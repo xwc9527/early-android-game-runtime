@@ -78,6 +78,7 @@ struct agr_guest {
     const char *unique_imports[256]; uint32_t unique_import_count;
     uint32_t input_queue_handle, input_ident, input_data;
     input_event input_events[32]; uint32_t input_head, input_count, next_input_handle;
+    uint32_t input_consumed_count;
     uint32_t draw_count, swap_count, asset_open_count;
 };
 
@@ -495,7 +496,9 @@ static int dispatch_import(agr_guest *g, const char *name) {
     }
     if (!strcmp(name,"AInputQueue_preDispatchEvent")) { guest_return(g,0,0); return 1; }
     if (!strcmp(name,"AInputQueue_finishEvent")) {
-        if (g->input_count && g->input_events[g->input_head%32].handle==argument(g,1)) { g->input_head++; g->input_count--; }
+        if (g->input_count && g->input_events[g->input_head%32].handle==argument(g,1)) {
+            g->input_head++; g->input_count--; g->input_consumed_count++;
+        }
         guest_return(g,0,0); return 1;
     }
     input_event *event=NULL; uint32_t event_handle=argument(g,0);
@@ -806,5 +809,6 @@ int32_t agr_guest_inject_motion(agr_guest *g, int32_t action, float x, float y) 
     g->next_input_handle+=4; g->input_count++; return 0;
 }
 uint32_t agr_guest_input_queue(agr_guest *g) { return g ? g->input_queue_handle : 0; }
+uint32_t agr_guest_input_consumed_count(agr_guest *g) { return g ? g->input_consumed_count : 0; }
 uint32_t agr_guest_unique_import_count(agr_guest *g) { return g ? g->unique_import_count : 0; }
 const char *agr_guest_unique_import(agr_guest *g,uint32_t index) { return g && index<g->unique_import_count ? g->unique_imports[index] : NULL; }

@@ -56,6 +56,7 @@ uint32_t agr_guest_swap_count(agr_guest *guest);
 uint32_t agr_guest_asset_open_count(agr_guest *guest);
 int32_t agr_guest_inject_motion(agr_guest *guest, int32_t action, float x, float y);
 uint32_t agr_guest_input_queue(agr_guest *guest);
+uint32_t agr_guest_input_consumed_count(agr_guest *guest);
 uint32_t agr_guest_unique_import_count(agr_guest *guest);
 const char *agr_guest_unique_import(agr_guest *guest, uint32_t index);
 

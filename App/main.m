@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#include "../Tests/Conformance/agr_contracts.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -291,20 +292,22 @@ static NSDictionary *runKungFooDexRegression(NSMutableArray<NSString *> *failure
              @"kungfoo_dex_renderer":renderer};
 }
 
-static void frameSignature(const uint8_t *rgba, int width, int height, uint8_t out[64]) {
-    for (int by=0; by<8; by++) for (int bx=0; bx<8; bx++) {
+enum { TRAJECTORY_GRID_W=16, TRAJECTORY_GRID_H=24, TRAJECTORY_SIGNATURE_SIZE=384 };
+static void frameSignature(const uint8_t *rgba, int width, int height, uint8_t out[TRAJECTORY_SIGNATURE_SIZE]) {
+    for (int by=0; by<TRAJECTORY_GRID_H; by++) for (int bx=0; bx<TRAJECTORY_GRID_W; bx++) {
         uint64_t sum=0; uint32_t count=0;
-        int x0=bx*width/8, x1=(bx+1)*width/8, y0=by*height/8, y1=(by+1)*height/8;
-        for (int y=y0; y<y1; y+=4) for (int x=x0; x<x1; x+=4) {
+        int x0=bx*width/TRAJECTORY_GRID_W, x1=(bx+1)*width/TRAJECTORY_GRID_W;
+        int y0=by*height/TRAJECTORY_GRID_H, y1=(by+1)*height/TRAJECTORY_GRID_H;
+        for (int y=y0; y<y1; y+=2) for (int x=x0; x<x1; x+=2) {
             const uint8_t *p=rgba+((size_t)y*width+x)*4;
             sum+=(uint64_t)p[0]*3+(uint64_t)p[1]*6+p[2]; count+=10;
         }
-        out[by*8+bx]=(uint8_t)(count ? sum/count : 0);
+        out[by*TRAJECTORY_GRID_W+bx]=(uint8_t)(count ? sum/count : 0);
     }
 }
 
-static uint32_t signatureDistance(const uint8_t a[64], const uint8_t b[64]) {
-    uint32_t total=0; for(int i=0;i<64;i++) total+=(uint32_t)abs((int)a[i]-(int)b[i]); return total/64;
+static uint32_t signatureChangedTiles(const uint8_t a[TRAJECTORY_SIGNATURE_SIZE], const uint8_t b[TRAJECTORY_SIGNATURE_SIZE], uint8_t delta) {
+    uint32_t changed=0; for(int i=0;i<TRAJECTORY_SIGNATURE_SIZE;i++) if(abs((int)a[i]-(int)b[i])>=delta) changed++; return changed;
 }
 
 static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *failures) {
@@ -386,65 +389,61 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
     }
     NSMutableArray *trajectory=[NSMutableArray array], *coverage=[NSMutableArray array];
     NSString *trajectoryOutcome=@"gameplay_not_entered", *trajectoryFailure=@"";
-    uint32_t uniqueStates=0, effectiveTransitions=0, ambientDistance=0;
-    if (nonblack>0 && onInput==0 && framePumpResult==0 && agr_guest_has_parked_thread(guest)) {
-        uint8_t signatures[16][64]={0}; frameSignature(frame,320,480,signatures[0]); uniqueStates=1;
-        uint8_t baseline[64]; memcpy(baseline,signatures[0],64);
-        int baselineRc=agr_guest_resume_thread_until_swap(guest);
-        if (baselineRc==0 && agr_guest_read_rgba(guest,frame,320u*480u*4u)>0) {
-            uint8_t ambient[64]; frameSignature(frame,320,480,ambient);
-            ambientDistance=signatureDistance(baseline,ambient); memcpy(signatures[0],ambient,64);
-        } else {
-            trajectoryOutcome=@"runtime_failure";
-            trajectoryFailure=[NSString stringWithUTF8String:agr_guest_last_error(guest)];
-        }
-        struct { const char *kind; float x0,y0,x1,y1; int hold; } actions[] = {
-          {"tap",160,360,160,360,0},{"tap",80,360,80,360,0},{"tap",240,360,240,360,0},
-          {"tap",160,240,160,240,0},{"tap",80,240,80,240,0},{"tap",240,240,240,240,0},
-          {"swipe",80,360,240,360,0},{"swipe",240,360,80,360,0},
-          {"long_press",160,360,160,360,2},{"tap",160,120,160,120,0},
-          {"swipe",160,400,160,180,0},{"swipe",160,180,160,400,0}
-        };
-        uint32_t coverageBefore=agr_guest_unique_import_count(guest);
-        for (uint32_t ai=0; ![trajectoryOutcome isEqualToString:@"runtime_failure"] &&
-             ai<sizeof(actions)/sizeof(actions[0]) && effectiveTransitions<8; ai++) {
-            uint8_t before[64]; frameSignature(frame,320,480,before);
+    uint32_t replayEvents=0, replayConsumed=0, uniqueStates=0;
+    NSString *tracePath=[[NSBundle mainBundle] pathForResource:@"kungfoo-barracuda" ofType:@"json"];
+    NSData *traceBytes=tracePath?[NSData dataWithContentsOfFile:tracePath]:nil;
+    NSDictionary *trace=traceBytes?[NSJSONSerialization JSONObjectWithData:traceBytes options:0 error:nil]:nil;
+    if (nonblack>0 && onInput==0 && framePumpResult==0 && agr_guest_has_parked_thread(guest) && trace) {
+        trajectoryOutcome=@"replay_incomplete";
+        uint8_t signatures[16][TRAJECTORY_SIGNATURE_SIZE]={0};
+        frameSignature(frame,320,480,signatures[0]); uniqueStates=1;
+        for(NSDictionary *event in trace[@"events"]) {
+            NSString *action=event[@"action"]; int motionAction=
+                [action isEqualToString:@"down"]?0:[action isEqualToString:@"up"]?1:
+                [action isEqualToString:@"move"]?2:-1;
+            if(motionAction<0) { trajectoryFailure=@"trace:unknown_action"; break; }
             uint32_t drawsBefore=agr_guest_draw_count(guest), swapsBefore=agr_guest_swap_count(guest);
-            int rc=agr_guest_inject_motion(guest,0,actions[ai].x0,actions[ai].y0);
-            if(rc==0) rc=agr_guest_resume_thread_until_swap(guest);
-            for(int h=0; rc==0 && h<actions[ai].hold; h++) rc=agr_guest_resume_thread_until_swap(guest);
-            if(rc==0 && !strcmp(actions[ai].kind,"swipe")) {
-                rc=agr_guest_inject_motion(guest,2,actions[ai].x1,actions[ai].y1);
-                if(rc==0) rc=agr_guest_resume_thread_until_swap(guest);
-            }
-            if(rc==0) rc=agr_guest_inject_motion(guest,1,actions[ai].x1,actions[ai].y1);
-            if(rc==0) rc=agr_guest_resume_thread_until_swap(guest);
-            if(rc==0) rc=agr_guest_resume_thread_until_swap(guest);
+            uint32_t consumedBefore=agr_guest_input_consumed_count(guest);
+            uint32_t coverageBefore=agr_guest_unique_import_count(guest);
+            int rc=agr_guest_inject_motion(guest,motionAction,[event[@"x"] floatValue],[event[@"y"] floatValue]);
+            int frames=MAX(1,MIN(8,[event[@"frames"] intValue]));
+            for(int f=0;rc==0&&f<frames;f++) rc=agr_guest_resume_thread_until_swap(guest);
             int32_t bytes=rc==0?agr_guest_read_rgba(guest,frame,320u*480u*4u):-1;
-            if(rc || bytes<=0) {
-                trajectoryFailure=[NSString stringWithUTF8String:agr_guest_last_error(guest)];
-                trajectoryOutcome=@"runtime_failure"; break;
+            uint32_t consumed=agr_guest_input_consumed_count(guest)-consumedBefore;
+            uint32_t drawDelta=agr_guest_draw_count(guest)-drawsBefore;
+            uint32_t swapDelta=agr_guest_swap_count(guest)-swapsBefore;
+            uint8_t signature[TRAJECTORY_SIGNATURE_SIZE]={0}; uint32_t changed=0; BOOL novel=NO;
+            if(bytes>0) {
+                frameSignature(frame,320,480,signature);
+                changed=signatureChangedTiles(signatures[uniqueStates-1],signature,10);
+                novel=YES;
+                for(uint32_t k=0;k<uniqueStates;k++) if(signatureChangedTiles(signatures[k],signature,10)<4){novel=NO;break;}
+                if(novel&&uniqueStates<16) memcpy(signatures[uniqueStates++],signature,TRAJECTORY_SIGNATURE_SIZE);
             }
-            uint8_t after[64]; frameSignature(frame,320,480,after);
-            uint32_t distance=signatureDistance(before,after), threshold=MAX(8u,ambientDistance*2u+3u);
-            BOOL duplicate=NO;
-            for(uint32_t s=0;s<uniqueStates;s++) if(signatureDistance(signatures[s],after)<threshold){duplicate=YES;break;}
-            BOOL progressed=distance>=threshold && !duplicate && agr_guest_draw_count(guest)>drawsBefore && agr_guest_swap_count(guest)>swapsBefore;
-            uint32_t coverageNow=agr_guest_unique_import_count(guest);
-            if(progressed && uniqueStates<16){memcpy(signatures[uniqueStates++],after,64);effectiveTransitions++;}
-            [trajectory addObject:@{@"input":[NSString stringWithUTF8String:actions[ai].kind],
-              @"from":@[@(actions[ai].x0),@(actions[ai].y0)],@"to":@[@(actions[ai].x1),@(actions[ai].y1)],
-              @"frame_distance":@(distance),@"threshold":@(threshold),@"effective":@(progressed),
-              @"draw_delta":@(agr_guest_draw_count(guest)-drawsBefore),@"swap_delta":@(agr_guest_swap_count(guest)-swapsBefore),
-              @"coverage_delta":@(coverageNow-coverageBefore)}];
-            coverageBefore=coverageNow;
+            uint32_t digest=2166136261u;
+            for(int k=0;k<TRAJECTORY_SIGNATURE_SIZE;k++) digest=(digest^signature[k])*16777619u;
+            [trajectory addObject:@{@"action":action,@"x":event[@"x"],@"y":event[@"y"],
+              @"requested_frames":@(frames),@"input_consumed":@(consumed),@"draw_delta":@(drawDelta),
+              @"swap_delta":@(swapDelta),@"changed_tiles":@(changed),@"novel_frame":@(novel),
+              @"fingerprint":[NSString stringWithFormat:@"%08x",digest],
+              @"coverage_delta":@(agr_guest_unique_import_count(guest)-coverageBefore)}];
+            replayEvents++;replayConsumed+=consumed;
+            if(rc||bytes<=0) {
+                trajectoryFailure=[NSString stringWithUTF8String:agr_guest_last_error(guest)];
+                trajectoryOutcome=@"runtime_failure";break;
+            }
+            if(!consumed||!drawDelta||!swapDelta) {
+                trajectoryFailure=@"checkpoint:input_or_draw_stalled";break;
+            }
         }
-        if (![trajectoryOutcome isEqualToString:@"runtime_failure"])
-            trajectoryOutcome=effectiveTransitions>=5?@"high_confidence_playable":@"exploration_insufficient";
+        if(replayEvents==[trace[@"events"] count] && !trajectoryFailure.length)
+            trajectoryOutcome=@"replay_completed_gameplay_unverified";
         for(uint32_t i=0;i<agr_guest_unique_import_count(guest);i++) {
             const char *name=agr_guest_unique_import(guest,i);
             if(name) [coverage addObject:[NSString stringWithUTF8String:name]];
         }
+        NSString *trajectoryFrame=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/kungfoo-trajectory-frame.png"];
+        writeRGBAFramePNG(frame,320,480,trajectoryFrame);
     }
     free(frame);
     NSString *error = guest ? [NSString stringWithUTF8String:agr_guest_last_error(guest)] : @"create failed";
@@ -464,8 +463,8 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
              @"kungfoo_native_texture_uploads":@(dexHost.uploads),@"kungfoo_native_nonblack_pixels":@(nonblack),
              @"kungfoo_native_frame_bytes":@(frameBytes),
              @"kungfoo_gameplay_trajectory":trajectory,@"kungfoo_gameplay_outcome":trajectoryOutcome,
-             @"kungfoo_gameplay_failure":trajectoryFailure,@"kungfoo_effective_transitions":@(effectiveTransitions),
-             @"kungfoo_unique_states":@(uniqueStates),@"kungfoo_ambient_frame_distance":@(ambientDistance),
+             @"kungfoo_gameplay_failure":trajectoryFailure,@"kungfoo_replay_events":@(replayEvents),
+             @"kungfoo_replay_consumed":@(replayConsumed),@"kungfoo_unique_states":@(uniqueStates),
              @"kungfoo_runtime_coverage":coverage};
 }
 
@@ -608,6 +607,16 @@ static NSArray *runBatchCompatibility(NSDictionary *gloomy, NSDictionary *kungfo
 
 static NSString *runTests(void) {
     NSMutableArray<NSString *> *failures = [NSMutableArray array];
+    agr_contract_result contractCases[32]={0};
+    uint32_t contractCount=agr_run_contracts(contractCases,32), contractPassed=0;
+    NSMutableArray *contracts=[NSMutableArray array];
+    for(uint32_t i=0;i<contractCount;i++) {
+        agr_contract_result *test=&contractCases[i]; if(test->passed)contractPassed++;
+        [contracts addObject:@{@"id":[NSString stringWithUTF8String:test->id],
+          @"module":[NSString stringWithUTF8String:test->module],
+          @"source_case":[NSString stringWithUTF8String:test->source_case],
+          @"passed":@(test->passed),@"observed":@(test->observed),@"expected":@(test->expected)}];
+    }
     NSData *dex = bundleData(@"classes", @"dex");
     DxVM *vm = dex ? poc_create(dex.bytes, (uint32_t)dex.length) : NULL;
     int32_t dexResult = 0;
@@ -673,6 +682,9 @@ static NSString *runTests(void) {
     [result addEntriesFromDictionary:kungFooDexResult];
     [result addEntriesFromDictionary:kungFooNativeResult];
     result[@"batch_results"] = batchResults;
+    result[@"conformance"] = @{ @"count":@(contractCount),@"passed":@(contractPassed),
+      @"reference":@"API19 source-derived expectations; Android 4.4 device differential pending",
+      @"cases":contracts };
     NSData *json = [NSJSONSerialization dataWithJSONObject:result options:NSJSONWritingPrettyPrinted error:nil];
     return [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
 }
