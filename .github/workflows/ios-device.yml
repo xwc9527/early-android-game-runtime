@@ -57,7 +57,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: agr-iphoneos-arm64-unsigned
-          path: build/iphoneos/AGRDevice.app
+          path: |
+            build/iphoneos/AGRDevice.app
+            build/iphoneos/AGRDevice-unsigned.ipa
           if-no-files-found: warn
       - name: Upload encrypted signed IPA
         if: env.IOS_SIGNING_IDENTITY != ''

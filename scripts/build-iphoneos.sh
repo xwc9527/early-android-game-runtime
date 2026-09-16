@@ -61,6 +61,8 @@ cp "$ROOT/App/Info.plist" "$APP/Info.plist"; cp "$ROOT/App/Resources/"* "$APP/"
 /usr/libexec/PlistBuddy -c 'Add :LSSupportsOpeningDocumentsInPlace bool true' "$APP/Info.plist"
 cp "$ROOT/Tests/Trajectories/kungfoo-barracuda.json" "$APP/"
 mkdir -p "$APP/Frameworks"; ditto "$ANGLE_FRAMEWORKS/libEGL.framework" "$APP/Frameworks/libEGL.framework"; ditto "$ANGLE_FRAMEWORKS/libGLESv2.framework" "$APP/Frameworks/libGLESv2.framework"
+mkdir -p "$BUILD/Payload"; ditto "$APP" "$BUILD/Payload/AGRDevice.app"
+(cd "$BUILD" && zip -qr AGRDevice-unsigned.ipa Payload)
 if [[ -n "${IOS_SIGNING_IDENTITY:-}" && -n "${IOS_PROVISIONING_PROFILE:-}" ]]; then
   cp "$IOS_PROVISIONING_PROFILE" "$APP/embedded.mobileprovision"
   security cms -D -i "$APP/embedded.mobileprovision" > "$BUILD/profile.plist"
@@ -68,7 +70,7 @@ if [[ -n "${IOS_SIGNING_IDENTITY:-}" && -n "${IOS_PROVISIONING_PROFILE:-}" ]]; t
   codesign --force --sign "$IOS_SIGNING_IDENTITY" "$APP/Frameworks/libEGL.framework"
   codesign --force --sign "$IOS_SIGNING_IDENTITY" "$APP/Frameworks/libGLESv2.framework"
   codesign --force --sign "$IOS_SIGNING_IDENTITY" --entitlements "$BUILD/entitlements.plist" "$APP"
-  mkdir -p "$BUILD/Payload"; ditto "$APP" "$BUILD/Payload/AGRDevice.app"
+  ditto "$APP" "$BUILD/Payload/AGRDevice.app"
   (cd "$BUILD" && zip -qr AGRDevice.ipa Payload)
   codesign --verify --deep --strict --verbose=2 "$APP"
 else
