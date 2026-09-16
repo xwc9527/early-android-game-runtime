@@ -12,6 +12,7 @@ App/Resources/gloomy-librenderer.so
 App/Resources/kungfoo-classes.dex
 App/Resources/kungfoo-native.so
 App/Resources/batch-plan.json
-samples/
+/samples/
+__pycache__/
 
 /probe.txt

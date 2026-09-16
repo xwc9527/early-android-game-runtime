@@ -1,0 +1,9 @@
+{
+  "samples": [
+    {"id":"kungfoo-barracuda","package":"com.onetwofivegames.kungfoobarracuda","version_code":3,"license":"GPL-3.0-only","source":"https://github.com/poseidn/KungFoo","profile":"kungfoo"},
+    {"id":"gloomy-dungeons-2","package":"org.zamedev.gloomydungeons2.opensource","version_code":1602221800,"license":"MIT","source":"https://github.com/restorer/gloomy-dungeons-2","profile":"gloomy"},
+    {"id":"pixel-dungeon","package":"com.watabou.pixeldungeon","selection":"oldest","license":"GPL-3.0-only","source":"https://github.com/watabou/pixel-dungeon","profile":"generic"},
+    {"id":"frozen-bubble","package":"org.jfedor.frozenbubble","selection":"oldest","license":"GPL-2.0-or-later","source":"https://github.com/videogameboy76/frozenbubbleandroid","profile":"generic"},
+    {"id":"vector-pinball","package":"com.dozingcatsoftware.bouncy","selection":"oldest","license":"GPL-3.0-only","source":"https://github.com/dozingcat/Vector-Pinball","profile":"generic"}
+  ]
+}
