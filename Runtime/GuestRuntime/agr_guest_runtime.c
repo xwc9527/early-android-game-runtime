@@ -57,7 +57,7 @@ struct agr_guest {
     EGLSurface surface;
     EGLContext context;
     int width, height;
-    char renderer[256], gl_version[256], error[256];
+    char renderer[256], gl_version[256], error[256], last_log[128];
     uint64_t instruction_count;
     uint64_t run_budget;
     uint32_t call_depth;
@@ -88,6 +88,11 @@ static int run_until_return(agr_guest *g);
 
 static void set_error(agr_guest *g, const char *text) {
     snprintf(g->error, sizeof(g->error), "%s", text ? text : "unknown error");
+}
+static void guest_log_cb(void *user, uint32_t priority, const char *tag, const char *format) {
+    agr_guest *g = (agr_guest *)user;
+    snprintf(g->last_log, sizeof(g->last_log), "%u:%s:%s", priority,
+             tag ? tag : "", format ? format : "");
 }
 static asset_entry *find_asset(agr_guest *g, uint32_t handle) {
     for (uint32_t i = 0; i < 64; i++) if (g->open_assets[i].handle == handle && g->open_assets[i].asset) return &g->open_assets[i];
@@ -555,7 +560,11 @@ static int dispatch_import(agr_guest *g, const char *name) {
     uint32_t regs[4] = { argument(g, 0), argument(g, 1), argument(g, 2), argument(g, 3) };
     agr_dispatch_result out = {0};
     if (agr_dispatch_system(g->runtime, name, regs, arm_interp_get_reg(g->cpu, 13), &out) == 0 && out.handled) {
-        if (out.action == AGR_ACTION_ABORT) { snprintf(g->error, sizeof(g->error), "guest aborted in %s", name); return -1; }
+        if (out.action == AGR_ACTION_ABORT) {
+            snprintf(g->error, sizeof(g->error), "guest aborted in %s lr=%08x r0=%08x last_log=%.110s",
+                     name, arm_interp_get_reg(g->cpu, 14), argument(g, 0), g->last_log);
+            return -1;
+        }
         if (out.action == AGR_ACTION_CALL_ONCE) {
             uint32_t saved[16], saved_cpsr = arm_interp_get_cpsr(g->cpu);
             for (uint32_t i = 0; i < 16; i++) saved[i] = arm_interp_get_reg(g->cpu, i);
@@ -653,6 +662,7 @@ agr_guest *agr_guest_create(void) {
     g->next_asset_handle = 0x62010000u; g->input_queue_handle=0x67000000u; g->next_input_handle=0x67000100u;
     if (!g->cpu) { free(g); return NULL; }
     agr_callbacks cb = {0}; cb.user = g; cb.read = mem_read_cb; cb.write = mem_write_cb; cb.resolve_import = resolve_import_cb;
+    cb.log = guest_log_cb;
     cb.pipe_create = pipe_create_cb; cb.fd_read = fd_read_cb; cb.fd_write = fd_write_cb; cb.fd_close = fd_close_cb;
     g->runtime = agr_runtime_create(&cb, 0x01008000, 0x01020000, 0x01900000, 0x02000000);
     if (!g->runtime) { arm_interp_destroy(g->cpu); free(g); return NULL; }
