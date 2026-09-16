@@ -22,6 +22,7 @@ static char g_uploaded_asset[512];
 static int32_t g_next_texture = 1;
 static int32_t g_bound_texture = 0;
 static int32_t g_log_calls = 0;
+static int32_t g_next_sound = 1;
 
 static void add_method(DxClass *cls, const char *name, const char *shorty,
                        uint32_t flags, DxNativeMethodFn fn, int direct) {
@@ -79,6 +80,33 @@ static DxResult context_get_assets(DxVM *vm, DxFrame *frame, DxValue *args, uint
     frame->result = DX_OBJ_VALUE(dx_vm_alloc_object(vm, cls));
     frame->has_result = true;
     return DX_OK;
+}
+
+static DxResult context_get_resources(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    (void)args; (void)count;
+    DxClass *cls = dx_vm_find_class(vm, "Landroid/content/res/Resources;");
+    frame->result = DX_OBJ_VALUE(dx_vm_alloc_object(vm, cls)); frame->has_result = true; return DX_OK;
+}
+
+static DxResult context_get_package_name(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    (void)args; (void)count;
+    frame->result = DX_OBJ_VALUE(dx_vm_create_string(vm,"com.onetwofivegames.kungfoobarracuda"));
+    frame->has_result = true; return DX_OK;
+}
+
+static DxResult resources_get_identifier(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    (void)vm; (void)args; (void)count;
+    frame->result = DX_INT_VALUE(g_next_sound++); frame->has_result = true; return DX_OK;
+}
+
+static DxResult soundpool_load(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    (void)vm; (void)args; (void)count;
+    frame->result = DX_INT_VALUE(g_next_sound++); frame->has_result = true; return DX_OK;
+}
+
+static DxResult soundpool_play(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    (void)vm; (void)args; (void)count;
+    frame->result = DX_INT_VALUE(g_next_sound++); frame->has_result = true; return DX_OK;
 }
 
 static DxResult asset_open(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
@@ -167,12 +195,16 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(native_activity, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
     add_method(native_activity, "onCreate", "VL", DX_ACC_PUBLIC, noop, 0);
     add_method(context, "getAssets", "L", DX_ACC_PUBLIC, context_get_assets, 0);
+    add_method(context, "getResources", "L", DX_ACC_PUBLIC, context_get_resources, 0);
+    add_method(context, "getPackageName", "L", DX_ACC_PUBLIC, context_get_package_name, 0);
 
     DxClass *asset_manager = reg_class(vm, "Landroid/content/res/AssetManager;", obj);
     add_method(asset_manager, "open", "LL", DX_ACC_PUBLIC, asset_open, 0);
     DxClass *input = reg_class(vm, "Ljava/io/InputStream;", obj);
     one_field(input, "_assetPath", "Ljava/lang/String;");
     add_method(input, "close", "V", DX_ACC_PUBLIC, noop, 0);
+    DxClass *resources = reg_class(vm, "Landroid/content/res/Resources;", obj);
+    add_method(resources, "getIdentifier", "ILLL", DX_ACC_PUBLIC, resources_get_identifier, 0);
 
     DxClass *options = reg_class(vm, "Landroid/graphics/BitmapFactory$Options;", obj);
     one_field(options, "inScaled", "Z");
@@ -196,6 +228,8 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(log, "e", "ILL", DX_ACC_PUBLIC | DX_ACC_STATIC, log_call, 1);
     DxClass *sound_pool = reg_class(vm, "Landroid/media/SoundPool;", obj);
     add_method(sound_pool, "<init>", "VIII", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
+    add_method(sound_pool, "load", "ILII", DX_ACC_PUBLIC, soundpool_load, 0);
+    add_method(sound_pool, "play", "IIFFIIF", DX_ACC_PUBLIC, soundpool_play, 0);
     return DX_OK;
 }
 
@@ -216,6 +250,7 @@ struct agr_dex_game {
     DxVM *vm;
     DxObject *activity;
     DxMethod *load_image;
+    DxMethod *play_sound;
 };
 
 agr_dex_game *agr_dex_game_create(const char *dex_path) {
@@ -240,7 +275,8 @@ agr_dex_game *agr_dex_game_create(const char *dex_path) {
     DxValue create_args[2]={DX_OBJ_VALUE(game->activity),DX_NULL_VALUE};
     if (!on_create || dx_vm_execute_method(game->vm,on_create,create_args,2,NULL)!=DX_OK) goto fail;
     game->load_image=dx_vm_find_method(cls,"loadImage","IL");
-    if (!game->load_image) goto fail;
+    game->play_sound=dx_vm_find_method(cls,"playSound","ILF");
+    if (!game->load_image || !game->play_sound) goto fail;
     return game;
 fail:
     agr_dex_game_destroy(game); return NULL;
@@ -264,6 +300,17 @@ int agr_dex_game_load_image(agr_dex_game *game, const char *path, int32_t *textu
     if (rc!=DX_OK || result.tag!=DX_VAL_INT) return -1;
     if (texture) *texture=result.i;
     return 0;
+}
+
+int agr_dex_game_play_sound(agr_dex_game *game, const char *path, float direction, int32_t *play_id) {
+    if (!game || !path || !game->play_sound) return -1;
+    DxObject *name=dx_vm_create_string(game->vm,path); if (!name) return -1;
+    DxValue direction_value={.tag=DX_VAL_FLOAT,.f=direction};
+    DxValue args[3]={DX_OBJ_VALUE(game->activity),DX_OBJ_VALUE(name),direction_value};
+    DxValue result=DX_INT_VALUE(0);
+    DxResult rc=dx_vm_execute_method(game->vm,game->play_sound,args,3,&result);
+    if (rc!=DX_OK || result.tag!=DX_VAL_INT) return -1;
+    if (play_id) *play_id=result.i; return 0;
 }
 
 int agr_dex_game_main(int argc, char **argv) {

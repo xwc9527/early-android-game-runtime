@@ -291,6 +291,22 @@ static NSDictionary *runKungFooDexRegression(NSMutableArray<NSString *> *failure
              @"kungfoo_dex_renderer":renderer};
 }
 
+static void frameSignature(const uint8_t *rgba, int width, int height, uint8_t out[64]) {
+    for (int by=0; by<8; by++) for (int bx=0; bx<8; bx++) {
+        uint64_t sum=0; uint32_t count=0;
+        int x0=bx*width/8, x1=(bx+1)*width/8, y0=by*height/8, y1=(by+1)*height/8;
+        for (int y=y0; y<y1; y+=4) for (int x=x0; x<x1; x+=4) {
+            const uint8_t *p=rgba+((size_t)y*width+x)*4;
+            sum+=(uint64_t)p[0]*3+(uint64_t)p[1]*6+p[2]; count+=10;
+        }
+        out[by*8+bx]=(uint8_t)(count ? sum/count : 0);
+    }
+}
+
+static uint32_t signatureDistance(const uint8_t a[64], const uint8_t b[64]) {
+    uint32_t total=0; for(int i=0;i<64;i++) total+=(uint32_t)abs((int)a[i]-(int)b[i]); return total/64;
+}
+
 static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *failures) {
     NSData *elf = bundleData(@"kungfoo-native",@"so");
     agr_guest *guest = agr_guest_create();
@@ -305,7 +321,7 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
     int loaded = elf && guest && dexLoaded == 0 ? agr_guest_load_elf(guest,"libKungFooBarracudaNativeActivity.so",elf.bytes,(uint32_t)elf.length,0x02800000) : -1;
     uint32_t constructors = 0;
     int initialized = loaded == 0 ? agr_guest_run_constructors(guest,&constructors) : -1;
-    int activityCreated = -1, onStart = -1, onResume = -1, onWindow = -1, onFocus = -1, pumped = -1;
+    int activityCreated = -1, onStart = -1, onResume = -1, onWindow = -1, onFocus = -1, onInput = -1, pumped = -1;
     int framePumpResult = 0; uint32_t framePumps = 0;
     uint8_t *frame = calloc(320u*480u*4u,1); uint32_t nonblack = 0; int32_t frameBytes = -1;
     uint32_t callbacksFound = 0;
@@ -333,7 +349,11 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
                 onWindow = agr_guest_call_address(guest,callbackWords[7],windowArgs,2,&ignored);
                 if (onWindow == 0) {
                     pumped = agr_guest_resume_thread(guest);
-                    if (pumped == 0 && callbackWords[6]) {
+                    if (pumped == 0 && callbackWords[11]) {
+                        uint32_t inputArgs[2]={activity,agr_guest_input_queue(guest)};
+                        onInput=agr_guest_call_address(guest,callbackWords[11],inputArgs,2,&ignored);
+                    }
+                    if (pumped == 0 && onInput == 0 && callbackWords[6]) {
                         uint32_t focusArgs[2] = {activity,1};
                         onFocus = agr_guest_call_address(guest,callbackWords[6],focusArgs,2,&ignored);
                         while (onFocus == 0 && frame && agr_guest_has_parked_thread(guest) &&
@@ -364,9 +384,71 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
         NSString *framePath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/kungfoo-frame.png"];
         if (!writeRGBAFramePNG(frame,320,480,framePath)) [failures addObject:@"kungfoo-frame-png-write"];
     }
+    NSMutableArray *trajectory=[NSMutableArray array], *coverage=[NSMutableArray array];
+    NSString *trajectoryOutcome=@"gameplay_not_entered", *trajectoryFailure=@"";
+    uint32_t uniqueStates=0, effectiveTransitions=0, ambientDistance=0;
+    if (nonblack>0 && onInput==0 && framePumpResult==0 && agr_guest_has_parked_thread(guest)) {
+        uint8_t signatures[16][64]={0}; frameSignature(frame,320,480,signatures[0]); uniqueStates=1;
+        uint8_t baseline[64]; memcpy(baseline,signatures[0],64);
+        int baselineRc=agr_guest_resume_thread_until_swap(guest);
+        if (baselineRc==0 && agr_guest_read_rgba(guest,frame,320u*480u*4u)>0) {
+            uint8_t ambient[64]; frameSignature(frame,320,480,ambient);
+            ambientDistance=signatureDistance(baseline,ambient); memcpy(signatures[0],ambient,64);
+        } else {
+            trajectoryOutcome=@"runtime_failure";
+            trajectoryFailure=[NSString stringWithUTF8String:agr_guest_last_error(guest)];
+        }
+        struct { const char *kind; float x0,y0,x1,y1; int hold; } actions[] = {
+          {"tap",160,360,160,360,0},{"tap",80,360,80,360,0},{"tap",240,360,240,360,0},
+          {"tap",160,240,160,240,0},{"tap",80,240,80,240,0},{"tap",240,240,240,240,0},
+          {"swipe",80,360,240,360,0},{"swipe",240,360,80,360,0},
+          {"long_press",160,360,160,360,2},{"tap",160,120,160,120,0},
+          {"swipe",160,400,160,180,0},{"swipe",160,180,160,400,0}
+        };
+        uint32_t coverageBefore=agr_guest_unique_import_count(guest);
+        for (uint32_t ai=0; ![trajectoryOutcome isEqualToString:@"runtime_failure"] &&
+             ai<sizeof(actions)/sizeof(actions[0]) && effectiveTransitions<8; ai++) {
+            uint8_t before[64]; frameSignature(frame,320,480,before);
+            uint32_t drawsBefore=agr_guest_draw_count(guest), swapsBefore=agr_guest_swap_count(guest);
+            int rc=agr_guest_inject_motion(guest,0,actions[ai].x0,actions[ai].y0);
+            if(rc==0) rc=agr_guest_resume_thread_until_swap(guest);
+            for(int h=0; rc==0 && h<actions[ai].hold; h++) rc=agr_guest_resume_thread_until_swap(guest);
+            if(rc==0 && !strcmp(actions[ai].kind,"swipe")) {
+                rc=agr_guest_inject_motion(guest,2,actions[ai].x1,actions[ai].y1);
+                if(rc==0) rc=agr_guest_resume_thread_until_swap(guest);
+            }
+            if(rc==0) rc=agr_guest_inject_motion(guest,1,actions[ai].x1,actions[ai].y1);
+            if(rc==0) rc=agr_guest_resume_thread_until_swap(guest);
+            if(rc==0) rc=agr_guest_resume_thread_until_swap(guest);
+            int32_t bytes=rc==0?agr_guest_read_rgba(guest,frame,320u*480u*4u):-1;
+            if(rc || bytes<=0) {
+                trajectoryFailure=[NSString stringWithUTF8String:agr_guest_last_error(guest)];
+                trajectoryOutcome=@"runtime_failure"; break;
+            }
+            uint8_t after[64]; frameSignature(frame,320,480,after);
+            uint32_t distance=signatureDistance(before,after), threshold=MAX(8u,ambientDistance*2u+3u);
+            BOOL duplicate=NO;
+            for(uint32_t s=0;s<uniqueStates;s++) if(signatureDistance(signatures[s],after)<threshold){duplicate=YES;break;}
+            BOOL progressed=distance>=threshold && !duplicate && agr_guest_draw_count(guest)>drawsBefore && agr_guest_swap_count(guest)>swapsBefore;
+            uint32_t coverageNow=agr_guest_unique_import_count(guest);
+            if(progressed && uniqueStates<16){memcpy(signatures[uniqueStates++],after,64);effectiveTransitions++;}
+            [trajectory addObject:@{@"input":[NSString stringWithUTF8String:actions[ai].kind],
+              @"from":@[@(actions[ai].x0),@(actions[ai].y0)],@"to":@[@(actions[ai].x1),@(actions[ai].y1)],
+              @"frame_distance":@(distance),@"threshold":@(threshold),@"effective":@(progressed),
+              @"draw_delta":@(agr_guest_draw_count(guest)-drawsBefore),@"swap_delta":@(agr_guest_swap_count(guest)-swapsBefore),
+              @"coverage_delta":@(coverageNow-coverageBefore)}];
+            coverageBefore=coverageNow;
+        }
+        if (![trajectoryOutcome isEqualToString:@"runtime_failure"])
+            trajectoryOutcome=effectiveTransitions>=5?@"high_confidence_playable":@"exploration_insufficient";
+        for(uint32_t i=0;i<agr_guest_unique_import_count(guest);i++) {
+            const char *name=agr_guest_unique_import(guest,i);
+            if(name) [coverage addObject:[NSString stringWithUTF8String:name]];
+        }
+    }
     free(frame);
     NSString *error = guest ? [NSString stringWithUTF8String:agr_guest_last_error(guest)] : @"create failed";
-    BOOL passed = mounted == 0 && dexLoaded == 0 && loaded == 0 && initialized == 0 && constructors == 51 && activityCreated == 0 && callbacksFound >= 10 && onStart == 0 && onResume == 0 && onWindow == 0 && pumped == 0 && onFocus == 0 && framePumpResult == 0 && draws > 0 && swaps > 0 && nonblack > 0;
+    BOOL passed = mounted == 0 && dexLoaded == 0 && loaded == 0 && initialized == 0 && constructors == 51 && activityCreated == 0 && callbacksFound >= 10 && onStart == 0 && onResume == 0 && onWindow == 0 && pumped == 0 && onInput == 0 && onFocus == 0 && framePumpResult == 0 && draws > 0 && swaps > 0 && nonblack > 0;
     if (!passed) [failures addObject:[NSString stringWithFormat:@"kungfoo-native=%d/%d/%d/%d/%u activity=%d callbacks=%u start=%d resume=%d window=%d pump=%d focus=%d frames=%u/%d/%@",mounted,dexLoaded,loaded,initialized,constructors,activityCreated,callbacksFound,onStart,onResume,onWindow,pumped,onFocus,framePumps,framePumpResult,error]];
     if (guest) agr_guest_destroy(guest);
     agr_dex_set_upload_callback(NULL,NULL);
@@ -380,7 +462,11 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
              @"kungfoo_frame_pumps":@(framePumps),
              @"kungfoo_native_swaps":@(swaps),@"kungfoo_native_asset_opens":@(assetOpens),
              @"kungfoo_native_texture_uploads":@(dexHost.uploads),@"kungfoo_native_nonblack_pixels":@(nonblack),
-             @"kungfoo_native_frame_bytes":@(frameBytes)};
+             @"kungfoo_native_frame_bytes":@(frameBytes),
+             @"kungfoo_gameplay_trajectory":trajectory,@"kungfoo_gameplay_outcome":trajectoryOutcome,
+             @"kungfoo_gameplay_failure":trajectoryFailure,@"kungfoo_effective_transitions":@(effectiveTransitions),
+             @"kungfoo_unique_states":@(uniqueStates),@"kungfoo_ambient_frame_distance":@(ambientDistance),
+             @"kungfoo_runtime_coverage":coverage};
 }
 
 static NSString *failureSignature(NSString *stage, NSString *detail) {

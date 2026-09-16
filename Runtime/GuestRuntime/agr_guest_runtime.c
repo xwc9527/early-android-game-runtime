@@ -42,6 +42,7 @@ typedef struct { uint32_t fd, ident, events, callback, data; } looper_fd;
 typedef struct { uint32_t handle; agr_afw_asset *asset; } asset_entry;
 typedef struct { uint32_t handle; char name[96], signature[128]; } jni_method;
 typedef struct { uint32_t handle; char *text; } jni_string;
+typedef struct { uint32_t handle, type, action, pointer_count, pointer_id; float x, y; } input_event;
 
 struct agr_guest {
     void *cpu;
@@ -74,6 +75,9 @@ struct agr_guest {
     jni_string strings[64]; uint32_t string_count;
     const char *recent_imports[12];
     uint32_t recent_import_index;
+    const char *unique_imports[256]; uint32_t unique_import_count;
+    uint32_t input_queue_handle, input_ident, input_data;
+    input_event input_events[32]; uint32_t input_head, input_count, next_input_handle;
     uint32_t draw_count, swap_count, asset_open_count;
 };
 
@@ -251,6 +255,19 @@ static int dispatch_jni(agr_guest *g, uint32_t address) {
             }
             guest_return(g,(uint32_t)texture,0); return 1;
         }
+        if (!strcmp(method->name,"playSound") && !strcmp(method->signature,"(Ljava/lang/String;F)I")) {
+            uint32_t argv=argument(g,3), string_handle=0, float_bits=0;
+            if (slot==49) { string_handle=argv; float_bits=argument(g,4); }
+            else if (slot==50) { string_handle=read_u32(g,argv); float_bits=read_u32(g,argv+4); }
+            else { string_handle=read_u32(g,argv); float_bits=read_u32(g,argv+8); }
+            const char *path=NULL; float direction=0.0f; memcpy(&direction,&float_bits,4);
+            for (uint32_t i=0; i<g->string_count; i++) if(g->strings[i].handle==string_handle) path=g->strings[i].text;
+            int32_t play_id=0;
+            if (!path || !g->dex_game || agr_dex_game_play_sound(g->dex_game,path,direction,&play_id)) {
+                set_error(g,"JNI playSound DEX invocation failed"); return -1;
+            }
+            guest_return(g,(uint32_t)play_id,0); return 1;
+        }
         snprintf(g->error,sizeof(g->error),"JNI CallIntMethod unhandled %.80s",method->name); return -1;
     }
     if (slot >= 61 && slot <= 63) { guest_return(g,0,0); return 1; }
@@ -410,6 +427,8 @@ static int dispatch_graphics(agr_guest *g, const char *name) {
 }
 static int dispatch_import(agr_guest *g, const char *name) {
     g->recent_imports[g->recent_import_index++ % 12] = name;
+    uint32_t seen=0; for(uint32_t i=0;i<g->unique_import_count;i++) if(!strcmp(g->unique_imports[i],name)){seen=1;break;}
+    if(!seen && g->unique_import_count<256) g->unique_imports[g->unique_import_count++]=name;
     if (!strcmp(name,"ANativeWindow_setBuffersGeometry")) {
         int32_t width=(int32_t)argument(g,1), height=(int32_t)argument(g,2);
         g->width=width>0?width:320; g->height=height>0?height:480;
@@ -441,7 +460,13 @@ static int dispatch_import(agr_guest *g, const char *name) {
     if (!strcmp(name, "ALooper_pollAll")) {
         int32_t timeout = (int32_t)argument(g, 0);
         uint32_t result = 0xffffffffu;
-        for (uint32_t i = 0; i < g->looper_fd_count; i++) {
+        if (g->input_count && g->input_ident) {
+            if (argument(g,1)) write_u32(g,argument(g,1),0xffffffffu);
+            if (argument(g,2)) write_u32(g,argument(g,2),1);
+            if (argument(g,3)) write_u32(g,argument(g,3),g->input_data);
+            result=g->input_ident;
+        }
+        for (uint32_t i = 0; result==0xffffffffu && i < g->looper_fd_count; i++) {
             looper_fd *fd = &g->looper_fds[i]; virtual_pipe *pipe = find_pipe(g, fd->fd);
             if (!pipe || pipe->size == pipe->read_offset) continue;
             if (argument(g, 1)) write_u32(g, argument(g, 1), fd->fd);
@@ -456,6 +481,32 @@ static int dispatch_import(agr_guest *g, const char *name) {
             g->parked_valid = 1; g->park_requested = 1; return 2;
         }
         return 1;
+    }
+    if (!strcmp(name,"AInputQueue_attachLooper")) {
+        if (argument(g,0)!=g->input_queue_handle) { set_error(g,"AInputQueue_attachLooper invalid queue"); return -1; }
+        g->looper_handle=argument(g,1); g->input_ident=argument(g,2); g->input_data=argument(g,4);
+        guest_return(g,0,0); return 1;
+    }
+    if (!strcmp(name,"AInputQueue_detachLooper")) { g->input_ident=g->input_data=0; guest_return(g,0,0); return 1; }
+    if (!strcmp(name,"AInputQueue_getEvent")) {
+        if (argument(g,0)!=g->input_queue_handle || !g->input_count) { guest_return(g,0xffffffffu,0); return 1; }
+        input_event *e=&g->input_events[g->input_head%32]; write_u32(g,argument(g,1),e->handle);
+        guest_return(g,0,0); return 1;
+    }
+    if (!strcmp(name,"AInputQueue_preDispatchEvent")) { guest_return(g,0,0); return 1; }
+    if (!strcmp(name,"AInputQueue_finishEvent")) {
+        if (g->input_count && g->input_events[g->input_head%32].handle==argument(g,1)) { g->input_head++; g->input_count--; }
+        guest_return(g,0,0); return 1;
+    }
+    input_event *event=NULL; uint32_t event_handle=argument(g,0);
+    for(uint32_t i=0;i<g->input_count;i++){ input_event *candidate=&g->input_events[(g->input_head+i)%32]; if(candidate->handle==event_handle){event=candidate;break;} }
+    if (!strcmp(name,"AInputEvent_getType")) { guest_return(g,event?event->type:0,0); return 1; }
+    if (!strcmp(name,"AMotionEvent_getAction")) { guest_return(g,event?event->action:0,0); return 1; }
+    if (!strcmp(name,"AMotionEvent_getPointerCount")) { guest_return(g,event?event->pointer_count:0,0); return 1; }
+    if (!strcmp(name,"AMotionEvent_getPointerId")) { guest_return(g,event?event->pointer_id:0,0); return 1; }
+    if (!strcmp(name,"AMotionEvent_getX") || !strcmp(name,"AMotionEvent_getY")) {
+        float value=event?(!strcmp(name,"AMotionEvent_getX")?event->x:event->y):0.0f; uint32_t bits=0; memcpy(&bits,&value,4);
+        guest_return(g,bits,0); return 1;
     }
     if (!strcmp(name, "AAssetManager_open")) {
         char path[1024]; uint32_t address = argument(g, 1), i = 0;
@@ -596,7 +647,7 @@ static int run_until_return(agr_guest *g) {
 agr_guest *agr_guest_create(void) {
     agr_guest *g = (agr_guest *)calloc(1, sizeof(*g)); if (!g) return NULL;
     g->cpu = arm_interp_create(); g->run_budget = 1000000; g->next_trap = IMPORT_BASE; g->next_array_handle = 0x61000000u;
-    g->next_asset_handle = 0x62010000u;
+    g->next_asset_handle = 0x62010000u; g->input_queue_handle=0x67000000u; g->next_input_handle=0x67000100u;
     if (!g->cpu) { free(g); return NULL; }
     agr_callbacks cb = {0}; cb.user = g; cb.read = mem_read_cb; cb.write = mem_write_cb; cb.resolve_import = resolve_import_cb;
     cb.pipe_create = pipe_create_cb; cb.fd_read = fd_read_cb; cb.fd_write = fd_write_cb; cb.fd_close = fd_close_cb;
@@ -748,3 +799,12 @@ uint64_t agr_guest_instruction_count(agr_guest *g) { return g->instruction_count
 uint32_t agr_guest_draw_count(agr_guest *g) { return g ? g->draw_count : 0; }
 uint32_t agr_guest_swap_count(agr_guest *g) { return g ? g->swap_count : 0; }
 uint32_t agr_guest_asset_open_count(agr_guest *g) { return g ? g->asset_open_count : 0; }
+int32_t agr_guest_inject_motion(agr_guest *g, int32_t action, float x, float y) {
+    if(!g || g->input_count>=32) return -1;
+    input_event *e=&g->input_events[(g->input_head+g->input_count)%32];
+    *e=(input_event){g->next_input_handle,2u,(uint32_t)action,1u,0u,x,y};
+    g->next_input_handle+=4; g->input_count++; return 0;
+}
+uint32_t agr_guest_input_queue(agr_guest *g) { return g ? g->input_queue_handle : 0; }
+uint32_t agr_guest_unique_import_count(agr_guest *g) { return g ? g->unique_import_count : 0; }
+const char *agr_guest_unique_import(agr_guest *g,uint32_t index) { return g && index<g->unique_import_count ? g->unique_imports[index] : NULL; }
