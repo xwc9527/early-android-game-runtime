@@ -440,10 +440,17 @@ static NSDictionary *probeGenericSample(NSDictionary *sample) {
     int mounted = guest ? agr_guest_mount_apk(guest,apkPath.UTF8String) : -1;
     NSString *failure = nil; NSString *stage = @"elf_loaded";
     uint32_t base = 0x02800000u;
-    for (NSString *member in libraries) {
-        NSData *elf = apkMember(assets,member);
-        if (!elf || agr_guest_load_elf(guest,member.lastPathComponent.UTF8String,elf.bytes,(uint32_t)elf.length,base)) {
-            failure = guest ? [NSString stringWithUTF8String:agr_guest_last_error(guest)] : @"guest create failed";
+    for (NSDictionary *library in libraries) {
+        NSString *member=library[@"member"], *elfResource=library[@"resource"];
+        NSString *elfPath=[[NSBundle mainBundle] pathForResource:elfResource.stringByDeletingPathExtension
+                                                          ofType:elfResource.pathExtension];
+        NSData *elf=elfPath ? [NSData dataWithContentsOfFile:elfPath] : nil;
+        if (!elf) {
+            failure=[NSString stringWithFormat:@"missing extracted ELF %@",member]; stage=@"input"; break;
+        }
+        if (agr_guest_load_elf(guest,member.lastPathComponent.UTF8String,elf.bytes,(uint32_t)elf.length,base)) {
+            const char *reason=guest ? agr_guest_last_error(guest) : NULL;
+            failure = reason && reason[0] ? [NSString stringWithUTF8String:reason] : @"ELF loader rejected image";
             stage = @"elf_load"; break;
         }
         base += 0x01000000u;

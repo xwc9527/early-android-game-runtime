@@ -59,13 +59,17 @@ def scan(sample: dict, root: pathlib.Path) -> dict:
     apk = root / "samples" / f"{sample['id']}.apk"
     with zipfile.ZipFile(apk) as archive:
         names = archive.namelist()
-        arm = [name for name in names if name.startswith(("lib/armeabi-v7a/", "lib/armeabi/")) and name.endswith(".so")]
+        arm_v7 = [name for name in names if name.startswith("lib/armeabi-v7a/") and name.endswith(".so")]
+        arm = arm_v7 or [name for name in names if name.startswith("lib/armeabi/") and name.endswith(".so")]
         libraries = []
         needed: set[str] = set()
         imports: set[str] = set()
-        for name in arm:
-            elf = inspect_elf(archive.read(name))
-            libraries.append({"member": name, **elf})
+        for index,name in enumerate(arm):
+            data=archive.read(name)
+            elf = inspect_elf(data)
+            resource=f"batch--{sample['id']}--{index}.so"
+            (root / "App" / "Resources" / resource).write_bytes(data)
+            libraries.append({"member": name, "resource":resource, **elf})
             needed.update(elf["needed"]); imports.update(elf["imports"])
         has_dex = any(name == "classes.dex" or re.fullmatch(r"classes\d+\.dex", name) for name in names)
     mode = "mixed" if arm and has_dex else "native" if arm else "dex" if has_dex else "resources"
@@ -99,7 +103,8 @@ def main() -> None:
     plan = {"samples": [{
         "id": item["id"], "package": item["package"], "resource": item["resource"],
         "profile": item["profile"], "has_dex": item["has_dex"],
-        "armv7_libraries": [lib["member"] for lib in item["armv7_libraries"]],
+        "armv7_libraries": [{"member":lib["member"],"resource":lib["resource"]}
+            for lib in item["armv7_libraries"]],
         "static_cluster": item["static_cluster"],
     } for item in records]}
     (root / args.plan).write_text(json.dumps(plan, indent=2), encoding="utf-8")
