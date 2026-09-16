@@ -91,6 +91,7 @@ static void set_error(agr_guest *g, const char *text) {
 }
 static void guest_log_cb(void *user, uint32_t priority, const char *tag, const char *format) {
     agr_guest *g = (agr_guest *)user;
+    if (format && !strcmp(format,"%s") && g->last_log[0]) return;
     snprintf(g->last_log, sizeof(g->last_log), "%u:%s:%s", priority,
              tag ? tag : "", format ? format : "");
 }
@@ -435,6 +436,19 @@ static int dispatch_import(agr_guest *g, const char *name) {
     g->recent_imports[g->recent_import_index++ % 12] = name;
     uint32_t seen=0; for(uint32_t i=0;i<g->unique_import_count;i++) if(!strcmp(g->unique_imports[i],name)){seen=1;break;}
     if(!seen && g->unique_import_count<256) g->unique_imports[g->unique_import_count++]=name;
+    if (!strcmp(name,"__android_log_print")) {
+        uint32_t fmt_address=argument(g,2), value_address=argument(g,3);
+        char fmt[12]={0}, value[104]={0};
+        for(uint32_t i=0;i<sizeof(fmt)-1;i++) {
+            if(arm_interp_read(g->cpu,fmt_address+i,(uint8_t *)&fmt[i],1)||!fmt[i])break;
+        }
+        if(!strcmp(fmt,"%s")) {
+            for(uint32_t i=0;i<sizeof(value)-1;i++) {
+                if(arm_interp_read(g->cpu,value_address+i,(uint8_t *)&value[i],1)||!value[i])break;
+            }
+            snprintf(g->last_log,sizeof(g->last_log),"%s",value);
+        }
+    }
     if (!strcmp(name,"ANativeWindow_setBuffersGeometry")) {
         int32_t width=(int32_t)argument(g,1), height=(int32_t)argument(g,2);
         g->width=width>0?width:320; g->height=height>0?height:480;
