@@ -322,7 +322,10 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
     int mounted = apkPath && guest ? agr_guest_mount_apk(guest,apkPath.UTF8String) : -1;
     int dexLoaded = mounted == 0 && dexPath ? agr_guest_load_dex(guest,dexPath.UTF8String) : -1;
     int loaded = elf && guest && dexLoaded == 0 ? agr_guest_load_elf(guest,"libKungFooBarracudaNativeActivity.so",elf.bytes,(uint32_t)elf.length,0x02800000) : -1;
-    if (loaded == 0) agr_guest_set_watch_pc(guest,agr_guest_find_symbol(guest,"__cxa_throw"));
+    /* Test-only diagnostic: this APK statically links __cxa_throw and does not
+       export it through the dynamic symbol table.  The ELF symbol value is
+       0x82b51 (Thumb), loaded at 0x02800000. */
+    if (loaded == 0) agr_guest_set_watch_pc(guest,0x02882b50u);
     uint32_t constructors = 0;
     int initialized = loaded == 0 ? agr_guest_run_constructors(guest,&constructors) : -1;
     int activityCreated = -1, onStart = -1, onResume = -1, onWindow = -1, onFocus = -1, onInput = -1, pumped = -1;
