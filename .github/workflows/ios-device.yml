@@ -1,0 +1,71 @@
+name: iPhone device build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/build-iphoneos.sh'
+      - 'App/main.m'
+      - '.github/workflows/ios-device.yml'
+      - 'Runtime/**'
+
+jobs:
+  iphoneos:
+    runs-on: macos-15
+    timeout-minutes: 25
+    env:
+      IOS_CERTIFICATE_P12_BASE64: ${{ secrets.IOS_CERTIFICATE_P12_BASE64 }}
+      IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+      IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+      IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+      IOS_ARTIFACT_PASSWORD: ${{ secrets.IOS_ARTIFACT_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect device SDK
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-path
+      - name: Set up device signing when credentials are configured
+        if: env.IOS_CERTIFICATE_P12_BASE64 != '' && env.IOS_CERTIFICATE_PASSWORD != '' && env.IOS_PROVISIONING_PROFILE_BASE64 != ''
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/agr-ci.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
+          printf '%s' "$IOS_CERTIFICATE_P12_BASE64" | base64 -D > "$RUNNER_TEMP/certificate.p12"
+          printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | base64 -D > "$RUNNER_TEMP/device.mobileprovision"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$KEYCHAIN" -P "$IOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN"
+          IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" | grep -Eo '[A-F0-9]{40}' | head -n 1)"
+          test -n "$IDENTITY"
+          echo "IOS_SIGNING_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+          echo "IOS_PROVISIONING_PROFILE=$RUNNER_TEMP/device.mobileprovision" >> "$GITHUB_ENV"
+      - name: Build arm64 iPhone app
+        run: bash scripts/build-iphoneos.sh
+      - name: Encrypt signed IPA for transfer through public CI
+        if: env.IOS_SIGNING_IDENTITY != ''
+        run: |
+          set -euo pipefail
+          test -n "$IOS_ARTIFACT_PASSWORD"
+          openssl enc -aes-256-cbc -pbkdf2 -salt -in build/iphoneos/AGRDevice.ipa -out build/iphoneos/AGRDevice.ipa.enc -pass env:IOS_ARTIFACT_PASSWORD
+      - name: Upload unsigned device link-validation build
+        if: env.IOS_SIGNING_IDENTITY == ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: agr-iphoneos-arm64-unsigned
+          path: build/iphoneos/AGRDevice.app
+          if-no-files-found: warn
+      - name: Upload encrypted signed IPA
+        if: env.IOS_SIGNING_IDENTITY != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: agr-iphoneos-arm64-signed-encrypted
+          path: build/iphoneos/AGRDevice.ipa.enc
+          if-no-files-found: error
+      - name: Remove temporary signing keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/agr-ci.keychain-db" 2>/dev/null || true

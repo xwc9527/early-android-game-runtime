@@ -808,17 +808,19 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
 }
 - (void)runRuntime {
     NSMutableArray *failures=[NSMutableArray array];NSDictionary *startup=runKungFooNativeRegression(failures,YES);
-    if(!gInteractive.guest){NSString *why=failures.count?[failures componentsJoinedByString:@" | "]:@"startup failed";dispatch_async(dispatch_get_main_queue(),^{self.status.text=why;});return;}
+    if(!gInteractive.guest){NSString *why=failures.count?[failures componentsJoinedByString:@" | "]:@"startup failed";NSLog(@"AGR_FAILURE startup %@",why);dispatch_async(dispatch_get_main_queue(),^{self.status.text=why;});return;}
     uint8_t *pixels=malloc(320u*480u*4u);uint32_t rendered=0;NSTimeInterval fpsStart=CACurrentMediaTime();
     while(!self.stopped){
         NSArray *events=nil;@synchronized(self.pendingEvents){events=[self.pendingEvents copy];[self.pendingEvents removeAllObjects];}
         for(NSDictionary *event in events){int action=[event[@"action"] isEqual:@"down"]?0:[event[@"action"] isEqual:@"up"]?1:2;
             agr_guest_inject_motion(gInteractive.guest,action,[event[@"x"] floatValue],[event[@"y"] floatValue]);
-            NSMutableDictionary *record=[event mutableCopy];record[@"swap_before"]=@(agr_guest_swap_count(gInteractive.guest));[self.trace addObject:record];[self saveTraceWithFailure:nil];}
+            NSMutableDictionary *record=[event mutableCopy];record[@"swap_before"]=@(agr_guest_swap_count(gInteractive.guest));[self.trace addObject:record];[self saveTraceWithFailure:nil];
+            NSLog(@"AGR_TOUCH %@ x=%@ y=%@ swap=%@ pc=%08x",event[@"action"],event[@"x"],event[@"y"],record[@"swap_before"],agr_guest_program_counter(gInteractive.guest));}
         int rc=agr_guest_resume_thread_until_swap(gInteractive.guest);
-        if(rc){self.stopped=YES;NSString *failure=[NSString stringWithUTF8String:agr_guest_last_error(gInteractive.guest)];[self saveTraceWithFailure:failure];dispatch_async(dispatch_get_main_queue(),^{self.status.text=[NSString stringWithFormat:@"STOPPED — frame preserved\n%@\nPC %08x\nlog %@",failure,agr_guest_program_counter(gInteractive.guest),[NSString stringWithUTF8String:agr_guest_last_android_log(gInteractive.guest)]];});break;}
+        if(rc){self.stopped=YES;NSString *failure=[NSString stringWithUTF8String:agr_guest_last_error(gInteractive.guest)];[self saveTraceWithFailure:failure];NSLog(@"AGR_FAILURE %@ pc=%08x swap=%u log=%s",failure,agr_guest_program_counter(gInteractive.guest),agr_guest_swap_count(gInteractive.guest),agr_guest_last_android_log(gInteractive.guest));dispatch_async(dispatch_get_main_queue(),^{self.status.text=[NSString stringWithFormat:@"STOPPED — frame preserved\n%@\nPC %08x\nlog %@",failure,agr_guest_program_counter(gInteractive.guest),[NSString stringWithUTF8String:agr_guest_last_android_log(gInteractive.guest)]];});break;}
         if(agr_guest_read_rgba(gInteractive.guest,pixels,320u*480u*4u)>0){UIImage *image=imageFromRGBA(pixels,320,480);rendered++;NSTimeInterval now=CACurrentMediaTime();double fps=rendered/MAX(.001,now-fpsStart);
             uint32_t swaps=agr_guest_swap_count(gInteractive.guest),pc=agr_guest_program_counter(gInteractive.guest);NSString *log=[NSString stringWithUTF8String:agr_guest_last_android_log(gInteractive.guest)];NSUInteger traceCount=self.trace.count;
+            if((rendered%60u)==0)NSLog(@"AGR_FRAME rendered=%u swap=%u pc=%08x log=%@",rendered,swaps,pc,log);
             dispatch_async(dispatch_get_main_queue(),^{self.frameView.image=image;self.status.text=[NSString stringWithFormat:@"%.1f fps  frame %u  swap %u\nPC %08x\nlog %@\ntouch events %lu  trace: Documents/manual-replay.json",fps,rendered,swaps,pc,log,(unsigned long)traceCount];});}
     }
     free(pixels);(void)startup;
@@ -833,6 +835,9 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     (void)application; (void)options;
     self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
     BOOL interactive=[NSProcessInfo.processInfo.arguments containsObject:@"--interactive"];
+#if AGR_DEVICE_INTERACTIVE
+    interactive=YES;
+#endif
     UIViewController *controller = interactive ? [AGRDebugController new] : [UIViewController new]; controller.view.backgroundColor = UIColor.blackColor;
     self.window.rootViewController = controller; [self.window makeKeyAndVisible];
     if(!interactive){NSString *result = runTests();
