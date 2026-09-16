@@ -5,24 +5,53 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
-import re
-import subprocess
-import tempfile
+import struct
 import zipfile
 
-NEEDED = re.compile(r"NEEDED\s+Shared library: \[(.+?)\]")
-UNDEFINED = re.compile(r"\bUND\b.*?\s([A-Za-z_.$][A-Za-z0-9_.$@]*)$")
-
-
 def inspect_elf(data: bytes) -> dict:
-    with tempfile.NamedTemporaryFile(suffix=".so") as handle:
-        handle.write(data); handle.flush()
-        command = ["xcrun", "llvm-readelf", "--dynamic", "--dyn-symbols", handle.name]
-        text = subprocess.run(command, check=True, text=True, capture_output=True).stdout
-    return {
-        "needed": sorted(set(NEEDED.findall(text))),
-        "imports": sorted(set(UNDEFINED.findall(text, re.MULTILINE))),
-    }
+    if data[:5] != b"\x7fELF\x01" or data[5] != 1:
+        raise ValueError("expected little-endian ELF32")
+    phoff=struct.unpack_from("<I",data,28)[0]
+    phentsize,phnum=struct.unpack_from("<HH",data,42)
+    loads=[]; dynamic=None
+    for index in range(phnum):
+        values=struct.unpack_from("<IIIIIIII",data,phoff+index*phentsize)
+        ptype,offset,vaddr,_,filesz,memsz,_,_=values
+        if ptype==1: loads.append((vaddr,vaddr+memsz,offset,filesz))
+        elif ptype==2: dynamic=(offset,filesz)
+    def file_offset(address:int)->int:
+        for start,end,offset,filesz in loads:
+            if start <= address < end and address-start < filesz: return offset+address-start
+        raise ValueError(f"unmapped ELF address 0x{address:x}")
+    tags:dict[int,list[int]]={}
+    if dynamic:
+        for offset in range(dynamic[0],dynamic[0]+dynamic[1],8):
+            tag,value=struct.unpack_from("<II",data,offset)
+            if tag==0: break
+            tags.setdefault(tag,[]).append(value)
+    strtab=file_offset(tags[5][0]); strsz=tags.get(10,[len(data)-strtab])[0]
+    strings=data[strtab:strtab+strsz]
+    def string_at(offset:int)->str:
+        end=strings.find(b"\0",offset)
+        return strings[offset:end if end>=0 else None].decode("utf-8","replace")
+    needed=[string_at(value) for value in tags.get(1,[])]
+    symbol_count=0
+    if 4 in tags:
+        _,symbol_count=struct.unpack_from("<II",data,file_offset(tags[4][0]))
+    relocation_symbols=[]
+    for address_tag,size_tag in ((17,18),(23,2)):
+        if address_tag not in tags: continue
+        offset=file_offset(tags[address_tag][0]); size=tags.get(size_tag,[0])[0]
+        for item in range(offset,offset+size,8):
+            _,info=struct.unpack_from("<II",data,item); relocation_symbols.append(info>>8)
+    if relocation_symbols: symbol_count=max(symbol_count,max(relocation_symbols)+1)
+    imports=[]
+    if 6 in tags:
+        symtab=file_offset(tags[6][0]); syment=tags.get(11,[16])[0]
+        for index in range(symbol_count):
+            name,_,_,_,_,section=struct.unpack_from("<IIIBBH",data,symtab+index*syment)
+            if section==0 and name: imports.append(string_at(name))
+    return {"needed":sorted(set(needed)),"imports":sorted(set(imports))}
 
 
 def scan(sample: dict, root: pathlib.Path) -> dict:
