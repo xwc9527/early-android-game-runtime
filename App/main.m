@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import <QuartzCore/QuartzCore.h>
 #include "../Tests/Conformance/agr_contracts.h"
 #include <stdint.h>
 #include <stdlib.h>
@@ -236,6 +237,13 @@ typedef struct {
     uint32_t width, height;
 } DexTextureHost;
 
+typedef struct {
+    agr_guest *guest;
+    agr_afw_manager *assets;
+    DexTextureHost *textureHost;
+} InteractiveRuntime;
+static InteractiveRuntime gInteractive = {0};
+
 static int32_t dexUploadTexture(void *user, const char *path) {
     DexTextureHost *host = (DexTextureHost *)user;
     agr_afw_asset *asset = agr_afw_open(host->assets, path, 3);
@@ -310,15 +318,15 @@ static uint32_t signatureChangedTiles(const uint8_t a[TRAJECTORY_SIGNATURE_SIZE]
     uint32_t changed=0; for(int i=0;i<TRAJECTORY_SIGNATURE_SIZE;i++) if(abs((int)a[i]-(int)b[i])>=delta) changed++; return changed;
 }
 
-static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *failures) {
+static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *failures, BOOL interactive) {
     NSData *elf = bundleData(@"kungfoo-native",@"so");
     agr_guest *guest = agr_guest_create();
     NSString *apkPath = [[NSBundle mainBundle] pathForResource:@"kungfoo" ofType:@"apk"];
     NSString *dexPath = [[NSBundle mainBundle] pathForResource:@"kungfoo-classes" ofType:@"dex"];
     agr_afw_manager *dexAssets = agr_afw_create();
     if (apkPath) agr_afw_add_apk(dexAssets,apkPath.UTF8String);
-    DexTextureHost dexHost = {dexAssets,0,0,0};
-    agr_dex_set_upload_callback(dexUploadTexture,&dexHost);
+    DexTextureHost *dexHost = calloc(1,sizeof(*dexHost)); dexHost->assets=dexAssets;
+    agr_dex_set_upload_callback(dexUploadTexture,dexHost);
     int mounted = apkPath && guest ? agr_guest_mount_apk(guest,apkPath.UTF8String) : -1;
     int dexLoaded = mounted == 0 && dexPath ? agr_guest_load_dex(guest,dexPath.UTF8String) : -1;
     int loaded = elf && guest && dexLoaded == 0 ? agr_guest_load_elf(guest,"libKungFooBarracudaNativeActivity.so",elf.bytes,(uint32_t)elf.length,0x02800000) : -1;
@@ -397,7 +405,7 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
     NSString *tracePath=[[NSBundle mainBundle] pathForResource:@"kungfoo-barracuda" ofType:@"json"];
     NSData *traceBytes=tracePath?[NSData dataWithContentsOfFile:tracePath]:nil;
     NSDictionary *trace=traceBytes?[NSJSONSerialization JSONObjectWithData:traceBytes options:0 error:nil]:nil;
-    if (nonblack>0 && onInput==0 && framePumpResult==0 && agr_guest_has_parked_thread(guest) && trace) {
+    if (!interactive && nonblack>0 && onInput==0 && framePumpResult==0 && agr_guest_has_parked_thread(guest) && trace) {
         trajectoryOutcome=@"replay_incomplete";
         uint8_t signatures[16][TRAJECTORY_SIGNATURE_SIZE]={0};
         frameSignature(frame,320,480,signatures[0]); uniqueStates=1;
@@ -458,9 +466,14 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
     NSString *error = guest ? [NSString stringWithUTF8String:agr_guest_last_error(guest)] : @"create failed";
     BOOL passed = mounted == 0 && dexLoaded == 0 && loaded == 0 && initialized == 0 && constructors == 51 && activityCreated == 0 && callbacksFound >= 10 && onStart == 0 && onResume == 0 && onWindow == 0 && pumped == 0 && onInput == 0 && onFocus == 0 && framePumpResult == 0 && draws > 0 && swaps > 0 && nonblack > 0;
     if (!passed) [failures addObject:[NSString stringWithFormat:@"kungfoo-native=%d/%d/%d/%d/%u activity=%d callbacks=%u start=%d resume=%d window=%d pump=%d focus=%d frames=%u/%d/%@",mounted,dexLoaded,loaded,initialized,constructors,activityCreated,callbacksFound,onStart,onResume,onWindow,pumped,onFocus,framePumps,framePumpResult,error]];
-    if (guest) agr_guest_destroy(guest);
-    agr_dex_set_upload_callback(NULL,NULL);
-    agr_afw_destroy(dexAssets);
+    int textureUploads=dexHost->uploads;
+    if (interactive && passed) {
+        gInteractive=(InteractiveRuntime){guest,dexAssets,dexHost};
+    } else {
+        if (guest) agr_guest_destroy(guest);
+        agr_dex_set_upload_callback(NULL,NULL);
+        agr_afw_destroy(dexAssets); free(dexHost);
+    }
     return @{@"kungfoo_native_so_bytes":@(elf.length),@"kungfoo_constructors":@(constructors),
              @"kungfoo_native_instructions":@(instructions),@"kungfoo_constructors_passed":@(initialized == 0 && constructors == 51),
              @"kungfoo_native_activity_created":@(activityCreated == 0),@"kungfoo_activity_callbacks":@(callbacksFound),
@@ -469,7 +482,7 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
              @"kungfoo_on_focus":@(onFocus == 0),
              @"kungfoo_frame_pumps":@(framePumps),
              @"kungfoo_native_swaps":@(swaps),@"kungfoo_native_asset_opens":@(assetOpens),
-             @"kungfoo_native_texture_uploads":@(dexHost.uploads),@"kungfoo_native_nonblack_pixels":@(nonblack),
+             @"kungfoo_native_texture_uploads":@(textureUploads),@"kungfoo_native_nonblack_pixels":@(nonblack),
              @"kungfoo_native_frame_bytes":@(frameBytes),
              @"kungfoo_gameplay_trajectory":trajectory,@"kungfoo_gameplay_outcome":trajectoryOutcome,
              @"kungfoo_gameplay_failure":trajectoryFailure,@"kungfoo_replay_events":@(replayEvents),
@@ -677,7 +690,7 @@ static NSString *runTests(void) {
     NSDictionary *angleResult = runAngleMetalTest(failures);
     NSDictionary *gloomyResult = runGloomyRegression(failures);
     NSDictionary *kungFooDexResult = runKungFooDexRegression(failures);
-    NSDictionary *kungFooNativeResult = runKungFooNativeRegression(failures);
+    NSDictionary *kungFooNativeResult = runKungFooNativeRegression(failures,NO);
     NSArray *batchResults = runBatchCompatibility(gloomyResult,kungFooNativeResult);
     NSArray *componentContracts=@[
       @{@"id":@"dex.jni.roundtrip",@"module":@"DEX_JNI",@"observed":@(dexResult),@"expected":@10,
@@ -718,6 +731,100 @@ static NSString *runTests(void) {
     return [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
 }
 
+#pragma mark - Interactive Simulator debugger
+
+static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) {
+    NSData *rgba=[NSData dataWithBytes:pixels length:width*height*4];
+    CGDataProviderRef provider=CGDataProviderCreateWithCFData((__bridge CFDataRef)rgba);
+    CGColorSpaceRef color=CGColorSpaceCreateDeviceRGB();
+    CGImageRef cg=CGImageCreate(width,height,8,32,width*4,color,
+        kCGBitmapByteOrder32Big|kCGImageAlphaLast,provider,NULL,false,kCGRenderingIntentDefault);
+    UIImage *result=cg?[UIImage imageWithCGImage:cg scale:1 orientation:UIImageOrientationDownMirrored]:nil;
+    if(cg)CGImageRelease(cg);CGColorSpaceRelease(color);CGDataProviderRelease(provider);return result;
+}
+
+@interface AGRTouchView : UIView
+@property(nonatomic,copy) void (^touchHandler)(NSString *,CGPoint);
+@end
+@implementation AGRTouchView
+- (void)emit:(NSString *)action touch:(UITouch *)touch {
+    if(self.touchHandler)self.touchHandler(action,[touch locationInView:self]);
+}
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { [self emit:@"down" touch:touches.anyObject]; }
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { [self emit:@"move" touch:touches.anyObject]; }
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { [self emit:@"up" touch:touches.anyObject]; }
+- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event { [self emit:@"up" touch:touches.anyObject]; }
+@end
+
+@interface AGRDebugController : UIViewController
+@property(nonatomic,strong) UIImageView *frameView;
+@property(nonatomic,strong) AGRTouchView *touchView;
+@property(nonatomic,strong) UILabel *status;
+@property(nonatomic,strong) NSMutableArray *pendingEvents;
+@property(nonatomic,strong) NSMutableArray *trace;
+@property(nonatomic,strong) dispatch_queue_t runtimeQueue;
+@property(nonatomic) BOOL stopped;
+@property(nonatomic) NSTimeInterval started;
+@end
+
+@implementation AGRDebugController
+- (void)viewDidLoad {
+    [super viewDidLoad]; self.view.backgroundColor=UIColor.blackColor;
+    self.status=[UILabel new];self.status.textColor=UIColor.greenColor;self.status.backgroundColor=[UIColor colorWithWhite:0 alpha:.72];
+    self.status.font=[UIFont monospacedSystemFontOfSize:11 weight:UIFontWeightRegular];self.status.numberOfLines=5;self.status.text=@"Starting original APK runtime…";
+    self.frameView=[UIImageView new];self.frameView.backgroundColor=UIColor.blackColor;self.frameView.contentMode=UIViewContentModeScaleAspectFit;
+    self.touchView=[AGRTouchView new];self.touchView.backgroundColor=UIColor.clearColor;self.touchView.multipleTouchEnabled=NO;
+    [self.view addSubview:self.frameView];[self.view addSubview:self.touchView];[self.view addSubview:self.status];
+    self.pendingEvents=[NSMutableArray array];self.trace=[NSMutableArray array];self.runtimeQueue=dispatch_queue_create("dev.agr.interactive-runtime",DISPATCH_QUEUE_SERIAL);
+    __weak AGRDebugController *weakSelf=self;
+    self.touchView.touchHandler=^(NSString *action,CGPoint point){
+        AGRDebugController *self=weakSelf;if(!self||self.stopped)return;
+        CGFloat x=MAX(0,MIN(319,point.x/self.touchView.bounds.size.width*320.0));
+        CGFloat y=MAX(0,MIN(479,point.y/self.touchView.bounds.size.height*480.0));
+        NSDictionary *event=@{@"action":action,@"x":@(x),@"y":@(y),@"host_ms":@((CACurrentMediaTime()-self.started)*1000.0)};
+        @synchronized(self.pendingEvents){[self.pendingEvents addObject:event];}
+        self.status.text=[NSString stringWithFormat:@"touch %@ %.0f,%.0f\n%@",action,x,y,self.status.text?:@""];
+    };
+}
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];CGRect safe=UIEdgeInsetsInsetRect(self.view.bounds,self.view.safeAreaInsets);
+    self.status.frame=CGRectMake(safe.origin.x,safe.origin.y,safe.size.width,76);
+    CGFloat availH=safe.size.height-76,scale=MIN(safe.size.width/320.0,availH/480.0);
+    CGRect game=CGRectMake(CGRectGetMidX(safe)-160*scale,safe.origin.y+76+(availH-480*scale)/2,320*scale,480*scale);
+    self.frameView.frame=game;self.touchView.frame=game;
+}
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];self.started=CACurrentMediaTime();
+    dispatch_async(self.runtimeQueue,^{[self runRuntime];});
+}
+- (void)saveTraceWithFailure:(NSString *)failure {
+    NSDictionary *doc=@{@"game":@"Kung Foo Barracuda",@"coordinate_space":@[@320,@480],
+      @"events":self.trace,@"failure":failure?:@"",@"swaps":@(agr_guest_swap_count(gInteractive.guest)),
+      @"pc":[NSString stringWithFormat:@"%08x",agr_guest_program_counter(gInteractive.guest)],
+      @"android_log":[NSString stringWithUTF8String:agr_guest_last_android_log(gInteractive.guest)]};
+    NSData *json=[NSJSONSerialization dataWithJSONObject:doc options:NSJSONWritingPrettyPrinted error:nil];
+    [json writeToFile:[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/manual-replay.json"] atomically:YES];
+    if(failure.length)[json writeToFile:[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/debug-failure.json"] atomically:YES];
+}
+- (void)runRuntime {
+    NSMutableArray *failures=[NSMutableArray array];NSDictionary *startup=runKungFooNativeRegression(failures,YES);
+    if(!gInteractive.guest){NSString *why=failures.count?[failures componentsJoinedByString:@" | "]:@"startup failed";dispatch_async(dispatch_get_main_queue(),^{self.status.text=why;});return;}
+    uint8_t *pixels=malloc(320u*480u*4u);uint32_t rendered=0;NSTimeInterval fpsStart=CACurrentMediaTime();
+    while(!self.stopped){
+        NSArray *events=nil;@synchronized(self.pendingEvents){events=[self.pendingEvents copy];[self.pendingEvents removeAllObjects];}
+        for(NSDictionary *event in events){int action=[event[@"action"] isEqual:@"down"]?0:[event[@"action"] isEqual:@"up"]?1:2;
+            agr_guest_inject_motion(gInteractive.guest,action,[event[@"x"] floatValue],[event[@"y"] floatValue]);
+            NSMutableDictionary *record=[event mutableCopy];record[@"swap_before"]=@(agr_guest_swap_count(gInteractive.guest));[self.trace addObject:record];[self saveTraceWithFailure:nil];}
+        int rc=agr_guest_resume_thread_until_swap(gInteractive.guest);
+        if(rc){self.stopped=YES;NSString *failure=[NSString stringWithUTF8String:agr_guest_last_error(gInteractive.guest)];[self saveTraceWithFailure:failure];dispatch_async(dispatch_get_main_queue(),^{self.status.text=[NSString stringWithFormat:@"STOPPED — frame preserved\n%@\nPC %08x\nlog %@",failure,agr_guest_program_counter(gInteractive.guest),[NSString stringWithUTF8String:agr_guest_last_android_log(gInteractive.guest)]];});break;}
+        if(agr_guest_read_rgba(gInteractive.guest,pixels,320u*480u*4u)>0){UIImage *image=imageFromRGBA(pixels,320,480);rendered++;NSTimeInterval now=CACurrentMediaTime();double fps=rendered/MAX(.001,now-fpsStart);
+            uint32_t swaps=agr_guest_swap_count(gInteractive.guest),pc=agr_guest_program_counter(gInteractive.guest);NSString *log=[NSString stringWithUTF8String:agr_guest_last_android_log(gInteractive.guest)];NSUInteger traceCount=self.trace.count;
+            dispatch_async(dispatch_get_main_queue(),^{self.frameView.image=image;self.status.text=[NSString stringWithFormat:@"%.1f fps  frame %u  swap %u\nPC %08x\nlog %@\ntouch events %lu  trace: Documents/manual-replay.json",fps,rendered,swaps,pc,log,(unsigned long)traceCount];});}
+    }
+    free(pixels);(void)startup;
+}
+@end
+
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 @property(nonatomic, strong) UIWindow *window;
 @end
@@ -725,12 +832,13 @@ static NSString *runTests(void) {
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)options {
     (void)application; (void)options;
     self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
-    UIViewController *controller = [UIViewController new]; controller.view.backgroundColor = UIColor.blackColor;
+    BOOL interactive=[NSProcessInfo.processInfo.arguments containsObject:@"--interactive"];
+    UIViewController *controller = interactive ? [AGRDebugController new] : [UIViewController new]; controller.view.backgroundColor = UIColor.blackColor;
     self.window.rootViewController = controller; [self.window makeKeyAndVisible];
-    NSString *result = runTests();
-    NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/runtime-smoke.json"];
-    [result writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
-    NSLog(@"AGR_RESULT_BEGIN%@AGR_RESULT_END", result);
+    if(!interactive){NSString *result = runTests();
+      NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/runtime-smoke.json"];
+      [result writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+      NSLog(@"AGR_RESULT_BEGIN%@AGR_RESULT_END", result);}
     return YES;
 }
 @end

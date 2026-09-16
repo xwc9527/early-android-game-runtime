@@ -699,6 +699,8 @@ void agr_guest_destroy(agr_guest *g) {
     agr_runtime_destroy(g->runtime); arm_interp_destroy(g->cpu); free(g);
 }
 const char *agr_guest_last_error(agr_guest *g) { return g ? g->error : "guest create failed"; }
+const char *agr_guest_last_android_log(agr_guest *g) { return g ? g->last_log : ""; }
+uint32_t agr_guest_program_counter(agr_guest *g) { return g ? arm_interp_get_reg(g->cpu,15) : 0; }
 int32_t agr_guest_load_elf(agr_guest *g, const char *name, const void *bytes, uint32_t size, uint32_t base) {
     agr_load_result out = {0}; int32_t rc = agr_load_elf(g->runtime, name, bytes, size, base, &out);
     if (rc) set_error(g, agr_last_error(g->runtime)); return rc;

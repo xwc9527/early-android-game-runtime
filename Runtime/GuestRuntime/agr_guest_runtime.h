@@ -19,6 +19,8 @@ enum {
 agr_guest *agr_guest_create(void);
 void agr_guest_destroy(agr_guest *guest);
 const char *agr_guest_last_error(agr_guest *guest);
+const char *agr_guest_last_android_log(agr_guest *guest);
+uint32_t agr_guest_program_counter(agr_guest *guest);
 
 int32_t agr_guest_load_elf(agr_guest *guest, const char *name,
                            const void *bytes, uint32_t size, uint32_t base);

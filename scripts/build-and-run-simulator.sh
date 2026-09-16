@@ -61,7 +61,14 @@ mkdir -p "$APP/Frameworks"; ditto "$ANGLE_FRAMEWORKS/libEGL.framework" "$APP/Fra
 codesign --force --sign - "$APP/Frameworks/libEGL.framework"; codesign --force --sign - "$APP/Frameworks/libGLESv2.framework"; codesign --force --sign - "$APP"
 DEVICE="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["udid"] for xs in d.values() for x in xs if x["name"]=="iPhone 16 Pro"))')"
 xcrun simctl boot "$DEVICE" 2>/dev/null || true; xcrun simctl bootstatus "$DEVICE" -b
-xcrun simctl install "$DEVICE" "$APP"; xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator
+xcrun simctl install "$DEVICE" "$APP"
+if [[ "${INTERACTIVE:-0}" == "1" ]]; then
+  open -a Simulator
+  xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --interactive
+  mkdir -p "$BUILD/artifacts"; printf '%s\n' "$DEVICE" > "$BUILD/artifacts/interactive-device.txt"
+  exit 0
+fi
+xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator
 RESULT_PATH="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)/Documents/runtime-smoke.json"
 for _ in $(seq 1 30); do [[ -f "$RESULT_PATH" ]] && break; sleep 1; done
 cat "$RESULT_PATH"
