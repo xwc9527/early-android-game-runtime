@@ -83,6 +83,7 @@ pub struct InterpreterCpu {
     dbg_n: u64,
     dbg_last_pc: u32,
     dbg_last_insn: u32,
+    watch_pc: u32,
     /// [hang debug] CCNode::visit 入口探针:命中次数 + 最近 16 个被 visit 的节点指针环。
     /// 卡死时 dump:环里反复出现同一批指针=循环遍历(cyclic/重复渲染),全是新指针=节点爆炸。
     visit_n: u64,
@@ -121,6 +122,7 @@ impl InterpreterCpu {
             dbg_n: 0,
             dbg_last_pc: 0,
             dbg_last_insn: 0,
+            watch_pc: 0,
             visit_n: 0,
             visit_ring: [0; 16],
             fprobe_n: 0,
@@ -160,6 +162,7 @@ impl InterpreterCpu {
     pub fn regs_mut(&mut self) -> &mut [u32; 16] {
         &mut self.regs
     }
+    pub fn set_watch_pc(&mut self, pc: u32) { self.watch_pc = pc; }
     pub fn cpsr(&self) -> u32 {
         self.cpsr
     }
@@ -535,6 +538,10 @@ impl InterpreterCpu {
 
     fn step_one(&mut self, mem: &mut Mem) -> CpuState {
         let pc = self.regs[PC];
+        if self.watch_pc != 0 && pc == self.watch_pc {
+            eprintln!("guest watch pc={pc:08x} r0={:08x} r1={:08x} r2={:08x} lr={:08x}",
+                      self.regs[0], self.regs[1], self.regs[2], self.regs[14]);
+        }
         let thumb = self.is_thumb();
 
         // ---- instruction fetch (variable length) ----

@@ -15,6 +15,7 @@ extern int32_t arm_interp_write(void *, uint32_t, const uint8_t *, uint32_t);
 extern int32_t arm_interp_read(void *, uint32_t, uint8_t *, uint32_t);
 extern int32_t arm_interp_set_reg(void *, uint32_t, uint32_t);
 extern uint32_t arm_interp_get_reg(void *, uint32_t);
+extern void arm_interp_set_watch_pc(void *, uint32_t);
 extern int32_t arm_interp_set_cpsr(void *, uint32_t);
 extern uint32_t arm_interp_get_cpsr(void *);
 extern int32_t arm_interp_run(void *, uint64_t *, uint32_t *);
@@ -704,6 +705,9 @@ int32_t agr_guest_load_elf(agr_guest *g, const char *name, const void *bytes, ui
 }
 uint32_t agr_guest_find_symbol(agr_guest *g, const char *symbol) {
     return g && symbol ? agr_find_symbol(g->runtime, symbol) : 0;
+}
+void agr_guest_set_watch_pc(agr_guest *g, uint32_t pc) {
+    if (g) arm_interp_set_watch_pc(g->cpu, pc & ~1u);
 }
 uint32_t agr_guest_new_primitive_array(agr_guest *g, uint32_t kind, const void *bytes, uint32_t count) {
     if (!g || g->array_count >= MAX_ARRAYS) return 0;

@@ -23,6 +23,7 @@ const char *agr_guest_last_error(agr_guest *guest);
 int32_t agr_guest_load_elf(agr_guest *guest, const char *name,
                            const void *bytes, uint32_t size, uint32_t base);
 uint32_t agr_guest_find_symbol(agr_guest *guest, const char *symbol);
+void agr_guest_set_watch_pc(agr_guest *guest, uint32_t pc);
 uint32_t agr_guest_new_primitive_array(agr_guest *guest, uint32_t kind,
                                        const void *bytes, uint32_t count);
 int32_t agr_guest_call_symbol(agr_guest *guest, const char *symbol,

@@ -50,6 +50,11 @@ pub unsafe extern "C" fn arm_interp_get_reg(ptr: *mut c_void, reg: u32) -> u32 {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn arm_interp_set_watch_pc(ptr: *mut c_void, pc: u32) {
+    if !ptr.is_null() { (*ptr.cast::<Handle>()).cpu.set_watch_pc(pc); }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn arm_interp_set_cpsr(ptr: *mut c_void, value: u32) -> i32 {
     if ptr.is_null() { return -1; }
     (*ptr.cast::<Handle>()).cpu.set_cpsr(value);
