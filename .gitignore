@@ -1,0 +1,17 @@
+.build/
+build/
+DerivedData/
+artifacts/
+*.xcresult
+*.app
+*.dSYM
+Vendor/ANGLE-Package/
+
+App/Resources/*.apk
+App/Resources/gloomy-librenderer.so
+App/Resources/kungfoo-classes.dex
+App/Resources/kungfoo-native.so
+App/Resources/batch-plan.json
+samples/
+
+/probe.txt

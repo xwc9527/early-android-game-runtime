@@ -1,0 +1,5 @@
+#ifndef AGR_ANDROIDFW_COMPAT_TYPEINFO
+#define AGR_ANDROIDFW_COMPAT_TYPEINFO
+// KitKat RefBase includes <typeinfo>, but all RTTI-dependent code is removed
+// when DEBUG_REFS is disabled in the original source.
+#endif

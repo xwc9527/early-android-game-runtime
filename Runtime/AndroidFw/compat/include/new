@@ -1,0 +1,11 @@
+#ifndef AGR_ANDROIDFW_COMPAT_NEW
+#define AGR_ANDROIDFW_COMPAT_NEW
+
+#include <stddef.h>
+
+inline void* operator new(size_t, void* pointer) throw() { return pointer; }
+inline void* operator new[](size_t, void* pointer) throw() { return pointer; }
+inline void operator delete(void*, void*) throw() {}
+inline void operator delete[](void*, void*) throw() {}
+
+#endif

@@ -1,0 +1,38 @@
+name: iOS Simulator Runtime
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  simulator-runtime:
+    runs-on: macos-15
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        shard: [0]
+    env:
+      SHARD_INDEX: ${{ matrix.shard }}
+      SHARD_COUNT: 1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect Xcode and Simulator
+        run: |
+          set -euxo pipefail
+          sw_vers
+          uname -m
+          xcodebuild -version
+          xcrun simctl list runtimes available
+          xcrun simctl list devices available
+          xcrun --sdk iphonesimulator --show-sdk-path
+      - name: Build and run native Runtime smoke in Simulator
+        run: bash scripts/build-and-run-simulator.sh
+      - name: Upload Simulator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-runtime-smoke-${{ matrix.shard }}
+          path: build/artifacts
