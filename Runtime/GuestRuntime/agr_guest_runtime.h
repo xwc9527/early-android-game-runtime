@@ -32,6 +32,8 @@ int32_t agr_guest_call_address(agr_guest *guest, uint32_t address,
                                const uint32_t *arguments, uint32_t argument_count,
                                int32_t *result);
 int32_t agr_guest_run_constructors(agr_guest *guest, uint32_t *executed);
+int32_t agr_guest_run_constructors_limit(agr_guest *guest, uint32_t limit, uint32_t *executed);
+void agr_guest_set_instruction_budget(agr_guest *guest, uint64_t instructions);
 uint32_t agr_guest_alloc(agr_guest *guest, const void *bytes, uint32_t size, uint32_t alignment);
 int32_t agr_guest_read(agr_guest *guest, uint32_t address, void *bytes, uint32_t size);
 int32_t agr_guest_write(agr_guest *guest, uint32_t address, const void *bytes, uint32_t size);

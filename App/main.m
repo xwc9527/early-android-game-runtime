@@ -437,6 +437,7 @@ static NSDictionary *probeGenericSample(NSDictionary *sample) {
         agr_afw_destroy(assets); return result;
     }
     agr_guest *guest = agr_guest_create();
+    agr_guest_set_instruction_budget(guest,100000);
     int mounted = guest ? agr_guest_mount_apk(guest,apkPath.UTF8String) : -1;
     NSString *failure = nil; NSString *stage = @"elf_loaded";
     uint32_t base = 0x02800000u;
@@ -465,16 +466,18 @@ static NSDictionary *probeGenericSample(NSDictionary *sample) {
         }
     }
     uint32_t constructors = 0;
-    if (!failure && agr_guest_run_constructors(guest,&constructors)) {
+    if (!failure && agr_guest_run_constructors_limit(guest,16,&constructors)) {
         failure = [NSString stringWithUTF8String:agr_guest_last_error(guest)]; stage = @"constructors";
     }
-    if (!failure && agr_guest_find_symbol(guest,"JNI_OnLoad")) {
+    BOOL constructorsCapped = !failure && constructors == 16;
+    if (constructorsCapped) stage = @"constructors_capped";
+    if (!failure && !constructorsCapped && agr_guest_find_symbol(guest,"JNI_OnLoad")) {
         uint32_t args[2] = {agr_guest_java_vm(guest),0}; int32_t value = 0;
         if (agr_guest_call_symbol(guest,"JNI_OnLoad",args,2,&value)) {
             failure = [NSString stringWithUTF8String:agr_guest_last_error(guest)]; stage = @"jni_onload";
         } else stage = @"jni_onload";
     }
-    if (!failure && agr_guest_find_symbol(guest,"ANativeActivity_onCreate")) {
+    if (!failure && !constructorsCapped && agr_guest_find_symbol(guest,"ANativeActivity_onCreate")) {
         uint8_t zero[64] = {0}; uint32_t callbacks=agr_guest_alloc(guest,zero,sizeof(zero),4);
         uint32_t words[10]={callbacks,agr_guest_java_vm(guest),agr_guest_jni_env(guest),0x60001000u,0,0,0,0,0x62000000u,0};
         uint32_t activity=agr_guest_alloc(guest,words,sizeof(words),4), args[3]={activity,0,0}; int32_t ignored=0;
@@ -490,7 +493,8 @@ static NSDictionary *probeGenericSample(NSDictionary *sample) {
           @"detail":failure,@"constructors":@(constructors)}];
     } else {
         [result addEntriesFromDictionary:@{@"stage":stage,@"outcome":@"known_gap",
-          @"signature":@"entrypoint:lifecycle_not_driven",@"constructors":@(constructors)}];
+          @"signature":constructorsCapped ? @"probe_limit:constructors" : @"entrypoint:lifecycle_not_driven",
+          @"constructors":@(constructors)}];
     }
     if (guest) agr_guest_destroy(guest); agr_afw_destroy(assets); return result;
 }

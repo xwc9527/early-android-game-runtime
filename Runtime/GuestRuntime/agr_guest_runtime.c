@@ -58,6 +58,7 @@ struct agr_guest {
     int width, height;
     char renderer[256], gl_version[256], error[256];
     uint64_t instruction_count;
+    uint64_t run_budget;
     uint32_t call_depth;
     uint32_t pending_thread_id, pending_thread_start, pending_thread_arg;
     uint32_t parked_regs[16], parked_cpsr;
@@ -566,9 +567,9 @@ static int dispatch_import(agr_guest *g, const char *name) {
 }
 static int run_until_return(agr_guest *g) {
     for (;;) {
-        uint64_t budget = 1000000; uint32_t svc = 0;
+        uint64_t budget = g->run_budget; uint32_t svc = 0;
         int32_t state = arm_interp_run(g->cpu, &budget, &svc);
-        g->instruction_count += 1000000 - budget;
+        g->instruction_count += g->run_budget - budget;
         if (state != 1) {
             uint32_t pc = arm_interp_get_reg(g->cpu, 15), cpsr = arm_interp_get_cpsr(g->cpu);
             uint8_t code[12] = {0}; arm_interp_read(g->cpu, pc-8, code, sizeof(code));
@@ -594,7 +595,7 @@ static int run_until_return(agr_guest *g) {
 
 agr_guest *agr_guest_create(void) {
     agr_guest *g = (agr_guest *)calloc(1, sizeof(*g)); if (!g) return NULL;
-    g->cpu = arm_interp_create(); g->next_trap = IMPORT_BASE; g->next_array_handle = 0x61000000u;
+    g->cpu = arm_interp_create(); g->run_budget = 1000000; g->next_trap = IMPORT_BASE; g->next_array_handle = 0x61000000u;
     g->next_asset_handle = 0x62010000u;
     if (!g->cpu) { free(g); return NULL; }
     agr_callbacks cb = {0}; cb.user = g; cb.read = mem_read_cb; cb.write = mem_write_cb; cb.resolve_import = resolve_import_cb;
@@ -652,8 +653,9 @@ int32_t agr_guest_call_address(agr_guest *g, uint32_t address, const uint32_t *a
     if (!g || !address) return -1;
     return call_address(g, address, args, count, result);
 }
-int32_t agr_guest_run_constructors(agr_guest *g, uint32_t *executed) {
+int32_t agr_guest_run_constructors_limit(agr_guest *g, uint32_t limit, uint32_t *executed) {
     uint32_t total = agr_constructor_count(g->runtime), done = 0;
+    if (total > limit) total = limit;
     for (uint32_t i = 0; i < total; i++) {
         uint32_t target = agr_constructor_address(g->runtime, i);
         if (target && call_address(g, target, NULL, 0, NULL)) {
@@ -665,6 +667,12 @@ int32_t agr_guest_run_constructors(agr_guest *g, uint32_t *executed) {
     }
     if (executed) *executed = done;
     return 0;
+}
+int32_t agr_guest_run_constructors(agr_guest *g, uint32_t *executed) {
+    return agr_guest_run_constructors_limit(g,UINT32_MAX,executed);
+}
+void agr_guest_set_instruction_budget(agr_guest *g, uint64_t instructions) {
+    if (g) g->run_budget = instructions ? instructions : 1;
 }
 uint32_t agr_guest_alloc(agr_guest *g, const void *bytes, uint32_t size, uint32_t alignment) {
     return g ? agr_alloc_static(g->runtime, bytes, size, alignment ? alignment : 1) : 0;
