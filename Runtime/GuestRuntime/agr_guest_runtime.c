@@ -842,3 +842,10 @@ uint32_t agr_guest_input_queue(agr_guest *g) { return g ? g->input_queue_handle 
 uint32_t agr_guest_input_consumed_count(agr_guest *g) { return g ? g->input_consumed_count : 0; }
 uint32_t agr_guest_unique_import_count(agr_guest *g) { return g ? g->unique_import_count : 0; }
 const char *agr_guest_unique_import(agr_guest *g,uint32_t index) { return g && index<g->unique_import_count ? g->unique_imports[index] : NULL; }
+uint32_t agr_guest_recent_call_count(agr_guest *g) { return g ? (g->recent_import_index < 12 ? g->recent_import_index : 12) : 0; }
+const char *agr_guest_recent_call(agr_guest *g,uint32_t index) {
+    if (!g) return NULL;
+    uint32_t count=agr_guest_recent_call_count(g); if(index>=count)return NULL;
+    uint32_t start=g->recent_import_index>12 ? g->recent_import_index%12 : 0;
+    return g->recent_imports[(start+index)%12];
+}

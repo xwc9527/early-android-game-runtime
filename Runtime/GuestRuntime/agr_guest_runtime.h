@@ -62,6 +62,8 @@ uint32_t agr_guest_input_queue(agr_guest *guest);
 uint32_t agr_guest_input_consumed_count(agr_guest *guest);
 uint32_t agr_guest_unique_import_count(agr_guest *guest);
 const char *agr_guest_unique_import(agr_guest *guest, uint32_t index);
+uint32_t agr_guest_recent_call_count(agr_guest *guest);
+const char *agr_guest_recent_call(agr_guest *guest, uint32_t index);
 
 #ifdef __cplusplus
 }
