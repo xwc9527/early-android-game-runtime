@@ -428,6 +428,11 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
               @"fingerprint":[NSString stringWithFormat:@"%08x",digest],
               @"coverage_delta":@(agr_guest_unique_import_count(guest)-coverageBefore)}];
             replayEvents++;replayConsumed+=consumed;
+            if(bytes>0) {
+                NSString *checkpoint=[NSHomeDirectory() stringByAppendingPathComponent:
+                    [NSString stringWithFormat:@"Documents/kungfoo-trajectory-%02u.png",replayEvents]];
+                writeRGBAFramePNG(frame,320,480,checkpoint);
+            }
             if(rc||bytes<=0) {
                 trajectoryFailure=[NSString stringWithUTF8String:agr_guest_last_error(guest)];
                 trajectoryOutcome=@"runtime_failure";break;

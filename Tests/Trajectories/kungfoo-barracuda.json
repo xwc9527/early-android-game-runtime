@@ -4,13 +4,13 @@
   "status": "candidate_recording",
   "description": "Fixed touch sequence for the original F-Droid APK. Checkpoints record actual input consumption, draw/swap continuity and frame fingerprints; gameplay state is not asserted until verified.",
   "events": [
-    {"action": "down", "x": 160, "y": 240, "frames": 2},
-    {"action": "up", "x": 160, "y": 240, "frames": 3},
-    {"action": "down", "x": 160, "y": 360, "frames": 2},
-    {"action": "up", "x": 160, "y": 360, "frames": 3},
-    {"action": "down", "x": 260, "y": 360, "frames": 2},
-    {"action": "up", "x": 260, "y": 360, "frames": 3},
-    {"action": "down", "x": 60, "y": 360, "frames": 2},
-    {"action": "up", "x": 60, "y": 360, "frames": 3}
+    {"action": "down", "x": 270, "y": 445, "frames": 8},
+    {"action": "up", "x": 270, "y": 445, "frames": 8},
+    {"action": "down", "x": 270, "y": 445, "frames": 8},
+    {"action": "up", "x": 270, "y": 445, "frames": 8},
+    {"action": "down", "x": 270, "y": 445, "frames": 8},
+    {"action": "up", "x": 270, "y": 445, "frames": 8},
+    {"action": "down", "x": 270, "y": 445, "frames": 8},
+    {"action": "up", "x": 270, "y": 445, "frames": 8}
   ]
 }

@@ -75,5 +75,8 @@ FRAME_PATH="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)/D
 test -s "$FRAME_PATH"; cp "$FRAME_PATH" "$BUILD/artifacts/kungfoo-frame.png"
 TRAJECTORY_FRAME_PATH="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)/Documents/kungfoo-trajectory-frame.png"
 if [[ -s "$TRAJECTORY_FRAME_PATH" ]]; then cp "$TRAJECTORY_FRAME_PATH" "$BUILD/artifacts/kungfoo-trajectory-frame.png"; fi
+for checkpoint in "$(dirname "$FRAME_PATH")"/kungfoo-trajectory-??.png; do
+  [[ -s "$checkpoint" ]] && cp "$checkpoint" "$BUILD/artifacts/"
+done
 cp "$ROOT/samples/resolved.json" "$ROOT/samples/static-scan.json" "$BUILD/artifacts/"
 python3 "$ROOT/tools/cluster_results.py" "$RESULT_PATH"
