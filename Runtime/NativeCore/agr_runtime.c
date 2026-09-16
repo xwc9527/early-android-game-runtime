@@ -180,7 +180,15 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
     (void)sp;memset(out,0,sizeof(*out));uint32_t a=r[0],b=r[1],c=r[2],d=r[3];char x[4096],y[4096];out->handled=1;
     if(!strcmp(name,"strlen")){if(!read_cstr(rt,a,x,sizeof(x)))return fail(rt,"strlen read");out->value=(uint32_t)strlen(x);}
     else if(!strcmp(name,"strcmp")||!strcmp(name,"strncmp")){if(!read_cstr(rt,a,x,sizeof(x))||!read_cstr(rt,b,y,sizeof(y)))return fail(rt,"string read");int v=!strcmp(name,"strcmp")?strcmp(x,y):strncmp(x,y,c);out->value=(uint32_t)(int32_t)v;}
-    else if(!strcmp(name,"memcpy")||!strcmp(name,"memmove")){unsigned char buf[1024];for(uint32_t off=0;off<c;){uint32_t n=c-off>sizeof(buf)?sizeof(buf):c-off;if(!read_mem(rt,b+off,buf,n)||!write_mem(rt,a+off,buf,n))return fail(rt,"memory copy");off+=n;}out->value=a;}
+    else if(!strcmp(name,"memcpy")||!strcmp(name,"memmove")){
+        unsigned char buf[1024];
+        if(!strcmp(name,"memmove")&&a>b&&a-b<c){
+            for(uint32_t remaining=c;remaining;){uint32_t n=remaining>sizeof(buf)?sizeof(buf):remaining;remaining-=n;
+                if(!read_mem(rt,b+remaining,buf,n)||!write_mem(rt,a+remaining,buf,n))return fail(rt,"memory move");}
+        }else for(uint32_t off=0;off<c;){uint32_t n=c-off>sizeof(buf)?sizeof(buf):c-off;
+            if(!read_mem(rt,b+off,buf,n)||!write_mem(rt,a+off,buf,n))return fail(rt,"memory copy");off+=n;}
+        out->value=a;
+    }
     else if(!strcmp(name,"memset")){unsigned char buf[512];memset(buf,b&255,sizeof(buf));for(uint32_t off=0;off<c;){uint32_t n=c-off>sizeof(buf)?sizeof(buf):c-off;if(!write_mem(rt,a+off,buf,n))return fail(rt,"memset");off+=n;}out->value=a;}
     else if(!strcmp(name,"memcmp")){unsigned char p[256],q[256];int v=0;for(uint32_t off=0;off<c&&!v;){uint32_t n=c-off>sizeof(p)?sizeof(p):c-off;if(!read_mem(rt,a+off,p,n)||!read_mem(rt,b+off,q,n))return fail(rt,"memcmp");v=memcmp(p,q,n);off+=n;}out->value=(uint32_t)(int32_t)v;}
     else if(!strcmp(name,"memchr")){unsigned char p[256];uint32_t found=0;for(uint32_t off=0;off<c&&!found;){uint32_t n=c-off>sizeof(p)?sizeof(p):c-off;if(!read_mem(rt,a+off,p,n))return fail(rt,"memchr");void*q=memchr(p,b&255,n);if(q)found=a+off+(uint32_t)((unsigned char*)q-p);off+=n;}out->value=found;}

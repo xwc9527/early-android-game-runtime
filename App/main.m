@@ -670,6 +670,26 @@ static NSString *runTests(void) {
     NSDictionary *kungFooDexResult = runKungFooDexRegression(failures);
     NSDictionary *kungFooNativeResult = runKungFooNativeRegression(failures);
     NSArray *batchResults = runBatchCompatibility(gloomyResult,kungFooNativeResult);
+    NSArray *componentContracts=@[
+      @{@"id":@"dex.jni.roundtrip",@"module":@"DEX_JNI",@"observed":@(dexResult),@"expected":@10,
+        @"source_case":@"AOSP dalvik/vm/analysis + CTS JNI callback pattern"},
+      @{@"id":@"elf.jni_onload.symbol",@"module":@"ELF_linker",@"observed":@(jniOnLoad!=0),@"expected":@1,
+        @"source_case":@"AOSP bionic linker and CTS native library loading"},
+      @{@"id":@"asset.apk.resources_table",@"module":@"AssetManager_resources",@"observed":@(tableCount>0),@"expected":@1,
+        @"source_case":@"CTS AssetManagerTest resource lookup"},
+      @{@"id":@"bitmap.png.dimensions",@"module":@"Bitmap",@"observed":@(bitmapWidth==64&&bitmapHeight==64),@"expected":@1,
+        @"source_case":@"CTS BitmapTest width/height and BitmapFactory decode"},
+      @{@"id":@"egl.gles.draw.readback",@"module":@"EGL_GLES",@"observed":angleResult[@"angle_draw_passed"]?:@0,@"expected":@1,
+        @"source_case":@"CTS OpenGL framebuffer readback pattern"},
+      @{@"id":@"nativeactivity.lifecycle.window",@"module":@"NativeActivity_lifecycle",
+        @"observed":@([kungFooNativeResult[@"kungfoo_on_start"] boolValue]&&[kungFooNativeResult[@"kungfoo_on_resume"] boolValue]&&[kungFooNativeResult[@"kungfoo_on_window_created"] boolValue]),@"expected":@1,
+        @"source_case":@"AOSP NativeActivity callback order"}
+    ];
+    for(NSDictionary *test in componentContracts) {
+        BOOL ok=[test[@"observed"] isEqual:test[@"expected"]]; if(ok) contractPassed++;
+        NSMutableDictionary *entry=[test mutableCopy];entry[@"passed"]=@(ok);[contracts addObject:entry];
+    }
+    contractCount+=(uint32_t)componentContracts.count;
 
     NSMutableDictionary *result = [@{@"platform":@"iOS Simulator", @"architecture":@"arm64",
       @"dex_jni_dex":@(dexResult), @"armv7_r0":@(armR0), @"armv7_svc":@(svc),

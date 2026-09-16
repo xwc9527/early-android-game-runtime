@@ -43,7 +43,7 @@ uint32_t agr_run_contracts(agr_contract_result *results,uint32_t capacity){
     run(rt,"__errno",0,0,0,0,&out);uint32_t errno_main=out.value;
     uint32_t other=agr_create_thread_state(rt);agr_set_current_thread(rt,other);
     run(rt,"__errno",0,0,0,0,&out);uint32_t errno_other=out.value;
-    EMIT("tls.errno.isolation","pthread_tls","bionic/tests/errno_test.cpp",errno_main!=errno_other,1);
+    EMIT("tls.errno.isolation","pthread_tls","bionic/libc/bionic/__errno.c",errno_main!=errno_other,1);
     agr_set_current_thread(rt,1);
     run(rt,"pthread_key_create",0x300,0,0,0,&out);uint32_t key=word(&m,0x300);
     run(rt,"pthread_setspecific",key,0x12345678,0,0,&out);
@@ -62,7 +62,7 @@ uint32_t agr_run_contracts(agr_contract_result *results,uint32_t capacity){
     EMIT("libdl.dlerror.clear","linker_libdl","bionic/tests/dlfcn_test.cpp",first!=NULL&&second==NULL,1);
     run(rt,"clock_gettime",0,0x600,0,0,&out);uint32_t sec1=word(&m,0x600),ns1=word(&m,0x604);
     run(rt,"clock_gettime",0,0x608,0,0,&out);uint32_t sec2=word(&m,0x608),ns2=word(&m,0x60c);
-    EMIT("time.clock.monotonic","time","bionic/tests/time_test.cpp",sec2>sec1||(sec2==sec1&&ns2>ns1),1);
-    EMIT("time.clock.nsec.range","time","bionic/tests/time_test.cpp",ns2<1000000000u,1);
+    EMIT("time.clock.monotonic","time","bionic/tests/pthread_test.cpp + clock_gettime.S",sec2>sec1||(sec2==sec1&&ns2>ns1),1);
+    EMIT("time.clock.nsec.range","time","bionic/tests/pthread_test.cpp + clock_gettime.S",ns2<1000000000u,1);
     agr_runtime_destroy(rt);free(m.bytes);return n<capacity?n:capacity;
 }

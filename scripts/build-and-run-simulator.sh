@@ -73,5 +73,7 @@ PY
 mkdir -p "$BUILD/artifacts"; cp "$RESULT_PATH" "$BUILD/artifacts/runtime-smoke.json"; xcrun simctl io "$DEVICE" screenshot "$BUILD/artifacts/simulator.png"
 FRAME_PATH="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)/Documents/kungfoo-frame.png"
 test -s "$FRAME_PATH"; cp "$FRAME_PATH" "$BUILD/artifacts/kungfoo-frame.png"
+TRAJECTORY_FRAME_PATH="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)/Documents/kungfoo-trajectory-frame.png"
+if [[ -s "$TRAJECTORY_FRAME_PATH" ]]; then cp "$TRAJECTORY_FRAME_PATH" "$BUILD/artifacts/kungfoo-trajectory-frame.png"; fi
 cp "$ROOT/samples/resolved.json" "$ROOT/samples/static-scan.json" "$BUILD/artifacts/"
 python3 "$ROOT/tools/cluster_results.py" "$RESULT_PATH"
