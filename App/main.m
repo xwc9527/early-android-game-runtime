@@ -798,6 +798,32 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     dispatch_async(self.runtimeQueue,^{[self runRuntime];});
 }
 - (void)saveTraceWithFailure:(NSString *)failure {
+    agr_guest *guest=gInteractive.guest;
+    NSMutableArray<NSString *> *calls=[NSMutableArray array];
+    for(uint32_t i=0;guest&&i<agr_guest_recent_call_count(guest);i++) {
+        const char *call=agr_guest_recent_call(guest,i);
+        if(call)[calls addObject:[NSString stringWithUTF8String:call]];
+    }
+    NSUInteger start=self.trace.count>16?self.trace.count-16:0;
+    NSArray *recentInputs=[self.trace subarrayWithRange:NSMakeRange(start,self.trace.count-start)];
+    NSDictionary *status=@{@"schema":@1,@"game":@"Kung Foo Barracuda",
+      @"host_ms":@((CACurrentMediaTime()-self.started)*1000.0),
+      @"frame":@(guest?agr_guest_swap_count(guest):0),
+      @"swap":@(guest?agr_guest_swap_count(guest):0),
+      @"draw":@(guest?agr_guest_draw_count(guest):0),
+      @"guest_pc":[NSString stringWithFormat:@"%08x",guest?agr_guest_program_counter(guest):0],
+      @"asset_opens":@(guest?agr_guest_asset_open_count(guest):0),
+      @"input_consumed":@(guest?agr_guest_input_consumed_count(guest):0),
+      @"recent_calls":calls,@"recent_inputs":recentInputs,
+      @"android_log":[NSString stringWithUTF8String:guest?agr_guest_last_android_log(guest):""],
+      @"runtime_error":[NSString stringWithUTF8String:guest?agr_guest_last_error(guest):""],
+      @"failure_signature":failure?:@""};
+    NSData *statusJSON=[NSJSONSerialization dataWithJSONObject:status options:0 error:nil];
+    NSString *documents=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+    [statusJSON writeToFile:[documents stringByAppendingPathComponent:@"runtime-status.json"] atomically:YES];
+    if(failure.length)[statusJSON writeToFile:[documents stringByAppendingPathComponent:@"runtime-failure.json"] atomically:YES];
+    if(failure.length||self.trace.count||agr_guest_swap_count(guest)%60u==0)
+        NSLog(@"AGR_STATUS %@",[[NSString alloc] initWithData:statusJSON encoding:NSUTF8StringEncoding]);
     NSDictionary *doc=@{@"game":@"Kung Foo Barracuda",@"coordinate_space":@[@320,@480],
       @"events":self.trace,@"failure":failure?:@"",@"swaps":@(agr_guest_swap_count(gInteractive.guest)),
       @"pc":[NSString stringWithFormat:@"%08x",agr_guest_program_counter(gInteractive.guest)],
@@ -808,7 +834,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
 }
 - (void)runRuntime {
     NSMutableArray *failures=[NSMutableArray array];NSDictionary *startup=runKungFooNativeRegression(failures,YES);
-    if(!gInteractive.guest){NSString *why=failures.count?[failures componentsJoinedByString:@" | "]:@"startup failed";NSLog(@"AGR_FAILURE startup %@",why);dispatch_async(dispatch_get_main_queue(),^{self.status.text=why;});return;}
+    if(!gInteractive.guest){NSString *why=failures.count?[failures componentsJoinedByString:@" | "]:@"startup failed";NSLog(@"AGR_FAILURE startup %@",why);[self saveTraceWithFailure:why];dispatch_async(dispatch_get_main_queue(),^{self.status.text=why;});return;}
     uint8_t *pixels=malloc(320u*480u*4u);uint32_t rendered=0;NSTimeInterval fpsStart=CACurrentMediaTime();
     while(!self.stopped){
         NSArray *events=nil;@synchronized(self.pendingEvents){events=[self.pendingEvents copy];[self.pendingEvents removeAllObjects];}
@@ -817,10 +843,10 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
             NSMutableDictionary *record=[event mutableCopy];record[@"swap_before"]=@(agr_guest_swap_count(gInteractive.guest));[self.trace addObject:record];[self saveTraceWithFailure:nil];
             NSLog(@"AGR_TOUCH %@ x=%@ y=%@ swap=%@ pc=%08x",event[@"action"],event[@"x"],event[@"y"],record[@"swap_before"],agr_guest_program_counter(gInteractive.guest));}
         int rc=agr_guest_resume_thread_until_swap(gInteractive.guest);
-        if(rc){self.stopped=YES;NSString *failure=[NSString stringWithUTF8String:agr_guest_last_error(gInteractive.guest)];[self saveTraceWithFailure:failure];NSLog(@"AGR_FAILURE %@ pc=%08x swap=%u log=%s",failure,agr_guest_program_counter(gInteractive.guest),agr_guest_swap_count(gInteractive.guest),agr_guest_last_android_log(gInteractive.guest));dispatch_async(dispatch_get_main_queue(),^{self.status.text=[NSString stringWithFormat:@"STOPPED — frame preserved\n%@\nPC %08x\nlog %@",failure,agr_guest_program_counter(gInteractive.guest),[NSString stringWithUTF8String:agr_guest_last_android_log(gInteractive.guest)]];});break;}
+        if(rc){self.stopped=YES;NSString *failure=[NSString stringWithUTF8String:agr_guest_last_error(gInteractive.guest)];[self saveTraceWithFailure:failure];if(rendered)writeRGBAFramePNG(pixels,320,480,[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/failure-frame.png"]);NSLog(@"AGR_FAILURE %@ pc=%08x swap=%u log=%s",failure,agr_guest_program_counter(gInteractive.guest),agr_guest_swap_count(gInteractive.guest),agr_guest_last_android_log(gInteractive.guest));dispatch_async(dispatch_get_main_queue(),^{self.status.text=[NSString stringWithFormat:@"STOPPED — frame preserved\n%@\nPC %08x\nlog %@",failure,agr_guest_program_counter(gInteractive.guest),[NSString stringWithUTF8String:agr_guest_last_android_log(gInteractive.guest)]];});break;}
         if(agr_guest_read_rgba(gInteractive.guest,pixels,320u*480u*4u)>0){UIImage *image=imageFromRGBA(pixels,320,480);rendered++;NSTimeInterval now=CACurrentMediaTime();double fps=rendered/MAX(.001,now-fpsStart);
             uint32_t swaps=agr_guest_swap_count(gInteractive.guest),pc=agr_guest_program_counter(gInteractive.guest);NSString *log=[NSString stringWithUTF8String:agr_guest_last_android_log(gInteractive.guest)];NSUInteger traceCount=self.trace.count;
-            if((rendered%60u)==0)NSLog(@"AGR_FRAME rendered=%u swap=%u pc=%08x log=%@",rendered,swaps,pc,log);
+            if((rendered%60u)==0)[self saveTraceWithFailure:nil];
             dispatch_async(dispatch_get_main_queue(),^{self.frameView.image=image;self.status.text=[NSString stringWithFormat:@"%.1f fps  frame %u  swap %u\nPC %08x\nlog %@\ntouch events %lu  trace: Documents/manual-replay.json",fps,rendered,swaps,pc,log,(unsigned long)traceCount];});}
     }
     free(pixels);(void)startup;
