@@ -1,8 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; BUILD="$ROOT/build"; APP="$BUILD/AGRSimulator.app"
+phase() { printf 'AGR_SMOKE_PHASE %s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"; }
 SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"; TARGET="arm64-apple-ios15.0-simulator"
 mkdir -p "$BUILD/obj" "$APP"
+phase "fetch samples"
 python3 "$ROOT/tools/fetch_fdroid_samples.py"
 python3 "$ROOT/tools/scan_apks.py" --shard-index "${SHARD_INDEX:-0}" --shard-count "${SHARD_COUNT:-1}"
 ANGLE_VERSION="v2.1.28252"
@@ -23,6 +25,7 @@ rm -rf "$ANGLE_FRAMEWORKS"; mkdir -p "$ANGLE_FRAMEWORKS"
 ditto "$ANGLE_EGL" "$ANGLE_FRAMEWORKS/libEGL.framework"
 ditto "$ANGLE_GLES" "$ANGLE_FRAMEWORKS/libGLESv2.framework"
 rustup target add aarch64-apple-ios-sim
+phase "compile Runtime and host"
 cargo build --manifest-path "$ROOT/Runtime/ArmInterpreter/Cargo.toml" --target aarch64-apple-ios-sim --release
 COMMON=(-target "$TARGET" -isysroot "$SDK" -mios-simulator-version-min=15.0 -O2)
 clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/NativeCore" -c "$ROOT/Runtime/NativeCore/agr_runtime.c" -o "$BUILD/obj/agr_runtime.o"
@@ -64,8 +67,12 @@ cp "$ROOT/App/Info.plist" "$APP/Info.plist"; cp "$ROOT/App/Resources/"* "$APP/"
 cp "$ROOT/Tests/Trajectories/kungfoo-barracuda.json" "$APP/"
 mkdir -p "$APP/Frameworks"; ditto "$ANGLE_FRAMEWORKS/libEGL.framework" "$APP/Frameworks/libEGL.framework"; ditto "$ANGLE_FRAMEWORKS/libGLESv2.framework" "$APP/Frameworks/libGLESv2.framework"
 codesign --force --sign - "$APP/Frameworks/libEGL.framework"; codesign --force --sign - "$APP/Frameworks/libGLESv2.framework"; codesign --force --sign - "$APP"
+phase "Runtime app linked and signed"
 DEVICE="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["udid"] for xs in d.values() for x in xs if x["name"]=="iPhone 16 Pro"))')"
+mkdir -p "$BUILD/artifacts"; printf '%s\n' "$DEVICE" > "$BUILD/artifacts/simulator-device.txt"
+phase "boot Simulator $DEVICE"
 xcrun simctl boot "$DEVICE" 2>/dev/null || true; xcrun simctl bootstatus "$DEVICE" -b
+phase "install Runtime app"
 xcrun simctl install "$DEVICE" "$APP"
 if [[ "${ZERO_INPUT_AB:-0}" == "1" ]]; then
   ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
@@ -73,6 +80,7 @@ if [[ "${ZERO_INPUT_AB:-0}" == "1" ]]; then
   rm -f "$DATA/Documents/runtime-status.json" "$DATA/Documents/runtime-failure.json" \
     "$DATA/Documents/debug-failure.json" "$DATA/Documents/manual-replay.json" \
     "$DATA/Documents/failure-frame.png"
+  phase "launch interactive zero-input Runtime"
   xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --interactive
   for _ in $(seq 1 60); do
     [[ -s "$DATA/Documents/runtime-failure.json" ]] && break
@@ -92,6 +100,7 @@ PY
   printf '%s\n' "$DEVICE" > "$ARTIFACTS/zero-input-device.txt"
   test -s "$ARTIFACTS/runtime-status.json"
   cat "$ARTIFACTS/runtime-status.json"
+  phase "zero-input Runtime status captured"
   exit 0
 fi
 if [[ "${INTERACTIVE:-0}" == "1" ]]; then

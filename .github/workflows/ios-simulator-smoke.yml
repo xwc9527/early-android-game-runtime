@@ -1,0 +1,19 @@
+name: iOS Simulator smoke (bounded)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: macos-15
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run Simulator smoke with evidence deadline
+        run: python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds 900
+      - name: Upload smoke and timeout evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-smoke-evidence
+          path: build/artifacts

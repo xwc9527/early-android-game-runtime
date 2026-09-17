@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+    paths: ['Runtime/**', 'App/**']
 
 jobs:
   simulator-runtime:
@@ -43,9 +44,7 @@ jobs:
       - name: Guest file-descriptor lifecycle contracts
         run: bash scripts/test-guest-fd-darwin.sh
       - name: Build and run native Runtime smoke in Simulator
-        env:
-          ZERO_INPUT_AB: "1"
-        run: bash scripts/build-and-run-simulator.sh
+        run: python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds 900
       - name: Run existing Runtime and real-game regressions
         run: bash scripts/run-simulator-regressions.sh
       - name: Upload Simulator evidence
