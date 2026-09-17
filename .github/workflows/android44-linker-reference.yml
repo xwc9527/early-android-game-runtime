@@ -30,10 +30,13 @@ jobs:
           SDK_TOOLS="$(cat sdk-tools-path.txt)"
           echo no | "$SDK_TOOLS/avdmanager" create avd --force --name agr-api19-arm --package 'system-images;android-19;default;armeabi-v7a'
           nohup emulator @agr-api19-arm -no-window -no-audio -no-snapshot -wipe-data -no-boot-anim -gpu swiftshader_indirect -accel off > emulator.log 2>&1 &
+          EMULATOR_PID=$!
           for i in $(seq 1 180); do
             if adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' | grep -q '^1$'; then break; fi
+            if ! kill -0 "$EMULATOR_PID" 2>/dev/null; then cat emulator.log; exit 1; fi
             sleep 5
           done
+          if ! adb get-state >/dev/null 2>&1; then cat emulator.log; exit 1; fi
           adb shell getprop ro.build.version.release | tr -d '\r' | grep -q '^4\.4'
           adb shell getprop ro.product.cpu.abi | tr -d '\r' | grep -q '^armeabi-v7a$'
       - name: Run reference and AGR differential
@@ -61,3 +64,4 @@ jobs:
             android44.json
             agr.json
             build-reference.so
+            emulator.log
