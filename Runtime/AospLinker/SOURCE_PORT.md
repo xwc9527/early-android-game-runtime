@@ -16,9 +16,11 @@ Production source ownership:
   - byte-offset alignment check
   - `mmap` to `__mmap2` 4096-byte-unit conversion
 
-The retained code owns ELF load-span calculation, load bias, reservation,
-`PT_LOAD` file mapping, writable partial-page zero fill, anonymous BSS pages,
-segment protection restoration, GNU RELRO, and unload extent.
+The port retains these functions' control flow and address/page formulas. It
+owns ELF load-span calculation, load bias, reservation, `PT_LOAD` file mapping,
+writable partial-page zero fill, anonymous BSS pages, segment protection
+restoration, and GNU RELRO. The AGR `agr_aosp_linker_unload` wrapper releases
+the load extent; this wrapper is not copied from `linker_phdr.cpp`.
 
 AGR modifications are limited to the platform boundary:
 
@@ -29,6 +31,13 @@ AGR modifications are limited to the platform boundary:
 - Android errno is returned explicitly because host errno is not guest TLS;
 - ELF bytes are exposed through a guest-fd file view rather than a Darwin fd;
 - AOSP logging macros are replaced by the caller's structured error result.
+- `validate_headers` adds bounds/congruence checks on the in-memory ELF view;
+  it is AGR glue, not an AOSP function.
+- `phdr_table_protect_gnu_relro` in the port folds the original helper into
+  one function; its page-rounding and `PROT_READ` policy are retained.
+- the AOSP wrapper's `madvise(MADV_MERGEABLE)` hint is omitted because the
+  guest VMA is backed by interpreter memory, not Linux KSM pages. It is not
+  an Android-visible segment mapping decision.
 
 `agr_guest_vma` does not select segment addresses or protections. It only
 performs the raw map/protect/unmap operations requested by the ported AOSP

@@ -31,8 +31,8 @@ jobs:
           IMAGE="$ANDROID_HOME/system-images/android-19/default/armeabi-v7a/system.img"
           test -s "$IMAGE"
           if file "$IMAGE" | grep -qi sparse; then simg2img "$IMAGE" system.raw.img; else cp "$IMAGE" system.raw.img; fi
-          mkdir -p android44-root
-          sudo debugfs -R "rdump / android44-root" system.raw.img
+          mkdir -p android44-root/system
+          sudo debugfs -R "rdump / android44-root/system" system.raw.img
           sudo chown -R "$USER":"$(id -gn)" android44-root
           test -x android44-root/system/bin/linker
           test -s android44-root/system/lib/libc.so
