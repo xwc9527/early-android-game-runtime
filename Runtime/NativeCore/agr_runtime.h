@@ -16,6 +16,7 @@ extern "C" {
 
 typedef int32_t (*agr_read_fn)(void *user, uint32_t address, void *data, uint32_t size);
 typedef int32_t (*agr_write_fn)(void *user, uint32_t address, const void *data, uint32_t size);
+typedef int32_t (*agr_protect_fn)(void *user, uint32_t address, uint32_t size, uint32_t protection);
 typedef uint32_t (*agr_import_fn)(void *user, const char *name, uint32_t symbol_type);
 typedef uint32_t (*agr_file_open_fn)(void *user, const char *path, const char *mode);
 typedef int32_t (*agr_file_close_fn)(void *user, uint32_t handle);
@@ -33,6 +34,8 @@ typedef struct agr_callbacks {
     void *user;
     agr_read_fn read;
     agr_write_fn write;
+    agr_write_fn loader_write;
+    agr_protect_fn protect;
     agr_import_fn resolve_import;
     agr_file_open_fn file_open;
     agr_file_close_fn file_close;

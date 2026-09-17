@@ -38,6 +38,8 @@ jobs:
         run: bash scripts/test-guest-vma.sh
       - name: API19 mmap and AOSP linker segment contracts
         run: bash scripts/test-aosp-linker.sh
+      - name: ARM guest page-permission faults
+        run: cargo test --manifest-path Runtime/ArmInterpreter/Cargo.toml --lib permission_tests
       - name: Guest file-descriptor lifecycle contracts
         run: bash scripts/test-guest-fd-darwin.sh
       - name: Build and run native Runtime smoke in Simulator

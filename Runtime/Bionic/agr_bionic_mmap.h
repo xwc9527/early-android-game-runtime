@@ -18,12 +18,15 @@ typedef int32_t (*agr_bionic_guest_write_fn)(void *opaque, uint32_t address,
                                               const void *data, uint32_t size);
 typedef int32_t (*agr_bionic_file_view_fn)(void *opaque, int32_t guest_fd,
                                            const uint8_t **bytes, uint32_t *size);
+typedef int32_t (*agr_bionic_guest_protect_fn)(void *opaque, uint32_t address,
+                                               uint32_t size, uint32_t protection);
 
 typedef struct agr_bionic_mmap_context {
     agr_guest_vma_space *vma;
     void *opaque;
     agr_bionic_guest_write_fn write_guest;
     agr_bionic_file_view_fn file_view;
+    agr_bionic_guest_protect_fn protect_guest;
 } agr_bionic_mmap_context;
 
 /* API 19 ARM ABI: mmap byte offset, __mmap2 offset in 4096-byte units. */

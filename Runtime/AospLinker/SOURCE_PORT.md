@@ -29,6 +29,7 @@ AGR modifications are limited to the platform boundary:
 - direct `mmap`, `mprotect`, and `munmap` syscalls call the Bionic adapter;
 - the adapter calls `agr_guest_vma` and guest-memory write callbacks;
 - Android errno is returned explicitly because host errno is not guest TLS;
+  successful operations leave the guest errno value unchanged;
 - ELF bytes are exposed through a guest-fd file view rather than a Darwin fd;
 - AOSP logging macros are replaced by the caller's structured error result.
 - `validate_headers` adds bounds/congruence checks on the in-memory ELF view;
@@ -44,10 +45,11 @@ performs the raw map/protect/unmap operations requested by the ported AOSP
 policy. The former independently rewritten `agr_aosp_linker.c` is deleted and
 is not compiled by any production or test target.
 
-Current verification boundary: `agr_guest_vma` records segment/RELRO
-protections, but the flat ARM interpreter memory does not yet enforce those
-permissions on guest reads/writes/executes. `agr_aosp_linker_unload` is
-contract-tested, but production `agr_dlclose` does not yet release its image.
-Neither is implied by a passing layout/differential metadata check; the
-formal mapping closure remains open until these behaviors are verified or
-explicitly scoped out with evidence.
+The Bionic adapter now publishes map/protect/unmap changes to the ARM
+interpreter's guest page-permission table. Host loader writes remain separate
+from guest instruction fetch/read/write. Production `agr_dlclose` calls the
+AOSP-port image unmap wrapper, releases image-owned metadata, and permits the
+same guest address to be reused. A failed post-map load uses that same cleanup
+path. These behaviors have dedicated contract tests; the closure is not
+considered complete until Android 4.4 differential, Simulator and iphoneos
+CI pass on the same revision.

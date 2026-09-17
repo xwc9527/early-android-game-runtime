@@ -191,6 +191,9 @@ pub struct Mem {
     /// also expose the base to CPU backends; never let it dangle (see [Drop]).
     base: *mut u8,
     null_segment_size: VAddr,
+    // Only pages managed by Bionic mmap have explicit guest permissions.
+    // Other legacy guest arenas retain their existing access behavior.
+    page_permissions: Box<[u8]>,
     #[cfg(windows)]
     backing: Box<[u8]>,
 }
@@ -220,7 +223,7 @@ impl Mem {
         {
             let mut backing = vec![0u8; MEM_SIZE].into_boxed_slice();
             let base = backing.as_mut_ptr();
-            return Mem { base, null_segment_size: 0, backing };
+            return Mem { base, null_segment_size: 0, page_permissions: vec![7; MEM_SIZE / PAGE_SIZE as usize].into_boxed_slice(), backing };
         }
         #[cfg(not(windows))]
         {
@@ -243,6 +246,7 @@ impl Mem {
         Mem {
             base: base as *mut u8,
             null_segment_size: 0,
+            page_permissions: vec![7; MEM_SIZE / PAGE_SIZE as usize].into_boxed_slice(),
         }
         }
     }
@@ -253,6 +257,29 @@ impl Mem {
     pub fn set_null_segment_size(&mut self, size: VAddr) {
         assert!(size % PAGE_SIZE == 0, "null segment must be page-aligned");
         self.null_segment_size = size;
+    }
+
+    pub fn set_page_permissions(&mut self, address: u32, length: u32, protection: u8) -> bool {
+        if address % PAGE_SIZE != 0 || length == 0 || protection & !7 != 0 { return false; }
+        let end = match (address as u64).checked_add(length as u64) { Some(v) if v <= MEM_SIZE as u64 => v, _ => return false };
+        let first = address as usize / PAGE_SIZE as usize;
+        let last = ((end + PAGE_SIZE as u64 - 1) / PAGE_SIZE as u64) as usize;
+        self.page_permissions[first..last].fill(protection);
+        true
+    }
+
+    pub fn allows(&self, address: u32, length: u32, required: u8) -> bool {
+        let end = address as u64 + length as u64;
+        if end > MEM_SIZE as u64 || address < self.null_segment_size { return false; }
+        if length == 0 { return true; }
+        let first = address as usize / PAGE_SIZE as usize;
+        let last = ((end - 1) / PAGE_SIZE as u64) as usize;
+        self.page_permissions[first..=last].iter().all(|p| p & required == required)
+    }
+
+    pub fn get_code_bytes_fallible(&self, address: u32, length: u32) -> Option<&[u8]> {
+        if !self.allows(address, length, 4) { return None; }
+        Some(unsafe { std::slice::from_raw_parts(self.base.add(address as usize), length as usize) })
     }
 
     /// Copy `data` into guest memory at `addr` (load code or data). Panics if the
@@ -298,7 +325,7 @@ impl GuestMem for Mem {
 
     fn get_bytes_fallible(&self, addr: ConstVoidPtr, count: GuestUSize) -> Option<&[u8]> {
         let a = addr.to_bits();
-        if a < self.null_segment_size {
+        if !self.allows(a, count, 1) {
             return None;
         }
         let end = (a as usize).checked_add(count as usize)?;
@@ -315,7 +342,7 @@ impl GuestMem for Mem {
         count: GuestUSize,
     ) -> Option<&mut [u8]> {
         let a = addr.to_bits();
-        if a < self.null_segment_size {
+        if !self.allows(a, count, 2) {
             return None;
         }
         let end = (a as usize).checked_add(count as usize)?;

@@ -18,7 +18,7 @@
 #![allow(dead_code, unused_assignments)]
 
 use crate::{CpuError, CpuState};
-use crate::mem::{ConstVoidPtr, GuestMem, Mem, Ptr};
+use crate::mem::{GuestMem, Mem, Ptr};
 
 mod arm;
 mod thumb16;
@@ -520,16 +520,14 @@ impl InterpreterCpu {
         if addr < self.null_segment_size {
             return None;
         }
-        let p: ConstVoidPtr = Ptr::from_bits(addr);
-        let b = mem.get_bytes_fallible(p, 2)?;
+        let b = mem.get_code_bytes_fallible(addr, 2)?;
         Some(u16::from_le_bytes([b[0], b[1]]))
     }
     fn read_code_u32(&self, mem: &Mem, addr: u32) -> Option<u32> {
         if addr < self.null_segment_size {
             return None;
         }
-        let p: ConstVoidPtr = Ptr::from_bits(addr);
-        let b = mem.get_bytes_fallible(p, 4)?;
+        let b = mem.get_code_bytes_fallible(addr, 4)?;
         Some(u32::from_le_bytes([b[0], b[1], b[2], b[3]]))
     }
 

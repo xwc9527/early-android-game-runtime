@@ -61,6 +61,11 @@ static int32_t source_write(void* opaque, uint32_t address, const void* bytes, u
   SourceView* source = static_cast<SourceView*>(opaque);
   return source->host->write_guest(source->host->opaque, address, bytes, size);
 }
+static int32_t source_protect(void* opaque, uint32_t address, uint32_t size, uint32_t protection) {
+  SourceView* source = static_cast<SourceView*>(opaque);
+  return source->host->protect_guest == NULL ? 0 :
+      source->host->protect_guest(source->host->opaque, address, size, protection);
+}
 static int zero_guest(agr_bionic_mmap_context* context, uint32_t address, uint32_t size) {
   static const uint8_t zero[PAGE_SIZE] = {0};
   while (size != 0) {
@@ -265,7 +270,7 @@ static int phdr_table_protect_gnu_relro(agr_bionic_mmap_context* context,
 
 extern "C" int32_t agr_aosp_linker_map(agr_bionic_mmap_context* context,const void* bytes,uint32_t size,uint32_t preferred,agr_aosp_linker_image* image,int32_t* guest_errno){
   const Elf32_Ehdr*eh;const Elf32_Phdr*ph;if(context==NULL||image==NULL||validate_headers(bytes,size,&eh,&ph,guest_errno)!=0)return -1;
-  memset(image,0,sizeof(*image));SourceView source={static_cast<const uint8_t*>(bytes),size,context};agr_bionic_mmap_context port=*context;port.opaque=&source;port.write_guest=source_write;port.file_view=source_file;
+  memset(image,0,sizeof(*image));SourceView source={static_cast<const uint8_t*>(bytes),size,context};agr_bionic_mmap_context port=*context;port.opaque=&source;port.write_guest=source_write;port.file_view=source_file;port.protect_guest=source_protect;
   if(!ReserveAddressSpace(&port,ph,eh->e_phnum,preferred,image,guest_errno))return -1;
   if(!LoadSegments(&port,ph,eh->e_phnum,image->load_bias,guest_errno)){agr_bionic_munmap(context,image->load_start,image->load_size,NULL);memset(image,0,sizeof(*image));return -1;}return 0;}
 extern "C" int32_t agr_aosp_linker_finalize(agr_bionic_mmap_context*c,const void*b,uint32_t z,agr_aosp_linker_image*im,int32_t*e){const Elf32_Ehdr*eh;const Elf32_Phdr*ph;if(validate_headers(b,z,&eh,&ph,e)!=0)return -1;if(phdr_table_protect_segments(c,ph,eh->e_phnum,im->load_bias,e)!=0)return -1;return phdr_table_protect_gnu_relro(c,ph,eh->e_phnum,im->load_bias,im,e);}

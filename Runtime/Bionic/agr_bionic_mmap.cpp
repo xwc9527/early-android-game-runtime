@@ -43,6 +43,15 @@ static int valid_protection(uint32_t protection) {
   return !(protection & ~(AGR_PROT_READ | AGR_PROT_WRITE | AGR_PROT_EXEC));
 }
 
+static int publish_protection(agr_bionic_mmap_context* context, uint32_t address,
+                              uint32_t length, uint32_t protection) {
+  if (context->protect_guest == NULL) return 0;
+  uint64_t rounded = (static_cast<uint64_t>(length) + 4095u) & ~4095ull;
+  if (rounded > UINT32_MAX) return EINVAL;
+  return context->protect_guest(context->opaque, address,
+                                static_cast<uint32_t>(rounded), protection) == 0 ? 0 : EFAULT;
+}
+
 static int write_zero(agr_bionic_mmap_context* context, uint32_t address, uint32_t length) {
   static const uint8_t zero[4096] = {0};
   while (length != 0) {
@@ -88,6 +97,16 @@ extern "C" int32_t agr_bionic_mmap2(agr_bionic_mmap_context* context,
       ((flags & AGR_MAP_FIXED) != 0 && (address & 4095) != 0)) {
     return fail(EINVAL, guest_errno);
   }
+  const uint8_t* file_bytes = NULL;
+  uint32_t file_size = 0;
+  uint64_t byte_offset = static_cast<uint64_t>(page_offset) << 12;
+  if ((flags & AGR_MAP_ANONYMOUS) == 0 &&
+      (guest_fd < 0 || context->file_view == NULL ||
+       context->file_view(context->opaque, guest_fd, &file_bytes, &file_size) != 0 ||
+       byte_offset > file_size || length > static_cast<uint64_t>(file_size) - byte_offset)) {
+    // A failed MAP_FIXED file lookup must not destroy an existing mapping.
+    return fail(EBADF, guest_errno);
+  }
   uint32_t vma_flags = (flags & AGR_MAP_FIXED) ? AGR_GUEST_VMA_FIXED : 0;
   int error = agr_guest_vma_map(context->vma, address, length, protection,
                                 vma_flags, mapped_address);
@@ -96,24 +115,22 @@ extern "C" int32_t agr_bionic_mmap2(agr_bionic_mmap_context* context,
   if ((flags & AGR_MAP_ANONYMOUS) != 0) {
     error = write_zero(context, *mapped_address, length);
   } else {
-    const uint8_t* bytes = NULL;
-    uint32_t file_size = 0;
-    uint64_t byte_offset = static_cast<uint64_t>(page_offset) << 12;
-    if (guest_fd < 0 || context->file_view == NULL ||
-        context->file_view(context->opaque, guest_fd, &bytes, &file_size) != 0 ||
-        byte_offset > file_size || length > static_cast<uint64_t>(file_size) - byte_offset) {
-      error = EBADF;
-    } else if (context->write_guest(context->opaque, *mapped_address,
-                                    bytes + static_cast<uint32_t>(byte_offset),
-                                    length) != 0) {
+    if (context->write_guest(context->opaque, *mapped_address,
+                             file_bytes + static_cast<uint32_t>(byte_offset),
+                             length) != 0) {
       error = EFAULT;
     }
   }
   if (error != 0) {
     agr_guest_vma_unmap(context->vma, *mapped_address, length);
+    publish_protection(context, *mapped_address, length, AGR_PROT_NONE);
     return fail(error, guest_errno);
   }
-  if (guest_errno != NULL) *guest_errno = 0;
+  error = publish_protection(context, *mapped_address, length, protection);
+  if (error != 0) {
+    agr_guest_vma_unmap(context->vma, *mapped_address, length);
+    return fail(error, guest_errno);
+  }
   return 0;
 }
 
@@ -125,7 +142,8 @@ extern "C" int32_t agr_bionic_mprotect(agr_bionic_mmap_context* context,
       !valid_protection(protection) || (address & 4095) != 0) return fail(EINVAL, guest_errno);
   int error = agr_guest_vma_protect(context->vma, address, length, protection);
   if (error != 0) return fail(error, guest_errno);
-  if (guest_errno != NULL) *guest_errno = 0;
+  error = publish_protection(context, address, length, protection);
+  if (error != 0) return fail(error, guest_errno);
   return 0;
 }
 
@@ -136,6 +154,7 @@ extern "C" int32_t agr_bionic_munmap(agr_bionic_mmap_context* context,
     return fail(EINVAL, guest_errno);
   int error = agr_guest_vma_unmap(context->vma, address, length);
   if (error != 0) return fail(error, guest_errno);
-  if (guest_errno != NULL) *guest_errno = 0;
+  error = publish_protection(context, address, length, AGR_PROT_NONE);
+  if (error != 0) return fail(error, guest_errno);
   return 0;
 }

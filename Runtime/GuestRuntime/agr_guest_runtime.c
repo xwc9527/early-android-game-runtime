@@ -13,7 +13,9 @@
 extern void *arm_interp_create(void);
 extern void arm_interp_destroy(void *);
 extern int32_t arm_interp_write(void *, uint32_t, const uint8_t *, uint32_t);
+extern int32_t arm_interp_load(void *, uint32_t, const uint8_t *, uint32_t);
 extern int32_t arm_interp_read(void *, uint32_t, uint8_t *, uint32_t);
+extern int32_t arm_interp_set_page_permissions(void *, uint32_t, uint32_t, uint32_t);
 extern int32_t arm_interp_set_reg(void *, uint32_t, uint32_t);
 extern uint32_t arm_interp_get_reg(void *, uint32_t);
 extern void arm_interp_set_watch_pc(void *, uint32_t);
@@ -114,6 +116,12 @@ static int32_t mem_read_cb(void *user, uint32_t address, void *data, uint32_t si
 }
 static int32_t mem_write_cb(void *user, uint32_t address, const void *data, uint32_t size) {
     return arm_interp_write(((agr_guest *)user)->cpu, address, (const uint8_t *)data, size);
+}
+static int32_t mem_loader_write_cb(void *user, uint32_t address, const void *data, uint32_t size) {
+    return arm_interp_load(((agr_guest *)user)->cpu, address, (const uint8_t *)data, size);
+}
+static int32_t mem_protect_cb(void *user, uint32_t address, uint32_t size, uint32_t protection) {
+    return arm_interp_set_page_permissions(((agr_guest *)user)->cpu, address, size, protection);
 }
 static virtual_pipe *find_pipe(agr_guest *g, uint32_t fd) {
     for (uint32_t i = 0; i < 8; i++) if (g->pipes[i].live && (g->pipes[i].read_fd == fd || g->pipes[i].write_fd == fd)) return &g->pipes[i];
@@ -662,7 +670,8 @@ static int run_until_return(agr_guest *g) {
             uint8_t code[12] = {0}; arm_interp_read(g->cpu, pc-8, code, sizeof(code));
             snprintf(g->error, sizeof(g->error),
                      "%s state=%d pc=%08x cpsr=%08x r0=%08x r1=%08x r2=%08x r3=%08x r4=%08x r5=%08x sp=%08x code[-8]=%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-                     state == 0 ? "ARM instruction budget exhausted" : "ARM interpreter error",
+                     state == 0 ? "ARM instruction budget exhausted" :
+                     state == -2 ? "ARM guest memory fault" : "ARM interpreter error",
                      state, pc, cpsr,arm_interp_get_reg(g->cpu,0),arm_interp_get_reg(g->cpu,1),
                      arm_interp_get_reg(g->cpu,2),arm_interp_get_reg(g->cpu,3),
                      arm_interp_get_reg(g->cpu,4),arm_interp_get_reg(g->cpu,5),arm_interp_get_reg(g->cpu,13),
@@ -685,7 +694,7 @@ agr_guest *agr_guest_create(void) {
     g->cpu = arm_interp_create(); g->run_budget = 1000000; g->next_trap = IMPORT_BASE; g->next_array_handle = 0x61000000u;
     g->next_asset_handle = 0x62010000u; g->input_queue_handle=0x67000000u; g->next_input_handle=0x67000100u;
     if (!g->cpu) { free(g); return NULL; }
-    agr_callbacks cb = {0}; cb.user = g; cb.read = mem_read_cb; cb.write = mem_write_cb; cb.resolve_import = resolve_import_cb;
+    agr_callbacks cb = {0}; cb.user = g; cb.read = mem_read_cb; cb.write = mem_write_cb; cb.loader_write = mem_loader_write_cb; cb.protect = mem_protect_cb; cb.resolve_import = resolve_import_cb;
     cb.log = guest_log_cb;
     cb.pipe_create = pipe_create_cb; cb.fd_read = fd_read_cb; cb.fd_write = fd_write_cb; cb.fd_close = fd_close_cb;
     g->runtime = agr_runtime_create(&cb, 0x01008000, 0x01020000, 0x01900000, 0x02000000);

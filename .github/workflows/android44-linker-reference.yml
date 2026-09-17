@@ -3,11 +3,11 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Tests/Android44Reference/**','.github/workflows/android44-linker-reference.yml']
+    paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Runtime/NativeCore/**','Tests/AospLinker/**','Tests/Android44Reference/**','.github/workflows/android44-linker-reference.yml']
 jobs:
   api19-reference:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Install API19 ARM reference and NDK
@@ -19,26 +19,28 @@ jobs:
           echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/emulator" >> "$GITHUB_PATH"
+          echo "$(dirname "$SDKMANAGER")" > sdk-tools-path.txt
       - name: Build ARM32 reference fixture
         run: |
-          TOOL="$ANDROID_SDK_ROOT/ndk/25.2.9519653/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          TOOL="$ANDROID_HOME/ndk/25.2.9519653/toolchains/llvm/prebuilt/linux-x86_64/bin"
           "$TOOL/armv7a-linux-androideabi19-clang" -shared -fPIC -Wl,-z,relro,-z,now Tests/Android44Reference/linker_fixture.c -o build-reference.so
           "$TOOL/armv7a-linux-androideabi19-clang" -fPIE -pie Tests/Android44Reference/android44_reference.c -ldl -o android44-reference
-      - name: Extract Android 4.4 ARM userspace
+      - name: Boot Android 4.4 ARM emulator
         run: |
-          sudo apt-get update
-          sudo apt-get install -y qemu-user android-sdk-libsparse-utils e2fsprogs
-          IMAGE="$ANDROID_HOME/system-images/android-19/default/armeabi-v7a/system.img"
-          test -s "$IMAGE"
-          if file "$IMAGE" | grep -qi sparse; then simg2img "$IMAGE" system.raw.img; else cp "$IMAGE" system.raw.img; fi
-          mkdir -p android44-root/system
-          sudo debugfs -R "rdump / android44-root/system" system.raw.img
-          sudo chown -R "$USER":"$(id -gn)" android44-root
-          test -x android44-root/system/bin/linker
-          test -s android44-root/system/lib/libc.so
+          SDK_TOOLS="$(cat sdk-tools-path.txt)"
+          echo no | "$SDK_TOOLS/avdmanager" create avd --force --name agr-api19-arm --package 'system-images;android-19;default;armeabi-v7a'
+          nohup emulator @agr-api19-arm -no-window -no-audio -no-snapshot -wipe-data -no-boot-anim -gpu swiftshader_indirect -accel off > emulator.log 2>&1 &
+          for i in $(seq 1 180); do
+            if adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' | grep -q '^1$'; then break; fi
+            sleep 5
+          done
+          adb shell getprop ro.build.version.release | tr -d '\r' | grep -q '^4\.4'
+          adb shell getprop ro.product.cpu.abi | tr -d '\r' | grep -q '^armeabi-v7a$'
       - name: Run reference and AGR differential
         run: |
-          qemu-arm -L android44-root ./android44-reference ./build-reference.so > android44.json
+          adb push android44-reference build-reference.so /data/local/tmp/
+          adb shell chmod 755 /data/local/tmp/android44-reference
+          adb shell /data/local/tmp/android44-reference /data/local/tmp/build-reference.so | tr -d '\r' > android44.json
           clang -std=c11 -O2 -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Tests/Android44Reference/agr_differential.c -o agr-diff.o
           clang -std=c11 -O2 -IRuntime/Process -c Runtime/Process/agr_guest_vma.c -o agr-vma.o
           clang++ -std=gnu++98 -O2 -fno-exceptions -fno-rtti -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Runtime/AospLinker/agr_aosp_linker.cpp -o agr-linker.o
