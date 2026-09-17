@@ -70,6 +70,7 @@ struct soinfo {
 struct SymbolRecord { std::string name; uint32_t address; soinfo* owner; };
 struct NeededRecord { std::string name; soinfo* owner; };
 struct RelocRecord { uint32_t type,address; std::string symbol,object_name; soinfo* owner; };
+struct FunctionRecord { uint32_t address; soinfo* owner; };
 
 struct agr_aosp_dynamic {
   agr_bionic_mmap_context* mmap;
@@ -79,7 +80,7 @@ struct agr_aosp_dynamic {
   std::vector<SymbolRecord> symbols;
   std::vector<NeededRecord> needed_log;
   std::vector<RelocRecord> relocations;
-  std::vector<uint32_t> constructors, finalizers;
+  std::vector<FunctionRecord> constructors, finalizers;
   soinfo* somain;
   char linker_error[768], dlerror_buffer[1024];
   bool dlerror_pending;
@@ -194,7 +195,7 @@ static int soinfo_relocate(agr_aosp_dynamic*rt,soinfo*si,uint32_t rel_vaddr,uint
   }return 0;
 }
 
-static bool CallFunction(agr_aosp_dynamic*rt,soinfo*si,uint32_t function,bool fini){if(!function||function==0xffffffffu)return true;if(rt->cb.invoke_guest_function&&rt->cb.invoke_guest_function(rt->cb.opaque,function)!=0){set_error(rt,"guest function failed in %s",si->name.c_str(),NULL);return false;}(fini?rt->finalizers:rt->constructors).push_back(function);return true;}
+static bool CallFunction(agr_aosp_dynamic*rt,soinfo*si,uint32_t function,bool fini){if(!function||function==0xffffffffu)return true;if(rt->cb.invoke_guest_function&&rt->cb.invoke_guest_function(rt->cb.opaque,function)!=0){set_error(rt,"guest function failed in %s",si->name.c_str(),NULL);return false;}FunctionRecord record={function,si};(fini?rt->finalizers:rt->constructors).push_back(record);return true;}
 static bool CallArray(agr_aosp_dynamic*rt,soinfo*si,uint32_t array,uint32_t count,bool reverse,bool fini){if(!array)return true;for(int i=reverse?(int)count-1:0;i!=(reverse?-1:(int)count);i+=reverse?-1:1){uint32_t fn=0;if(!read_word(rt,array+(uint32_t)i*4,&fn)){set_error(rt,"constructor/finalizer array read failed in %s",si->name.c_str(),NULL);return false;}if(!CallFunction(rt,si,fn,fini))return false;}return true;}
 
 /* AOSP soinfo::CallConstructors/CallDestructors, preserving recursion/order. */
@@ -239,6 +240,8 @@ static void erase_records(agr_aosp_dynamic*rt,soinfo*si){
   for(size_t i=0;i<rt->symbols.size();)if(rt->symbols[i].owner==si)rt->symbols.erase(rt->symbols.begin()+i);else ++i;
   for(size_t i=0;i<rt->needed_log.size();)if(rt->needed_log[i].owner==si)rt->needed_log.erase(rt->needed_log.begin()+i);else ++i;
   for(size_t i=0;i<rt->relocations.size();)if(rt->relocations[i].owner==si)rt->relocations.erase(rt->relocations.begin()+i);else ++i;
+  for(size_t i=0;i<rt->constructors.size();)if(rt->constructors[i].owner==si)rt->constructors.erase(rt->constructors.begin()+i);else ++i;
+  for(size_t i=0;i<rt->finalizers.size();)if(rt->finalizers[i].owner==si)rt->finalizers.erase(rt->finalizers.begin()+i);else ++i;
 }
 /* AOSP soinfo_unload. Dependencies are released after finalizers, then image. */
 static int soinfo_unload(agr_aosp_dynamic*rt,soinfo*si){if(!si)return -1;if(si->host){if(si->ref_count)si->ref_count--;return 0;}if(si->ref_count==1){if(!CallDestructors(rt,si))return -1;std::vector<soinfo*>deps=si->needed;agr_aosp_linker_unload(rt->mmap,&si->image,NULL);erase_records(rt,si);for(size_t i=0;i<rt->solist.size();++i)if(rt->solist[i]==si){rt->solist.erase(rt->solist.begin()+i);break;}if(rt->somain==si)rt->somain=NULL;delete si;for(size_t i=0;i<deps.size();++i)if(soinfo_unload(rt,deps[i]))return -1;}else if(si->ref_count>1)si->ref_count--;return 0;}
@@ -270,9 +273,9 @@ extern "C" uint32_t agr_aosp_dynamic_symbol_address(const agr_aosp_dynamic*rt,ui
 extern "C" uint32_t agr_aosp_dynamic_needed_count(const agr_aosp_dynamic*rt){return rt?(uint32_t)rt->needed_log.size():0;}
 extern "C" const char* agr_aosp_dynamic_needed_name(const agr_aosp_dynamic*rt,uint32_t i){return rt&&i<rt->needed_log.size()?rt->needed_log[i].name.c_str():NULL;}
 extern "C" uint32_t agr_aosp_dynamic_constructor_count(const agr_aosp_dynamic*rt){return rt?(uint32_t)rt->constructors.size():0;}
-extern "C" uint32_t agr_aosp_dynamic_constructor_address(const agr_aosp_dynamic*rt,uint32_t i){return rt&&i<rt->constructors.size()?rt->constructors[i]:0;}
+extern "C" uint32_t agr_aosp_dynamic_constructor_address(const agr_aosp_dynamic*rt,uint32_t i){return rt&&i<rt->constructors.size()?rt->constructors[i].address:0;}
 extern "C" uint32_t agr_aosp_dynamic_finalizer_count(const agr_aosp_dynamic*rt){return rt?(uint32_t)rt->finalizers.size():0;}
-extern "C" uint32_t agr_aosp_dynamic_finalizer_address(const agr_aosp_dynamic*rt,uint32_t i){return rt&&i<rt->finalizers.size()?rt->finalizers[i]:0;}
+extern "C" uint32_t agr_aosp_dynamic_finalizer_address(const agr_aosp_dynamic*rt,uint32_t i){return rt&&i<rt->finalizers.size()?rt->finalizers[i].address:0;}
 extern "C" uint32_t agr_aosp_dynamic_relocation_count(const agr_aosp_dynamic*rt){return rt?(uint32_t)rt->relocations.size():0;}
 extern "C" int32_t agr_aosp_dynamic_relocation_at(const agr_aosp_dynamic*rt,uint32_t i,agr_aosp_dynamic_relocation*out){if(!rt||!out||i>=rt->relocations.size())return -1;const RelocRecord&r=rt->relocations[i];out->type=r.type;out->address=r.address;out->symbol=r.symbol.c_str();out->object_name=r.object_name.c_str();return 0;}
 extern "C" uint32_t agr_aosp_dynamic_find_exidx(const agr_aosp_dynamic*rt,uint32_t pc,uint32_t*count){if(rt)for(size_t i=0;i<rt->solist.size();++i){soinfo*si=rt->solist[i];if(!si->host&&pc>=si->image.load_start&&pc<si->image.load_start+si->image.load_size){if(count)*count=si->exidx_count;return si->exidx;}}if(count)*count=0;return 0;}
