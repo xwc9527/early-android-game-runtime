@@ -17,7 +17,6 @@
 #define AGR_MAX_NEEDED 1024
 #define AGR_MAX_RELOCS 131072
 #define AGR_MAX_CTORS 8192
-#define AGR_MAX_ALLOCS 8192
 #define AGR_MAX_THREADS 128
 #define AGR_MAX_TLS_KEYS 256
 #define AGR_MAX_MUTEXES 2048
@@ -28,7 +27,11 @@
 typedef struct { char *name; uint32_t address; uint32_t object_index; } agr_symbol;
 typedef struct { char *name; uint32_t base, min_address, max_address, exidx, exidx_count; } agr_object;
 typedef struct { uint32_t type, address; char *symbol, *object_name; } agr_reloc;
-typedef struct { uint32_t address, size, live; } agr_alloc;
+typedef struct agr_heap_block {
+    uint32_t address, span, requested, alignment;
+    uint8_t live;
+    struct agr_heap_block *prev, *next;
+} agr_heap_block;
 typedef struct { uint32_t id, errno_address; uint32_t tls[AGR_MAX_TLS_KEYS]; } agr_thread;
 typedef struct { uint32_t address, owner, depth, live; } agr_mutex;
 typedef struct { uint32_t address, state; } agr_word_state;
@@ -39,8 +42,8 @@ struct agr_runtime {
     char error[512];
     char dlerror[512];
     char library_path[1024];
-    uint32_t static_ptr, static_limit, heap_ptr, heap_limit;
-    agr_alloc allocations[AGR_MAX_ALLOCS]; uint32_t allocation_count;
+    uint32_t static_ptr, static_limit, heap_base, heap_limit;
+    agr_heap_block *heap_blocks;
     agr_object objects[AGR_MAX_OBJECTS]; uint32_t object_count;
     agr_symbol symbols[AGR_MAX_SYMBOLS]; uint32_t symbol_count;
     char *needed[AGR_MAX_NEEDED]; uint32_t needed_count;
@@ -80,13 +83,18 @@ static int read_cstr(agr_runtime *rt, uint32_t address, char *out, uint32_t capa
 }
 
 agr_runtime *agr_runtime_create(const agr_callbacks *cb, uint32_t sb, uint32_t sl, uint32_t hb, uint32_t hl) {
+    if (!cb || !cb->read || !cb->write || !hb || hb >= hl) return NULL;
     agr_runtime *rt = (agr_runtime *)calloc(1, sizeof(*rt)); if (!rt) return NULL;
-    rt->cb = *cb; rt->static_ptr = sb; rt->static_limit = sl; rt->heap_ptr = hb; rt->heap_limit = hl;
+    rt->heap_blocks = (agr_heap_block *)calloc(1, sizeof(*rt->heap_blocks));
+    if (!rt->heap_blocks) { free(rt); return NULL; }
+    rt->heap_blocks->address = hb; rt->heap_blocks->span = hl - hb;
+    rt->cb = *cb; rt->static_ptr = sb; rt->static_limit = sl; rt->heap_base = hb; rt->heap_limit = hl;
     rt->thread_count = 1; rt->threads[0].id = 1; rt->current_thread = 1; rt->next_thread = 2;
     rt->next_tls_key = 1; rt->clock_ns = 1000000000ULL; return rt;
 }
 void agr_runtime_destroy(agr_runtime *rt) {
     uint32_t i; if (!rt) return;
+    for (agr_heap_block *block=rt->heap_blocks,*next; block; block=next) { next=block->next; free(block); }
     for (i=0;i<rt->object_count;i++) free(rt->objects[i].name);
     for (i=0;i<rt->symbol_count;i++) free(rt->symbols[i].name);
     for (i=0;i<rt->needed_count;i++) free(rt->needed[i]);
@@ -99,24 +107,135 @@ uint32_t agr_alloc_static(agr_runtime *rt, const void *data, uint32_t size, uint
     if (end < address || end > rt->static_limit) { fail(rt, "static arena exhausted"); return 0; }
     rt->static_ptr = end; if (size && !write_mem(rt, address, data, size)) { fail(rt, "static write failed"); return 0; } return address;
 }
-uint32_t agr_malloc(agr_runtime *rt, uint32_t size) {
-    uint32_t address, end; unsigned char zero[256] = {0}; if (!size) size = 1;
-    address = align_up(rt->heap_ptr, 8); end = address + size;
-    if (end < address || end > rt->heap_limit || rt->allocation_count >= AGR_MAX_ALLOCS) return 0;
-    rt->heap_ptr = end; rt->allocations[rt->allocation_count++] = (agr_alloc){address,size,1};
-    for (uint32_t left=size, at=address; left;) { uint32_t n=left>sizeof(zero)?sizeof(zero):left; if(!write_mem(rt,at,zero,n))return 0; at+=n;left-=n; }
-    return address;
+static int heap_alignment_valid(uint32_t alignment) {
+    return alignment >= 4 && (alignment & (alignment - 1)) == 0;
 }
-void agr_free(agr_runtime *rt, uint32_t address) { for(uint32_t i=0;i<rt->allocation_count;i++)if(rt->allocations[i].address==address)rt->allocations[i].live=0; }
-uint32_t agr_allocation_size(agr_runtime *rt,uint32_t address){for(uint32_t i=0;i<rt->allocation_count;i++)if(rt->allocations[i].address==address&&rt->allocations[i].live)return rt->allocations[i].size;return 0;}
-void agr_heap_diagnostics(agr_runtime *rt,uint32_t out[5]){
-    if(!out)return;memset(out,0,5*sizeof(*out));if(!rt)return;
-    out[0]=rt->heap_ptr;out[1]=rt->heap_limit;out[2]=rt->allocation_count;
-    for(uint32_t i=0;i<rt->allocation_count;i++)if(rt->allocations[i].live){out[3]++;out[4]+=rt->allocations[i].size;}
+static agr_heap_block *heap_find_live(agr_runtime *rt, uint32_t address) {
+    if (!rt || !address) return NULL;
+    for (agr_heap_block *b=rt->heap_blocks; b; b=b->next)
+        if (b->live && b->address == address) return b;
+    return NULL;
 }
-uint32_t agr_realloc(agr_runtime *rt,uint32_t address,uint32_t size){
-    if(!address)return agr_malloc(rt,size);if(!size){agr_free(rt,address);return 0;}uint32_t old=agr_allocation_size(rt,address),n=agr_malloc(rt,size);
-    if(n&&old){uint32_t count=old<size?old:size;unsigned char buf[256];for(uint32_t off=0;off<count;){uint32_t k=count-off>sizeof(buf)?sizeof(buf):count-off;if(!read_mem(rt,address+off,buf,k)||!write_mem(rt,n+off,buf,k))break;off+=k;}}agr_free(rt,address);return n;
+static void heap_insert_after(agr_heap_block *at, agr_heap_block *node) {
+    node->prev=at; node->next=at->next;
+    if (node->next) node->next->prev=node;
+    at->next=node;
+}
+static void heap_remove(agr_runtime *rt, agr_heap_block *node) {
+    if (node->prev) node->prev->next=node->next; else rt->heap_blocks=node->next;
+    if (node->next) node->next->prev=node->prev;
+    free(node);
+}
+static agr_heap_block *heap_coalesce(agr_runtime *rt, agr_heap_block *b) {
+    if (b->prev && !b->prev->live) {
+        agr_heap_block *prior=b->prev;
+        prior->span+=b->span; heap_remove(rt,b); b=prior;
+    }
+    if (b->next && !b->next->live) {
+        agr_heap_block *next=b->next;
+        b->span+=next->span; heap_remove(rt,next);
+    }
+    return b;
+}
+static int heap_clear(agr_runtime *rt, uint32_t address, uint32_t size) {
+    static const unsigned char zeros[256] = {0};
+    for (uint32_t at=address,left=size; left;) {
+        uint32_t n=left>sizeof(zeros)?sizeof(zeros):left;
+        if (!write_mem(rt,at,zeros,n)) return 0;
+        at+=n; left-=n;
+    }
+    return 1;
+}
+uint32_t agr_malloc_aligned(agr_runtime *rt, uint32_t size, uint32_t alignment) {
+    if (!rt || !heap_alignment_valid(alignment)) return 0;
+    if (alignment < 8) alignment=8;
+    uint32_t requested=size?size:1;
+    uint64_t rounded=((uint64_t)requested+7u)&~7ull;
+    if (rounded>UINT32_MAX) return 0;
+    uint32_t span=(uint32_t)rounded;
+    for (agr_heap_block *b=rt->heap_blocks; b; b=b->next) {
+        if (b->live) continue;
+        uint64_t aligned=((uint64_t)b->address+alignment-1u)&~(uint64_t)(alignment-1u);
+        uint64_t end=aligned+span, block_end=(uint64_t)b->address+b->span;
+        if (aligned>UINT32_MAX || end>block_end) continue;
+        uint32_t prefix=(uint32_t)(aligned-b->address), suffix=(uint32_t)(block_end-end);
+        agr_heap_block *allocated=prefix?(agr_heap_block *)calloc(1,sizeof(*allocated)):b;
+        if (!allocated) return 0;
+        agr_heap_block *tail=suffix?(agr_heap_block *)calloc(1,sizeof(*tail)):NULL;
+        if (suffix && !tail) { if(prefix)free(allocated); return 0; }
+        if (!heap_clear(rt,(uint32_t)aligned,span)) {
+            if (prefix) free(allocated); free(tail); return 0;
+        }
+        if (prefix) { b->span=prefix; heap_insert_after(b,allocated); }
+        allocated->address=(uint32_t)aligned; allocated->span=span;
+        allocated->requested=requested; allocated->alignment=alignment; allocated->live=1;
+        if (tail) { tail->address=(uint32_t)end; tail->span=suffix; heap_insert_after(allocated,tail); }
+        return allocated->address;
+    }
+    return 0;
+}
+uint32_t agr_malloc(agr_runtime *rt, uint32_t size) { return agr_malloc_aligned(rt,size,8); }
+uint32_t agr_calloc(agr_runtime *rt, uint32_t count, uint32_t size) {
+    uint64_t total=(uint64_t)count*size;
+    return total>UINT32_MAX?0:agr_malloc(rt,(uint32_t)total);
+}
+void agr_free(agr_runtime *rt, uint32_t address) {
+    agr_heap_block *b=heap_find_live(rt,address);
+    if (!b) return; /* free(NULL), invalid and repeated frees cannot corrupt the heap. */
+    b->live=0; b->requested=0; b->alignment=0;
+    heap_coalesce(rt,b);
+}
+uint32_t agr_allocation_size(agr_runtime *rt,uint32_t address) {
+    agr_heap_block *b=heap_find_live(rt,address);
+    return b?b->requested:0;
+}
+void agr_heap_diagnostics(agr_runtime *rt,uint32_t out[5]) {
+    if (!out) return; memset(out,0,5*sizeof(*out)); if (!rt) return;
+    out[0]=rt->heap_base; out[1]=rt->heap_limit;
+    for (agr_heap_block *b=rt->heap_blocks; b; b=b->next) {
+        out[2]++;
+        if (b->live) { out[3]++; out[4]+=b->requested; out[0]=b->address+b->span; }
+    }
+}
+uint32_t agr_realloc(agr_runtime *rt,uint32_t address,uint32_t size) {
+    if (!address) return agr_malloc(rt,size);
+    agr_heap_block *b=heap_find_live(rt,address);
+    if (!b) return 0;
+    if (!size) { agr_free(rt,address); return 0; }
+    uint64_t rounded=((uint64_t)size+7u)&~7ull;
+    if (rounded>UINT32_MAX) return 0;
+    uint32_t new_span=(uint32_t)rounded, old_size=b->requested;
+    if (new_span<=b->span) {
+        uint32_t spare=b->span-new_span;
+        if (spare>=8) {
+            agr_heap_block *tail=(agr_heap_block *)calloc(1,sizeof(*tail));
+            if (tail) {
+                tail->address=b->address+new_span;tail->span=spare;b->span=new_span;
+                heap_insert_after(b,tail);heap_coalesce(rt,tail);
+            }
+        }
+        b->requested=size;return address;
+    }
+    if (b->next && !b->next->live && b->next->span>=new_span-b->span) {
+        if (!heap_clear(rt,address+old_size,size-old_size)) return 0;
+        agr_heap_block *next=b->next;
+        uint32_t take=new_span-b->span;
+        b->span=new_span;b->requested=size;
+        next->address+=take;next->span-=take;
+        if (!next->span) heap_remove(rt,next);
+        return address;
+    }
+    uint32_t replacement=agr_malloc_aligned(rt,size,b->alignment);
+    if (!replacement) return 0;
+    unsigned char buffer[256];
+    for (uint32_t at=0;at<old_size;) {
+        uint32_t n=old_size-at>sizeof(buffer)?sizeof(buffer):old_size-at;
+        if (!read_mem(rt,address+at,buffer,n) || !write_mem(rt,replacement+at,buffer,n)) {
+            agr_free(rt,replacement);return 0;
+        }
+        at+=n;
+    }
+    agr_free(rt,address);return replacement;
 }
 
 static const void *range(const unsigned char *data,uint32_t size,uint32_t offset,uint32_t need){return offset<=size&&need<=size-offset?data+offset:NULL;}
@@ -218,7 +337,19 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
     else if(!strcmp(name,"fread")||!strcmp(name,"fwrite")){uint32_t total=b*c,done=0;unsigned char buffer[1024];if(!b){out->value=0;}else{for(uint32_t off=0;off<total;){uint32_t n=total-off>sizeof(buffer)?sizeof(buffer):total-off,k;if(!strcmp(name,"fread")){k=rt->cb.file_read?rt->cb.file_read(rt->cb.user,d,buffer,n):0;if(k&&!write_mem(rt,a+off,buffer,k))return fail(rt,"fread guest write");}else{if(!read_mem(rt,a+off,buffer,n))return fail(rt,"fwrite guest read");k=rt->cb.file_write?rt->cb.file_write(rt->cb.user,d,buffer,n):0;}done+=k;off+=k;if(k<n)break;}out->value=done/b;}}
     else if(!strcmp(name,"fseek")){out->value=rt->cb.file_seek?(uint32_t)rt->cb.file_seek(rt->cb.user,a,(int32_t)b,c):0xffffffffu;}
     else if(!strcmp(name,"ftell")){out->value=rt->cb.file_tell?(uint32_t)rt->cb.file_tell(rt->cb.user,a):0xffffffffu;}
-    else if(!strcmp(name,"malloc"))out->value=agr_malloc(rt,a);else if(!strcmp(name,"free"))agr_free(rt,a);else if(!strcmp(name,"realloc"))out->value=agr_realloc(rt,a,b);
+    else if(!strcmp(name,"malloc"))out->value=agr_malloc(rt,a);
+    else if(!strcmp(name,"calloc"))out->value=agr_calloc(rt,a,b);
+    else if(!strcmp(name,"free"))agr_free(rt,a);
+    else if(!strcmp(name,"realloc"))out->value=agr_realloc(rt,a,b);
+    else if(!strcmp(name,"memalign"))out->value=agr_malloc_aligned(rt,b,a);
+    else if(!strcmp(name,"aligned_alloc"))out->value=(a&&b%a==0)?agr_malloc_aligned(rt,b,a):0;
+    else if(!strcmp(name,"posix_memalign")){
+        if(!heap_alignment_valid(b)){out->value=EINVAL;}
+        else {uint32_t aligned=agr_malloc_aligned(rt,c,b);
+            if(!aligned)out->value=ENOMEM;
+            else if(!write_mem(rt,a,&aligned,4)){agr_free(rt,aligned);out->value=EINVAL;}
+        }
+    }
     else if(!strcmp(name,"__errno")){agr_thread*t=thread(rt);if(!t->errno_address)t->errno_address=agr_malloc(rt,4);out->value=t->errno_address;}
     else if(!strcmp(name,"clock_gettime")){rt->clock_ns+=16666667ULL;uint32_t v[2]={(uint32_t)(rt->clock_ns/1000000000ULL),(uint32_t)(rt->clock_ns%1000000000ULL)};write_mem(rt,b,v,8);}
     else if(!strcmp(name,"gettimeofday")){rt->clock_ns+=16666667ULL;uint32_t v[2]={(uint32_t)(rt->clock_ns/1000000000ULL),(uint32_t)((rt->clock_ns%1000000000ULL)/1000)};write_mem(rt,a,v,8);}

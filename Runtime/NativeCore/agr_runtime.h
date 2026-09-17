@@ -91,6 +91,8 @@ AGR_API const char *agr_last_error(agr_runtime *runtime);
 
 AGR_API uint32_t agr_alloc_static(agr_runtime *runtime, const void *data, uint32_t size, uint32_t alignment);
 AGR_API uint32_t agr_malloc(agr_runtime *runtime, uint32_t size);
+AGR_API uint32_t agr_malloc_aligned(agr_runtime *runtime, uint32_t size, uint32_t alignment);
+AGR_API uint32_t agr_calloc(agr_runtime *runtime, uint32_t count, uint32_t size);
 AGR_API void agr_free(agr_runtime *runtime, uint32_t address);
 AGR_API uint32_t agr_realloc(agr_runtime *runtime, uint32_t address, uint32_t size);
 AGR_API uint32_t agr_allocation_size(agr_runtime *runtime, uint32_t address);
