@@ -109,6 +109,11 @@ uint32_t agr_malloc(agr_runtime *rt, uint32_t size) {
 }
 void agr_free(agr_runtime *rt, uint32_t address) { for(uint32_t i=0;i<rt->allocation_count;i++)if(rt->allocations[i].address==address)rt->allocations[i].live=0; }
 uint32_t agr_allocation_size(agr_runtime *rt,uint32_t address){for(uint32_t i=0;i<rt->allocation_count;i++)if(rt->allocations[i].address==address&&rt->allocations[i].live)return rt->allocations[i].size;return 0;}
+void agr_heap_diagnostics(agr_runtime *rt,uint32_t out[5]){
+    if(!out)return;memset(out,0,5*sizeof(*out));if(!rt)return;
+    out[0]=rt->heap_ptr;out[1]=rt->heap_limit;out[2]=rt->allocation_count;
+    for(uint32_t i=0;i<rt->allocation_count;i++)if(rt->allocations[i].live){out[3]++;out[4]+=rt->allocations[i].size;}
+}
 uint32_t agr_realloc(agr_runtime *rt,uint32_t address,uint32_t size){
     if(!address)return agr_malloc(rt,size);if(!size){agr_free(rt,address);return 0;}uint32_t old=agr_allocation_size(rt,address),n=agr_malloc(rt,size);
     if(n&&old){uint32_t count=old<size?old:size;unsigned char buf[256];for(uint32_t off=0;off<count;){uint32_t k=count-off>sizeof(buf)?sizeof(buf):count-off;if(!read_mem(rt,address+off,buf,k)||!write_mem(rt,n+off,buf,k))break;off+=k;}}agr_free(rt,address);return n;

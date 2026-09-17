@@ -94,6 +94,7 @@ AGR_API uint32_t agr_malloc(agr_runtime *runtime, uint32_t size);
 AGR_API void agr_free(agr_runtime *runtime, uint32_t address);
 AGR_API uint32_t agr_realloc(agr_runtime *runtime, uint32_t address, uint32_t size);
 AGR_API uint32_t agr_allocation_size(agr_runtime *runtime, uint32_t address);
+AGR_API void agr_heap_diagnostics(agr_runtime *runtime, uint32_t out_values[5]);
 
 AGR_API int32_t agr_load_elf(agr_runtime *runtime, const char *name,
                              const void *data, uint32_t size, uint32_t base,

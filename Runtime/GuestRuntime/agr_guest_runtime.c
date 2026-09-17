@@ -725,6 +725,9 @@ int32_t agr_guest_watch_trace(agr_guest *g, uint32_t index, uint32_t *pc, uint32
     return g ? arm_interp_watch_trace(g->cpu,index,pc,instruction) : -1;
 }
 uint32_t agr_guest_current_thread_id(agr_guest *g) { return g ? arm_interp_watch_thread_tag(g->cpu) : 0; }
+void agr_guest_heap_diagnostics(agr_guest *g, uint32_t out[5]) {
+    if(out)agr_heap_diagnostics(g?g->runtime:NULL,out);
+}
 uint32_t agr_guest_new_primitive_array(agr_guest *g, uint32_t kind, const void *bytes, uint32_t count) {
     if (!g || g->array_count >= MAX_ARRAYS) return 0;
     uint32_t element = kind == AGR_ARRAY_SHORT ? 2 : 4;

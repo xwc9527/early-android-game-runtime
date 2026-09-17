@@ -348,6 +348,7 @@ static NSDictionary *throwDiagnostic(agr_guest *guest) {
         uint32_t pc=0,insn=0;if(agr_guest_watch_trace(guest,i,&pc,&insn)==0&&pc)
             [instructionTrace addObject:@{ @"pc":[NSString stringWithFormat:@"%08x",pc],@"instruction":[NSString stringWithFormat:@"%08x",insn] }];
     }
+    uint32_t heap[5]={0};agr_guest_heap_diagnostics(guest,heap);
     return @{ @"symbol":@"__cxa_throw",@"hits":@(agr_guest_watch_hits(guest)),
       @"pc":@"02882b50",@"caller_lr":[NSString stringWithFormat:@"%08x",regs[14]],
       @"exception_object":[NSString stringWithFormat:@"%08x",regs[0]],
@@ -357,6 +358,9 @@ static NSDictionary *throwDiagnostic(agr_guest *guest) {
       @"thread_id":@(agr_guest_current_thread_id(guest)),
       @"cpsr":[NSString stringWithFormat:@"%08x",agr_guest_watch_cpsr(guest)],
       @"registers":registers,@"exception_object_bytes":guestHex(objectBytes,sizeof(objectBytes)),
+      @"heap":@{ @"current":[NSString stringWithFormat:@"%08x",heap[0]],
+                   @"limit":[NSString stringWithFormat:@"%08x",heap[1]],
+                   @"allocation_count":@(heap[2]),@"live_count":@(heap[3]),@"live_bytes":@(heap[4]) },
       @"stack_words":stackWords,@"stack_code_candidates":codeCandidates,@"instruction_trace":instructionTrace };
 }
 
