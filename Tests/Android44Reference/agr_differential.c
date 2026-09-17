@@ -1,5 +1,4 @@
 #include "../../Runtime/AospLinker/agr_aosp_linker.h"
-#include <elf.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>

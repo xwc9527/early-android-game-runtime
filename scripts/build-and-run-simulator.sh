@@ -27,8 +27,8 @@ cargo build --manifest-path "$ROOT/Runtime/ArmInterpreter/Cargo.toml" --target a
 COMMON=(-target "$TARGET" -isysroot "$SDK" -mios-simulator-version-min=15.0 -O2)
 clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/NativeCore" -c "$ROOT/Runtime/NativeCore/agr_runtime.c" -o "$BUILD/obj/agr_runtime.o"
 clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/Process" -c "$ROOT/Runtime/Process/agr_guest_vma.c" -o "$BUILD/obj/agr_guest_vma.o"
-clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/Bionic" -I"$ROOT/Runtime/Process" -c "$ROOT/Runtime/Bionic/agr_bionic_mmap.c" -o "$BUILD/obj/agr_bionic_mmap.o"
-clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/AospLinker" -I"$ROOT/Runtime/Bionic" -I"$ROOT/Runtime/Process" -I"$ROOT/Runtime/NativeCore" -c "$ROOT/Runtime/AospLinker/agr_aosp_linker.c" -o "$BUILD/obj/agr_aosp_linker.o"
+clang++ "${COMMON[@]}" -std=gnu++98 -fno-exceptions -fno-rtti -I"$ROOT/Runtime/Bionic" -I"$ROOT/Runtime/Process" -c "$ROOT/Runtime/Bionic/agr_bionic_mmap.cpp" -o "$BUILD/obj/agr_bionic_mmap.o"
+clang++ "${COMMON[@]}" -std=gnu++98 -fno-exceptions -fno-rtti -I"$ROOT/Runtime/AospLinker" -I"$ROOT/Runtime/Bionic" -I"$ROOT/Runtime/Process" -I"$ROOT/Runtime/NativeCore" -c "$ROOT/Runtime/AospLinker/agr_aosp_linker.cpp" -o "$BUILD/obj/agr_aosp_linker.o"
 clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/NativeCore" -c "$ROOT/Tests/Conformance/agr_contracts.c" -o "$BUILD/obj/agr_contracts.o"
 clang "${COMMON[@]}" -std=c11 -DGL_GLES_PROTOTYPES=1 -I"$ROOT/Vendor/ANGLE-Headers" -I"$ROOT/Runtime/NativeCore" -I"$ROOT/Runtime/GuestRuntime" -c "$ROOT/Runtime/GuestRuntime/agr_guest_runtime.c" -o "$BUILD/obj/agr_guest_runtime.o"
 clang "${COMMON[@]}" -std=c11 -c "$ROOT/Runtime/GuestRuntime/agr_jni_methods.c" -o "$BUILD/obj/agr_jni_methods.o"

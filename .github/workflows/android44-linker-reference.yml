@@ -33,7 +33,11 @@ jobs:
           adb push android44-reference /data/local/tmp/android44-reference
           adb shell chmod 755 /data/local/tmp/android44-reference
           adb shell /data/local/tmp/android44-reference /data/local/tmp/libagr-reference.so | tr -d '\r' > android44.json
-          clang -std=c11 -O2 -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore Tests/Android44Reference/agr_differential.c Runtime/AospLinker/agr_aosp_linker.c Runtime/Bionic/agr_bionic_mmap.c Runtime/Process/agr_guest_vma.c -o agr-differential
+          clang -std=c11 -O2 -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Tests/Android44Reference/agr_differential.c -o agr-diff.o
+          clang -std=c11 -O2 -IRuntime/Process -c Runtime/Process/agr_guest_vma.c -o agr-vma.o
+          clang++ -std=gnu++98 -O2 -fno-exceptions -fno-rtti -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Runtime/AospLinker/agr_aosp_linker.cpp -o agr-linker.o
+          clang++ -std=gnu++98 -O2 -fno-exceptions -fno-rtti -IRuntime/Bionic -IRuntime/Process -c Runtime/Bionic/agr_bionic_mmap.cpp -o agr-mmap.o
+          clang++ agr-diff.o agr-vma.o agr-linker.o agr-mmap.o -o agr-differential
           ./agr-differential build-reference.so > agr.json
           python3 - <<'PY'
           import json
