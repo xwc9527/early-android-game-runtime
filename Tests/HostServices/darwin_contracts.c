@@ -44,6 +44,9 @@ int main(void) {
     char copy[sizeof(payload)] = {0};
     CHECK(host.file_read(host.context, fd, copy, sizeof(copy)) == (int64_t)sizeof(copy));
     CHECK(memcmp(copy, payload, sizeof(payload)) == 0);
+    int duplicate = host.file_dup(host.context, fd);
+    CHECK(duplicate >= 0);
+    CHECK(host.file_close(host.context, duplicate) == 0);
     CHECK(host.file_close(host.context, fd) == 0);
     unlink(path);
 

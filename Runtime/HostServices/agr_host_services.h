@@ -33,6 +33,7 @@ typedef struct agr_host_services {
     int64_t (*file_read)(void *context, int fd, void *data, uint64_t size);
     int64_t (*file_write)(void *context, int fd, const void *data, uint64_t size);
     int64_t (*file_seek)(void *context, int fd, int64_t offset, int whence);
+    int32_t (*file_dup)(void *context, int fd);
     int32_t (*file_close)(void *context, int fd);
 } agr_host_services;
 

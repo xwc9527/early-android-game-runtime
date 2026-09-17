@@ -89,6 +89,12 @@ static int64_t host_file_seek(void *context, int fd, int64_t offset, int whence)
     return result < 0 ? -errno : (int64_t)result;
 }
 
+static int32_t host_file_dup(void *context, int fd) {
+    (void)context;
+    int result = fcntl(fd, F_DUPFD, 0);
+    return result < 0 ? -errno : result;
+}
+
 static int32_t host_file_close(void *context, int fd) {
     (void)context;
     int result = close(fd);
@@ -110,6 +116,7 @@ int32_t agr_host_services_init_darwin(agr_host_services *services) {
         .file_read = host_file_read,
         .file_write = host_file_write,
         .file_seek = host_file_seek,
+        .file_dup = host_file_dup,
         .file_close = host_file_close,
     };
     return 0;
