@@ -1,0 +1,52 @@
+name: Android 4.4 linker differential
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Tests/Android44Reference/**','.github/workflows/android44-linker-reference.yml']
+jobs:
+  api19-reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: android-actions/setup-android@v3
+      - name: Install API19 ARM reference and NDK
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager 'platform-tools' 'emulator' 'system-images;android-19;default;armeabi-v7a' 'ndk;25.2.9519653'
+      - name: Build ARM32 reference fixture
+        run: |
+          TOOL="$ANDROID_SDK_ROOT/ndk/25.2.9519653/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          "$TOOL/armv7a-linux-androideabi19-clang" -shared -fPIC -Wl,-z,relro,-z,now Tests/Android44Reference/linker_fixture.c -o build-reference.so
+          "$TOOL/armv7a-linux-androideabi19-clang" -fPIE -pie Tests/Android44Reference/android44_reference.c -ldl -o android44-reference
+      - name: Boot Android 4.4 ARM emulator
+        run: |
+          echo no | avdmanager create avd -n agr-api19 -k 'system-images;android-19;default;armeabi-v7a' --force
+          nohup emulator -avd agr-api19 -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -no-accel > emulator.log 2>&1 &
+          adb wait-for-device
+          for i in $(seq 1 120); do [[ "$(adb shell getprop sys.boot_completed | tr -d '\r')" == 1 ]] && break; sleep 5; done
+          test "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" = 19
+      - name: Run reference and AGR differential
+        run: |
+          adb push build-reference.so /data/local/tmp/libagr-reference.so
+          adb push android44-reference /data/local/tmp/android44-reference
+          adb shell chmod 755 /data/local/tmp/android44-reference
+          adb shell /data/local/tmp/android44-reference /data/local/tmp/libagr-reference.so | tr -d '\r' > android44.json
+          clang -std=c11 -O2 -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore Tests/Android44Reference/agr_differential.c Runtime/AospLinker/agr_aosp_linker.c Runtime/Bionic/agr_bionic_mmap.c Runtime/Process/agr_guest_vma.c -o agr-differential
+          ./agr-differential build-reference.so > agr.json
+          python3 - <<'PY'
+          import json
+          a=json.load(open('android44.json')); b=json.load(open('agr.json'))
+          print('Android 4.4:',json.dumps(a,sort_keys=True)); print('AGR:',json.dumps(b,sort_keys=True))
+          assert a==b,(a,b)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android44-linker-differential
+          path: |
+            android44.json
+            agr.json
+            emulator.log
+            build-reference.so
