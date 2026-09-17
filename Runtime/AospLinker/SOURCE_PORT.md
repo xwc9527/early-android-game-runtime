@@ -43,3 +43,11 @@ AGR modifications are limited to the platform boundary:
 performs the raw map/protect/unmap operations requested by the ported AOSP
 policy. The former independently rewritten `agr_aosp_linker.c` is deleted and
 is not compiled by any production or test target.
+
+Current verification boundary: `agr_guest_vma` records segment/RELRO
+protections, but the flat ARM interpreter memory does not yet enforce those
+permissions on guest reads/writes/executes. `agr_aosp_linker_unload` is
+contract-tested, but production `agr_dlclose` does not yet release its image.
+Neither is implied by a passing layout/differential metadata check; the
+formal mapping closure remains open until these behaviors are verified or
+explicitly scoped out with evidence.
