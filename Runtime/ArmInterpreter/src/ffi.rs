@@ -55,6 +55,41 @@ pub unsafe extern "C" fn arm_interp_set_watch_pc(ptr: *mut c_void, pc: u32) {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn arm_interp_watch_hits(ptr: *mut c_void) -> u32 {
+    if ptr.is_null() { 0 } else { (*ptr.cast::<Handle>()).cpu.watch_hits() }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn arm_interp_watch_reg(ptr: *mut c_void, reg: u32) -> u32 {
+    if ptr.is_null() { 0 } else { (*ptr.cast::<Handle>()).cpu.watch_reg(reg as usize) }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn arm_interp_watch_cpsr(ptr: *mut c_void) -> u32 {
+    if ptr.is_null() { 0 } else { (*ptr.cast::<Handle>()).cpu.watch_cpsr() }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn arm_interp_set_thread_tag(ptr: *mut c_void, thread_tag: u32) {
+    if !ptr.is_null() { (*ptr.cast::<Handle>()).cpu.set_thread_tag(thread_tag); }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn arm_interp_watch_thread_tag(ptr: *mut c_void) -> u32 {
+    if ptr.is_null() { 0 } else { (*ptr.cast::<Handle>()).cpu.watch_thread_tag() }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn arm_interp_watch_trace(ptr: *mut c_void, index: u32,
+                                                   pc: *mut u32, insn: *mut u32) -> i32 {
+    if ptr.is_null() || pc.is_null() || insn.is_null() || index >= 64 { return -1; }
+    let entry = (*ptr.cast::<Handle>()).cpu.watch_trace_entry(index as usize);
+    *pc = entry.0;
+    *insn = entry.1;
+    0
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn arm_interp_set_cpsr(ptr: *mut c_void, value: u32) -> i32 {
     if ptr.is_null() { return -1; }
     (*ptr.cast::<Handle>()).cpu.set_cpsr(value);

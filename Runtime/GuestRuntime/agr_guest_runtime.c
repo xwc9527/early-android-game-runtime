@@ -16,6 +16,12 @@ extern int32_t arm_interp_read(void *, uint32_t, uint8_t *, uint32_t);
 extern int32_t arm_interp_set_reg(void *, uint32_t, uint32_t);
 extern uint32_t arm_interp_get_reg(void *, uint32_t);
 extern void arm_interp_set_watch_pc(void *, uint32_t);
+extern uint32_t arm_interp_watch_hits(void *);
+extern uint32_t arm_interp_watch_reg(void *, uint32_t);
+extern uint32_t arm_interp_watch_cpsr(void *);
+extern void arm_interp_set_thread_tag(void *, uint32_t);
+extern uint32_t arm_interp_watch_thread_tag(void *);
+extern int32_t arm_interp_watch_trace(void *, uint32_t, uint32_t *, uint32_t *);
 extern int32_t arm_interp_set_cpsr(void *, uint32_t);
 extern uint32_t arm_interp_get_cpsr(void *);
 extern int32_t arm_interp_run(void *, uint64_t *, uint32_t *);
@@ -646,6 +652,7 @@ static int dispatch_import(agr_guest *g, const char *name) {
 static int run_until_return(agr_guest *g) {
     for (;;) {
         uint64_t budget = g->run_budget; uint32_t svc = 0;
+        arm_interp_set_thread_tag(g->cpu, agr_current_thread(g->runtime));
         int32_t state = arm_interp_run(g->cpu, &budget, &svc);
         g->instruction_count += g->run_budget - budget;
         if (state != 1) {
@@ -711,6 +718,13 @@ uint32_t agr_guest_find_symbol(agr_guest *g, const char *symbol) {
 void agr_guest_set_watch_pc(agr_guest *g, uint32_t pc) {
     if (g) arm_interp_set_watch_pc(g->cpu, pc & ~1u);
 }
+uint32_t agr_guest_watch_hits(agr_guest *g) { return g ? arm_interp_watch_hits(g->cpu) : 0; }
+uint32_t agr_guest_watch_reg(agr_guest *g, uint32_t reg) { return g ? arm_interp_watch_reg(g->cpu,reg) : 0; }
+uint32_t agr_guest_watch_cpsr(agr_guest *g) { return g ? arm_interp_watch_cpsr(g->cpu) : 0; }
+int32_t agr_guest_watch_trace(agr_guest *g, uint32_t index, uint32_t *pc, uint32_t *instruction) {
+    return g ? arm_interp_watch_trace(g->cpu,index,pc,instruction) : -1;
+}
+uint32_t agr_guest_current_thread_id(agr_guest *g) { return g ? arm_interp_watch_thread_tag(g->cpu) : 0; }
 uint32_t agr_guest_new_primitive_array(agr_guest *g, uint32_t kind, const void *bytes, uint32_t count) {
     if (!g || g->array_count >= MAX_ARRAYS) return 0;
     uint32_t element = kind == AGR_ARRAY_SHORT ? 2 : 4;

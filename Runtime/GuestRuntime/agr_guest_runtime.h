@@ -26,6 +26,12 @@ int32_t agr_guest_load_elf(agr_guest *guest, const char *name,
                            const void *bytes, uint32_t size, uint32_t base);
 uint32_t agr_guest_find_symbol(agr_guest *guest, const char *symbol);
 void agr_guest_set_watch_pc(agr_guest *guest, uint32_t pc);
+uint32_t agr_guest_watch_hits(agr_guest *guest);
+uint32_t agr_guest_watch_reg(agr_guest *guest, uint32_t reg);
+uint32_t agr_guest_watch_cpsr(agr_guest *guest);
+int32_t agr_guest_watch_trace(agr_guest *guest, uint32_t index,
+                              uint32_t *pc, uint32_t *instruction);
+uint32_t agr_guest_current_thread_id(agr_guest *guest);
 uint32_t agr_guest_new_primitive_array(agr_guest *guest, uint32_t kind,
                                        const void *bytes, uint32_t count);
 int32_t agr_guest_call_symbol(agr_guest *guest, const char *symbol,

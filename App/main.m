@@ -318,6 +318,48 @@ static uint32_t signatureChangedTiles(const uint8_t a[TRAJECTORY_SIGNATURE_SIZE]
     uint32_t changed=0; for(int i=0;i<TRAJECTORY_SIGNATURE_SIZE;i++) if(abs((int)a[i]-(int)b[i])>=delta) changed++; return changed;
 }
 
+static NSString *guestHex(const uint8_t *bytes, uint32_t size) {
+    NSMutableString *out=[NSMutableString stringWithCapacity:size*2];
+    for(uint32_t i=0;i<size;i++)[out appendFormat:@"%02x",bytes[i]];
+    return out;
+}
+
+static NSDictionary *throwDiagnostic(agr_guest *guest) {
+    if(!guest||agr_guest_watch_hits(guest)==0)return @{};
+    uint32_t regs[16];for(uint32_t i=0;i<16;i++)regs[i]=agr_guest_watch_reg(guest,i);
+    NSMutableArray *registers=[NSMutableArray arrayWithCapacity:16];
+    for(uint32_t i=0;i<16;i++)[registers addObject:[NSString stringWithFormat:@"%08x",regs[i]]];
+    uint32_t typeNamePtr=0; agr_guest_read(guest,regs[1]+4,&typeNamePtr,4);
+    uint8_t typeNameBytes[192]={0};
+    if(typeNamePtr)agr_guest_read(guest,typeNamePtr,typeNameBytes,sizeof(typeNameBytes)-1);
+    NSString *typeName=[[NSString alloc] initWithUTF8String:(const char *)typeNameBytes]?:@"";
+    uint8_t objectBytes[64]={0};
+    if(regs[0])agr_guest_read(guest,regs[0],objectBytes,sizeof(objectBytes));
+    uint32_t stack[96]={0}; if(regs[13])agr_guest_read(guest,regs[13],stack,sizeof(stack));
+    NSMutableArray *stackWords=[NSMutableArray arrayWithCapacity:96],*codeCandidates=[NSMutableArray array];
+    for(uint32_t i=0;i<96;i++){
+        [stackWords addObject:[NSString stringWithFormat:@"%08x",stack[i]]];
+        uint32_t address=stack[i]&~1u;
+        if(address>=0x02800000u&&address<0x02900000u)
+            [codeCandidates addObject:@{ @"stack_index":@(i),@"address":[NSString stringWithFormat:@"%08x",stack[i]] }];
+    }
+    NSMutableArray *instructionTrace=[NSMutableArray array];
+    for(uint32_t i=0;i<64;i++){
+        uint32_t pc=0,insn=0;if(agr_guest_watch_trace(guest,i,&pc,&insn)==0&&pc)
+            [instructionTrace addObject:@{ @"pc":[NSString stringWithFormat:@"%08x",pc],@"instruction":[NSString stringWithFormat:@"%08x",insn] }];
+    }
+    return @{ @"symbol":@"__cxa_throw",@"hits":@(agr_guest_watch_hits(guest)),
+      @"pc":@"02882b50",@"caller_lr":[NSString stringWithFormat:@"%08x",regs[14]],
+      @"exception_object":[NSString stringWithFormat:@"%08x",regs[0]],
+      @"type_info":[NSString stringWithFormat:@"%08x",regs[1]],
+      @"type_name_pointer":[NSString stringWithFormat:@"%08x",typeNamePtr],@"type_name":typeName,
+      @"destructor":[NSString stringWithFormat:@"%08x",regs[2]],
+      @"thread_id":@(agr_guest_current_thread_id(guest)),
+      @"cpsr":[NSString stringWithFormat:@"%08x",agr_guest_watch_cpsr(guest)],
+      @"registers":registers,@"exception_object_bytes":guestHex(objectBytes,sizeof(objectBytes)),
+      @"stack_words":stackWords,@"stack_code_candidates":codeCandidates,@"instruction_trace":instructionTrace };
+}
+
 static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *failures, BOOL interactive) {
     NSData *elf = bundleData(@"kungfoo-native",@"so");
     agr_guest *guest = agr_guest_create();
@@ -814,7 +856,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
       @"guest_pc":[NSString stringWithFormat:@"%08x",guest?agr_guest_program_counter(guest):0],
       @"asset_opens":@(guest?agr_guest_asset_open_count(guest):0),
       @"input_consumed":@(guest?agr_guest_input_consumed_count(guest):0),
-      @"recent_calls":calls,@"recent_inputs":recentInputs,
+      @"recent_calls":calls,@"recent_inputs":recentInputs,@"throw_diagnostic":throwDiagnostic(guest),
       @"android_log":[NSString stringWithUTF8String:guest?agr_guest_last_android_log(guest):""],
       @"runtime_error":[NSString stringWithUTF8String:guest?agr_guest_last_error(guest):""],
       @"failure_signature":failure?:@""};

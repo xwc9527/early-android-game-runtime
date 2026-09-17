@@ -84,6 +84,13 @@ pub struct InterpreterCpu {
     dbg_last_pc: u32,
     dbg_last_insn: u32,
     watch_pc: u32,
+    watch_hits: u32,
+    watch_regs: [u32; 16],
+    watch_cpsr: u32,
+    watch_trace: [(u32, u32); 64],
+    watch_trace_pos: usize,
+    thread_tag: u32,
+    watch_thread_tag: u32,
     /// [hang debug] CCNode::visit 入口探针:命中次数 + 最近 16 个被 visit 的节点指针环。
     /// 卡死时 dump:环里反复出现同一批指针=循环遍历(cyclic/重复渲染),全是新指针=节点爆炸。
     visit_n: u64,
@@ -123,6 +130,13 @@ impl InterpreterCpu {
             dbg_last_pc: 0,
             dbg_last_insn: 0,
             watch_pc: 0,
+            watch_hits: 0,
+            watch_regs: [0; 16],
+            watch_cpsr: 0,
+            watch_trace: [(0, 0); 64],
+            watch_trace_pos: 0,
+            thread_tag: 0,
+            watch_thread_tag: 0,
             visit_n: 0,
             visit_ring: [0; 16],
             fprobe_n: 0,
@@ -163,6 +177,15 @@ impl InterpreterCpu {
         &mut self.regs
     }
     pub fn set_watch_pc(&mut self, pc: u32) { self.watch_pc = pc; }
+    pub fn watch_hits(&self) -> u32 { self.watch_hits }
+    pub fn watch_reg(&self, reg: usize) -> u32 { self.watch_regs.get(reg).copied().unwrap_or(0) }
+    pub fn watch_cpsr(&self) -> u32 { self.watch_cpsr }
+    pub fn set_thread_tag(&mut self, thread_tag: u32) { self.thread_tag = thread_tag; }
+    pub fn watch_thread_tag(&self) -> u32 { self.watch_thread_tag }
+    pub fn watch_trace_entry(&self, index: usize) -> (u32, u32) {
+        if index >= self.watch_trace.len() { return (0, 0); }
+        self.watch_trace[(self.watch_trace_pos + index) % self.watch_trace.len()]
+    }
     pub fn cpsr(&self) -> u32 {
         self.cpsr
     }
@@ -539,6 +562,12 @@ impl InterpreterCpu {
     fn step_one(&mut self, mem: &mut Mem) -> CpuState {
         let pc = self.regs[PC];
         if self.watch_pc != 0 && pc == self.watch_pc {
+            self.watch_hits = self.watch_hits.saturating_add(1);
+            self.watch_regs = self.regs;
+            self.watch_cpsr = self.cpsr;
+            self.watch_trace = self.trace;
+            self.watch_trace_pos = self.trace_pos;
+            self.watch_thread_tag = self.thread_tag;
             eprintln!("guest watch pc={pc:08x} r0={:08x} r1={:08x} r2={:08x} lr={:08x}",
                       self.regs[0], self.regs[1], self.regs[2], self.regs[14]);
         }
