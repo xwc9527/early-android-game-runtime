@@ -29,7 +29,8 @@ def capture(name, command, timeout=12):
 
 
 def snapshot():
-    evidence = {"reason": "simulator_smoke_timeout", "captured_at_epoch": time.time()}
+    evidence = {"reason": "simulator_smoke_timeout", "captured_at_epoch": time.time(),
+                "guest_pc": "unavailable", "recent_calls": [], "runtime_failure": "unavailable"}
     evidence["processes"] = capture("timeout-processes.txt", ["ps", "-axo", "pid,ppid,stat,etime,comm"])
     device_file = ARTIFACTS / "simulator-device.txt"
     if not device_file.exists():
@@ -51,15 +52,28 @@ def snapshot():
                     shutil.copy2(source, ARTIFACTS / ("timeout-" + name))
                     copied.append(name)
             evidence["app_documents"] = copied
+            status_path = ARTIFACTS / "timeout-runtime-status.json"
+            if status_path.is_file():
+                try:
+                    status = json.loads(status_path.read_text(encoding="utf-8"))
+                    evidence["guest_pc"] = status.get("guest_pc", "unavailable")
+                    evidence["recent_calls"] = status.get("recent_calls", [])
+                    evidence["runtime_failure"] = status.get("failure_signature") or status.get("runtime_error") or ""
+                    evidence["last_frame"] = status.get("frame")
+                    evidence["last_android_log"] = status.get("android_log")
+                except (OSError, ValueError) as exc:
+                    evidence["runtime_status_parse_error"] = str(exc)
         else:
             evidence["app_container_error"] = container.stderr.strip()
     except (OSError, subprocess.TimeoutExpired) as exc:
         evidence["app_container_error"] = str(exc)
     processes = (ARTIFACTS / "timeout-processes.txt").read_text(encoding="utf-8", errors="replace")
-    pids = [line.split()[0] for line in processes.splitlines()[1:] if line.split() and line.split()[-1].endswith("/AGRSimulator")]
-    if pids:
-        evidence["host_stack"] = capture("timeout-host-stack.txt", ["sample", pids[0], "2"], 12)
-        evidence["app_pid"] = pids[0]
+    app_processes = [line for line in processes.splitlines()[1:] if line.split() and line.split()[-1].endswith("AGRSimulator")]
+    if app_processes:
+        pid = app_processes[0].split()[0]
+        evidence["host_process_state"] = app_processes[0].strip()
+        evidence["host_stack"] = capture("timeout-host-stack.txt", ["sample", pid, "2"], 12)
+        evidence["app_pid"] = pid
     return evidence
 
 
