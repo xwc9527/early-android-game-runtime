@@ -34,6 +34,8 @@ jobs:
         env:
           ZERO_INPUT_AB: "1"
         run: bash scripts/build-and-run-simulator.sh
+      - name: Run existing Runtime and real-game regressions
+        run: bash scripts/run-simulator-regressions.sh
       - name: Upload Simulator evidence
         if: always()
         uses: actions/upload-artifact@v4
