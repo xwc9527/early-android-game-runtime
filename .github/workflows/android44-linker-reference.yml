@@ -28,7 +28,10 @@ jobs:
       - name: Boot Android 4.4 ARM emulator
         run: |
           SDK_TOOLS="$(cat sdk-tools-path.txt)"
-          echo no | "$SDK_TOOLS/avdmanager" create avd --force --name agr-api19-arm --package 'system-images;android-19;default;armeabi-v7a'
+          export ANDROID_AVD_HOME="$HOME/.android/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          "$SDK_TOOLS/avdmanager" create avd --force --name agr-api19-arm --device pixel --package 'system-images;android-19;default;armeabi-v7a'
+          emulator -list-avds | grep -q '^agr-api19-arm$'
           nohup emulator @agr-api19-arm -no-window -no-audio -no-snapshot -wipe-data -no-boot-anim -gpu swiftshader_indirect -accel off > emulator.log 2>&1 &
           EMULATOR_PID=$!
           for i in $(seq 1 180); do
