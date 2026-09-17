@@ -2,6 +2,11 @@ name: iOS Simulator smoke (bounded)
 
 on:
   workflow_dispatch:
+    inputs:
+      timeout_seconds:
+        description: Smoke deadline in seconds (capped at 900; use 1 to test evidence capture)
+        required: false
+        default: '900'
 
 jobs:
   smoke:
@@ -10,7 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build and run Simulator smoke with evidence deadline
-        run: python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds 900
+        env:
+          SMOKE_TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
+        run: python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds "$SMOKE_TIMEOUT_SECONDS"
       - name: Upload smoke and timeout evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -76,6 +76,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--timeout-seconds", type=int, default=900)
     args = parser.parse_args()
+    deadline = max(1, min(args.timeout_seconds, 900))
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, ZERO_INPUT_AB="1")
     child = subprocess.Popen(["bash", "scripts/build-and-run-simulator.sh"], cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1, start_new_session=True)
@@ -86,10 +87,10 @@ def main():
     for thread in threads:
         thread.start()
     try:
-        result = child.wait(timeout=args.timeout_seconds)
+        result = child.wait(timeout=deadline)
     except subprocess.TimeoutExpired:
         evidence = snapshot()
-        evidence["timeout_seconds"] = args.timeout_seconds
+        evidence["timeout_seconds"] = deadline
         evidence["last_progress_lines"] = (ARTIFACTS / "smoke-stdout.log").read_text(encoding="utf-8", errors="replace").splitlines()[-20:]
         (ARTIFACTS / "simulator-smoke-timeout.json").write_text(json.dumps(evidence, indent=2), encoding="utf-8")
         try:
