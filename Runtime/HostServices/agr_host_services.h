@@ -1,0 +1,45 @@
+#ifndef AGR_HOST_SERVICES_H
+#define AGR_HOST_SERVICES_H
+
+#include <stddef.h>
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Host-only primitives. Android-visible policy belongs above this interface. */
+typedef enum agr_host_clock {
+    AGR_HOST_CLOCK_MONOTONIC = 1,
+    AGR_HOST_CLOCK_REALTIME = 2,
+} agr_host_clock;
+
+typedef enum agr_host_vm_protection {
+    AGR_HOST_VM_NONE  = 0,
+    AGR_HOST_VM_READ  = 1,
+    AGR_HOST_VM_WRITE = 2,
+    AGR_HOST_VM_EXEC  = 4,
+} agr_host_vm_protection;
+
+typedef struct agr_host_services {
+    void *context;
+    uint32_t page_size;
+    int32_t (*clock_ns)(void *context, agr_host_clock clock, uint64_t *value);
+    int32_t (*vm_reserve)(void *context, uint64_t size, void **base);
+    int32_t (*vm_protect)(void *context, void *base, uint64_t size,
+                          uint32_t protection);
+    int32_t (*vm_release)(void *context, void *base, uint64_t size);
+    int32_t (*file_open)(void *context, const char *path, int flags, int mode);
+    int64_t (*file_read)(void *context, int fd, void *data, uint64_t size);
+    int64_t (*file_write)(void *context, int fd, const void *data, uint64_t size);
+    int64_t (*file_seek)(void *context, int fd, int64_t offset, int whence);
+    int32_t (*file_close)(void *context, int fd);
+} agr_host_services;
+
+/* Installs Darwin primitives only. It does not implement Bionic semantics. */
+int32_t agr_host_services_init_darwin(agr_host_services *services);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
