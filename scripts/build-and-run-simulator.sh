@@ -62,6 +62,33 @@ codesign --force --sign - "$APP/Frameworks/libEGL.framework"; codesign --force -
 DEVICE="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["udid"] for xs in d.values() for x in xs if x["name"]=="iPhone 16 Pro"))')"
 xcrun simctl boot "$DEVICE" 2>/dev/null || true; xcrun simctl bootstatus "$DEVICE" -b
 xcrun simctl install "$DEVICE" "$APP"
+if [[ "${ZERO_INPUT_AB:-0}" == "1" ]]; then
+  ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
+  DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
+  rm -f "$DATA/Documents/runtime-status.json" "$DATA/Documents/runtime-failure.json" \
+    "$DATA/Documents/debug-failure.json" "$DATA/Documents/manual-replay.json" \
+    "$DATA/Documents/failure-frame.png"
+  xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --interactive
+  for _ in $(seq 1 60); do
+    [[ -s "$DATA/Documents/runtime-failure.json" ]] && break
+    [[ -s "$DATA/Documents/runtime-status.json" ]] && \
+      python3 - "$DATA/Documents/runtime-status.json" <<'PY' && break || true
+import json,sys
+d=json.load(open(sys.argv[1]))
+raise SystemExit(0 if d.get("frame",0) >= 60 else 1)
+PY
+    sleep 1
+  done
+  for name in runtime-status.json runtime-failure.json debug-failure.json manual-replay.json failure-frame.png kungfoo-frame.png; do
+    [[ -s "$DATA/Documents/$name" ]] && cp "$DATA/Documents/$name" "$ARTIFACTS/$name"
+  done
+  xcrun simctl io "$DEVICE" screenshot "$ARTIFACTS/simulator-zero-input.png"
+  shasum -a 256 "$ROOT/App/Resources/kungfoo.apk" "$APP/AGRSimulator" > "$ARTIFACTS/zero-input-hashes.txt"
+  printf '%s\n' "$DEVICE" > "$ARTIFACTS/zero-input-device.txt"
+  test -s "$ARTIFACTS/runtime-status.json"
+  cat "$ARTIFACTS/runtime-status.json"
+  exit 0
+fi
 if [[ "${INTERACTIVE:-0}" == "1" ]]; then
   open -a Simulator
   xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --interactive

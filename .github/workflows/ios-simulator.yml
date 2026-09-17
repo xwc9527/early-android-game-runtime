@@ -29,6 +29,8 @@ jobs:
           xcrun simctl list devices available
           xcrun --sdk iphonesimulator --show-sdk-path
       - name: Build and run native Runtime smoke in Simulator
+        env:
+          ZERO_INPUT_AB: "1"
         run: bash scripts/build-and-run-simulator.sh
       - name: Upload Simulator evidence
         if: always()
