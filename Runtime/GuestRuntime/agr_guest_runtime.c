@@ -773,18 +773,11 @@ int32_t agr_guest_call_address(agr_guest *g, uint32_t address, const uint32_t *a
     return call_address(g, address, args, count, result);
 }
 int32_t agr_guest_run_constructors_limit(agr_guest *g, uint32_t limit, uint32_t *executed) {
-    uint32_t total = agr_constructor_count(g->runtime), done = 0;
-    if (total > limit) total = limit;
-    for (uint32_t i = 0; i < total; i++) {
-        uint32_t target = agr_constructor_address(g->runtime, i);
-        if (target && call_address(g, target, NULL, 0, NULL)) {
-            char cause[sizeof(g->error)]; snprintf(cause, sizeof(cause), "%s", g->error);
-            snprintf(g->error, sizeof(g->error), "constructor[%u] target=0x%08x: %.180s", i, target, cause);
-            if (executed) *executed = done; return -1;
-        }
-        if (target) done++;
-    }
-    if (executed) *executed = done;
+    if (!g) return -1;
+    /* The KitKat linker invokes constructors during dlopen. This legacy
+       entrypoint reports those calls without executing them again. */
+    uint32_t total = agr_constructor_count(g->runtime);
+    if (executed) *executed = total < limit ? total : limit;
     return 0;
 }
 int32_t agr_guest_run_constructors(agr_guest *g, uint32_t *executed) {

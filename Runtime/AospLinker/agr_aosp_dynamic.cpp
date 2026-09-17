@@ -194,7 +194,7 @@ static int soinfo_relocate(agr_aosp_dynamic*rt,soinfo*si,uint32_t rel_vaddr,uint
   }return 0;
 }
 
-static bool CallFunction(agr_aosp_dynamic*rt,soinfo*si,uint32_t function,bool fini){if(!function||function==0xffffffffu)return true;if(rt->cb.invoke_guest_function){if(rt->cb.invoke_guest_function(rt->cb.opaque,function)!=0){set_error(rt,"guest function failed in %s",si->name.c_str(),NULL);return false;}}else(fini?rt->finalizers:rt->constructors).push_back(function);return true;}
+static bool CallFunction(agr_aosp_dynamic*rt,soinfo*si,uint32_t function,bool fini){if(!function||function==0xffffffffu)return true;if(rt->cb.invoke_guest_function&&rt->cb.invoke_guest_function(rt->cb.opaque,function)!=0){set_error(rt,"guest function failed in %s",si->name.c_str(),NULL);return false;}(fini?rt->finalizers:rt->constructors).push_back(function);return true;}
 static bool CallArray(agr_aosp_dynamic*rt,soinfo*si,uint32_t array,uint32_t count,bool reverse,bool fini){if(!array)return true;for(int i=reverse?(int)count-1:0;i!=(reverse?-1:(int)count);i+=reverse?-1:1){uint32_t fn=0;if(!read_word(rt,array+(uint32_t)i*4,&fn)){set_error(rt,"constructor/finalizer array read failed in %s",si->name.c_str(),NULL);return false;}if(!CallFunction(rt,si,fn,fini))return false;}return true;}
 
 /* AOSP soinfo::CallConstructors/CallDestructors, preserving recursion/order. */
