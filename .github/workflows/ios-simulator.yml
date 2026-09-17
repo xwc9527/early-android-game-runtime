@@ -30,6 +30,8 @@ jobs:
           xcrun --sdk iphonesimulator --show-sdk-path
       - name: NativeCore allocator stress and sanitizer tests
         run: bash scripts/test-nativecore-allocator.sh
+      - name: JNI method registry stress and sanitizer tests
+        run: bash scripts/test-jni-methods.sh
       - name: Build and run native Runtime smoke in Simulator
         env:
           ZERO_INPUT_AB: "1"

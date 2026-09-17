@@ -28,6 +28,7 @@ COMMON=(-target "$TARGET" -isysroot "$SDK" -miphoneos-version-min=15.0 -O2)
 clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/NativeCore" -c "$ROOT/Runtime/NativeCore/agr_runtime.c" -o "$BUILD/obj/agr_runtime.o"
 clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/NativeCore" -c "$ROOT/Tests/Conformance/agr_contracts.c" -o "$BUILD/obj/agr_contracts.o"
 clang "${COMMON[@]}" -std=c11 -DGL_GLES_PROTOTYPES=1 -I"$ROOT/Vendor/ANGLE-Headers" -I"$ROOT/Runtime/NativeCore" -I"$ROOT/Runtime/GuestRuntime" -c "$ROOT/Runtime/GuestRuntime/agr_guest_runtime.c" -o "$BUILD/obj/agr_guest_runtime.o"
+clang "${COMMON[@]}" -std=c11 -c "$ROOT/Runtime/GuestRuntime/agr_jni_methods.c" -o "$BUILD/obj/agr_jni_methods.o"
 
 AOSP="$ROOT/Vendor/AOSP"; AFW="$ROOT/Runtime/AndroidFw"; BITMAP="$ROOT/Runtime/Bitmap"
 AFW_INCLUDES=(-I"$AFW/compat/include" -I"$AFW" -I"$AOSP/frameworks-base/include" -I"$AOSP/frameworks-native/include" -I"$AOSP/system-core/include")
@@ -54,7 +55,7 @@ DEX_SOURCES=("$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c"
 INDEX=0; DEX_OBJECTS=()
 for SOURCE in "${DEX_SOURCES[@]}"; do OBJECT="$BUILD/obj/dex-$INDEX.o"; clang "${COMMON[@]}" -std=gnu11 -DGL_GLES_PROTOTYPES=1 -I"$ROOT/Vendor/ANGLE-Headers" -I"$DEX_INCLUDE" -c "$SOURCE" -o "$OBJECT"; DEX_OBJECTS+=("$OBJECT"); INDEX=$((INDEX+1)); done
 clang "${COMMON[@]}" -fobjc-arc -DAGR_DEVICE_INTERACTIVE=1 -I"$ROOT/Vendor/ANGLE-Headers" -I"$ROOT/Runtime/NativeCore" -I"$ROOT/Runtime/GuestRuntime" -I"$DEX_INCLUDE" -I"$AFW" -I"$BITMAP" -c "$ROOT/App/main.m" -o "$BUILD/obj/main.o"
-clang++ "${COMMON[@]}" -Wl,-dead_strip -Wl,-rpath,@executable_path/Frameworks -F"$ANGLE_FRAMEWORKS" "$BUILD/obj/main.o" "$BUILD/obj/agr_runtime.o" "$BUILD/obj/agr_contracts.o" "$BUILD/obj/agr_guest_runtime.o" "${DEX_OBJECTS[@]}" "${AFW_OBJECTS[@]}" "${SKIA_OBJECTS[@]}" "${PNG_OBJECTS[@]}" "$ROOT/Runtime/ArmInterpreter/target/aarch64-apple-ios/release/libtouchhle_arm_interpreter.a" -lz -framework UIKit -framework Foundation -framework CoreGraphics -framework Security -framework Metal -framework QuartzCore -framework libEGL -framework libGLESv2 -o "$APP/AGRSimulator"
+clang++ "${COMMON[@]}" -Wl,-dead_strip -Wl,-rpath,@executable_path/Frameworks -F"$ANGLE_FRAMEWORKS" "$BUILD/obj/main.o" "$BUILD/obj/agr_runtime.o" "$BUILD/obj/agr_contracts.o" "$BUILD/obj/agr_guest_runtime.o" "$BUILD/obj/agr_jni_methods.o" "${DEX_OBJECTS[@]}" "${AFW_OBJECTS[@]}" "${SKIA_OBJECTS[@]}" "${PNG_OBJECTS[@]}" "$ROOT/Runtime/ArmInterpreter/target/aarch64-apple-ios/release/libtouchhle_arm_interpreter.a" -lz -framework UIKit -framework Foundation -framework CoreGraphics -framework Security -framework Metal -framework QuartzCore -framework libEGL -framework libGLESv2 -o "$APP/AGRSimulator"
 cp "$ROOT/App/Info.plist" "$APP/Info.plist"; cp "$ROOT/App/Resources/"* "$APP/"
 /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier ${IOS_BUNDLE_ID:-dev.agr.simulator}" "$APP/Info.plist"
 /usr/libexec/PlistBuddy -c 'Add :UIFileSharingEnabled bool true' "$APP/Info.plist"

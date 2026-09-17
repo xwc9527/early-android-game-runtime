@@ -1,4 +1,5 @@
 #include "agr_guest_runtime.h"
+#include "agr_jni_methods.h"
 #include "agr_runtime.h"
 #include "../AndroidFw/agr_androidfw.h"
 #include "../DexLoom/game_dex_runner.h"
@@ -47,7 +48,6 @@ typedef struct { int size; GLenum type; int stride; uint32_t pointer; int active
 typedef struct { uint32_t read_fd, write_fd, read_offset, size; uint8_t data[4096]; int live; } virtual_pipe;
 typedef struct { uint32_t fd, ident, events, callback, data; } looper_fd;
 typedef struct { uint32_t handle; agr_afw_asset *asset; } asset_entry;
-typedef struct { uint32_t handle; char name[96], signature[128]; } jni_method;
 typedef struct { uint32_t handle; char *text; } jni_string;
 typedef struct { uint32_t handle, type, action, pointer_count, pointer_id; float x, y; } input_event;
 
@@ -78,7 +78,7 @@ struct agr_guest {
     asset_entry open_assets[64];
     uint32_t next_asset_handle;
     agr_dex_game *dex_game;
-    jni_method methods[64]; uint32_t method_count;
+    agr_jni_method_table methods;
     jni_string strings[64]; uint32_t string_count;
     const char *recent_imports[12];
     uint32_t recent_import_index;
@@ -233,14 +233,16 @@ static int dispatch_jni(agr_guest *g, uint32_t address) {
     uint32_t slot = (address - TRAP_BASE) / 4;
     if (slot == 31) { guest_return(g,0x64000001u,0); return 1; }
     if (slot == 33) {
-        if (g->method_count >= 64) { set_error(g,"JNI method handle table full"); return -1; }
-        jni_method *method=&g->methods[g->method_count++];
-        method->handle=0x65000000u+(g->method_count-1)*4;
-        if (read_guest_string(g,argument(g,2),method->name,sizeof(method->name)) ||
-            read_guest_string(g,argument(g,3),method->signature,sizeof(method->signature))) {
+        char name[256], signature[256];
+        if (read_guest_string(g,argument(g,2),name,sizeof(name)) ||
+            read_guest_string(g,argument(g,3),signature,sizeof(signature))) {
             set_error(g,"JNI GetMethodID invalid strings"); return -1;
         }
-        guest_return(g,method->handle,0); return 1;
+        uint32_t handle=0;
+        if (agr_jni_method_id(&g->methods,argument(g,1),name,signature,&handle)) {
+            set_error(g,"JNI GetMethodID registry allocation failed"); return -1;
+        }
+        guest_return(g,handle,0); return 1;
     }
     if (slot == 167) {
         if (g->string_count >= 64) { set_error(g,"JNI string handle table full"); return -1; }
@@ -256,8 +258,8 @@ static int dispatch_jni(agr_guest *g, uint32_t address) {
         guest_return(g,slot==21 ? argument(g,1) : 0,0); return 1;
     }
     if (slot >= 49 && slot <= 51) {
-        uint32_t method_handle=argument(g,2); jni_method *method=NULL;
-        for (uint32_t i=0; i<g->method_count; i++) if(g->methods[i].handle==method_handle) method=&g->methods[i];
+        uint32_t method_handle=argument(g,2);
+        const agr_jni_method *method=agr_jni_method_lookup(&g->methods,method_handle);
         if (!method) { set_error(g,"JNI CallIntMethod unknown method"); return -1; }
         if (!strcmp(method->name,"loadImage") && !strcmp(method->signature,"(Ljava/lang/String;)I")) {
             uint32_t string_handle=slot==49 ? argument(g,3) : read_u32(g,argument(g,3));
@@ -700,6 +702,7 @@ void agr_guest_destroy(agr_guest *g) {
     for (uint32_t i = 0; i < 64; i++) if (g->open_assets[i].asset) agr_afw_close(g->open_assets[i].asset);
     if (g->assets) agr_afw_destroy(g->assets);
     if (g->dex_game) agr_dex_game_destroy(g->dex_game);
+    agr_jni_method_table_destroy(&g->methods);
     for (uint32_t i=0; i<g->string_count; i++) free(g->strings[i].text);
     if (g->display != EGL_NO_DISPLAY) { eglMakeCurrent(g->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT); if (g->context) eglDestroyContext(g->display, g->context); if (g->surface) eglDestroySurface(g->display, g->surface); eglTerminate(g->display); }
     for (uint32_t i = 0; i < g->trap_count; i++) free(g->traps[i].name);
