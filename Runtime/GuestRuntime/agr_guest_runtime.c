@@ -757,7 +757,7 @@ static int32_t call_address(agr_guest *g, uint32_t target, const uint32_t *args,
     uint32_t stack_top = STACK_TOP - g->call_depth * 0x4000u;
     for (uint32_t i = 4; i < count; i++) write_u32(g, stack_top + (i - 4) * 4, args[i]);
     for (uint32_t i = 0; i < 4; i++) arm_interp_set_reg(g->cpu, i, i < count ? args[i] : 0);
-    uint32_t cpsr = arm_interp_get_cpsr(g->cpu); arm_interp_set_cpsr(g->cpu, (target & 1) ? (cpsr | 0x20) : (cpsr & ~0x20));
+    arm_interp_set_cpsr(g->cpu, (target & 1) ? 0x20u : 0u);
     arm_interp_set_reg(g->cpu, 13, stack_top); arm_interp_set_reg(g->cpu, 14, STOP_ADDR); arm_interp_set_reg(g->cpu, 15, target & ~1u);
     g->call_depth++;
     int rc = run_until_return(g);

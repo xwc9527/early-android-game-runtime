@@ -26,11 +26,11 @@ static void*read_file(const char*path,uint32_t*size){FILE*f=fopen(path,"rb");lon
 static int reg(agr_runtime*r,const char*name,const char*path,uint32_t base){uint32_t n=0;void*p=read_file(path,&n);int rc=p?agr_register_elf_source(r,name,p,n,base):-1;free(p);return rc;}
 static const char*kind(const char*e){if(!e)return "none";if(strstr(e,"not found")||strstr(e,"could not load"))return "missing_dependency";if(strstr(e,"cannot locate")||strstr(e,"undefined symbol"))return "missing_symbol";return "other";}
 static int32_t call_guest(harness*h,uint32_t target,const uint32_t*args,uint32_t count,int32_t*result){
-  uint32_t stop=0xef000000u,cpsr=arm_interp_get_cpsr(h->cpu);uint64_t budget=1000000;uint32_t svc=0;
+  uint32_t stop=0xef000000u;uint64_t budget=1000000;uint32_t svc=0;
   if(arm_interp_load(h->cpu,STOP_ADDR,(const uint8_t*)&stop,4)||arm_interp_set_page_permissions(h->cpu,STOP_ADDR,0x1000,5)||arm_interp_set_page_permissions(h->cpu,STACK_TOP-0x10000,0x10000,3))return -1;
   for(uint32_t i=0;i<4;i++)arm_interp_set_reg(h->cpu,i,i<count?args[i]:0);
   for(uint32_t i=4;i<count;i++)if(arm_interp_write(h->cpu,STACK_TOP+(i-4)*4,(const uint8_t*)&args[i],4))return -1;
-  arm_interp_set_cpsr(h->cpu,(target&1)?(cpsr|0x20u):(cpsr&~0x20u));arm_interp_set_reg(h->cpu,13,STACK_TOP);arm_interp_set_reg(h->cpu,14,STOP_ADDR);arm_interp_set_reg(h->cpu,15,target&~1u);
+  arm_interp_set_cpsr(h->cpu,(target&1)?0x20u:0u);arm_interp_set_reg(h->cpu,13,STACK_TOP);arm_interp_set_reg(h->cpu,14,STOP_ADDR);arm_interp_set_reg(h->cpu,15,target&~1u);
   if(arm_interp_run(h->cpu,&budget,&svc)!=1||arm_interp_get_reg(h->cpu,15)-4!=STOP_ADDR)return -1;
   if(result)*result=(int32_t)arm_interp_get_reg(h->cpu,0);return 0;
 }
