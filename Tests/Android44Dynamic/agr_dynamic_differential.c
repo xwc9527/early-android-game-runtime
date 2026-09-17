@@ -57,7 +57,7 @@ int main(int argc,char**argv){
   uint32_t bad_needed=agr_dlopen(r,"libagr_bad_needed.so");const char*bad_needed_kind=kind(agr_dlerror(r));
   uint32_t bad_symbol=agr_dlopen(r,"libagr_bad_symbol.so");const char*bad_symbol_kind=kind(agr_dlerror(r));
   uint32_t reload=agr_dlopen(r,"libagr_A.so");char reload_trace[64];if(read_events(r,&h,reload_trace,sizeof(reload_trace)))return 15;
-  printf("{\"dependency_order\":\"%s\",\"cross_result\":%d,\"cross_data_relocated\":%s,\"weak_result\":0,\"weak_relocated_zero\":%s,\"missing_dlsym\":\"%s\",\"after_one_close\":%d,\"after_one_trace\":\"%s\",\"after_unload\":\"%s\",\"bad_needed\":\"%s\",\"bad_symbol\":\"%s\",\"after_reload\":\"%s\",\"reloaded\":%s,\"entry_visible_after_unload\":%s}\n",
+  printf("{\"dependency_order\":\"%s\",\"cross_result\":%d,\"cross_data_relocated\":%s,\"weak_result\":%d,\"weak_relocated_zero\":%s,\"missing_dlsym\":\"%s\",\"after_one_close\":%d,\"after_one_trace\":\"%s\",\"after_unload\":\"%s\",\"bad_needed\":\"%s\",\"bad_symbol\":\"%s\",\"after_reload\":\"%s\",\"reloaded\":%s,\"entry_visible_after_unload\":%s}\n",
     ctor,result,relocated_data==c_data?"true":"false",weak_result,relocated_weak==0?"true":"false",missing_kind,after_one,after_one_trace,unload_trace,bad_needed?"loaded":bad_needed_kind,bad_symbol?"loaded":bad_symbol_kind,reload_trace,reload?"true":"false",f0?"true":"false");
   if(reload)agr_dlclose(r,reload);
   for(int i=0;i<1000;i++){uint32_t stress=agr_dlopen(r,"libagr_A.so");if(!stress||stress!=a1||agr_dlclose(r,stress)){fprintf(stderr,"load/unload stress failed at %d: %s\n",i,agr_dlerror(r));return 8;}}

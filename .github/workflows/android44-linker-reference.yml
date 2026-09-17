@@ -84,7 +84,7 @@ jobs:
           adb push dynamic/android44-dynamic-reference dynamic/libagr_trace.so dynamic/libagr_C.so dynamic/libagr_B.so dynamic/libagr_A.so dynamic/libagr_bad_needed.so dynamic/libagr_bad_symbol.so /data/local/tmp/dynamic/
           adb shell chmod 755 /data/local/tmp/dynamic/android44-dynamic-reference
           adb shell 'cd /data/local/tmp/dynamic && LD_LIBRARY_PATH=/data/local/tmp/dynamic ./android44-dynamic-reference' | tr -d '\r' > android44-dynamic.json
-          clang -std=c11 -O2 -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Tests/Android44Dynamic/agr_dynamic_differential.c -o agr-dynamic-diff.o
+          clang -std=c11 -O2 -Wall -Wextra -Werror -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Tests/Android44Dynamic/agr_dynamic_differential.c -o agr-dynamic-diff.o
           clang -std=c11 -O2 -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Runtime/NativeCore/agr_runtime.c -o agr-runtime.o
           cargo build --manifest-path Runtime/ArmInterpreter/Cargo.toml --release
           clang++ agr-dynamic-diff.o agr-runtime.o agr-vma.o agr-linker.o agr-dynamic.o agr-mmap.o Runtime/ArmInterpreter/target/release/libtouchhle_arm_interpreter.a -ldl -lpthread -lm -o agr-dynamic-differential
