@@ -29,6 +29,7 @@ typedef uint32_t (*agr_fd_read_fn)(void *user, uint32_t fd, void *data, uint32_t
 typedef uint32_t (*agr_fd_write_fn)(void *user, uint32_t fd, const void *data, uint32_t size);
 typedef int32_t (*agr_fd_close_fn)(void *user, uint32_t fd);
 typedef void (*agr_log_fn)(void *user, uint32_t priority, const char *tag, const char *format);
+typedef int32_t (*agr_invoke_guest_fn)(void *user, uint32_t function);
 
 typedef struct agr_callbacks {
     void *user;
@@ -48,6 +49,7 @@ typedef struct agr_callbacks {
     agr_fd_write_fn fd_write;
     agr_fd_close_fn fd_close;
     agr_log_fn log;
+    agr_invoke_guest_fn invoke_guest;
 } agr_callbacks;
 
 typedef struct agr_runtime agr_runtime;
@@ -104,6 +106,9 @@ AGR_API void agr_heap_diagnostics(agr_runtime *runtime, uint32_t out_values[5]);
 AGR_API int32_t agr_load_elf(agr_runtime *runtime, const char *name,
                              const void *data, uint32_t size, uint32_t base,
                              agr_load_result *result);
+AGR_API int32_t agr_register_elf_source(agr_runtime *runtime, const char *name,
+                                        const void *data, uint32_t size,
+                                        uint32_t preferred_base);
 AGR_API uint32_t agr_find_symbol(agr_runtime *runtime, const char *name);
 AGR_API uint32_t agr_symbol_count(agr_runtime *runtime);
 AGR_API const char *agr_symbol_name(agr_runtime *runtime, uint32_t index);
@@ -112,10 +117,13 @@ AGR_API uint32_t agr_needed_count(agr_runtime *runtime);
 AGR_API const char *agr_needed_name(agr_runtime *runtime, uint32_t index);
 AGR_API uint32_t agr_constructor_count(agr_runtime *runtime);
 AGR_API uint32_t agr_constructor_address(agr_runtime *runtime, uint32_t index);
+AGR_API uint32_t agr_finalizer_count(agr_runtime *runtime);
+AGR_API uint32_t agr_finalizer_address(agr_runtime *runtime, uint32_t index);
 AGR_API uint32_t agr_relocation_count(agr_runtime *runtime);
 AGR_API int32_t agr_relocation(agr_runtime *runtime, uint32_t index, agr_relocation_info *info);
 
 AGR_API uint32_t agr_dlopen(agr_runtime *runtime, const char *name);
+AGR_API uint32_t agr_dlopen_flags(agr_runtime *runtime, const char *name, uint32_t flags);
 AGR_API uint32_t agr_dlsym(agr_runtime *runtime, uint32_t handle, const char *name);
 AGR_API uint32_t agr_dlclose(agr_runtime *runtime, uint32_t handle);
 AGR_API const char *agr_dlerror(agr_runtime *runtime);

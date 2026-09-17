@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Runtime/NativeCore/**','Tests/AospLinker/**','Tests/Android44Reference/**','.github/workflows/android44-linker-reference.yml']
+    paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Runtime/NativeCore/**','Tests/AospLinker/**','Tests/Android44Reference/**','Tests/Android44Dynamic/**','.github/workflows/android44-linker-reference.yml']
 jobs:
   api19-reference:
     runs-on: ubuntu-latest
@@ -25,6 +25,17 @@ jobs:
           TOOL="$ANDROID_HOME/ndk/25.2.9519653/toolchains/llvm/prebuilt/linux-x86_64/bin"
           "$TOOL/armv7a-linux-androideabi19-clang" -shared -fPIC -Wl,-z,relro,-z,now Tests/Android44Reference/linker_fixture.c -o build-reference.so
           "$TOOL/armv7a-linux-androideabi19-clang" -fPIE -pie Tests/Android44Reference/android44_reference.c -ldl -o android44-reference
+          mkdir -p dynamic
+          CC="$TOOL/armv7a-linux-androideabi19-clang"
+          COMMON=(-shared -fPIC -Wl,--hash-style=sysv,-z,relro,-z,now -Ldynamic)
+          "$CC" "${COMMON[@]}" -Wl,-soname,libagr_trace.so Tests/Android44Dynamic/trace.c -o dynamic/libagr_trace.so
+          "$CC" "${COMMON[@]}" -Wl,-soname,libagr_C.so Tests/Android44Dynamic/c.c -lagr_trace -o dynamic/libagr_C.so
+          "$CC" "${COMMON[@]}" -Wl,-soname,libagr_B.so Tests/Android44Dynamic/b.c -lagr_C -lagr_trace -o dynamic/libagr_B.so
+          "$CC" "${COMMON[@]}" -Wl,-soname,libagr_A.so,-init,a_dt_init,-fini,a_dt_fini Tests/Android44Dynamic/a.c -lagr_B -lagr_C -lagr_trace -o dynamic/libagr_A.so
+          "$CC" "${COMMON[@]}" -Wl,-soname,libagr_missing.so Tests/Android44Dynamic/missing.c -o dynamic/libagr_missing.so
+          "$CC" "${COMMON[@]}" -Wl,-soname,libagr_bad_needed.so Tests/Android44Dynamic/bad_needed.c -lagr_missing -o dynamic/libagr_bad_needed.so
+          "$CC" "${COMMON[@]}" -Wl,-soname,libagr_bad_symbol.so Tests/Android44Dynamic/bad_symbol.c -o dynamic/libagr_bad_symbol.so
+          "$CC" -fPIE -pie Tests/Android44Dynamic/reference.c -ldl -o dynamic/android44-dynamic-reference
       - name: Boot Android 4.4 ARM emulator
         run: |
           SDK_TOOLS="$(cat sdk-tools-path.txt)"
@@ -59,14 +70,32 @@ jobs:
           clang -std=c11 -O2 -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Tests/Android44Reference/agr_differential.c -o agr-diff.o
           clang -std=c11 -O2 -IRuntime/Process -c Runtime/Process/agr_guest_vma.c -o agr-vma.o
           clang++ -std=gnu++98 -O2 -fno-exceptions -fno-rtti -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Runtime/AospLinker/agr_aosp_linker.cpp -o agr-linker.o
+          clang++ -std=gnu++98 -O2 -fno-exceptions -fno-rtti -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Runtime/AospLinker/agr_aosp_dynamic.cpp -o agr-dynamic.o
           clang++ -std=gnu++98 -O2 -fno-exceptions -fno-rtti -IRuntime/Bionic -IRuntime/Process -c Runtime/Bionic/agr_bionic_mmap.cpp -o agr-mmap.o
-          clang++ agr-diff.o agr-vma.o agr-linker.o agr-mmap.o -o agr-differential
+          clang++ agr-diff.o agr-vma.o agr-linker.o agr-dynamic.o agr-mmap.o -o agr-differential
           ./agr-differential build-reference.so > agr.json
           python3 - <<'PY'
           import json
           a=json.load(open('android44.json')); b=json.load(open('agr.json'))
           print('Android 4.4:',json.dumps(a,sort_keys=True)); print('AGR:',json.dumps(b,sort_keys=True))
           assert a==b,(a,b)
+          PY
+          adb shell mkdir -p /data/local/tmp/dynamic
+          adb push dynamic/android44-dynamic-reference dynamic/libagr_trace.so dynamic/libagr_C.so dynamic/libagr_B.so dynamic/libagr_A.so dynamic/libagr_bad_needed.so dynamic/libagr_bad_symbol.so /data/local/tmp/dynamic/
+          adb shell chmod 755 /data/local/tmp/dynamic/android44-dynamic-reference
+          adb shell 'cd /data/local/tmp/dynamic && LD_LIBRARY_PATH=/data/local/tmp/dynamic ./android44-dynamic-reference' | tr -d '\r' > android44-dynamic.json
+          clang -std=c11 -O2 -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Tests/Android44Dynamic/agr_dynamic_differential.c -o agr-dynamic-diff.o
+          clang -std=c11 -O2 -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Runtime/NativeCore/agr_runtime.c -o agr-runtime.o
+          cargo build --manifest-path Runtime/ArmInterpreter/Cargo.toml --release
+          clang++ agr-dynamic-diff.o agr-runtime.o agr-vma.o agr-linker.o agr-dynamic.o agr-mmap.o Runtime/ArmInterpreter/target/release/libtouchhle_arm_interpreter.a -ldl -lpthread -lm -o agr-dynamic-differential
+          ./agr-dynamic-differential dynamic/libagr_trace.so dynamic/libagr_C.so dynamic/libagr_B.so dynamic/libagr_A.so dynamic/libagr_bad_needed.so dynamic/libagr_bad_symbol.so dynamic/libagr_missing.so > agr-dynamic.json
+          python3 - <<'PY'
+          import json
+          android=json.load(open('android44-dynamic.json'))
+          agr=json.load(open('agr-dynamic.json'))
+          print('Android 4.4 dynamic:',json.dumps(android,sort_keys=True))
+          print('AGR dynamic:',json.dumps(agr,sort_keys=True))
+          assert android==agr,(android,agr)
           PY
       - uses: actions/upload-artifact@v4
         if: always()
@@ -76,4 +105,7 @@ jobs:
             android44.json
             agr.json
             build-reference.so
+            android44-dynamic.json
+            agr-dynamic.json
+            dynamic/*.so
             emulator.log

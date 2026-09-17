@@ -27,6 +27,9 @@ typedef struct { Elf32_Sword d_tag; union { Elf32_Word d_val; Elf32_Addr d_ptr; 
 #define SHN_UNDEF 0
 #define STB_GLOBAL 1
 #define STB_WEAK 2
+#define STT_NOTYPE 0
+#define STT_OBJECT 1
+#define STT_FUNC 2
 #define ELF32_ST_BIND(i) ((i)>>4)
 #define ELF32_ST_TYPE(i) ((i)&0xf)
 #define ELF32_R_SYM(i) ((i)>>8)
@@ -34,18 +37,35 @@ typedef struct { Elf32_Sword d_tag; union { Elf32_Word d_val; Elf32_Addr d_ptr; 
 
 #define DT_NULL 0
 #define DT_NEEDED 1
+#define DT_PLTRELSZ 2
+#define DT_PLTGOT 3
 #define DT_HASH 4
 #define DT_STRTAB 5
 #define DT_SYMTAB 6
+#define DT_RELA 7
+#define DT_RELASZ 8
+#define DT_STRSZ 10
+#define DT_SYMENT 11
+#define DT_INIT 12
+#define DT_FINI 13
+#define DT_SYMBOLIC 16
 #define DT_REL 17
 #define DT_RELSZ 18
-#define DT_PLTRELSZ 2
+#define DT_RELENT 19
+#define DT_PLTREL 20
 #define DT_JMPREL 23
+#define DT_TEXTREL 22
 #define DT_INIT_ARRAY 25
+#define DT_FINI_ARRAY 26
 #define DT_INIT_ARRAYSZ 27
+#define DT_FINI_ARRAYSZ 28
+#define DT_PREINIT_ARRAY 32
+#define DT_PREINIT_ARRAYSZ 33
 
+#define R_ARM_NONE 0
 #define R_ARM_ABS32 2
 #define R_ARM_REL32 3
+#define R_ARM_COPY 20
 #define R_ARM_GLOB_DAT 21
 #define R_ARM_JUMP_SLOT 22
 #define R_ARM_RELATIVE 23

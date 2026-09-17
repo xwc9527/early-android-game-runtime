@@ -9,6 +9,7 @@ clang -std=c11 -Wall -Wextra -Werror -O2 "${INC[@]}" -c "$ROOT/Tests/AospLinker/
 clang -std=c11 -Wall -Wextra -Werror -O2 "${INC[@]}" -c "$ROOT/Runtime/Process/agr_guest_vma.c" -o "$OBJ/vma.o"
 clang -std=c11 -O2 "${INC[@]}" -c "$ROOT/Runtime/NativeCore/agr_runtime.c" -o "$OBJ/runtime.o"
 clang++ -std=gnu++98 -Wall -Wextra -Werror -O2 -fno-exceptions -fno-rtti "${INC[@]}" -c "$ROOT/Runtime/AospLinker/agr_aosp_linker.cpp" -o "$OBJ/linker.o"
+clang++ -std=gnu++98 -Wall -Wextra -Werror -O2 -fno-exceptions -fno-rtti "${INC[@]}" -c "$ROOT/Runtime/AospLinker/agr_aosp_dynamic.cpp" -o "$OBJ/dynamic.o"
 clang++ -std=gnu++98 -Wall -Wextra -Werror -O2 -fno-exceptions -fno-rtti "${INC[@]}" -c "$ROOT/Runtime/Bionic/agr_bionic_mmap.cpp" -o "$OBJ/mmap.o"
-clang++ "$OBJ/test.o" "$OBJ/vma.o" "$OBJ/runtime.o" "$OBJ/linker.o" "$OBJ/mmap.o" -lm -o "$OUT"
+clang++ "$OBJ/test.o" "$OBJ/vma.o" "$OBJ/runtime.o" "$OBJ/linker.o" "$OBJ/dynamic.o" "$OBJ/mmap.o" -lm -o "$OUT"
 "$OUT"

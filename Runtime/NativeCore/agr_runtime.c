@@ -1,5 +1,6 @@
 #include "agr_runtime.h"
 #include "../AospLinker/agr_aosp_linker.h"
+#include "../AospLinker/agr_aosp_dynamic.h"
 
 #include <ctype.h>
 #include "agr_elf32.h"
@@ -13,22 +14,13 @@
 #define PT_ARM_EXIDX 0x70000001
 #endif
 
-#define AGR_MAX_OBJECTS 64
-#define AGR_MAX_SYMBOLS 16384
-#define AGR_MAX_NEEDED 1024
-#define AGR_MAX_RELOCS 131072
-#define AGR_MAX_CTORS 8192
 #define AGR_MAX_THREADS 128
 #define AGR_MAX_TLS_KEYS 256
 #define AGR_MAX_MUTEXES 2048
 #define AGR_MAX_ONCE 2048
 #define AGR_MAX_GUARDS 2048
 #define AGR_MAX_ATEXIT 4096
-#define AGR_SELF_HANDLE 0xfffffffeu
 
-typedef struct { char *name; uint32_t address; uint32_t object_index; } agr_symbol;
-typedef struct { char *name; uint32_t base, min_address, max_address, exidx, exidx_count, refs; agr_aosp_linker_image image; } agr_object;
-typedef struct { uint32_t type, address, object_index; char *symbol, *object_name; } agr_reloc;
 typedef struct agr_heap_block {
     uint32_t address, span, requested, alignment;
     uint8_t live;
@@ -46,13 +38,7 @@ struct agr_runtime {
     char library_path[1024];
     uint32_t static_ptr, static_limit, heap_base, heap_limit;
     agr_heap_block *heap_blocks;
-    agr_object objects[AGR_MAX_OBJECTS]; uint32_t object_count;
-    agr_symbol symbols[AGR_MAX_SYMBOLS]; uint32_t symbol_count;
-    char *needed[AGR_MAX_NEEDED]; uint32_t needed_count;
-    uint32_t needed_owner[AGR_MAX_NEEDED];
-    agr_reloc relocs[AGR_MAX_RELOCS]; uint32_t reloc_count;
-    uint32_t constructors[AGR_MAX_CTORS]; uint32_t constructor_count;
-    uint32_t constructor_owner[AGR_MAX_CTORS];
+    agr_aosp_dynamic *dynamic_linker;
     agr_thread threads[AGR_MAX_THREADS]; uint32_t thread_count, current_thread, next_thread;
     uint32_t tls_destructors[AGR_MAX_TLS_KEYS], next_tls_key;
     agr_mutex mutexes[AGR_MAX_MUTEXES]; uint32_t mutex_count;
@@ -64,10 +50,6 @@ struct agr_runtime {
     agr_bionic_mmap_context linker_mmap;
 };
 
-static char *agr_strdup(const char *s) {
-    size_t n = strlen(s) + 1; char *copy = (char *)malloc(n);
-    if (copy) memcpy(copy, s, n); return copy;
-}
 static int fail(agr_runtime *rt, const char *message) {
     snprintf(rt->error, sizeof(rt->error), "%s", message); return -1;
 }
@@ -84,6 +66,17 @@ static int loader_write_mem(agr_runtime *rt, uint32_t address, const void *data,
 static int32_t linker_write(void *opaque, uint32_t address, const void *data, uint32_t size) {
     return loader_write_mem((agr_runtime *)opaque, address, data, size) ? 0 : EFAULT;
 }
+static int32_t dynamic_read(void *opaque, uint32_t address, void *data, uint32_t size) {
+    return read_mem((agr_runtime *)opaque,address,data,size) ? 0 : EFAULT;
+}
+static uint32_t dynamic_import(void *opaque,const char *name,uint32_t type) {
+    agr_runtime *rt=(agr_runtime*)opaque;
+    return rt->cb.resolve_import ? rt->cb.resolve_import(rt->cb.user,name,type) : 0;
+}
+static int32_t dynamic_invoke(void *opaque,uint32_t function) {
+    agr_runtime *rt=(agr_runtime*)opaque;
+    return rt->cb.invoke_guest ? rt->cb.invoke_guest(rt->cb.user,function) : 1;
+}
 static int32_t linker_protect(void *opaque, uint32_t address, uint32_t size, uint32_t protection) {
     agr_runtime *rt = (agr_runtime *)opaque;
     return rt->cb.protect ? rt->cb.protect(rt->cb.user, address, size, protection) : 0;
@@ -92,7 +85,6 @@ static uint32_t align_up(uint32_t value, uint32_t alignment) {
     if (!alignment) alignment = 1; return (value + alignment - 1) & ~(alignment - 1);
 }
 static void write_u32(agr_runtime *rt, uint32_t address, uint32_t value) { write_mem(rt, address, &value, 4); }
-static int write_loader_u32(agr_runtime *rt, uint32_t address, uint32_t value) { return loader_write_mem(rt, address, &value, 4); }
 static uint32_t read_u32(agr_runtime *rt, uint32_t address) { uint32_t v = 0; read_mem(rt, address, &v, 4); return v; }
 static int read_cstr(agr_runtime *rt, uint32_t address, char *out, uint32_t capacity) {
     uint32_t i; if (!address || !capacity) return 0;
@@ -111,19 +103,18 @@ agr_runtime *agr_runtime_create(const agr_callbacks *cb, uint32_t sb, uint32_t s
         free(rt->heap_blocks); free(rt); return NULL;
     }
     rt->linker_mmap = (agr_bionic_mmap_context){&rt->linker_vma, rt, linker_write, NULL, linker_protect};
+    agr_aosp_dynamic_callbacks dynamic_cb={rt,dynamic_read,linker_write,dynamic_import,NULL};
+    if(cb->invoke_guest)dynamic_cb.invoke_guest_function=dynamic_invoke;
+    rt->dynamic_linker=agr_aosp_dynamic_create(&rt->linker_mmap,&dynamic_cb);
+    if(!rt->dynamic_linker){agr_guest_vma_destroy(&rt->linker_vma);free(rt->heap_blocks);free(rt);return NULL;}
     rt->thread_count = 1; rt->threads[0].id = 1; rt->current_thread = 1; rt->next_thread = 2;
     rt->next_tls_key = 1; rt->clock_ns = 1000000000ULL; return rt;
 }
 void agr_runtime_destroy(agr_runtime *rt) {
     uint32_t i; if (!rt) return;
     for (agr_heap_block *block=rt->heap_blocks,*next; block; block=next) { next=block->next; free(block); }
-    for (i=0;i<rt->object_count;i++) {
-        if (rt->objects[i].image.load_size) agr_aosp_linker_unload(&rt->linker_mmap,&rt->objects[i].image,NULL);
-        free(rt->objects[i].name);
-    }
-    for (i=0;i<rt->symbol_count;i++) free(rt->symbols[i].name);
-    for (i=0;i<rt->needed_count;i++) free(rt->needed[i]);
-    for (i=0;i<rt->reloc_count;i++){free(rt->relocs[i].symbol);free(rt->relocs[i].object_name);}
+    (void)i;
+    agr_aosp_dynamic_destroy(rt->dynamic_linker);
     agr_guest_vma_destroy(&rt->linker_vma); free(rt);
 }
 const char *agr_last_error(agr_runtime *rt) { return rt ? rt->error : "runtime is null"; }
@@ -264,114 +255,33 @@ uint32_t agr_realloc(agr_runtime *rt,uint32_t address,uint32_t size) {
     agr_free(rt,address);return replacement;
 }
 
-static const void *range(const unsigned char *data,uint32_t size,uint32_t offset,uint32_t need){return offset<=size&&need<=size-offset?data+offset:NULL;}
-static const void *vaddr_ptr(const unsigned char *data,uint32_t size,const Elf32_Phdr *ph,uint32_t phnum,uint32_t vaddr,uint32_t need){
-    for(uint32_t i=0;i<phnum;i++)if(ph[i].p_type==PT_LOAD&&vaddr>=ph[i].p_vaddr&&vaddr-ph[i].p_vaddr<=ph[i].p_filesz&&need<=ph[i].p_filesz-(vaddr-ph[i].p_vaddr))return range(data,size,ph[i].p_offset+(vaddr-ph[i].p_vaddr),need);return NULL;
+int32_t agr_register_elf_source(agr_runtime *rt,const char *name,const void *bytes,uint32_t size,uint32_t base){
+    return rt&&rt->dynamic_linker?agr_aosp_dynamic_register(rt->dynamic_linker,name,bytes,size,base):-1;
 }
-static uint32_t symbol_lookup(agr_runtime *rt,const char *name){for(uint32_t i=rt->symbol_count;i>0;i--)if(!strcmp(rt->symbols[i-1].name,name))return rt->symbols[i-1].address;return 0;}
-uint32_t agr_find_symbol(agr_runtime *rt,const char *name){return symbol_lookup(rt,name);}
-
-static int32_t load_elf_inner(agr_runtime *rt,const char *name,const void *bytes,uint32_t size,uint32_t base,agr_load_result *out){
-    const unsigned char *data=(const unsigned char*)bytes;const Elf32_Ehdr *eh=(const Elf32_Ehdr*)range(data,size,0,sizeof(Elf32_Ehdr));
-    if(!eh||memcmp(eh->e_ident,ELFMAG,SELFMAG)||eh->e_ident[EI_CLASS]!=ELFCLASS32||eh->e_machine!=EM_ARM)return fail(rt,"not an ARM32 ELF");
-    const Elf32_Phdr *ph=(const Elf32_Phdr*)range(data,size,eh->e_phoff,(uint32_t)eh->e_phnum*sizeof(Elf32_Phdr));if(!ph)return fail(rt,"invalid program headers");
-    uint32_t oi=0;while(oi<rt->object_count&&rt->objects[oi].name)oi++;
-    if(oi==AGR_MAX_OBJECTS)return fail(rt,"object table full");uint32_t min=0xffffffffu,max=0,exidx=0,excount=0;
-    agr_aosp_linker_image image={0};int32_t map_errno=0;
-    if(agr_aosp_linker_map(&rt->linker_mmap,bytes,size,base,&image,&map_errno)){snprintf(rt->error,sizeof(rt->error),"AOSP linker segment mapping failed: errno %d",map_errno);return -1;}
-    base=image.load_bias;
-    for(uint32_t i=0;i<eh->e_phnum;i++){if(ph[i].p_type==PT_LOAD){uint32_t a=base+ph[i].p_vaddr,b=a+ph[i].p_memsz;if(a<min)min=a;if(b>max)max=b;}else if(ph[i].p_type==PT_ARM_EXIDX){exidx=base+ph[i].p_vaddr;excount=ph[i].p_memsz/8;}}
-    char *object_name=agr_strdup(name);
-    if(!object_name){agr_aosp_linker_unload(&rt->linker_mmap,&image,NULL);return fail(rt,"object name allocation failed");}
-    rt->objects[oi]=(agr_object){object_name,base,min,max,exidx,excount,1,image};if(oi==rt->object_count)rt->object_count++;
-    uint32_t strtab=0,symtab=0,hash=0,rel=0,relsz=0,jmprel=0,pltrelsz=0,init=0,initsz=0,needed_idx[128],needed_n=0;
-    for(uint32_t i=0;i<eh->e_phnum;i++)if(ph[i].p_type==PT_DYNAMIC){const Elf32_Dyn *d=(const Elf32_Dyn*)range(data,size,ph[i].p_offset,ph[i].p_filesz);if(!d)return fail(rt,"invalid PT_DYNAMIC");for(uint32_t j=0;j<ph[i].p_filesz/sizeof(*d)&&d[j].d_tag!=DT_NULL;j++){uint32_t v=d[j].d_un.d_val;switch(d[j].d_tag){case DT_STRTAB:strtab=v;break;case DT_SYMTAB:symtab=v;break;case DT_HASH:hash=v;break;case DT_REL:rel=v;break;case DT_RELSZ:relsz=v;break;case DT_JMPREL:jmprel=v;break;case DT_PLTRELSZ:pltrelsz=v;break;case DT_INIT_ARRAY:init=v;break;case DT_INIT_ARRAYSZ:initsz=v;break;case DT_NEEDED:if(needed_n<128)needed_idx[needed_n++]=v;break;}}}
-    const char *str=(const char*)vaddr_ptr(data,size,ph,eh->e_phnum,strtab,1);const Elf32_Sym *syms=(const Elf32_Sym*)vaddr_ptr(data,size,ph,eh->e_phnum,symtab,sizeof(Elf32_Sym));if(!str||!syms)return fail(rt,"missing dynamic string/symbol table");
-    uint32_t symcount=0;if(hash){const uint32_t *h=(const uint32_t*)vaddr_ptr(data,size,ph,eh->e_phnum,hash,8);if(h)symcount=h[1];}
-    if(!symcount&&eh->e_shoff){const Elf32_Shdr *sh=(const Elf32_Shdr*)range(data,size,eh->e_shoff,(uint32_t)eh->e_shnum*sizeof(Elf32_Shdr));if(sh)for(uint32_t i=0;i<eh->e_shnum;i++)if(sh[i].sh_type==SHT_DYNSYM){symcount=sh[i].sh_size/sizeof(Elf32_Sym);break;}}
-    if(!symcount)return fail(rt,"cannot determine dynamic symbol count");
-    uint32_t symbol_start=rt->symbol_count,needed_start=rt->needed_count,reloc_start=rt->reloc_count,ctor_start=rt->constructor_count;
-    for(uint32_t i=0;i<symcount;i++)if(syms[i].st_name&&syms[i].st_shndx!=SHN_UNDEF&&(ELF32_ST_BIND(syms[i].st_info)==STB_GLOBAL||ELF32_ST_BIND(syms[i].st_info)==STB_WEAK)){if(rt->symbol_count>=AGR_MAX_SYMBOLS)return fail(rt,"symbol table full");rt->symbols[rt->symbol_count++]=(agr_symbol){agr_strdup(str+syms[i].st_name),base+syms[i].st_value,oi};}
-    for(uint32_t i=0;i<needed_n;i++){if(rt->needed_count>=AGR_MAX_NEEDED)return fail(rt,"needed table full");rt->needed_owner[rt->needed_count]=oi;rt->needed[rt->needed_count++]=agr_strdup(str+needed_idx[i]);}
-    uint32_t tables[2][2]={{rel,relsz},{jmprel,pltrelsz}};for(uint32_t t=0;t<2;t++){if(!tables[t][0])continue;const Elf32_Rel *rs=(const Elf32_Rel*)vaddr_ptr(data,size,ph,eh->e_phnum,tables[t][0],tables[t][1]);if(!rs)return fail(rt,"invalid relocation table");for(uint32_t i=0;i<tables[t][1]/sizeof(*rs);i++){uint32_t type=ELF32_R_TYPE(rs[i].r_info),si=ELF32_R_SYM(rs[i].r_info),where=base+rs[i].r_offset,add=read_u32(rt,where),resolved=0;const char *sn="";if(si){sn=str+syms[si].st_name;if(syms[si].st_shndx==SHN_UNDEF){resolved=symbol_lookup(rt,sn);if(!resolved&&rt->cb.resolve_import)resolved=rt->cb.resolve_import(rt->cb.user,sn,ELF32_ST_TYPE(syms[si].st_info));}else resolved=base+syms[si].st_value;}uint32_t value;if(type==R_ARM_RELATIVE)value=base+add;else if(type==R_ARM_GLOB_DAT||type==R_ARM_JUMP_SLOT)value=resolved;else if(type==R_ARM_ABS32)value=resolved+add;else if(type==R_ARM_REL32)value=resolved+add-where;else{snprintf(rt->error,sizeof(rt->error),"unsupported ARM relocation %u for %s",type,sn);return -1;}if(!write_loader_u32(rt,where,value))return fail(rt,"relocation write failed");if(rt->reloc_count>=AGR_MAX_RELOCS)return fail(rt,"relocation table full");rt->relocs[rt->reloc_count++]=(agr_reloc){type,where,oi,agr_strdup(sn),agr_strdup(name)};}}
-    if(init&&initsz){const uint32_t *ctors=(const uint32_t*)vaddr_ptr(data,size,ph,eh->e_phnum,init,initsz);if(!ctors)return fail(rt,"invalid init array");for(uint32_t i=0;i<initsz/4;i++)if(ctors[i]){if(rt->constructor_count>=AGR_MAX_CTORS)return fail(rt,"constructor table full");rt->constructor_owner[rt->constructor_count]=oi;rt->constructors[rt->constructor_count++]=base+ctors[i];}}
-    if(agr_aosp_linker_finalize(&rt->linker_mmap,bytes,size,&rt->objects[oi].image,&map_errno)){snprintf(rt->error,sizeof(rt->error),"AOSP linker protection/RELRO failed: errno %d",map_errno);return -1;}
-    if(out)*out=(agr_load_result){base,needed_start,rt->needed_count-needed_start,reloc_start,rt->reloc_count-reloc_start,ctor_start,rt->constructor_count-ctor_start,symbol_start,rt->symbol_count-symbol_start};return 0;
-}
-
 int32_t agr_load_elf(agr_runtime *rt,const char *name,const void *bytes,uint32_t size,uint32_t base,agr_load_result *out){
-    uint64_t before=0;
-    for(uint32_t i=0;i<rt->object_count;i++)if(rt->objects[i].name)before|=1ull<<i;
-    int32_t result=load_elf_inner(rt,name,bytes,size,base,out);
-    if(result==0)return 0;
-    for(uint32_t i=0;i<rt->object_count;i++)if(rt->objects[i].name&&!(before&(1ull<<i))){
-        agr_dlclose(rt,rt->objects[i].base);break;
-    }
-    return result;
+    agr_aosp_dynamic_load_result result={0};
+    int32_t rc=rt&&rt->dynamic_linker?agr_aosp_dynamic_load(rt->dynamic_linker,name,bytes,size,base,&result):-1;
+    if(rc){const char *e=agr_aosp_dynamic_dlerror(rt?rt->dynamic_linker:NULL);if(rt)snprintf(rt->error,sizeof(rt->error),"%s",e?e:"AOSP dynamic linker load failed");return -1;}
+    if(out)memcpy(out,&result,sizeof(result));return 0;
 }
-
-uint32_t agr_symbol_count(agr_runtime*rt){return rt->symbol_count;}const char*agr_symbol_name(agr_runtime*rt,uint32_t i){return i<rt->symbol_count?rt->symbols[i].name:NULL;}uint32_t agr_symbol_address(agr_runtime*rt,uint32_t i){return i<rt->symbol_count?rt->symbols[i].address:0;}
-uint32_t agr_needed_count(agr_runtime*rt){return rt->needed_count;}const char*agr_needed_name(agr_runtime*rt,uint32_t i){return i<rt->needed_count?rt->needed[i]:NULL;}uint32_t agr_constructor_count(agr_runtime*rt){return rt->constructor_count;}uint32_t agr_constructor_address(agr_runtime*rt,uint32_t i){return i<rt->constructor_count?rt->constructors[i]:0;}uint32_t agr_relocation_count(agr_runtime*rt){return rt->reloc_count;}
-int32_t agr_relocation(agr_runtime*rt,uint32_t i,agr_relocation_info*out){if(i>=rt->reloc_count||!out)return -1;*out=(agr_relocation_info){rt->relocs[i].type,rt->relocs[i].address,rt->relocs[i].symbol,rt->relocs[i].object_name};return 0;}
-uint32_t agr_dlopen(agr_runtime*rt,const char*name){
-    if(!name){for(uint32_t i=0;i<rt->object_count;i++)if(rt->objects[i].name){rt->dlerror[0]=0;return AGR_SELF_HANDLE;}return 0;}
-    for(uint32_t i=0;i<rt->object_count;i++)if(rt->objects[i].name&&!strcmp(rt->objects[i].name,name)){
-        rt->objects[i].refs++;rt->dlerror[0]=0;return rt->objects[i].base;
-    }
-    snprintf(rt->dlerror,sizeof(rt->dlerror),"library not loaded: %s",name);return 0;
-}
-uint32_t agr_dlsym(agr_runtime*rt,uint32_t handle,const char*name){
-    uint32_t a=0;
-    if(handle==0||handle==0xffffffffu||handle==AGR_SELF_HANDLE)a=symbol_lookup(rt,name);
-    else for(uint32_t i=0;i<rt->symbol_count;i++){
-        uint32_t oi=rt->symbols[i].object_index;
-        if(rt->objects[oi].name&&rt->objects[oi].base==handle&&!strcmp(rt->symbols[i].name,name)){
-            a=rt->symbols[i].address;break;
-        }
-    }
-    if(!a)snprintf(rt->dlerror,sizeof(rt->dlerror),"undefined symbol: %s",name);else rt->dlerror[0]=0;
-    return a;
-}
-uint32_t agr_dlclose(agr_runtime*rt,uint32_t handle){
-    if(handle==AGR_SELF_HANDLE){rt->dlerror[0]=0;return 0;}
-    for(uint32_t oi=0;oi<rt->object_count;oi++){
-        agr_object *object=&rt->objects[oi];
-        if(!object->name||object->base!=handle)continue;
-        if(object->refs>1){object->refs--;rt->dlerror[0]=0;return 0;}
-        int32_t guest_errno=0;
-        if(agr_aosp_linker_unload(&rt->linker_mmap,&object->image,&guest_errno)){
-            snprintf(rt->dlerror,sizeof(rt->dlerror),"image unmap failed: errno %d",guest_errno);
-            return 0xffffffffu;
-        }
-        uint32_t write=0;
-        for(uint32_t read=0,count=rt->symbol_count;read<count;read++){
-            if(rt->symbols[read].object_index==oi){free(rt->symbols[read].name);continue;}
-            rt->symbols[write++]=rt->symbols[read];
-        }
-        rt->symbol_count=write;write=0;
-        for(uint32_t read=0,count=rt->needed_count;read<count;read++){
-            if(rt->needed_owner[read]==oi){free(rt->needed[read]);continue;}
-            rt->needed[write]=rt->needed[read];rt->needed_owner[write++]=rt->needed_owner[read];
-        }
-        rt->needed_count=write;write=0;
-        for(uint32_t read=0,count=rt->reloc_count;read<count;read++){
-            if(rt->relocs[read].object_index==oi){free(rt->relocs[read].symbol);free(rt->relocs[read].object_name);continue;}
-            rt->relocs[write++]=rt->relocs[read];
-        }
-        rt->reloc_count=write;write=0;
-        for(uint32_t read=0,count=rt->constructor_count;read<count;read++){
-            if(rt->constructor_owner[read]==oi)continue;
-            rt->constructors[write]=rt->constructors[read];
-            rt->constructor_owner[write++]=rt->constructor_owner[read];
-        }
-        rt->constructor_count=write;
-        free(object->name);memset(object,0,sizeof(*object));
-        rt->dlerror[0]=0;return 0;
-    }
-    snprintf(rt->dlerror,sizeof(rt->dlerror),"invalid library handle");return 0xffffffffu;
-}
-const char*agr_dlerror(agr_runtime*rt){if(!rt->dlerror[0])return NULL;static char out[512];snprintf(out,sizeof(out),"%s",rt->dlerror);rt->dlerror[0]=0;return out;}
-uint32_t agr_find_exidx(agr_runtime*rt,uint32_t pc,uint32_t*count){for(uint32_t i=0;i<rt->object_count;i++)if(pc>=rt->objects[i].min_address&&pc<rt->objects[i].max_address){if(count)*count=rt->objects[i].exidx_count;return rt->objects[i].exidx;}if(count)*count=0;return 0;}
+uint32_t agr_find_symbol(agr_runtime *rt,const char *name){return rt?agr_aosp_dynamic_find_symbol(rt->dynamic_linker,name):0;}
+uint32_t agr_symbol_count(agr_runtime*rt){return rt?agr_aosp_dynamic_symbol_count(rt->dynamic_linker):0;}
+const char*agr_symbol_name(agr_runtime*rt,uint32_t i){return rt?agr_aosp_dynamic_symbol_name(rt->dynamic_linker,i):NULL;}
+uint32_t agr_symbol_address(agr_runtime*rt,uint32_t i){return rt?agr_aosp_dynamic_symbol_address(rt->dynamic_linker,i):0;}
+uint32_t agr_needed_count(agr_runtime*rt){return rt?agr_aosp_dynamic_needed_count(rt->dynamic_linker):0;}
+const char*agr_needed_name(agr_runtime*rt,uint32_t i){return rt?agr_aosp_dynamic_needed_name(rt->dynamic_linker,i):NULL;}
+uint32_t agr_constructor_count(agr_runtime*rt){return rt?agr_aosp_dynamic_constructor_count(rt->dynamic_linker):0;}
+uint32_t agr_constructor_address(agr_runtime*rt,uint32_t i){return rt?agr_aosp_dynamic_constructor_address(rt->dynamic_linker,i):0;}
+uint32_t agr_finalizer_count(agr_runtime*rt){return rt?agr_aosp_dynamic_finalizer_count(rt->dynamic_linker):0;}
+uint32_t agr_finalizer_address(agr_runtime*rt,uint32_t i){return rt?agr_aosp_dynamic_finalizer_address(rt->dynamic_linker,i):0;}
+uint32_t agr_relocation_count(agr_runtime*rt){return rt?agr_aosp_dynamic_relocation_count(rt->dynamic_linker):0;}
+int32_t agr_relocation(agr_runtime*rt,uint32_t i,agr_relocation_info*out){agr_aosp_dynamic_relocation r;if(!rt||!out||agr_aosp_dynamic_relocation_at(rt->dynamic_linker,i,&r))return -1;*out=(agr_relocation_info){r.type,r.address,r.symbol,r.object_name};return 0;}
+uint32_t agr_dlopen(agr_runtime*rt,const char*name){return rt?agr_aosp_dynamic_dlopen(rt->dynamic_linker,name,2):0;}
+uint32_t agr_dlopen_flags(agr_runtime*rt,const char*name,uint32_t flags){return rt?agr_aosp_dynamic_dlopen(rt->dynamic_linker,name,(int)flags):0;}
+uint32_t agr_dlsym(agr_runtime*rt,uint32_t handle,const char*name){return rt?agr_aosp_dynamic_dlsym(rt->dynamic_linker,handle,name):0;}
+uint32_t agr_dlclose(agr_runtime*rt,uint32_t handle){return rt?(uint32_t)agr_aosp_dynamic_dlclose(rt->dynamic_linker,handle):0xffffffffu;}
+const char*agr_dlerror(agr_runtime*rt){return rt?agr_aosp_dynamic_dlerror(rt->dynamic_linker):NULL;}
+uint32_t agr_find_exidx(agr_runtime*rt,uint32_t pc,uint32_t*count){return rt?agr_aosp_dynamic_find_exidx(rt->dynamic_linker,pc,count):0;}
 
 static agr_thread*thread(agr_runtime*rt){for(uint32_t i=0;i<rt->thread_count;i++)if(rt->threads[i].id==rt->current_thread)return&rt->threads[i];return&rt->threads[0];}
 void agr_set_current_thread(agr_runtime*rt,uint32_t id){for(uint32_t i=0;i<rt->thread_count;i++)if(rt->threads[i].id==id){rt->current_thread=id;return;}}uint32_t agr_current_thread(agr_runtime*rt){return rt->current_thread;}uint32_t agr_create_thread_state(agr_runtime*rt){if(rt->thread_count>=AGR_MAX_THREADS)return 0;uint32_t id=rt->next_thread++;rt->threads[rt->thread_count++].id=id;return id;}
@@ -466,12 +376,12 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
     else if(!strcmp(name,"pthread_cond_broadcast")||!strcmp(name,"pthread_cond_signal")){out->action=AGR_ACTION_COND_BROADCAST;out->action_arg0=a;}
     else if(!strcmp(name,"pthread_cond_init")||!strcmp(name,"pthread_cond_destroy")||!strcmp(name,"pthread_attr_setdetachstate")){}
     else if(!strcmp(name,"pthread_attr_init")){unsigned char z[16]={0};write_mem(rt,a,z,16);}
-    else if(!strcmp(name,"dlopen")){if(a&&!read_cstr(rt,a,x,sizeof(x)))return fail(rt,"dlopen name");out->value=agr_dlopen(rt,a?x:NULL);}
+    else if(!strcmp(name,"dlopen")){if(a&&!read_cstr(rt,a,x,sizeof(x)))return fail(rt,"dlopen name");out->value=agr_dlopen_flags(rt,a?x:NULL,b);}
     else if(!strcmp(name,"dlsym")){if(!read_cstr(rt,b,x,sizeof(x)))return fail(rt,"dlsym name");out->value=agr_dlsym(rt,a,x);}
     else if(!strcmp(name,"dlclose"))out->value=agr_dlclose(rt,a);
     else if(!strcmp(name,"dlerror")){const char*e=agr_dlerror(rt);out->value=e?agr_alloc_static(rt,e,(uint32_t)strlen(e)+1,1):0;}
     else if(!strcmp(name,"android_update_LD_LIBRARY_PATH")){if(a&&read_cstr(rt,a,rt->library_path,sizeof(rt->library_path))==0)return fail(rt,"library path read");if(!a)rt->library_path[0]=0;}
-    else if(!strcmp(name,"dladdr")){agr_object*object=NULL;uint32_t object_index=0;for(uint32_t i=0;i<rt->object_count;i++)if(a>=rt->objects[i].min_address&&a<rt->objects[i].max_address){object=&rt->objects[i];object_index=i;break;}if(!object)out->value=0;else{uint32_t file_name=agr_alloc_static(rt,object->name,(uint32_t)strlen(object->name)+1,1),symbol_name=0,symbol_address=0;const char*nearest=NULL;for(uint32_t i=0;i<rt->symbol_count;i++)if(rt->symbols[i].object_index==object_index&&rt->symbols[i].address<=a&&rt->symbols[i].address>=symbol_address){symbol_address=rt->symbols[i].address;nearest=rt->symbols[i].name;}if(nearest)symbol_name=agr_alloc_static(rt,nearest,(uint32_t)strlen(nearest)+1,1);write_u32(rt,b,file_name);write_u32(rt,b+4,object->base);write_u32(rt,b+8,symbol_name);write_u32(rt,b+12,symbol_address);out->value=1;}}
+    else if(!strcmp(name,"dladdr")){char object_name[256]={0},symbol_name[256]={0};uint32_t object_base=0,symbol_address=0;if(!agr_aosp_dynamic_dladdr(rt->dynamic_linker,a,object_name,sizeof(object_name),&object_base,symbol_name,sizeof(symbol_name),&symbol_address))out->value=0;else{uint32_t file_name=agr_alloc_static(rt,object_name,(uint32_t)strlen(object_name)+1,1),symbol_handle=symbol_name[0]?agr_alloc_static(rt,symbol_name,(uint32_t)strlen(symbol_name)+1,1):0;write_u32(rt,b,file_name);write_u32(rt,b+4,object_base);write_u32(rt,b+8,symbol_handle);write_u32(rt,b+12,symbol_address);out->value=1;}}
     else if(!strcmp(name,"dl_unwind_find_exidx")||!strcmp(name,"__gnu_Unwind_Find_exidx")){uint32_t count;out->value=agr_find_exidx(rt,a,&count);if(b)write_u32(rt,b,count);}
     else if(!strcmp(name,"__cxa_guard_acquire")){agr_word_state*s=word_state(rt->guards,&rt->guard_count,AGR_MAX_GUARDS,a);if(!s)return fail(rt,"guard table full");out->value=s->state==1?0:1;if(!s->state)s->state=2;}
     else if(!strcmp(name,"__cxa_guard_release")||!strcmp(name,"__cxa_guard_abort")){agr_word_state*s=word_state(rt->guards,&rt->guard_count,AGR_MAX_GUARDS,a);if(s){s->state=!strcmp(name,"__cxa_guard_release")?1:0;write_u32(rt,a,s->state);}}

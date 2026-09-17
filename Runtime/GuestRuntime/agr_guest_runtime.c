@@ -689,6 +689,11 @@ static int run_until_return(agr_guest *g) {
     }
 }
 
+static int32_t call_address(agr_guest *g, uint32_t target, const uint32_t *args, uint32_t count, int32_t *result);
+static int32_t invoke_linker_function(void *opaque,uint32_t function) {
+    return call_address((agr_guest*)opaque,function,NULL,0,NULL);
+}
+
 agr_guest *agr_guest_create(void) {
     agr_guest *g = (agr_guest *)calloc(1, sizeof(*g)); if (!g) return NULL;
     g->cpu = arm_interp_create(); g->run_budget = 1000000; g->next_trap = IMPORT_BASE; g->next_array_handle = 0x61000000u;
@@ -696,6 +701,7 @@ agr_guest *agr_guest_create(void) {
     if (!g->cpu) { free(g); return NULL; }
     agr_callbacks cb = {0}; cb.user = g; cb.read = mem_read_cb; cb.write = mem_write_cb; cb.loader_write = mem_loader_write_cb; cb.protect = mem_protect_cb; cb.resolve_import = resolve_import_cb;
     cb.log = guest_log_cb;
+    cb.invoke_guest = invoke_linker_function;
     cb.pipe_create = pipe_create_cb; cb.fd_read = fd_read_cb; cb.fd_write = fd_write_cb; cb.fd_close = fd_close_cb;
     g->runtime = agr_runtime_create(&cb, 0x01008000, 0x01020000, 0x01900000, 0x02000000);
     if (!g->runtime) { arm_interp_destroy(g->cpu); free(g); return NULL; }

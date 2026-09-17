@@ -52,6 +52,8 @@ static void dynamic_fixture(uint8_t *data){
     memset(s,0,2*sizeof(*s));s[1].st_name=1;s[1].st_value=0x1100;
     s[1].st_info=(STB_GLOBAL<<4)|2;s[1].st_shndx=1;
     ((uint32_t*)(data+0x2b00))[0]=1;((uint32_t*)(data+0x2b00))[1]=2;
+    ((uint32_t*)(data+0x2b00))[2]=1; /* SYSV bucket[0] -> symbol 1. */
+    ((uint32_t*)(data+0x2b00))[4]=0; /* chain[1] terminates. */
 }
 
 static int test_bionic_contracts(void){
@@ -133,7 +135,8 @@ static int test_formal_image_lifecycle(void){
     CHECK(!agr_load_elf(runtime,"first.so",elf,FIXTURE_SIZE,0x20000,&first));
     CHECK(!agr_load_elf(runtime,"second.so",elf,FIXTURE_SIZE,0x30000,&second));
     CHECK(first.object_handle!=second.object_handle);
-    CHECK(agr_find_symbol(runtime,"fixture_entry")==second.object_handle+0x1100);
+    /* KitKat global lookup is solist order: first definition wins. */
+    CHECK(agr_find_symbol(runtime,"fixture_entry")==first.object_handle+0x1100);
     CHECK(!agr_dlclose(runtime,first.object_handle));
     CHECK(agr_find_symbol(runtime,"fixture_entry")==second.object_handle+0x1100);
     CHECK(!agr_dlclose(runtime,second.object_handle));
