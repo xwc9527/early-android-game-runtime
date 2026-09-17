@@ -130,8 +130,8 @@ static bool symbol_at(soinfo*si,uint32_t index,Elf32_Sym*out){const void*p=NULL;
 static const char* string_at(soinfo*si,uint32_t offset){const void*p=NULL;return source_vaddr(si,si->strtab_vaddr+offset,1,&p)?(const char*)p:NULL;}
 
 /* AOSP linker.cpp: soinfo_elf_lookup. SYSV hash chain policy is retained. */
-static bool soinfo_elf_lookup(agr_aosp_dynamic*rt,soinfo*si,unsigned hash,const char*name,Elf32_Sym*out,uint32_t*out_addr){
-  if(si->host){uint32_t a=rt->cb.resolve_import?rt->cb.resolve_import(rt->cb.opaque,name,STT_NOTYPE):0;if(!a)return false;memset(out,0,sizeof(*out));out->st_info=(STB_GLOBAL<<4);out->st_shndx=1;out->st_value=a;*out_addr=a;return true;}
+static bool soinfo_elf_lookup(agr_aosp_dynamic*rt,soinfo*si,unsigned hash,const char*name,uint32_t symbol_type,Elf32_Sym*out,uint32_t*out_addr){
+  if(si->host){uint32_t a=rt->cb.resolve_import?rt->cb.resolve_import(rt->cb.opaque,name,symbol_type):0;if(!a)return false;memset(out,0,sizeof(*out));out->st_info=(STB_GLOBAL<<4);out->st_shndx=1;out->st_value=a;*out_addr=a;return true;}
   const void*hp=NULL;if(!si->nbucket||!source_vaddr(si,si->hash_vaddr,8+(si->nbucket+si->nchain)*4,&hp))return false;
   const uint32_t*h=(const uint32_t*)hp;const uint32_t*bucket=h+2,*chain=bucket+si->nbucket;
   for(uint32_t n=bucket[hash%si->nbucket];n!=0&&n<si->nchain;n=chain[n]){Elf32_Sym s;if(!symbol_at(si,n,&s))return false;const char*sn=string_at(si,s.st_name);if(!sn||strcmp(sn,name))continue;
@@ -140,17 +140,17 @@ static bool soinfo_elf_lookup(agr_aosp_dynamic*rt,soinfo*si,unsigned hash,const 
 }
 
 /* AOSP linker.cpp: soinfo_do_lookup, with gLdPreloads absent by declared scope. */
-static bool soinfo_do_lookup(agr_aosp_dynamic*rt,soinfo*si,const char*name,soinfo**lsi,Elf32_Sym*out,uint32_t*out_addr){
+static bool soinfo_do_lookup(agr_aosp_dynamic*rt,soinfo*si,const char*name,uint32_t symbol_type,soinfo**lsi,Elf32_Sym*out,uint32_t*out_addr){
   unsigned hash=elfhash(name);
   if(si&&rt->somain){
-    if(si==rt->somain){if(soinfo_elf_lookup(rt,si,hash,name,out,out_addr)){*lsi=si;return true;}}
+    if(si==rt->somain){if(soinfo_elf_lookup(rt,si,hash,name,symbol_type,out,out_addr)){*lsi=si;return true;}}
     else {
-      if(!si->has_DT_SYMBOLIC&&soinfo_elf_lookup(rt,rt->somain,hash,name,out,out_addr)){*lsi=rt->somain;return true;}
-      if(soinfo_elf_lookup(rt,si,hash,name,out,out_addr)){*lsi=si;return true;}
-      if(si->has_DT_SYMBOLIC&&soinfo_elf_lookup(rt,rt->somain,hash,name,out,out_addr)){*lsi=rt->somain;return true;}
+      if(!si->has_DT_SYMBOLIC&&soinfo_elf_lookup(rt,rt->somain,hash,name,symbol_type,out,out_addr)){*lsi=rt->somain;return true;}
+      if(soinfo_elf_lookup(rt,si,hash,name,symbol_type,out,out_addr)){*lsi=si;return true;}
+      if(si->has_DT_SYMBOLIC&&soinfo_elf_lookup(rt,rt->somain,hash,name,symbol_type,out,out_addr)){*lsi=rt->somain;return true;}
     }
   }
-  if(si)for(size_t i=0;i<si->needed.size();++i)if(soinfo_elf_lookup(rt,si->needed[i],hash,name,out,out_addr)){*lsi=si->needed[i];return true;}
+  if(si)for(size_t i=0;i<si->needed.size();++i)if(soinfo_elf_lookup(rt,si->needed[i],hash,name,symbol_type,out,out_addr)){*lsi=si->needed[i];return true;}
   return false;
 }
 
@@ -174,7 +174,7 @@ static int soinfo_relocate(agr_aosp_dynamic*rt,soinfo*si,uint32_t rel_vaddr,uint
     uint32_t type=ELF32_R_TYPE(rel.r_info),sym=ELF32_R_SYM(rel.r_info),where=rel.r_offset+si->load_bias,sym_addr=0;Elf32_Sym local,s;soinfo*lsi=NULL;const char*sym_name="";
     if(type==R_ARM_NONE)continue;
     if(sym!=0){if(!symbol_at(si,sym,&local)){set_error(rt,"invalid symbol index in %s",si->name.c_str(),NULL);return -1;}sym_name=string_at(si,local.st_name);if(!sym_name){set_error(rt,"invalid symbol name in %s",si->name.c_str(),NULL);return -1;}
-      if(!soinfo_do_lookup(rt,si,sym_name,&lsi,&s,&sym_addr)){
+      if(!soinfo_do_lookup(rt,si,sym_name,ELF32_ST_TYPE(local.st_info),&lsi,&s,&sym_addr)){
         if(ELF32_ST_BIND(local.st_info)!=STB_WEAK){set_error(rt,"cannot locate symbol %s referenced by %s",sym_name,si->name.c_str());return -1;}
         switch(type){case R_ARM_JUMP_SLOT:case R_ARM_GLOB_DAT:case R_ARM_ABS32:case R_ARM_RELATIVE:sym_addr=0;break;default:set_error(rt,"unknown weak relocation in %s",si->name.c_str(),NULL);return -1;}
       }
@@ -250,10 +250,10 @@ extern "C" void agr_aosp_dynamic_destroy(agr_aosp_dynamic*rt){if(!rt)return;whil
 extern "C" int32_t agr_aosp_dynamic_register(agr_aosp_dynamic*rt,const char*name,const void*bytes,uint32_t size,uint32_t bias){if(!rt||!name||!bytes||!size)return -1;Source*s=find_source(rt,name);if(!s){s=new Source;s->name=basename_of(name);rt->sources.push_back(s);}s->bytes.assign((const unsigned char*)bytes,(const unsigned char*)bytes+size);s->preferred_bias=bias;return 0;}
 extern "C" int32_t agr_aosp_dynamic_load(agr_aosp_dynamic*rt,const char*name,const void*bytes,uint32_t size,uint32_t bias,agr_aosp_dynamic_load_result*out){if(agr_aosp_dynamic_register(rt,name,bytes,size,bias))return -1;uint32_t ns=rt->needed_log.size(),rs=rt->relocations.size(),cs=rt->constructors.size(),ss=rt->symbols.size();soinfo*si=find_library(rt,name);if(!si){set_dlerror(rt,"dlopen failed",rt->linker_error);return -1;}rebuild_symbols(rt,si);if(!CallConstructors(rt,si)){set_dlerror(rt,"dlopen failed",rt->linker_error);return -1;}if(out){out->object_handle=si->load_bias;out->needed_start=ns;out->needed_count=(uint32_t)rt->needed_log.size()-ns;out->relocation_start=rs;out->relocation_count=(uint32_t)rt->relocations.size()-rs;out->constructor_start=cs;out->constructor_count=(uint32_t)rt->constructors.size()-cs;out->symbol_start=ss;out->symbol_count=(uint32_t)rt->symbols.size()-ss;}rt->linker_error[0]=0;rt->dlerror_pending=false;return 0;}
 
-extern "C" uint32_t agr_aosp_dynamic_find_symbol(agr_aosp_dynamic*rt,const char*name){if(!rt||!name)return 0;for(size_t i=0;i<rt->solist.size();++i){Elf32_Sym s;uint32_t a=0;if(soinfo_elf_lookup(rt,rt->solist[i],elfhash(name),name,&s,&a))return a;}return 0;}
+extern "C" uint32_t agr_aosp_dynamic_find_symbol(agr_aosp_dynamic*rt,const char*name){if(!rt||!name)return 0;for(size_t i=0;i<rt->solist.size();++i){Elf32_Sym s;uint32_t a=0;if(soinfo_elf_lookup(rt,rt->solist[i],elfhash(name),name,STT_NOTYPE,&s,&a))return a;}return 0;}
 extern "C" uint32_t agr_aosp_dynamic_dlopen(agr_aosp_dynamic*rt,const char*name,int flags){if(!rt)return 0;if(flags&~0x103){set_dlerror(rt,"dlopen failed","invalid flags");return 0;}if(!name)return rt->somain?AGR_SELF_HANDLE:0;soinfo*si=find_library(rt,name);if(!si){set_dlerror(rt,"dlopen failed",rt->linker_error);return 0;}if(!si->host){rebuild_symbols(rt,si);if(!CallConstructors(rt,si)){set_dlerror(rt,"dlopen failed",rt->linker_error);return 0;}}rt->dlerror_pending=false;return si->load_bias;}
-extern "C" uint32_t agr_aosp_dynamic_dlsym(agr_aosp_dynamic*rt,uint32_t handle,const char*name){if(!rt||!name){if(rt)set_dlerror(rt,"dlsym failed","symbol name is null");return 0;}if(handle==0){set_dlerror(rt,"dlsym failed","library handle is null");return 0;}Elf32_Sym s;uint32_t a=0;if(handle==AGR_SELF_HANDLE||handle==0xffffffffu){for(size_t i=0;i<rt->solist.size();++i)if(soinfo_elf_lookup(rt,rt->solist[i],elfhash(name),name,&s,&a)){rt->dlerror_pending=false;return ELF32_ST_BIND(s.st_info)==STB_GLOBAL?a:0;}}
-  else {for(size_t i=0;i<rt->solist.size();++i)if(rt->solist[i]->load_bias==handle&&soinfo_elf_lookup(rt,rt->solist[i],elfhash(name),name,&s,&a)){if(ELF32_ST_BIND(s.st_info)==STB_GLOBAL){rt->dlerror_pending=false;return a;}set_dlerror(rt,"dlsym failed","symbol found but not global");return 0;}}
+extern "C" uint32_t agr_aosp_dynamic_dlsym(agr_aosp_dynamic*rt,uint32_t handle,const char*name){if(!rt||!name){if(rt)set_dlerror(rt,"dlsym failed","symbol name is null");return 0;}if(handle==0){set_dlerror(rt,"dlsym failed","library handle is null");return 0;}Elf32_Sym s;uint32_t a=0;if(handle==AGR_SELF_HANDLE||handle==0xffffffffu){for(size_t i=0;i<rt->solist.size();++i)if(soinfo_elf_lookup(rt,rt->solist[i],elfhash(name),name,STT_NOTYPE,&s,&a)){rt->dlerror_pending=false;return ELF32_ST_BIND(s.st_info)==STB_GLOBAL?a:0;}}
+  else {for(size_t i=0;i<rt->solist.size();++i)if(rt->solist[i]->load_bias==handle&&soinfo_elf_lookup(rt,rt->solist[i],elfhash(name),name,STT_NOTYPE,&s,&a)){if(ELF32_ST_BIND(s.st_info)==STB_GLOBAL){rt->dlerror_pending=false;return a;}set_dlerror(rt,"dlsym failed","symbol found but not global");return 0;}}
   set_dlerror(rt,"dlsym failed","undefined symbol");return 0;}
 extern "C" int32_t agr_aosp_dynamic_dlclose(agr_aosp_dynamic*rt,uint32_t handle){if(!rt)return -1;if(handle==AGR_SELF_HANDLE){rt->dlerror_pending=false;return 0;}for(size_t i=0;i<rt->solist.size();++i)if(rt->solist[i]->load_bias==handle){int r=soinfo_unload(rt,rt->solist[i]);if(r)set_dlerror(rt,"dlclose failed",rt->linker_error);else rt->dlerror_pending=false;return r;}set_dlerror(rt,"dlclose failed","invalid library handle");return -1;}
 extern "C" const char* agr_aosp_dynamic_dlerror(agr_aosp_dynamic*rt){if(!rt||!rt->dlerror_pending)return NULL;rt->dlerror_pending=false;return rt->dlerror_buffer;}
