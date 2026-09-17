@@ -24,19 +24,20 @@ jobs:
           TOOL="$ANDROID_SDK_ROOT/ndk/25.2.9519653/toolchains/llvm/prebuilt/linux-x86_64/bin"
           "$TOOL/armv7a-linux-androideabi19-clang" -shared -fPIC -Wl,-z,relro,-z,now Tests/Android44Reference/linker_fixture.c -o build-reference.so
           "$TOOL/armv7a-linux-androideabi19-clang" -fPIE -pie Tests/Android44Reference/android44_reference.c -ldl -o android44-reference
-      - name: Boot Android 4.4 ARM emulator
+      - name: Extract Android 4.4 ARM userspace
         run: |
-          echo no | avdmanager create avd -n agr-api19 -k 'system-images;android-19;default;armeabi-v7a' --force
-          nohup emulator -avd agr-api19 -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -no-accel > emulator.log 2>&1 &
-          adb wait-for-device
-          for i in $(seq 1 120); do [[ "$(adb shell getprop sys.boot_completed | tr -d '\r')" == 1 ]] && break; sleep 5; done
-          test "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" = 19
+          sudo apt-get update
+          sudo apt-get install -y qemu-user android-sdk-libsparse-utils e2fsprogs
+          IMAGE="$ANDROID_HOME/system-images/android-19/default/armeabi-v7a/system.img"
+          test -s "$IMAGE"
+          if file "$IMAGE" | grep -qi sparse; then simg2img "$IMAGE" system.raw.img; else cp "$IMAGE" system.raw.img; fi
+          mkdir -p android44-root
+          debugfs -R "rdump / android44-root" system.raw.img
+          test -x android44-root/system/bin/linker
+          test -s android44-root/system/lib/libc.so
       - name: Run reference and AGR differential
         run: |
-          adb push build-reference.so /data/local/tmp/libagr-reference.so
-          adb push android44-reference /data/local/tmp/android44-reference
-          adb shell chmod 755 /data/local/tmp/android44-reference
-          adb shell /data/local/tmp/android44-reference /data/local/tmp/libagr-reference.so | tr -d '\r' > android44.json
+          qemu-arm -L android44-root ./android44-reference ./build-reference.so > android44.json
           clang -std=c11 -O2 -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Tests/Android44Reference/agr_differential.c -o agr-diff.o
           clang -std=c11 -O2 -IRuntime/Process -c Runtime/Process/agr_guest_vma.c -o agr-vma.o
           clang++ -std=gnu++98 -O2 -fno-exceptions -fno-rtti -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Runtime/AospLinker/agr_aosp_linker.cpp -o agr-linker.o
@@ -56,5 +57,4 @@ jobs:
           path: |
             android44.json
             agr.json
-            emulator.log
             build-reference.so
