@@ -31,7 +31,8 @@ static int32_t call_guest(harness*h,uint32_t target,const uint32_t*args,uint32_t
   for(uint32_t i=0;i<4;i++)arm_interp_set_reg(h->cpu,i,i<count?args[i]:0);
   for(uint32_t i=4;i<count;i++)if(arm_interp_write(h->cpu,STACK_TOP+(i-4)*4,(const uint8_t*)&args[i],4))return -1;
   arm_interp_set_cpsr(h->cpu,(target&1)?0x20u:0u);arm_interp_set_reg(h->cpu,13,STACK_TOP);arm_interp_set_reg(h->cpu,14,STOP_ADDR);arm_interp_set_reg(h->cpu,15,target&~1u);
-  if(arm_interp_run(h->cpu,&budget,&svc)!=1||arm_interp_get_reg(h->cpu,15)-4!=STOP_ADDR)return -1;
+  int32_t state=arm_interp_run(h->cpu,&budget,&svc);uint32_t pc=arm_interp_get_reg(h->cpu,15);
+  if(state!=1||pc-4!=STOP_ADDR){fprintf(stderr,"guest call failed target=0x%08x state=%d pc=0x%08x cpsr=0x%08x svc=%u budget=%llu\n",target,state,pc,arm_interp_get_cpsr(h->cpu),svc,(unsigned long long)budget);return -1;}
   if(result)*result=(int32_t)arm_interp_get_reg(h->cpu,0);return 0;
 }
 static int32_t invoke_guest(void*o,uint32_t target){return call_guest((harness*)o,target,NULL,0,NULL);}
@@ -53,7 +54,7 @@ int main(int argc,char**argv){
   uint32_t arg=5;int32_t result=-1,weak_result=-1;if(!entry||call_guest(&h,entry,&arg,1,&result)||!weak||call_guest(&h,weak,NULL,0,&weak_result)){fprintf(stderr,"guest cross-DSO call failed\n");return 12;}
   agr_dlsym(r,a1,"not_exported_anywhere");const char*missing_kind=kind(agr_dlerror(r));
   agr_dlclose(r,a1);uint32_t after_one_symbol=agr_dlsym(r,a2,"a_entry");arg=6;int32_t after_one=-1;if(!after_one_symbol||call_guest(&h,after_one_symbol,&arg,1,&after_one)){fprintf(stderr,"post-refcount call failed\n");return 13;}char after_one_trace[64];if(read_events(r,&h,after_one_trace,sizeof(after_one_trace)))return 13;
-  agr_dlclose(r,a2);char unload_trace[64];if(read_events(r,&h,unload_trace,sizeof(unload_trace)))return 14;uint32_t f0=agr_find_symbol(r,"a_entry");
+  int32_t close_result=(int32_t)agr_dlclose(r,a2);if(close_result){fprintf(stderr,"final dlclose failed: %s\n",agr_dlerror(r));return 16;}char unload_trace[64];if(read_events(r,&h,unload_trace,sizeof(unload_trace)))return 14;uint32_t f0=agr_find_symbol(r,"a_entry");
   uint32_t bad_needed=agr_dlopen(r,"libagr_bad_needed.so");const char*bad_needed_kind=kind(agr_dlerror(r));
   uint32_t bad_symbol=agr_dlopen(r,"libagr_bad_symbol.so");const char*bad_symbol_kind=kind(agr_dlerror(r));
   uint32_t reload=agr_dlopen(r,"libagr_A.so");char reload_trace[64];if(read_events(r,&h,reload_trace,sizeof(reload_trace)))return 15;
