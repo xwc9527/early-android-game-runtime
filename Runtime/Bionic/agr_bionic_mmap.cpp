@@ -64,7 +64,7 @@ extern "C" int32_t agr_bionic_mmap2(agr_bionic_mmap_context* context,
                          AGR_MAP_ANONYMOUS | AGR_MAP_NORESERVE;
   if ((flags & ~known) != 0 || ((flags & AGR_MAP_SHARED) != 0) ==
       ((flags & AGR_MAP_PRIVATE) != 0) ||
-      ((flags & AGR_MAP_FIXED) != 0 && (address & 4095) != 0) {
+      ((flags & AGR_MAP_FIXED) != 0 && (address & 4095) != 0)) {
     return fail(EINVAL, guest_errno);
   }
   uint32_t vma_flags = (flags & AGR_MAP_FIXED) ? AGR_GUEST_VMA_FIXED : 0;
