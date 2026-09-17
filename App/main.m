@@ -845,6 +845,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
 }
 - (void)saveTraceWithFailure:(NSString *)failure {
     agr_guest *guest=gInteractive.guest;
+    uint32_t heap[5]={0};agr_guest_heap_diagnostics(guest,heap);
     NSMutableArray<NSString *> *calls=[NSMutableArray array];
     for(uint32_t i=0;guest&&i<agr_guest_recent_call_count(guest);i++) {
         const char *call=agr_guest_recent_call(guest,i);
@@ -860,6 +861,9 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
       @"guest_pc":[NSString stringWithFormat:@"%08x",guest?agr_guest_program_counter(guest):0],
       @"asset_opens":@(guest?agr_guest_asset_open_count(guest):0),
       @"input_consumed":@(guest?agr_guest_input_consumed_count(guest):0),
+      @"heap":@{ @"highest_live_end":[NSString stringWithFormat:@"%08x",heap[0]],
+                  @"limit":[NSString stringWithFormat:@"%08x",heap[1]],
+                  @"metadata_blocks":@(heap[2]),@"live_count":@(heap[3]),@"live_bytes":@(heap[4]) },
       @"recent_calls":calls,@"recent_inputs":recentInputs,@"throw_diagnostic":throwDiagnostic(guest),
       @"android_log":[NSString stringWithUTF8String:guest?agr_guest_last_android_log(guest):""],
       @"runtime_error":[NSString stringWithUTF8String:guest?agr_guest_last_error(guest):""],
