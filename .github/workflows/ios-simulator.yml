@@ -34,6 +34,8 @@ jobs:
         run: bash scripts/test-jni-methods.sh
       - name: Darwin host-service contracts
         run: bash scripts/test-host-services-darwin.sh
+      - name: Guest 32-bit VMA contracts
+        run: bash scripts/test-guest-vma.sh
       - name: Build and run native Runtime smoke in Simulator
         env:
           ZERO_INPUT_AB: "1"
