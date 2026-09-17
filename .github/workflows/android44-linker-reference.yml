@@ -36,6 +36,10 @@ jobs:
           export ANDROID_AVD_HOME="$HOME/.android/avd"
           mkdir -p "$ANDROID_AVD_HOME"
           "$SDK_TOOLS/avdmanager" create avd --force --name agr-api19-arm --device pixel --package 'system-images;android-19;default;armeabi-v7a'
+          AVD_CONFIG="$ANDROID_AVD_HOME/agr-api19-arm.avd/config.ini"
+          test -f "$AVD_CONFIG"
+          sed -i '/^hw.lcd.width=/d;/^hw.lcd.height=/d;/^skin.name=/d;/^skin.path=/d' "$AVD_CONFIG"
+          printf 'hw.lcd.width=480\nhw.lcd.height=800\nskin.name=480x800\nskin.path=480x800\n' >> "$AVD_CONFIG"
           "$LEGACY_EMULATOR" -list-avds | grep -q '^agr-api19-arm$'
           nohup "$LEGACY_EMULATOR" @agr-api19-arm -skin 480x800 -no-window -noaudio -no-snapshot -wipe-data -no-boot-anim -gpu off > emulator.log 2>&1 &
           EMULATOR_PID=$!
