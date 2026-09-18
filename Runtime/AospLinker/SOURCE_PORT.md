@@ -57,6 +57,10 @@ AGR modifications are limited to the platform boundary:
   addresses synchronously; dependency recursion, ordering, once-only state,
   and unload timing stay in the port. Host-only contract tests substitute a
   recording callback and compare the canonicalized order with Android 4.4.
+- `dl_unwind_find_exidx` / module lookup is an adapter over the same `solist`
+  `soinfo` records (`PT_ARM_EXIDX`, load span). Unwind does not keep a second
+  DSO or exidx registry; unload removes the `soinfo` and the exidx range
+  becomes invisible immediately.
 - `validate_headers` adds bounds/congruence checks on the in-memory ELF view;
   it is AGR glue, not an AOSP function.
 - `phdr_table_protect_gnu_relro` in the port folds the original helper into

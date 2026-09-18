@@ -6,9 +6,11 @@ on:
     branches: [main]
     paths:
       - 'scripts/build-iphoneos.sh'
+      - 'scripts/test-ehabi-unwind.sh'
       - 'App/main.m'
       - '.github/workflows/ios-device.yml'
       - 'Runtime/**'
+      - 'Tests/Ehabi/**'
 
 jobs:
   iphoneos:
@@ -33,6 +35,8 @@ jobs:
             tail -n 20 linker-test.log | while IFS= read -r line; do echo "::error title=Linker contract::$line"; done
             exit 1
           }
+      - name: ARM EHABI unwind foundation contracts
+        run: bash scripts/test-ehabi-unwind.sh
       - name: Set up device signing when credentials are configured
         if: env.IOS_CERTIFICATE_P12_BASE64 != '' && env.IOS_CERTIFICATE_PASSWORD != '' && env.IOS_PROVISIONING_PROFILE_BASE64 != ''
         run: |

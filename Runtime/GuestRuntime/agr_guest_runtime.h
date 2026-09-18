@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "../Ehabi/agr_ehabi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,6 +74,11 @@ uint32_t agr_guest_unique_import_count(agr_guest *guest);
 const char *agr_guest_unique_import(agr_guest *guest, uint32_t index);
 uint32_t agr_guest_recent_call_count(agr_guest *guest);
 const char *agr_guest_recent_call(agr_guest *guest, uint32_t index);
+
+int32_t agr_guest_unwind_backtrace(agr_guest *guest,
+                                   agr_guest_unwind_frame *frames,
+                                   uint32_t max_frames, uint32_t *count,
+                                   const char **stop_reason);
 
 #ifdef __cplusplus
 }

@@ -84,6 +84,12 @@ typedef struct agr_callbacks {
 
 typedef struct agr_runtime agr_runtime;
 
+typedef struct agr_module_info {
+    const char *name;
+    uint32_t load_start, load_size, load_bias;
+    uint32_t exidx, exidx_count;
+} agr_module_info;
+
 typedef struct agr_load_result {
     uint32_t object_handle;
     uint32_t needed_start, needed_count;
@@ -159,6 +165,10 @@ AGR_API uint32_t agr_dlsym(agr_runtime *runtime, uint32_t handle, const char *na
 AGR_API uint32_t agr_dlclose(agr_runtime *runtime, uint32_t handle);
 AGR_API const char *agr_dlerror(agr_runtime *runtime);
 AGR_API uint32_t agr_find_exidx(agr_runtime *runtime, uint32_t pc, uint32_t *count);
+AGR_API int32_t agr_find_module(agr_runtime *runtime, uint32_t pc,
+                                agr_module_info *out);
+AGR_API int32_t agr_runtime_read(agr_runtime *runtime, uint32_t address,
+                                 void *data, uint32_t size);
 
 AGR_API uint32_t agr_current_thread(agr_runtime *runtime);
 #if !defined(__APPLE__)

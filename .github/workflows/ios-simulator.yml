@@ -12,6 +12,8 @@ on:
     paths:
       - 'Runtime/**'
       - 'Tests/Conformance/**'
+      - 'Tests/Ehabi/**'
+      - 'scripts/test-ehabi-unwind.sh'
       - 'App/**'
       - 'scripts/build-and-run-simulator.sh'
       - 'scripts/run-simulator-smoke-bounded.py'
@@ -59,6 +61,13 @@ jobs:
           set -o pipefail
           bash scripts/test-aosp-linker.sh 2>&1 | tee aosp-linker-test.log || {
             tail -n 12 aosp-linker-test.log | while IFS= read -r line; do echo "::error title=API19 linker contract::$line"; done
+            exit 1
+          }
+      - name: ARM EHABI unwind foundation contracts
+        run: |
+          set -o pipefail
+          bash scripts/test-ehabi-unwind.sh 2>&1 | tee ehabi-unwind-test.log || {
+            tail -n 20 ehabi-unwind-test.log | while IFS= read -r line; do echo "::error title=EHABI unwind contract::$line"; done
             exit 1
           }
       - name: ARM guest page-permission faults

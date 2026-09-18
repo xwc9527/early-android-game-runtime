@@ -23,6 +23,7 @@ typedef struct { Elf32_Sword d_tag; union { Elf32_Word d_val; Elf32_Addr d_ptr; 
 #define EM_ARM 40
 #define PT_LOAD 1
 #define PT_DYNAMIC 2
+#define PT_ARM_EXIDX 0x70000001
 #define SHT_DYNSYM 11
 #define SHN_UNDEF 0
 #define STB_GLOBAL 1

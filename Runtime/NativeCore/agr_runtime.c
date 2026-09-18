@@ -448,6 +448,16 @@ uint32_t agr_dlsym(agr_runtime*rt,uint32_t handle,const char*name){return rt?agr
 uint32_t agr_dlclose(agr_runtime*rt,uint32_t handle){return rt?(uint32_t)agr_aosp_dynamic_dlclose(rt->dynamic_linker,handle):0xffffffffu;}
 const char*agr_dlerror(agr_runtime*rt){return rt?agr_aosp_dynamic_dlerror(rt->dynamic_linker):NULL;}
 uint32_t agr_find_exidx(agr_runtime*rt,uint32_t pc,uint32_t*count){return rt?agr_aosp_dynamic_find_exidx(rt->dynamic_linker,pc,count):0;}
+int32_t agr_find_module(agr_runtime*rt,uint32_t pc,agr_module_info*out){
+    agr_aosp_exidx_module module;
+    if(!rt||!out||agr_aosp_dynamic_find_module_by_pc(rt->dynamic_linker,pc,&module))return -1;
+    out->name=module.name;out->load_start=module.load_start;out->load_size=module.load_size;
+    out->load_bias=module.load_bias;out->exidx=module.exidx;out->exidx_count=module.exidx_count;
+    return 0;
+}
+int32_t agr_runtime_read(agr_runtime*rt,uint32_t address,void*data,uint32_t size){
+    return rt&&read_mem(rt,address,data,size)?0:-1;
+}
 
 #if !defined(__APPLE__)
 static agr_thread*thread(agr_runtime*rt){for(uint32_t i=0;i<rt->thread_count;i++)if(rt->threads[i].id==rt->current_thread)return&rt->threads[i];return&rt->threads[0];}

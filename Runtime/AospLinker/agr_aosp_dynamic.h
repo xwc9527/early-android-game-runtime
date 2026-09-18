@@ -74,6 +74,16 @@ uint32_t agr_aosp_dynamic_finalizer_address(const agr_aosp_dynamic*, uint32_t);
 uint32_t agr_aosp_dynamic_relocation_count(const agr_aosp_dynamic*);
 int32_t agr_aosp_dynamic_relocation_at(const agr_aosp_dynamic*, uint32_t,
                                        agr_aosp_dynamic_relocation*);
+typedef struct agr_aosp_exidx_module {
+  const char* name;
+  uint32_t load_start, load_size, load_bias;
+  uint32_t exidx, exidx_count;
+} agr_aosp_exidx_module;
+
+/* Looks up the already-loaded soinfo that owns `pc`. This is an adapter over
+ * the formal linker solist, not a second DSO/exidx registry. */
+int32_t agr_aosp_dynamic_find_module_by_pc(const agr_aosp_dynamic*, uint32_t pc,
+                                           agr_aosp_exidx_module* out);
 uint32_t agr_aosp_dynamic_find_exidx(const agr_aosp_dynamic*, uint32_t pc,
                                      uint32_t* count);
 

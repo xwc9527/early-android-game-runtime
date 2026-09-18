@@ -3,6 +3,7 @@
 #include "agr_runtime.h"
 #include "agr_thread_context.h"
 #include "agr_service_dispatch.h"
+#include "../Ehabi/agr_ehabi.h"
 #include "../Bionic/agr_bionic_thread_attr.h"
 #include "../AndroidFw/agr_androidfw.h"
 #include "../DexLoom/game_dex_runner.h"
@@ -1114,4 +1115,29 @@ const char *agr_guest_recent_call(agr_guest *g,uint32_t index) {
     uint32_t count=agr_guest_recent_call_count(g); if(index>=count)return NULL;
     uint32_t start=g->recent_import_index>12 ? g->recent_import_index%12 : 0;
     return g->recent_imports[(start+index)%12];
+}
+
+__attribute__((used))
+int32_t agr_guest_unwind_backtrace(agr_guest *g, agr_guest_unwind_frame *frames,
+                                   uint32_t max_frames, uint32_t *count,
+                                   const char **stop_reason) {
+    agr_guest_thread_context *context;
+    agr_guest_unwind_context unwind;
+    uint32_t regs[16];
+    uint32_t i;
+    int32_t rc;
+    if (count) *count = 0;
+    if (stop_reason) *stop_reason = "failure";
+    if (!g || !frames || !max_frames) return -1;
+    context = guest_context(g);
+    if (!context || !context->cpu || !g->runtime) {
+        if (stop_reason) *stop_reason = "invalid_pc";
+        return -1;
+    }
+    for (i = 0; i < 16; i++) regs[i] = arm_interp_get_reg(context->cpu, i);
+    agr_ehabi_context_init(&unwind, context, regs, arm_interp_get_cpsr(context->cpu),
+                           context->guest_stack_base, context->guest_stack_size);
+    rc = agr_ehabi_backtrace_runtime(g->runtime, &unwind, frames, max_frames, count);
+    if (stop_reason) *stop_reason = agr_ehabi_stop_name(unwind.stop);
+    return rc;
 }

@@ -278,4 +278,26 @@ extern "C" uint32_t agr_aosp_dynamic_finalizer_count(const agr_aosp_dynamic*rt){
 extern "C" uint32_t agr_aosp_dynamic_finalizer_address(const agr_aosp_dynamic*rt,uint32_t i){return rt&&i<rt->finalizers.size()?rt->finalizers[i].address:0;}
 extern "C" uint32_t agr_aosp_dynamic_relocation_count(const agr_aosp_dynamic*rt){return rt?(uint32_t)rt->relocations.size():0;}
 extern "C" int32_t agr_aosp_dynamic_relocation_at(const agr_aosp_dynamic*rt,uint32_t i,agr_aosp_dynamic_relocation*out){if(!rt||!out||i>=rt->relocations.size())return -1;const RelocRecord&r=rt->relocations[i];out->type=r.type;out->address=r.address;out->symbol=r.symbol.c_str();out->object_name=r.object_name.c_str();return 0;}
-extern "C" uint32_t agr_aosp_dynamic_find_exidx(const agr_aosp_dynamic*rt,uint32_t pc,uint32_t*count){if(rt)for(size_t i=0;i<rt->solist.size();++i){soinfo*si=rt->solist[i];if(!si->host&&pc>=si->image.load_start&&pc<si->image.load_start+si->image.load_size){if(count)*count=si->exidx_count;return si->exidx;}}if(count)*count=0;return 0;}
+extern "C" int32_t agr_aosp_dynamic_find_module_by_pc(const agr_aosp_dynamic*rt,uint32_t pc,agr_aosp_exidx_module*out){
+  if(!rt||!out)return -1;
+  uint32_t addr=pc&~1u;
+  for(size_t i=0;i<rt->solist.size();++i){
+    soinfo*si=rt->solist[i];
+    if(si->host||!si->image.load_size)continue;
+    if(addr>=si->image.load_start&&addr<si->image.load_start+si->image.load_size){
+      out->name=si->name.c_str();
+      out->load_start=si->image.load_start;
+      out->load_size=si->image.load_size;
+      out->load_bias=si->load_bias;
+      out->exidx=si->exidx;
+      out->exidx_count=si->exidx_count;
+      return 0;
+    }
+  }
+  return -1;
+}
+extern "C" uint32_t agr_aosp_dynamic_find_exidx(const agr_aosp_dynamic*rt,uint32_t pc,uint32_t*count){
+  agr_aosp_exidx_module module;
+  if(agr_aosp_dynamic_find_module_by_pc(rt,pc,&module)){if(count)*count=0;return 0;}
+  if(count)*count=module.exidx_count;return module.exidx;
+}

@@ -148,11 +148,19 @@ python tools/observe_iphone.py --bundle-id dev.agr.simulator
 
 接手后的首要工作是继续 Runtime closure，而不是扩大 APK 数量或继续针对 Kung Foo 补洞。
 
-第一优先级是 DEX/Dalvik 与 JNI 正式化：移除 JNI string/array/trap 等固定表，迁移 local/global/weak reference、method/field ID、thread attach/detach、异常与 GC root 语义，并建立 Android 4.4 differential。当前 `agr_guest_runtime.c` 的 64 项 string handle 和其他固定容量明确属于未闭合实现。
+正式依赖顺序保持：
 
-第二优先级是 native 公共环境剩余主体：便携 Bionic libc/libm/stdio、文件和路径语义、真实时钟、signals/fault delivery、API19 allocator source port，以及 ARM C++ ABI/EHABI/unwind。当前 free-list allocator 已解决历史分配耗尽，但还不是 Bionic dlmalloc 的正式迁移结果。
+`Native Android userspace` → `C++ ABI / ARM EHABI` → `剩余 Bionic native environment` → `Dalvik / GC` → `JNI / JavaVM` → `Framework`
 
-第三优先级是 Framework 与设备边界：把 AndroidMini 中的 stub/固定成功行为替换为可声明、可测试的 API19 HLE；随后闭合 NativeActivity/Looper/Input/Window、Bitmap lifecycle 和 Audio/OpenSL ES。未知 API 不得伪造成功。
+当前下一工作包是 ARM C++ ABI / EHABI / unwind 正式迁移。
+
+Native Android userspace 剩余基础闭合后，再进入 DEX/Dalvik、GC 与 JNI/JavaVM 正式化。
+
+当前 JNI string / array / trap fixed tables 属于明确技术债，但不得在正式 JNI 迁移前通过扩表、局部 shim 或真实游戏补丁处理。当前 `agr_guest_runtime.c` 的 64 项 string handle 和其他固定容量明确属于未闭合实现。
+
+EHABI unwind foundation 之后的 native 公共环境剩余主体：便携 Bionic libc/libm/stdio、文件和路径语义、真实时钟、signals/fault delivery、API19 allocator source port。当前 free-list allocator 已解决历史分配耗尽，但还不是 Bionic dlmalloc 的正式迁移结果。
+
+再之后是 Framework 与设备边界：把 AndroidMini 中的 stub/固定成功行为替换为可声明、可测试的 API19 HLE；随后闭合 NativeActivity/Looper/Input/Window、Bitmap lifecycle 和 Audio/OpenSL ES。未知 API 不得伪造成功。
 
 完成公共模块的契约与 differential 后，真实游戏只承担集成回归、coverage 和 failure signature 发现，不再作为逐调用设计 Runtime 的依据。
 

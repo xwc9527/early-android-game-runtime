@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Runtime/NativeCore/**','Tests/AospLinker/**','Tests/Android44Reference/**','Tests/Android44Dynamic/**','Tests/Android44Threads/**','.github/workflows/android44-linker-reference.yml']
+    paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Runtime/NativeCore/**','Runtime/Ehabi/**','Tests/AospLinker/**','Tests/Ehabi/**','Tests/Android44Reference/**','Tests/Android44Dynamic/**','Tests/Android44Threads/**','Tests/Android44Unwind/**','scripts/build-android44-unwind-gcc.sh','.github/workflows/android44-linker-reference.yml']
 jobs:
   api19-reference:
     runs-on: ubuntu-latest
@@ -37,6 +37,34 @@ jobs:
           "$CC" "${COMMON[@]}" -Wl,-soname,libagr_bad_symbol.so Tests/Android44Dynamic/bad_symbol.c -o dynamic/libagr_bad_symbol.so
           "$CC" -fPIE -pie Tests/Android44Dynamic/reference.c -ldl -o dynamic/android44-dynamic-reference
           "$CC" -fPIE -pie Tests/Android44Threads/reference.c -pthread -o android44-thread-reference
+      - uses: actions/cache@v4
+        id: ndk-r10e
+        with:
+          path: ${{ runner.temp }}/android-ndk-r10e
+          key: android-ndk-r10e-linux-x86_64-md5-19af543b068bdb7f27787c2bc69aba7f
+      - name: Fetch NDK r10e GCC 4.8 EHABI oracle
+        if: steps.ndk-r10e.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y p7zip-full
+          NDK_BIN="$RUNNER_TEMP/android-ndk-r10e-linux-x86_64.bin"
+          curl -fL --retry 3 https://dl.google.com/android/repository/android-ndk-r10e-linux-x86_64.bin -o "$NDK_BIN"
+          echo "19af543b068bdb7f27787c2bc69aba7f  $NDK_BIN" | md5sum -c -
+          test "$(stat -c%s "$NDK_BIN")" = 401522849
+          rm -rf "$RUNNER_TEMP/ndk-r10e-extract"
+          mkdir -p "$RUNNER_TEMP/ndk-r10e-extract"
+          7z x -y -o"$RUNNER_TEMP/ndk-r10e-extract" "$NDK_BIN"
+          ROOT="$(find "$RUNNER_TEMP/ndk-r10e-extract" -type d -name android-ndk-r10e | head -n 1)"
+          test -n "$ROOT"
+          rm -rf "$RUNNER_TEMP/android-ndk-r10e"
+          mv "$ROOT" "$RUNNER_TEMP/android-ndk-r10e"
+      - name: Build GCC 4.8 ARM EHABI unwind fixtures
+        run: |
+          test -x "$RUNNER_TEMP/android-ndk-r10e/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64/bin/arm-linux-androideabi-gcc"
+          "$RUNNER_TEMP/android-ndk-r10e/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64/bin/arm-linux-androideabi-gcc" --version | grep '4\.8'
+          export NDK_R10E="$RUNNER_TEMP/android-ndk-r10e"
+          export UNWIND_OUT="$GITHUB_WORKSPACE/unwind"
+          bash scripts/build-android44-unwind-gcc.sh
       - name: Boot Android 4.4 ARM emulator
         run: |
           SDK_TOOLS="$(cat sdk-tools-path.txt)"
@@ -124,6 +152,30 @@ jobs:
               print(f'::error title=API19 pthread differential::{key}: Android={android.get(key)!r} AGR={agr.get(key)!r}')
           assert android==agr,(android,agr)
           PY
+      - name: API19 ARM EHABI unwind differential
+        run: |
+          bash scripts/test-ehabi-unwind.sh
+          adb shell mkdir -p /data/local/tmp/unwind
+          adb push unwind/android44-unwind-reference unwind/libagr_unwind_probe.so unwind/libagr_unwind_C.so unwind/libagr_unwind_B.so unwind/libagr_unwind_A.so /data/local/tmp/unwind/
+          adb shell chmod 755 /data/local/tmp/unwind/android44-unwind-reference
+          adb shell 'cd /data/local/tmp/unwind && LD_LIBRARY_PATH=/data/local/tmp/unwind ./android44-unwind-reference' | tr -d '\r' > android44-unwind.json
+          clang -std=c11 -O2 -Wall -Wextra -Werror -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -IRuntime/Ehabi -IRuntime/GuestRuntime -c Tests/Android44Unwind/agr_differential.c -o agr-unwind-diff.o
+          clang -std=c11 -O2 -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -IRuntime/Ehabi -IRuntime/GuestRuntime -c Runtime/Ehabi/agr_ehabi.c -o agr-ehabi.o
+          clang++ agr-unwind-diff.o agr-ehabi.o agr-runtime.o agr-vma.o agr-linker.o agr-dynamic.o agr-mmap.o Runtime/ArmInterpreter/target/release/libtouchhle_arm_interpreter.a -ldl -lpthread -lm -o agr-unwind-differential
+          ./agr-unwind-differential unwind/libagr_unwind_C.so unwind/libagr_unwind_B.so unwind/libagr_unwind_A.so > agr-unwind.json
+          python3 - <<'PY'
+          import json
+          android=json.load(open('android44-unwind.json'))
+          agr=json.load(open('agr-unwind.json'))
+          print('Android 4.4 unwind:',json.dumps(android,sort_keys=True))
+          print('AGR unwind:',json.dumps(agr,sort_keys=True))
+          assert android.get('stop')==agr.get('stop'),(android,agr)
+          assert len(android.get('frames',[]))==len(agr.get('frames',[])),(android,agr)
+          for i,(a,b) in enumerate(zip(android['frames'],agr['frames'])):
+            if a!=b:
+              print(f'::error title=API19 EHABI frame {i}::{a!r} vs {b!r}')
+          assert android==agr,(android,agr)
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -137,4 +189,7 @@ jobs:
             dynamic/*.so
             android44-thread.json
             agr-thread.json
+            android44-unwind.json
+            agr-unwind.json
+            unwind/*
             emulator.log
