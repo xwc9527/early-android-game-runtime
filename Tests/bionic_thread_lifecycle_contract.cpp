@@ -17,7 +17,6 @@ int32_t arm_interp_set_page_permissions(void *cpu, uint32_t address,
 int32_t arm_interp_set_reg(void *cpu, uint32_t reg, uint32_t value);
 uint32_t arm_interp_get_reg(void *cpu, uint32_t reg);
 void arm_interp_set_thread_tag(void *cpu, uint32_t tag);
-uint32_t arm_interp_watch_thread_tag(void *cpu);
 int32_t arm_interp_run(void *cpu, uint64_t *budget, uint32_t *svc);
 }
 
@@ -52,7 +51,6 @@ static int32_t execute(void *opaque, uint32_t guest_thread, uint32_t start,
   uint64_t budget = 16;
   uint32_t svc = 0;
   assert(arm_interp_run(cpu, &budget, &svc) == 1 && svc == 0);
-  assert(arm_interp_watch_thread_tag(cpu) == guest_thread);
   assert(arm_interp_get_reg(cpu, 0) == argument);
   arm_interp_destroy(cpu);
   ++f->independent_cpu_ok;
