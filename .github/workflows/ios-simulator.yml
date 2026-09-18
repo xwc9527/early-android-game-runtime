@@ -56,6 +56,8 @@ jobs:
         run: bash scripts/test-host-services-darwin.sh
       - name: Guest 32-bit VMA contracts
         run: bash scripts/test-guest-vma.sh
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
       - name: API19 mmap and AOSP linker segment contracts
         run: |
           set -o pipefail

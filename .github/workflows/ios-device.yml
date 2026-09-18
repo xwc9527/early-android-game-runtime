@@ -28,6 +28,8 @@ jobs:
         run: |
           xcodebuild -version
           xcrun --sdk iphoneos --show-sdk-path
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
       - name: API19 mmap and AOSP linker segment contracts
         run: |
           set -o pipefail

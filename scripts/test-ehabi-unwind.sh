@@ -4,6 +4,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/build/ehabi-unwind-test"; OBJ="$ROOT/build/ehabi-unwind-obj"
 mkdir -p "$ROOT/build"
 rm -rf "$OBJ"; mkdir -p "$OBJ"
+if ! command -v cargo >/dev/null 2>&1; then
+  echo "cargo is required to build the ARM interpreter for EHABI unwind contracts" >&2
+  exit 1
+fi
 INC=(-I"$ROOT/Runtime/AospLinker" -I"$ROOT/Runtime/Bionic" -I"$ROOT/Runtime/Process" -I"$ROOT/Runtime/NativeCore" -I"$ROOT/Runtime/Ehabi" -I"$ROOT/Runtime/GuestRuntime")
 cargo build --manifest-path "$ROOT/Runtime/ArmInterpreter/Cargo.toml" --release
 INTERP="$ROOT/Runtime/ArmInterpreter/target/release/libtouchhle_arm_interpreter.a"
@@ -20,7 +24,7 @@ if [[ "$(uname -s)" == Darwin ]]; then
   for SOURCE in agr_futex_host agr_bionic_sync agr_bionic_tls agr_bionic_errno_host agr_bionic_thread_lifecycle; do
     clang++ -std=c++17 -O2 -fno-rtti "${INC[@]}" -c "$ROOT/Runtime/Bionic/$SOURCE.cpp" -o "$OBJ/$SOURCE.o"
   done
-  EXTRA=("$OBJ/host-services.o" "$OBJ/thread-attr.o" "$OBJ/agr_futex_host.o" "$OBJ/agr_bionic_sync.o" "$OBJ/agr_bionic_tls.o" "$OBJ/agr_bionic_errno_host.o" "$OBJ/agr_bionic_thread_lifecycle.o")
+  EXTRA=("$OBJ/host-services.o" "$OBJ/thread-attr.o" "$OBJ/agr_futex_host.o" "$OBJ/agr_bionic_sync.o" "$OBJ/agr_bionic_tls.o" "$OBJ/agr_bionic_errno_host.o" "$OBJ/agr_bionic_thread_lifecycle.o" -framework CoreFoundation -framework Security)
 else
   EXTRA=()
 fi

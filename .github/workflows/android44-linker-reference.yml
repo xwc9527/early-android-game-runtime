@@ -91,6 +91,7 @@ jobs:
           if ! adb get-state >/dev/null 2>&1; then cat emulator.log; exit 1; fi
           adb shell getprop ro.build.version.release | tr -d '\r' | grep -q '^4\.4'
           adb shell getprop ro.product.cpu.abi | tr -d '\r' | grep -q '^armeabi-v7a$'
+      - uses: dtolnay/rust-toolchain@stable
       - name: Run reference and AGR differential
         run: |
           adb push android44-reference build-reference.so /data/local/tmp/
