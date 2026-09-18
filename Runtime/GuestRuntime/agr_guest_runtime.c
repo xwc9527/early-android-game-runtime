@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdatomic.h>
+#include <time.h>
 
 extern void *arm_interp_create(void);
 extern void arm_interp_destroy(void *);
@@ -82,9 +83,6 @@ struct agr_process_runtime {
     _Atomic int shutting_down;
     uint64_t run_budget;
     uint32_t call_depth;
-    uint32_t pending_thread_id, pending_thread_start, pending_thread_arg;
-    uint32_t parked_regs[16], parked_cpsr;
-    int cooperative_thread_active, parked_valid, park_requested, yield_after_swap;
     virtual_pipe pipes[8];
     uint32_t looper_handle, looper_fd_count;
     looper_fd looper_fds[16];
@@ -100,7 +98,12 @@ struct agr_process_runtime {
     uint32_t input_queue_handle, input_ident, input_data;
     input_event input_events[32]; uint32_t input_head, input_count, next_input_handle;
     uint32_t input_consumed_count;
-    uint32_t draw_count, swap_count, asset_open_count;
+    _Atomic uint32_t draw_count, swap_count;
+    uint32_t asset_open_count;
+    uint32_t egl_owner_thread_id;
+    atomic_flag framebuffer_lock;
+    uint8_t *framebuffer;
+    uint32_t framebuffer_capacity, framebuffer_size;
 };
 
 void agr_process_runtime_register_thread(agr_process_runtime *process,
@@ -421,10 +424,10 @@ static void set_normal_pointer(GLint size, GLenum type, GLsizei stride, const vo
 }
 static int dispatch_egl(agr_guest *g, const char *name) {
     if (strncmp(name,"egl",3) != 0) return 0;
-    /* EGL object ownership is explicit.  Until the EGLContextOwner executor
-     * is migrated, workers cannot use the main thread's ANGLE context. */
-    if (guest_context(g) != g->main_thread) {
-        set_error(g,"EGL worker dispatch requires EGLContextOwner executor");
+    const uint32_t thread_id=guest_context(g)->guest_thread_id;
+    if (!g->egl_owner_thread_id) g->egl_owner_thread_id=thread_id;
+    if (g->egl_owner_thread_id != thread_id) {
+        set_error(g,"EGL call executed outside EGLContextOwner");
         return -1;
     }
     if (!strcmp(name, "eglGetDisplay")) {
@@ -490,18 +493,32 @@ static int dispatch_egl(agr_guest *g, const char *name) {
         guest_return(g,ok,0); return 1;
     }
     if (!strcmp(name, "eglSwapBuffers")) {
-        g->swap_count++;
-        guest_return(g,eglSwapBuffers(g->display,g->surface),0);
-        if (g->yield_after_swap && g->cooperative_thread_active) {
-            for (uint32_t i = 0; i < 16; i++) g->parked_regs[i] = arm_interp_get_reg(guest_cpu(g), i);
-            g->parked_cpsr = arm_interp_get_cpsr(guest_cpu(g));
-            g->parked_valid = 1; g->park_requested = 1; return 2;
+        uint32_t needed=(uint32_t)(g->width*g->height*4);
+        while (atomic_flag_test_and_set_explicit(&g->framebuffer_lock,memory_order_acquire)) {}
+        if (needed>g->framebuffer_capacity) {
+            uint8_t *replacement=(uint8_t *)realloc(g->framebuffer,needed);
+            if (replacement) { g->framebuffer=replacement; g->framebuffer_capacity=needed; }
         }
+        if (g->framebuffer && g->framebuffer_capacity>=needed) {
+            glFinish(); glReadPixels(0,0,g->width,g->height,GL_RGBA,GL_UNSIGNED_BYTE,g->framebuffer);
+            g->framebuffer_size=glGetError()==GL_NO_ERROR?needed:0;
+        }
+        atomic_flag_clear_explicit(&g->framebuffer_lock,memory_order_release);
+        atomic_fetch_add_explicit(&g->swap_count,1u,memory_order_release);
+        guest_return(g,eglSwapBuffers(g->display,g->surface),0);
         return 1;
     }
     return 0;
 }
 static int dispatch_graphics(agr_guest *g, const char *name) {
+    if (!strncmp(name,"gl",2)) {
+        const uint32_t thread_id=guest_context(g)->guest_thread_id;
+        if (!g->egl_owner_thread_id) g->egl_owner_thread_id=thread_id;
+        if (g->egl_owner_thread_id != thread_id) {
+            set_error(g,"GLES call executed outside EGLContextOwner");
+            return -1;
+        }
+    }
     if (!strcmp(name,"glEnable")) { glEnable(argument(g,0)); guest_return(g,0,0); return 1; }
     if (!strcmp(name,"glDisable")) { glDisable(argument(g,0)); guest_return(g,0,0); return 1; }
     if (!strcmp(name,"glEnableClientState")) { glEnableClientState(argument(g,0)); guest_return(g,0,0); return 1; }
@@ -547,7 +564,7 @@ static int dispatch_graphics(agr_guest *g, const char *name) {
         apply_client_array(g, &g->normal, vertices, set_normal_pointer, &nb);
         if (!strcmp(name, "glDrawArrays")) glDrawArrays(mode, (GLint)first, (GLsizei)count);
         else glDrawElements(mode, (GLsizei)count, index_type, indices);
-        g->draw_count++;
+        atomic_fetch_add_explicit(&g->draw_count,1u,memory_order_relaxed);
         free(vb); free(cb); free(tb); free(nb); free(indices);
         guest_return(g, 0, 0); return 1;
     }
@@ -577,7 +594,7 @@ static int dispatch_import(agr_guest *g, const char *name) {
         guest_return(g,0,0); return 1;
     }
     int egl = dispatch_egl(g,name); if (egl) return egl;
-    if (dispatch_graphics(g, name)) return 1;
+    int graphics=dispatch_graphics(g,name); if (graphics) return graphics;
     if (!strcmp(name, "AConfiguration_new")) { guest_return(g, agr_malloc(g->runtime, 64), 0); return 1; }
     if (!strcmp(name, "AConfiguration_delete")) { agr_free(g->runtime, argument(g, 0)); guest_return(g, 0, 0); return 1; }
     if (!strcmp(name, "AConfiguration_fromAssetManager")) { guest_return(g, 0, 0); return 1; }
@@ -617,11 +634,6 @@ static int dispatch_import(agr_guest *g, const char *name) {
             result = fd->ident; break;
         }
         guest_return(g, result, 0);
-        if (result == 0xffffffffu && timeout < 0 && g->cooperative_thread_active) {
-            for (uint32_t i = 0; i < 16; i++) g->parked_regs[i] = arm_interp_get_reg(guest_cpu(g), i);
-            g->parked_cpsr = arm_interp_get_cpsr(guest_cpu(g));
-            g->parked_valid = 1; g->park_requested = 1; return 2;
-        }
         return 1;
     }
     if (!strcmp(name,"AInputQueue_attachLooper")) {
@@ -714,55 +726,6 @@ static int dispatch_import(agr_guest *g, const char *name) {
             for (uint32_t i = 0; i < 16; i++) arm_interp_set_reg(guest_cpu(g), i, saved[i]);
             arm_interp_set_cpsr(guest_cpu(g), saved_cpsr);
             agr_complete_once(g->runtime, out.action_arg1);
-        } else if (out.action == AGR_ACTION_RUN_THREAD) {
-            g->pending_thread_id = out.value;
-            g->pending_thread_start = out.action_arg0;
-            g->pending_thread_arg = out.action_arg1;
-        } else if (out.action == AGR_ACTION_COND_WAIT) {
-            if (g->pending_thread_start) {
-                uint32_t saved[16], saved_cpsr = arm_interp_get_cpsr(guest_cpu(g));
-                for (uint32_t i = 0; i < 16; i++) saved[i] = arm_interp_get_reg(guest_cpu(g), i);
-                uint32_t prior = agr_current_thread(g->runtime);
-                agr_set_current_thread(g->runtime, g->pending_thread_id);
-                g->cooperative_thread_active = 1;
-                uint32_t start = g->pending_thread_start, thread_args[1] = {g->pending_thread_arg};
-                g->pending_thread_start = 0;
-                int nested = call_address(g, start, thread_args, 1, NULL);
-                g->cooperative_thread_active = 0;
-                agr_set_current_thread(g->runtime, prior);
-                for (uint32_t i = 0; i < 16; i++) arm_interp_set_reg(guest_cpu(g), i, saved[i]);
-                arm_interp_set_cpsr(guest_cpu(g), saved_cpsr);
-                if (nested) return -1;
-            }
-            if (g->parked_valid) {
-                uint32_t saved[16], saved_cpsr = arm_interp_get_cpsr(guest_cpu(g));
-                for (uint32_t i = 0; i < 16; i++) saved[i] = arm_interp_get_reg(guest_cpu(g), i);
-                uint32_t prior = agr_current_thread(g->runtime);
-                agr_set_current_thread(g->runtime, g->pending_thread_id);
-                for (uint32_t i = 0; i < 16; i++) arm_interp_set_reg(guest_cpu(g), i, g->parked_regs[i]);
-                arm_interp_set_cpsr(guest_cpu(g), g->parked_cpsr);
-                g->parked_valid = 0; g->cooperative_thread_active = 1; guest_context(g)->callback_depth++;
-                int resumed = run_until_return(g);
-                guest_context(g)->callback_depth--; g->cooperative_thread_active = 0;
-                agr_set_current_thread(g->runtime, prior);
-                for (uint32_t i = 0; i < 16; i++) arm_interp_set_reg(guest_cpu(g), i, saved[i]);
-                arm_interp_set_cpsr(guest_cpu(g), saved_cpsr);
-                if (resumed < 0) return -1;
-            }
-            uint32_t lock_args[4] = {out.action_arg1,0,0,0}; agr_dispatch_result lock = {0};
-            if (agr_dispatch_system(g->runtime, "pthread_mutex_lock", lock_args,
-                                    arm_interp_get_reg(guest_cpu(g), 13), &lock) || !lock.handled) {
-                snprintf(g->error, sizeof(g->error), "pthread_cond_wait mutex=0x%08x thread=%u owner=%u parked=%d pipe=%u: %.100s",
-                         out.action_arg1, agr_current_thread(g->runtime),
-                         agr_mutex_owner(g->runtime,out.action_arg1),g->parked_valid,
-                         g->pipes[0].size-g->pipes[0].read_offset,agr_last_error(g->runtime));
-                fprintf(stderr,"guest recent imports:");
-                for (uint32_t i = 0; i < 12; i++) { const char *entry=g->recent_imports[(g->recent_import_index+i)%12]; if(entry) fprintf(stderr," %s",entry); }
-                fprintf(stderr,"\n"); return -1;
-            }
-        } else if (out.action == AGR_ACTION_COND_BROADCAST) {
-            /* Signalling does not yield the guest thread: it may still own the
-               mutex and must run through its unlock before the waiter resumes. */
         } else if (out.action != AGR_ACTION_NONE) {
             snprintf(g->error, sizeof(g->error), "unsupported nested system action %u in %s", out.action, name); return -1;
         }
@@ -797,7 +760,6 @@ static int run_until_return(agr_guest *g) {
         const char *name = trap_name(g, address);
         int imported = name ? dispatch_import(g, name) : -1;
         if (imported < 0) { if (!name) snprintf(g->error, sizeof(g->error), "unknown SVC trap 0x%x", address); return -1; }
-        if (imported == 2 && g->park_requested) { g->park_requested = 0; return 1; }
         if (imported == 3) return 2;
     }
 }
@@ -823,6 +785,7 @@ agr_guest *agr_guest_create(void) {
     agr_guest *g = (agr_guest *)calloc(1, sizeof(*g)); if (!g) return NULL;
     atomic_flag_clear_explicit(&g->thread_registry_lock,memory_order_release);
     atomic_flag_clear_explicit(&g->diagnostics_lock,memory_order_release);
+    atomic_flag_clear_explicit(&g->framebuffer_lock,memory_order_release);
     g->process_cpu = arm_interp_create(); g->run_budget = 1000000; g->next_trap = IMPORT_BASE; g->next_array_handle = 0x61000000u;
     g->next_asset_handle = 0x62010000u; g->input_queue_handle=0x67000000u; g->next_input_handle=0x67000100u;
     if (!g->process_cpu) { free(g); return NULL; }
@@ -864,6 +827,7 @@ void agr_guest_destroy(agr_guest *g) {
     for (uint32_t i=0; i<g->string_count; i++) free(g->strings[i].text);
     if (g->display != EGL_NO_DISPLAY) { eglMakeCurrent(g->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT); if (g->context) eglDestroyContext(g->display, g->context); if (g->surface) eglDestroySurface(g->display, g->surface); eglTerminate(g->display); }
     for (uint32_t i = 0; i < g->trap_count; i++) free(g->traps[i].name);
+    free(g->framebuffer);
     agr_runtime_detach_current_thread(g->runtime,1);
     agr_runtime_destroy(g->runtime); agr_guest_thread_context_destroy(g->main_thread); arm_interp_destroy(g->process_cpu); free(g);
 }
@@ -1013,29 +977,15 @@ int32_t agr_guest_load_dex(agr_guest *g, const char *path) {
     if (!g->dex_game) { set_error(g,"original DEX Runtime creation failed"); return -1; }
     return 0;
 }
-int32_t agr_guest_has_parked_thread(agr_guest *g) { return g && g->parked_valid; }
-int32_t agr_guest_resume_thread(agr_guest *g) {
-    if (!g || !g->parked_valid) return 0;
-    uint32_t saved[16], saved_cpsr=arm_interp_get_cpsr(guest_cpu(g));
-    for (uint32_t i=0; i<16; i++) saved[i]=arm_interp_get_reg(guest_cpu(g),i);
-    uint32_t prior=agr_current_thread(g->runtime);
-    agr_set_current_thread(g->runtime,g->pending_thread_id);
-    for (uint32_t i=0; i<16; i++) arm_interp_set_reg(guest_cpu(g),i,g->parked_regs[i]);
-    arm_interp_set_cpsr(guest_cpu(g),g->parked_cpsr);
-    g->parked_valid=0; g->cooperative_thread_active=1; guest_context(g)->callback_depth++;
-    int result=run_until_return(g);
-    guest_context(g)->callback_depth--; g->cooperative_thread_active=0;
-    agr_set_current_thread(g->runtime,prior);
-    for (uint32_t i=0; i<16; i++) arm_interp_set_reg(guest_cpu(g),i,saved[i]);
-    arm_interp_set_cpsr(guest_cpu(g),saved_cpsr);
-    return result < 0 ? -1 : 0;
-}
-int32_t agr_guest_resume_thread_until_swap(agr_guest *g) {
+int32_t agr_guest_wait_for_swap(agr_guest *g, uint32_t previous, uint32_t timeout_ms) {
     if (!g) return -1;
-    g->yield_after_swap = 1;
-    int32_t result = agr_guest_resume_thread(g);
-    g->yield_after_swap = 0;
-    return result;
+    struct timespec delay={0,1000000};
+    for (uint32_t elapsed=0; elapsed<timeout_ms; ++elapsed) {
+        if (atomic_load_explicit(&g->swap_count,memory_order_acquire)>previous) return 0;
+        if (g->error[0] || atomic_load_explicit(&g->shutting_down,memory_order_acquire)) return -1;
+        nanosleep(&delay,NULL);
+    }
+    return 1;
 }
 int32_t agr_guest_create_gles1_pbuffer(agr_guest *g, int width, int height) {
     PFNEGLGETPLATFORMDISPLAYEXTPROC getPlatformDisplay = (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
@@ -1062,13 +1012,19 @@ void agr_guest_setup_gles1_frame(agr_guest *g) {
     glViewport(0,0,g->width,g->height); glClearColor(0,0,0,1); glClear(GL_COLOR_BUFFER_BIT); glMatrixMode(GL_PROJECTION); glLoadIdentity(); glMatrixMode(GL_MODELVIEW); glLoadIdentity(); glEnableClientState(GL_VERTEX_ARRAY); glEnableClientState(GL_COLOR_ARRAY);
 }
 int32_t agr_guest_read_rgba(agr_guest *g, void *pixels, uint32_t capacity) {
-    uint32_t need = (uint32_t)(g->width * g->height * 4); if (capacity < need) return -1; glFinish(); glReadPixels(0,0,g->width,g->height,GL_RGBA,GL_UNSIGNED_BYTE,pixels); return glGetError() == GL_NO_ERROR ? (int32_t)need : -1;
+    if (!g || !pixels) return -1;
+    while (atomic_flag_test_and_set_explicit(&g->framebuffer_lock,memory_order_acquire)) {}
+    uint32_t size=g->framebuffer_size;
+    if (!size || capacity<size) { atomic_flag_clear_explicit(&g->framebuffer_lock,memory_order_release); return -1; }
+    memcpy(pixels,g->framebuffer,size);
+    atomic_flag_clear_explicit(&g->framebuffer_lock,memory_order_release);
+    return (int32_t)size;
 }
 const char *agr_guest_gl_renderer(agr_guest *g) { return g->renderer; }
 const char *agr_guest_gl_version(agr_guest *g) { return g->gl_version; }
 uint64_t agr_guest_instruction_count(agr_guest *g) { return g ? atomic_load_explicit(&g->instruction_count,memory_order_relaxed) : 0; }
-uint32_t agr_guest_draw_count(agr_guest *g) { return g ? g->draw_count : 0; }
-uint32_t agr_guest_swap_count(agr_guest *g) { return g ? g->swap_count : 0; }
+uint32_t agr_guest_draw_count(agr_guest *g) { return g ? atomic_load_explicit(&g->draw_count,memory_order_relaxed) : 0; }
+uint32_t agr_guest_swap_count(agr_guest *g) { return g ? atomic_load_explicit(&g->swap_count,memory_order_acquire) : 0; }
 uint32_t agr_guest_asset_open_count(agr_guest *g) { return g ? g->asset_open_count : 0; }
 int32_t agr_guest_inject_motion(agr_guest *g, int32_t action, float x, float y) {
     if(!g || g->input_count>=32) return -1;

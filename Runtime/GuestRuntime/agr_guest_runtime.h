@@ -54,9 +54,8 @@ uint32_t agr_guest_jni_env(agr_guest *guest);
 uint32_t agr_guest_java_vm(agr_guest *guest);
 int32_t agr_guest_mount_apk(agr_guest *guest, const char *path);
 int32_t agr_guest_load_dex(agr_guest *guest, const char *path);
-int32_t agr_guest_resume_thread(agr_guest *guest);
-int32_t agr_guest_resume_thread_until_swap(agr_guest *guest);
-int32_t agr_guest_has_parked_thread(agr_guest *guest);
+int32_t agr_guest_wait_for_swap(agr_guest *guest, uint32_t previous_swap,
+                                uint32_t timeout_ms);
 
 int32_t agr_guest_create_gles1_pbuffer(agr_guest *guest, int width, int height);
 void agr_guest_setup_gles1_frame(agr_guest *guest);

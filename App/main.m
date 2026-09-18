@@ -409,7 +409,7 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
                 uint32_t windowArgs[2] = {activity,0x63000000u};
                 onWindow = agr_guest_call_address(guest,callbackWords[7],windowArgs,2,&ignored);
                 if (onWindow == 0) {
-                    pumped = agr_guest_resume_thread(guest);
+                    pumped = 0;
                     if (pumped == 0 && callbackWords[11]) {
                         uint32_t inputArgs[2]={activity,agr_guest_input_queue(guest)};
                         onInput=agr_guest_call_address(guest,callbackWords[11],inputArgs,2,&ignored);
@@ -417,9 +417,9 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
                     if (pumped == 0 && onInput == 0 && callbackWords[6]) {
                         uint32_t focusArgs[2] = {activity,1};
                         onFocus = agr_guest_call_address(guest,callbackWords[6],focusArgs,2,&ignored);
-                        while (onFocus == 0 && frame && agr_guest_has_parked_thread(guest) &&
-                               framePumps < 40 && nonblack == 0) {
-                            framePumpResult = agr_guest_resume_thread_until_swap(guest);
+                        while (onFocus == 0 && frame && framePumps < 40 && nonblack == 0) {
+                            uint32_t priorSwap=agr_guest_swap_count(guest);
+                            framePumpResult = agr_guest_wait_for_swap(guest,priorSwap,500);
                             framePumps++;
                             if (framePumpResult) break;
                             memset(frame,0,320u*480u*4u); nonblack = 0;
@@ -451,7 +451,7 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
     NSString *tracePath=[[NSBundle mainBundle] pathForResource:@"kungfoo-barracuda" ofType:@"json"];
     NSData *traceBytes=tracePath?[NSData dataWithContentsOfFile:tracePath]:nil;
     NSDictionary *trace=traceBytes?[NSJSONSerialization JSONObjectWithData:traceBytes options:0 error:nil]:nil;
-    if (!interactive && nonblack>0 && onInput==0 && framePumpResult==0 && agr_guest_has_parked_thread(guest) && trace) {
+    if (!interactive && nonblack>0 && onInput==0 && framePumpResult==0 && trace) {
         trajectoryOutcome=@"replay_incomplete";
         uint8_t signatures[16][TRAJECTORY_SIGNATURE_SIZE]={0};
         frameSignature(frame,320,480,signatures[0]); uniqueStates=1;
@@ -465,7 +465,10 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
             uint32_t coverageBefore=agr_guest_unique_import_count(guest);
             int rc=agr_guest_inject_motion(guest,motionAction,[event[@"x"] floatValue],[event[@"y"] floatValue]);
             int frames=MAX(1,MIN(8,[event[@"frames"] intValue]));
-            for(int f=0;rc==0&&f<frames;f++) rc=agr_guest_resume_thread_until_swap(guest);
+            for(int f=0;rc==0&&f<frames;f++) {
+                uint32_t priorSwap=agr_guest_swap_count(guest);
+                rc=agr_guest_wait_for_swap(guest,priorSwap,500);
+            }
             int32_t bytes=rc==0?agr_guest_read_rgba(guest,frame,320u*480u*4u):-1;
             uint32_t consumed=agr_guest_input_consumed_count(guest)-consumedBefore;
             uint32_t drawDelta=agr_guest_draw_count(guest)-drawsBefore;
@@ -892,7 +895,8 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
             agr_guest_inject_motion(gInteractive.guest,action,[event[@"x"] floatValue],[event[@"y"] floatValue]);
             NSMutableDictionary *record=[event mutableCopy];record[@"swap_before"]=@(agr_guest_swap_count(gInteractive.guest));[self.trace addObject:record];[self saveTraceWithFailure:nil];
             NSLog(@"AGR_TOUCH %@ x=%@ y=%@ swap=%@ pc=%08x",event[@"action"],event[@"x"],event[@"y"],record[@"swap_before"],agr_guest_program_counter(gInteractive.guest));}
-        int rc=agr_guest_resume_thread_until_swap(gInteractive.guest);
+        uint32_t priorSwap=agr_guest_swap_count(gInteractive.guest);
+        int rc=agr_guest_wait_for_swap(gInteractive.guest,priorSwap,500);
         if(rc){self.stopped=YES;NSString *failure=[NSString stringWithUTF8String:agr_guest_last_error(gInteractive.guest)];[self saveTraceWithFailure:failure];if(rendered)writeRGBAFramePNG(pixels,320,480,[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/failure-frame.png"]);NSLog(@"AGR_FAILURE %@ pc=%08x swap=%u log=%s",failure,agr_guest_program_counter(gInteractive.guest),agr_guest_swap_count(gInteractive.guest),agr_guest_last_android_log(gInteractive.guest));dispatch_async(dispatch_get_main_queue(),^{self.status.text=[NSString stringWithFormat:@"STOPPED — frame preserved\n%@\nPC %08x\nlog %@",failure,agr_guest_program_counter(gInteractive.guest),[NSString stringWithUTF8String:agr_guest_last_android_log(gInteractive.guest)]];});break;}
         if(agr_guest_read_rgba(gInteractive.guest,pixels,320u*480u*4u)>0){UIImage *image=imageFromRGBA(pixels,320,480);rendered++;NSTimeInterval now=CACurrentMediaTime();double fps=rendered/MAX(.001,now-fpsStart);
             uint32_t swaps=agr_guest_swap_count(gInteractive.guest),pc=agr_guest_program_counter(gInteractive.guest);NSString *log=[NSString stringWithUTF8String:agr_guest_last_android_log(gInteractive.guest)];NSUInteger traceCount=self.trace.count;
