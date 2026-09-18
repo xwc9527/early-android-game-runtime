@@ -59,6 +59,13 @@ int main() {
   assert(agr_bionic_tls_getspecific(f.tls, 1, f.key, &value) == 0 && value == 0);
   assert(agr_bionic_tls_getspecific(f.tls, 2, f.key, &value) == 0 && value == 0);
   assert(agr_bionic_tls_setspecific(f.tls, 1, f.key, 1) == AGR_ANDROID_EINVAL);
+  for (uint32_t i = 0; i < 100000; ++i) {
+    uint32_t cycle_key = 0;
+    assert(agr_bionic_tls_key_create(f.tls, 0, &cycle_key) == 0);
+    assert(cycle_key == f.key);
+    assert(agr_bionic_tls_setspecific(f.tls, 1, cycle_key, i + 1) == 0);
+    assert(agr_bionic_tls_key_delete(f.tls, cycle_key) == 0);
+  }
   uint32_t reused = 0;
   assert(agr_bionic_tls_key_create(f.tls, 0x9000, &reused) == 0);
   assert(reused == f.key);
