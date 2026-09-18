@@ -27,7 +27,12 @@ jobs:
           xcodebuild -version
           xcrun --sdk iphoneos --show-sdk-path
       - name: API19 mmap and AOSP linker segment contracts
-        run: bash scripts/test-aosp-linker.sh
+        run: |
+          set -o pipefail
+          bash scripts/test-aosp-linker.sh 2>&1 | tee linker-test.log || {
+            tail -n 20 linker-test.log | while IFS= read -r line; do echo "::error title=Linker contract::$line"; done
+            exit 1
+          }
       - name: Set up device signing when credentials are configured
         if: env.IOS_CERTIFICATE_P12_BASE64 != '' && env.IOS_CERTIFICATE_PASSWORD != '' && env.IOS_PROVISIONING_PROFILE_BASE64 != ''
         run: |

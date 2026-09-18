@@ -114,6 +114,9 @@ jobs:
           agr=json.load(open('agr-thread.json'))
           print('Android 4.4 thread:',json.dumps(android,sort_keys=True))
           print('AGR Bionic source port:',json.dumps(agr,sort_keys=True))
+          for key in sorted(set(android)|set(agr)):
+            if android.get(key)!=agr.get(key):
+              print(f'::error title=API19 pthread differential::{key}: Android={android.get(key)!r} AGR={agr.get(key)!r}')
           assert android==agr,(android,agr)
           PY
       - uses: actions/upload-artifact@v4

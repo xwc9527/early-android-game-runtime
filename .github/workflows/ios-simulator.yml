@@ -35,7 +35,12 @@ jobs:
           xcrun simctl list devices available
           xcrun --sdk iphonesimulator --show-sdk-path
       - name: NativeCore allocator stress and sanitizer tests
-        run: bash scripts/test-nativecore-allocator.sh
+        run: |
+          set -o pipefail
+          bash scripts/test-nativecore-allocator.sh 2>&1 | tee allocator-test.log || {
+            tail -n 20 allocator-test.log | while IFS= read -r line; do echo "::error title=Allocator test::$line"; done
+            exit 1
+          }
       - name: JNI method registry stress and sanitizer tests
         run: bash scripts/test-jni-methods.sh
       - name: Darwin host-service contracts

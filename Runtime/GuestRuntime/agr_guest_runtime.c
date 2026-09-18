@@ -417,6 +417,7 @@ static void set_normal_pointer(GLint size, GLenum type, GLsizei stride, const vo
     glNormalPointer(type, stride, pointer);
 }
 static int dispatch_egl(agr_guest *g, const char *name) {
+    if (strncmp(name,"egl",3) != 0) return 0;
     /* EGL object ownership is explicit.  Until the EGLContextOwner executor
      * is migrated, workers cannot use the main thread's ANGLE context. */
     if (guest_context(g) != g->main_thread) {
