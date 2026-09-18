@@ -4,13 +4,18 @@ An experimental iOS compatibility runtime for original early Android game APKs.
 It preserves DEX and ARMv7 ELF code and supplies observable Android guest
 behavior inside one native iOS process. It does not boot Android.
 
-The current iOS Simulator runtime includes:
+The current iOS Simulator and iphoneos runtime include:
 
-- a native ARM32 ELF loader and guest system ABI core;
+- a KitKat-derived ARM32 linker/libdl path and guest VMA/system ABI core;
 - the touchHLE ARM interpreter without JIT;
 - a host DEX runtime and bidirectional JNI bridge;
+- a ProcessRuntime/GuestThreadContext model backed by Darwin pthreads;
 - selected Android 4.4.4 `androidfw` and KitKat Skia codec sources;
 - EGL/GLES forwarding through ANGLE's Metal backend.
+
+This repository is a partially formalized Runtime and engineering validation
+harness. It is not yet a general APK launcher or a complete playable-game
+product. See the project overview for the exact completion boundary.
 
 ## Reproducible Simulator regression
 
@@ -38,3 +43,9 @@ matrix only when the corpus needs it; each shard builds the Runtime once and
 reuses its Simulator process for all assigned APKs.
 
 See `THIRD_PARTY_NOTICES.md` for component licenses.
+
+## Documentation
+
+- [中文项目说明](docs/PROJECT_OVERVIEW.zh-CN.md)
+- [中文工程交接文档](docs/HANDOFF.zh-CN.md)
+- [Android 4.4.4 Runtime migration architecture](docs/MIGRATION_ARCHITECTURE_PLAN.md)
