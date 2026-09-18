@@ -54,7 +54,7 @@ int main() {
   assert(agr_bionic_tls_errno_write(f.tls, 1, 35) == 0);
   assert(f.first[2] == 35 && f.second[2] == 22);
   assert(agr_bionic_tls_key_create(f.tls, 0, &f.key) == 0);
-  assert(f.key == AGR_BIONIC_TLS_FIRST_USER_SLOT);
+  assert(f.key == AGR_BIONIC_TLS_FIRST_APP_KEY);
   assert(agr_bionic_tls_setspecific(f.tls, 1, f.key, 111) == 0);
   assert(agr_bionic_tls_setspecific(f.tls, 2, f.key, 222) == 0);
   uint32_t value = 0;

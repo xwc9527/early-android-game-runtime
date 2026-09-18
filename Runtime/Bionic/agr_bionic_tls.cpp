@@ -58,7 +58,13 @@ extern "C" agr_bionic_tls *agr_bionic_tls_create(void *opaque,
   if (!read || !write || !invoke) return nullptr;
   auto *tls = new (std::nothrow) agr_bionic_tls;
   if (tls) { tls->opaque = opaque; tls->read = read;
-             tls->write = write; tls->invoke = invoke; }
+             tls->write = write; tls->invoke = invoke;
+             /* API19 libc reserves four pthread keys during process startup
+              * for GLOBAL_INIT_THREAD_LOCAL_BUFFER users. The Android 4.4 ARM
+              * reference consequently returns key 11 to the first app call. */
+             for (uint32_t key = AGR_BIONIC_TLS_FIRST_USER_SLOT;
+                  key < AGR_BIONIC_TLS_FIRST_APP_KEY; ++key)
+               tls->allocated[key] = true; }
   return tls;
 }
 extern "C" void agr_bionic_tls_destroy(agr_bionic_tls *tls) { delete tls; }

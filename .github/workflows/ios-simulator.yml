@@ -57,7 +57,12 @@ jobs:
           cargo test --manifest-path Runtime/ArmInterpreter/Cargo.toml --lib guest_atomic_words_serialize_across_cpu_handles
           cargo test --manifest-path Runtime/ArmInterpreter/Cargo.toml --lib guest_exclusive_monitor_tests
       - name: KitKat pthread source-port and futex boundary contracts
-        run: bash scripts/test-bionic-futex-host.sh
+        run: |
+          set -o pipefail
+          bash scripts/test-bionic-futex-host.sh 2>&1 | tee bionic-thread-test.log || {
+            tail -n 24 bionic-thread-test.log | while IFS= read -r line; do echo "::error title=KitKat pthread contract::$line"; done
+            exit 1
+          }
       - name: Guest file-descriptor lifecycle contracts
         run: bash scripts/test-guest-fd-darwin.sh
       - name: Build and run native Runtime smoke in Simulator

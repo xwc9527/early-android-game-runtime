@@ -799,7 +799,16 @@ static int run_until_return(agr_guest *g) {
 
 static int32_t call_address(agr_guest *g, uint32_t target, const uint32_t *args, uint32_t count, int32_t *result);
 static int32_t invoke_linker_function(void *opaque,uint32_t function) {
-    return call_address((agr_guest*)opaque,function,NULL,0,NULL);
+    agr_guest *g=(agr_guest *)opaque;
+    agr_guest_thread_context *context=guest_context(g);
+    if (!context || !context->cpu) return -1;
+    uint32_t saved[16];
+    uint32_t cpsr=arm_interp_get_cpsr(context->cpu);
+    for (uint32_t i=0;i<16;i++) saved[i]=arm_interp_get_reg(context->cpu,i);
+    int32_t rc=call_address(g,function,NULL,0,NULL);
+    for (uint32_t i=0;i<16;i++) arm_interp_set_reg(context->cpu,i,saved[i]);
+    arm_interp_set_cpsr(context->cpu,cpsr);
+    return rc;
 }
 static int32_t invoke_guest_args(void *opaque,uint32_t function,const uint32_t *args,uint32_t count) {
     return call_address((agr_guest *)opaque,function,args,count,NULL);
