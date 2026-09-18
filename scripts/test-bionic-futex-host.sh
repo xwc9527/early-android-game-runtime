@@ -12,3 +12,8 @@ ${CXX:-c++} -std=c++17 -O2 -pthread -Wall -Wextra -Werror \
   -o build/bionic-thread-tests/bionic-sync
 echo 'Running bounded KitKat sync contract'
 python3 -c 'import subprocess; subprocess.run(["build/bionic-thread-tests/bionic-sync"], check=True, timeout=60)'
+${CXX:-c++} -std=c++17 -O2 -pthread -Wall -Wextra -Werror \
+  Runtime/Bionic/agr_bionic_tls.cpp Tests/bionic_tls_contract_test.cpp \
+  -o build/bionic-thread-tests/bionic-tls
+echo 'Running bounded KitKat TLS contract'
+python3 -c 'import subprocess; subprocess.run(["build/bionic-thread-tests/bionic-tls"], check=True, timeout=60)'

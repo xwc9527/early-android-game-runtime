@@ -89,16 +89,23 @@ int main() {
   assert(agr_bionic_mutex_destroy(&sync, mutex) == 0);
   std::fprintf(stderr, "sync: recursive and errorcheck\n");
   assert(agr_bionic_mutex_lock(&sync, mutex) == EINVAL);
+  std::fprintf(stderr, "sync: recursive init\n");
 
   assert(agr_bionic_mutex_init(&sync, mutex, 1) == 0);
   assert(agr_bionic_mutex_lock(&sync, mutex) == 0);
+  std::fprintf(stderr, "sync: recursive first lock\n");
   assert(agr_bionic_mutex_lock(&sync, mutex) == 0);
+  std::fprintf(stderr, "sync: recursive second lock\n");
   assert(agr_bionic_mutex_unlock(&sync, mutex) == 0);
   assert(agr_bionic_mutex_unlock(&sync, mutex) == 0);
+  std::fprintf(stderr, "sync: recursive unlocks\n");
   assert(agr_bionic_mutex_destroy(&sync, mutex) == 0);
+  std::fprintf(stderr, "sync: recursive destroyed\n");
   assert(agr_bionic_mutex_init(&sync, mutex, 2) == 0);
   assert(agr_bionic_mutex_lock(&sync, mutex) == 0);
+  std::fprintf(stderr, "sync: errorcheck first lock\n");
   assert(agr_bionic_mutex_lock(&sync, mutex) == EDEADLK);
+  std::fprintf(stderr, "sync: errorcheck deadlock result\n");
   assert(agr_bionic_mutex_unlock(&sync, mutex) == 0);
 
   assert(agr_bionic_cond_init(&sync, cond, 0) == 0);
