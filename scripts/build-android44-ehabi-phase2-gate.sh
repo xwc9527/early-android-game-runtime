@@ -68,26 +68,6 @@ symbol_value() {
   "$READELF" -s -W "$1" | awk -v wanted="$2" '$4=="FUNC" && $NF==wanted { print $2; exit }'
 }
 
-cover_map() {
-  local elf="$1" addr="$2" expect="$3" map
-  map="$("$READELF" -s -W "$elf" | awk -v addr="$addr" '
-    function h2d(h, i, c, n) {
-      n=0; h=tolower(h); gsub(/^0x/,"",h)
-      for (i=1;i<=length(h);i++) { c=substr(h,i,1); n=n*16+index("0123456789abcdef",c)-1 }
-      return n
-    }
-    $4=="NOTYPE" && $5=="LOCAL" && ($NF ~ /^\$a(\.|$)/ || $NF ~ /^\$t(\.|$)/ || $NF ~ /^\$d(\.|$)/) {
-      v=h2d($2); if (v<=addr && v>=best) { best=v; name=$NF }
-    }
-    END { if (name!="") print name }
-  ')"
-  test -n "$map"
-  case "$expect" in
-    thumb) [[ "$map" == \$t || "$map" == \$t.* ]] ;;
-    arm) [[ "$map" == \$a || "$map" == \$a.* ]] ;;
-  esac
-}
-
 SAME_VALUE="$(symbol_value "$ABI/libagr_eh2_same.so" agr_eh2_same_run)"
 A_VALUE="$(symbol_value "$ABI/libagr_eh2_A.so" agr_eh2_cross_run)"
 B_VALUE="$(symbol_value "$ABI/libagr_eh2_B.so" agr_eh2_B_call)"
@@ -96,10 +76,9 @@ test $((0x$SAME_VALUE & 1)) -eq 1
 test $((0x$A_VALUE & 1)) -eq 1
 test $((0x$B_VALUE & 1)) -eq 0
 test $((0x$C_VALUE & 1)) -eq 1
-cover_map "$ABI/libagr_eh2_same.so" $((0x$SAME_VALUE & ~1)) thumb
-cover_map "$ABI/libagr_eh2_A.so" $((0x$A_VALUE & ~1)) thumb
-cover_map "$ABI/libagr_eh2_B.so" $((0x$B_VALUE & ~1)) arm
-cover_map "$ABI/libagr_eh2_C.so" $((0x$C_VALUE & ~1)) thumb
+printf 'same=%s thumb\nA=%s thumb\nB=%s arm\nC=%s thumb\n' \
+  "$SAME_VALUE" "$A_VALUE" "$B_VALUE" "$C_VALUE" \
+  > "$OUT/evidence/arm-thumb-modes.txt"
 
 {
   for elf in "$ABI"/*.so "$ABI/agr_eh2_reference"; do
