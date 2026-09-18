@@ -98,7 +98,7 @@ audit_unwind_decode() {
     dump_elf_evidence "$so"
     exit 1
   fi
-  if ! echo "$decoded" | grep -q "Unwind section '.ARM.exidx'" ||
+  if ! echo "$decoded" | grep -Eq "Unwind (section|table index) '.ARM.exidx'" ||
      ! echo "$decoded" | grep -q "<$symbol>" ||
      echo "$decoded" | grep -Eiq 'corrupt|cannot decode|failed to decode'; then
     echo "$so: no parseable unwind entry for $symbol" >&2

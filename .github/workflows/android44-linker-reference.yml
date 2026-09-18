@@ -77,7 +77,7 @@ jobs:
             test -n "$SIZE" && test "$SIZE" != 0 && test "$SIZE" != 000000
             "$READELF" -l -W "$so" | grep -Eq '^[[:space:]]*(ARM_)?EXIDX[[:space:]]'
             "$READELF" --unwind -W "$so" > "$so.unwind.txt"
-            grep -q "Unwind section '.ARM.exidx'" "$so.unwind.txt"
+            grep -Eq "Unwind (section|table index) '.ARM.exidx'" "$so.unwind.txt"
             grep -q "<$symbol>" "$so.unwind.txt"
             ! grep -Eiq 'corrupt|cannot decode|failed to decode' "$so.unwind.txt"
             "$READELF" -r -W "$so" > "$so.relocations.txt"
