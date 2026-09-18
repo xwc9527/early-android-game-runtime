@@ -174,7 +174,12 @@ static void guest_log_cb(void *user, uint32_t priority, const char *tag, const c
 }
 static void record_process_import(agr_guest *g, const char *name) {
     while (atomic_flag_test_and_set_explicit(&g->diagnostics_lock,memory_order_acquire)) {}
-    record_process_import(g,name);
+    g->recent_imports[g->recent_import_index++ % 12u]=name;
+    uint32_t found=0;
+    for (uint32_t i=0;i<g->unique_import_count;i++)
+        if (!strcmp(g->unique_imports[i],name)) { found=1; break; }
+    if (!found && g->unique_import_count < 256u)
+        g->unique_imports[g->unique_import_count++]=name;
     atomic_flag_clear_explicit(&g->diagnostics_lock,memory_order_release);
 }
 static asset_entry *find_asset(agr_guest *g, uint32_t handle) {
@@ -301,7 +306,16 @@ static array_entry *find_array(agr_guest *g, uint32_t handle) {
     return NULL;
 }
 static int dispatch_jni(agr_guest *g, uint32_t address) {
+    /* The current JNI HLE still owns process-wide method/string tables.  A
+     * worker may not fall back to those main-context tables: full per-thread
+     * JNIEnv migration is a later JNI unit. */
+    if (guest_context(g) != g->main_thread) {
+        set_error(g,"JNI worker dispatch requires per-thread JNIEnv migration");
+        return -1;
+    }
     record_process_import(g,"JNI");
+    agr_guest_thread_context_record_call(guest_context(g),"JNI",
+        arm_interp_get_reg(guest_cpu(g),15));
     if (address >= TRAP_BASE + 0x800 && address < TRAP_BASE + 0x900) {
         uint32_t slot = (address - TRAP_BASE - 0x800) / 4;
         if (slot == 4 || slot == 6) {
@@ -403,6 +417,12 @@ static void set_normal_pointer(GLint size, GLenum type, GLsizei stride, const vo
     glNormalPointer(type, stride, pointer);
 }
 static int dispatch_egl(agr_guest *g, const char *name) {
+    /* EGL object ownership is explicit.  Until the EGLContextOwner executor
+     * is migrated, workers cannot use the main thread's ANGLE context. */
+    if (guest_context(g) != g->main_thread) {
+        set_error(g,"EGL worker dispatch requires EGLContextOwner executor");
+        return -1;
+    }
     if (!strcmp(name, "eglGetDisplay")) {
         if (!g->display) {
             PFNEGLGETPLATFORMDISPLAYEXTPROC get = (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");

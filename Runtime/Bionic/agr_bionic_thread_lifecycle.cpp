@@ -152,7 +152,8 @@ extern "C" int32_t agr_bionic_thread_lifecycle_join(
   auto found = lifecycle->records.find(handle);
   if (found == lifecycle->records.end()) return AGR_ANDROID_ESRCH;
   if (lifecycle->host.thread_guest_binding &&
-      lifecycle->host.thread_guest_binding(lifecycle->host.context) == found->second.get())
+      lifecycle->host.thread_guest_binding(lifecycle->host.context) ==
+          found->second->guest_context)
     return AGR_ANDROID_EDEADLK;
   if (found->second->flags & kDetached) return AGR_ANDROID_EINVAL;
   if (found->second->flags & kJoined) return AGR_ANDROID_EINVAL;

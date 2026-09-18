@@ -47,7 +47,7 @@ struct agr_runtime {
     uint32_t static_ptr, static_limit, heap_base, heap_limit;
     agr_heap_block *heap_blocks;
     agr_aosp_dynamic *dynamic_linker;
-    agr_thread threads[AGR_MAX_THREADS]; uint32_t thread_count, current_thread, next_thread;
+    agr_thread threads[AGR_MAX_THREADS]; uint32_t thread_count, current_thread; atomic_uint next_thread;
     uint32_t tls_destructors[AGR_MAX_TLS_KEYS], next_tls_key;
     agr_mutex mutexes[AGR_MAX_MUTEXES]; uint32_t mutex_count;
     agr_word_state once[AGR_MAX_ONCE]; uint32_t once_count;
@@ -203,7 +203,8 @@ agr_runtime *agr_runtime_create(const agr_callbacks *cb, uint32_t sb, uint32_t s
     if(cb->invoke_guest)dynamic_cb.invoke_guest_function=dynamic_invoke;
     rt->dynamic_linker=agr_aosp_dynamic_create(&rt->linker_mmap,&dynamic_cb);
     if(!rt->dynamic_linker){agr_guest_vma_destroy(&rt->linker_vma);free(rt->heap_blocks);free(rt);return NULL;}
-    rt->thread_count = 1; rt->threads[0].id = 1; rt->current_thread = 1; rt->next_thread = 2;
+    rt->thread_count = 1; rt->threads[0].id = 1; rt->current_thread = 1;
+    atomic_init(&rt->next_thread,2u);
 #if defined(__APPLE__)
     if (agr_host_services_init_darwin(&rt->host_services) != 0) {
         agr_aosp_dynamic_destroy(rt->dynamic_linker); agr_guest_vma_destroy(&rt->linker_vma); free(rt->heap_blocks); free(rt); return NULL;
@@ -331,24 +332,35 @@ void agr_free(agr_runtime *rt, uint32_t address) {
     runtime_unlock(&rt->heap_lock);
 }
 uint32_t agr_allocation_size(agr_runtime *rt,uint32_t address) {
+    if (!rt) return 0;
+    runtime_lock(&rt->heap_lock);
     agr_heap_block *b=heap_find_live(rt,address);
-    return b?b->requested:0;
+    uint32_t size=b?b->requested:0;
+    runtime_unlock(&rt->heap_lock);
+    return size;
 }
 void agr_heap_diagnostics(agr_runtime *rt,uint32_t out[5]) {
     if (!out) return; memset(out,0,5*sizeof(*out)); if (!rt) return;
+    runtime_lock(&rt->heap_lock);
     out[0]=rt->heap_base; out[1]=rt->heap_limit;
     for (agr_heap_block *b=rt->heap_blocks; b; b=b->next) {
         out[2]++;
         if (b->live) { out[3]++; out[4]+=b->requested; out[0]=b->address+b->span; }
     }
+    runtime_unlock(&rt->heap_lock);
 }
 uint32_t agr_realloc(agr_runtime *rt,uint32_t address,uint32_t size) {
     if (!address) return agr_malloc(rt,size);
+    if (!rt) return 0;
+    runtime_lock(&rt->heap_lock);
     agr_heap_block *b=heap_find_live(rt,address);
-    if (!b) return 0;
-    if (!size) { agr_free(rt,address); return 0; }
+    if (!b) { runtime_unlock(&rt->heap_lock); return 0; }
+    if (!size) {
+        b->live=0; b->requested=0; b->alignment=0; heap_coalesce(rt,b);
+        runtime_unlock(&rt->heap_lock); return 0;
+    }
     uint64_t rounded=((uint64_t)size+7u)&~7ull;
-    if (rounded>UINT32_MAX) return 0;
+    if (rounded>UINT32_MAX) { runtime_unlock(&rt->heap_lock); return 0; }
     uint32_t new_span=(uint32_t)rounded, old_size=b->requested;
     if (new_span<=b->span) {
         uint32_t spare=b->span-new_span;
@@ -359,18 +371,20 @@ uint32_t agr_realloc(agr_runtime *rt,uint32_t address,uint32_t size) {
                 heap_insert_after(b,tail);heap_coalesce(rt,tail);
             }
         }
-        b->requested=size;return address;
+        b->requested=size;runtime_unlock(&rt->heap_lock);return address;
     }
     if (b->next && !b->next->live && b->next->span>=new_span-b->span) {
-        if (!heap_clear(rt,address+old_size,size-old_size)) return 0;
+        if (!heap_clear(rt,address+old_size,size-old_size)) { runtime_unlock(&rt->heap_lock); return 0; }
         agr_heap_block *next=b->next;
         uint32_t take=new_span-b->span;
         b->span=new_span;b->requested=size;
         next->address+=take;next->span-=take;
         if (!next->span) heap_remove(rt,next);
-        return address;
+        runtime_unlock(&rt->heap_lock); return address;
     }
-    uint32_t replacement=agr_malloc_aligned(rt,size,b->alignment);
+    uint32_t alignment=b->alignment;
+    runtime_unlock(&rt->heap_lock);
+    uint32_t replacement=agr_malloc_aligned(rt,size,alignment);
     if (!replacement) return 0;
     unsigned char buffer[256];
     for (uint32_t at=0;at<old_size;) {
@@ -419,7 +433,7 @@ uint32_t agr_current_thread(agr_runtime*rt){
 #endif
     return rt ? rt->current_thread : 0;
 }
-uint32_t agr_create_thread_state(agr_runtime*rt){if(rt->thread_count>=AGR_MAX_THREADS)return 0;uint32_t id=rt->next_thread++;rt->threads[rt->thread_count++].id=id;return id;}
+uint32_t agr_create_thread_state(agr_runtime*rt){if(rt->thread_count>=AGR_MAX_THREADS)return 0;uint32_t id=atomic_fetch_add_explicit(&rt->next_thread,1u,memory_order_relaxed);rt->threads[rt->thread_count++].id=id;return id;}
 int32_t agr_runtime_attach_current_thread(agr_runtime *rt, uint32_t guest_thread,
                                           uint32_t pthread_handle, uint32_t tls_base) {
 #if defined(__APPLE__)
@@ -608,7 +622,7 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
     }
     else if(!strcmp(name,"pthread_create")){
 #if defined(__APPLE__)
-        uint32_t detached=0, guest_thread=rt->next_thread++, handle=0;
+        uint32_t detached=0, guest_thread=atomic_fetch_add_explicit(&rt->next_thread,1u,memory_order_relaxed), handle=0;
         if (b) { agr_bionic_thread_attr attr; if(!read_mem(rt,b,&attr,sizeof(attr)))return fail(rt,"pthread_create attr read"); detached=attr.flags&1u; }
         int32_t rc=agr_bionic_thread_lifecycle_create_thread(rt->thread_lifecycle,guest_thread,c,d,detached,&handle);
         if(rc)out->value=(uint32_t)rc; else if(!write_mem(rt,a,&handle,4))return fail(rt,"pthread_create write");
