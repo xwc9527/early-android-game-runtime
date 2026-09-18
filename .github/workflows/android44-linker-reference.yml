@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Runtime/NativeCore/**','Runtime/Ehabi/**','Tests/AospLinker/**','Tests/Ehabi/**','Tests/Android44Reference/**','Tests/Android44Dynamic/**','Tests/Android44Threads/**','Tests/Android44Unwind/**','scripts/build-android44-unwind-gcc.sh','.github/workflows/android44-linker-reference.yml']
+    paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Runtime/NativeCore/**','Runtime/Ehabi/**','Tests/AospLinker/**','Tests/Ehabi/**','Tests/Android44Reference/**','Tests/Android44Dynamic/**','Tests/Android44Threads/**','Tests/Android44Unwind/**','Tests/Android44EhabiPhase2Gate/**','scripts/build-android44-unwind-gcc.sh','scripts/build-android44-ehabi-phase2-gate.sh','.github/workflows/android44-linker-reference.yml']
 jobs:
   api19-reference:
     runs-on: ubuntu-latest
@@ -60,6 +60,11 @@ jobs:
           export NDK_R10E="$RUNNER_TEMP/android-ndk-r10e"
           export UNWIND_OUT="$GITHUB_WORKSPACE/unwind"
           bash scripts/build-android44-unwind-gcc.sh
+      - name: Build and audit GCC 4.8 EHABI Phase 2 source-oracle fixtures
+        run: |
+          export NDK_R10E="$RUNNER_TEMP/android-ndk-r10e"
+          export EHABI2_GATE_OUT="$GITHUB_WORKSPACE/ehabi2-gate"
+          bash scripts/build-android44-ehabi-phase2-gate.sh
       - name: Audit GCC 4.8 ARM EHABI unwind fixtures
         run: |
           PRE="$RUNNER_TEMP/android-ndk-r10e/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64/bin"
@@ -266,6 +271,19 @@ jobs:
               print(f'::error title=API19 EHABI frame {i}::{a!r} vs {b!r}')
           assert android==agr,(android,agr)
           PY
+      - name: Android 4.4 GCC EHABI Phase 2 oracle gate
+        run: |
+          adb shell rm -rf /data/local/tmp/ehabi2
+          adb shell mkdir -p /data/local/tmp/ehabi2
+          adb push ehabi2-gate/libs/armeabi-v7a/. /data/local/tmp/ehabi2/
+          adb shell chmod 755 /data/local/tmp/ehabi2/agr_eh2_reference
+          adb shell 'cd /data/local/tmp/ehabi2 && LD_LIBRARY_PATH=/data/local/tmp/ehabi2 ./agr_eh2_reference' | tr -d '\r' > android44-ehabi2-gate.json
+          python3 - <<'PY'
+          import json
+          result=json.load(open('android44-ehabi2-gate.json'))
+          print('Android 4.4 EHABI Phase 2 oracle:',json.dumps(result,sort_keys=True))
+          assert result == {'same':[1,2], 'cross':[10,11,12,13], 'same_ok':1}, result
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -282,4 +300,7 @@ jobs:
             android44-unwind.json
             agr-unwind.json
             unwind/*
+            android44-ehabi2-gate.json
+            ehabi2-gate/evidence/*
+            ehabi2-gate/libs/armeabi-v7a/*
             emulator.log
