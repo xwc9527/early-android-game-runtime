@@ -915,25 +915,20 @@ static int32_t guest_thread_execute(void *user, uint32_t guest_thread,
     agr_bionic_thread_attr default_attr;
     if (!attr) { agr_bionic_thread_attr_init(&default_attr); attr=&default_attr; }
     uint32_t size=(attr->stack_size+4095u)&~4095u;
-    uint32_t stack=attr->stack_base ? attr->stack_base :
-        agr_malloc_aligned(g->runtime,size,4096u);
-    if (!stack) return -1;
+    uint32_t stack=attr->stack_base;
+    if (!stack && agr_runtime_map_thread_stack(g->runtime,size,
+                                               (attr->guard_size+4095u)&~4095u,
+                                               &stack)) return -1;
     agr_bionic_thread_stack_layout layout;
     if (agr_bionic_thread_compute_stack_layout(attr,stack,&layout)) {
-        if (!attr->stack_base) agr_free(g->runtime,stack);
-        return -1;
-    }
-    if (!layout.user_stack && layout.guard_size &&
-        arm_interp_set_page_permissions(g->process_cpu,layout.base,layout.guard_size,0)) {
-        agr_free(g->runtime,stack);
+        if (!attr->stack_base) agr_runtime_unmap_thread_stack(g->runtime,stack,size);
         return -1;
     }
     agr_guest_thread_context *context=agr_guest_thread_context_create(
         g,g->process_cpu,guest_thread,layout.base,layout.size,layout.tls_base);
     if (!context) {
         if (!layout.user_stack) {
-            if (layout.guard_size) arm_interp_set_page_permissions(g->process_cpu,layout.base,layout.guard_size,3);
-            agr_free(g->runtime,stack);
+            agr_runtime_unmap_thread_stack(g->runtime,stack,layout.size);
         }
         return -1;
     }
@@ -941,8 +936,7 @@ static int32_t guest_thread_execute(void *user, uint32_t guest_thread,
     if (agr_runtime_attach_current_thread(g->runtime,guest_thread,0,context->guest_tls_base)) {
         agr_guest_thread_context_destroy(context);
         if (!layout.user_stack) {
-            if (layout.guard_size) arm_interp_set_page_permissions(g->process_cpu,layout.base,layout.guard_size,3);
-            agr_free(g->runtime,stack);
+            agr_runtime_unmap_thread_stack(g->runtime,stack,layout.size);
         }
         return -1;
     }
@@ -966,8 +960,7 @@ static int32_t guest_thread_execute(void *user, uint32_t guest_thread,
     if (return_value) *return_value=(uint32_t)result;
     agr_guest_thread_context_destroy(context);
     if (!layout.user_stack) {
-        if (layout.guard_size) arm_interp_set_page_permissions(g->process_cpu,layout.base,layout.guard_size,3);
-        agr_free(g->runtime,stack);
+        agr_runtime_unmap_thread_stack(g->runtime,stack,layout.size);
     }
     return rc;
 }

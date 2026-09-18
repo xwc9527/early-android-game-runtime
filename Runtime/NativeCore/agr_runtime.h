@@ -171,6 +171,12 @@ AGR_API void agr_runtime_shutdown_workers(agr_runtime *runtime);
 AGR_API uint32_t agr_runtime_errno_address(agr_runtime *runtime,
                                             uint32_t guest_thread);
 AGR_API uint32_t agr_runtime_current_pthread(agr_runtime *runtime);
+AGR_API int32_t agr_runtime_map_thread_stack(agr_runtime *runtime,
+                                              uint32_t size,
+                                              uint32_t guard_size,
+                                              uint32_t *base);
+AGR_API void agr_runtime_unmap_thread_stack(agr_runtime *runtime,
+                                             uint32_t base,uint32_t size);
 AGR_API int32_t agr_dispatch_system(agr_runtime *runtime, const char *name,
                                     const uint32_t regs[4], uint32_t sp,
                                     agr_dispatch_result *result);

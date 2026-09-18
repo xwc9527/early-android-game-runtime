@@ -58,6 +58,7 @@ struct agr_runtime {
     agr_bionic_mmap_context linker_mmap;
     atomic_flag heap_lock;
     atomic_flag static_lock;
+    atomic_flag vma_lock;
 #if defined(__APPLE__)
     /* Formal API19 pthread production state. The legacy arrays above remain
      * only for non-Apple fixture builds until their conformance harness is
@@ -195,6 +196,7 @@ agr_runtime *agr_runtime_create(const agr_callbacks *cb, uint32_t sb, uint32_t s
     rt->heap_blocks->address = hb; rt->heap_blocks->span = hl - hb;
     atomic_flag_clear_explicit(&rt->heap_lock,memory_order_release);
     atomic_flag_clear_explicit(&rt->static_lock,memory_order_release);
+    atomic_flag_clear_explicit(&rt->vma_lock,memory_order_release);
     rt->cb = *cb; rt->static_ptr = sb; rt->static_limit = sl; rt->heap_base = hb; rt->heap_limit = hl;
     if (agr_guest_vma_init(&rt->linker_vma, 4096, 0x10000u, 0x100000000ull)) {
         free(rt->heap_blocks); free(rt); return NULL;
@@ -450,6 +452,35 @@ uint32_t agr_runtime_current_pthread(agr_runtime *rt) {
 #else
     return rt ? rt->current_thread : 0;
 #endif
+}
+int32_t agr_runtime_map_thread_stack(agr_runtime *rt,uint32_t size,
+                                     uint32_t guard,uint32_t *base) {
+    if (!rt || !base || !size || guard>=size) return AGR_ANDROID_EINVAL;
+    int32_t guest_errno=0;
+    runtime_lock(&rt->vma_lock);
+    if (agr_bionic_mmap(&rt->linker_mmap,0,size,AGR_PROT_READ|AGR_PROT_WRITE,
+                        AGR_MAP_PRIVATE|AGR_MAP_ANONYMOUS|AGR_MAP_NORESERVE,
+                        -1,0,base,&guest_errno)) {
+        runtime_unlock(&rt->vma_lock);
+        return guest_errno ? guest_errno : AGR_ANDROID_ENOMEM;
+    }
+    if (guard && agr_bionic_mprotect(&rt->linker_mmap,*base,guard,
+                                     AGR_PROT_NONE,&guest_errno)) {
+        int32_t ignored=0;
+        agr_bionic_munmap(&rt->linker_mmap,*base,size,&ignored);
+        runtime_unlock(&rt->vma_lock);
+        return guest_errno ? guest_errno : AGR_ANDROID_EINVAL;
+    }
+    runtime_unlock(&rt->vma_lock);
+    return 0;
+}
+void agr_runtime_unmap_thread_stack(agr_runtime *rt,uint32_t base,uint32_t size) {
+    int32_t ignored=0;
+    if (rt && base && size) {
+        runtime_lock(&rt->vma_lock);
+        agr_bionic_munmap(&rt->linker_mmap,base,size,&ignored);
+        runtime_unlock(&rt->vma_lock);
+    }
 }
 uint32_t agr_create_thread_state(agr_runtime*rt){if(rt->thread_count>=AGR_MAX_THREADS)return 0;uint32_t id=atomic_fetch_add_explicit(&rt->next_thread,1u,memory_order_relaxed);rt->threads[rt->thread_count++].id=id;return id;}
 int32_t agr_runtime_attach_current_thread(agr_runtime *rt, uint32_t guest_thread,

@@ -105,6 +105,17 @@ static int test_formal_image_lifecycle(void){
     harness *h=(harness*)calloc(1,sizeof(*h));CHECK(h);
     agr_callbacks cb={0};cb.user=h;cb.read=read_guest;cb.write=write_guest;cb.loader_write=write_guest;cb.protect=protect_guest;
     agr_runtime *runtime=agr_runtime_create(&cb,0x60000,0x70000,0x70000,0x90000);CHECK(runtime);
+    uint32_t first_stack=0;
+    CHECK(!agr_runtime_map_thread_stack(runtime,0x10000,0x1000,&first_stack));
+    CHECK(first_stack==0x10000);
+    CHECK(h->page_protection[first_stack/4096]==AGR_PROT_NONE);
+    CHECK(h->page_protection[first_stack/4096+1]==(AGR_PROT_READ|AGR_PROT_WRITE));
+    agr_runtime_unmap_thread_stack(runtime,first_stack,0x10000);
+    CHECK(h->page_protection[first_stack/4096]==AGR_PROT_NONE);
+    uint32_t reused_stack=0;
+    CHECK(!agr_runtime_map_thread_stack(runtime,0x10000,0x1000,&reused_stack));
+    CHECK(reused_stack==first_stack);
+    agr_runtime_unmap_thread_stack(runtime,reused_stack,0x10000);
     Elf32_Ehdr *header=(Elf32_Ehdr*)elf;
     Elf32_Phdr *phdr=(Elf32_Phdr*)(elf+header->e_phoff);
     phdr[3].p_offset=FIXTURE_SIZE+1;
