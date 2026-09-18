@@ -110,6 +110,7 @@ audit_unwind_decode() {
 
 audit_dynamic_relocations() {
   local so="$1"
+  local allow="$2"
   local relocs
   relocs="$("$READELF" -r -W "$so" 2>&1)"
   if echo "$relocs" | grep -Eq '__aeabi_unwind_cpp_pr[012]'; then
@@ -119,6 +120,24 @@ audit_dynamic_relocations() {
   fi
   if echo "$relocs" | grep -E 'R_ARM_NONE' | grep -Eq '__aeabi_unwind_cpp_pr[012]'; then
     echo "$so: final dynamic relocations retain an R_ARM_NONE personality marker" >&2
+    dump_elf_evidence "$so"
+    exit 1
+  fi
+  local saw_allow=0
+  while read -r type symbol; do
+    [[ -z "${symbol:-}" ]] && continue
+    if "$READELF" -s -W "$so" | awk -v s="$symbol" \
+       '$7=="UND" && $8==s { found=1 } END { exit !found }'; then
+      if [[ "$symbol" != "$allow" ]]; then
+        echo "$so: external dynamic relocation $type targets '$symbol'; allowed only '$allow'" >&2
+        dump_elf_evidence "$so"
+        exit 1
+      fi
+      saw_allow=1
+    fi
+  done < <(echo "$relocs" | awk '$3 ~ /^R_ARM_/ && NF >= 5 { print $3, $5 }')
+  if [[ "$saw_allow" -ne 1 ]]; then
+    echo "$so: no dynamic relocation targets required external symbol '$allow'" >&2
     dump_elf_evidence "$so"
     exit 1
   fi
@@ -163,11 +182,29 @@ dump_elf_evidence() {
 audit_undefined() {
   local so="$1"
   local allow="$2"
-  local extra
-  extra="$("$NM" -D -u "$so" 2>/dev/null | awk '{print $NF}' | grep -v "^${allow}$" || true)"
-  if [[ -n "$extra" ]]; then
-    echo "$so: extra undefined symbols; allowed only '$allow'" >&2
-    echo "$extra" >&2
+  local decoded symbol model
+  local saw_allow=0
+  decoded="$("$READELF" --unwind -W "$so" 2>&1)"
+  while read -r symbol; do
+    [[ -z "$symbol" ]] && continue
+    if [[ "$symbol" == "$allow" ]]; then
+      saw_allow=1
+      continue
+    fi
+    if [[ "$symbol" =~ ^__aeabi_unwind_cpp_pr([012])$ ]]; then
+      model="${BASH_REMATCH[1]}"
+      if echo "$decoded" | grep -Eq "Compact model index:[[:space:]]*$model([[:space:]]|$)"; then
+        continue
+      fi
+      echo "$so: $symbol is not backed by compact model index $model" >&2
+    else
+      echo "$so: unexpected dynamic undefined symbol '$symbol'" >&2
+    fi
+    dump_elf_evidence "$so"
+    exit 1
+  done < <("$NM" -D -u "$so" 2>/dev/null | awk '{print $NF}')
+  if [[ "$saw_allow" -ne 1 ]]; then
+    echo "$so: required dynamic undefined symbol '$allow' is missing" >&2
     dump_elf_evidence "$so"
     exit 1
   fi
@@ -257,9 +294,9 @@ audit_exidx "$OUT/libagr_unwind_C.so"
 audit_unwind_decode "$OUT/libagr_unwind_A.so" A
 audit_unwind_decode "$OUT/libagr_unwind_B.so" B
 audit_unwind_decode "$OUT/libagr_unwind_C.so" C
-audit_dynamic_relocations "$OUT/libagr_unwind_A.so"
-audit_dynamic_relocations "$OUT/libagr_unwind_B.so"
-audit_dynamic_relocations "$OUT/libagr_unwind_C.so"
+audit_dynamic_relocations "$OUT/libagr_unwind_A.so" B
+audit_dynamic_relocations "$OUT/libagr_unwind_B.so" C
+audit_dynamic_relocations "$OUT/libagr_unwind_C.so" agr_unwind_probe
 audit_mode "$OUT/libagr_unwind_A.so" A thumb
 audit_mode "$OUT/libagr_unwind_B.so" B arm
 audit_mode "$OUT/libagr_unwind_C.so" C thumb
