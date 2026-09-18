@@ -32,6 +32,9 @@ struct agr_guest_thread_context {
     uint32_t callback_depth;
     uint32_t exit_result;
     uint32_t tls_destructor_active;
+    uint32_t jni_env_handle;
+    uint32_t jni_local_frame_depth;
+    uint32_t jni_dispatch_depth;
     agr_guest_thread_lifecycle lifecycle;
     agr_thread_recent_call recent_calls[32];
     uint32_t recent_call_index;

@@ -66,6 +66,8 @@ struct agr_process_runtime {
     agr_guest_thread_context *thread_registry;
     atomic_flag thread_registry_lock;
     atomic_flag diagnostics_lock;
+    atomic_flag jni_lock;
+    atomic_flag input_lock;
     uint32_t failure_generation;
     agr_runtime *runtime;
     trap_entry traps[MAX_TRAPS];
@@ -97,7 +99,7 @@ struct agr_process_runtime {
     const char *unique_imports[256]; uint32_t unique_import_count;
     uint32_t input_queue_handle, input_ident, input_data;
     input_event input_events[32]; uint32_t input_head, input_count, next_input_handle;
-    uint32_t input_consumed_count;
+    _Atomic uint32_t input_consumed_count;
     _Atomic uint32_t draw_count, swap_count;
     uint32_t asset_open_count;
     uint32_t egl_owner_thread_id;
@@ -311,14 +313,7 @@ static array_entry *find_array(agr_guest *g, uint32_t handle) {
     for (uint32_t i = 0; i < g->array_count; i++) if (g->arrays[i].handle == handle) return &g->arrays[i];
     return NULL;
 }
-static int dispatch_jni(agr_guest *g, uint32_t address) {
-    /* The current JNI HLE still owns process-wide method/string tables.  A
-     * worker may not fall back to those main-context tables: full per-thread
-     * JNIEnv migration is a later JNI unit. */
-    if (guest_context(g) != g->main_thread) {
-        set_error(g,"JNI worker dispatch requires per-thread JNIEnv migration");
-        return -1;
-    }
+static int dispatch_jni_impl(agr_guest *g, uint32_t address) {
     record_process_import(g,"JNI");
     agr_guest_thread_context_record_call(guest_context(g),"JNI",
         arm_interp_get_reg(guest_cpu(g),15));
@@ -402,6 +397,16 @@ static int dispatch_jni(agr_guest *g, uint32_t address) {
     }
     snprintf(g->error, sizeof(g->error), "unhandled JNI slot %u", slot);
     return -1;
+}
+static int dispatch_jni(agr_guest *g,uint32_t address) {
+    agr_guest_thread_context *context=guest_context(g);
+    if (!context) return -1;
+    const int outer=context->jni_dispatch_depth++==0;
+    if (outer) while (atomic_flag_test_and_set_explicit(&g->jni_lock,memory_order_acquire)) {}
+    int result=dispatch_jni_impl(g,address);
+    if (outer) atomic_flag_clear_explicit(&g->jni_lock,memory_order_release);
+    context->jni_dispatch_depth--;
+    return result;
 }
 static size_t gl_type_size(GLenum type) {
     switch (type) { case GL_BYTE: case GL_UNSIGNED_BYTE: return 1; case GL_SHORT: case GL_UNSIGNED_SHORT: return 2; case GL_FLOAT: case GL_FIXED: return 4; default: return 0; }
@@ -617,14 +622,15 @@ static int dispatch_import(agr_guest *g, const char *name) {
         guest_return(g, 1, 0); return 1;
     }
     if (!strcmp(name, "ALooper_pollAll")) {
-        int32_t timeout = (int32_t)argument(g, 0);
         uint32_t result = 0xffffffffu;
+        while (atomic_flag_test_and_set_explicit(&g->input_lock,memory_order_acquire)) {}
         if (g->input_count && g->input_ident) {
             if (argument(g,1)) write_u32(g,argument(g,1),0xffffffffu);
             if (argument(g,2)) write_u32(g,argument(g,2),1);
             if (argument(g,3)) write_u32(g,argument(g,3),g->input_data);
             result=g->input_ident;
         }
+        atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
         for (uint32_t i = 0; result==0xffffffffu && i < g->looper_fd_count; i++) {
             looper_fd *fd = &g->looper_fds[i]; virtual_pipe *pipe = find_pipe(g, fd->fd);
             if (!pipe || pipe->size == pipe->read_offset) continue;
@@ -643,19 +649,29 @@ static int dispatch_import(agr_guest *g, const char *name) {
     }
     if (!strcmp(name,"AInputQueue_detachLooper")) { g->input_ident=g->input_data=0; guest_return(g,0,0); return 1; }
     if (!strcmp(name,"AInputQueue_getEvent")) {
-        if (argument(g,0)!=g->input_queue_handle || !g->input_count) { guest_return(g,0xffffffffu,0); return 1; }
-        input_event *e=&g->input_events[g->input_head%32]; write_u32(g,argument(g,1),e->handle);
+        while (atomic_flag_test_and_set_explicit(&g->input_lock,memory_order_acquire)) {}
+        if (argument(g,0)!=g->input_queue_handle || !g->input_count) {
+            atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
+            guest_return(g,0xffffffffu,0); return 1;
+        }
+        uint32_t handle=g->input_events[g->input_head%32].handle;
+        atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
+        write_u32(g,argument(g,1),handle);
         guest_return(g,0,0); return 1;
     }
     if (!strcmp(name,"AInputQueue_preDispatchEvent")) { guest_return(g,0,0); return 1; }
     if (!strcmp(name,"AInputQueue_finishEvent")) {
+        while (atomic_flag_test_and_set_explicit(&g->input_lock,memory_order_acquire)) {}
         if (g->input_count && g->input_events[g->input_head%32].handle==argument(g,1)) {
-            g->input_head++; g->input_count--; g->input_consumed_count++;
+            g->input_head++; g->input_count--; atomic_fetch_add_explicit(&g->input_consumed_count,1u,memory_order_relaxed);
         }
+        atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
         guest_return(g,0,0); return 1;
     }
-    input_event *event=NULL; uint32_t event_handle=argument(g,0);
-    for(uint32_t i=0;i<g->input_count;i++){ input_event *candidate=&g->input_events[(g->input_head+i)%32]; if(candidate->handle==event_handle){event=candidate;break;} }
+    input_event event_value={0}; input_event *event=NULL; uint32_t event_handle=argument(g,0);
+    while (atomic_flag_test_and_set_explicit(&g->input_lock,memory_order_acquire)) {}
+    for(uint32_t i=0;i<g->input_count;i++){ input_event *candidate=&g->input_events[(g->input_head+i)%32]; if(candidate->handle==event_handle){event_value=*candidate;event=&event_value;break;} }
+    atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
     if (!strcmp(name,"AInputEvent_getType")) { guest_return(g,event?event->type:0,0); return 1; }
     if (!strcmp(name,"AMotionEvent_getAction")) { guest_return(g,event?event->action:0,0); return 1; }
     if (!strcmp(name,"AMotionEvent_getPointerCount")) { guest_return(g,event?event->pointer_count:0,0); return 1; }
@@ -785,6 +801,8 @@ agr_guest *agr_guest_create(void) {
     agr_guest *g = (agr_guest *)calloc(1, sizeof(*g)); if (!g) return NULL;
     atomic_flag_clear_explicit(&g->thread_registry_lock,memory_order_release);
     atomic_flag_clear_explicit(&g->diagnostics_lock,memory_order_release);
+    atomic_flag_clear_explicit(&g->jni_lock,memory_order_release);
+    atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
     atomic_flag_clear_explicit(&g->framebuffer_lock,memory_order_release);
     g->process_cpu = arm_interp_create(); g->run_budget = 1000000; g->next_trap = IMPORT_BASE; g->next_array_handle = 0x61000000u;
     g->next_asset_handle = 0x62010000u; g->input_queue_handle=0x67000000u; g->next_input_handle=0x67000100u;
@@ -809,6 +827,7 @@ agr_guest *agr_guest_create(void) {
         agr_runtime_destroy(g->runtime); agr_guest_thread_context_destroy(g->main_thread); arm_interp_destroy(g->process_cpu); free(g); return NULL;
     }
     g->main_thread->guest_errno_address=agr_runtime_errno_address(g->runtime,1);
+    g->main_thread->jni_env_handle=JNI_ENV_PTR;
     write_u32(g, JNI_ENV_PTR, JNI_TABLE);
     for (uint32_t slot = 4; slot < 233; slot++) { uint32_t trap = TRAP_BASE + slot * 4; write_u32(g, JNI_TABLE + slot * 4, trap); write_u32(g, trap, 0xef000000u | slot); }
     write_u32(g, JVM_PTR, JVM_TABLE);
@@ -825,7 +844,12 @@ void agr_guest_destroy(agr_guest *g) {
     if (g->dex_game) agr_dex_game_destroy(g->dex_game);
     agr_jni_method_table_destroy(&g->methods);
     for (uint32_t i=0; i<g->string_count; i++) free(g->strings[i].text);
-    if (g->display != EGL_NO_DISPLAY) { eglMakeCurrent(g->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT); if (g->context) eglDestroyContext(g->display, g->context); if (g->surface) eglDestroySurface(g->display, g->surface); eglTerminate(g->display); }
+    if (g->display != EGL_NO_DISPLAY && g->egl_owner_thread_id==g->main_thread->guest_thread_id) {
+        eglMakeCurrent(g->display,EGL_NO_SURFACE,EGL_NO_SURFACE,EGL_NO_CONTEXT);
+        if (g->context) eglDestroyContext(g->display,g->context);
+        if (g->surface) eglDestroySurface(g->display,g->surface);
+        eglTerminate(g->display);
+    }
     for (uint32_t i = 0; i < g->trap_count; i++) free(g->traps[i].name);
     free(g->framebuffer);
     agr_runtime_detach_current_thread(g->runtime,1);
@@ -918,11 +942,20 @@ static int32_t guest_thread_execute(void *user, uint32_t guest_thread,
         return -1;
     }
     context->guest_errno_address=agr_runtime_errno_address(g->runtime,guest_thread);
+    context->jni_env_handle=JNI_ENV_PTR;
     uint32_t args[1]={argument}; int32_t result=0;
     int32_t rc=call_address(g,start,args,1,&result);
     if (context->lifecycle == AGR_GUEST_THREAD_EXITED) result=(int32_t)context->exit_result;
     context->exit_result=(uint32_t)result;
     context->lifecycle=AGR_GUEST_THREAD_EXITED;
+    if (g->egl_owner_thread_id==guest_thread && g->display!=EGL_NO_DISPLAY) {
+        eglMakeCurrent(g->display,EGL_NO_SURFACE,EGL_NO_SURFACE,EGL_NO_CONTEXT);
+        if (g->context) eglDestroyContext(g->display,g->context);
+        if (g->surface) eglDestroySurface(g->display,g->surface);
+        eglTerminate(g->display);
+        g->context=EGL_NO_CONTEXT; g->surface=EGL_NO_SURFACE;
+        g->display=EGL_NO_DISPLAY; g->egl_owner_thread_id=0;
+    }
     (void)agr_runtime_detach_current_thread(g->runtime,guest_thread);
     if (return_value) *return_value=(uint32_t)result;
     agr_guest_thread_context_destroy(context);
@@ -1027,13 +1060,17 @@ uint32_t agr_guest_draw_count(agr_guest *g) { return g ? atomic_load_explicit(&g
 uint32_t agr_guest_swap_count(agr_guest *g) { return g ? atomic_load_explicit(&g->swap_count,memory_order_acquire) : 0; }
 uint32_t agr_guest_asset_open_count(agr_guest *g) { return g ? g->asset_open_count : 0; }
 int32_t agr_guest_inject_motion(agr_guest *g, int32_t action, float x, float y) {
-    if(!g || g->input_count>=32) return -1;
+    if(!g) return -1;
+    while (atomic_flag_test_and_set_explicit(&g->input_lock,memory_order_acquire)) {}
+    if(g->input_count>=32) { atomic_flag_clear_explicit(&g->input_lock,memory_order_release); return -1; }
     input_event *e=&g->input_events[(g->input_head+g->input_count)%32];
     *e=(input_event){g->next_input_handle,2u,(uint32_t)action,1u,0u,x,y};
-    g->next_input_handle+=4; g->input_count++; return 0;
+    g->next_input_handle+=4; g->input_count++;
+    atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
+    return 0;
 }
 uint32_t agr_guest_input_queue(agr_guest *g) { return g ? g->input_queue_handle : 0; }
-uint32_t agr_guest_input_consumed_count(agr_guest *g) { return g ? g->input_consumed_count : 0; }
+uint32_t agr_guest_input_consumed_count(agr_guest *g) { return g ? atomic_load_explicit(&g->input_consumed_count,memory_order_relaxed) : 0; }
 uint32_t agr_guest_unique_import_count(agr_guest *g) { return g ? g->unique_import_count : 0; }
 const char *agr_guest_unique_import(agr_guest *g,uint32_t index) { return g && index<g->unique_import_count ? g->unique_imports[index] : NULL; }
 uint32_t agr_guest_recent_call_count(agr_guest *g) { return g ? (g->recent_import_index < 12 ? g->recent_import_index : 12) : 0; }
