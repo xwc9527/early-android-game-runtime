@@ -27,3 +27,14 @@ ${CC:-cc} -std=c11 -O2 -Wall -Wextra -Werror \
   -o build/bionic-thread-tests/bionic-thread-attr
 echo 'Running bounded KitKat ARM32 pthread attr and stack-layout contract'
 python3 -c 'import subprocess; subprocess.run(["build/bionic-thread-tests/bionic-thread-attr"], check=True, timeout=60)'
+${CC:-cc} -std=c11 -O2 -pthread -Wall -Wextra -Werror \
+  -c Runtime/HostServices/agr_host_services_darwin.c \
+  -o build/bionic-thread-tests/darwin-host-services.o
+${CXX:-c++} -std=c++17 -O2 -pthread -Wall -Wextra -Werror \
+  build/bionic-thread-tests/darwin-host-services.o \
+  Runtime/Bionic/agr_bionic_errno_host.cpp \
+  Runtime/Bionic/agr_bionic_thread_lifecycle.cpp \
+  Tests/bionic_thread_lifecycle_contract.cpp \
+  -o build/bionic-thread-tests/bionic-thread-lifecycle
+echo 'Running bounded KitKat pthread lifecycle 100k create/join stress'
+python3 -c 'import subprocess; subprocess.run(["build/bionic-thread-tests/bionic-thread-lifecycle"], check=True, timeout=120)'
