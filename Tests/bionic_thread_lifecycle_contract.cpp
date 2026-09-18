@@ -10,8 +10,10 @@ extern "C" {
 void *arm_interp_create(void);
 void *arm_interp_create_thread(void *parent);
 void arm_interp_destroy(void *cpu);
-int32_t arm_interp_write(void *cpu, uint32_t address, const uint8_t *bytes,
-                         uint32_t size);
+int32_t arm_interp_load(void *cpu, uint32_t address, const uint8_t *bytes,
+                        uint32_t size);
+int32_t arm_interp_set_page_permissions(void *cpu, uint32_t address,
+                                         uint32_t size, uint32_t protection);
 int32_t arm_interp_set_reg(void *cpu, uint32_t reg, uint32_t value);
 uint32_t arm_interp_get_reg(void *cpu, uint32_t reg);
 void arm_interp_set_thread_tag(void *cpu, uint32_t tag);
@@ -68,7 +70,8 @@ int main() {
   // mov r0, r0; svc #0. The code is written only through the parent CPU; a
   // worker can execute it only if arm_interp_create_thread shares guest memory.
   const uint8_t arm_body[] = {0x00, 0x00, 0xa0, 0xe1, 0x00, 0x00, 0x00, 0xef};
-  assert(arm_interp_write(f.parent_cpu, 0x2000, arm_body, sizeof(arm_body)) == 0);
+  assert(arm_interp_load(f.parent_cpu, 0x2000, arm_body, sizeof(arm_body)) == 0);
+  assert(arm_interp_set_page_permissions(f.parent_cpu, 0x2000, 4096, 5) == 0);
   f.lifecycle = agr_bionic_thread_lifecycle_create(&host, &f, execute);
   assert(f.lifecycle);
 
