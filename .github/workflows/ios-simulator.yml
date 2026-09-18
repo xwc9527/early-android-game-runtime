@@ -2,6 +2,11 @@ name: iOS Simulator Runtime
 
 on:
   workflow_dispatch:
+    inputs:
+      contracts_only:
+        description: Run native contracts without the bounded Simulator smoke
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths: ['Runtime/**', 'App/**']
@@ -51,8 +56,10 @@ jobs:
       - name: Guest file-descriptor lifecycle contracts
         run: bash scripts/test-guest-fd-darwin.sh
       - name: Build and run native Runtime smoke in Simulator
+        if: ${{ inputs.contracts_only != true }}
         run: python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds 900
       - name: Run existing Runtime and real-game regressions
+        if: ${{ inputs.contracts_only != true }}
         run: bash scripts/run-simulator-regressions.sh
       - name: Upload Simulator evidence
         if: always()
