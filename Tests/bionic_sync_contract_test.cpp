@@ -155,6 +155,28 @@ int main() {
   });
   for (auto &thread : callers) thread.join();
   assert(counter == 20000);
+  std::fprintf(stderr, "sync: condition broadcast\n");
+  assert(agr_bionic_cond_init(&sync, cond, 0) == 0);
+  std::atomic<uint32_t> waiting{0}, awakened{0};
+  bool release = false;
+  callers.clear();
+  for (uint32_t i = 0; i < 4; ++i) callers.emplace_back([&] {
+    guest_tid = next_tid++;
+    assert(agr_bionic_mutex_lock(&sync, mutex) == 0);
+    ++waiting;
+    while (!release)
+      assert(agr_bionic_cond_wait_relative(&sync, cond, mutex, 5000000000ULL) == 0);
+    ++awakened;
+    assert(agr_bionic_mutex_unlock(&sync, mutex) == 0);
+  });
+  while (waiting != 4) std::this_thread::yield();
+  assert(agr_bionic_mutex_lock(&sync, mutex) == 0);
+  release = true;
+  assert(agr_bionic_cond_broadcast(&sync, cond) == 0);
+  assert(agr_bionic_mutex_unlock(&sync, mutex) == 0);
+  for (auto &thread : callers) thread.join();
+  assert(awakened == 4);
+  assert(agr_bionic_cond_destroy(&sync, cond) == 0);
   assert(agr_bionic_mutex_destroy(&sync, mutex) == 0);
   agr_futex_host_destroy(f.futex);
 }
