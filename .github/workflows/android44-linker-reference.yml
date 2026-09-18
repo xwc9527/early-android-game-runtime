@@ -66,10 +66,19 @@ jobs:
           READELF="$PRE/arm-linux-androideabi-readelf"
           NM="$PRE/arm-linux-androideabi-nm"
           test -x "$READELF" && test -x "$NM"
-          for so in unwind/libagr_unwind_A.so unwind/libagr_unwind_B.so unwind/libagr_unwind_C.so; do
+          for pair in unwind/libagr_unwind_A.so:A unwind/libagr_unwind_B.so:B unwind/libagr_unwind_C.so:C; do
+            so="${pair%%:*}"
+            symbol="${pair##*:}"
             SIZE="$("$READELF" -S -W "$so" | awk '$2==".ARM.exidx" {print $6; exit}')"
             test -n "$SIZE" && test "$SIZE" != 0 && test "$SIZE" != 000000
             "$READELF" -l -W "$so" | grep -q ARM_EXIDX
+            "$READELF" --unwind -W "$so" > "$so.unwind.txt"
+            grep -q "Unwind section '.ARM.exidx'" "$so.unwind.txt"
+            grep -q "<$symbol>" "$so.unwind.txt"
+            ! grep -Eiq 'corrupt|cannot decode|failed to decode' "$so.unwind.txt"
+            "$READELF" -r -W "$so" > "$so.relocations.txt"
+            ! grep -Eq '__aeabi_unwind_cpp_pr[012]' "$so.relocations.txt"
+            ! grep -E 'R_ARM_NONE' "$so.relocations.txt" | grep -Eq '__aeabi_unwind_cpp_pr[012]'
           done
           AVAL="$("$READELF" -s -W unwind/libagr_unwind_A.so | awk '$NF=="A" && /FUNC/ {print $2; exit}')"
           BVAL="$("$READELF" -s -W unwind/libagr_unwind_B.so | awk '$NF=="B" && /FUNC/ {print $2; exit}')"

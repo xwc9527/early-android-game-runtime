@@ -46,7 +46,6 @@ LD_SHARED=(
   -shared
   --hash-style=sysv
   --no-copy-dt-needed-entries
-  --no-undefined
   -z relro
   -z now
   -L"$OUT"
@@ -85,6 +84,42 @@ audit_exidx() {
   fi
 }
 
+audit_unwind_decode() {
+  local so="$1"
+  local symbol="$2"
+  local decoded
+  if ! decoded="$("$READELF" --unwind -W "$so" 2>&1)"; then
+    echo "$so: readelf --unwind failed" >&2
+    echo "$decoded" >&2
+    dump_elf_evidence "$so"
+    exit 1
+  fi
+  if ! echo "$decoded" | grep -q "Unwind section '.ARM.exidx'" ||
+     ! echo "$decoded" | grep -q "<$symbol>" ||
+     echo "$decoded" | grep -Eiq 'corrupt|cannot decode|failed to decode'; then
+    echo "$so: no parseable unwind entry for $symbol" >&2
+    echo "$decoded" >&2
+    dump_elf_evidence "$so"
+    exit 1
+  fi
+}
+
+audit_dynamic_relocations() {
+  local so="$1"
+  local relocs
+  relocs="$("$READELF" -r -W "$so" 2>&1)"
+  if echo "$relocs" | grep -Eq '__aeabi_unwind_cpp_pr[012]'; then
+    echo "$so: final dynamic relocations retain an EHABI personality dependency" >&2
+    dump_elf_evidence "$so"
+    exit 1
+  fi
+  if echo "$relocs" | grep -E 'R_ARM_NONE' | grep -Eq '__aeabi_unwind_cpp_pr[012]'; then
+    echo "$so: final dynamic relocations retain an R_ARM_NONE personality marker" >&2
+    dump_elf_evidence "$so"
+    exit 1
+  fi
+}
+
 audit_needed() {
   local so="$1"
   local expect="$2"
@@ -117,6 +152,8 @@ dump_elf_evidence() {
   "$OBJDUMP" -s -j .ARM.exidx "$so" >&2 || true
   echo "---- $so .ARM.extab ----" >&2
   "$OBJDUMP" -s -j .ARM.extab "$so" >&2 || true
+  echo "---- $so decoded unwind ----" >&2
+  "$READELF" --unwind -W "$so" >&2 || true
 }
 
 audit_undefined() {
@@ -213,6 +250,12 @@ audit_mode() {
 audit_exidx "$OUT/libagr_unwind_A.so"
 audit_exidx "$OUT/libagr_unwind_B.so"
 audit_exidx "$OUT/libagr_unwind_C.so"
+audit_unwind_decode "$OUT/libagr_unwind_A.so" A
+audit_unwind_decode "$OUT/libagr_unwind_B.so" B
+audit_unwind_decode "$OUT/libagr_unwind_C.so" C
+audit_dynamic_relocations "$OUT/libagr_unwind_A.so"
+audit_dynamic_relocations "$OUT/libagr_unwind_B.so"
+audit_dynamic_relocations "$OUT/libagr_unwind_C.so"
 audit_mode "$OUT/libagr_unwind_A.so" A thumb
 audit_mode "$OUT/libagr_unwind_B.so" B arm
 audit_mode "$OUT/libagr_unwind_C.so" C thumb
