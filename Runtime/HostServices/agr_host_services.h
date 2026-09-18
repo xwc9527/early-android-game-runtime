@@ -35,6 +35,15 @@ typedef struct agr_host_services {
     int64_t (*file_seek)(void *context, int fd, int64_t offset, int whence);
     int32_t (*file_dup)(void *context, int fd);
     int32_t (*file_close)(void *context, int fd);
+    /* AOSP consumer: Bionic pthread_create/join/detach and per-thread TLS
+     * anchor. These are raw Darwin operations; guest lifecycle policy stays
+     * in the Bionic source port. */
+    int32_t (*thread_create)(void *context, void *(*entry)(void *), void *arg,
+                             void **handle);
+    int32_t (*thread_join)(void *context, void *handle, void **return_value);
+    int32_t (*thread_detach)(void *context, void *handle);
+    void (*thread_bind_guest)(void *context, void *guest_thread);
+    void *(*thread_guest_binding)(void *context);
 } agr_host_services;
 
 /* Installs Darwin primitives only. It does not implement Bionic semantics. */

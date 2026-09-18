@@ -11,6 +11,21 @@
     fprintf(stderr, "FAIL %s:%d: %s\n", __FILE__, __LINE__, #condition); return 1; \
 } } while (0)
 
+typedef struct thread_fixture {
+    agr_host_services *host;
+    void *guest_binding;
+    int saw_isolation;
+} thread_fixture;
+static void *thread_entry(void *opaque) {
+    thread_fixture *fixture = opaque;
+    agr_host_services *host = fixture->host;
+    fixture->saw_isolation = host->thread_guest_binding(host->context) == NULL;
+    host->thread_bind_guest(host->context, fixture->guest_binding);
+    if (host->thread_guest_binding(host->context) != fixture->guest_binding)
+        fixture->saw_isolation = 0;
+    return fixture->guest_binding;
+}
+
 int main(void) {
     agr_host_services host;
     CHECK(agr_host_services_init_darwin(&host) == 0);
@@ -50,6 +65,15 @@ int main(void) {
     CHECK(host.file_close(host.context, fd) == 0);
     unlink(path);
 
-    puts("PASS Darwin host-service memory/time/file contracts");
+    int main_binding = 1, child_binding = 2;
+    host.thread_bind_guest(host.context, &main_binding);
+    thread_fixture fixture = {&host, &child_binding, 0};
+    void *handle = NULL, *result = NULL;
+    CHECK(host.thread_create(host.context, thread_entry, &fixture, &handle) == 0);
+    CHECK(host.thread_join(host.context, handle, &result) == 0);
+    CHECK(fixture.saw_isolation && result == &child_binding);
+    CHECK(host.thread_guest_binding(host.context) == &main_binding);
+
+    puts("PASS Darwin host-service memory/time/file/thread contracts");
     return 0;
 }

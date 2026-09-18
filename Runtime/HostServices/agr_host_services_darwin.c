@@ -7,6 +7,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <pthread.h>
+#include <stdlib.h>
 #include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
@@ -101,6 +103,45 @@ static int32_t host_file_close(void *context, int fd) {
     return result ? errno : 0;
 }
 
+typedef struct host_thread_handle { pthread_t value; } host_thread_handle;
+static _Thread_local void *bound_guest_thread;
+
+static int32_t host_thread_create(void *context, void *(*entry)(void *),
+                                  void *arg, void **handle) {
+    (void)context;
+    if (!entry || !handle) return EINVAL;
+    host_thread_handle *thread = calloc(1, sizeof(*thread));
+    if (!thread) return ENOMEM;
+    int result = pthread_create(&thread->value, NULL, entry, arg);
+    if (result) { free(thread); return result; }
+    *handle = thread;
+    return 0;
+}
+static int32_t host_thread_join(void *context, void *handle, void **return_value) {
+    (void)context;
+    if (!handle) return EINVAL;
+    host_thread_handle *thread = handle;
+    int result = pthread_join(thread->value, return_value);
+    if (!result) free(thread);
+    return result;
+}
+static int32_t host_thread_detach(void *context, void *handle) {
+    (void)context;
+    if (!handle) return EINVAL;
+    host_thread_handle *thread = handle;
+    int result = pthread_detach(thread->value);
+    if (!result) free(thread);
+    return result;
+}
+static void host_thread_bind_guest(void *context, void *guest_thread) {
+    (void)context;
+    bound_guest_thread = guest_thread;
+}
+static void *host_thread_guest_binding(void *context) {
+    (void)context;
+    return bound_guest_thread;
+}
+
 int32_t agr_host_services_init_darwin(agr_host_services *services) {
     if (!services) return EINVAL;
     long page = sysconf(_SC_PAGESIZE);
@@ -118,6 +159,11 @@ int32_t agr_host_services_init_darwin(agr_host_services *services) {
         .file_seek = host_file_seek,
         .file_dup = host_file_dup,
         .file_close = host_file_close,
+        .thread_create = host_thread_create,
+        .thread_join = host_thread_join,
+        .thread_detach = host_thread_detach,
+        .thread_bind_guest = host_thread_bind_guest,
+        .thread_guest_binding = host_thread_guest_binding,
     };
     return 0;
 }

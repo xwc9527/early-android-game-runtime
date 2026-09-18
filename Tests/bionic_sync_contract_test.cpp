@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cassert>
 #include <cerrno>
+#include <cstdio>
 #include <chrono>
 #include <thread>
 #include <vector>
@@ -71,6 +72,7 @@ int main() {
                        wait, wake, current_tid, invoke_once};
   constexpr uint32_t mutex = 0x4000, cond = 0x4004, once = 0x4008;
   assert(agr_bionic_mutex_init(&sync, mutex, 0) == 0);
+  std::fprintf(stderr, "sync: normal mutex contention\n");
   assert(agr_bionic_mutex_lock(&sync, mutex) == 0);
   assert(agr_bionic_mutex_trylock(&sync, mutex) != 0);
   std::atomic<uint32_t> acquired{0};
@@ -85,6 +87,7 @@ int main() {
   contender.join();
   assert(acquired == 1);
   assert(agr_bionic_mutex_destroy(&sync, mutex) == 0);
+  std::fprintf(stderr, "sync: recursive and errorcheck\n");
   assert(agr_bionic_mutex_lock(&sync, mutex) == EINVAL);
 
   assert(agr_bionic_mutex_init(&sync, mutex, 1) == 0);
@@ -99,6 +102,7 @@ int main() {
   assert(agr_bionic_mutex_unlock(&sync, mutex) == 0);
 
   assert(agr_bionic_cond_init(&sync, cond, 0) == 0);
+  std::fprintf(stderr, "sync: condition timeout and signal\n");
   assert(agr_bionic_mutex_lock(&sync, mutex) == 0);
   assert(agr_bionic_cond_wait_relative(&sync, cond, mutex, 1000000) == ETIMEDOUT);
   assert(agr_bionic_mutex_unlock(&sync, mutex) == 0);
@@ -117,6 +121,7 @@ int main() {
   signaler.join();
   assert(done == 1);
   assert(agr_bionic_cond_destroy(&sync, cond) == 0);
+  std::fprintf(stderr, "sync: once concurrent callers\n");
 
   std::vector<std::thread> callers;
   for (uint32_t i = 0; i < 16; ++i) callers.emplace_back([&] {
