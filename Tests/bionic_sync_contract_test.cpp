@@ -141,5 +141,20 @@ int main() {
   for (auto &thread : callers) thread.join();
   assert(f.init_count == 1);
   assert(f.words[2] == 2);
+  std::fprintf(stderr, "sync: repeated contended lock\n");
+  assert(agr_bionic_mutex_init(&sync, mutex, 0) == 0);
+  uint32_t counter = 0;
+  callers.clear();
+  for (uint32_t i = 0; i < 4; ++i) callers.emplace_back([&] {
+    guest_tid = next_tid++;
+    for (uint32_t n = 0; n < 5000; ++n) {
+      assert(agr_bionic_mutex_lock(&sync, mutex) == 0);
+      ++counter;
+      assert(agr_bionic_mutex_unlock(&sync, mutex) == 0);
+    }
+  });
+  for (auto &thread : callers) thread.join();
+  assert(counter == 20000);
+  assert(agr_bionic_mutex_destroy(&sync, mutex) == 0);
   agr_futex_host_destroy(f.futex);
 }

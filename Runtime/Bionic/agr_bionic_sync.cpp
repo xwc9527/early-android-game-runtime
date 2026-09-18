@@ -221,13 +221,15 @@ extern "C" int32_t agr_bionic_cond_wait_relative(agr_bionic_sync *s,
                                                     uint64_t timeout_ns) {
   uint32_t old = 0;
   if (!cond || !mutex || !load(s, cond, &old)) return AGR_ANDROID_EINVAL;
+  if (!s->wait) return AGR_ANDROID_ENOSYS;
   int32_t rc = agr_bionic_mutex_unlock(s, mutex);
   if (rc != 0) return rc;
-  const int32_t waited = s->wait ? s->wait(s->opaque, cond, old, timeout_ns) : -AGR_ANDROID_ENOSYS;
+  const int32_t waited = s->wait(s->opaque, cond, old, timeout_ns);
   rc = agr_bionic_mutex_lock(s, mutex);
   if (rc != 0) return rc;
   if (waited == -AGR_ANDROID_ETIMEDOUT) return AGR_ANDROID_ETIMEDOUT;
-  if (waited < 0 && waited != -AGR_ANDROID_EAGAIN && waited != -AGR_ANDROID_EINTR) return -waited;
+  // KitKat __pthread_cond_timedwait_relative only exposes ETIMEDOUT from
+  // __futex_wait_ex; all other wake/error results return 0 after relocking.
   return 0;
 }
 
