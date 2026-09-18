@@ -40,6 +40,7 @@ typedef int32_t (*agr_thread_execute_fn)(void *user, uint32_t guest_thread,
                                          const struct agr_bionic_thread_attr *attr,
                                          uint32_t *return_value);
 typedef uint32_t (*agr_current_thread_fn)(void *user);
+typedef void *(*agr_current_thread_context_fn)(void *user);
 typedef int32_t (*agr_atomic_load_fn)(void *user, uint32_t address,
                                       uint32_t *value);
 typedef int32_t (*agr_atomic_cas_fn)(void *user, uint32_t address,
@@ -74,6 +75,7 @@ typedef struct agr_callbacks {
      * worker after GuestRuntime has created and bound a GuestThreadContext. */
     agr_thread_execute_fn execute_thread;
     agr_current_thread_fn current_thread;
+    agr_current_thread_context_fn current_thread_context;
     agr_atomic_load_fn atomic_load;
     agr_atomic_cas_fn atomic_cas;
     agr_atomic_exchange_fn atomic_exchange;

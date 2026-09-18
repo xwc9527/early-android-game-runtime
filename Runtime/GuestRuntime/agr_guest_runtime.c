@@ -148,6 +148,9 @@ static uint32_t guest_current_thread_cb(void *user) {
     agr_guest_thread_context *context=guest_context((agr_guest *)user);
     return context ? context->guest_thread_id : 0;
 }
+static void *guest_current_thread_context_cb(void *user) {
+    return guest_context((agr_guest *)user);
+}
 static int32_t guest_atomic_load_cb(void *user,uint32_t address,uint32_t *value) {
     extern int32_t arm_interp_atomic_load32(void *,uint32_t,uint32_t *);
     return arm_interp_atomic_load32(guest_cpu((agr_guest *)user),address,value);
@@ -819,6 +822,7 @@ agr_guest *agr_guest_create(void) {
     cb.invoke_guest = invoke_linker_function;
     cb.invoke_guest_args = invoke_guest_args;
     cb.execute_thread=guest_thread_execute; cb.current_thread=guest_current_thread_cb;
+    cb.current_thread_context=guest_current_thread_context_cb;
     cb.atomic_load=guest_atomic_load_cb; cb.atomic_cas=guest_atomic_cas_cb;
     cb.atomic_exchange=guest_atomic_exchange_cb; cb.atomic_fetch_sub=guest_atomic_fetch_sub_cb;
     cb.pipe_create = pipe_create_cb; cb.fd_read = fd_read_cb; cb.fd_write = fd_write_cb; cb.fd_close = fd_close_cb;

@@ -487,7 +487,9 @@ int32_t agr_runtime_attach_current_thread(agr_runtime *rt, uint32_t guest_thread
                                           uint32_t pthread_handle, uint32_t tls_base) {
 #if defined(__APPLE__)
     if (!rt || !guest_thread || !tls_base) return AGR_ANDROID_EINVAL;
-    void *context = rt->host_services.thread_guest_binding(rt->host_services.context);
+    void *context = rt->cb.current_thread_context ?
+        rt->cb.current_thread_context(rt->cb.user) : NULL;
+    if (!context) return AGR_ANDROID_EINVAL;
     int32_t rc;
     if (guest_thread == 1u) {
         rc = agr_bionic_thread_lifecycle_register_current(rt->thread_lifecycle,
