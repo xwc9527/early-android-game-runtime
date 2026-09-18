@@ -67,6 +67,7 @@ void agr_guest_thread_context_destroy(agr_guest_thread_context *context) {
 }
 
 void agr_guest_thread_context_bind(agr_guest_thread_context *context) {
+    if (context) context->host_thread_identity=current_host_thread_identity();
     current_context = context;
 }
 

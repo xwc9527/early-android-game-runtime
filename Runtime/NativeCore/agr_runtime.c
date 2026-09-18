@@ -444,6 +444,13 @@ uint32_t agr_current_thread(agr_runtime*rt){
 #endif
     return rt ? rt->current_thread : 0;
 }
+uint32_t agr_runtime_current_pthread(agr_runtime *rt) {
+#if defined(__APPLE__)
+    return rt ? agr_bionic_thread_lifecycle_self(rt->thread_lifecycle) : 0;
+#else
+    return rt ? rt->current_thread : 0;
+#endif
+}
 uint32_t agr_create_thread_state(agr_runtime*rt){if(rt->thread_count>=AGR_MAX_THREADS)return 0;uint32_t id=atomic_fetch_add_explicit(&rt->next_thread,1u,memory_order_relaxed);rt->threads[rt->thread_count++].id=id;return id;}
 int32_t agr_runtime_attach_current_thread(agr_runtime *rt, uint32_t guest_thread,
                                           uint32_t pthread_handle, uint32_t tls_base) {

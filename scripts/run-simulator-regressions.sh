@@ -19,5 +19,8 @@ python3 - "$RESULT" <<'PY'
 import json, sys
 r = json.load(open(sys.argv[1]))
 print(json.dumps(r, indent=2))
+if not r["passed"]:
+    failures=" | ".join(map(str,r.get("failures",[])))[:900]
+    print(f"::error title=Simulator real-game regression::{failures}")
 assert r["passed"], r
 PY

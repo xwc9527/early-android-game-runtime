@@ -82,6 +82,7 @@ struct agr_process_runtime {
     int width, height;
     char renderer[256], gl_version[256], error[256], last_log[128];
     _Atomic uint64_t instruction_count;
+    _Atomic uint32_t last_guest_pc;
     _Atomic int shutting_down;
     uint64_t run_budget;
     uint32_t call_depth;
@@ -755,6 +756,9 @@ static int run_until_return(agr_guest *g) {
         uint64_t budget = g->run_budget; uint32_t svc = 0;
         arm_interp_set_thread_tag(guest_cpu(g), agr_current_thread(g->runtime));
         int32_t state = arm_interp_run(guest_cpu(g), &budget, &svc);
+        uint32_t observed_pc=arm_interp_get_reg(guest_cpu(g),15);
+        guest_context(g)->current_guest_pc=observed_pc;
+        atomic_store_explicit(&g->last_guest_pc,observed_pc,memory_order_release);
         atomic_fetch_add_explicit(&g->instruction_count,g->run_budget-budget,memory_order_relaxed);
         if (state != 1) {
             uint32_t pc = arm_interp_get_reg(guest_cpu(g), 15), cpsr = arm_interp_get_cpsr(guest_cpu(g));
@@ -827,6 +831,7 @@ agr_guest *agr_guest_create(void) {
         agr_runtime_destroy(g->runtime); agr_guest_thread_context_destroy(g->main_thread); arm_interp_destroy(g->process_cpu); free(g); return NULL;
     }
     g->main_thread->guest_errno_address=agr_runtime_errno_address(g->runtime,1);
+    g->main_thread->pthread_handle=agr_runtime_current_pthread(g->runtime);
     g->main_thread->jni_env_handle=JNI_ENV_PTR;
     write_u32(g, JNI_ENV_PTR, JNI_TABLE);
     for (uint32_t slot = 4; slot < 233; slot++) { uint32_t trap = TRAP_BASE + slot * 4; write_u32(g, JNI_TABLE + slot * 4, trap); write_u32(g, trap, 0xef000000u | slot); }
@@ -857,7 +862,7 @@ void agr_guest_destroy(agr_guest *g) {
 }
 const char *agr_guest_last_error(agr_guest *g) { return g ? g->error : "guest create failed"; }
 const char *agr_guest_last_android_log(agr_guest *g) { return g ? g->last_log : ""; }
-uint32_t agr_guest_program_counter(agr_guest *g) { return g ? arm_interp_get_reg(guest_cpu(g),15) : 0; }
+uint32_t agr_guest_program_counter(agr_guest *g) { return g ? atomic_load_explicit(&g->last_guest_pc,memory_order_acquire) : 0; }
 int32_t agr_guest_load_elf(agr_guest *g, const char *name, const void *bytes, uint32_t size, uint32_t base) {
     agr_load_result out = {0}; int32_t rc = agr_load_elf(g->runtime, name, bytes, size, base, &out);
     if (rc) set_error(g, agr_last_error(g->runtime)); return rc;
@@ -942,6 +947,7 @@ static int32_t guest_thread_execute(void *user, uint32_t guest_thread,
         return -1;
     }
     context->guest_errno_address=agr_runtime_errno_address(g->runtime,guest_thread);
+    context->pthread_handle=agr_runtime_current_pthread(g->runtime);
     context->jni_env_handle=JNI_ENV_PTR;
     uint32_t args[1]={argument}; int32_t result=0;
     int32_t rc=call_address(g,start,args,1,&result);
