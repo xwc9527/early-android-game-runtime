@@ -45,7 +45,6 @@ constexpr uint32_t kShared = 0x2000u;
 constexpr uint32_t kType = 0xc000u;
 constexpr uint32_t kRecursive = 0x4000u;
 constexpr uint32_t kErrorcheck = 0x8000u;
-constexpr uint32_t kCondShared = 1u;
 
 bool load(agr_bionic_sync *s, uint32_t a, uint32_t *v) {
   return s && s->load && s->load(s->opaque, a, v) == 0;
