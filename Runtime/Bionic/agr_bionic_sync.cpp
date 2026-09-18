@@ -31,8 +31,8 @@
  * the shared guest address space. Linux futex calls remain raw host callbacks.
  */
 #include "agr_bionic_sync.h"
+#include "agr_bionic_errno.h"
 
-#include <cerrno>
 #include <climits>
 
 namespace {
@@ -69,114 +69,114 @@ uint32_t tid(agr_bionic_sync *s) {
 
 extern "C" int32_t agr_bionic_mutex_init(agr_bionic_sync *s, uint32_t a,
                                             int32_t type) {
-  if (!a || type < 0 || type > 2) return EINVAL;
-  return store(s, a, static_cast<uint32_t>(type) << 14) ? 0 : EFAULT;
+  if (!a || type < 0 || type > 2) return AGR_ANDROID_EINVAL;
+  return store(s, a, static_cast<uint32_t>(type) << 14) ? 0 : AGR_ANDROID_EFAULT;
 }
 
 /* _normal_lock from KitKat pthread.c: 0 -> 1 fast path, exchange 2 on
  * contention, then futex-wait while the value is 2. */
 extern "C" int32_t agr_bionic_mutex_lock(agr_bionic_sync *s, uint32_t a) {
   uint32_t value = 0;
-  if (!a || !load(s, a, &value)) return EINVAL;
+  if (!a || !load(s, a, &value)) return AGR_ANDROID_EINVAL;
   const uint32_t type = value & kType, shared = value & kShared;
   if (type == 0) {
     bool won = false;
-    if (!cas(s, a, shared, shared | kUncontended, &won)) return EFAULT;
+    if (!cas(s, a, shared, shared | kUncontended, &won)) return AGR_ANDROID_EFAULT;
     if (won) return 0;
     for (;;) {
       uint32_t previous = 0;
-      if (!exchange(s, a, shared | kContended, &previous)) return EFAULT;
+      if (!exchange(s, a, shared | kContended, &previous)) return AGR_ANDROID_EFAULT;
       if (previous == shared) return 0;
-      if (!s->wait) return ENOSYS;
+      if (!s->wait) return AGR_ANDROID_ENOSYS;
       int32_t rc = s->wait(s->opaque, a, shared | kContended, UINT64_MAX);
-      if (rc != 0 && rc != -EAGAIN && rc != -EINTR) return -rc;
+      if (rc != 0 && rc != -AGR_ANDROID_EAGAIN && rc != -AGR_ANDROID_EINTR) return -rc;
     }
   }
-  if (type != kRecursive && type != kErrorcheck) return EINVAL;
+  if (type != kRecursive && type != kErrorcheck) return AGR_ANDROID_EINVAL;
   const uint32_t self = tid(s);
-  if (!self) return EINVAL;
+  if (!self) return AGR_ANDROID_EINVAL;
   const uint32_t unlocked = type | shared;
   if (value == unlocked) {
     bool won = false;
-    if (!cas(s, a, value, (self << 16) | unlocked | kUncontended, &won)) return EFAULT;
+    if (!cas(s, a, value, (self << 16) | unlocked | kUncontended, &won)) return AGR_ANDROID_EFAULT;
     if (won) return 0;
   }
   for (;;) {
-    if (!load(s, a, &value)) return EFAULT;
+    if (!load(s, a, &value)) return AGR_ANDROID_EFAULT;
     if ((value & kState) != 0 && (value >> 16) == self) {
-      if (type == kErrorcheck) return EDEADLK;
-      if ((value & kCounter) == kCounter) return EAGAIN;
+      if (type == kErrorcheck) return AGR_ANDROID_EDEADLK;
+      if ((value & kCounter) == kCounter) return AGR_ANDROID_EAGAIN;
       bool won = false;
-      if (!cas(s, a, value, value + kCounterOne, &won)) return EFAULT;
+      if (!cas(s, a, value, value + kCounterOne, &won)) return AGR_ANDROID_EFAULT;
       if (won) return 0;
       continue;
     }
     if (value == unlocked) {
       bool won = false;
-      if (!cas(s, a, value, (self << 16) | unlocked | kContended, &won)) return EFAULT;
+      if (!cas(s, a, value, (self << 16) | unlocked | kContended, &won)) return AGR_ANDROID_EFAULT;
       if (won) return 0;
       continue;
     }
     if ((value & kState) == kUncontended) {
       bool won = false;
-      if (!cas(s, a, value, value ^ 3u, &won)) return EFAULT;
+      if (!cas(s, a, value, value ^ 3u, &won)) return AGR_ANDROID_EFAULT;
       if (!won) continue;
       value ^= 3u;
     }
-    if (!s->wait) return ENOSYS;
+    if (!s->wait) return AGR_ANDROID_ENOSYS;
     int32_t rc = s->wait(s->opaque, a, value, UINT64_MAX);
-    if (rc != 0 && rc != -EAGAIN && rc != -EINTR) return -rc;
+    if (rc != 0 && rc != -AGR_ANDROID_EAGAIN && rc != -AGR_ANDROID_EINTR) return -rc;
   }
 }
 
 extern "C" int32_t agr_bionic_mutex_trylock(agr_bionic_sync *s, uint32_t a) {
   uint32_t value = 0;
-  if (!a || !load(s, a, &value)) return EINVAL;
+  if (!a || !load(s, a, &value)) return AGR_ANDROID_EINVAL;
   const uint32_t type = value & kType, shared = value & kShared;
-  if (type != 0 && type != kRecursive && type != kErrorcheck) return EINVAL;
+  if (type != 0 && type != kRecursive && type != kErrorcheck) return AGR_ANDROID_EINVAL;
   if (type != 0 && (value & kState) != 0 && (value >> 16) == tid(s)) {
-    if (type == kErrorcheck) return EDEADLK;
-    if ((value & kCounter) == kCounter) return EAGAIN;
+    if (type == kErrorcheck) return AGR_ANDROID_EDEADLK;
+    if ((value & kCounter) == kCounter) return AGR_ANDROID_EAGAIN;
     bool won = false;
     do {
-      if (!cas(s, a, value, value + kCounterOne, &won)) return EFAULT;
+      if (!cas(s, a, value, value + kCounterOne, &won)) return AGR_ANDROID_EFAULT;
       if (won) return 0;
     } while (load(s, a, &value) && (value >> 16) == tid(s));
-    return EBUSY;
+    return AGR_ANDROID_EBUSY;
   }
   bool won = false;
   const uint32_t self = type == 0 ? 0 : tid(s);
-  if (type != 0 && !self) return EINVAL;
+  if (type != 0 && !self) return AGR_ANDROID_EINVAL;
   if (!cas(s, a, shared | type,
-           (self << 16) | shared | type | kUncontended, &won)) return EFAULT;
-  return won ? 0 : EBUSY;
+           (self << 16) | shared | type | kUncontended, &won)) return AGR_ANDROID_EFAULT;
+  return won ? 0 : AGR_ANDROID_EBUSY;
 }
 
 extern "C" int32_t agr_bionic_mutex_unlock(agr_bionic_sync *s, uint32_t a) {
   uint32_t value = 0;
-  if (!a || !load(s, a, &value)) return EINVAL;
+  if (!a || !load(s, a, &value)) return AGR_ANDROID_EINVAL;
   const uint32_t type = value & kType, shared = value & kShared;
   if (type == 0) {
     uint32_t previous = 0;
-    if (!s->fetch_sub || s->fetch_sub(s->opaque, a, 1, &previous) != 0) return EFAULT;
+    if (!s->fetch_sub || s->fetch_sub(s->opaque, a, 1, &previous) != 0) return AGR_ANDROID_EFAULT;
     if (previous != (shared | kUncontended)) {
-      if (!store(s, a, shared)) return EFAULT;
+      if (!store(s, a, shared)) return AGR_ANDROID_EFAULT;
       if (s->wake) s->wake(s->opaque, a, 1);
     }
     return 0;
   }
-  if (type != kRecursive && type != kErrorcheck) return EINVAL;
-  if ((value >> 16) != tid(s)) return EPERM;
+  if (type != kRecursive && type != kErrorcheck) return AGR_ANDROID_EINVAL;
+  if ((value >> 16) != tid(s)) return AGR_ANDROID_EPERM;
   if (value & kCounter) {
     for (;;) {
       bool won = false;
-      if (!cas(s, a, value, value - kCounterOne, &won)) return EFAULT;
+      if (!cas(s, a, value, value - kCounterOne, &won)) return AGR_ANDROID_EFAULT;
       if (won) return 0;
-      if (!load(s, a, &value)) return EFAULT;
+      if (!load(s, a, &value)) return AGR_ANDROID_EFAULT;
     }
   }
   uint32_t previous = 0;
-  if (!exchange(s, a, type | shared, &previous)) return EFAULT;
+  if (!exchange(s, a, type | shared, &previous)) return AGR_ANDROID_EFAULT;
   if ((previous & kState) == kContended && s->wake) s->wake(s->opaque, a, 1);
   return 0;
 }
@@ -184,28 +184,28 @@ extern "C" int32_t agr_bionic_mutex_unlock(agr_bionic_sync *s, uint32_t a) {
 extern "C" int32_t agr_bionic_mutex_destroy(agr_bionic_sync *s, uint32_t a) {
   const int32_t result = agr_bionic_mutex_trylock(s, a);
   if (result != 0) return result;
-  return store(s, a, 0xdead10ccu) ? 0 : EFAULT;
+  return store(s, a, 0xdead10ccu) ? 0 : AGR_ANDROID_EFAULT;
 }
 
 extern "C" int32_t agr_bionic_cond_init(agr_bionic_sync *s, uint32_t a,
                                            int32_t shared) {
-  if (!a || (shared != 0 && shared != 1)) return EINVAL;
-  return store(s, a, static_cast<uint32_t>(shared)) ? 0 : EFAULT;
+  if (!a || (shared != 0 && shared != 1)) return AGR_ANDROID_EINVAL;
+  return store(s, a, static_cast<uint32_t>(shared)) ? 0 : AGR_ANDROID_EFAULT;
 }
 extern "C" int32_t agr_bionic_cond_destroy(agr_bionic_sync *s, uint32_t a) {
-  if (!a) return EINVAL;
-  return store(s, a, 0xdeadc04du) ? 0 : EFAULT;
+  if (!a) return AGR_ANDROID_EINVAL;
+  return store(s, a, 0xdeadc04du) ? 0 : AGR_ANDROID_EFAULT;
 }
 
 static int32_t pulse(agr_bionic_sync *s, uint32_t a, uint32_t count) {
   uint32_t old = 0;
-  if (!a || !load(s, a, &old)) return EINVAL;
+  if (!a || !load(s, a, &old)) return AGR_ANDROID_EINVAL;
   for (;;) {
     const uint32_t next = ((old - 2u) & ~1u) | (old & 1u);
     bool won = false;
-    if (!cas(s, a, old, next, &won)) return EFAULT;
+    if (!cas(s, a, old, next, &won)) return AGR_ANDROID_EFAULT;
     if (won) break;
-    if (!load(s, a, &old)) return EFAULT;
+    if (!load(s, a, &old)) return AGR_ANDROID_EFAULT;
   }
   if (s->wake) s->wake(s->opaque, a, count);
   return 0;
@@ -220,14 +220,14 @@ extern "C" int32_t agr_bionic_cond_wait_relative(agr_bionic_sync *s,
                                                     uint32_t cond, uint32_t mutex,
                                                     uint64_t timeout_ns) {
   uint32_t old = 0;
-  if (!cond || !mutex || !load(s, cond, &old)) return EINVAL;
+  if (!cond || !mutex || !load(s, cond, &old)) return AGR_ANDROID_EINVAL;
   int32_t rc = agr_bionic_mutex_unlock(s, mutex);
   if (rc != 0) return rc;
-  const int32_t waited = s->wait ? s->wait(s->opaque, cond, old, timeout_ns) : -ENOSYS;
+  const int32_t waited = s->wait ? s->wait(s->opaque, cond, old, timeout_ns) : -AGR_ANDROID_ENOSYS;
   rc = agr_bionic_mutex_lock(s, mutex);
   if (rc != 0) return rc;
-  if (waited == -ETIMEDOUT) return ETIMEDOUT;
-  if (waited < 0 && waited != -EAGAIN && waited != -EINTR) return -waited;
+  if (waited == -AGR_ANDROID_ETIMEDOUT) return AGR_ANDROID_ETIMEDOUT;
+  if (waited < 0 && waited != -AGR_ANDROID_EAGAIN && waited != -AGR_ANDROID_EINTR) return -waited;
   return 0;
 }
 
@@ -235,18 +235,18 @@ extern "C" int32_t agr_bionic_cond_wait_relative(agr_bionic_sync *s,
  * with futex waiters and release publication before waking all. */
 extern "C" int32_t agr_bionic_once(agr_bionic_sync *s, uint32_t control,
                                      uint32_t init_function) {
-  if (!control || !s || !s->invoke_once) return EINVAL;
+  if (!control || !s || !s->invoke_once) return AGR_ANDROID_EINVAL;
   for (;;) {
     uint32_t old = 0;
-    if (!load(s, control, &old)) return EFAULT;
+    if (!load(s, control, &old)) return AGR_ANDROID_EFAULT;
     if (old & 2u) return 0;
     bool won = false;
-    if (!cas(s, control, old, old | 1u, &won)) return EFAULT;
+    if (!cas(s, control, old, old | 1u, &won)) return AGR_ANDROID_EFAULT;
     if (!won) continue;
     if (!(old & 1u)) break;
-    if (!s->wait) return ENOSYS;
+    if (!s->wait) return AGR_ANDROID_ENOSYS;
     const int32_t waited = s->wait(s->opaque, control, old | 1u, UINT64_MAX);
-    if (waited < 0 && waited != -EAGAIN && waited != -EINTR) return -waited;
+    if (waited < 0 && waited != -AGR_ANDROID_EAGAIN && waited != -AGR_ANDROID_EINTR) return -waited;
   }
   int32_t rc = s->invoke_once(s->opaque, init_function);
   if (rc != 0) {
@@ -256,7 +256,7 @@ extern "C" int32_t agr_bionic_once(agr_bionic_sync *s, uint32_t control,
     if (s->wake) s->wake(s->opaque, control, INT_MAX);
     return rc;
   }
-  if (!store(s, control, 2u)) return EFAULT;
+  if (!store(s, control, 2u)) return AGR_ANDROID_EFAULT;
   if (s->wake) s->wake(s->opaque, control, INT_MAX);
   return 0;
 }

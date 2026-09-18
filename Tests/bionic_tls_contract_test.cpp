@@ -1,8 +1,8 @@
 #include "../Runtime/Bionic/agr_bionic_tls.h"
+#include "../Runtime/Bionic/agr_bionic_errno.h"
 
 #include <array>
 #include <cassert>
-#include <cerrno>
 #include <cstdint>
 
 struct fixture {
@@ -58,7 +58,7 @@ int main() {
   assert(agr_bionic_tls_key_delete(f.tls, f.key) == 0);
   assert(agr_bionic_tls_getspecific(f.tls, 1, f.key, &value) == 0 && value == 0);
   assert(agr_bionic_tls_getspecific(f.tls, 2, f.key, &value) == 0 && value == 0);
-  assert(agr_bionic_tls_setspecific(f.tls, 1, f.key, 1) == EINVAL);
+  assert(agr_bionic_tls_setspecific(f.tls, 1, f.key, 1) == AGR_ANDROID_EINVAL);
   uint32_t reused = 0;
   assert(agr_bionic_tls_key_create(f.tls, 0x9000, &reused) == 0);
   assert(reused == f.key);

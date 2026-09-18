@@ -31,9 +31,9 @@
  * four-pass destructor control flow remain from Bionic.
  */
 #include "agr_bionic_tls.h"
+#include "agr_bionic_errno.h"
 
 #include <array>
-#include <cerrno>
 #include <mutex>
 #include <new>
 #include <unordered_map>
@@ -66,39 +66,39 @@ extern "C" void agr_bionic_tls_destroy(agr_bionic_tls *tls) { delete tls; }
 extern "C" int32_t agr_bionic_tls_register_thread(agr_bionic_tls *tls,
     uint32_t tid, uint32_t base, uint32_t descriptor) {
   if (!tls || !tid || !base || (base & 3u) || base > UINT32_MAX - 560u)
-    return EINVAL;
+    return AGR_ANDROID_EINVAL;
   std::lock_guard<std::mutex> guard(tls->lock);
-  if (tls->threads.count(tid)) return EEXIST;
+  if (tls->threads.count(tid)) return AGR_ANDROID_EEXIST;
   for (uint32_t key = 0; key < AGR_BIONIC_TLS_SLOTS; ++key)
-    if (tls->write(tls->opaque, slot(base, key), 0) != 0) return EFAULT;
+    if (tls->write(tls->opaque, slot(base, key), 0) != 0) return AGR_ANDROID_EFAULT;
   if (tls->write(tls->opaque, slot(base, 0), base) != 0 ||
-      tls->write(tls->opaque, slot(base, 1), descriptor) != 0) return EFAULT;
+      tls->write(tls->opaque, slot(base, 1), descriptor) != 0) return AGR_ANDROID_EFAULT;
   try { tls->threads.emplace(tid, agr_bionic_tls::thread{base}); }
-  catch (const std::bad_alloc &) { return ENOMEM; }
+  catch (const std::bad_alloc &) { return AGR_ANDROID_ENOMEM; }
   return 0;
 }
 
 extern "C" int32_t agr_bionic_tls_key_create(agr_bionic_tls *tls,
     uint32_t destructor, uint32_t *key) {
-  if (!tls || !key) return EINVAL;
+  if (!tls || !key) return AGR_ANDROID_EINVAL;
   std::lock_guard<std::mutex> guard(tls->lock);
   for (uint32_t i = AGR_BIONIC_TLS_FIRST_USER_SLOT; i < AGR_BIONIC_TLS_SLOTS; ++i)
     if (!tls->allocated[i]) {
       tls->allocated[i] = true; tls->destructors[i] = destructor;
       *key = i; return 0;
     }
-  return EAGAIN;
+  return AGR_ANDROID_EAGAIN;
 }
 
 extern "C" int32_t agr_bionic_tls_key_delete(agr_bionic_tls *tls,
     uint32_t key) {
   if (!tls || key < AGR_BIONIC_TLS_FIRST_USER_SLOT ||
-      key >= AGR_BIONIC_TLS_SLOTS) return EINVAL;
+      key >= AGR_BIONIC_TLS_SLOTS) return AGR_ANDROID_EINVAL;
   std::lock_guard<std::mutex> guard(tls->lock);
-  if (!tls->allocated[key]) return EINVAL;
+  if (!tls->allocated[key]) return AGR_ANDROID_EINVAL;
   for (auto &entry : tls->threads)
     if (tls->write(tls->opaque, slot(entry.second.base, key), 0) != 0)
-      return EFAULT;
+      return AGR_ANDROID_EFAULT;
   tls->allocated[key] = false; tls->destructors[key] = 0;
   return 0;
 }
@@ -106,23 +106,23 @@ extern "C" int32_t agr_bionic_tls_key_delete(agr_bionic_tls *tls,
 extern "C" int32_t agr_bionic_tls_setspecific(agr_bionic_tls *tls,
     uint32_t tid, uint32_t key, uint32_t value) {
   if (!tls || key < AGR_BIONIC_TLS_FIRST_USER_SLOT ||
-      key >= AGR_BIONIC_TLS_SLOTS) return EINVAL;
+      key >= AGR_BIONIC_TLS_SLOTS) return AGR_ANDROID_EINVAL;
   std::lock_guard<std::mutex> guard(tls->lock);
   auto it = tls->threads.find(tid);
-  if (it == tls->threads.end() || !tls->allocated[key]) return EINVAL;
-  return tls->write(tls->opaque, slot(it->second.base, key), value) == 0 ? 0 : EFAULT;
+  if (it == tls->threads.end() || !tls->allocated[key]) return AGR_ANDROID_EINVAL;
+  return tls->write(tls->opaque, slot(it->second.base, key), value) == 0 ? 0 : AGR_ANDROID_EFAULT;
 }
 
 extern "C" int32_t agr_bionic_tls_getspecific(agr_bionic_tls *tls,
     uint32_t tid, uint32_t key, uint32_t *value) {
-  if (!tls || !value) return EINVAL;
+  if (!tls || !value) return AGR_ANDROID_EINVAL;
   *value = 0;
   if (key < AGR_BIONIC_TLS_FIRST_USER_SLOT || key >= AGR_BIONIC_TLS_SLOTS)
     return 0; // Bionic pthread_getspecific returns NULL for invalid keys.
   std::lock_guard<std::mutex> guard(tls->lock);
   auto it = tls->threads.find(tid);
-  if (it == tls->threads.end()) return ESRCH;
-  return tls->read(tls->opaque, slot(it->second.base, key), value) == 0 ? 0 : EFAULT;
+  if (it == tls->threads.end()) return AGR_ANDROID_ESRCH;
+  return tls->read(tls->opaque, slot(it->second.base, key), value) == 0 ? 0 : AGR_ANDROID_EFAULT;
 }
 
 extern "C" uint32_t agr_bionic_tls_errno_address(agr_bionic_tls *tls,
@@ -135,10 +135,10 @@ extern "C" uint32_t agr_bionic_tls_errno_address(agr_bionic_tls *tls,
 
 extern "C" int32_t agr_bionic_tls_cleanup_thread(agr_bionic_tls *tls,
     uint32_t tid) {
-  if (!tls) return EINVAL;
+  if (!tls) return AGR_ANDROID_EINVAL;
   std::unique_lock<std::mutex> guard(tls->lock);
   auto it = tls->threads.find(tid);
-  if (it == tls->threads.end()) return ESRCH;
+  if (it == tls->threads.end()) return AGR_ANDROID_ESRCH;
   const uint32_t base = it->second.base;
   // pthread_key.cpp ScopedTlsMapAccess::CleanAll: clear the value before
   // invoking, unlock around guest code, and repeat up to four passes.
@@ -148,9 +148,9 @@ extern "C" int32_t agr_bionic_tls_cleanup_thread(agr_bionic_tls *tls,
          key < AGR_BIONIC_TLS_SLOTS; ++key) {
       if (!tls->allocated[key] || !tls->destructors[key]) continue;
       uint32_t value = 0;
-      if (tls->read(tls->opaque, slot(base, key), &value) != 0) return EFAULT;
+      if (tls->read(tls->opaque, slot(base, key), &value) != 0) return AGR_ANDROID_EFAULT;
       if (!value) continue;
-      if (tls->write(tls->opaque, slot(base, key), 0) != 0) return EFAULT;
+      if (tls->write(tls->opaque, slot(base, key), 0) != 0) return AGR_ANDROID_EFAULT;
       uint32_t destructor = tls->destructors[key];
       guard.unlock();
       int32_t rc = tls->invoke(tls->opaque, tid, destructor, value);
@@ -165,7 +165,7 @@ extern "C" int32_t agr_bionic_tls_cleanup_thread(agr_bionic_tls *tls,
 
 extern "C" int32_t agr_bionic_tls_unregister_thread(agr_bionic_tls *tls,
     uint32_t tid) {
-  if (!tls) return EINVAL;
+  if (!tls) return AGR_ANDROID_EINVAL;
   std::lock_guard<std::mutex> guard(tls->lock);
-  return tls->threads.erase(tid) ? 0 : ESRCH;
+  return tls->threads.erase(tid) ? 0 : AGR_ANDROID_ESRCH;
 }

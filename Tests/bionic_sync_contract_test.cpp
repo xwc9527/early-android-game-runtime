@@ -1,9 +1,9 @@
 #include "../Runtime/Bionic/agr_bionic_sync.h"
+#include "../Runtime/Bionic/agr_bionic_errno.h"
 #include "../Runtime/Bionic/agr_futex_host.h"
 
 #include <atomic>
 #include <cassert>
-#include <cerrno>
 #include <cstdio>
 #include <chrono>
 #include <thread>
@@ -107,14 +107,14 @@ int main() {
   assert(agr_bionic_mutex_init(&sync, mutex, 2) == 0);
   assert(agr_bionic_mutex_lock(&sync, mutex) == 0);
   std::fprintf(stderr, "sync: errorcheck first lock\n");
-  assert(agr_bionic_mutex_lock(&sync, mutex) == EDEADLK);
+  assert(agr_bionic_mutex_lock(&sync, mutex) == AGR_ANDROID_EDEADLK);
   std::fprintf(stderr, "sync: errorcheck deadlock result\n");
   assert(agr_bionic_mutex_unlock(&sync, mutex) == 0);
 
   assert(agr_bionic_cond_init(&sync, cond, 0) == 0);
   std::fprintf(stderr, "sync: condition timeout and signal\n");
   assert(agr_bionic_mutex_lock(&sync, mutex) == 0);
-  assert(agr_bionic_cond_wait_relative(&sync, cond, mutex, 1000000) == ETIMEDOUT);
+  assert(agr_bionic_cond_wait_relative(&sync, cond, mutex, 1000000) == AGR_ANDROID_ETIMEDOUT);
   assert(agr_bionic_mutex_unlock(&sync, mutex) == 0);
   std::atomic<uint32_t> ready{0}, done{0};
   std::thread signaler([&] {
