@@ -2,7 +2,10 @@
 
 #include <stdlib.h>
 #if defined(__APPLE__)
+#include "../HostServices/agr_host_services.h"
 #include <pthread.h>
+#else
+static _Thread_local agr_guest_thread_context *current_context;
 #endif
 
 static uintptr_t current_host_thread_identity(void) {
@@ -15,10 +18,6 @@ static uintptr_t current_host_thread_identity(void) {
 
 extern void *arm_interp_create_thread(void *parent);
 extern void arm_interp_destroy(void *cpu);
-
-/* This is the only Darwin TLS owned by AGR.  Its value is always a complete
- * GuestThreadContext, never a NativeCore record or a synthetic scheduler id. */
-static _Thread_local agr_guest_thread_context *current_context;
 
 agr_guest_thread_context *agr_guest_thread_context_create(
     agr_process_runtime *process, void *parent_cpu, uint32_t guest_thread_id,
@@ -59,7 +58,8 @@ agr_guest_thread_context *agr_guest_thread_context_create_main(
 
 void agr_guest_thread_context_destroy(agr_guest_thread_context *context) {
     if (!context) return;
-    if (current_context == context) current_context = NULL;
+    if (agr_guest_thread_context_current() == context)
+        agr_guest_thread_context_bind(NULL);
     agr_process_runtime_unregister_thread(context->process,context);
     /* The process entry CPU is owned by ProcessRuntime. Workers own clones. */
     if (context->cpu && context->guest_thread_id != 1u) arm_interp_destroy(context->cpu);
@@ -68,11 +68,19 @@ void agr_guest_thread_context_destroy(agr_guest_thread_context *context) {
 
 void agr_guest_thread_context_bind(agr_guest_thread_context *context) {
     if (context) context->host_thread_identity=current_host_thread_identity();
+#if defined(__APPLE__)
+    agr_host_services_bind_current_guest(context);
+#else
     current_context = context;
+#endif
 }
 
 agr_guest_thread_context *agr_guest_thread_context_current(void) {
+#if defined(__APPLE__)
+    return (agr_guest_thread_context *)agr_host_services_current_guest();
+#else
     return current_context;
+#endif
 }
 
 void agr_guest_thread_context_record_call(agr_guest_thread_context *context,

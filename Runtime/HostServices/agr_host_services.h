@@ -48,6 +48,10 @@ typedef struct agr_host_services {
 
 /* Installs Darwin primitives only. It does not implement Bionic semantics. */
 int32_t agr_host_services_init_darwin(agr_host_services *services);
+/* The single host TLS slot used by Apple production to map the current
+ * Darwin pthread to its GuestThreadContext. */
+void agr_host_services_bind_current_guest(void *guest_thread);
+void *agr_host_services_current_guest(void);
 
 #ifdef __cplusplus
 }

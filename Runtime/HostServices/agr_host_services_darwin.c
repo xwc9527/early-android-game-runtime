@@ -106,6 +106,13 @@ static int32_t host_file_close(void *context, int fd) {
 typedef struct host_thread_handle { pthread_t value; } host_thread_handle;
 static _Thread_local void *bound_guest_thread;
 
+void agr_host_services_bind_current_guest(void *guest_thread) {
+    bound_guest_thread = guest_thread;
+}
+void *agr_host_services_current_guest(void) {
+    return bound_guest_thread;
+}
+
 static int32_t host_thread_create(void *context, void *(*entry)(void *),
                                   void *arg, void **handle) {
     (void)context;
@@ -135,11 +142,11 @@ static int32_t host_thread_detach(void *context, void *handle) {
 }
 static void host_thread_bind_guest(void *context, void *guest_thread) {
     (void)context;
-    bound_guest_thread = guest_thread;
+    agr_host_services_bind_current_guest(guest_thread);
 }
 static void *host_thread_guest_binding(void *context) {
     (void)context;
-    return bound_guest_thread;
+    return agr_host_services_current_guest();
 }
 
 int32_t agr_host_services_init_darwin(agr_host_services *services) {
