@@ -31,6 +31,7 @@ enum {
 agr_bionic_thread_lifecycle *agr_bionic_thread_lifecycle_create(
     const agr_host_services *, void *opaque, agr_bionic_thread_execute);
 void agr_bionic_thread_lifecycle_destroy(agr_bionic_thread_lifecycle *);
+void agr_bionic_thread_lifecycle_shutdown(agr_bionic_thread_lifecycle *);
 
 int32_t agr_bionic_thread_lifecycle_create_thread(
     agr_bionic_thread_lifecycle *, uint32_t guest_thread,

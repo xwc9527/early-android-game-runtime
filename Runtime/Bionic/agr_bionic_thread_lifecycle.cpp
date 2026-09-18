@@ -45,6 +45,8 @@ struct agr_bionic_thread_lifecycle {
   void *opaque;
   agr_bionic_thread_execute execute;
   std::mutex lock;
+  std::condition_variable changed;
+  bool closing = false;
   std::unordered_map<uint32_t, std::unique_ptr<record>> records;
   uint32_t next_handle;
 };
@@ -67,6 +69,7 @@ static void *thread_entry(void *opaque) {
   const bool detached = (found->second->flags & kDetached) != 0;
   found->second->exited.notify_all();
   if (detached) owner->records.erase(found);
+  owner->changed.notify_all();
   return nullptr;
 }
 
@@ -105,6 +108,38 @@ extern "C" void agr_bionic_thread_lifecycle_destroy(
   delete lifecycle;
 }
 
+extern "C" void agr_bionic_thread_lifecycle_shutdown(
+    agr_bionic_thread_lifecycle *lifecycle) {
+  if (!lifecycle) return;
+  std::unique_lock<std::mutex> lock(lifecycle->lock);
+  lifecycle->closing = true;
+  for (auto &entry : lifecycle->records) entry.second->exited.notify_all();
+  for (;;) {
+    auto found = lifecycle->records.end();
+    for (auto it = lifecycle->records.begin(); it != lifecycle->records.end(); ++it) {
+      const record *item = it->second.get();
+      if (item->guest_thread != 1u || item->start_routine != 0 || item->host_handle)
+        { found = it; break; }
+    }
+    if (found == lifecycle->records.end()) return;
+    if (found->second->flags & kJoined) {
+      lifecycle->changed.wait(lock);
+      continue;
+    }
+    if ((found->second->flags & kZombie) == 0) {
+      lifecycle->changed.wait(lock);
+      continue;
+    }
+    void *host_handle = found->second->host_handle;
+    const uint32_t handle = found->first;
+    lock.unlock();
+    if (host_handle) lifecycle->host.thread_join(lifecycle->host.context,
+                                                  host_handle, nullptr);
+    lock.lock();
+    lifecycle->records.erase(handle);
+  }
+}
+
 extern "C" int32_t agr_bionic_thread_lifecycle_create_thread(
     agr_bionic_thread_lifecycle *lifecycle, uint32_t guest_thread,
     uint32_t start_routine, uint32_t argument,
@@ -114,6 +149,7 @@ extern "C" int32_t agr_bionic_thread_lifecycle_create_thread(
   if (!lifecycle || !guest_thread || !start_routine || !pthread_handle ||
       detached > 1) return AGR_ANDROID_EINVAL;
   std::unique_lock<std::mutex> lock(lifecycle->lock);
+  if (lifecycle->closing) return AGR_ANDROID_EAGAIN;
   uint32_t handle = lifecycle->next_handle++;
   if (!handle) handle = lifecycle->next_handle++;
   std::unique_ptr<record> item(new (std::nothrow) record{});
@@ -157,6 +193,7 @@ extern "C" int32_t agr_bionic_thread_lifecycle_join(
   std::unique_lock<std::mutex> lock(lifecycle->lock);
   auto found = lifecycle->records.find(handle);
   if (found == lifecycle->records.end()) return AGR_ANDROID_ESRCH;
+  if (lifecycle->closing) return AGR_ANDROID_ECANCELED;
   if (found->second->guest_context && lifecycle->host.thread_guest_binding &&
       lifecycle->host.thread_guest_binding(lifecycle->host.context) ==
           found->second->guest_context)
@@ -164,17 +201,28 @@ extern "C" int32_t agr_bionic_thread_lifecycle_join(
   if (found->second->flags & kDetached) return AGR_ANDROID_EINVAL;
   if (found->second->flags & kJoined) return AGR_ANDROID_EINVAL;
   found->second->flags |= kJoined;
-  while ((found->second->flags & kZombie) == 0)
+  while ((found->second->flags & kZombie) == 0 && !lifecycle->closing)
     found->second->exited.wait(lock);
+  if (lifecycle->closing) {
+    found->second->flags &= ~kJoined;
+    lifecycle->changed.notify_all();
+    return AGR_ANDROID_ECANCELED;
+  }
   if (return_value) *return_value = found->second->return_value;
   void *host_handle = found->second->host_handle;
   lock.unlock();
   const int32_t join_result = lifecycle->host.thread_join(lifecycle->host.context,
                                                           host_handle, nullptr);
-  if (join_result != 0) return agr_bionic_errno_from_host(join_result);
   lock.lock();
+  if (join_result != 0) {
+    auto failed = lifecycle->records.find(handle);
+    if (failed != lifecycle->records.end()) failed->second->flags &= ~kJoined;
+    lifecycle->changed.notify_all();
+    return agr_bionic_errno_from_host(join_result);
+  }
   auto final = lifecycle->records.find(handle);
   if (final != lifecycle->records.end()) lifecycle->records.erase(final);
+  lifecycle->changed.notify_all();
   return 0;
 }
 
@@ -184,6 +232,7 @@ extern "C" int32_t agr_bionic_thread_lifecycle_detach(
   std::unique_lock<std::mutex> lock(lifecycle->lock);
   auto found = lifecycle->records.find(handle);
   if (found == lifecycle->records.end()) return AGR_ANDROID_ESRCH;
+  if (lifecycle->closing) return AGR_ANDROID_ECANCELED;
   if (found->second->flags & kDetached) return AGR_ANDROID_EINVAL;
   if (found->second->flags & kJoined) return 0; // KitKat keeps the joiner owner.
   const int32_t result = lifecycle->host.thread_detach(lifecycle->host.context,

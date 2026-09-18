@@ -226,6 +226,7 @@ agr_runtime *agr_runtime_create(const agr_callbacks *cb, uint32_t sb, uint32_t s
 }
 void agr_runtime_destroy(agr_runtime *rt) {
     uint32_t i; if (!rt) return;
+    agr_runtime_shutdown_workers(rt);
     for (agr_heap_block *block=rt->heap_blocks,*next; block; block=next) { next=block->next; free(block); }
     (void)i;
 #if defined(__APPLE__)
@@ -246,6 +247,15 @@ uint32_t agr_alloc_static(agr_runtime *rt, const void *data, uint32_t size, uint
     rt->static_ptr = end;
     if (size && !write_mem(rt, address, data, size)) { fail(rt, "static write failed"); runtime_unlock(&rt->static_lock); return 0; }
     runtime_unlock(&rt->static_lock); return address;
+}
+void agr_runtime_shutdown_workers(agr_runtime *rt) {
+#if defined(__APPLE__)
+    if (!rt) return;
+    agr_futex_host_cancel_all(rt->futex);
+    agr_bionic_thread_lifecycle_shutdown(rt->thread_lifecycle);
+#else
+    (void)rt;
+#endif
 }
 static int heap_alignment_valid(uint32_t alignment) {
     return alignment >= 4 && (alignment & (alignment - 1)) == 0;

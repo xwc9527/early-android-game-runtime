@@ -16,6 +16,7 @@ typedef int32_t (*agr_futex_read_word)(void *opaque, uint32_t address,
 
 agr_futex_host *agr_futex_host_create(void *opaque, agr_futex_read_word read);
 void agr_futex_host_destroy(agr_futex_host *host);
+void agr_futex_host_cancel_all(agr_futex_host *host);
 
 /* Linux futex syscall result convention used by KitKat Bionic:
  * nonnegative on success, negative Android errno on failure. A timeout is a

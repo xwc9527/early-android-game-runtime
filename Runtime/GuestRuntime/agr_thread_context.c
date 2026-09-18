@@ -1,6 +1,17 @@
 #include "agr_thread_context.h"
 
 #include <stdlib.h>
+#if defined(__APPLE__)
+#include <pthread.h>
+#endif
+
+static uintptr_t current_host_thread_identity(void) {
+#if defined(__APPLE__)
+    return (uintptr_t)pthread_self();
+#else
+    return 0;
+#endif
+}
 
 extern void *arm_interp_create_thread(void *parent);
 extern void arm_interp_destroy(void *cpu);
@@ -18,6 +29,7 @@ agr_guest_thread_context *agr_guest_thread_context_create(
     context->cpu = parent_cpu ? arm_interp_create_thread(parent_cpu) : NULL;
     if (parent_cpu && !context->cpu) { free(context); return NULL; }
     context->process = process;
+    context->host_thread_identity = current_host_thread_identity();
     context->guest_thread_id = guest_thread_id;
     context->guest_stack_base = stack_base;
     context->guest_stack_size = stack_size;
@@ -34,6 +46,7 @@ agr_guest_thread_context *agr_guest_thread_context_create_main(
     agr_guest_thread_context *context = calloc(1, sizeof(*context));
     if (!context) return NULL;
     context->process = process;
+    context->host_thread_identity = current_host_thread_identity();
     context->cpu = cpu;
     context->guest_thread_id = guest_thread_id;
     context->guest_stack_base = stack_base;

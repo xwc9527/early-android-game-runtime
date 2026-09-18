@@ -49,5 +49,13 @@ int main() {
   wake_until_queued(futex, 2);
   a.join(); b.join();
   assert(first == 0 && second == 0);
+  std::atomic<int32_t> cancelled{-999};
+  std::thread stopping([&] {
+    cancelled = agr_futex_host_wait(futex, 0x4000, 7, UINT64_MAX);
+  });
+  agr_futex_host_cancel_all(futex);
+  stopping.join();
+  assert(cancelled == -125);
+  assert(agr_futex_host_wait(futex, 0x4000, 7, UINT64_MAX) == -125);
   agr_futex_host_destroy(futex);
 }

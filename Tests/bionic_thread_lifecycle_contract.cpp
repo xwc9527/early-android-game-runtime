@@ -27,6 +27,7 @@ struct fixture {
   std::atomic<uint32_t> self_ok{0};
   std::atomic<uint32_t> self_join_ok{0};
   std::atomic<uint32_t> independent_cpu_ok{0};
+  std::atomic<uint32_t> hold_shutdown_worker{0};
 };
 
 static int32_t execute(void *opaque, uint32_t guest_thread, uint32_t start,
@@ -62,6 +63,8 @@ static int32_t execute(void *opaque, uint32_t guest_thread, uint32_t start,
   arm_interp_destroy(cpu);
   ++f->independent_cpu_ok;
   ++f->ran;
+  if (guest_thread == 999999u)
+    while (f->hold_shutdown_worker.load()) std::this_thread::yield();
   *result = argument ^ 0x5a5a5a5au;
   return 0;
 }
@@ -115,6 +118,16 @@ int main() {
   assert(agr_bionic_thread_lifecycle_live_count(f.lifecycle) == 0);
   assert(f.ran == 100002 && f.self_ok == 100002 && f.self_join_ok == 100002 &&
          f.independent_cpu_ok == 100002);
+  f.hold_shutdown_worker = 1;
+  uint32_t shutdown_handle = 0;
+  assert(agr_bionic_thread_lifecycle_create_thread(f.lifecycle, 999999u,
+      0x2000, 7u, &joinable_attr, &shutdown_handle) == 0);
+  std::thread shutdown([&] { agr_bionic_thread_lifecycle_shutdown(f.lifecycle); });
+  f.hold_shutdown_worker = 0;
+  shutdown.join();
+  assert(agr_bionic_thread_lifecycle_live_count(f.lifecycle) == 0);
+  assert(agr_bionic_thread_lifecycle_create_thread(f.lifecycle, 999998u,
+      0x2000, 7u, &joinable_attr, &shutdown_handle) == AGR_ANDROID_EAGAIN);
   agr_bionic_thread_lifecycle_destroy(f.lifecycle);
   arm_interp_destroy(f.parent_cpu);
 }

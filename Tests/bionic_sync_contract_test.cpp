@@ -70,7 +70,23 @@ int main() {
   f.futex = agr_futex_host_create(&f, load);
   agr_bionic_sync sync{&f, load, store, cas, exchange, fetch_sub,
                        wait, wake, current_tid, invoke_once};
-  constexpr uint32_t mutex = 0x4000, cond = 0x4004, once = 0x4008;
+  constexpr uint32_t mutex = 0x4000, cond = 0x4004, once = 0x4008, attr = 0x400c;
+  assert(agr_bionic_mutexattr_init(&sync, attr) == 0);
+  assert(agr_bionic_mutexattr_settype(&sync, attr, 1) == 0);
+  assert(agr_bionic_mutexattr_setpshared(&sync, attr, 1) == 0);
+  assert(f.words[3].load() == 0x11u);
+  assert(agr_bionic_mutex_init(&sync, mutex, (int32_t)f.words[3].load()) == 0);
+  assert(f.words[0].load() == 0x6000u);
+  assert(agr_bionic_mutex_destroy(&sync, mutex) == 0);
+  assert(agr_bionic_mutexattr_destroy(&sync, attr) == 0);
+  assert(f.words[3].load() == UINT32_MAX);
+  assert(agr_bionic_condattr_init(&sync, attr) == 0);
+  assert(agr_bionic_condattr_setpshared(&sync, attr, 1) == 0);
+  assert(agr_bionic_cond_init(&sync, cond, (int32_t)f.words[3].load()) == 0);
+  assert(f.words[1].load() == 1u);
+  assert(agr_bionic_cond_destroy(&sync, cond) == 0);
+  assert(agr_bionic_condattr_destroy(&sync, attr) == 0);
+  assert(f.words[3].load() == 0xdeada11du);
   assert(agr_bionic_mutex_init(&sync, mutex, 0) == 0);
   std::fprintf(stderr, "sync: normal mutex contention\n");
   assert(agr_bionic_mutex_lock(&sync, mutex) == 0);

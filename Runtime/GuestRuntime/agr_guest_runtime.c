@@ -79,6 +79,7 @@ struct agr_process_runtime {
     int width, height;
     char renderer[256], gl_version[256], error[256], last_log[128];
     _Atomic uint64_t instruction_count;
+    _Atomic int shutting_down;
     uint64_t run_budget;
     uint32_t call_depth;
     uint32_t pending_thread_id, pending_thread_start, pending_thread_arg;
@@ -771,6 +772,7 @@ static int dispatch_import(agr_guest *g, const char *name) {
 }
 static int run_until_return(agr_guest *g) {
     for (;;) {
+        if (atomic_load_explicit(&g->shutting_down,memory_order_acquire)) return -1;
         uint64_t budget = g->run_budget; uint32_t svc = 0;
         arm_interp_set_thread_tag(guest_cpu(g), agr_current_thread(g->runtime));
         int32_t state = arm_interp_run(guest_cpu(g), &budget, &svc);
@@ -853,6 +855,8 @@ agr_guest *agr_guest_create(void) {
 }
 void agr_guest_destroy(agr_guest *g) {
     if (!g) return;
+    atomic_store_explicit(&g->shutting_down,1,memory_order_release);
+    agr_runtime_shutdown_workers(g->runtime);
     for (uint32_t i = 0; i < 64; i++) if (g->open_assets[i].asset) agr_afw_close(g->open_assets[i].asset);
     if (g->assets) agr_afw_destroy(g->assets);
     if (g->dex_game) agr_dex_game_destroy(g->dex_game);

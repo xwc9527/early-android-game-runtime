@@ -21,6 +21,7 @@ typedef struct agr_thread_recent_call {
 struct agr_guest_thread_context {
     agr_process_runtime *process;
     void *cpu;
+    uintptr_t host_thread_identity;
     uint32_t guest_thread_id;
     uint32_t pthread_handle;
     uint32_t guest_stack_base;
