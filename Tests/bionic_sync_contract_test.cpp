@@ -88,7 +88,10 @@ int main() {
   assert(acquired == 1);
   assert(agr_bionic_mutex_destroy(&sync, mutex) == 0);
   std::fprintf(stderr, "sync: recursive and errorcheck\n");
-  assert(agr_bionic_mutex_lock(&sync, mutex) == EINVAL);
+  // KitKat pthread_mutex_destroy writes 0xdead10cc. Locking a destroyed
+  // mutex is undefined; its normal-lock path may wait forever on that word.
+  // Verify the AOSP sentinel, then reinitialize before the next contract.
+  assert(f.words[0].load() == 0xdead10ccu);
   std::fprintf(stderr, "sync: recursive init\n");
 
   assert(agr_bionic_mutex_init(&sync, mutex, 1) == 0);
