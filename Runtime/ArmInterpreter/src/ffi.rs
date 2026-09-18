@@ -125,6 +125,65 @@ pub unsafe extern "C" fn arm_interp_watch_trace(ptr: *mut c_void, index: u32,
     0
 }
 
+// The Bionic source port's __bionic_* atomics use this same lock as all ARM
+// instruction execution. This is an explicit ARM32 acquire/release boundary,
+// not an atomic operation on a leaked Darwin address.
+unsafe fn atomic_word(ptr: *mut c_void, addr: u32, observed: *mut u32,
+                      update: Option<(u32, u32)>) -> i32 {
+    if ptr.is_null() || observed.is_null() || addr & 3 != 0 { return -1; }
+    let h = &*ptr.cast::<Handle>();
+    let Ok(mut mem) = h.mem.lock() else { return -1; };
+    let Some(bytes) = mem.get_bytes_fallible(Ptr::from_bits(addr), 4) else { return -1; };
+    let current = u32::from_le_bytes(bytes.try_into().unwrap());
+    *observed = current;
+    if let Some((expected, next)) = update {
+        if current == expected {
+            let Some(destination) = mem.get_bytes_fallible_mut(Ptr::from_bits(addr), 4) else { return -1; };
+            destination.copy_from_slice(&next.to_le_bytes());
+        }
+    }
+    0
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn arm_interp_atomic_load32(ptr: *mut c_void, addr: u32,
+                                                     observed: *mut u32) -> i32 {
+    atomic_word(ptr, addr, observed, None)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn arm_interp_atomic_compare_exchange32(
+    ptr: *mut c_void, addr: u32, expected: u32, next: u32,
+    observed: *mut u32) -> i32 {
+    atomic_word(ptr, addr, observed, Some((expected, next)))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn arm_interp_atomic_exchange32(
+    ptr: *mut c_void, addr: u32, next: u32, observed: *mut u32) -> i32 {
+    if ptr.is_null() || observed.is_null() || addr & 3 != 0 { return -1; }
+    let h = &*ptr.cast::<Handle>();
+    let Ok(mut mem) = h.mem.lock() else { return -1; };
+    let Some(bytes) = mem.get_bytes_fallible(Ptr::from_bits(addr), 4) else { return -1; };
+    *observed = u32::from_le_bytes(bytes.try_into().unwrap());
+    let Some(destination) = mem.get_bytes_fallible_mut(Ptr::from_bits(addr), 4) else { return -1; };
+    destination.copy_from_slice(&next.to_le_bytes());
+    0
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn arm_interp_atomic_fetch_sub32(
+    ptr: *mut c_void, addr: u32, amount: u32, observed: *mut u32) -> i32 {
+    if ptr.is_null() || observed.is_null() || addr & 3 != 0 { return -1; }
+    let h = &*ptr.cast::<Handle>();
+    let Ok(mut mem) = h.mem.lock() else { return -1; };
+    let Some(bytes) = mem.get_bytes_fallible(Ptr::from_bits(addr), 4) else { return -1; };
+    *observed = u32::from_le_bytes(bytes.try_into().unwrap());
+    let Some(destination) = mem.get_bytes_fallible_mut(Ptr::from_bits(addr), 4) else { return -1; };
+    destination.copy_from_slice(&(*observed).wrapping_sub(amount).to_le_bytes());
+    0
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn arm_interp_set_cpsr(ptr: *mut c_void, value: u32) -> i32 {
     if ptr.is_null() { return -1; }
@@ -237,6 +296,28 @@ mod permission_tests {
             assert_eq!(arm_interp_write(second, 0x2000, value.as_ptr(), 4), -1);
             arm_interp_destroy(first);
             assert_eq!(arm_interp_read(second, 0x2000, observed.as_mut_ptr(), 4), 0);
+            arm_interp_destroy(second);
+        }
+    }
+
+    #[test]
+    fn guest_atomic_words_serialize_across_cpu_handles() {
+        unsafe {
+            let first = arm_interp_create();
+            let second = arm_interp_create_thread(first);
+            let address = 0x4000;
+            let initial = 10u32.to_le_bytes();
+            assert_eq!(arm_interp_write(first, address, initial.as_ptr(), 4), 0);
+            let mut seen = 0;
+            assert_eq!(arm_interp_atomic_compare_exchange32(second, address, 9, 20, &mut seen), 0);
+            assert_eq!(seen, 10);
+            assert_eq!(arm_interp_atomic_compare_exchange32(second, address, 10, 20, &mut seen), 0);
+            assert_eq!(seen, 10);
+            assert_eq!(arm_interp_atomic_fetch_sub32(first, address, 3, &mut seen), 0);
+            assert_eq!(seen, 20);
+            assert_eq!(arm_interp_atomic_load32(second, address, &mut seen), 0);
+            assert_eq!(seen, 17);
+            arm_interp_destroy(first);
             arm_interp_destroy(second);
         }
     }

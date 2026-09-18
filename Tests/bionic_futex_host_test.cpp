@@ -13,11 +13,14 @@ static int32_t read_word(void *opaque, uint32_t address, uint32_t *value) {
 
 static void wake_until_queued(agr_futex_host *futex, uint32_t count) {
   const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-  while (std::chrono::steady_clock::now() < deadline) {
-    if (agr_futex_host_wake(futex, 0x4000, count) == static_cast<int32_t>(count)) return;
+  uint32_t remaining = count;
+  while (remaining && std::chrono::steady_clock::now() < deadline) {
+    int32_t woken = agr_futex_host_wake(futex, 0x4000, remaining);
+    assert(woken >= 0);
+    remaining -= static_cast<uint32_t>(woken);
     std::this_thread::yield();
   }
-  assert(false && "guest futex waiters never queued");
+  assert(remaining == 0 && "guest futex waiters never queued");
 }
 
 int main() {

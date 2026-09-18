@@ -44,6 +44,7 @@ jobs:
       - name: ARM per-thread CPU and shared-memory contracts
         run: |
           cargo test --manifest-path Runtime/ArmInterpreter/Cargo.toml --lib guest_threads_share_memory_but_not_registers
+          cargo test --manifest-path Runtime/ArmInterpreter/Cargo.toml --lib guest_atomic_words_serialize_across_cpu_handles
           cargo test --manifest-path Runtime/ArmInterpreter/Cargo.toml --lib guest_exclusive_monitor_tests
       - name: KitKat pthread source-port and futex boundary contracts
         run: bash scripts/test-bionic-futex-host.sh
