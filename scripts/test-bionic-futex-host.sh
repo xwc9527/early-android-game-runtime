@@ -22,3 +22,8 @@ ${CXX:-c++} -std=c++17 -O2 -pthread -Wall -Wextra -Werror \
   -o build/bionic-thread-tests/bionic-errno
 echo 'Running bounded KitKat guest errno contract'
 python3 -c 'import subprocess; subprocess.run(["build/bionic-thread-tests/bionic-errno"], check=True, timeout=60)'
+${CC:-cc} -std=c11 -O2 -Wall -Wextra -Werror \
+  Runtime/Bionic/agr_bionic_thread_attr.c Tests/bionic_thread_attr_contract.c \
+  -o build/bionic-thread-tests/bionic-thread-attr
+echo 'Running bounded KitKat ARM32 pthread attr and stack-layout contract'
+python3 -c 'import subprocess; subprocess.run(["build/bionic-thread-tests/bionic-thread-attr"], check=True, timeout=60)'
