@@ -17,9 +17,6 @@
 #include <mutex>
 #include <new>
 #include <unordered_map>
-#if defined(__APPLE__)
-#include <os/log.h>
-#endif
 
 struct agr_bionic_thread_lifecycle;
 
@@ -58,16 +55,10 @@ static void *thread_entry(void *opaque) {
   record *item = static_cast<record *>(opaque);
   agr_bionic_thread_lifecycle *owner = item->owner;
   uint32_t result = 0;
-#if defined(__APPLE__)
-  os_log_error(OS_LOG_DEFAULT,"AGR_THREAD worker_enter tid=%u start=%08x",item->guest_thread,item->start_routine);
-#endif
   int32_t execution = owner->execute(owner->opaque, item->guest_thread,
                                      item->start_routine, item->argument,
                                      &item->attr,
                                      &result);
-#if defined(__APPLE__)
-  os_log_error(OS_LOG_DEFAULT,"AGR_THREAD worker_leave tid=%u execution=%d result=%08x",item->guest_thread,execution,result);
-#endif
   if (execution != 0) result = 0;
   std::unique_lock<std::mutex> lock(owner->lock);
   const uint32_t handle = item->handle;

@@ -95,7 +95,7 @@ if [[ "${ZERO_INPUT_AB:-0}" == "1" ]]; then
       python3 - "$DATA/Documents/runtime-status.json" <<'PY' && break || true
 import json,sys
 d=json.load(open(sys.argv[1]))
-raise SystemExit(0 if d.get("frame",0) >= 60 else 1)
+raise SystemExit(0 if d.get("frame",0) >= 1 and not d.get("failure_signature") else 1)
 PY
     sleep 1
   done
@@ -106,6 +106,12 @@ PY
   shasum -a 256 "$ROOT/App/Resources/kungfoo.apk" "$APP/AGRSimulator" > "$ARTIFACTS/zero-input-hashes.txt"
   printf '%s\n' "$DEVICE" > "$ARTIFACTS/zero-input-device.txt"
   test -s "$ARTIFACTS/runtime-status.json"
+  test ! -s "$ARTIFACTS/runtime-failure.json"
+  python3 - "$ARTIFACTS/runtime-status.json" <<'PY'
+import json,sys
+d=json.load(open(sys.argv[1]))
+assert d.get("frame",0)>=1 and not d.get("failure_signature"), d
+PY
   cat "$ARTIFACTS/runtime-status.json"
   phase "zero-input Runtime status captured"
   exit 0

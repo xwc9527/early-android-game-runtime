@@ -428,7 +428,8 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
                             uint32_t priorSwap=agr_guest_swap_count(guest);
                             framePumpResult = agr_guest_wait_for_swap(guest,priorSwap,500);
                             framePumps++;
-                            if (framePumpResult) break;
+                            if (framePumpResult < 0) break;
+                            if (framePumpResult == 1) continue;
                             memset(frame,0,320u*480u*4u); nonblack = 0;
                             frameBytes = agr_guest_read_rgba(guest,frame,320u*480u*4u);
                             if (frameBytes > 0) for (int32_t i=0; i+3<frameBytes; i+=4)
@@ -904,10 +905,11 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
             NSLog(@"AGR_TOUCH %@ x=%@ y=%@ swap=%@ pc=%08x",event[@"action"],event[@"x"],event[@"y"],record[@"swap_before"],agr_guest_program_counter(gInteractive.guest));}
         uint32_t priorSwap=agr_guest_swap_count(gInteractive.guest);
         int rc=agr_guest_wait_for_swap(gInteractive.guest,priorSwap,500);
-        if(rc){self.stopped=YES;NSString *failure=[NSString stringWithUTF8String:agr_guest_last_error(gInteractive.guest)];[self saveTraceWithFailure:failure];if(rendered)writeRGBAFramePNG(pixels,320,480,[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/failure-frame.png"]);NSLog(@"AGR_FAILURE %@ pc=%08x swap=%u log=%s",failure,agr_guest_program_counter(gInteractive.guest),agr_guest_swap_count(gInteractive.guest),agr_guest_last_android_log(gInteractive.guest));dispatch_async(dispatch_get_main_queue(),^{self.status.text=[NSString stringWithFormat:@"STOPPED — frame preserved\n%@\nPC %08x\nlog %@",failure,agr_guest_program_counter(gInteractive.guest),[NSString stringWithUTF8String:agr_guest_last_android_log(gInteractive.guest)]];});break;}
+        if(rc < 0){self.stopped=YES;NSString *failure=[NSString stringWithUTF8String:agr_guest_last_error(gInteractive.guest)];[self saveTraceWithFailure:failure];if(rendered)writeRGBAFramePNG(pixels,320,480,[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/failure-frame.png"]);NSLog(@"AGR_FAILURE %@ pc=%08x swap=%u log=%s",failure,agr_guest_program_counter(gInteractive.guest),agr_guest_swap_count(gInteractive.guest),agr_guest_last_android_log(gInteractive.guest));dispatch_async(dispatch_get_main_queue(),^{self.status.text=[NSString stringWithFormat:@"STOPPED — frame preserved\n%@\nPC %08x\nlog %@",failure,agr_guest_program_counter(gInteractive.guest),[NSString stringWithUTF8String:agr_guest_last_android_log(gInteractive.guest)]];});break;}
+        if(rc == 1) continue;
         if(agr_guest_read_rgba(gInteractive.guest,pixels,320u*480u*4u)>0){UIImage *image=imageFromRGBA(pixels,320,480);rendered++;NSTimeInterval now=CACurrentMediaTime();double fps=rendered/MAX(.001,now-fpsStart);
             uint32_t swaps=agr_guest_swap_count(gInteractive.guest),pc=agr_guest_program_counter(gInteractive.guest);NSString *log=[NSString stringWithUTF8String:agr_guest_last_android_log(gInteractive.guest)];NSUInteger traceCount=self.trace.count;
-            if((rendered%60u)==0)[self saveTraceWithFailure:nil];
+            if(rendered==1u||(rendered%60u)==0)[self saveTraceWithFailure:nil];
             dispatch_async(dispatch_get_main_queue(),^{self.frameView.image=image;self.status.text=[NSString stringWithFormat:@"%.1f fps  frame %u  swap %u\nPC %08x\nlog %@\ntouch events %lu  trace: Documents/manual-replay.json",fps,rendered,swaps,pc,log,(unsigned long)traceCount];});}
     }
     free(pixels);(void)startup;

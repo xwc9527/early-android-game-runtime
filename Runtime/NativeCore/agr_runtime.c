@@ -17,9 +17,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdatomic.h>
-#if defined(__APPLE__)
-#include <os/log.h>
-#endif
 
 #ifndef PT_ARM_EXIDX
 #define PT_ARM_EXIDX 0x70000001
@@ -684,7 +681,6 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
         else agr_bionic_thread_attr_init(&attr);
         if (attr.flags & ~3u || attr.stack_size < 8192u) { out->value=AGR_ANDROID_EINVAL; return 0; }
         int32_t rc=agr_bionic_thread_lifecycle_create_thread(rt->thread_lifecycle,guest_thread,c,d,&attr,&handle);
-        os_log_error(OS_LOG_DEFAULT,"AGR_THREAD create tid=%u start=%08x arg=%08x stack=%u guard=%u rc=%d handle=%u",guest_thread,c,d,attr.stack_size,attr.guard_size,rc,handle);
         if(rc)out->value=(uint32_t)rc; else if(!write_mem(rt,a,&handle,4))return fail(rt,"pthread_create write");
 #else
         uint32_t id=agr_create_thread_state(rt);if(!id)return fail(rt,"thread table full");write_u32(rt,a,id);out->action=AGR_ACTION_RUN_THREAD;out->action_arg0=c;out->action_arg1=d;out->value=id;
@@ -738,9 +734,7 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
     }
     else if(!strcmp(name,"pthread_cond_wait")){
 #if defined(__APPLE__)
-        os_log_error(OS_LOG_DEFAULT,"AGR_THREAD cond_wait enter tid=%u cond=%08x mutex=%08x",agr_current_thread(rt),a,b);
         out->value=(uint32_t)agr_bionic_cond_wait_relative(&rt->bionic_sync,a,b,UINT64_MAX);
-        os_log_error(OS_LOG_DEFAULT,"AGR_THREAD cond_wait leave tid=%u rc=%d",agr_current_thread(rt),(int32_t)out->value);
 #else
         agr_mutex*m=mutex_state(rt,b);if(m&&m->owner==rt->current_thread){m->owner=0;m->depth=0;}out->action=AGR_ACTION_COND_WAIT;out->action_arg0=a;out->action_arg1=b;
 #endif
