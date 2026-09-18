@@ -133,6 +133,28 @@ extern "C" uint32_t agr_bionic_tls_errno_address(agr_bionic_tls *tls,
   return it == tls->threads.end() ? 0 : slot(it->second.base, AGR_BIONIC_TLS_ERRNO_SLOT);
 }
 
+extern "C" int32_t agr_bionic_tls_errno_read(agr_bionic_tls *tls,
+    uint32_t tid, uint32_t *value) {
+  if (!tls || !value) return AGR_ANDROID_EINVAL;
+  std::lock_guard<std::mutex> guard(tls->lock);
+  auto it = tls->threads.find(tid);
+  if (it == tls->threads.end()) return AGR_ANDROID_ESRCH;
+  return tls->read(tls->opaque,
+      slot(it->second.base, AGR_BIONIC_TLS_ERRNO_SLOT), value) == 0
+      ? 0 : AGR_ANDROID_EFAULT;
+}
+
+extern "C" int32_t agr_bionic_tls_errno_write(agr_bionic_tls *tls,
+    uint32_t tid, uint32_t value) {
+  if (!tls) return AGR_ANDROID_EINVAL;
+  std::lock_guard<std::mutex> guard(tls->lock);
+  auto it = tls->threads.find(tid);
+  if (it == tls->threads.end()) return AGR_ANDROID_ESRCH;
+  return tls->write(tls->opaque,
+      slot(it->second.base, AGR_BIONIC_TLS_ERRNO_SLOT), value) == 0
+      ? 0 : AGR_ANDROID_EFAULT;
+}
+
 extern "C" int32_t agr_bionic_tls_cleanup_thread(agr_bionic_tls *tls,
     uint32_t tid) {
   if (!tls) return AGR_ANDROID_EINVAL;

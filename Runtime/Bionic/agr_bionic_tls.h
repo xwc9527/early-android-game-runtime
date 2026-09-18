@@ -34,6 +34,10 @@ int32_t agr_bionic_tls_setspecific(agr_bionic_tls *, uint32_t thread_id,
 int32_t agr_bionic_tls_getspecific(agr_bionic_tls *, uint32_t thread_id,
                                    uint32_t key, uint32_t *value);
 uint32_t agr_bionic_tls_errno_address(agr_bionic_tls *, uint32_t thread_id);
+int32_t agr_bionic_tls_errno_read(agr_bionic_tls *, uint32_t thread_id,
+                                  uint32_t *value);
+int32_t agr_bionic_tls_errno_write(agr_bionic_tls *, uint32_t thread_id,
+                                   uint32_t value);
 
 #ifdef __cplusplus
 }
