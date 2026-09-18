@@ -160,9 +160,12 @@ AGR_API uint32_t agr_dlclose(agr_runtime *runtime, uint32_t handle);
 AGR_API const char *agr_dlerror(agr_runtime *runtime);
 AGR_API uint32_t agr_find_exidx(agr_runtime *runtime, uint32_t pc, uint32_t *count);
 
-AGR_API void agr_set_current_thread(agr_runtime *runtime, uint32_t thread_id);
 AGR_API uint32_t agr_current_thread(agr_runtime *runtime);
+#if !defined(__APPLE__)
+/* Legacy synthetic fixture APIs are not part of the Apple production ABI. */
+AGR_API void agr_set_current_thread(agr_runtime *runtime, uint32_t thread_id);
 AGR_API uint32_t agr_create_thread_state(agr_runtime *runtime);
+#endif
 AGR_API int32_t agr_runtime_attach_current_thread(agr_runtime *runtime,
                                                    uint32_t guest_thread,
                                                    uint32_t pthread_handle,
@@ -183,7 +186,9 @@ AGR_API int32_t agr_dispatch_system(agr_runtime *runtime, const char *name,
                                     const uint32_t regs[4], uint32_t sp,
                                     agr_dispatch_result *result);
 AGR_API void agr_complete_once(agr_runtime *runtime, uint32_t control);
+#if !defined(__APPLE__)
 AGR_API uint32_t agr_mutex_owner(agr_runtime *runtime, uint32_t address);
+#endif
 
 #ifdef __cplusplus
 }

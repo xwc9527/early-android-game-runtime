@@ -22,9 +22,11 @@
 #define PT_ARM_EXIDX 0x70000001
 #endif
 
+#if !defined(__APPLE__)
 #define AGR_MAX_THREADS 128
 #define AGR_MAX_TLS_KEYS 256
 #define AGR_MAX_MUTEXES 2048
+#endif
 #define AGR_MAX_ONCE 2048
 #define AGR_MAX_GUARDS 2048
 #define AGR_MAX_ATEXIT 4096
@@ -34,8 +36,10 @@ typedef struct agr_heap_block {
     uint8_t live;
     struct agr_heap_block *prev, *next;
 } agr_heap_block;
+#if !defined(__APPLE__)
 typedef struct { uint32_t id, errno_address; uint32_t tls[AGR_MAX_TLS_KEYS]; } agr_thread;
 typedef struct { uint32_t address, owner, depth, live; } agr_mutex;
+#endif
 typedef struct { uint32_t address, state; } agr_word_state;
 typedef struct { uint32_t function, argument, dso; } agr_atexit;
 
@@ -47,9 +51,12 @@ struct agr_runtime {
     uint32_t static_ptr, static_limit, heap_base, heap_limit;
     agr_heap_block *heap_blocks;
     agr_aosp_dynamic *dynamic_linker;
-    agr_thread threads[AGR_MAX_THREADS]; uint32_t thread_count, current_thread; atomic_uint next_thread;
+    atomic_uint next_thread;
+#if !defined(__APPLE__)
+    agr_thread threads[AGR_MAX_THREADS]; uint32_t thread_count, current_thread;
     uint32_t tls_destructors[AGR_MAX_TLS_KEYS], next_tls_key;
     agr_mutex mutexes[AGR_MAX_MUTEXES]; uint32_t mutex_count;
+#endif
     agr_word_state once[AGR_MAX_ONCE]; uint32_t once_count;
     agr_word_state guards[AGR_MAX_GUARDS]; uint32_t guard_count;
     agr_atexit atexit[AGR_MAX_ATEXIT]; uint32_t atexit_count;
@@ -60,9 +67,8 @@ struct agr_runtime {
     atomic_flag static_lock;
     atomic_flag vma_lock;
 #if defined(__APPLE__)
-    /* Formal API19 pthread production state. The legacy arrays above remain
-     * only for non-Apple fixture builds until their conformance harness is
-     * moved to the same host adapter. */
+    /* Formal API19 pthread production state. Fixed thread/TLS/mutex tables
+     * are absent from Apple builds. */
     agr_host_services host_services;
     agr_bionic_thread_lifecycle *thread_lifecycle;
     agr_bionic_tls *bionic_tls;
@@ -206,7 +212,9 @@ agr_runtime *agr_runtime_create(const agr_callbacks *cb, uint32_t sb, uint32_t s
     if(cb->invoke_guest)dynamic_cb.invoke_guest_function=dynamic_invoke;
     rt->dynamic_linker=agr_aosp_dynamic_create(&rt->linker_mmap,&dynamic_cb);
     if(!rt->dynamic_linker){agr_guest_vma_destroy(&rt->linker_vma);free(rt->heap_blocks);free(rt);return NULL;}
+#if !defined(__APPLE__)
     rt->thread_count = 1; rt->threads[0].id = 1; rt->current_thread = 1;
+#endif
     atomic_init(&rt->next_thread,2u);
 #if defined(__APPLE__)
     if (agr_host_services_init_darwin(&rt->host_services) != 0) {
@@ -224,7 +232,10 @@ agr_runtime *agr_runtime_create(const agr_callbacks *cb, uint32_t sb, uint32_t s
         agr_guest_vma_destroy(&rt->linker_vma); free(rt->heap_blocks); free(rt); return NULL;
     }
 #endif
-    rt->next_tls_key = 1; rt->clock_ns = 1000000000ULL; return rt;
+#if !defined(__APPLE__)
+    rt->next_tls_key = 1;
+#endif
+    rt->clock_ns = 1000000000ULL; return rt;
 }
 void agr_runtime_destroy(agr_runtime *rt) {
     uint32_t i; if (!rt) return;
@@ -438,13 +449,17 @@ uint32_t agr_dlclose(agr_runtime*rt,uint32_t handle){return rt?(uint32_t)agr_aos
 const char*agr_dlerror(agr_runtime*rt){return rt?agr_aosp_dynamic_dlerror(rt->dynamic_linker):NULL;}
 uint32_t agr_find_exidx(agr_runtime*rt,uint32_t pc,uint32_t*count){return rt?agr_aosp_dynamic_find_exidx(rt->dynamic_linker,pc,count):0;}
 
+#if !defined(__APPLE__)
 static agr_thread*thread(agr_runtime*rt){for(uint32_t i=0;i<rt->thread_count;i++)if(rt->threads[i].id==rt->current_thread)return&rt->threads[i];return&rt->threads[0];}
 void agr_set_current_thread(agr_runtime*rt,uint32_t id){for(uint32_t i=0;i<rt->thread_count;i++)if(rt->threads[i].id==id){rt->current_thread=id;return;}}
+#endif
 uint32_t agr_current_thread(agr_runtime*rt){
 #if defined(__APPLE__)
     if (rt && rt->cb.current_thread) return rt->cb.current_thread(rt->cb.user);
-#endif
+    return 0;
+#else
     return rt ? rt->current_thread : 0;
+#endif
 }
 uint32_t agr_runtime_current_pthread(agr_runtime *rt) {
 #if defined(__APPLE__)
@@ -482,7 +497,9 @@ void agr_runtime_unmap_thread_stack(agr_runtime *rt,uint32_t base,uint32_t size)
         runtime_unlock(&rt->vma_lock);
     }
 }
+#if !defined(__APPLE__)
 uint32_t agr_create_thread_state(agr_runtime*rt){if(rt->thread_count>=AGR_MAX_THREADS)return 0;uint32_t id=atomic_fetch_add_explicit(&rt->next_thread,1u,memory_order_relaxed);rt->threads[rt->thread_count++].id=id;return id;}
+#endif
 int32_t agr_runtime_attach_current_thread(agr_runtime *rt, uint32_t guest_thread,
                                           uint32_t pthread_handle, uint32_t tls_base) {
 #if defined(__APPLE__)
@@ -524,8 +541,10 @@ uint32_t agr_runtime_errno_address(agr_runtime *rt, uint32_t guest_thread) {
 #endif
 }
 static agr_word_state*word_state(agr_word_state*a,uint32_t*n,uint32_t cap,uint32_t address){for(uint32_t i=0;i<*n;i++)if(a[i].address==address)return&a[i];if(*n>=cap)return NULL;a[*n]=(agr_word_state){address,0};return&a[(*n)++];}
+#if !defined(__APPLE__)
 static agr_mutex*mutex_state(agr_runtime*rt,uint32_t address){for(uint32_t i=0;i<rt->mutex_count;i++)if(rt->mutexes[i].address==address)return&rt->mutexes[i];if(rt->mutex_count>=AGR_MAX_MUTEXES)return NULL;rt->mutexes[rt->mutex_count]=(agr_mutex){address,0,0,1};return&rt->mutexes[rt->mutex_count++];}
 uint32_t agr_mutex_owner(agr_runtime*rt,uint32_t address){agr_mutex*m=mutex_state(rt,address);return m?m->owner:0;}
+#endif
 void agr_complete_once(agr_runtime*rt,uint32_t control){agr_word_state*s=word_state(rt->once,&rt->once_count,AGR_MAX_ONCE,control);if(s){s->state=1;write_u32(rt,control,1);}}
 
 static uint32_t append_text(char *output,uint32_t capacity,uint32_t length,const char *text){
