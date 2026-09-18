@@ -9,7 +9,13 @@ on:
         default: false
   push:
     branches: [main]
-    paths: ['Runtime/**', 'App/**']
+    paths:
+      - 'Runtime/**'
+      - 'App/**'
+      - 'scripts/build-and-run-simulator.sh'
+      - 'scripts/run-simulator-smoke-bounded.py'
+      - 'scripts/run-simulator-regressions.sh'
+      - '.github/workflows/ios-simulator.yml'
 
 jobs:
   simulator-runtime:

@@ -119,6 +119,16 @@ def main():
         return 124
     for thread in threads:
         thread.join(timeout=5)
+    if result != 0:
+        evidence = snapshot()
+        evidence["reason"] = "simulator_smoke_failed"
+        evidence["exit_code"] = result
+        evidence["last_progress_lines"] = (ARTIFACTS / "smoke-stdout.log").read_text(
+            encoding="utf-8", errors="replace").splitlines()[-20:]
+        (ARTIFACTS / "simulator-smoke-failure.json").write_text(
+            json.dumps(evidence, indent=2), encoding="utf-8")
+        print("Simulator smoke failed; evidence saved in build/artifacts",
+              file=sys.stderr)
     return result
 
 
