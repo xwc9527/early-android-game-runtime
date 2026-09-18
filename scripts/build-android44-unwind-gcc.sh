@@ -81,7 +81,7 @@ audit_exidx() {
     "$READELF" -S -W "$so" >&2 || true
     exit 1
   fi
-  if ! "$READELF" -l -W "$so" | grep -q 'ARM_EXIDX'; then
+  if ! "$READELF" -l -W "$so" | grep -Eq '^[[:space:]]*(ARM_)?EXIDX[[:space:]]'; then
     echo "$so: missing PT_ARM_EXIDX" >&2
     "$READELF" -l -W "$so" >&2 || true
     exit 1
