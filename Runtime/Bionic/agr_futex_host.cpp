@@ -74,7 +74,9 @@ extern "C" int32_t agr_futex_host_wait(agr_futex_host *host, uint32_t address,
           static_cast<uint64_t>(std::numeric_limits<int64_t>::max()))));
     awoken = q->cv.wait_for(lock, duration, ready);
   }
-  if (awoken) --q->pending;
+  /* cancel_all also satisfies the wait predicate, but does not publish a
+   * wake token. Never underflow pending while tearing down a process. */
+  if (awoken && q->pending != 0) --q->pending;
   --q->waiters;
   if (q->waiters == 0) host->queues.erase(address);
   if (host->closing) return -125;
