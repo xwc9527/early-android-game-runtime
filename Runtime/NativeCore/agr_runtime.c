@@ -96,7 +96,7 @@ static int32_t bionic_futex_read(void *opaque, uint32_t address, uint32_t *value
 }
 static int32_t bionic_sync_load(void *opaque, uint32_t address, uint32_t *value) {
     agr_runtime *rt = (agr_runtime *)opaque;
-    return rt->cb.atomic_load ? rt->cb.atomic_load(rt->cb.user, address, value) : AGR_ANDROID_ENOSYS;
+    return rt->cb.atomic_load ? (rt->cb.atomic_load)(rt->cb.user, address, value) : AGR_ANDROID_ENOSYS;
 }
 static int32_t bionic_sync_cas(void *opaque, uint32_t address, uint32_t old,
                                uint32_t next, uint32_t *observed) {
@@ -106,12 +106,12 @@ static int32_t bionic_sync_cas(void *opaque, uint32_t address, uint32_t old,
 static int32_t bionic_sync_exchange(void *opaque, uint32_t address, uint32_t next,
                                     uint32_t *observed) {
     agr_runtime *rt = (agr_runtime *)opaque;
-    return rt->cb.atomic_exchange ? rt->cb.atomic_exchange(rt->cb.user,address,next,observed) : AGR_ANDROID_ENOSYS;
+    return rt->cb.atomic_exchange ? (rt->cb.atomic_exchange)(rt->cb.user,address,next,observed) : AGR_ANDROID_ENOSYS;
 }
 static int32_t bionic_sync_fetch_sub(void *opaque, uint32_t address, uint32_t amount,
                                      uint32_t *observed) {
     agr_runtime *rt = (agr_runtime *)opaque;
-    return rt->cb.atomic_fetch_sub ? rt->cb.atomic_fetch_sub(rt->cb.user,address,amount,observed) : AGR_ANDROID_ENOSYS;
+    return rt->cb.atomic_fetch_sub ? (rt->cb.atomic_fetch_sub)(rt->cb.user,address,amount,observed) : AGR_ANDROID_ENOSYS;
 }
 static int32_t bionic_sync_wait(void *opaque, uint32_t address, uint32_t expected,
                                 uint64_t timeout_ns) {
