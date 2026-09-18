@@ -11,6 +11,7 @@ on:
     branches: [main]
     paths:
       - 'Runtime/**'
+      - 'Tests/Conformance/**'
       - 'App/**'
       - 'scripts/build-and-run-simulator.sh'
       - 'scripts/run-simulator-smoke-bounded.py'
