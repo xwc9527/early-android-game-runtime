@@ -23,6 +23,9 @@ typedef enum agr_ehabi_stop {
     AGR_EHABI_FAILURE = 5
 } agr_ehabi_stop;
 
+#define AGR_EXIDX_CANTUNWIND 1u
+#define EXIDX_CANTUNWIND AGR_EXIDX_CANTUNWIND
+
 typedef struct agr_guest_unwind_context {
     agr_guest_thread_context *thread; /* snapshot source; not replaced */
     uint32_t r[16]; /* r0-r15; SP=r[13], LR=r[14], PC=r[15] */

@@ -10,7 +10,6 @@
 #include <string.h>
 
 enum { R_SP = 13, R_LR = 14, R_PC = 15 };
-#define EXIDX_CANTUNWIND 1u
 #define CPSR_T 0x20u
 
 static void set_stop(agr_guest_unwind_context *ctx, agr_ehabi_stop stop, const char *detail) {

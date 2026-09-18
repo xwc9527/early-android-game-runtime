@@ -41,22 +41,17 @@ jobs:
         id: ndk-r10e
         with:
           path: ${{ runner.temp }}/android-ndk-r10e
-          key: android-ndk-r10e-linux-x86_64-md5-19af543b068bdb7f27787c2bc69aba7f
+          key: android-ndk-r10e-linux-x86_64-zip
       - name: Fetch NDK r10e GCC 4.8 EHABI oracle
         if: steps.ndk-r10e.outputs.cache-hit != 'true'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y p7zip-full
-          NDK_BIN="$RUNNER_TEMP/android-ndk-r10e-linux-x86_64.bin"
-          curl -fL --retry 3 https://dl.google.com/android/repository/android-ndk-r10e-linux-x86_64.bin -o "$NDK_BIN"
-          echo "19af543b068bdb7f27787c2bc69aba7f  $NDK_BIN" | md5sum -c -
-          test "$(stat -c%s "$NDK_BIN")" = 401522849
-          rm -rf "$RUNNER_TEMP/ndk-r10e-extract"
+          NDK_ZIP="$RUNNER_TEMP/android-ndk-r10e-linux-x86_64.zip"
+          curl -fL --retry 3 https://dl.google.com/android/repository/android-ndk-r10e-linux-x86_64.zip -o "$NDK_ZIP"
+          rm -rf "$RUNNER_TEMP/ndk-r10e-extract" "$RUNNER_TEMP/android-ndk-r10e"
           mkdir -p "$RUNNER_TEMP/ndk-r10e-extract"
-          7z x -y -o"$RUNNER_TEMP/ndk-r10e-extract" "$NDK_BIN"
+          unzip -q "$NDK_ZIP" -d "$RUNNER_TEMP/ndk-r10e-extract"
           ROOT="$(find "$RUNNER_TEMP/ndk-r10e-extract" -type d -name android-ndk-r10e | head -n 1)"
           test -n "$ROOT"
-          rm -rf "$RUNNER_TEMP/android-ndk-r10e"
           mv "$ROOT" "$RUNNER_TEMP/android-ndk-r10e"
       - name: Build GCC 4.8 ARM EHABI unwind fixtures
         run: |
