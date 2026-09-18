@@ -37,7 +37,7 @@ def pull(base: list[str], bundle: str, remote: str, local: Path) -> bool:
     temporary = local.with_suffix(local.suffix + ".download")
     try:
         result = subprocess.run(
-            base + ["apps", "pull", bundle, remote, str(temporary), "--documents"],
+            base + ["apps", "pull", bundle, f"Documents/{remote}", str(temporary)],
             capture_output=True,
             timeout=20,
         )
