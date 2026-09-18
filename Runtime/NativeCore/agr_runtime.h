@@ -33,13 +33,13 @@ typedef int32_t (*agr_invoke_guest_fn)(void *user, uint32_t function);
 typedef int32_t (*agr_invoke_guest_args_fn)(void *user, uint32_t function,
                                              const uint32_t *args,
                                              uint32_t count);
+struct agr_bionic_thread_attr;
 typedef int32_t (*agr_thread_execute_fn)(void *user, uint32_t guest_thread,
                                          uint32_t start_routine,
                                          uint32_t argument,
                                          const struct agr_bionic_thread_attr *attr,
                                          uint32_t *return_value);
 typedef uint32_t (*agr_current_thread_fn)(void *user);
-struct agr_bionic_thread_attr;
 typedef int32_t (*agr_atomic_load_fn)(void *user, uint32_t address,
                                       uint32_t *value);
 typedef int32_t (*agr_atomic_cas_fn)(void *user, uint32_t address,

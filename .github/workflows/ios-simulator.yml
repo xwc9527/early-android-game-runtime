@@ -48,7 +48,12 @@ jobs:
       - name: Guest 32-bit VMA contracts
         run: bash scripts/test-guest-vma.sh
       - name: API19 mmap and AOSP linker segment contracts
-        run: bash scripts/test-aosp-linker.sh
+        run: |
+          set -o pipefail
+          bash scripts/test-aosp-linker.sh 2>&1 | tee aosp-linker-test.log || {
+            tail -n 12 aosp-linker-test.log | while IFS= read -r line; do echo "::error title=API19 linker contract::$line"; done
+            exit 1
+          }
       - name: ARM guest page-permission faults
         run: cargo test --manifest-path Runtime/ArmInterpreter/Cargo.toml --lib permission_tests
       - name: ARM per-thread CPU and shared-memory contracts
