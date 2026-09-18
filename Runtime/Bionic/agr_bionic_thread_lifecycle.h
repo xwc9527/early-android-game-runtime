@@ -39,6 +39,14 @@ int32_t agr_bionic_thread_lifecycle_join(agr_bionic_thread_lifecycle *,
                                          uint32_t *return_value);
 int32_t agr_bionic_thread_lifecycle_detach(agr_bionic_thread_lifecycle *,
                                            uint32_t pthread_handle);
+/* GuestRuntime calls this after creating the complete GuestThreadContext on a
+ * Darwin worker. Host TLS then contains that context, never this source-port's
+ * private record. */
+int32_t agr_bionic_thread_lifecycle_bind_current(
+    agr_bionic_thread_lifecycle *, uint32_t guest_thread, void *guest_context);
+int32_t agr_bionic_thread_lifecycle_register_current(
+    agr_bionic_thread_lifecycle *, uint32_t guest_thread,
+    uint32_t pthread_handle, void *guest_context);
 uint32_t agr_bionic_thread_lifecycle_self(agr_bionic_thread_lifecycle *);
 int32_t agr_bionic_thread_lifecycle_equal(uint32_t one, uint32_t two);
 uint32_t agr_bionic_thread_lifecycle_live_count(agr_bionic_thread_lifecycle *);

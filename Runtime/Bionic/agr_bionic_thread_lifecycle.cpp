@@ -34,6 +34,7 @@ struct record {
   uint32_t flags;
   uint32_t return_value;
   void *host_handle;
+  void *guest_context;
   std::condition_variable exited;
 };
 }
@@ -51,8 +52,6 @@ static void *thread_entry(void *opaque) {
   record *item = static_cast<record *>(opaque);
   agr_bionic_thread_lifecycle *owner = item->owner;
   uint32_t result = 0;
-  if (owner->host.thread_bind_guest)
-    owner->host.thread_bind_guest(owner->host.context, item);
   int32_t execution = owner->execute(owner->opaque, item->guest_thread,
                                      item->start_routine, item->argument,
                                      &result);
@@ -90,6 +89,15 @@ extern "C" void agr_bionic_thread_lifecycle_destroy(
   if (!lifecycle) return;
   {
     std::lock_guard<std::mutex> lock(lifecycle->lock);
+    /* Process entry is registered for pthread_self but has no Darwin handle
+     * owned by this lifecycle object. It is already stopped at Runtime
+     * teardown, unlike detached workers. */
+    for (auto it = lifecycle->records.begin(); it != lifecycle->records.end();) {
+      const record *item = it->second.get();
+      if (item->guest_thread == 1u && item->start_routine == 0 &&
+          item->host_handle == nullptr) it = lifecycle->records.erase(it);
+      else ++it;
+    }
     if (!lifecycle->records.empty()) return;
   }
   delete lifecycle;
@@ -180,12 +188,52 @@ extern "C" int32_t agr_bionic_thread_lifecycle_detach(
   return 0;
 }
 
+extern "C" int32_t agr_bionic_thread_lifecycle_bind_current(
+    agr_bionic_thread_lifecycle *lifecycle, uint32_t guest_thread,
+    void *guest_context) {
+  if (!lifecycle || !guest_thread || !guest_context ||
+      !lifecycle->host.thread_bind_guest) return AGR_ANDROID_EINVAL;
+  std::lock_guard<std::mutex> lock(lifecycle->lock);
+  for (auto &entry : lifecycle->records) {
+    record *item = entry.second.get();
+    if (item->guest_thread != guest_thread) continue;
+    item->guest_context = guest_context;
+    lifecycle->host.thread_bind_guest(lifecycle->host.context, guest_context);
+    return 0;
+  }
+  return AGR_ANDROID_ESRCH;
+}
+
+extern "C" int32_t agr_bionic_thread_lifecycle_register_current(
+    agr_bionic_thread_lifecycle *lifecycle, uint32_t guest_thread,
+    uint32_t pthread_handle, void *guest_context) {
+  if (!lifecycle || !guest_thread || !pthread_handle || !guest_context ||
+      !lifecycle->host.thread_bind_guest) return AGR_ANDROID_EINVAL;
+  std::lock_guard<std::mutex> lock(lifecycle->lock);
+  if (lifecycle->records.count(pthread_handle)) return AGR_ANDROID_EEXIST;
+  std::unique_ptr<record> item(new (std::nothrow) record{});
+  if (!item) return AGR_ANDROID_EAGAIN;
+  item->owner = lifecycle;
+  item->handle = pthread_handle;
+  item->guest_thread = guest_thread;
+  item->guest_context = guest_context;
+  item->flags = kDetached; /* The process entry thread has no joinable host handle. */
+  try { lifecycle->records.emplace(pthread_handle, std::move(item)); }
+  catch (const std::bad_alloc &) { return AGR_ANDROID_EAGAIN; }
+  if (pthread_handle >= lifecycle->next_handle) lifecycle->next_handle = pthread_handle + 1u;
+  lifecycle->host.thread_bind_guest(lifecycle->host.context, guest_context);
+  return 0;
+}
+
 extern "C" uint32_t agr_bionic_thread_lifecycle_self(
     agr_bionic_thread_lifecycle *lifecycle) {
   if (!lifecycle || !lifecycle->host.thread_guest_binding) return 0;
-  auto *item = static_cast<record *>(
-      lifecycle->host.thread_guest_binding(lifecycle->host.context));
-  return item && item->owner == lifecycle ? item->handle : 0;
+  void *guest_context = lifecycle->host.thread_guest_binding(lifecycle->host.context);
+  if (!guest_context) return 0;
+  std::lock_guard<std::mutex> lock(lifecycle->lock);
+  for (const auto &entry : lifecycle->records)
+    if (entry.second->guest_context == guest_context) return entry.second->handle;
+  return 0;
 }
 
 extern "C" int32_t agr_bionic_thread_lifecycle_equal(uint32_t one, uint32_t two) {

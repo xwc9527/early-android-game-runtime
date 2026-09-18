@@ -8,7 +8,10 @@
 extern "C" {
 #endif
 
-typedef struct agr_guest agr_guest;
+/* agr_guest remains the public ABI spelling. The owned object is formally a
+ * ProcessRuntime; every GuestThreadContext refers back to this instance. */
+typedef struct agr_process_runtime agr_process_runtime;
+typedef agr_process_runtime agr_guest;
 
 enum {
     AGR_ARRAY_SHORT = 1,

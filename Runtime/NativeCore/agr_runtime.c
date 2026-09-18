@@ -1,6 +1,13 @@
 #include "agr_runtime.h"
 #include "../AospLinker/agr_aosp_linker.h"
 #include "../AospLinker/agr_aosp_dynamic.h"
+#include "../Bionic/agr_bionic_thread_lifecycle.h"
+#include "../Bionic/agr_bionic_tls.h"
+#include "../Bionic/agr_bionic_sync.h"
+#include "../Bionic/agr_bionic_thread_attr.h"
+#include "../Bionic/agr_futex_host.h"
+#include "../Bionic/agr_bionic_errno.h"
+#include "../HostServices/agr_host_services.h"
 
 #include <ctype.h>
 #include "agr_elf32.h"
@@ -9,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdatomic.h>
 
 #ifndef PT_ARM_EXIDX
 #define PT_ARM_EXIDX 0x70000001
@@ -48,7 +56,87 @@ struct agr_runtime {
     uint64_t clock_ns;
     agr_guest_vma_space linker_vma;
     agr_bionic_mmap_context linker_mmap;
+    atomic_flag heap_lock;
+    atomic_flag static_lock;
+#if defined(__APPLE__)
+    /* Formal API19 pthread production state. The legacy arrays above remain
+     * only for non-Apple fixture builds until their conformance harness is
+     * moved to the same host adapter. */
+    agr_host_services host_services;
+    agr_bionic_thread_lifecycle *thread_lifecycle;
+    agr_bionic_tls *bionic_tls;
+    agr_futex_host *futex;
+    agr_bionic_sync bionic_sync;
+#endif
 };
+
+static int read_mem(agr_runtime *rt, uint32_t address, void *data, uint32_t size);
+static int write_mem(agr_runtime *rt, uint32_t address, const void *data, uint32_t size);
+
+#if defined(__APPLE__)
+static int32_t bionic_tls_read(void *opaque, uint32_t address, uint32_t *value) {
+    return read_mem((agr_runtime *)opaque, address, value, 4) ? 0 : AGR_ANDROID_EFAULT;
+}
+static int32_t bionic_tls_write(void *opaque, uint32_t address, uint32_t value) {
+    return write_mem((agr_runtime *)opaque, address, &value, 4) ? 0 : AGR_ANDROID_EFAULT;
+}
+static int32_t bionic_tls_invoke(void *opaque, uint32_t thread_id,
+                                 uint32_t destructor, uint32_t value) {
+    (void)thread_id;
+    agr_runtime *rt = (agr_runtime *)opaque;
+    /* Destructor execution is a same-thread guest callback. GuestRuntime
+     * supplies it after its context is bound; this source-port boundary must
+     * never create a synthetic scheduler frame. */
+    uint32_t args[1] = {value};
+    if (!rt->cb.invoke_guest_args) return AGR_ANDROID_ENOSYS;
+    return rt->cb.invoke_guest_args(rt->cb.user, destructor,args,1) == 0 ? 0 : AGR_ANDROID_EFAULT;
+}
+static int32_t bionic_futex_read(void *opaque, uint32_t address, uint32_t *value) {
+    return bionic_tls_read(opaque, address, value);
+}
+static int32_t bionic_sync_load(void *opaque, uint32_t address, uint32_t *value) {
+    agr_runtime *rt = (agr_runtime *)opaque;
+    return rt->cb.atomic_load ? rt->cb.atomic_load(rt->cb.user, address, value) : AGR_ANDROID_ENOSYS;
+}
+static int32_t bionic_sync_cas(void *opaque, uint32_t address, uint32_t old,
+                               uint32_t next, uint32_t *observed) {
+    agr_runtime *rt = (agr_runtime *)opaque;
+    return rt->cb.atomic_cas ? rt->cb.atomic_cas(rt->cb.user,address,old,next,observed) : AGR_ANDROID_ENOSYS;
+}
+static int32_t bionic_sync_exchange(void *opaque, uint32_t address, uint32_t next,
+                                    uint32_t *observed) {
+    agr_runtime *rt = (agr_runtime *)opaque;
+    return rt->cb.atomic_exchange ? rt->cb.atomic_exchange(rt->cb.user,address,next,observed) : AGR_ANDROID_ENOSYS;
+}
+static int32_t bionic_sync_fetch_sub(void *opaque, uint32_t address, uint32_t amount,
+                                     uint32_t *observed) {
+    agr_runtime *rt = (agr_runtime *)opaque;
+    return rt->cb.atomic_fetch_sub ? rt->cb.atomic_fetch_sub(rt->cb.user,address,amount,observed) : AGR_ANDROID_ENOSYS;
+}
+static int32_t bionic_sync_wait(void *opaque, uint32_t address, uint32_t expected,
+                                uint64_t timeout_ns) {
+    agr_runtime *rt = (agr_runtime *)opaque;
+    return agr_futex_host_wait(rt->futex, address, expected, timeout_ns);
+}
+static int32_t bionic_sync_wake(void *opaque, uint32_t address, uint32_t count) {
+    agr_runtime *rt = (agr_runtime *)opaque;
+    return agr_futex_host_wake(rt->futex, address, count);
+}
+static uint32_t bionic_sync_current_tid(void *opaque) {
+    agr_runtime *rt = (agr_runtime *)opaque;
+    return rt->cb.current_thread ? rt->cb.current_thread(rt->cb.user) : 0;
+}
+static int32_t bionic_sync_once(void *opaque, uint32_t function) {
+    agr_runtime *rt = (agr_runtime *)opaque;
+    return rt->cb.invoke_guest && rt->cb.invoke_guest(rt->cb.user,function) == 0 ? 0 : AGR_ANDROID_EFAULT;
+}
+static int32_t bionic_thread_execute(void *opaque, uint32_t guest_thread,
+                                     uint32_t start, uint32_t argument,
+                                     uint32_t *return_value) {
+    agr_runtime *rt = (agr_runtime *)opaque;
+    return rt->cb.execute_thread ? rt->cb.execute_thread(rt->cb.user,guest_thread,start,argument,return_value) : AGR_ANDROID_ENOSYS;
+}
+#endif
 
 static int fail(agr_runtime *rt, const char *message) {
     snprintf(rt->error, sizeof(rt->error), "%s", message); return -1;
@@ -72,6 +160,12 @@ static int32_t dynamic_read(void *opaque, uint32_t address, void *data, uint32_t
 static uint32_t dynamic_import(void *opaque,const char *name,uint32_t type) {
     agr_runtime *rt=(agr_runtime*)opaque;
     return rt->cb.resolve_import ? rt->cb.resolve_import(rt->cb.user,name,type) : 0;
+}
+static void runtime_lock(atomic_flag *lock) {
+    while (atomic_flag_test_and_set_explicit(lock,memory_order_acquire)) {}
+}
+static void runtime_unlock(atomic_flag *lock) {
+    atomic_flag_clear_explicit(lock,memory_order_release);
 }
 static int32_t dynamic_invoke(void *opaque,uint32_t function) {
     agr_runtime *rt=(agr_runtime*)opaque;
@@ -98,6 +192,8 @@ agr_runtime *agr_runtime_create(const agr_callbacks *cb, uint32_t sb, uint32_t s
     rt->heap_blocks = (agr_heap_block *)calloc(1, sizeof(*rt->heap_blocks));
     if (!rt->heap_blocks) { free(rt); return NULL; }
     rt->heap_blocks->address = hb; rt->heap_blocks->span = hl - hb;
+    atomic_flag_clear_explicit(&rt->heap_lock,memory_order_release);
+    atomic_flag_clear_explicit(&rt->static_lock,memory_order_release);
     rt->cb = *cb; rt->static_ptr = sb; rt->static_limit = sl; rt->heap_base = hb; rt->heap_limit = hl;
     if (agr_guest_vma_init(&rt->linker_vma, 4096, 0x10000u, 0x100000000ull)) {
         free(rt->heap_blocks); free(rt); return NULL;
@@ -108,21 +204,46 @@ agr_runtime *agr_runtime_create(const agr_callbacks *cb, uint32_t sb, uint32_t s
     rt->dynamic_linker=agr_aosp_dynamic_create(&rt->linker_mmap,&dynamic_cb);
     if(!rt->dynamic_linker){agr_guest_vma_destroy(&rt->linker_vma);free(rt->heap_blocks);free(rt);return NULL;}
     rt->thread_count = 1; rt->threads[0].id = 1; rt->current_thread = 1; rt->next_thread = 2;
+#if defined(__APPLE__)
+    if (agr_host_services_init_darwin(&rt->host_services) != 0) {
+        agr_aosp_dynamic_destroy(rt->dynamic_linker); agr_guest_vma_destroy(&rt->linker_vma); free(rt->heap_blocks); free(rt); return NULL;
+    }
+    rt->bionic_tls = agr_bionic_tls_create(rt,bionic_tls_read,bionic_tls_write,bionic_tls_invoke);
+    rt->futex = agr_futex_host_create(rt,bionic_futex_read);
+    rt->bionic_sync = (agr_bionic_sync){rt,bionic_sync_load,bionic_tls_write,bionic_sync_cas,
+        bionic_sync_exchange,bionic_sync_fetch_sub,bionic_sync_wait,bionic_sync_wake,
+        bionic_sync_current_tid,bionic_sync_once};
+    rt->thread_lifecycle = agr_bionic_thread_lifecycle_create(&rt->host_services,rt,bionic_thread_execute);
+    if (!rt->bionic_tls || !rt->futex || !rt->thread_lifecycle) {
+        agr_bionic_thread_lifecycle_destroy(rt->thread_lifecycle); agr_futex_host_destroy(rt->futex);
+        agr_bionic_tls_destroy(rt->bionic_tls); agr_aosp_dynamic_destroy(rt->dynamic_linker);
+        agr_guest_vma_destroy(&rt->linker_vma); free(rt->heap_blocks); free(rt); return NULL;
+    }
+#endif
     rt->next_tls_key = 1; rt->clock_ns = 1000000000ULL; return rt;
 }
 void agr_runtime_destroy(agr_runtime *rt) {
     uint32_t i; if (!rt) return;
     for (agr_heap_block *block=rt->heap_blocks,*next; block; block=next) { next=block->next; free(block); }
     (void)i;
+#if defined(__APPLE__)
+    agr_bionic_thread_lifecycle_destroy(rt->thread_lifecycle);
+    agr_futex_host_destroy(rt->futex);
+    agr_bionic_tls_destroy(rt->bionic_tls);
+#endif
     agr_aosp_dynamic_destroy(rt->dynamic_linker);
     agr_guest_vma_destroy(&rt->linker_vma); free(rt);
 }
 const char *agr_last_error(agr_runtime *rt) { return rt ? rt->error : "runtime is null"; }
 
 uint32_t agr_alloc_static(agr_runtime *rt, const void *data, uint32_t size, uint32_t alignment) {
+    if (!rt) return 0;
+    runtime_lock(&rt->static_lock);
     uint32_t address = align_up(rt->static_ptr, alignment ? alignment : 8), end = address + size;
-    if (end < address || end > rt->static_limit) { fail(rt, "static arena exhausted"); return 0; }
-    rt->static_ptr = end; if (size && !write_mem(rt, address, data, size)) { fail(rt, "static write failed"); return 0; } return address;
+    if (end < address || end > rt->static_limit) { fail(rt, "static arena exhausted"); runtime_unlock(&rt->static_lock); return 0; }
+    rt->static_ptr = end;
+    if (size && !write_mem(rt, address, data, size)) { fail(rt, "static write failed"); runtime_unlock(&rt->static_lock); return 0; }
+    runtime_unlock(&rt->static_lock); return address;
 }
 static int heap_alignment_valid(uint32_t alignment) {
     return alignment >= 4 && (alignment & (alignment - 1)) == 0;
@@ -170,6 +291,8 @@ uint32_t agr_malloc_aligned(agr_runtime *rt, uint32_t size, uint32_t alignment) 
     uint64_t rounded=((uint64_t)requested+7u)&~7ull;
     if (rounded>UINT32_MAX) return 0;
     uint32_t span=(uint32_t)rounded;
+    uint32_t result=0;
+    runtime_lock(&rt->heap_lock);
     for (agr_heap_block *b=rt->heap_blocks; b; b=b->next) {
         if (b->live) continue;
         uint64_t aligned=((uint64_t)b->address+alignment-1u)&~(uint64_t)(alignment-1u);
@@ -177,19 +300,20 @@ uint32_t agr_malloc_aligned(agr_runtime *rt, uint32_t size, uint32_t alignment) 
         if (aligned>UINT32_MAX || end>block_end) continue;
         uint32_t prefix=(uint32_t)(aligned-b->address), suffix=(uint32_t)(block_end-end);
         agr_heap_block *allocated=prefix?(agr_heap_block *)calloc(1,sizeof(*allocated)):b;
-        if (!allocated) return 0;
+        if (!allocated) break;
         agr_heap_block *tail=suffix?(agr_heap_block *)calloc(1,sizeof(*tail)):NULL;
-        if (suffix && !tail) { if(prefix)free(allocated); return 0; }
+        if (suffix && !tail) { if(prefix)free(allocated); break; }
         if (!heap_clear(rt,(uint32_t)aligned,span)) {
-            if (prefix) free(allocated); free(tail); return 0;
+            if (prefix) free(allocated); free(tail); break;
         }
         if (prefix) { b->span=prefix; heap_insert_after(b,allocated); }
         allocated->address=(uint32_t)aligned; allocated->span=span;
         allocated->requested=requested; allocated->alignment=alignment; allocated->live=1;
         if (tail) { tail->address=(uint32_t)end; tail->span=suffix; heap_insert_after(allocated,tail); }
-        return allocated->address;
+        result=allocated->address; break;
     }
-    return 0;
+    runtime_unlock(&rt->heap_lock);
+    return result;
 }
 uint32_t agr_malloc(agr_runtime *rt, uint32_t size) { return agr_malloc_aligned(rt,size,8); }
 uint32_t agr_calloc(agr_runtime *rt, uint32_t count, uint32_t size) {
@@ -197,10 +321,14 @@ uint32_t agr_calloc(agr_runtime *rt, uint32_t count, uint32_t size) {
     return total>UINT32_MAX?0:agr_malloc(rt,(uint32_t)total);
 }
 void agr_free(agr_runtime *rt, uint32_t address) {
+    if (!rt) return;
+    runtime_lock(&rt->heap_lock);
     agr_heap_block *b=heap_find_live(rt,address);
-    if (!b) return; /* free(NULL), invalid and repeated frees cannot corrupt the heap. */
-    b->live=0; b->requested=0; b->alignment=0;
-    heap_coalesce(rt,b);
+    if (b) { /* free(NULL), invalid and repeated frees cannot corrupt the heap. */
+        b->live=0; b->requested=0; b->alignment=0;
+        heap_coalesce(rt,b);
+    }
+    runtime_unlock(&rt->heap_lock);
 }
 uint32_t agr_allocation_size(agr_runtime *rt,uint32_t address) {
     agr_heap_block *b=heap_find_live(rt,address);
@@ -284,7 +412,52 @@ const char*agr_dlerror(agr_runtime*rt){return rt?agr_aosp_dynamic_dlerror(rt->dy
 uint32_t agr_find_exidx(agr_runtime*rt,uint32_t pc,uint32_t*count){return rt?agr_aosp_dynamic_find_exidx(rt->dynamic_linker,pc,count):0;}
 
 static agr_thread*thread(agr_runtime*rt){for(uint32_t i=0;i<rt->thread_count;i++)if(rt->threads[i].id==rt->current_thread)return&rt->threads[i];return&rt->threads[0];}
-void agr_set_current_thread(agr_runtime*rt,uint32_t id){for(uint32_t i=0;i<rt->thread_count;i++)if(rt->threads[i].id==id){rt->current_thread=id;return;}}uint32_t agr_current_thread(agr_runtime*rt){return rt->current_thread;}uint32_t agr_create_thread_state(agr_runtime*rt){if(rt->thread_count>=AGR_MAX_THREADS)return 0;uint32_t id=rt->next_thread++;rt->threads[rt->thread_count++].id=id;return id;}
+void agr_set_current_thread(agr_runtime*rt,uint32_t id){for(uint32_t i=0;i<rt->thread_count;i++)if(rt->threads[i].id==id){rt->current_thread=id;return;}}
+uint32_t agr_current_thread(agr_runtime*rt){
+#if defined(__APPLE__)
+    if (rt && rt->cb.current_thread) return rt->cb.current_thread(rt->cb.user);
+#endif
+    return rt ? rt->current_thread : 0;
+}
+uint32_t agr_create_thread_state(agr_runtime*rt){if(rt->thread_count>=AGR_MAX_THREADS)return 0;uint32_t id=rt->next_thread++;rt->threads[rt->thread_count++].id=id;return id;}
+int32_t agr_runtime_attach_current_thread(agr_runtime *rt, uint32_t guest_thread,
+                                          uint32_t pthread_handle, uint32_t tls_base) {
+#if defined(__APPLE__)
+    if (!rt || !guest_thread || !tls_base) return AGR_ANDROID_EINVAL;
+    void *context = rt->host_services.thread_guest_binding(rt->host_services.context);
+    int32_t rc;
+    if (guest_thread == 1u) {
+        rc = agr_bionic_thread_lifecycle_register_current(rt->thread_lifecycle,
+            guest_thread,pthread_handle,context);
+    } else {
+        rc = agr_bionic_thread_lifecycle_bind_current(rt->thread_lifecycle,guest_thread,context);
+        if (!rc) pthread_handle=agr_bionic_thread_lifecycle_self(rt->thread_lifecycle);
+    }
+    if (rc) return rc;
+    return agr_bionic_tls_register_thread(rt->bionic_tls,guest_thread,tls_base,pthread_handle);
+#else
+    (void)rt; (void)guest_thread; (void)pthread_handle; (void)tls_base;
+    return 0;
+#endif
+}
+int32_t agr_runtime_detach_current_thread(agr_runtime *rt, uint32_t guest_thread) {
+#if defined(__APPLE__)
+    if (!rt) return AGR_ANDROID_EINVAL;
+    int32_t rc = agr_bionic_tls_cleanup_thread(rt->bionic_tls,guest_thread);
+    if (rc && rc != AGR_ANDROID_ESRCH) return rc;
+    rc = agr_bionic_tls_unregister_thread(rt->bionic_tls,guest_thread);
+    return rc == AGR_ANDROID_ESRCH ? 0 : rc;
+#else
+    (void)rt; (void)guest_thread; return 0;
+#endif
+}
+uint32_t agr_runtime_errno_address(agr_runtime *rt, uint32_t guest_thread) {
+#if defined(__APPLE__)
+    return rt ? agr_bionic_tls_errno_address(rt->bionic_tls,guest_thread) : 0;
+#else
+    (void)guest_thread; return 0;
+#endif
+}
 static agr_word_state*word_state(agr_word_state*a,uint32_t*n,uint32_t cap,uint32_t address){for(uint32_t i=0;i<*n;i++)if(a[i].address==address)return&a[i];if(*n>=cap)return NULL;a[*n]=(agr_word_state){address,0};return&a[(*n)++];}
 static agr_mutex*mutex_state(agr_runtime*rt,uint32_t address){for(uint32_t i=0;i<rt->mutex_count;i++)if(rt->mutexes[i].address==address)return&rt->mutexes[i];if(rt->mutex_count>=AGR_MAX_MUTEXES)return NULL;rt->mutexes[rt->mutex_count]=(agr_mutex){address,0,0,1};return&rt->mutexes[rt->mutex_count++];}
 uint32_t agr_mutex_owner(agr_runtime*rt,uint32_t address){agr_mutex*m=mutex_state(rt,address);return m?m->owner:0;}
@@ -359,21 +532,156 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
             else if(!write_mem(rt,a,&aligned,4)){agr_free(rt,aligned);out->value=EINVAL;}
         }
     }
-    else if(!strcmp(name,"__errno")){agr_thread*t=thread(rt);if(!t->errno_address)t->errno_address=agr_malloc(rt,4);out->value=t->errno_address;}
+    else if(!strcmp(name,"__errno")){
+#if defined(__APPLE__)
+        out->value=agr_bionic_tls_errno_address(rt->bionic_tls,agr_current_thread(rt));
+        if (!out->value) return fail(rt,"current GuestThreadContext has no Bionic TLS");
+#else
+        agr_thread*t=thread(rt);if(!t->errno_address)t->errno_address=agr_malloc(rt,4);out->value=t->errno_address;
+#endif
+    }
     else if(!strcmp(name,"clock_gettime")){rt->clock_ns+=16666667ULL;uint32_t v[2]={(uint32_t)(rt->clock_ns/1000000000ULL),(uint32_t)(rt->clock_ns%1000000000ULL)};write_mem(rt,b,v,8);}
     else if(!strcmp(name,"gettimeofday")){rt->clock_ns+=16666667ULL;uint32_t v[2]={(uint32_t)(rt->clock_ns/1000000000ULL),(uint32_t)((rt->clock_ns%1000000000ULL)/1000)};write_mem(rt,a,v,8);}
-    else if(!strcmp(name,"pthread_key_create")){uint32_t k=rt->next_tls_key++;if(k>=AGR_MAX_TLS_KEYS)return fail(rt,"TLS key table full");rt->tls_destructors[k]=b;write_u32(rt,a,k);}
-    else if(!strcmp(name,"pthread_key_delete")){if(a<AGR_MAX_TLS_KEYS){rt->tls_destructors[a]=0;for(uint32_t i=0;i<rt->thread_count;i++)rt->threads[i].tls[a]=0;}}
-    else if(!strcmp(name,"pthread_setspecific")){if(a>=AGR_MAX_TLS_KEYS)return fail(rt,"invalid TLS key");thread(rt)->tls[a]=b;}
-    else if(!strcmp(name,"pthread_getspecific")){out->value=a<AGR_MAX_TLS_KEYS?thread(rt)->tls[a]:0;}
-    else if(!strcmp(name,"pthread_once")){agr_word_state*s=word_state(rt->once,&rt->once_count,AGR_MAX_ONCE,a);if(!s)return fail(rt,"once table full");if(!s->state){s->state=2;out->action=AGR_ACTION_CALL_ONCE;out->action_arg0=b;out->action_arg1=a;}}
-    else if(!strcmp(name,"pthread_mutex_init")){agr_mutex*m=mutex_state(rt,a);if(!m)return fail(rt,"mutex table full");m->owner=m->depth=0;write_u32(rt,a,0);}
-    else if(!strcmp(name,"pthread_mutex_destroy")){agr_mutex*m=mutex_state(rt,a);if(m)m->live=0;}
-    else if(!strcmp(name,"pthread_mutex_lock")){agr_mutex*m=mutex_state(rt,a);if(!m)return fail(rt,"mutex table full");if(m->owner&&m->owner!=rt->current_thread)return fail(rt,"contended mutex requires scheduler");m->owner=rt->current_thread;m->depth++;}
-    else if(!strcmp(name,"pthread_mutex_unlock")){agr_mutex*m=mutex_state(rt,a);if(!m||m->owner!=rt->current_thread)return fail(rt,"mutex unlock by non-owner");if(--m->depth==0)m->owner=0;}
-    else if(!strcmp(name,"pthread_create")){uint32_t id=agr_create_thread_state(rt);if(!id)return fail(rt,"thread table full");write_u32(rt,a,id);out->action=AGR_ACTION_RUN_THREAD;out->action_arg0=c;out->action_arg1=d;out->value=id;}
-    else if(!strcmp(name,"pthread_cond_wait")){agr_mutex*m=mutex_state(rt,b);if(m&&m->owner==rt->current_thread){m->owner=0;m->depth=0;}out->action=AGR_ACTION_COND_WAIT;out->action_arg0=a;out->action_arg1=b;}
-    else if(!strcmp(name,"pthread_cond_broadcast")||!strcmp(name,"pthread_cond_signal")){out->action=AGR_ACTION_COND_BROADCAST;out->action_arg0=a;}
+    else if(!strcmp(name,"pthread_key_create")){
+#if defined(__APPLE__)
+        uint32_t key=0; int32_t rc=agr_bionic_tls_key_create(rt->bionic_tls,b,&key);
+        if(rc)out->value=(uint32_t)rc; else if(!write_mem(rt,a,&key,4))return fail(rt,"pthread_key_create write");
+#else
+        uint32_t k=rt->next_tls_key++;if(k>=AGR_MAX_TLS_KEYS)return fail(rt,"TLS key table full");rt->tls_destructors[k]=b;write_u32(rt,a,k);
+#endif
+    }
+    else if(!strcmp(name,"pthread_key_delete")){
+#if defined(__APPLE__)
+        out->value=(uint32_t)agr_bionic_tls_key_delete(rt->bionic_tls,a);
+#else
+        if(a<AGR_MAX_TLS_KEYS){rt->tls_destructors[a]=0;for(uint32_t i=0;i<rt->thread_count;i++)rt->threads[i].tls[a]=0;}
+#endif
+    }
+    else if(!strcmp(name,"pthread_setspecific")){
+#if defined(__APPLE__)
+        out->value=(uint32_t)agr_bionic_tls_setspecific(rt->bionic_tls,agr_current_thread(rt),a,b);
+#else
+        if(a>=AGR_MAX_TLS_KEYS)return fail(rt,"invalid TLS key");thread(rt)->tls[a]=b;
+#endif
+    }
+    else if(!strcmp(name,"pthread_getspecific")){
+#if defined(__APPLE__)
+        uint32_t value=0; int32_t rc=agr_bionic_tls_getspecific(rt->bionic_tls,agr_current_thread(rt),a,&value);out->value=rc?0:value;
+#else
+        out->value=a<AGR_MAX_TLS_KEYS?thread(rt)->tls[a]:0;
+#endif
+    }
+    else if(!strcmp(name,"pthread_once")){
+#if defined(__APPLE__)
+        out->value=(uint32_t)agr_bionic_once(&rt->bionic_sync,a,b);
+#else
+        agr_word_state*s=word_state(rt->once,&rt->once_count,AGR_MAX_ONCE,a);if(!s)return fail(rt,"once table full");if(!s->state){s->state=2;out->action=AGR_ACTION_CALL_ONCE;out->action_arg0=b;out->action_arg1=a;}
+#endif
+    }
+    else if(!strcmp(name,"pthread_mutex_init")){
+#if defined(__APPLE__)
+        out->value=(uint32_t)agr_bionic_mutex_init(&rt->bionic_sync,a,0);
+#else
+        agr_mutex*m=mutex_state(rt,a);if(!m)return fail(rt,"mutex table full");m->owner=m->depth=0;write_u32(rt,a,0);
+#endif
+    }
+    else if(!strcmp(name,"pthread_mutex_destroy")){
+#if defined(__APPLE__)
+        out->value=(uint32_t)agr_bionic_mutex_destroy(&rt->bionic_sync,a);
+#else
+        agr_mutex*m=mutex_state(rt,a);if(m)m->live=0;
+#endif
+    }
+    else if(!strcmp(name,"pthread_mutex_lock")){
+#if defined(__APPLE__)
+        out->value=(uint32_t)agr_bionic_mutex_lock(&rt->bionic_sync,a);
+#else
+        agr_mutex*m=mutex_state(rt,a);if(!m)return fail(rt,"mutex table full");if(m->owner&&m->owner!=rt->current_thread)return fail(rt,"contended mutex requires scheduler");m->owner=rt->current_thread;m->depth++;
+#endif
+    }
+    else if(!strcmp(name,"pthread_mutex_unlock")){
+#if defined(__APPLE__)
+        out->value=(uint32_t)agr_bionic_mutex_unlock(&rt->bionic_sync,a);
+#else
+        agr_mutex*m=mutex_state(rt,a);if(!m||m->owner!=rt->current_thread)return fail(rt,"mutex unlock by non-owner");if(--m->depth==0)m->owner=0;
+#endif
+    }
+    else if(!strcmp(name,"pthread_create")){
+#if defined(__APPLE__)
+        uint32_t detached=0, guest_thread=rt->next_thread++, handle=0;
+        if (b) { agr_bionic_thread_attr attr; if(!read_mem(rt,b,&attr,sizeof(attr)))return fail(rt,"pthread_create attr read"); detached=attr.flags&1u; }
+        int32_t rc=agr_bionic_thread_lifecycle_create_thread(rt->thread_lifecycle,guest_thread,c,d,detached,&handle);
+        if(rc)out->value=(uint32_t)rc; else if(!write_mem(rt,a,&handle,4))return fail(rt,"pthread_create write");
+#else
+        uint32_t id=agr_create_thread_state(rt);if(!id)return fail(rt,"thread table full");write_u32(rt,a,id);out->action=AGR_ACTION_RUN_THREAD;out->action_arg0=c;out->action_arg1=d;out->value=id;
+#endif
+    }
+    else if(!strcmp(name,"pthread_join")){
+#if defined(__APPLE__)
+        uint32_t value=0; int32_t rc=agr_bionic_thread_lifecycle_join(rt->thread_lifecycle,a,&value); if(!rc&&b&&!write_mem(rt,b,&value,4))return fail(rt,"pthread_join write");out->value=(uint32_t)rc;
+#else
+        out->handled=0;
+#endif
+    }
+    else if(!strcmp(name,"pthread_detach")){
+#if defined(__APPLE__)
+        out->value=(uint32_t)agr_bionic_thread_lifecycle_detach(rt->thread_lifecycle,a);
+#else
+        out->handled=0;
+#endif
+    }
+    else if(!strcmp(name,"pthread_self")){
+#if defined(__APPLE__)
+        out->value=agr_bionic_thread_lifecycle_self(rt->thread_lifecycle);
+#else
+        out->value=agr_current_thread(rt);
+#endif
+    }
+    else if(!strcmp(name,"pthread_equal")){out->value=a==b?1:0;}
+    else if(!strcmp(name,"pthread_exit")){out->action=AGR_ACTION_THREAD_EXIT;out->action_arg0=a;}
+    else if(!strcmp(name,"pthread_mutex_trylock")){
+#if defined(__APPLE__)
+        out->value=(uint32_t)agr_bionic_mutex_trylock(&rt->bionic_sync,a);
+#else
+        out->handled=0;
+#endif
+    }
+    else if(!strcmp(name,"pthread_cond_init")){
+#if defined(__APPLE__)
+        out->value=(uint32_t)agr_bionic_cond_init(&rt->bionic_sync,a,0);
+#else
+        out->handled=0;
+#endif
+    }
+    else if(!strcmp(name,"pthread_cond_destroy")){
+#if defined(__APPLE__)
+        out->value=(uint32_t)agr_bionic_cond_destroy(&rt->bionic_sync,a);
+#else
+        out->handled=0;
+#endif
+    }
+    else if(!strcmp(name,"pthread_cond_wait")){
+#if defined(__APPLE__)
+        out->value=(uint32_t)agr_bionic_cond_wait_relative(&rt->bionic_sync,a,b,UINT64_MAX);
+#else
+        agr_mutex*m=mutex_state(rt,b);if(m&&m->owner==rt->current_thread){m->owner=0;m->depth=0;}out->action=AGR_ACTION_COND_WAIT;out->action_arg0=a;out->action_arg1=b;
+#endif
+    }
+    else if(!strcmp(name,"pthread_cond_timedwait_relative_np")){
+#if defined(__APPLE__)
+        uint32_t ts[2]={0,0}; if(!read_mem(rt,c,ts,8))return fail(rt,"pthread_cond_timedwait_relative_np timespec");
+        uint64_t ns=(uint64_t)ts[0]*1000000000ull+ts[1]; out->value=(uint32_t)agr_bionic_cond_wait_relative(&rt->bionic_sync,a,b,ns);
+#else
+        out->handled=0;
+#endif
+    }
+    else if(!strcmp(name,"pthread_cond_broadcast")||!strcmp(name,"pthread_cond_signal")){
+#if defined(__APPLE__)
+        out->value=(uint32_t)(!strcmp(name,"pthread_cond_signal")?agr_bionic_cond_signal(&rt->bionic_sync,a):agr_bionic_cond_broadcast(&rt->bionic_sync,a));
+#else
+        out->action=AGR_ACTION_COND_BROADCAST;out->action_arg0=a;
+#endif
+    }
     else if(!strcmp(name,"pthread_cond_init")||!strcmp(name,"pthread_cond_destroy")||!strcmp(name,"pthread_attr_setdetachstate")){}
     else if(!strcmp(name,"pthread_attr_init")){unsigned char z[16]={0};write_mem(rt,a,z,16);}
     else if(!strcmp(name,"dlopen")){if(a&&!read_cstr(rt,a,x,sizeof(x)))return fail(rt,"dlopen name");out->value=agr_dlopen_flags(rt,a?x:NULL,b);}

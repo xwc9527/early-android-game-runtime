@@ -30,6 +30,23 @@ typedef uint32_t (*agr_fd_write_fn)(void *user, uint32_t fd, const void *data, u
 typedef int32_t (*agr_fd_close_fn)(void *user, uint32_t fd);
 typedef void (*agr_log_fn)(void *user, uint32_t priority, const char *tag, const char *format);
 typedef int32_t (*agr_invoke_guest_fn)(void *user, uint32_t function);
+typedef int32_t (*agr_invoke_guest_args_fn)(void *user, uint32_t function,
+                                             const uint32_t *args,
+                                             uint32_t count);
+typedef int32_t (*agr_thread_execute_fn)(void *user, uint32_t guest_thread,
+                                         uint32_t start_routine,
+                                         uint32_t argument,
+                                         uint32_t *return_value);
+typedef uint32_t (*agr_current_thread_fn)(void *user);
+typedef int32_t (*agr_atomic_load_fn)(void *user, uint32_t address,
+                                      uint32_t *value);
+typedef int32_t (*agr_atomic_cas_fn)(void *user, uint32_t address,
+                                     uint32_t expected, uint32_t next,
+                                     uint32_t *observed);
+typedef int32_t (*agr_atomic_exchange_fn)(void *user, uint32_t address,
+                                          uint32_t next, uint32_t *observed);
+typedef int32_t (*agr_atomic_fetch_sub_fn)(void *user, uint32_t address,
+                                           uint32_t amount, uint32_t *observed);
 
 typedef struct agr_callbacks {
     void *user;
@@ -50,6 +67,15 @@ typedef struct agr_callbacks {
     agr_fd_close_fn fd_close;
     agr_log_fn log;
     agr_invoke_guest_fn invoke_guest;
+    agr_invoke_guest_args_fn invoke_guest_args;
+    /* Process-owned callback: Bionic lifecycle invokes this on its Darwin
+     * worker after GuestRuntime has created and bound a GuestThreadContext. */
+    agr_thread_execute_fn execute_thread;
+    agr_current_thread_fn current_thread;
+    agr_atomic_load_fn atomic_load;
+    agr_atomic_cas_fn atomic_cas;
+    agr_atomic_exchange_fn atomic_exchange;
+    agr_atomic_fetch_sub_fn atomic_fetch_sub;
 } agr_callbacks;
 
 typedef struct agr_runtime agr_runtime;
@@ -86,6 +112,7 @@ enum {
     AGR_ACTION_COND_BROADCAST = 4,
     AGR_ACTION_FINALIZE = 5,
     AGR_ACTION_ABORT = 6,
+    AGR_ACTION_THREAD_EXIT = 7,
 };
 
 AGR_API agr_runtime *agr_runtime_create(const agr_callbacks *callbacks,
@@ -132,6 +159,14 @@ AGR_API uint32_t agr_find_exidx(agr_runtime *runtime, uint32_t pc, uint32_t *cou
 AGR_API void agr_set_current_thread(agr_runtime *runtime, uint32_t thread_id);
 AGR_API uint32_t agr_current_thread(agr_runtime *runtime);
 AGR_API uint32_t agr_create_thread_state(agr_runtime *runtime);
+AGR_API int32_t agr_runtime_attach_current_thread(agr_runtime *runtime,
+                                                   uint32_t guest_thread,
+                                                   uint32_t pthread_handle,
+                                                   uint32_t tls_base);
+AGR_API int32_t agr_runtime_detach_current_thread(agr_runtime *runtime,
+                                                   uint32_t guest_thread);
+AGR_API uint32_t agr_runtime_errno_address(agr_runtime *runtime,
+                                            uint32_t guest_thread);
 AGR_API int32_t agr_dispatch_system(agr_runtime *runtime, const char *name,
                                     const uint32_t regs[4], uint32_t sp,
                                     agr_dispatch_result *result);

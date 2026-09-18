@@ -32,6 +32,11 @@ struct fixture {
 static int32_t execute(void *opaque, uint32_t guest_thread, uint32_t start,
                        uint32_t argument, uint32_t *result) {
   auto *f = static_cast<fixture *>(opaque);
+  /* Production binds a GuestThreadContext here. The lifecycle source port
+   * deliberately never stores its private record in Darwin TLS. */
+  static thread_local uint32_t guest_context_cookie;
+  assert(agr_bionic_thread_lifecycle_bind_current(
+      f->lifecycle, guest_thread, &guest_context_cookie) == 0);
   const uint32_t self = agr_bionic_thread_lifecycle_self(f->lifecycle);
   if (self && agr_bionic_thread_lifecycle_join(f->lifecycle, self, nullptr) ==
                   AGR_ANDROID_EDEADLK) {
