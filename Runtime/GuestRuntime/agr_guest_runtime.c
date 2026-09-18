@@ -14,6 +14,9 @@
 #include <string.h>
 #include <stdatomic.h>
 #include <time.h>
+#if defined(__APPLE__)
+#include <os/log.h>
+#endif
 
 extern void *arm_interp_create(void);
 extern void arm_interp_destroy(void *);
@@ -922,15 +925,26 @@ static int32_t guest_thread_execute(void *user, uint32_t guest_thread,
     uint32_t stack=attr->stack_base;
     if (!stack && agr_runtime_map_thread_stack(g->runtime,size,
                                                (attr->guard_size+4095u)&~4095u,
-                                               &stack)) return -1;
+                                               &stack)) {
+#if defined(__APPLE__)
+        os_log_error(OS_LOG_DEFAULT,"AGR_THREAD stack_map_failed tid=%u size=%u guard=%u",guest_thread,size,attr->guard_size);
+#endif
+        return -1;
+    }
     agr_bionic_thread_stack_layout layout;
     if (agr_bionic_thread_compute_stack_layout(attr,stack,&layout)) {
+#if defined(__APPLE__)
+        os_log_error(OS_LOG_DEFAULT,"AGR_THREAD stack_layout_failed tid=%u stack=%08x",guest_thread,stack);
+#endif
         if (!attr->stack_base) agr_runtime_unmap_thread_stack(g->runtime,stack,size);
         return -1;
     }
     agr_guest_thread_context *context=agr_guest_thread_context_create(
         g,g->process_cpu,guest_thread,layout.base,layout.size,layout.tls_base);
     if (!context) {
+#if defined(__APPLE__)
+        os_log_error(OS_LOG_DEFAULT,"AGR_THREAD context_create_failed tid=%u",guest_thread);
+#endif
         if (!layout.user_stack) {
             agr_runtime_unmap_thread_stack(g->runtime,stack,layout.size);
         }
@@ -938,6 +952,9 @@ static int32_t guest_thread_execute(void *user, uint32_t guest_thread,
     }
     agr_guest_thread_context_bind(context);
     if (agr_runtime_attach_current_thread(g->runtime,guest_thread,0,context->guest_tls_base)) {
+#if defined(__APPLE__)
+        os_log_error(OS_LOG_DEFAULT,"AGR_THREAD attach_failed tid=%u",guest_thread);
+#endif
         agr_guest_thread_context_destroy(context);
         if (!layout.user_stack) {
             agr_runtime_unmap_thread_stack(g->runtime,stack,layout.size);
@@ -949,6 +966,9 @@ static int32_t guest_thread_execute(void *user, uint32_t guest_thread,
     context->jni_env_handle=JNI_ENV_PTR;
     uint32_t args[1]={argument}; int32_t result=0;
     int32_t rc=call_address(g,start,args,1,&result);
+#if defined(__APPLE__)
+    if (rc) os_log_error(OS_LOG_DEFAULT,"AGR_THREAD guest_call_failed tid=%u pc=%08x error=%{public}s",guest_thread,arm_interp_get_reg(guest_cpu(g),15),g->error);
+#endif
     if (context->lifecycle == AGR_GUEST_THREAD_EXITED) result=(int32_t)context->exit_result;
     context->exit_result=(uint32_t)result;
     context->lifecycle=AGR_GUEST_THREAD_EXITED;
