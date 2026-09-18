@@ -121,7 +121,7 @@ void agr_process_runtime_unregister_thread(agr_process_runtime *process,
 
 static agr_guest_thread_context *guest_context(agr_guest *g) {
     agr_guest_thread_context *context = agr_guest_thread_context_current();
-    return context && context->process == g ? context : g->main_thread;
+    return context && context->process == g ? context : NULL;
 }
 static void *guest_cpu(agr_guest *g) {
     agr_guest_thread_context *context = guest_context(g);
@@ -551,6 +551,7 @@ static int dispatch_graphics(agr_guest *g, const char *name) {
     return 0;
 }
 static int dispatch_import(agr_guest *g, const char *name) {
+    if (!guest_context(g)) { set_error(g,"guest import has no current GuestThreadContext"); return -1; }
     agr_guest_thread_context_record_call(guest_context(g),name,
         arm_interp_get_reg(guest_cpu(g),15));
     record_process_import(g,name);

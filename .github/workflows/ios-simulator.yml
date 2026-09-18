@@ -60,7 +60,7 @@ jobs:
         run: |
           set -o pipefail
           bash scripts/test-bionic-futex-host.sh 2>&1 | tee bionic-thread-test.log || {
-            tail -n 24 bionic-thread-test.log | while IFS= read -r line; do echo "::error title=KitKat pthread contract::$line"; done
+            tail -n 6 bionic-thread-test.log | while IFS= read -r line; do echo "::error title=KitKat pthread contract::$line"; done
             exit 1
           }
       - name: Guest file-descriptor lifecycle contracts
