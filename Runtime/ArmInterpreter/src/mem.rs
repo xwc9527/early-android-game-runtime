@@ -194,6 +194,9 @@ pub struct Mem {
     // Only pages managed by Bionic mmap have explicit guest permissions.
     // Other legacy guest arenas retain their existing access behavior.
     page_permissions: Box<[u8]>,
+    // Conservative shared exclusive-monitor generation. Every mutable guest
+    // memory access invalidates outstanding ARM LDREX reservations.
+    write_epoch: u64,
     #[cfg(windows)]
     backing: Box<[u8]>,
 }
@@ -223,7 +226,7 @@ impl Mem {
         {
             let mut backing = vec![0u8; MEM_SIZE].into_boxed_slice();
             let base = backing.as_mut_ptr();
-            return Mem { base, null_segment_size: 0, page_permissions: vec![7; MEM_SIZE / PAGE_SIZE as usize].into_boxed_slice(), backing };
+            return Mem { base, null_segment_size: 0, page_permissions: vec![7; MEM_SIZE / PAGE_SIZE as usize].into_boxed_slice(), write_epoch: 0, backing };
         }
         #[cfg(not(windows))]
         {
@@ -247,6 +250,7 @@ impl Mem {
             base: base as *mut u8,
             null_segment_size: 0,
             page_permissions: vec![7; MEM_SIZE / PAGE_SIZE as usize].into_boxed_slice(),
+            write_epoch: 0,
         }
         }
     }
@@ -277,6 +281,8 @@ impl Mem {
         self.page_permissions[first..=last].iter().all(|p| p & required == required)
     }
 
+    pub fn write_epoch(&self) -> u64 { self.write_epoch }
+
     pub fn get_code_bytes_fallible(&self, address: u32, length: u32) -> Option<&[u8]> {
         if !self.allows(address, length, 4) { return None; }
         Some(unsafe { std::slice::from_raw_parts(self.base.add(address as usize), length as usize) })
@@ -293,6 +299,7 @@ impl Mem {
         unsafe {
             std::ptr::copy_nonoverlapping(data.as_ptr(), self.base.add(addr as usize), data.len());
         }
+        if !data.is_empty() { self.write_epoch = self.write_epoch.wrapping_add(1); }
         let _ = end;
     }
 
@@ -349,6 +356,7 @@ impl GuestMem for Mem {
         if end > MEM_SIZE {
             return None;
         }
+        if count != 0 { self.write_epoch = self.write_epoch.wrapping_add(1); }
         // SAFETY: bounds + null checked; single-threaded access contract.
         Some(unsafe { std::slice::from_raw_parts_mut(self.base.add(a as usize), count as usize) })
     }
@@ -362,6 +370,7 @@ impl GuestMem for Mem {
             (a as usize).checked_add(count as usize).unwrap() <= MEM_SIZE,
             "bytes_at_mut out of bounds at {a:#x}"
         );
+        if count != 0 { self.write_epoch = self.write_epoch.wrapping_add(1); }
         // SAFETY: bounds + null checked.
         unsafe { std::slice::from_raw_parts_mut(self.base.add(a as usize), count as usize) }
     }

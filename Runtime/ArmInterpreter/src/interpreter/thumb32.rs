@@ -487,8 +487,8 @@ impl InterpreterCpu {
     }
 
     /// Load/store exclusive (LDREX/STREX{,B,H,D}) and table branch (TBB/TBH).
-    /// Single-thread exclusive monitor: STREX succeeds iff a prior LDREX to the
-    /// same address set the monitor. rt = bits[15:12], rt2 = bits[11:8].
+    /// STREX succeeds only while the local reservation remains valid in the
+    /// shared guest memory. rt = bits[15:12], rt2 = bits[11:8].
     fn t32_exclusive_or_tb(
         &mut self,
         op5: u32,
@@ -505,7 +505,7 @@ impl InterpreterCpu {
             0b00100 => {
                 // STREX Rd, Rt, [Rn, #imm8<<2]  (Rd = bits[11:8] = rt2)
                 let addr = base.wrapping_add((insn & 0xff) << 2);
-                let res = if self.excl_check_clear(addr) {
+                let res = if self.excl_check_clear(addr, mem) {
                     if !self.data_w_u32(mem, addr, self.get_reg(rt)) {
                         self.regs[15] = next;
                         return Some(CpuState::Error(CpuError::MemoryError));
@@ -526,7 +526,7 @@ impl InterpreterCpu {
                     return Some(CpuState::Error(CpuError::MemoryError));
                 };
                 self.set_reg(rt, v);
-                self.excl_set(addr);
+                self.excl_set(addr, mem);
                 self.regs[15] = next;
                 Some(CpuState::Normal)
             }
@@ -585,9 +585,9 @@ impl InterpreterCpu {
                         }
                         _ => return None,
                     }
-                    self.excl_set(base);
+                    self.excl_set(base, mem);
                 } else {
-                    let res = if self.excl_check_clear(base) {
+                    let res = if self.excl_check_clear(base, mem) {
                         let ok = match op3 {
                             0b0100 => self.data_w_u8(mem, base, self.get_reg(rt) as u8),
                             0b0101 => self.data_w_u16(mem, base, self.get_reg(rt) as u16),

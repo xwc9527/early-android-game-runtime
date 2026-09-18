@@ -42,6 +42,22 @@ pub struct CpuContext {
     pub fpscr: u32,
 }
 
+#[cfg(test)]
+mod guest_exclusive_monitor_tests {
+    use super::*;
+
+    #[test]
+    fn another_thread_write_invalidates_reservation() {
+        let mut memory = Mem::new();
+        let mut first = InterpreterCpu::new(1);
+        first.excl_set(0x2000, &memory);
+        assert!(first.excl_check_clear(0x2000, &memory));
+        first.excl_set(0x2000, &memory);
+        memory.write_bytes(0x2000, &1u32.to_le_bytes());
+        assert!(!first.excl_check_clear(0x2000, &memory));
+    }
+}
+
 // `[u32; 64]` doesn't implement `Default` (std only does arrays up to 32), so
 // derive won't work — implement it by hand.
 impl Default for CpuContext {
@@ -69,9 +85,9 @@ pub struct InterpreterCpu {
     fpscr: u32,
     /// Bytes below this address are the guest null segment; any access faults.
     null_segment_size: u32,
-    /// Local exclusive monitor address (LDREX/STREX). Single host thread, so we
-    /// only track the address; STREX succeeds iff it matches a prior LDREX.
-    excl_addr: Option<u32>,
+    /// Local ARM reservation plus shared-memory write generation. A write by
+    /// another guest thread must make a subsequent STREX fail.
+    excl_addr: Option<(u32, u64)>,
     /// [P1 debug] ring buffer of the last executed (pc, insn) pairs, dumped when
     /// a fatal CPU error happens so we can see the trail INTO a bad address
     /// (a derail can run sequentially through garbage before faulting).
@@ -155,14 +171,13 @@ impl InterpreterCpu {
         })
     }
 
-    // Exclusive monitor (LDREX/STREX), single-thread semantics.
-    pub(super) fn excl_set(&mut self, addr: u32) {
-        self.excl_addr = Some(addr);
+    pub(super) fn excl_set(&mut self, addr: u32, mem: &Mem) {
+        self.excl_addr = Some((addr, mem.write_epoch()));
     }
     /// STREX: returns true (store should proceed, Rd=0) iff a prior LDREX marked
     /// this address. Always clears the monitor.
-    pub(super) fn excl_check_clear(&mut self, addr: u32) -> bool {
-        let ok = self.excl_addr == Some(addr);
+    pub(super) fn excl_check_clear(&mut self, addr: u32, mem: &Mem) -> bool {
+        let ok = self.excl_addr == Some((addr, mem.write_epoch()));
         self.excl_addr = None;
         ok
     }
