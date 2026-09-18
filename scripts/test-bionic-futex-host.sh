@@ -30,10 +30,14 @@ python3 -c 'import subprocess; subprocess.run(["build/bionic-thread-tests/bionic
 ${CC:-cc} -std=c11 -O2 -pthread -Wall -Wextra -Werror \
   -c Runtime/HostServices/agr_host_services_darwin.c \
   -o build/bionic-thread-tests/darwin-host-services.o
+${CC:-cc} -std=c11 -O2 -Wall -Wextra -Werror \
+  -c Runtime/Bionic/agr_bionic_thread_attr.c \
+  -o build/bionic-thread-tests/bionic-thread-attr.o
 rustup target add "$(rustc -vV | sed -n 's/^host: //p')"
 cargo build --manifest-path Runtime/ArmInterpreter/Cargo.toml --release
 ${CXX:-c++} -std=c++17 -O2 -pthread -Wall -Wextra -Werror \
   build/bionic-thread-tests/darwin-host-services.o \
+  build/bionic-thread-tests/bionic-thread-attr.o \
   Runtime/Bionic/agr_bionic_errno_host.cpp \
   Runtime/Bionic/agr_bionic_thread_lifecycle.cpp \
   Tests/bionic_thread_lifecycle_contract.cpp \

@@ -3,6 +3,7 @@
 #include "agr_runtime.h"
 #include "agr_thread_context.h"
 #include "agr_service_dispatch.h"
+#include "../Bionic/agr_bionic_thread_attr.h"
 #include "../AndroidFw/agr_androidfw.h"
 #include "../DexLoom/game_dex_runner.h"
 #include <EGL/egl.h>
@@ -133,6 +134,7 @@ static int32_t call_address(agr_guest *g, uint32_t target, const uint32_t *args,
 static int run_until_return(agr_guest *g);
 static int32_t guest_thread_execute(void *user, uint32_t guest_thread,
                                     uint32_t start, uint32_t argument,
+                                    const struct agr_bionic_thread_attr *attr,
                                     uint32_t *return_value);
 
 static uint32_t guest_current_thread_cb(void *user) {
@@ -894,7 +896,7 @@ static int32_t call_address(agr_guest *g, uint32_t target, const uint32_t *args,
     agr_guest_thread_context *context=guest_context(g);
     if (context->callback_depth >= 16) { set_error(g, "guest nested call depth exceeded"); return -1; }
     uint32_t initial_stack=context->guest_stack_size ?
-        context->guest_stack_base+context->guest_stack_size-0x100u : STACK_TOP;
+        context->guest_tls_base-0x100u : STACK_TOP;
     uint32_t stack_top = initial_stack - context->callback_depth * 0x4000u;
     for (uint32_t i = 4; i < count; i++) write_u32(g, stack_top + (i - 4) * 4, args[i]);
     for (uint32_t i = 0; i < 4; i++) arm_interp_set_reg(guest_cpu(g), i, i < count ? args[i] : 0);
@@ -907,19 +909,45 @@ static int32_t call_address(agr_guest *g, uint32_t target, const uint32_t *args,
 }
 static int32_t guest_thread_execute(void *user, uint32_t guest_thread,
                                     uint32_t start, uint32_t argument,
+                                    const struct agr_bionic_thread_attr *attr,
                                     uint32_t *return_value) {
     agr_guest *g=(agr_guest *)user;
     /* Worker CPU registers and stack/TLS are private. process_cpu remains the
      * shared ARM address-space anchor, therefore no guest pointer crosses a
      * Darwin ABI boundary. */
-    uint32_t stack=agr_malloc(g->runtime,0x40000u);
+    agr_bionic_thread_attr default_attr;
+    if (!attr) { agr_bionic_thread_attr_init(&default_attr); attr=&default_attr; }
+    uint32_t size=(attr->stack_size+4095u)&~4095u;
+    uint32_t stack=attr->stack_base ? attr->stack_base :
+        agr_malloc_aligned(g->runtime,size,4096u);
     if (!stack) return -1;
+    agr_bionic_thread_stack_layout layout;
+    if (agr_bionic_thread_compute_stack_layout(attr,stack,&layout)) {
+        if (!attr->stack_base) agr_free(g->runtime,stack);
+        return -1;
+    }
+    if (!layout.user_stack && layout.guard_size &&
+        arm_interp_set_page_permissions(g->process_cpu,layout.base,layout.guard_size,0)) {
+        agr_free(g->runtime,stack);
+        return -1;
+    }
     agr_guest_thread_context *context=agr_guest_thread_context_create(
-        g,g->process_cpu,guest_thread,stack,0x40000u,stack+0x40000u-560u);
-    if (!context) { agr_free(g->runtime,stack); return -1; }
+        g,g->process_cpu,guest_thread,layout.base,layout.size,layout.tls_base);
+    if (!context) {
+        if (!layout.user_stack) {
+            if (layout.guard_size) arm_interp_set_page_permissions(g->process_cpu,layout.base,layout.guard_size,3);
+            agr_free(g->runtime,stack);
+        }
+        return -1;
+    }
     agr_guest_thread_context_bind(context);
     if (agr_runtime_attach_current_thread(g->runtime,guest_thread,0,context->guest_tls_base)) {
-        agr_guest_thread_context_destroy(context); agr_free(g->runtime,stack); return -1;
+        agr_guest_thread_context_destroy(context);
+        if (!layout.user_stack) {
+            if (layout.guard_size) arm_interp_set_page_permissions(g->process_cpu,layout.base,layout.guard_size,3);
+            agr_free(g->runtime,stack);
+        }
+        return -1;
     }
     context->guest_errno_address=agr_runtime_errno_address(g->runtime,guest_thread);
     uint32_t args[1]={argument}; int32_t result=0;
@@ -930,7 +958,10 @@ static int32_t guest_thread_execute(void *user, uint32_t guest_thread,
     (void)agr_runtime_detach_current_thread(g->runtime,guest_thread);
     if (return_value) *return_value=(uint32_t)result;
     agr_guest_thread_context_destroy(context);
-    agr_free(g->runtime,stack);
+    if (!layout.user_stack) {
+        if (layout.guard_size) arm_interp_set_page_permissions(g->process_cpu,layout.base,layout.guard_size,3);
+        agr_free(g->runtime,stack);
+    }
     return rc;
 }
 int32_t agr_guest_call_symbol(agr_guest *g, const char *symbol, const uint32_t *args, uint32_t count, int32_t *result) {

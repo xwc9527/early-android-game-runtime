@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "../HostServices/agr_host_services.h"
+#include "agr_bionic_thread_attr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,6 +20,7 @@ typedef int32_t (*agr_bionic_thread_execute)(void *opaque,
                                              uint32_t guest_thread,
                                              uint32_t start_routine,
                                              uint32_t argument,
+                                             const agr_bionic_thread_attr *attr,
                                              uint32_t *return_value);
 
 enum {
@@ -32,7 +34,8 @@ void agr_bionic_thread_lifecycle_destroy(agr_bionic_thread_lifecycle *);
 
 int32_t agr_bionic_thread_lifecycle_create_thread(
     agr_bionic_thread_lifecycle *, uint32_t guest_thread,
-    uint32_t start_routine, uint32_t argument, uint32_t detached,
+    uint32_t start_routine, uint32_t argument,
+    const agr_bionic_thread_attr *attr,
     uint32_t *pthread_handle);
 int32_t agr_bionic_thread_lifecycle_join(agr_bionic_thread_lifecycle *,
                                          uint32_t pthread_handle,

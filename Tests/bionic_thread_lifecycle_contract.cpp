@@ -30,8 +30,10 @@ struct fixture {
 };
 
 static int32_t execute(void *opaque, uint32_t guest_thread, uint32_t start,
-                       uint32_t argument, uint32_t *result) {
+                       uint32_t argument, const agr_bionic_thread_attr *attr,
+                       uint32_t *result) {
   auto *f = static_cast<fixture *>(opaque);
+  assert(attr && attr->stack_size != 0);
   /* Production binds a GuestThreadContext here. The lifecycle source port
    * deliberately never stores its private record in Darwin TLS. */
   static thread_local uint32_t guest_context_cookie;
@@ -79,8 +81,10 @@ int main() {
   assert(f.lifecycle);
 
   uint32_t first = 0;
+  agr_bionic_thread_attr joinable_attr;
+  assert(agr_bionic_thread_attr_init(&joinable_attr) == 0);
   assert(agr_bionic_thread_lifecycle_create_thread(f.lifecycle, 101, 0x2000,
-      0x1234, AGR_BIONIC_THREAD_JOINABLE, &first) == 0);
+      0x1234, &joinable_attr, &first) == 0);
   uint32_t result = 0;
   assert(agr_bionic_thread_lifecycle_join(f.lifecycle, first, &result) == 0);
   assert(result == (0x1234u ^ 0x5a5a5a5au));
@@ -88,8 +92,10 @@ int main() {
          AGR_ANDROID_ESRCH);
 
   uint32_t detached = 0;
+  agr_bionic_thread_attr detached_attr = joinable_attr;
+  assert(agr_bionic_thread_attr_setdetachstate(&detached_attr, 1) == 0);
   assert(agr_bionic_thread_lifecycle_create_thread(f.lifecycle, 102, 0x2000,
-      0x4321, AGR_BIONIC_THREAD_DETACHED, &detached) == 0);
+      0x4321, &detached_attr, &detached) == 0);
   assert(agr_bionic_thread_lifecycle_detach(f.lifecycle, detached) ==
          AGR_ANDROID_EINVAL);
   const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
@@ -102,7 +108,7 @@ int main() {
   for (uint32_t i = 0; i < 100000; ++i) {
     uint32_t handle = 0, returned = 0;
     assert(agr_bionic_thread_lifecycle_create_thread(f.lifecycle, i + 1000,
-        0x2000, i, AGR_BIONIC_THREAD_JOINABLE, &handle) == 0);
+        0x2000, i, &joinable_attr, &handle) == 0);
     assert(agr_bionic_thread_lifecycle_join(f.lifecycle, handle, &returned) == 0);
     assert(returned == (i ^ 0x5a5a5a5au));
   }

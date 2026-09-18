@@ -31,6 +31,7 @@ struct record {
   uint32_t guest_thread;
   uint32_t start_routine;
   uint32_t argument;
+  agr_bionic_thread_attr attr;
   uint32_t flags;
   uint32_t return_value;
   void *host_handle;
@@ -54,6 +55,7 @@ static void *thread_entry(void *opaque) {
   uint32_t result = 0;
   int32_t execution = owner->execute(owner->opaque, item->guest_thread,
                                      item->start_routine, item->argument,
+                                     &item->attr,
                                      &result);
   if (execution != 0) result = 0;
   std::unique_lock<std::mutex> lock(owner->lock);
@@ -105,8 +107,10 @@ extern "C" void agr_bionic_thread_lifecycle_destroy(
 
 extern "C" int32_t agr_bionic_thread_lifecycle_create_thread(
     agr_bionic_thread_lifecycle *lifecycle, uint32_t guest_thread,
-    uint32_t start_routine, uint32_t argument, uint32_t detached,
+    uint32_t start_routine, uint32_t argument,
+    const agr_bionic_thread_attr *attr,
     uint32_t *pthread_handle) {
+  const uint32_t detached = attr ? (attr->flags & 1u) : 0u;
   if (!lifecycle || !guest_thread || !start_routine || !pthread_handle ||
       detached > 1) return AGR_ANDROID_EINVAL;
   std::unique_lock<std::mutex> lock(lifecycle->lock);
@@ -119,6 +123,8 @@ extern "C" int32_t agr_bionic_thread_lifecycle_create_thread(
   item->guest_thread = guest_thread;
   item->start_routine = start_routine;
   item->argument = argument;
+  if (attr) item->attr = *attr;
+  else agr_bionic_thread_attr_init(&item->attr);
   item->flags = detached ? kDetached : 0;
   record *raw = item.get();
   try { lifecycle->records.emplace(handle, std::move(item)); }

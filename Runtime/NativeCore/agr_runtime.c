@@ -132,9 +132,10 @@ static int32_t bionic_sync_once(void *opaque, uint32_t function) {
 }
 static int32_t bionic_thread_execute(void *opaque, uint32_t guest_thread,
                                      uint32_t start, uint32_t argument,
+                                     const agr_bionic_thread_attr *attr,
                                      uint32_t *return_value) {
     agr_runtime *rt = (agr_runtime *)opaque;
-    return rt->cb.execute_thread ? rt->cb.execute_thread(rt->cb.user,guest_thread,start,argument,return_value) : AGR_ANDROID_ENOSYS;
+    return rt->cb.execute_thread ? rt->cb.execute_thread(rt->cb.user,guest_thread,start,argument,attr,return_value) : AGR_ANDROID_ENOSYS;
 }
 #endif
 
@@ -622,9 +623,12 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
     }
     else if(!strcmp(name,"pthread_create")){
 #if defined(__APPLE__)
-        uint32_t detached=0, guest_thread=atomic_fetch_add_explicit(&rt->next_thread,1u,memory_order_relaxed), handle=0;
-        if (b) { agr_bionic_thread_attr attr; if(!read_mem(rt,b,&attr,sizeof(attr)))return fail(rt,"pthread_create attr read"); detached=attr.flags&1u; }
-        int32_t rc=agr_bionic_thread_lifecycle_create_thread(rt->thread_lifecycle,guest_thread,c,d,detached,&handle);
+        uint32_t guest_thread=atomic_fetch_add_explicit(&rt->next_thread,1u,memory_order_relaxed), handle=0;
+        agr_bionic_thread_attr attr;
+        if (b) { if(!read_mem(rt,b,&attr,sizeof(attr)))return fail(rt,"pthread_create attr read"); }
+        else agr_bionic_thread_attr_init(&attr);
+        if (attr.flags & ~3u || attr.stack_size < 8192u) { out->value=AGR_ANDROID_EINVAL; return 0; }
+        int32_t rc=agr_bionic_thread_lifecycle_create_thread(rt->thread_lifecycle,guest_thread,c,d,&attr,&handle);
         if(rc)out->value=(uint32_t)rc; else if(!write_mem(rt,a,&handle,4))return fail(rt,"pthread_create write");
 #else
         uint32_t id=agr_create_thread_state(rt);if(!id)return fail(rt,"thread table full");write_u32(rt,a,id);out->action=AGR_ACTION_RUN_THREAD;out->action_arg0=c;out->action_arg1=d;out->value=id;
@@ -696,8 +700,26 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
         out->action=AGR_ACTION_COND_BROADCAST;out->action_arg0=a;
 #endif
     }
-    else if(!strcmp(name,"pthread_cond_init")||!strcmp(name,"pthread_cond_destroy")||!strcmp(name,"pthread_attr_setdetachstate")){}
-    else if(!strcmp(name,"pthread_attr_init")){unsigned char z[16]={0};write_mem(rt,a,z,16);}
+    else if(!strcmp(name,"pthread_attr_init")||!strcmp(name,"pthread_attr_destroy")||
+            !strcmp(name,"pthread_attr_setdetachstate")||!strcmp(name,"pthread_attr_setstacksize")||
+            !strcmp(name,"pthread_attr_setstack")||!strcmp(name,"pthread_attr_setguardsize")){
+#if defined(__APPLE__)
+        agr_bionic_thread_attr attr;
+        if (!a || (!strcmp(name,"pthread_attr_init") ? 0 : !read_mem(rt,a,&attr,sizeof(attr))))
+            { out->value=AGR_ANDROID_EINVAL; return 0; }
+        int32_t rc=0;
+        if (!strcmp(name,"pthread_attr_init")) rc=agr_bionic_thread_attr_init(&attr);
+        else if (!strcmp(name,"pthread_attr_destroy")) rc=agr_bionic_thread_attr_destroy(&attr);
+        else if (!strcmp(name,"pthread_attr_setdetachstate")) rc=agr_bionic_thread_attr_setdetachstate(&attr,(int32_t)b);
+        else if (!strcmp(name,"pthread_attr_setstacksize")) rc=agr_bionic_thread_attr_setstacksize(&attr,b);
+        else if (!strcmp(name,"pthread_attr_setstack")) rc=agr_bionic_thread_attr_setstack(&attr,b,c);
+        else rc=agr_bionic_thread_attr_setguardsize(&attr,b);
+        if (!rc && !write_mem(rt,a,&attr,sizeof(attr)))return fail(rt,"pthread_attr write");
+        out->value=(uint32_t)rc;
+#else
+        out->handled=0;
+#endif
+    }
     else if(!strcmp(name,"dlopen")){if(a&&!read_cstr(rt,a,x,sizeof(x)))return fail(rt,"dlopen name");out->value=agr_dlopen_flags(rt,a?x:NULL,b);}
     else if(!strcmp(name,"dlsym")){if(!read_cstr(rt,b,x,sizeof(x)))return fail(rt,"dlsym name");out->value=agr_dlsym(rt,a,x);}
     else if(!strcmp(name,"dlclose"))out->value=agr_dlclose(rt,a);
