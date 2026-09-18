@@ -71,7 +71,11 @@ DRIVER_COMMON=(
 audit_exidx() {
   local so="$1"
   local size
-  size="$("$READELF" -S -W "$so" | awk '$2==".ARM.exidx" {print $6; exit}')"
+  size="$("$READELF" -S -W "$so" | awk '{
+    for (i = 1; i <= NF; i++) {
+      if ($i == ".ARM.exidx") { print $(i + 4); exit }
+    }
+  }')"
   if [[ -z "$size" || "$size" == "000000" || "$size" == "0" ]]; then
     echo "$so: missing or empty .ARM.exidx" >&2
     "$READELF" -S -W "$so" >&2 || true

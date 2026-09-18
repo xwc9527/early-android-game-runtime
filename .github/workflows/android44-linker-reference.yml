@@ -69,7 +69,11 @@ jobs:
           for pair in unwind/libagr_unwind_A.so:A unwind/libagr_unwind_B.so:B unwind/libagr_unwind_C.so:C; do
             so="${pair%%:*}"
             symbol="${pair##*:}"
-            SIZE="$("$READELF" -S -W "$so" | awk '$2==".ARM.exidx" {print $6; exit}')"
+            SIZE="$("$READELF" -S -W "$so" | awk '{
+              for (i = 1; i <= NF; i++) {
+                if ($i == ".ARM.exidx") { print $(i + 4); exit }
+              }
+            }')"
             test -n "$SIZE" && test "$SIZE" != 0 && test "$SIZE" != 000000
             "$READELF" -l -W "$so" | grep -q ARM_EXIDX
             "$READELF" --unwind -W "$so" > "$so.unwind.txt"
