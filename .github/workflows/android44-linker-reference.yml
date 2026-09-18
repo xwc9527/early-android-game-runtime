@@ -103,9 +103,14 @@ jobs:
           adb push android44-thread-reference /data/local/tmp/
           adb shell chmod 755 /data/local/tmp/android44-thread-reference
           adb shell /data/local/tmp/android44-thread-reference | tr -d '\r' > android44-thread.json
+          clang -std=c11 -O2 -Wall -Wextra -Werror -c \
+            Runtime/Bionic/agr_bionic_thread_attr.c -o agr-bionic-thread-attr.o
           clang++ -std=c++17 -O2 -pthread -Wall -Wextra -Werror \
             Runtime/Bionic/agr_futex_host.cpp Runtime/Bionic/agr_bionic_sync.cpp \
-            Runtime/Bionic/agr_bionic_tls.cpp Tests/Android44Threads/agr_differential.cpp \
+            Runtime/Bionic/agr_bionic_tls.cpp Runtime/Bionic/agr_bionic_errno_host.cpp \
+            Runtime/Bionic/agr_bionic_thread_lifecycle.cpp \
+            agr-bionic-thread-attr.o \
+            Tests/Android44Threads/agr_differential.cpp \
             -o agr-thread-differential
           ./agr-thread-differential > agr-thread.json
           python3 - <<'PY'

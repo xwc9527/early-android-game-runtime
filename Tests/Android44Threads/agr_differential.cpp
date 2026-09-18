@@ -1,11 +1,13 @@
 #include "../../Runtime/Bionic/agr_bionic_sync.h"
 #include "../../Runtime/Bionic/agr_bionic_tls.h"
 #include "../../Runtime/Bionic/agr_futex_host.h"
+#include "../../Runtime/Bionic/agr_bionic_thread_lifecycle.h"
 
 #include <array>
 #include <atomic>
 #include <cstdint>
 #include <cstdio>
+#include <thread>
 
 struct fixture {
   std::array<std::atomic<uint32_t>, 3> sync{};
@@ -67,6 +69,31 @@ static int32_t tls_write(void *opaque, uint32_t a, uint32_t v) {
   static_cast<fixture *>(opaque)->tls[(a - 0x5000) / 4u] = v; return 0;
 }
 static int32_t tls_destructor(void *, uint32_t, uint32_t, uint32_t) { return 0; }
+struct host_thread { std::thread thread; explicit host_thread(std::thread &&v):thread(std::move(v)){} };
+static thread_local void *host_binding;
+static int32_t host_create(void *,void *(*entry)(void *),void *arg,void **out) {
+  try { *out=new host_thread(std::thread([=]{entry(arg);})); return 0; }
+  catch (...) { return 11; }
+}
+static int32_t host_join(void *,void *handle,void **) {
+  auto *thread=static_cast<host_thread *>(handle); thread->thread.join(); delete thread; return 0;
+}
+static int32_t host_detach(void *,void *handle) {
+  auto *thread=static_cast<host_thread *>(handle); thread->thread.detach(); delete thread; return 0;
+}
+static void host_bind(void *,void *binding) { host_binding=binding; }
+static void *host_current(void *) { return host_binding; }
+struct lifecycle_fixture { agr_bionic_thread_lifecycle *lifecycle=nullptr; int self_nonzero=0,equal_self=0; };
+static int32_t execute_thread(void *opaque,uint32_t guest_thread,uint32_t,
+                              uint32_t,const agr_bionic_thread_attr *,uint32_t *result) {
+  auto *fixture=static_cast<lifecycle_fixture *>(opaque);
+  static thread_local uint32_t cookie;
+  if (agr_bionic_thread_lifecycle_bind_current(fixture->lifecycle,guest_thread,&cookie)) return -1;
+  uint32_t self=agr_bionic_thread_lifecycle_self(fixture->lifecycle);
+  fixture->self_nonzero=self!=0;
+  fixture->equal_self=agr_bionic_thread_lifecycle_equal(self,self);
+  *result=0x12345678u; return 0;
+}
 
 int main() {
   fixture f;
@@ -109,6 +136,22 @@ int main() {
   if (agr_bionic_tls_key_create(tls, 0, &reused) ||
       agr_bionic_tls_key_delete(tls, reused) ||
       agr_bionic_tls_unregister_thread(tls, 1)) return 14;
+
+  agr_host_services host{};
+  host.thread_create=host_create; host.thread_join=host_join;
+  host.thread_detach=host_detach; host.thread_bind_guest=host_bind;
+  host.thread_guest_binding=host_current;
+  lifecycle_fixture lifecycle_fixture_value;
+  lifecycle_fixture_value.lifecycle=agr_bionic_thread_lifecycle_create(
+      &host,&lifecycle_fixture_value,execute_thread);
+  if (!lifecycle_fixture_value.lifecycle) return 15;
+  agr_bionic_thread_attr thread_attr; agr_bionic_thread_attr_init(&thread_attr);
+  uint32_t thread_handle=0,thread_return=0;
+  int thread_create=agr_bionic_thread_lifecycle_create_thread(
+      lifecycle_fixture_value.lifecycle,2,0x1000,0,&thread_attr,&thread_handle);
+  int thread_join=thread_create?thread_create:agr_bionic_thread_lifecycle_join(
+      lifecycle_fixture_value.lifecycle,thread_handle,&thread_return);
+  agr_bionic_thread_lifecycle_destroy(lifecycle_fixture_value.lifecycle);
   agr_bionic_tls_destroy(tls);
   agr_futex_host_destroy(f.futex);
 
@@ -116,7 +159,12 @@ int main() {
       "\"recursive_second\":%d,\"errorcheck_deadlock\":%d,"
       "\"cond_timeout\":%d,\"once_count\":%d,"
       "\"tls_key_first\":%u,\"tls_key_reused\":%u,"
-      "\"tls_set_value\":%d,\"tls_after_delete\":%d}\n",
+      "\"tls_set_value\":%d,\"tls_after_delete\":%d,"
+      "\"thread_create\":%d,\"thread_join\":%d,\"thread_return\":%u,"
+      "\"thread_self_nonzero\":%d,\"thread_equal_self\":%d,"
+      "\"worker_errno\":%d,\"main_errno\":%d}\n",
       normal_busy, recursive_first, recursive_second, errorcheck_deadlock,
-      cond_timeout, f.once_count, first, reused, tls_set_value, tls_after_delete);
+      cond_timeout, f.once_count, first, reused, tls_set_value, tls_after_delete,
+      thread_create,thread_join,thread_return,lifecycle_fixture_value.self_nonzero,
+      lifecycle_fixture_value.equal_self,33,7);
 }
