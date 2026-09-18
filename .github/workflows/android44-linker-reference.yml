@@ -60,6 +60,59 @@ jobs:
           export NDK_R10E="$RUNNER_TEMP/android-ndk-r10e"
           export UNWIND_OUT="$GITHUB_WORKSPACE/unwind"
           bash scripts/build-android44-unwind-gcc.sh
+      - name: Audit GCC 4.8 ARM EHABI unwind fixtures
+        run: |
+          PRE="$RUNNER_TEMP/android-ndk-r10e/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64/bin"
+          READELF="$PRE/arm-linux-androideabi-readelf"
+          NM="$PRE/arm-linux-androideabi-nm"
+          test -x "$READELF" && test -x "$NM"
+          for so in unwind/libagr_unwind_A.so unwind/libagr_unwind_B.so unwind/libagr_unwind_C.so; do
+            SIZE="$("$READELF" -S -W "$so" | awk '$2==".ARM.exidx" {print $6; exit}')"
+            test -n "$SIZE" && test "$SIZE" != 0 && test "$SIZE" != 000000
+            "$READELF" -l -W "$so" | grep -q ARM_EXIDX
+          done
+          AVAL="$("$READELF" -s -W unwind/libagr_unwind_A.so | awk '$NF=="A" && /FUNC/ {print $2; exit}')"
+          BVAL="$("$READELF" -s -W unwind/libagr_unwind_B.so | awk '$NF=="B" && /FUNC/ {print $2; exit}')"
+          CVAL="$("$READELF" -s -W unwind/libagr_unwind_C.so | awk '$NF=="C" && /FUNC/ {print $2; exit}')"
+          test $((0x$AVAL & 1)) -eq 1
+          test $((0x$BVAL & 1)) -eq 0
+          test $((0x$CVAL & 1)) -eq 1
+          cover_map() {
+            local so="$1" addr="$2" expect="$3"
+            local map
+            map="$("$READELF" -s -W "$so" | awk -v addr="$addr" '
+              function h2d(h, i, c, n) {
+                n=0; h=tolower(h); gsub(/^0x/,"",h)
+                for (i=1;i<=length(h);i++) {
+                  c=substr(h,i,1); n=n*16+index("0123456789abcdef",c)-1
+                }
+                return n
+              }
+              $4=="NOTYPE" && $5=="LOCAL" && ($NF ~ /^\$a(\.|$)/ || $NF ~ /^\$t(\.|$)/ || $NF ~ /^\$d(\.|$)/) {
+                v=h2d($2); if (v<=addr && v>=best) { best=v; name=$NF }
+              }
+              END { if (name!="") print name }
+            ')"
+            test -n "$map"
+            case "$expect" in
+              thumb) [[ "$map" == \$t || "$map" == \$t.* ]] ;;
+              arm) [[ "$map" == \$a || "$map" == \$a.* ]] ;;
+              *) exit 1 ;;
+            esac
+          }
+          cover_map unwind/libagr_unwind_A.so $((0x$AVAL & ~1)) thumb
+          cover_map unwind/libagr_unwind_B.so $((0x$BVAL & ~1)) arm
+          cover_map unwind/libagr_unwind_C.so $((0x$CVAL & ~1)) thumb
+          test "$("$READELF" -d unwind/libagr_unwind_A.so | awk -F'[][]' '/\(NEEDED\)/{print $2}')" = libagr_unwind_B.so
+          test "$("$READELF" -d unwind/libagr_unwind_B.so | awk -F'[][]' '/\(NEEDED\)/{print $2}')" = libagr_unwind_C.so
+          test "$("$READELF" -d unwind/libagr_unwind_C.so | awk -F'[][]' '/\(NEEDED\)/{print $2}')" = libagr_unwind_probe.so
+          ! "$READELF" -d unwind/libagr_unwind_A.so unwind/libagr_unwind_B.so unwind/libagr_unwind_C.so | grep -Ei 'libc\.so|libdl\.so|libgcc|libstdc\+\+'
+          test "$("$NM" -D -u unwind/libagr_unwind_A.so | awk '{print $NF}')" = B
+          test "$("$NM" -D -u unwind/libagr_unwind_B.so | awk '{print $NF}')" = C
+          test "$("$NM" -D -u unwind/libagr_unwind_C.so | awk '{print $NF}')" = agr_unwind_probe
+          "$NM" -g unwind/libagr_unwind_probe.so | grep -q ' __gnu_Unwind_Backtrace$'
+          "$NM" -g unwind/libagr_unwind_probe.so | grep -q ' __gnu_unwind_execute$'
+          if "$NM" -g unwind/libagr_unwind_probe.so | grep -E ' unw_getcontext$| unw_init_local$'; then exit 1; fi
       - name: Boot Android 4.4 ARM emulator
         run: |
           SDK_TOOLS="$(cat sdk-tools-path.txt)"
@@ -165,6 +218,8 @@ jobs:
           agr=json.load(open('agr-unwind.json'))
           print('Android 4.4 unwind:',json.dumps(android,sort_keys=True))
           print('AGR unwind:',json.dumps(agr,sort_keys=True))
+          assert android.get('stop')=='fixture_boundary',android
+          assert agr.get('stop')=='fixture_boundary',agr
           assert android.get('stop')==agr.get('stop'),(android,agr)
           assert len(android.get('frames',[]))==len(agr.get('frames',[])),(android,agr)
           for i,(a,b) in enumerate(zip(android['frames'],agr['frames'])):

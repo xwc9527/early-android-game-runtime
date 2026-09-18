@@ -165,16 +165,32 @@ int main(int argc, char **argv) {
                            STACK_TOP - STACK_SIZE, STACK_SIZE);
     agr_ehabi_env_from_runtime(&env, rt);
     agr_ehabi_backtrace(&ctx, &env, frames, 8, &count);
-    printf("{\"frames\":[");
-    for (i = 0; i < count; i++) {
-        printf("%s{\"dso\":\"%s\",\"relative_pc\":%u,\"sp_delta\":%u,\"thumb\":%s}",
-               i ? "," : "", frames[i].dso, frames[i].relative_pc,
-               frames[i].sp - frames[0].sp, frames[i].thumb ? "true" : "false");
-    }
-    printf("],\"stop\":\"no_module\"}\n");
-    if (count != 3) {
-        fprintf(stderr, "expected C,B,A got %u stop=%s\n", count, agr_ehabi_stop_name(ctx.stop));
-        return 10;
+    {
+        const char *canonical = "incomplete";
+        int left_fixture = 0;
+        agr_module_info next;
+        if (agr_find_module(rt, ctx.r[15], &next) != 0 || !next.name ||
+            (strcmp(next.name, "libagr_unwind_C.so") &&
+             strcmp(next.name, "libagr_unwind_B.so") &&
+             strcmp(next.name, "libagr_unwind_A.so")))
+            left_fixture = 1;
+        if (count == 3 && left_fixture &&
+            !strcmp(frames[0].dso, "libagr_unwind_C.so") &&
+            !strcmp(frames[1].dso, "libagr_unwind_B.so") &&
+            !strcmp(frames[2].dso, "libagr_unwind_A.so"))
+            canonical = "fixture_boundary";
+        printf("{\"frames\":[");
+        for (i = 0; i < count; i++) {
+            printf("%s{\"dso\":\"%s\",\"relative_pc\":%u,\"sp_delta\":%u,\"thumb\":%s}",
+                   i ? "," : "", frames[i].dso, frames[i].relative_pc,
+                   frames[i].sp - frames[0].sp, frames[i].thumb ? "true" : "false");
+        }
+        printf("],\"stop\":\"%s\"}\n", canonical);
+        if (strcmp(canonical, "fixture_boundary")) {
+            fprintf(stderr, "expected C,B,A fixture_boundary got %u stop=%s next_pc=%08x\n",
+                    count, agr_ehabi_stop_name(ctx.stop), ctx.r[15]);
+            return 10;
+        }
     }
     if (agr_dlclose(rt, handle)) return 12;
     if (agr_find_module(rt, a_pc, &module) == 0) {
