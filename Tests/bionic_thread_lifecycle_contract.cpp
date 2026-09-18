@@ -76,7 +76,7 @@ int main() {
   assert(f.lifecycle);
 
   uint32_t first = 0;
-  assert(agr_bionic_thread_lifecycle_create_thread(f.lifecycle, 101, 0x1000,
+  assert(agr_bionic_thread_lifecycle_create_thread(f.lifecycle, 101, 0x2000,
       0x1234, AGR_BIONIC_THREAD_JOINABLE, &first) == 0);
   uint32_t result = 0;
   assert(agr_bionic_thread_lifecycle_join(f.lifecycle, first, &result) == 0);
@@ -85,7 +85,7 @@ int main() {
          AGR_ANDROID_ESRCH);
 
   uint32_t detached = 0;
-  assert(agr_bionic_thread_lifecycle_create_thread(f.lifecycle, 102, 0x1001,
+  assert(agr_bionic_thread_lifecycle_create_thread(f.lifecycle, 102, 0x2000,
       0x4321, AGR_BIONIC_THREAD_DETACHED, &detached) == 0);
   assert(agr_bionic_thread_lifecycle_detach(f.lifecycle, detached) ==
          AGR_ANDROID_EINVAL);
