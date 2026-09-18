@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Runtime/NativeCore/**','Tests/AospLinker/**','Tests/Android44Reference/**','Tests/Android44Dynamic/**','.github/workflows/android44-linker-reference.yml']
+    paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Runtime/NativeCore/**','Tests/AospLinker/**','Tests/Android44Reference/**','Tests/Android44Dynamic/**','Tests/Android44Threads/**','.github/workflows/android44-linker-reference.yml']
 jobs:
   api19-reference:
     runs-on: ubuntu-latest
@@ -36,6 +36,7 @@ jobs:
           "$CC" "${COMMON[@]}" -Wl,-soname,libagr_bad_needed.so Tests/Android44Dynamic/bad_needed.c -lagr_missing -o dynamic/libagr_bad_needed.so
           "$CC" "${COMMON[@]}" -Wl,-soname,libagr_bad_symbol.so Tests/Android44Dynamic/bad_symbol.c -o dynamic/libagr_bad_symbol.so
           "$CC" -fPIE -pie Tests/Android44Dynamic/reference.c -ldl -o dynamic/android44-dynamic-reference
+          "$CC" -fPIE -pie Tests/Android44Threads/reference.c -pthread -o android44-thread-reference
       - name: Boot Android 4.4 ARM emulator
         run: |
           SDK_TOOLS="$(cat sdk-tools-path.txt)"
@@ -97,6 +98,24 @@ jobs:
           print('AGR dynamic:',json.dumps(agr,sort_keys=True))
           assert android==agr,(android,agr)
           PY
+      - name: API19 pthread sync and TLS differential
+        run: |
+          adb push android44-thread-reference /data/local/tmp/
+          adb shell chmod 755 /data/local/tmp/android44-thread-reference
+          adb shell /data/local/tmp/android44-thread-reference | tr -d '\r' > android44-thread.json
+          clang++ -std=c++17 -O2 -pthread -Wall -Wextra -Werror \
+            Runtime/Bionic/agr_futex_host.cpp Runtime/Bionic/agr_bionic_sync.cpp \
+            Runtime/Bionic/agr_bionic_tls.cpp Tests/Android44Threads/agr_differential.cpp \
+            -o agr-thread-differential
+          ./agr-thread-differential > agr-thread.json
+          python3 - <<'PY'
+          import json
+          android=json.load(open('android44-thread.json'))
+          agr=json.load(open('agr-thread.json'))
+          print('Android 4.4 thread:',json.dumps(android,sort_keys=True))
+          print('AGR Bionic source port:',json.dumps(agr,sort_keys=True))
+          assert android==agr,(android,agr)
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -108,4 +127,6 @@ jobs:
             android44-dynamic.json
             agr-dynamic.json
             dynamic/*.so
+            android44-thread.json
+            agr-thread.json
             emulator.log
