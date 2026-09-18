@@ -417,6 +417,13 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
                     if (pumped == 0 && onInput == 0 && callbackWords[6]) {
                         uint32_t focusArgs[2] = {activity,1};
                         onFocus = agr_guest_call_address(guest,callbackWords[6],focusArgs,2,&ignored);
+                        /* The worker may finish a visible frame before onFocus
+                         * returns, then legitimately wait for player input. */
+                        if (onFocus == 0 && frame && agr_guest_swap_count(guest) > 0) {
+                            frameBytes = agr_guest_read_rgba(guest,frame,320u*480u*4u);
+                            if (frameBytes > 0) for (int32_t i=0; i+3<frameBytes; i+=4)
+                                if (frame[i] || frame[i+1] || frame[i+2]) nonblack++;
+                        }
                         while (onFocus == 0 && frame && framePumps < 40 && nonblack == 0) {
                             uint32_t priorSwap=agr_guest_swap_count(guest);
                             framePumpResult = agr_guest_wait_for_swap(guest,priorSwap,500);

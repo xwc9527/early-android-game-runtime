@@ -1069,6 +1069,18 @@ void agr_guest_setup_gles1_frame(agr_guest *g) {
 }
 int32_t agr_guest_read_rgba(agr_guest *g, void *pixels, uint32_t capacity) {
     if (!g || !pixels) return -1;
+    /* A direct GLES fixture can read its own current context without a guest
+     * eglSwapBuffers. A different thread (notably the UIKit observer of a
+     * NativeActivity worker) must use the completed swap snapshot below. */
+    uint32_t direct_size=(uint32_t)(g->width*g->height*4);
+    agr_guest_thread_context *current=guest_context(g);
+    if (direct_size && capacity>=direct_size && current &&
+        g->egl_owner_thread_id==current->guest_thread_id &&
+        eglGetCurrentContext()==g->context) {
+        glFinish();
+        glReadPixels(0,0,g->width,g->height,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
+        return glGetError()==GL_NO_ERROR ? (int32_t)direct_size : -1;
+    }
     while (atomic_flag_test_and_set_explicit(&g->framebuffer_lock,memory_order_acquire)) {}
     uint32_t size=g->framebuffer_size;
     if (!size || capacity<size) { atomic_flag_clear_explicit(&g->framebuffer_lock,memory_order_release); return -1; }
