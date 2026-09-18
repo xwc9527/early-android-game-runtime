@@ -15,7 +15,7 @@ mkdir -p "$OUT/evidence"
 "$NDK/ndk-build" -C "$PROJECT" NDK_OUT="$OUT/obj" NDK_LIBS_OUT="$OUT/libs" -j2
 ABI="$OUT/libs/armeabi-v7a"
 test -x "$ABI/agr_eh2_reference"
-for elf in "$ABI"/libagr_eh2_*.so "$ABI/agr_eh2_reference"; do
+for elf in "$ABI"/libagr_eh2_*.so "$ABI/libgnustl_shared.so" "$ABI/agr_eh2_reference"; do
   base="$(basename "$elf")"
   "$READELF" -s -W "$elf" > "$OUT/evidence/$base.symbols.txt"
   "$READELF" -r -W "$elf" > "$OUT/evidence/$base.relocations.txt"
