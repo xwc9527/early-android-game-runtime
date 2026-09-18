@@ -595,7 +595,9 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
     }
     else if(!strcmp(name,"pthread_mutex_init")){
 #if defined(__APPLE__)
-        out->value=(uint32_t)agr_bionic_mutex_init(&rt->bionic_sync,a,0);
+        uint32_t attr=0;
+        if (b && !read_mem(rt,b,&attr,4))return fail(rt,"pthread_mutex_init attr read");
+        out->value=(uint32_t)agr_bionic_mutex_init(&rt->bionic_sync,a,(int32_t)attr);
 #else
         agr_mutex*m=mutex_state(rt,a);if(!m)return fail(rt,"mutex table full");m->owner=m->depth=0;write_u32(rt,a,0);
 #endif
@@ -666,7 +668,9 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
     }
     else if(!strcmp(name,"pthread_cond_init")){
 #if defined(__APPLE__)
-        out->value=(uint32_t)agr_bionic_cond_init(&rt->bionic_sync,a,0);
+        uint32_t attr=0;
+        if (b && !read_mem(rt,b,&attr,4))return fail(rt,"pthread_cond_init attr read");
+        out->value=(uint32_t)agr_bionic_cond_init(&rt->bionic_sync,a,(int32_t)attr);
 #else
         out->handled=0;
 #endif
@@ -698,6 +702,22 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
         out->value=(uint32_t)(!strcmp(name,"pthread_cond_signal")?agr_bionic_cond_signal(&rt->bionic_sync,a):agr_bionic_cond_broadcast(&rt->bionic_sync,a));
 #else
         out->action=AGR_ACTION_COND_BROADCAST;out->action_arg0=a;
+#endif
+    }
+    else if(!strcmp(name,"pthread_mutexattr_init")||!strcmp(name,"pthread_mutexattr_destroy")||
+            !strcmp(name,"pthread_mutexattr_settype")||!strcmp(name,"pthread_mutexattr_setpshared")||
+            !strcmp(name,"pthread_condattr_init")||!strcmp(name,"pthread_condattr_destroy")||
+            !strcmp(name,"pthread_condattr_setpshared")){
+#if defined(__APPLE__)
+        if (!strcmp(name,"pthread_mutexattr_init"))out->value=(uint32_t)agr_bionic_mutexattr_init(&rt->bionic_sync,a);
+        else if (!strcmp(name,"pthread_mutexattr_destroy"))out->value=(uint32_t)agr_bionic_mutexattr_destroy(&rt->bionic_sync,a);
+        else if (!strcmp(name,"pthread_mutexattr_settype"))out->value=(uint32_t)agr_bionic_mutexattr_settype(&rt->bionic_sync,a,(int32_t)b);
+        else if (!strcmp(name,"pthread_mutexattr_setpshared"))out->value=(uint32_t)agr_bionic_mutexattr_setpshared(&rt->bionic_sync,a,(int32_t)b);
+        else if (!strcmp(name,"pthread_condattr_init"))out->value=(uint32_t)agr_bionic_condattr_init(&rt->bionic_sync,a);
+        else if (!strcmp(name,"pthread_condattr_destroy"))out->value=(uint32_t)agr_bionic_condattr_destroy(&rt->bionic_sync,a);
+        else out->value=(uint32_t)agr_bionic_condattr_setpshared(&rt->bionic_sync,a,(int32_t)b);
+#else
+        out->handled=0;
 #endif
     }
     else if(!strcmp(name,"pthread_attr_init")||!strcmp(name,"pthread_attr_destroy")||

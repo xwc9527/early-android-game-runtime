@@ -23,11 +23,18 @@ typedef struct agr_bionic_sync {
 } agr_bionic_sync;
 
 int32_t agr_bionic_mutex_init(agr_bionic_sync *, uint32_t mutex, int32_t type);
+int32_t agr_bionic_mutexattr_init(agr_bionic_sync *, uint32_t attr);
+int32_t agr_bionic_mutexattr_destroy(agr_bionic_sync *, uint32_t attr);
+int32_t agr_bionic_mutexattr_settype(agr_bionic_sync *, uint32_t attr, int32_t type);
+int32_t agr_bionic_mutexattr_setpshared(agr_bionic_sync *, uint32_t attr, int32_t shared);
 int32_t agr_bionic_mutex_destroy(agr_bionic_sync *, uint32_t mutex);
 int32_t agr_bionic_mutex_lock(agr_bionic_sync *, uint32_t mutex);
 int32_t agr_bionic_mutex_trylock(agr_bionic_sync *, uint32_t mutex);
 int32_t agr_bionic_mutex_unlock(agr_bionic_sync *, uint32_t mutex);
 int32_t agr_bionic_cond_init(agr_bionic_sync *, uint32_t cond, int32_t shared);
+int32_t agr_bionic_condattr_init(agr_bionic_sync *, uint32_t attr);
+int32_t agr_bionic_condattr_destroy(agr_bionic_sync *, uint32_t attr);
+int32_t agr_bionic_condattr_setpshared(agr_bionic_sync *, uint32_t attr, int32_t shared);
 int32_t agr_bionic_cond_destroy(agr_bionic_sync *, uint32_t cond);
 int32_t agr_bionic_cond_signal(agr_bionic_sync *, uint32_t cond);
 int32_t agr_bionic_cond_broadcast(agr_bionic_sync *, uint32_t cond);

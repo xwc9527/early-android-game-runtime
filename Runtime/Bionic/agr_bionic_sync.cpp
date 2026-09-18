@@ -69,8 +69,43 @@ uint32_t tid(agr_bionic_sync *s) {
 
 extern "C" int32_t agr_bionic_mutex_init(agr_bionic_sync *s, uint32_t a,
                                             int32_t type) {
-  if (!a || type < 0 || type > 2) return AGR_ANDROID_EINVAL;
-  return store(s, a, static_cast<uint32_t>(type) << 14) ? 0 : AGR_ANDROID_EFAULT;
+  if (!a || type < 0 || (type & ~0x1f) != 0 || (type & 0xf) > 2)
+    return AGR_ANDROID_EINVAL;
+  const uint32_t value = (static_cast<uint32_t>(type & 0xf) << 14) |
+                         ((type & 0x10) ? kShared : 0u);
+  return store(s, a, value) ? 0 : AGR_ANDROID_EFAULT;
+}
+
+/* API19 pthread.c mutexattr/condattr operations; only the guest 32-bit word
+ * crosses this boundary, never a host pthread attribute object. */
+extern "C" int32_t agr_bionic_mutexattr_init(agr_bionic_sync *s, uint32_t a) {
+  return a && store(s,a,0) ? 0 : AGR_ANDROID_EINVAL;
+}
+extern "C" int32_t agr_bionic_mutexattr_destroy(agr_bionic_sync *s, uint32_t a) {
+  return a && store(s,a,UINT32_MAX) ? 0 : AGR_ANDROID_EINVAL;
+}
+extern "C" int32_t agr_bionic_mutexattr_settype(agr_bionic_sync *s,
+                                                    uint32_t a, int32_t type) {
+  uint32_t old=0;
+  if (!a || type<0 || type>2 || !load(s,a,&old)) return AGR_ANDROID_EINVAL;
+  return store(s,a,(old & ~0xfu) | static_cast<uint32_t>(type)) ? 0 : AGR_ANDROID_EFAULT;
+}
+extern "C" int32_t agr_bionic_mutexattr_setpshared(agr_bionic_sync *s,
+                                                       uint32_t a, int32_t shared) {
+  uint32_t old=0;
+  if (!a || (shared!=0 && shared!=1) || !load(s,a,&old)) return AGR_ANDROID_EINVAL;
+  return store(s,a,(old & ~0x10u) | (shared ? 0x10u : 0u)) ? 0 : AGR_ANDROID_EFAULT;
+}
+extern "C" int32_t agr_bionic_condattr_init(agr_bionic_sync *s, uint32_t a) {
+  return a && store(s,a,0) ? 0 : AGR_ANDROID_EINVAL;
+}
+extern "C" int32_t agr_bionic_condattr_destroy(agr_bionic_sync *s, uint32_t a) {
+  return a && store(s,a,0xdeada11du) ? 0 : AGR_ANDROID_EINVAL;
+}
+extern "C" int32_t agr_bionic_condattr_setpshared(agr_bionic_sync *s,
+                                                      uint32_t a, int32_t shared) {
+  if (!a || (shared!=0 && shared!=1)) return AGR_ANDROID_EINVAL;
+  return store(s,a,static_cast<uint32_t>(shared)) ? 0 : AGR_ANDROID_EFAULT;
 }
 
 /* _normal_lock from KitKat pthread.c: 0 -> 1 fast path, exchange 2 on
