@@ -42,10 +42,21 @@ int main(void) {
     int same_ok = same_run();
     printf("{");
     print_events("same", count, get);
-    cross_run();
+    int cross_ok = cross_run();
     printf(",");
     print_events("cross", count, get);
-    printf(",\"same_ok\":%d}\n", same_ok);
+    if (dlclose(cross) || dlclose(same)) {
+        fprintf(stderr, "dlclose fixture failed: %s\n", dlerror());
+        return 4;
+    }
+    cross = must_dlopen("libagr_eh2_A.so");
+    cross_run = (run_fn)must_dlsym(cross, "agr_eh2_cross_run");
+    int reload_ok = cross_run();
+    printf(",");
+    print_events("reload_cross", count, get);
+    printf(",\"same_ok\":%d,\"cross_ok\":%d,\"reload_ok\":%d}\n",
+           same_ok, cross_ok, reload_ok);
+    dlclose(cross);
+    dlclose(probe);
     return 0;
 }
-

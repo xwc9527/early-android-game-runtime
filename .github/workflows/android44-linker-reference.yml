@@ -282,7 +282,11 @@ jobs:
           import json
           result=json.load(open('android44-ehabi2-gate.json'))
           print('Android 4.4 EHABI Phase 2 oracle:',json.dumps(result,sort_keys=True))
-          assert result == {'same':[1,2], 'cross':[10,11,12,13], 'same_ok':1}, result
+          assert result == {
+              'same':[1,2], 'cross':[10,11,12,13],
+              'reload_cross':[10,11,12,13],
+              'same_ok':1, 'cross_ok':1, 'reload_ok':1,
+          }, result
           PY
       - name: AGR guest GCC EHABI Phase 2 differential
         run: |
@@ -310,11 +314,29 @@ jobs:
           print('AGR guest EHABI2:',json.dumps(agr,sort_keys=True))
           assert agr['same']==android['same'],(android,agr)
           assert agr['cross']==android['cross'],(android,agr)
+          assert agr['reload_cross']==android['reload_cross'],(android,agr)
           assert agr['same_ok']==android['same_ok'],(android,agr)
-          assert agr['cross_ok']==1,agr
+          assert agr['cross_ok']==android['cross_ok'],(android,agr)
+          assert agr['reload_ok']==android['reload_ok'],(android,agr)
+          assert agr['unload_stale']==0,agr
+          assert agr['reload_owned']==1,agr
+          assert agr['exidx_mismatches']==0,agr
+          assert agr['exidx'],agr
+          assert {'libagr_eh2_A.so','libagr_eh2_B.so','libagr_eh2_C.so'} <= {
+              event['module'] for event in agr['exidx']
+          },agr['exidx']
           symbols=[event['symbol'] for event in agr['trace']]
           for required in ('__cxa_throw','_Unwind_RaiseException','__gxx_personality_v0'):
             assert any(symbol.endswith(required) for symbol in symbols),(required,symbols)
+          assert 'cleanup_landing_pad' in symbols,symbols
+          assert 'handler_landing_pad' in symbols,symbols
+          states=[event['state'] for event in agr['trace']
+                  if event['symbol'].endswith('__gxx_personality_v0')]
+          assert 0 in states and 1 in states and 2 in states,states
+          results=[event['result'] for event in agr['trace']
+                   if event['result'] is not None]
+          assert 6 in results,results
+          assert 8 in results,results
           PY
       - uses: actions/upload-artifact@v4
         if: always()
