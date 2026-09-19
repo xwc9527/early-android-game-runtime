@@ -15,6 +15,7 @@
 #include <string.h>
 #include <stdatomic.h>
 #include <time.h>
+#include <pthread.h>
 #if defined(__APPLE__)
 #include <os/log.h>
 #endif
@@ -75,7 +76,7 @@ struct agr_process_runtime {
     atomic_flag thread_registry_lock;
     atomic_flag diagnostics_lock;
     atomic_flag jni_lock;
-    atomic_flag input_lock;
+    pthread_mutex_t input_lock;
     uint32_t failure_generation;
     agr_runtime *runtime;
     trap_entry traps[MAX_TRAPS];
@@ -832,14 +833,14 @@ static int dispatch_import(agr_guest *g, const char *name) {
     }
     if (!strcmp(name, "ALooper_pollAll")) {
         uint32_t result = 0xffffffffu;
-        while (atomic_flag_test_and_set_explicit(&g->input_lock,memory_order_acquire)) {}
+        pthread_mutex_lock(&g->input_lock);
         if (g->input_count && g->input_ident) {
             if (argument(g,1)) write_u32(g,argument(g,1),0xffffffffu);
             if (argument(g,2)) write_u32(g,argument(g,2),1);
             if (argument(g,3)) write_u32(g,argument(g,3),g->input_data);
             result=g->input_ident;
         }
-        atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
+        pthread_mutex_unlock(&g->input_lock);
         for (uint32_t i = 0; result==0xffffffffu && i < g->looper_fd_count; i++) {
             looper_fd *fd = &g->looper_fds[i]; virtual_pipe *pipe = find_pipe(g, fd->fd);
             if (!pipe || pipe->size == pipe->read_offset) continue;
@@ -866,14 +867,14 @@ static int dispatch_import(agr_guest *g, const char *name) {
         g->input_ident=g->input_data=0; guest_return(g,0,0); return 1;
     }
     if (!strcmp(name,"AInputQueue_getEvent")) {
-        while (atomic_flag_test_and_set_explicit(&g->input_lock,memory_order_acquire)) {}
+        pthread_mutex_lock(&g->input_lock);
         if (argument(g,0)!=g->input_queue_handle || !g->input_count) {
-            atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
+            pthread_mutex_unlock(&g->input_lock);
             guest_return(g,0xffffffffu,0); return 1;
         }
         input_event queued=g->input_events[g->input_head%32];
         uint32_t handle=queued.handle;
-        atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
+        pthread_mutex_unlock(&g->input_lock);
         write_u32(g,argument(g,1),handle);
         agr_guest_record_runtime_event(g,"input.get",argument(g,0),handle,0,
                                        (int32_t)queued.action,queued.x,queued.y,-1);
@@ -885,18 +886,18 @@ static int dispatch_import(agr_guest *g, const char *name) {
     }
     if (!strcmp(name,"AInputQueue_finishEvent")) {
         uint32_t event_handle=argument(g,1);int32_t handled=(int32_t)argument(g,2);
-        while (atomic_flag_test_and_set_explicit(&g->input_lock,memory_order_acquire)) {}
+        pthread_mutex_lock(&g->input_lock);
         if (g->input_count && g->input_events[g->input_head%32].handle==event_handle) {
             g->input_head++; g->input_count--; atomic_fetch_add_explicit(&g->input_consumed_count,1u,memory_order_relaxed);
         }
-        atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
+        pthread_mutex_unlock(&g->input_lock);
         agr_guest_record_runtime_event(g,"input.finish",argument(g,0),event_handle,0,-1,0,0,handled);
         guest_return(g,0,0); return 1;
     }
     input_event event_value={0}; input_event *event=NULL; uint32_t event_handle=argument(g,0);
-    while (atomic_flag_test_and_set_explicit(&g->input_lock,memory_order_acquire)) {}
+    pthread_mutex_lock(&g->input_lock);
     for(uint32_t i=0;i<g->input_count;i++){ input_event *candidate=&g->input_events[(g->input_head+i)%32]; if(candidate->handle==event_handle){event_value=*candidate;event=&event_value;break;} }
-    atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
+    pthread_mutex_unlock(&g->input_lock);
     if (!strcmp(name,"AInputEvent_getType")) {
         agr_guest_record_runtime_event(g,"input.guest_handler",event_handle,0,event?(int32_t)event->type:0,
                                        event?(int32_t)event->action:-1,event?event->x:0,event?event->y:0,-1);
@@ -1038,13 +1039,13 @@ agr_guest *agr_guest_create(void) {
     atomic_flag_clear_explicit(&g->thread_registry_lock,memory_order_release);
     atomic_flag_clear_explicit(&g->diagnostics_lock,memory_order_release);
     atomic_flag_clear_explicit(&g->jni_lock,memory_order_release);
-    atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
+    if (pthread_mutex_init(&g->input_lock,NULL)) { free(g); return NULL; }
     atomic_flag_clear_explicit(&g->framebuffer_lock,memory_order_release);
     g->process_cpu = arm_interp_create(); g->run_budget = 1000000; g->next_trap = IMPORT_BASE; g->next_array_handle = 0x61000000u;
     g->next_asset_handle = 0x62010000u; g->input_queue_handle=0x67000000u; g->next_input_handle=0x67000100u;
-    if (!g->process_cpu) { free(g); return NULL; }
+    if (!g->process_cpu) { pthread_mutex_destroy(&g->input_lock); free(g); return NULL; }
     g->main_thread=agr_guest_thread_context_create_main(g,g->process_cpu,1,0,0,0);
-    if (!g->main_thread) { arm_interp_destroy(g->process_cpu); free(g); return NULL; }
+    if (!g->main_thread) { arm_interp_destroy(g->process_cpu); pthread_mutex_destroy(&g->input_lock); free(g); return NULL; }
     agr_guest_thread_context_bind(g->main_thread);
     agr_callbacks cb = {0}; cb.user = g; cb.read = mem_read_cb; cb.write = mem_write_cb; cb.loader_write = mem_loader_write_cb; cb.protect = mem_protect_cb; cb.resolve_import = resolve_import_cb;
     cb.log = guest_log_cb;
@@ -1057,12 +1058,12 @@ agr_guest *agr_guest_create(void) {
     cb.memory_base=mem_base_cb;
     cb.pipe_create = pipe_create_cb; cb.fd_read = fd_read_cb; cb.fd_write = fd_write_cb; cb.fd_close = fd_close_cb;
     g->runtime = agr_runtime_create(&cb, 0x01008000, 0x01020000, 0x01900000, 0x02000000);
-    if (!g->runtime) { agr_guest_thread_context_destroy(g->main_thread); arm_interp_destroy(g->process_cpu); free(g); return NULL; }
+    if (!g->runtime) { agr_guest_thread_context_destroy(g->main_thread); arm_interp_destroy(g->process_cpu); pthread_mutex_destroy(&g->input_lock); free(g); return NULL; }
     g->main_thread->guest_stack_base=agr_malloc(g->runtime,0x40000u);
     g->main_thread->guest_stack_size=g->main_thread->guest_stack_base?0x40000u:0;
     g->main_thread->guest_tls_base=g->main_thread->guest_stack_base+0x40000u-560u;
     if (!g->main_thread->guest_stack_base || agr_runtime_attach_current_thread(g->runtime,1,1,g->main_thread->guest_tls_base)) {
-        agr_runtime_destroy(g->runtime); agr_guest_thread_context_destroy(g->main_thread); arm_interp_destroy(g->process_cpu); free(g); return NULL;
+        agr_runtime_destroy(g->runtime); agr_guest_thread_context_destroy(g->main_thread); arm_interp_destroy(g->process_cpu); pthread_mutex_destroy(&g->input_lock); free(g); return NULL;
     }
     g->main_thread->guest_errno_address=agr_runtime_errno_address(g->runtime,1);
     g->main_thread->pthread_handle=agr_runtime_current_pthread(g->runtime);
@@ -1097,7 +1098,7 @@ void agr_guest_destroy(agr_guest *g) {
     for (uint32_t i = 0; i < g->trap_count; i++) free(g->traps[i].name);
     free(g->framebuffer);
     agr_runtime_detach_current_thread(g->runtime,1);
-    agr_runtime_destroy(g->runtime); agr_guest_thread_context_destroy(g->main_thread); arm_interp_destroy(g->process_cpu); free(g);
+    agr_runtime_destroy(g->runtime); agr_guest_thread_context_destroy(g->main_thread); arm_interp_destroy(g->process_cpu); pthread_mutex_destroy(&g->input_lock); free(g);
 }
 const char *agr_guest_last_error(agr_guest *g) { return g ? g->error : "guest create failed"; }
 const char *agr_guest_last_android_log(agr_guest *g) { return g ? g->last_log : ""; }
@@ -1389,13 +1390,13 @@ uint32_t agr_guest_swap_count(agr_guest *g) { return g ? atomic_load_explicit(&g
 uint32_t agr_guest_asset_open_count(agr_guest *g) { return g ? g->asset_open_count : 0; }
 int32_t agr_guest_inject_motion(agr_guest *g, int32_t action, float x, float y) {
     if(!g) return -1;
-    while (atomic_flag_test_and_set_explicit(&g->input_lock,memory_order_acquire)) {}
-    if(g->input_count>=32) { atomic_flag_clear_explicit(&g->input_lock,memory_order_release); return -1; }
+    pthread_mutex_lock(&g->input_lock);
+    if(g->input_count>=32) { pthread_mutex_unlock(&g->input_lock); return -1; }
     input_event *e=&g->input_events[(g->input_head+g->input_count)%32];
     *e=(input_event){g->next_input_handle,2u,(uint32_t)action,1u,0u,x,y};
     g->next_input_handle+=4; g->input_count++;
     uint32_t handle=e->handle;
-    atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
+    pthread_mutex_unlock(&g->input_lock);
     agr_guest_record_runtime_event(g,"input.inject",g->input_queue_handle,handle,0,action,x,y,-1);
     return 0;
 }
