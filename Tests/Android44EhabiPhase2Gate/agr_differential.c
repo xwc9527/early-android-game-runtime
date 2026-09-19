@@ -27,6 +27,10 @@ typedef struct exidx_event {
     uint32_t pc, result, count, expected, expected_count;
     char module[96];
 } exidx_event;
+typedef struct host_call_event {
+    uint32_t pc, lr, sp, regs[4];
+    char symbol[64];
+} host_call_event;
 typedef struct harness {
     void *cpu;
     agr_runtime *runtime;
@@ -35,6 +39,7 @@ typedef struct harness {
     uint32_t watched[24]; const char *watched_names[24]; uint32_t watched_count;
     pending_return pending[MAX_PENDING]; uint32_t pending_count;
     exidx_event exidx[MAX_EXIDX]; uint32_t exidx_count, exidx_mismatches;
+    host_call_event recent_calls[64]; uint32_t recent_call_count;
     char error[512];
 } harness;
 
@@ -89,6 +94,9 @@ static int32_t invoke_guest(void*o,uint32_t fn){return call_guest((harness*)o,fn
 
 static int dispatch_trap(harness*h,const char*name){
     uint32_t regs[4];for(uint32_t i=0;i<4;i++)regs[i]=arm_interp_get_reg(h->cpu,i);
+    host_call_event *call=&h->recent_calls[h->recent_call_count++%64u];
+    call->pc=arm_interp_get_reg(h->cpu,15)-4u;call->lr=arm_interp_get_reg(h->cpu,14);call->sp=arm_interp_get_reg(h->cpu,13);
+    memcpy(call->regs,regs,sizeof(regs));snprintf(call->symbol,sizeof(call->symbol),"%s",name);
     agr_dispatch_result out={0};
     if(agr_dispatch_system(h->runtime,name,regs,arm_interp_get_reg(h->cpu,13),&out)||!out.handled){snprintf(h->error,sizeof(h->error),"unhandled host import %s: %s",name,agr_last_error(h->runtime));return -1;}
     if(out.action==AGR_ACTION_ABORT){snprintf(h->error,sizeof(h->error),"guest abort via %s",name);return -1;}
@@ -128,6 +136,14 @@ static int read_events(harness*h,uint32_t probe,int*out,uint32_t cap){uint32_t c
 static void print_events(const int*v,int n){putchar('[');for(int i=0;i<n;i++)printf("%s%d",i?",":"",v[i]);putchar(']');}
 static void print_trace(harness*h){putchar('[');for(uint32_t i=0;i<h->trace_count;i++){trace_event*e=&h->trace[i];printf("%s{\"symbol\":\"%s\",\"pc\":%u,\"state\":%u,\"result\":",i?",":"",e->symbol,e->pc,e->r0);if(e->has_result)printf("%u",e->result);else printf("null");printf(",\"sp\":%u,\"lr\":%u}",e->sp,e->lr);}putchar(']');}
 static void print_exidx(harness*h){putchar('[');for(uint32_t i=0;i<h->exidx_count;i++){exidx_event*e=&h->exidx[i];printf("%s{\"pc\":%u,\"module\":\"%s\",\"result\":%u,\"count\":%u,\"expected\":%u,\"expected_count\":%u}",i?",":"",e->pc,e->module,e->result,e->count,e->expected,e->expected_count);}putchar(']');}
+static void dump_failure(harness*h,const char*stage){
+    fprintf(stderr,"EHABI2_FAILURE stage=%s error=%s pc=%08x lr=%08x sp=%08x cpsr=%08x\n",stage,h->error,
+            arm_interp_get_reg(h->cpu,15),arm_interp_get_reg(h->cpu,14),arm_interp_get_reg(h->cpu,13),arm_interp_get_cpsr(h->cpu));
+    for(uint32_t i=0;i<h->trace_count;i++){trace_event*e=&h->trace[i];fprintf(stderr,"TRACE %u symbol=%s pc=%08x state=%u result=%s%u sp=%08x lr=%08x\n",i,e->symbol,e->pc,e->r0,e->has_result?"":"unset:",e->result,e->sp,e->lr);}
+    for(uint32_t i=0;i<h->exidx_count;i++){exidx_event*e=&h->exidx[i];fprintf(stderr,"EXIDX %u pc=%08x module=%s result=%08x count=%u expected=%08x expected_count=%u\n",i,e->pc,e->module,e->result,e->count,e->expected,e->expected_count);}
+    uint32_t first=h->recent_call_count>64u?h->recent_call_count-64u:0u;
+    for(uint32_t i=first;i<h->recent_call_count;i++){host_call_event*e=&h->recent_calls[i%64u];fprintf(stderr,"HOSTCALL %u symbol=%s pc=%08x lr=%08x sp=%08x r0=%08x r1=%08x r2=%08x r3=%08x\n",i,e->symbol,e->pc,e->lr,e->sp,e->regs[0],e->regs[1],e->regs[2],e->regs[3]);}
+}
 
 int agr_ehabi2_run(int argc,char**argv){
     if(argc!=7){fprintf(stderr,"usage: %s gnustl probe same C B A\n",argv[0]);return 2;}
@@ -140,7 +156,7 @@ int agr_ehabi2_run(int argc,char**argv){
     watch_addr(&h,same_h,"_Unwind_RaiseException","same:_Unwind_RaiseException");watch_addr(&h,same_h,"_Unwind_Resume","same:_Unwind_Resume");watch_addr(&h,b_h,"_Unwind_Resume","B:_Unwind_Resume");watch_addr(&h,c_h,"_Unwind_RaiseException","C:_Unwind_RaiseException");watch_addr(&h,probe,"agr_eh2_event","agr_eh2_event");
     int same[32],cross[32],reload_cross[32],same_n,cross_n,reload_n,same_ok=0,cross_ok=0,reload_ok=0;
     uint32_t before=h.trace_count;
-    uint32_t same_fn=agr_dlsym(h.runtime,same_h,"agr_eh2_same_run");if(!same_fn||call_guest(&h,same_fn,NULL,0,&same_ok)||(same_n=read_events(&h,probe,same,32))<0){fprintf(stderr,"same: %s\n",h.error);return 6;}
+    uint32_t same_fn=agr_dlsym(h.runtime,same_h,"agr_eh2_same_run");if(!same_fn||call_guest(&h,same_fn,NULL,0,&same_ok)||(same_n=read_events(&h,probe,same,32))<0){fprintf(stderr,"same: %s\n",h.error);dump_failure(&h,"same");return 6;}
     uint32_t same_trace_end=h.trace_count,cross_fn=agr_dlsym(h.runtime,a_h,"agr_eh2_cross_run");if(!cross_fn||call_guest(&h,cross_fn,NULL,0,&cross_ok)||(cross_n=read_events(&h,probe,cross,32))<0){fprintf(stderr,"cross: %s\n",h.error);return 7;}
     uint32_t first_cross_end=h.trace_count,c_pc=agr_dlsym(h.runtime,c_h,"agr_eh2_C_throw"),b_pc=agr_dlsym(h.runtime,b_h,"agr_eh2_B_call"),a_pc=cross_fn;
     if(h.exidx_mismatches){fprintf(stderr,"formal linker exidx ownership mismatches: %u\n",h.exidx_mismatches);return 8;}
