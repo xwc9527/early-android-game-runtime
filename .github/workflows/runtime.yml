@@ -1,0 +1,138 @@
+name: AGR Runtime
+
+on:
+  workflow_dispatch:
+    inputs:
+      contracts_only:
+        description: Run native contracts without the bounded Simulator smoke
+        type: boolean
+        default: false
+      run_kind:
+        description: Evidence intent
+        type: choice
+        options: [discovery, closure]
+        default: discovery
+  push:
+    branches: [bionic-thread-migration, playable-vertical-slice-1, 'feature/**', 'phase/**']
+    paths:
+      - 'Runtime/**'
+      - 'Tests/Conformance/**'
+      - 'Tests/Ehabi/**'
+      - 'Tests/Android44EhabiPhase2Gate/**'
+      - 'Tests/Android44EhabiPhase2BGate/**'
+      - 'scripts/test-ehabi-unwind.sh'
+      - 'scripts/test-ehabi-phase2-simulator.sh'
+      - 'scripts/test-ehabi-phase2b-simulator.sh'
+      - 'App/**'
+      - 'scripts/build-and-run-simulator.sh'
+      - 'scripts/run-simulator-smoke-bounded.py'
+      - 'scripts/run-simulator-regressions.sh'
+
+jobs:
+  simulator-runtime:
+    runs-on: macos-15
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        shard: [0]
+    env:
+      SHARD_INDEX: ${{ matrix.shard }}
+      SHARD_COUNT: 1
+    steps:
+      - id: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore toolchain and dependency caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            .tools
+            Vendor/ANGLE-Package
+            Runtime/ArmInterpreter/target
+          key: agr-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-and-run-simulator.sh', 'Tests/Samples/fdroid.json') }}
+          restore-keys: agr-${{ runner.os }}-
+      - name: Validate governance state
+        run: python3 ci/validate-governance.py --mode working
+      - name: Inspect Xcode and Simulator
+        run: |
+          set -euxo pipefail
+          sw_vers
+          uname -m
+          xcodebuild -version
+          xcrun simctl list runtimes available
+          xcrun simctl list devices available
+          xcrun --sdk iphonesimulator --show-sdk-path
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - id: contracts
+        name: Run independent Runtime contracts
+        continue-on-error: true
+        run: bash ci/run-contracts.sh
+      - name: Build and run native Runtime smoke in Simulator
+        id: smoke
+        continue-on-error: true
+        if: ${{ inputs.contracts_only != true }}
+        run: |
+          set +e
+          python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds 900
+          STATUS=$?
+          if [[ $STATUS -ne 0 ]]; then
+            for FILE in build/artifacts/simulator-smoke-failure.json \
+                        build/artifacts/simulator-smoke-timeout.json \
+                        build/artifacts/runtime-status.json \
+                        build/artifacts/runtime-failure.json \
+                        build/artifacts/debug-failure.json; do
+              if [[ -s "$FILE" ]]; then
+                echo "::error title=Simulator evidence $(basename "$FILE")::$(tr '\n' ' ' < "$FILE" | cut -c1-3000)"
+              fi
+            done
+            if [[ -s build/artifacts/smoke-stderr.log ]]; then
+              tail -n 30 build/artifacts/smoke-stderr.log | while IFS= read -r line; do
+                echo "::error title=Simulator stderr::$line"
+              done
+            fi
+            if [[ -s build/artifacts/smoke-stdout.log ]]; then
+              tail -n 30 build/artifacts/smoke-stdout.log | while IFS= read -r line; do
+                echo "::error title=Simulator stdout::$line"
+              done
+            fi
+            exit $STATUS
+          fi
+      - name: Run existing Runtime and real-game regressions
+        id: regressions
+        continue-on-error: true
+        if: ${{ inputs.contracts_only != true && steps.smoke.outcome == 'success' }}
+        run: bash ci/run-regressions.sh
+      - name: Build AGR run summary
+        if: always()
+        env:
+          RUN_KIND: ${{ inputs.run_kind || 'discovery' }}
+        run: |
+          python3 ci/build-summary.py \
+            --platform ios-simulator \
+            --run-kind "$RUN_KIND" \
+            --build-status '${{ steps.smoke.outcome }}' \
+            --contracts-status '${{ steps.contracts.outcome }}' \
+            --regressions-status '${{ steps.regressions.outcome }}' \
+            --result build/artifacts/runtime-smoke.json \
+            --diagnostic build/artifacts/pvs-progress.json
+      - name: Validate closure candidate identity
+        if: ${{ always() && inputs.run_kind == 'closure' }}
+        run: python3 ci/validate-governance.py --mode closure --summary build/artifacts/run-summary.json
+      - name: Upload Simulator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-runtime-smoke-${{ matrix.shard }}
+          path: build/artifacts
+      - name: Enforce Runtime result
+        if: always()
+        run: |
+          test '${{ steps.contracts.outcome }}' = success
+          if [[ '${{ inputs.contracts_only }}' != 'true' ]]; then
+            test '${{ steps.smoke.outcome }}' = success
+            test '${{ steps.regressions.outcome }}' = success
+          fi

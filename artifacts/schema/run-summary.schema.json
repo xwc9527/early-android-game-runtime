@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agr.invalid/schema/run-summary.schema.json",
+  "type": "object",
+  "required": ["schema_version","run","changes","build","contracts","regressions","target","warnings","diagnostics","closure","artifacts"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "run": {"type":"object","required":["tested_commit","tested_tree","baseline_commit","branch","platform","valid_run"]},
+    "changes": {"type":"object","required":["files","modules","stable_modules_touched"]},
+    "build": {"type":"object","required":["status"]},
+    "contracts": {"type":"object","required":["status","new_failures","resolved_failures"]},
+    "regressions": {"type":"object","required":["status","new_failures","resolved_failures","unchanged_failures"]},
+    "target": {"type":"object","required":["name","status","stage","normalized_signature","raw_fingerprint"]},
+    "warnings": {"type":"object","required":["new","resolved"]},
+    "diagnostics": {"type":"object","required":["passive","intrusive"]},
+    "closure": {"type":"object","required":["target","tested_commit","tested_tree","state","eligible_for_merge"],"properties":{"state":{"enum":["IMPLEMENTED","CLOSED"]}}},
+    "artifacts": {"type":"object"}
+  }
+}

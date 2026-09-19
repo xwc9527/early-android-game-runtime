@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version","modules"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "modules": {"type":"array","items":{"type":"object","required":["name","status","paths"],"properties":{"status":{"enum":["stable","active","experimental"]}}}}
+  }
+}

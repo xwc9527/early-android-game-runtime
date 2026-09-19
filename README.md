@@ -19,7 +19,7 @@ product. See the project overview for the exact completion boundary.
 
 ## Reproducible Simulator regression
 
-`.github/workflows/ios-simulator.yml` starts from a clean macOS runner, resolves
+`.github/workflows/runtime.yml` starts from a clean macOS runner, resolves
 licensed F-Droid APK inputs, verifies their published SHA-256 hashes, performs a
 static APK/ELF scan, builds the Runtime once per shard, boots an iOS Simulator,
 and tests every APK assigned to that shard. No third-party APK is committed to

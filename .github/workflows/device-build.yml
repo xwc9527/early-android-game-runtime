@@ -1,16 +1,15 @@
-name: iPhone device build
+name: AGR device build
 
 on:
   workflow_dispatch:
   push:
-    branches: [main, playable-vertical-slice-1]
+    branches: [main, playable-vertical-slice-1, 'feature/**', 'phase/**']
     paths:
       - 'scripts/build-iphoneos.sh'
       - 'scripts/test-ehabi-unwind.sh'
       - 'scripts/test-ehabi-phase2-simulator.sh'
       - 'scripts/test-ehabi-phase2b-simulator.sh'
       - 'App/main.m'
-      - '.github/workflows/ios-device.yml'
       - 'Runtime/**'
       - 'Tests/Ehabi/**'
       - 'Tests/Android44EhabiPhase2Gate/**'
@@ -29,6 +28,19 @@ jobs:
       IOS_ARTIFACT_PASSWORD: ${{ secrets.IOS_ARTIFACT_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore toolchain and dependency caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            .tools
+            Vendor/ANGLE-Package
+            Runtime/ArmInterpreter/target
+          key: agr-device-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-iphoneos.sh') }}
+          restore-keys: agr-device-${{ runner.os }}-
+      - name: Validate governance state
+        run: python3 ci/validate-governance.py --mode working
       - name: Inspect device SDK
         run: |
           xcodebuild -version
@@ -63,6 +75,7 @@ jobs:
           echo "IOS_SIGNING_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
           echo "IOS_PROVISIONING_PROFILE=$RUNNER_TEMP/device.mobileprovision" >> "$GITHUB_ENV"
       - name: Build arm64 iPhone app
+        id: device_build
         run: |
           set -o pipefail
           bash scripts/build-iphoneos.sh 2>&1 | tee iphoneos-build.log || {
@@ -99,3 +112,15 @@ jobs:
       - name: Remove temporary signing keychain
         if: always()
         run: security delete-keychain "$RUNNER_TEMP/agr-ci.keychain-db" 2>/dev/null || true
+      - name: Build device run summary
+        if: always()
+        run: |
+          python3 ci/build-summary.py --platform iphoneos --run-kind build \
+            --build-status '${{ steps.device_build.outcome }}' \
+            --contracts-status pass --regressions-status skipped
+      - name: Upload device evidence summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agr-iphoneos-run-summary
+          path: build/artifacts/run-summary.json

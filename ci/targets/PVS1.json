@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "target": "PVS1",
+  "requirements": {
+    "apk_bootstrap": true,
+    "native_activity": true,
+    "window_created": true,
+    "input_attached": true,
+    "input_consumed": true,
+    "guest_progress_after_input": true,
+    "runtime_failure": false,
+    "clean_teardown": true
+  },
+  "evidence_fields": [
+    "generic_apk_bootstrap",
+    "pvs1_closure.nativeactivity_window",
+    "pvs1_closure.input_consumed",
+    "replay_consumed",
+    "frame_after_input",
+    "swap_after_input",
+    "runtime_failure_signature",
+    "pvs1_closure.clean_teardown"
+  ],
+  "novel_frame_required": false
+}

@@ -1,0 +1,60 @@
+name: AGR post-merge gate
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - 'ci/governance/*.json'
+      - 'AGENTS.md'
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  post-merge:
+    runs-on: macos-15
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Restore toolchain and dependency caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            .tools
+            Vendor/ANGLE-Package
+            Runtime/ArmInterpreter/target
+          key: agr-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-and-run-simulator.sh', 'Tests/Samples/fdroid.json') }}
+          restore-keys: agr-${{ runner.os }}-
+      - name: Verify merged tree against closure evidence
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python3 ci/fetch-closure-evidence.py
+          python3 ci/verify-merge.py build/artifacts/closure-run-summary.json --merged
+      - name: Compile governance tools
+        run: python3 -m py_compile ci/*.py
+      - name: Critical static and JNI contract
+        id: critical
+        run: bash scripts/test-jni-methods.sh
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Active target smoke
+        id: smoke
+        run: python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds 900
+      - name: Post-merge summary
+        if: always()
+        run: |
+          python3 ci/build-summary.py --platform ios-simulator --run-kind post-merge \
+            --build-status '${{ steps.smoke.outcome }}' \
+            --contracts-status '${{ steps.critical.outcome }}' --regressions-status skipped \
+            --result build/artifacts/runtime-smoke.json
+      - name: Upload post-merge evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agr-post-merge-${{ github.sha }}
+          path: build/artifacts

@@ -1,0 +1,39 @@
+name: AGR governance
+
+on:
+  pull_request:
+  push:
+    branches: [main, bionic-thread-migration, playable-vertical-slice-1, 'feature/**', 'phase/**']
+    paths:
+      - 'AGENTS.md'
+      - 'docs/**'
+      - 'ci/**'
+      - 'artifacts/schema/**'
+      - '.github/workflows/**'
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Compile governance tools
+        run: python3 -m py_compile ci/*.py
+      - name: Validate state and stable-module protection
+        run: python3 ci/validate-governance.py --mode working
+      - name: Validate JSON documents
+        run: |
+          python3 - <<'PY'
+          import json,pathlib
+          files=list(pathlib.Path('ci').rglob('*.json'))+list(pathlib.Path('artifacts/schema').glob('*.json'))
+          for path in files: json.loads(path.read_text(encoding='utf-8'))
+          print(f'validated {len(files)} JSON documents')
+          PY
+      - name: Upload governance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agr-governance
+          path: build/artifacts/governance-report.json

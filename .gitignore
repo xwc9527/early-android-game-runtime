@@ -4,7 +4,9 @@ build/
 .tmp/
 .research/
 DerivedData/
-artifacts/
+artifacts/*
+!artifacts/schema/
+!artifacts/schema/*.json
 *.xcresult
 *.app
 *.dSYM

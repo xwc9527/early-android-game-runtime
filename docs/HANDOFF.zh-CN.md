@@ -83,10 +83,11 @@ cargo test --manifest-path Runtime/ArmInterpreter/Cargo.toml --lib
 
 | Workflow | 文件 | 作用 |
 |---|---|---|
-| iOS Simulator Runtime | `.github/workflows/ios-simulator.yml` | allocator/JNI/VMA/linker/pthread/fd contracts、bounded Simulator smoke 和真实游戏回归 |
-| iPhone device build | `.github/workflows/ios-device.yml` | iphoneos arm64 编译、可选签名和 IPA artifact |
+| AGR Runtime | `.github/workflows/runtime.yml` | 独立 contracts、bounded Simulator smoke、真实游戏 target、统一 run-summary 和 closure identity gate |
+| AGR device build | `.github/workflows/device-build.yml` | iphoneos arm64 编译、可选签名、IPA artifact 和 device run-summary |
 | Android 4.4 linker differential | `.github/workflows/android44-linker-reference.yml` | 在真实 API19 ARM emulator 与 AGR 比较 mmap/linker/libdl/pthread 结果 |
 | iOS Simulator smoke (bounded) | `.github/workflows/ios-simulator-smoke.yml` | 独立硬超时 smoke 与 hang 现场采集 |
+| AGR governance | `.github/workflows/governance.yml` | 文档/状态/schema、stable-module reopen 和治理工具校验 |
 
 workflow 使用 path filter。只修改文档或 `tools/observe_iphone.py` 不会自动触发 Runtime 构建；迁移到新仓库后应手动运行前三个 workflow 建立新环境的基线。
 

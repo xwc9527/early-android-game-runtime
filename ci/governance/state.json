@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "baseline": {
+    "branch": "main",
+    "commit": "dd83c7425e49a33b8a87d047b39d1b36a8e5464e",
+    "last_known_good": "dd83c7425e49a33b8a87d047b39d1b36a8e5464e"
+  },
+  "active": {
+    "target": "PVS1",
+    "branch": "playable-vertical-slice-1",
+    "lifecycle": "ACTIVE",
+    "primary_blocker": "Simulator app process exits after replay event 4 is consumed while bounded swap wait 2 is active",
+    "first_broken_boundary": "AGRSimulator process lifetime terminates before the bounded post-input wait returns",
+    "first_broken_boundary_evidence": "input_consumed=4, pvs-progress before:replay.4.wait.2, empty runtime failure, timeout process check reports pid no longer running"
+  },
+  "ci_budget": {
+    "valid_discovery_runs": 1,
+    "valid_closure_runs": 1,
+    "infrastructure_failures_consume_budget": false,
+    "discovery_runs_used": 1,
+    "closure_runs_used": 0
+  }
+}
