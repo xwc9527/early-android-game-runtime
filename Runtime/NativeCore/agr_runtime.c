@@ -327,6 +327,8 @@ const char*agr_symbol_name(agr_runtime*rt,uint32_t i){return rt?agr_aosp_dynamic
 uint32_t agr_symbol_address(agr_runtime*rt,uint32_t i){return rt?agr_aosp_dynamic_symbol_address(rt->dynamic_linker,i):0;}
 uint32_t agr_needed_count(agr_runtime*rt){return rt?agr_aosp_dynamic_needed_count(rt->dynamic_linker):0;}
 const char*agr_needed_name(agr_runtime*rt,uint32_t i){return rt?agr_aosp_dynamic_needed_name(rt->dynamic_linker,i):NULL;}
+uint32_t agr_loaded_module_count(agr_runtime*rt){return rt?agr_aosp_dynamic_loaded_count(rt->dynamic_linker):0;}
+const char*agr_loaded_module_name(agr_runtime*rt,uint32_t i){return rt?agr_aosp_dynamic_loaded_name(rt->dynamic_linker,i):NULL;}
 uint32_t agr_constructor_count(agr_runtime*rt){return rt?agr_aosp_dynamic_constructor_count(rt->dynamic_linker):0;}
 uint32_t agr_constructor_address(agr_runtime*rt,uint32_t i){return rt?agr_aosp_dynamic_constructor_address(rt->dynamic_linker,i):0;}
 uint32_t agr_finalizer_count(agr_runtime*rt){return rt?agr_aosp_dynamic_finalizer_count(rt->dynamic_linker):0;}

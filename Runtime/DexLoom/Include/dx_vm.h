@@ -102,6 +102,8 @@ typedef struct {
 
 // Native method implementation signature
 typedef DxResult (*DxNativeMethodFn)(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count);
+typedef DxResult (*DxUnboundNativeMethodFn)(DxVM *vm, DxFrame *frame, DxMethod *method,
+                                            DxValue *args, uint32_t arg_count, void *user);
 
 // Runtime method representation
 struct DxMethod {
@@ -201,6 +203,12 @@ struct DxVM {
     DxDexFile *dex;              // primary DEX (for backwards compat)
     DxDexFile *dex_files[DX_MAX_DEX_FILES];
     uint32_t   dex_count;
+    /* Host runtime boundary used only when a DEX-declared native method has
+       no framework-native implementation inside DexLoom. */
+    DxUnboundNativeMethodFn unbound_native_fn;
+    void                   *unbound_native_user;
+    int32_t               (*load_library_fn)(void *user, const char *name);
+    void                   *load_library_user;
 
     // Per-DEX class cache: maps class_def_index -> already-loaded DxClass*
     // Avoids re-parsing the same class_def on repeated load_class calls

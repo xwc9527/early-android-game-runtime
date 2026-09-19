@@ -64,9 +64,28 @@ int agr_jni_method_id(agr_jni_method_table *table, uint32_t class_handle,
     if (!name_copy || !signature_copy) { free(name_copy);free(signature_copy);return -1; }
     size_t index=table->count++;
     table->entries[index]=(agr_jni_method){METHOD_BASE+(uint32_t)index*4u,
-                                             class_handle,name_copy,signature_copy};
+                                             class_handle,name_copy,signature_copy,0};
     table->buckets[slot]=(uint32_t)index+1;
     *handle=table->entries[index].handle;
+    return 0;
+}
+int agr_jni_method_bind(agr_jni_method_table *table, uint32_t class_handle,
+                        const char *name, const char *signature, uint32_t native_address) {
+    uint32_t handle=0;
+    if(!native_address||agr_jni_method_id(table,class_handle,name,signature,&handle))return -1;
+    uint32_t index=(handle-METHOD_BASE)/4u;
+    table->entries[index].native_address=native_address;
+    return 0;
+}
+uint32_t agr_jni_method_native_address(const agr_jni_method_table *table,
+                                       uint32_t class_handle, const char *name,
+                                       const char *signature) {
+    if(!table||!name||!signature)return 0;
+    for(size_t i=0;i<table->count;i++) {
+        const agr_jni_method *entry=&table->entries[i];
+        if(entry->class_handle==class_handle&&!strcmp(entry->name,name)&&
+           !strcmp(entry->signature,signature))return entry->native_address;
+    }
     return 0;
 }
 const agr_jni_method *agr_jni_method_lookup(const agr_jni_method_table *table,

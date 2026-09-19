@@ -154,6 +154,8 @@ AGR_API const char *agr_symbol_name(agr_runtime *runtime, uint32_t index);
 AGR_API uint32_t agr_symbol_address(agr_runtime *runtime, uint32_t index);
 AGR_API uint32_t agr_needed_count(agr_runtime *runtime);
 AGR_API const char *agr_needed_name(agr_runtime *runtime, uint32_t index);
+AGR_API uint32_t agr_loaded_module_count(agr_runtime *runtime);
+AGR_API const char *agr_loaded_module_name(agr_runtime *runtime, uint32_t index);
 AGR_API uint32_t agr_constructor_count(agr_runtime *runtime);
 AGR_API uint32_t agr_constructor_address(agr_runtime *runtime, uint32_t index);
 AGR_API uint32_t agr_finalizer_count(agr_runtime *runtime);

@@ -1,6 +1,8 @@
 #include "dx_vm.h"
 #include "dx_dex.h"
 #include "dx_memory.h"
+#include "dx_apk.h"
+#include "dx_manifest.h"
 #include "game_dex_runner.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +25,7 @@ static int32_t g_next_texture = 1;
 static int32_t g_bound_texture = 0;
 static int32_t g_log_calls = 0;
 static int32_t g_next_sound = 1;
+static char g_package_name[256];
 
 static void add_method(DxClass *cls, const char *name, const char *shorty,
                        uint32_t flags, DxNativeMethodFn fn, int direct) {
@@ -90,7 +93,7 @@ static DxResult context_get_resources(DxVM *vm, DxFrame *frame, DxValue *args, u
 
 static DxResult context_get_package_name(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
     (void)args; (void)count;
-    frame->result = DX_OBJ_VALUE(dx_vm_create_string(vm,"com.onetwofivegames.kungfoobarracuda"));
+    frame->result = DX_OBJ_VALUE(dx_vm_create_string(vm,g_package_name));
     frame->has_result = true; return DX_OK;
 }
 
@@ -249,37 +252,245 @@ struct agr_dex_game {
     DxDexFile *dex;
     DxVM *vm;
     DxObject *activity;
-    DxMethod *load_image;
-    DxMethod *play_sound;
+    DxClass *activity_class;
+    agr_dex_native_callback native_callback;
+    void *native_callback_user;
+    struct { uint32_t handle; DxObject *object; } *objects;
+    uint32_t object_count, object_capacity;
 };
 
-agr_dex_game *agr_dex_game_create(const char *dex_path) {
+typedef struct {
+    char *name;
+    uint8_t *bytes;
+    uint32_t size;
+} agr_apk_library;
+
+struct agr_apk_package {
+    DxApkFile *apk;
+    DxManifest *manifest;
+    uint8_t *dex_bytes;
+    uint32_t dex_size;
+    char *activity_descriptor;
+    char *native_library;
+    agr_apk_library *libraries;
+    uint32_t library_count;
+};
+
+static char *copy_text(const char *text) {
+    if (!text) return NULL;
+    size_t size=strlen(text)+1;
+    char *copy=malloc(size);
+    if (copy) memcpy(copy,text,size);
+    return copy;
+}
+
+static const char *component_metadata(const DxComponent *component, const char *name) {
+    if (!component || !name) return NULL;
+    for (uint32_t i=0;i<component->meta_data_count;i++)
+        if (component->meta_data[i].name && !strcmp(component->meta_data[i].name,name))
+            return component->meta_data[i].value;
+    return NULL;
+}
+
+static char *class_descriptor(const char *name) {
+    if (!name) return NULL;
+    size_t length=strlen(name);
+    char *descriptor=malloc(length+3);
+    if (!descriptor) return NULL;
+    descriptor[0]='L';
+    for (size_t i=0;i<length;i++) descriptor[i+1]=name[i]=='.'?'/':name[i];
+    descriptor[length+1]=';'; descriptor[length+2]=0;
+    return descriptor;
+}
+
+agr_apk_package *agr_apk_package_open(const char *apk_path) {
+    agr_apk_package *package=calloc(1,sizeof(*package));
+    const DxZipEntry *entry=NULL;
+    uint8_t *manifest_bytes=NULL; uint32_t manifest_size=0;
+    if (!package || !apk_path || dx_apk_open_file(apk_path,&package->apk)!=DX_OK ||
+        dx_apk_find_entry(package->apk,"AndroidManifest.xml",&entry)!=DX_OK ||
+        dx_apk_extract_entry(package->apk,entry,&manifest_bytes,&manifest_size)!=DX_OK ||
+        dx_manifest_parse(manifest_bytes,manifest_size,&package->manifest)!=DX_OK ||
+        !package->manifest->package_name || !package->manifest->main_activity) goto fail;
+    dx_free(manifest_bytes); manifest_bytes=NULL;
+    package->activity_descriptor=class_descriptor(package->manifest->main_activity);
+    const DxComponent *activity=dx_manifest_find_activity(package->manifest,
+                                                           package->manifest->main_activity);
+    const char *lib=component_metadata(activity,"android.app.lib_name");
+    if (!lib) lib="main"; /* NativeActivity.java API19 default. */
+    size_t lib_length=strlen(lib);
+    if (lib_length>6 && !strncmp(lib,"lib",3) && !strcmp(lib+lib_length-3,".so"))
+        package->native_library=copy_text(lib);
+    else {
+        package->native_library=malloc(lib_length+7);
+        if (package->native_library) snprintf(package->native_library,lib_length+7,"lib%s.so",lib);
+    }
+    if (!package->activity_descriptor || !package->native_library ||
+        dx_apk_find_entry(package->apk,"classes.dex",&entry)!=DX_OK ||
+        dx_apk_extract_entry(package->apk,entry,&package->dex_bytes,&package->dex_size)!=DX_OK)
+        goto fail;
+
+    const char *abi_prefix="lib/armeabi-v7a/";
+    size_t prefix_length=strlen(abi_prefix);
+    bool found_v7=false;
+    for (uint32_t i=0;i<package->apk->entry_count;i++)
+        if (!strncmp(package->apk->entries[i].filename,abi_prefix,prefix_length)) { found_v7=true; break; }
+    if (!found_v7) { abi_prefix="lib/armeabi/"; prefix_length=strlen(abi_prefix); }
+    for (uint32_t i=0;i<package->apk->entry_count;i++) {
+        const DxZipEntry *candidate=&package->apk->entries[i];
+        const char *filename=candidate->filename;
+        size_t length=filename?strlen(filename):0;
+        if (!filename || strncmp(filename,abi_prefix,prefix_length) || length<3 ||
+            strcmp(filename+length-3,".so")) continue;
+        agr_apk_library *grown=realloc(package->libraries,
+            sizeof(*grown)*(package->library_count+1));
+        if (!grown) goto fail;
+        package->libraries=grown;
+        agr_apk_library *library=&package->libraries[package->library_count];
+        memset(library,0,sizeof(*library));
+        library->name=copy_text(filename+prefix_length);
+        if (!library->name || dx_apk_extract_entry(package->apk,candidate,&library->bytes,
+                                                    &library->size)!=DX_OK) goto fail;
+        package->library_count++;
+    }
+    if (!package->library_count) goto fail;
+    return package;
+fail:
+    dx_free(manifest_bytes);
+    agr_apk_package_close(package);
+    return NULL;
+}
+
+void agr_apk_package_close(agr_apk_package *package) {
+    if (!package) return;
+    for (uint32_t i=0;i<package->library_count;i++) {
+        free(package->libraries[i].name); dx_free(package->libraries[i].bytes);
+    }
+    free(package->libraries); free(package->activity_descriptor); free(package->native_library);
+    dx_free(package->dex_bytes); dx_manifest_free(package->manifest);
+    if (package->apk) dx_apk_close(package->apk);
+    free(package);
+}
+const char *agr_apk_package_name(const agr_apk_package *p){return p&&p->manifest?p->manifest->package_name:NULL;}
+const char *agr_apk_launch_activity(const agr_apk_package *p){return p?p->activity_descriptor:NULL;}
+const char *agr_apk_native_library(const agr_apk_package *p){return p?p->native_library:NULL;}
+int32_t agr_apk_min_sdk(const agr_apk_package *p){return p&&p->manifest?p->manifest->min_sdk:0;}
+int32_t agr_apk_target_sdk(const agr_apk_package *p){return p&&p->manifest?p->manifest->target_sdk:0;}
+const void *agr_apk_dex_bytes(const agr_apk_package *p,uint32_t *size){if(size)*size=p?p->dex_size:0;return p?p->dex_bytes:NULL;}
+uint32_t agr_apk_native_library_count(const agr_apk_package *p){return p?p->library_count:0;}
+const char *agr_apk_native_library_name(const agr_apk_package *p,uint32_t i){return p&&i<p->library_count?p->libraries[i].name:NULL;}
+const void *agr_apk_native_library_bytes(const agr_apk_package *p,uint32_t i,uint32_t *size){if(size)*size=p&&i<p->library_count?p->libraries[i].size:0;return p&&i<p->library_count?p->libraries[i].bytes:NULL;}
+
+static agr_dex_game *create_game(const uint8_t *bytes, uint32_t size,
+                                 const char *activity_descriptor,
+                                 const char *package_name) {
     agr_dex_game *game = calloc(1,sizeof(*game));
     if (!game) return NULL;
-    uint32_t size=0; DxClass *cls=NULL;
-    if (!read_file(dex_path,&game->bytes,&size) ||
+    DxClass *cls=NULL;
+    game->bytes=malloc(size);
+    if (game->bytes) memcpy(game->bytes,bytes,size);
+    snprintf(g_package_name,sizeof(g_package_name),"%s",package_name?package_name:"");
+    if (!game->bytes || !activity_descriptor ||
         dx_dex_parse(game->bytes,size,&game->dex)!=DX_OK ||
         !(game->vm=dx_vm_create(NULL)) ||
         dx_vm_load_dex(game->vm,game->dex)!=DX_OK ||
         dx_register_java_lang(game->vm)!=DX_OK ||
         register_game_framework(game->vm)!=DX_OK ||
-        dx_vm_load_class(game->vm,"Lcom/onetwofivegames/kungfoobarracuda/KungFooBarracudaNativeActivity;",&cls)!=DX_OK || !cls)
+        dx_vm_load_class(game->vm,activity_descriptor,&cls)!=DX_OK || !cls)
         goto fail;
+    game->activity_class=cls;
     game->activity=dx_vm_alloc_object(game->vm,cls);
     if (!game->activity) goto fail;
     g_activity=game->activity;
-    DxMethod *init=dx_vm_find_method(cls,"<init>","V");
-    DxValue init_args[1]={DX_OBJ_VALUE(game->activity)};
-    if (!init || dx_vm_execute_method(game->vm,init,init_args,1,NULL)!=DX_OK) goto fail;
-    DxMethod *on_create=dx_vm_find_method(cls,"onCreate","VL");
-    DxValue create_args[2]={DX_OBJ_VALUE(game->activity),DX_NULL_VALUE};
-    if (!on_create || dx_vm_execute_method(game->vm,on_create,create_args,2,NULL)!=DX_OK) goto fail;
-    game->load_image=dx_vm_find_method(cls,"loadImage","IL");
-    game->play_sound=dx_vm_find_method(cls,"playSound","ILF");
-    if (!game->load_image || !game->play_sound) goto fail;
     return game;
 fail:
     agr_dex_game_destroy(game); return NULL;
+}
+
+static char *method_signature(const agr_dex_game *game, const DxMethod *method) {
+    if (!game || !method || method->dex_method_idx >= game->dex->method_count) return NULL;
+    uint32_t count=dx_dex_get_method_param_count(game->dex,method->dex_method_idx);
+    const char *ret=dx_dex_get_method_return_type(game->dex,method->dex_method_idx);
+    size_t length=3+(ret?strlen(ret):0);
+    for(uint32_t i=0;i<count;i++) {
+        const char *type=dx_dex_get_method_param_type(game->dex,method->dex_method_idx,i);
+        length+=type?strlen(type):0;
+    }
+    char *signature=malloc(length);
+    if(!signature)return NULL;
+    char *out=signature;*out++='(';
+    for(uint32_t i=0;i<count;i++) {
+        const char *type=dx_dex_get_method_param_type(game->dex,method->dex_method_idx,i);
+        if(type){size_t n=strlen(type);memcpy(out,type,n);out+=n;}
+    }
+    *out++=')';if(ret){size_t n=strlen(ret);memcpy(out,ret,n);out+=n;}*out=0;
+    return signature;
+}
+
+static uint32_t object_handle(agr_dex_game *game, DxObject *object) {
+    if(!game||!object)return 0;
+    for(uint32_t i=0;i<game->object_count;i++)if(game->objects[i].object==object)return game->objects[i].handle;
+    if(game->object_count==game->object_capacity) {
+        uint32_t next=game->object_capacity?game->object_capacity*2:16;
+        void *grown=realloc(game->objects,(size_t)next*sizeof(*game->objects));
+        if(!grown)return 0;game->objects=grown;game->object_capacity=next;
+    }
+    uint32_t handle=0x67000000u+game->object_count*4u;
+    game->objects[game->object_count++]=(typeof(*game->objects)){handle,object};
+    return handle;
+}
+
+static DxResult dex_unbound_native(DxVM *vm, DxFrame *frame, DxMethod *method,
+                                   DxValue *args, uint32_t count, void *user) {
+    (void)vm;
+    agr_dex_game *game=(agr_dex_game *)user;
+    if(!game||!game->native_callback)return DX_ERR_METHOD_NOT_FOUND;
+    char *signature=method_signature(game,method);
+    if(!signature)return DX_ERR_METHOD_NOT_FOUND;
+    agr_dex_argument *native_args=count?calloc(count,sizeof(*native_args)):NULL;
+    if(count&&!native_args){free(signature);return DX_ERR_OUT_OF_MEMORY;}
+    for(uint32_t i=0;i<count;i++) {
+        if(args[i].tag==DX_VAL_INT){native_args[i].kind=AGR_DEX_ARG_INT;native_args[i].value.i=args[i].i;}
+        else if(args[i].tag==DX_VAL_FLOAT){native_args[i].kind=AGR_DEX_ARG_FLOAT;native_args[i].value.f=args[i].f;}
+        else if(args[i].tag==DX_VAL_NULL){native_args[i].kind=AGR_DEX_ARG_NULL;}
+        else if(args[i].tag==DX_VAL_OBJ&&args[i].obj) {
+            const char *text=dx_vm_get_string_value(args[i].obj);
+            if(text){native_args[i].kind=AGR_DEX_ARG_STRING;native_args[i].value.string=text;}
+            else {native_args[i].kind=AGR_DEX_ARG_OBJECT;native_args[i].value.object=object_handle(game,args[i].obj);}
+        } else {free(native_args);free(signature);return DX_ERR_INTERNAL;}
+    }
+    agr_dex_argument result={0};
+    int32_t rc=game->native_callback(game->native_callback_user,
+        method->declaring_class?method->declaring_class->descriptor:NULL,method->name,signature,
+        (method->access_flags&DX_ACC_STATIC)!=0,native_args,count,&result);
+    if(!rc&&result.kind==AGR_DEX_ARG_INT){frame->result=DX_INT_VALUE(result.value.i);frame->has_result=true;}
+    else if(!rc&&result.kind==AGR_DEX_ARG_FLOAT){frame->result.tag=DX_VAL_FLOAT;frame->result.f=result.value.f;frame->has_result=true;}
+    free(native_args);free(signature);
+    return rc?DX_ERR_INTERNAL:DX_OK;
+}
+
+void agr_dex_game_set_native_callback(agr_dex_game *game,
+                                      agr_dex_native_callback callback, void *user) {
+    if(!game)return;
+    game->native_callback=callback;game->native_callback_user=user;
+    game->vm->unbound_native_fn=callback?dex_unbound_native:NULL;
+    game->vm->unbound_native_user=game;
+}
+void agr_dex_game_set_load_library_callback(agr_dex_game *game,
+                                            int32_t (*callback)(void *, const char *),
+                                            void *user) {
+    if(!game)return;game->vm->load_library_fn=callback;game->vm->load_library_user=user;
+}
+
+int agr_dex_game_start_activity(agr_dex_game *game) {
+    if (!game || !game->activity_class || !game->activity) return -1;
+    DxClass *cls=game->activity_class;
+    DxMethod *init=dx_vm_find_method(cls,"<init>","V");
+    DxValue init_args[1]={DX_OBJ_VALUE(game->activity)};
+    if (!init || dx_vm_execute_method(game->vm,init,init_args,1,NULL)!=DX_OK) return -1;
+    DxMethod *on_create=dx_vm_find_method(cls,"onCreate","VL");
+    DxValue create_args[2]={DX_OBJ_VALUE(game->activity),DX_NULL_VALUE};
+    return !on_create || dx_vm_execute_method(game->vm,on_create,create_args,2,NULL)!=DX_OK ? -1 : 0;
 }
 
 void agr_dex_game_destroy(agr_dex_game *game) {
@@ -287,30 +498,89 @@ void agr_dex_game_destroy(agr_dex_game *game) {
     if (g_activity==game->activity) g_activity=NULL;
     if (game->vm) dx_vm_destroy(game->vm);
     if (game->dex) dx_dex_free(game->dex);
-    free(game->bytes); free(game);
+    free(game->objects); free(game->bytes); free(game);
+}
+const char *agr_dex_game_activity_descriptor(const agr_dex_game *game) {
+    return game&&game->activity_class?game->activity_class->descriptor:NULL;
 }
 
-int agr_dex_game_load_image(agr_dex_game *game, const char *path, int32_t *texture) {
-    if (!game || !path) return -1;
-    DxObject *name=dx_vm_create_string(game->vm,path);
-    if (!name) return -1;
-    DxValue args[2]={DX_OBJ_VALUE(game->activity),DX_OBJ_VALUE(name)};
+static DxMethod *find_exact_method(agr_dex_game *game, DxClass *cls,
+                                   const char *name, const char *signature) {
+    for(DxClass *at=cls;at;at=at->super_class) {
+        for(uint32_t group=0;group<2;group++) {
+            DxMethod *methods=group?at->virtual_methods:at->direct_methods;
+            uint32_t count=group?at->virtual_method_count:at->direct_method_count;
+            for(uint32_t i=0;i<count;i++) if(methods[i].name&&!strcmp(methods[i].name,name)) {
+                char *candidate=method_signature(game,&methods[i]);
+                int match=candidate&&!strcmp(candidate,signature);free(candidate);
+                if(match)return &methods[i];
+            }
+        }
+    }
+    return NULL;
+}
+int agr_dex_game_resolve_class(agr_dex_game *game, const char *descriptor) {
+    DxClass *cls=NULL;
+    return game&&descriptor&&dx_vm_load_class(game->vm,descriptor,&cls)==DX_OK&&cls?0:-1;
+}
+int agr_dex_game_resolve_method(agr_dex_game *game, const char *class_descriptor,
+                                const char *name, const char *signature, int is_static) {
+    DxClass *cls=NULL;
+    if(!game||!class_descriptor||!name||!signature||
+       dx_vm_load_class(game->vm,class_descriptor,&cls)!=DX_OK||!cls)return -1;
+    DxMethod *method=find_exact_method(game,cls,name,signature);
+    return method&&(is_static<0||(((method->access_flags&DX_ACC_STATIC)!=0)==!!is_static))?0:-1;
+}
+
+int agr_dex_game_invoke_int(agr_dex_game *game, const char *name, const char *signature,
+                            const agr_dex_argument *arguments, uint32_t argument_count,
+                            int32_t *value) {
+    if (!game || !name || !signature || argument_count+1>DX_MAX_REGISTERS) return -1;
+    DxMethod *method=find_exact_method(game,game->activity_class,name,signature);
+    if (!method || !method->shorty || method->shorty[0]!='I') return -1;
+    DxValue args[DX_MAX_REGISTERS]={0}; args[0]=DX_OBJ_VALUE(game->activity);
+    for (uint32_t i=0;i<argument_count;i++) {
+        switch(arguments[i].kind) {
+        case AGR_DEX_ARG_INT: args[i+1]=DX_INT_VALUE(arguments[i].value.i); break;
+        case AGR_DEX_ARG_FLOAT: args[i+1].tag=DX_VAL_FLOAT;args[i+1].f=arguments[i].value.f;break;
+        case AGR_DEX_ARG_STRING:
+            args[i+1]=DX_OBJ_VALUE(dx_vm_create_string(game->vm,arguments[i].value.string));break;
+        case AGR_DEX_ARG_NULL: args[i+1]=DX_NULL_VALUE;break;
+        default:return -1;
+        }
+    }
     DxValue result=DX_INT_VALUE(0);
-    DxResult rc=dx_vm_execute_method(game->vm,game->load_image,args,2,&result);
+    DxResult rc=dx_vm_execute_method(game->vm,method,args,argument_count+1,&result);
     if (rc!=DX_OK || result.tag!=DX_VAL_INT) return -1;
-    if (texture) *texture=result.i;
+    if (value) *value=result.i;
     return 0;
 }
 
+int agr_dex_game_load_image(agr_dex_game *game, const char *path, int32_t *texture) {
+    agr_dex_argument arg={AGR_DEX_ARG_STRING,{.string=path}};
+    return agr_dex_game_invoke_int(game,"loadImage","(Ljava/lang/String;)I",&arg,1,texture);
+}
+
+agr_dex_game *agr_dex_game_create(const char *dex_path) {
+    uint8_t *bytes=NULL; uint32_t size=0;
+    if (!read_file(dex_path,&bytes,&size)) return NULL;
+    agr_dex_game *game=create_game(bytes,size,
+        "Lcom/onetwofivegames/kungfoobarracuda/KungFooBarracudaNativeActivity;",
+        "com.onetwofivegames.kungfoobarracuda");
+    free(bytes);
+    if (game && agr_dex_game_start_activity(game)) { agr_dex_game_destroy(game);game=NULL; }
+    return game;
+}
+
+agr_dex_game *agr_dex_game_create_from_apk(const agr_apk_package *package) {
+    return package?create_game(package->dex_bytes,package->dex_size,
+        package->activity_descriptor,package->manifest->package_name):NULL;
+}
+
 int agr_dex_game_play_sound(agr_dex_game *game, const char *path, float direction, int32_t *play_id) {
-    if (!game || !path || !game->play_sound) return -1;
-    DxObject *name=dx_vm_create_string(game->vm,path); if (!name) return -1;
-    DxValue direction_value={.tag=DX_VAL_FLOAT,.f=direction};
-    DxValue args[3]={DX_OBJ_VALUE(game->activity),DX_OBJ_VALUE(name),direction_value};
-    DxValue result=DX_INT_VALUE(0);
-    DxResult rc=dx_vm_execute_method(game->vm,game->play_sound,args,3,&result);
-    if (rc!=DX_OK || result.tag!=DX_VAL_INT) return -1;
-    if (play_id) *play_id=result.i; return 0;
+    agr_dex_argument args[2]={{AGR_DEX_ARG_STRING,{.string=path}},
+                              {AGR_DEX_ARG_FLOAT,{.f=direction}}};
+    return agr_dex_game_invoke_int(game,"playSound","(Ljava/lang/String;F)I",args,2,play_id);
 }
 
 int agr_dex_game_main(int argc, char **argv) {

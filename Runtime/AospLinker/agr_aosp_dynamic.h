@@ -67,6 +67,8 @@ const char* agr_aosp_dynamic_symbol_name(const agr_aosp_dynamic*, uint32_t);
 uint32_t agr_aosp_dynamic_symbol_address(const agr_aosp_dynamic*, uint32_t);
 uint32_t agr_aosp_dynamic_needed_count(const agr_aosp_dynamic*);
 const char* agr_aosp_dynamic_needed_name(const agr_aosp_dynamic*, uint32_t);
+uint32_t agr_aosp_dynamic_loaded_count(const agr_aosp_dynamic*);
+const char* agr_aosp_dynamic_loaded_name(const agr_aosp_dynamic*, uint32_t);
 uint32_t agr_aosp_dynamic_constructor_count(const agr_aosp_dynamic*);
 uint32_t agr_aosp_dynamic_constructor_address(const agr_aosp_dynamic*, uint32_t);
 uint32_t agr_aosp_dynamic_finalizer_count(const agr_aosp_dynamic*);

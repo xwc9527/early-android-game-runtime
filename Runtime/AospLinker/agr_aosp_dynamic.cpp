@@ -272,6 +272,8 @@ extern "C" const char* agr_aosp_dynamic_symbol_name(const agr_aosp_dynamic*rt,ui
 extern "C" uint32_t agr_aosp_dynamic_symbol_address(const agr_aosp_dynamic*rt,uint32_t i){return rt&&i<rt->symbols.size()?rt->symbols[i].address:0;}
 extern "C" uint32_t agr_aosp_dynamic_needed_count(const agr_aosp_dynamic*rt){return rt?(uint32_t)rt->needed_log.size():0;}
 extern "C" const char* agr_aosp_dynamic_needed_name(const agr_aosp_dynamic*rt,uint32_t i){return rt&&i<rt->needed_log.size()?rt->needed_log[i].name.c_str():NULL;}
+extern "C" uint32_t agr_aosp_dynamic_loaded_count(const agr_aosp_dynamic*rt){return rt?(uint32_t)rt->solist.size():0;}
+extern "C" const char* agr_aosp_dynamic_loaded_name(const agr_aosp_dynamic*rt,uint32_t i){return rt&&i<rt->solist.size()?rt->solist[i]->name.c_str():NULL;}
 extern "C" uint32_t agr_aosp_dynamic_constructor_count(const agr_aosp_dynamic*rt){return rt?(uint32_t)rt->constructors.size():0;}
 extern "C" uint32_t agr_aosp_dynamic_constructor_address(const agr_aosp_dynamic*rt,uint32_t i){return rt&&i<rt->constructors.size()?rt->constructors[i].address:0;}
 extern "C" uint32_t agr_aosp_dynamic_finalizer_count(const agr_aosp_dynamic*rt){return rt?(uint32_t)rt->finalizers.size():0;}

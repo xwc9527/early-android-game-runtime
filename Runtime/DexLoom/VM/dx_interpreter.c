@@ -1117,7 +1117,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
 
     // Handle native methods
     if (method->is_native) {
-        if (!method->native_fn) {
+        if (!method->native_fn && !vm->unbound_native_fn) {
             DX_ERROR(TAG, "Native method has no implementation: %s.%s",
                      method->declaring_class->descriptor, method->name);
             return DX_ERR_METHOD_NOT_FOUND;
@@ -1135,7 +1135,10 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
         vm->current_frame = frame;
         vm->stack_depth++;
 
-        DxResult res = method->native_fn(vm, frame, args, arg_count);
+        DxResult res = method->native_fn
+            ? method->native_fn(vm, frame, args, arg_count)
+            : vm->unbound_native_fn(vm, frame, method, args, arg_count,
+                                    vm->unbound_native_user);
 
         vm->stack_depth--;
         vm->current_frame = frame->caller;

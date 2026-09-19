@@ -9,6 +9,7 @@
 #include "agr_androidfw.h"
 #include "agr_bitmap.h"
 #include "agr_guest_runtime.h"
+#include "game_dex_runner.h"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
@@ -247,6 +248,7 @@ typedef struct {
     DexTextureHost *textureHost;
 } InteractiveRuntime;
 static InteractiveRuntime gInteractive = {0};
+static NSString *gInteractivePackage;
 
 static int32_t dexUploadTexture(void *user, const char *path) {
     DexTextureHost *host = (DexTextureHost *)user;
@@ -368,33 +370,40 @@ static NSDictionary *throwDiagnostic(agr_guest *guest) {
       @"stack_words":stackWords,@"stack_code_candidates":codeCandidates,@"instruction_trace":instructionTrace };
 }
 
-static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *failures, BOOL interactive) {
-    NSData *elf = bundleData(@"kungfoo-native",@"so");
+static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace,
+                                          NSMutableArray<NSString *> *failures, BOOL interactive) {
     agr_guest *guest = agr_guest_create();
-    NSString *apkPath = [[NSBundle mainBundle] pathForResource:@"kungfoo" ofType:@"apk"];
-    NSString *dexPath = [[NSBundle mainBundle] pathForResource:@"kungfoo-classes" ofType:@"dex"];
+    agr_apk_package *package=apkPath?agr_apk_package_open(apkPath.UTF8String):NULL;
     agr_afw_manager *dexAssets = agr_afw_create();
     if (apkPath) agr_afw_add_apk(dexAssets,apkPath.UTF8String);
     DexTextureHost *dexHost = calloc(1,sizeof(*dexHost)); dexHost->assets=dexAssets;
     agr_dex_set_upload_callback(dexUploadTexture,dexHost);
     int mounted = apkPath && guest ? agr_guest_mount_apk(guest,apkPath.UTF8String) : -1;
-    int dexLoaded = mounted == 0 && dexPath ? agr_guest_load_dex(guest,dexPath.UTF8String) : -1;
-    int loaded = elf && guest && dexLoaded == 0 ? agr_guest_load_elf(guest,"libKungFooBarracudaNativeActivity.so",elf.bytes,(uint32_t)elf.length,0x02800000) : -1;
-    /* Test-only diagnostic: this APK statically links __cxa_throw and does not
-       export it through the dynamic symbol table.  The ELF symbol value is
-       0x82b51 (Thumb), loaded at 0x02800000. */
-    if (loaded == 0) agr_guest_set_watch_pc(guest,0x02882b50u);
+    int registered=package&&guest?0:-1;
+    uint32_t mainLibraryBytes=0;
+    for(uint32_t i=0;registered==0&&i<agr_apk_native_library_count(package);i++) {
+        uint32_t size=0;const void *bytes=agr_apk_native_library_bytes(package,i,&size);
+        const char *name=agr_apk_native_library_name(package,i);
+        if(name&&!strcmp(name,agr_apk_native_library(package)))mainLibraryBytes=size;
+        registered=agr_guest_register_elf_source(guest,name,bytes,size);
+    }
+    int dexLoaded=registered==0?agr_guest_load_dex_package(guest,package):-1;
+    int32_t jniVersion=0;
+    int jniOnLoad=dexLoaded==0?agr_guest_load_java_library(guest,agr_apk_native_library(package),&jniVersion):-1;
+    int loaded=jniOnLoad==0?0:-1;
+    int dexStarted=loaded==0?agr_guest_start_dex_activity(guest):-1;
     uint32_t constructors = 0;
-    int initialized = loaded == 0 ? agr_guest_run_constructors(guest,&constructors) : -1;
+    int initialized = dexStarted == 0 ? agr_guest_run_constructors(guest,&constructors) : -1;
     int activityCreated = -1, onStart = -1, onResume = -1, onWindow = -1, onFocus = -1, onInput = -1, pumped = -1;
     int framePumpResult = 0; uint32_t framePumps = 0;
     uint8_t *frame = calloc(320u*480u*4u,1); uint32_t nonblack = 0; int32_t frameBytes = -1;
     uint32_t callbacksFound = 0;
     if (initialized == 0) {
         uint8_t callbacksZero[64] = {0};
-        const char internalPath[] = "/data/data/com.onetwofivegames.kungfoobarracuda/files";
-        const char externalPath[] = "/sdcard/Android/data/com.onetwofivegames.kungfoobarracuda/files";
-        const char obbPath[] = "/sdcard/Android/obb/com.onetwofivegames.kungfoobarracuda";
+        char internalPath[512],externalPath[512],obbPath[512];
+        snprintf(internalPath,sizeof(internalPath),"/data/data/%s/files",agr_apk_package_name(package));
+        snprintf(externalPath,sizeof(externalPath),"/sdcard/Android/data/%s/files",agr_apk_package_name(package));
+        snprintf(obbPath,sizeof(obbPath),"/sdcard/Android/obb/%s",agr_apk_package_name(package));
         uint32_t callbacks = agr_guest_alloc(guest,callbacksZero,sizeof(callbacksZero),4);
         uint32_t internal = agr_guest_alloc(guest,internalPath,sizeof(internalPath),1);
         uint32_t external = agr_guest_alloc(guest,externalPath,sizeof(externalPath),1);
@@ -460,9 +469,6 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
     NSMutableArray *trajectory=[NSMutableArray array], *coverage=[NSMutableArray array];
     NSString *trajectoryOutcome=@"gameplay_not_entered", *trajectoryFailure=@"";
     uint32_t replayEvents=0, replayConsumed=0, uniqueStates=0;
-    NSString *tracePath=[[NSBundle mainBundle] pathForResource:@"kungfoo-barracuda" ofType:@"json"];
-    NSData *traceBytes=tracePath?[NSData dataWithContentsOfFile:tracePath]:nil;
-    NSDictionary *trace=traceBytes?[NSJSONSerialization JSONObjectWithData:traceBytes options:0 error:nil]:nil;
     if (!interactive && nonblack>0 && onInput==0 && framePumpResult==0 && trace) {
         trajectoryOutcome=@"replay_incomplete";
         uint8_t signatures[16][TRAJECTORY_SIGNATURE_SIZE]={0};
@@ -525,30 +531,44 @@ static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *fail
     }
     free(frame);
     NSString *error = guest ? [NSString stringWithUTF8String:agr_guest_last_error(guest)] : @"create failed";
-    BOOL passed = mounted == 0 && dexLoaded == 0 && loaded == 0 && initialized == 0 && constructors == 51 && activityCreated == 0 && callbacksFound >= 10 && onStart == 0 && onResume == 0 && onWindow == 0 && pumped == 0 && onInput == 0 && onFocus == 0 && framePumpResult == 0 && draws > 0 && swaps > 0 && nonblack > 0;
-    if (!passed) [failures addObject:[NSString stringWithFormat:@"kungfoo-native=%d/%d/%d/%d/%u activity=%d callbacks=%u start=%d resume=%d window=%d pump=%d focus=%d frames=%u/%d/%@",mounted,dexLoaded,loaded,initialized,constructors,activityCreated,callbacksFound,onStart,onResume,onWindow,pumped,onFocus,framePumps,framePumpResult,error]];
+    BOOL passed = package && mounted == 0 && registered == 0 && dexLoaded == 0 && loaded == 0 && jniOnLoad == 0 && dexStarted == 0 && initialized == 0 && activityCreated == 0 && callbacksFound >= 10 && onStart == 0 && onResume == 0 && onWindow == 0 && pumped == 0 && onInput == 0 && onFocus == 0 && framePumpResult == 0 && draws > 0 && swaps > 0 && nonblack > 0;
+    if (!passed) [failures addObject:[NSString stringWithFormat:@"apk-native=%d/%d/%d/%d/%d/%d/%u activity=%d callbacks=%u start=%d resume=%d window=%d pump=%d focus=%d frames=%u/%d/%@",mounted,registered,dexLoaded,loaded,jniOnLoad,dexStarted,constructors,activityCreated,callbacksFound,onStart,onResume,onWindow,pumped,onFocus,framePumps,framePumpResult,error]];
     int textureUploads=dexHost->uploads;
     if (interactive && passed) {
         gInteractive=(InteractiveRuntime){guest,dexAssets,dexHost};
+        gInteractivePackage=package&&agr_apk_package_name(package)
+            ? [NSString stringWithUTF8String:agr_apk_package_name(package)] : @"";
     } else {
         if (guest) agr_guest_destroy(guest);
         agr_dex_set_upload_callback(NULL,NULL);
         agr_afw_destroy(dexAssets); free(dexHost);
     }
-    return @{@"kungfoo_native_so_bytes":@(elf.length),@"kungfoo_constructors":@(constructors),
-             @"kungfoo_native_instructions":@(instructions),@"kungfoo_constructors_passed":@(initialized == 0 && constructors == 51),
-             @"kungfoo_native_activity_created":@(activityCreated == 0),@"kungfoo_activity_callbacks":@(callbacksFound),
-             @"kungfoo_on_start":@(onStart == 0),@"kungfoo_on_resume":@(onResume == 0),
-             @"kungfoo_on_window_created":@(onWindow == 0),@"kungfoo_native_draws":@(draws),
-             @"kungfoo_on_focus":@(onFocus == 0),
-             @"kungfoo_frame_pumps":@(framePumps),
-             @"kungfoo_native_swaps":@(swaps),@"kungfoo_native_asset_opens":@(assetOpens),
-             @"kungfoo_native_texture_uploads":@(textureUploads),@"kungfoo_native_nonblack_pixels":@(nonblack),
-             @"kungfoo_native_frame_bytes":@(frameBytes),
-             @"kungfoo_gameplay_trajectory":trajectory,@"kungfoo_gameplay_outcome":trajectoryOutcome,
-             @"kungfoo_gameplay_failure":trajectoryFailure,@"kungfoo_replay_events":@(replayEvents),
-             @"kungfoo_replay_consumed":@(replayConsumed),@"kungfoo_unique_states":@(uniqueStates),
-             @"kungfoo_runtime_coverage":coverage};
+    NSDictionary *result=@{@"package":package&&agr_apk_package_name(package)?[NSString stringWithUTF8String:agr_apk_package_name(package)]:@"",
+             @"selected_activity":package&&agr_apk_launch_activity(package)?[NSString stringWithUTF8String:agr_apk_launch_activity(package)]:@"",
+             @"selected_native_library":package&&agr_apk_native_library(package)?[NSString stringWithUTF8String:agr_apk_native_library(package)]:@"",
+             @"min_sdk":@(agr_apk_min_sdk(package)),@"target_sdk":@(agr_apk_target_sdk(package)),
+             @"jni_onload_result":@(jniVersion),@"native_so_bytes":@(mainLibraryBytes),@"constructors":@(constructors),
+             @"native_instructions":@(instructions),@"constructors_passed":@(initialized == 0),
+             @"native_activity_created":@(activityCreated == 0),@"activity_callbacks":@(callbacksFound),
+             @"on_start":@(onStart == 0),@"on_resume":@(onResume == 0),
+             @"on_window_created":@(onWindow == 0),@"native_draws":@(draws),
+             @"on_focus":@(onFocus == 0),@"frame_pumps":@(framePumps),
+             @"native_swaps":@(swaps),@"native_asset_opens":@(assetOpens),
+             @"native_texture_uploads":@(textureUploads),@"native_nonblack_pixels":@(nonblack),
+             @"native_frame_bytes":@(frameBytes),@"gameplay_trajectory":trajectory,
+             @"gameplay_outcome":trajectoryOutcome,@"gameplay_failure":trajectoryFailure,
+             @"replay_events":@(replayEvents),@"replay_consumed":@(replayConsumed),
+             @"unique_states":@(uniqueStates),@"runtime_coverage":coverage};
+    agr_apk_package_close(package);
+    return result;
+}
+
+static NSDictionary *runKungFooNativeRegression(NSMutableArray<NSString *> *failures, BOOL interactive) {
+    NSString *apkPath=[[NSBundle mainBundle] pathForResource:@"kungfoo" ofType:@"apk"];
+    NSString *tracePath=[[NSBundle mainBundle] pathForResource:@"kungfoo-barracuda" ofType:@"json"];
+    NSData *traceBytes=tracePath?[NSData dataWithContentsOfFile:tracePath]:nil;
+    NSDictionary *trace=traceBytes?[NSJSONSerialization JSONObjectWithData:traceBytes options:0 error:nil]:nil;
+    return runNativeActivityApk(apkPath,trace,failures,interactive);
 }
 
 static NSString *failureSignature(NSString *stage, NSString *detail) {
@@ -681,8 +701,8 @@ static NSArray *runBatchCompatibility(NSDictionary *gloomy, NSDictionary *kungfo
         } else if ([profile isEqualToString:@"kungfoo"]) {
             [results addObject:@{@"id":sample[@"id"],@"package":sample[@"package"],@"stage":@"visible_frame",
               @"outcome":@"visible_frame",@"signature":@"success:visible_frame",
-              @"draws":kungfoo[@"kungfoo_native_draws"] ?: @0,
-              @"nonblack_pixels":kungfoo[@"kungfoo_native_nonblack_pixels"] ?: @0}];
+              @"draws":kungfoo[@"native_draws"] ?: @0,
+              @"nonblack_pixels":kungfoo[@"native_nonblack_pixels"] ?: @0}];
         } else [results addObject:probeGenericSample(sample)];
     }
     return results;
@@ -867,9 +887,14 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
         const char *call=agr_guest_recent_call(guest,i);
         if(call)[calls addObject:[NSString stringWithUTF8String:call]];
     }
+    NSMutableArray<NSString *> *modules=[NSMutableArray array];
+    for(uint32_t i=0;guest&&i<agr_guest_loaded_module_count(guest);i++) {
+        const char *name=agr_guest_loaded_module(guest,i);
+        if(name)[modules addObject:[NSString stringWithUTF8String:name]];
+    }
     NSUInteger start=self.trace.count>16?self.trace.count-16:0;
     NSArray *recentInputs=[self.trace subarrayWithRange:NSMakeRange(start,self.trace.count-start)];
-    NSDictionary *status=@{@"schema":@1,@"game":@"Kung Foo Barracuda",
+    NSDictionary *status=@{@"schema":@1,@"package":gInteractivePackage?:@"",
       @"host_ms":@((CACurrentMediaTime()-self.started)*1000.0),
       @"frame":@(guest?agr_guest_swap_count(guest):0),
       @"swap":@(guest?agr_guest_swap_count(guest):0),
@@ -880,7 +905,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
       @"heap":@{ @"highest_live_end":[NSString stringWithFormat:@"%08x",heap[0]],
                   @"limit":[NSString stringWithFormat:@"%08x",heap[1]],
                   @"metadata_blocks":@(heap[2]),@"live_count":@(heap[3]),@"live_bytes":@(heap[4]) },
-      @"recent_calls":calls,@"recent_inputs":recentInputs,@"throw_diagnostic":throwDiagnostic(guest),
+      @"loaded_dso":modules,@"recent_calls":calls,@"recent_inputs":recentInputs,@"throw_diagnostic":throwDiagnostic(guest),
       @"android_log":[NSString stringWithUTF8String:guest?agr_guest_last_android_log(guest):""],
       @"runtime_error":[NSString stringWithUTF8String:guest?agr_guest_last_error(guest):""],
       @"failure_signature":failure?:@""};
@@ -890,7 +915,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     if(failure.length)[statusJSON writeToFile:[documents stringByAppendingPathComponent:@"runtime-failure.json"] atomically:YES];
     if(failure.length||self.trace.count||agr_guest_swap_count(guest)%60u==0)
         NSLog(@"AGR_STATUS %@",[[NSString alloc] initWithData:statusJSON encoding:NSUTF8StringEncoding]);
-    NSDictionary *doc=@{@"game":@"Kung Foo Barracuda",@"coordinate_space":@[@320,@480],
+    NSDictionary *doc=@{@"package":gInteractivePackage?:@"",@"coordinate_space":@[@320,@480],
       @"events":self.trace,@"failure":failure?:@"",@"swaps":@(agr_guest_swap_count(gInteractive.guest)),
       @"pc":[NSString stringWithFormat:@"%08x",agr_guest_program_counter(gInteractive.guest)],
       @"android_log":[NSString stringWithUTF8String:agr_guest_last_android_log(gInteractive.guest)]};
@@ -899,7 +924,9 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     if(failure.length)[json writeToFile:[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/debug-failure.json"] atomically:YES];
 }
 - (void)runRuntime {
-    NSMutableArray *failures=[NSMutableArray array];NSDictionary *startup=runKungFooNativeRegression(failures,YES);
+    NSMutableArray *failures=[NSMutableArray array];
+    NSString *apkPath=[[NSBundle mainBundle] pathForResource:@"kungfoo" ofType:@"apk"];
+    NSDictionary *startup=runNativeActivityApk(apkPath,nil,failures,YES);
     if(!gInteractive.guest){NSString *why=failures.count?[failures componentsJoinedByString:@" | "]:@"startup failed";NSLog(@"AGR_FAILURE startup %@",why);[self saveTraceWithFailure:why];dispatch_async(dispatch_get_main_queue(),^{self.status.text=why;});return;}
     uint8_t *pixels=malloc(320u*480u*4u);uint32_t rendered=0;NSTimeInterval fpsStart=CACurrentMediaTime();
     while(!self.stopped){

@@ -61,6 +61,8 @@ typedef struct { uint32_t read_fd, write_fd, read_offset, size; uint8_t data[409
 typedef struct { uint32_t fd, ident, events, callback, data; } looper_fd;
 typedef struct { uint32_t handle; agr_afw_asset *asset; } asset_entry;
 typedef struct { uint32_t handle; char *text; } jni_string;
+typedef struct { uint32_t handle; char *descriptor; } jni_class;
+typedef struct { char *name; uint32_t handle; int32_t jni_version; } java_library;
 typedef struct { uint32_t handle, type, action, pointer_count, pointer_id; float x, y; } input_event;
 
 struct agr_process_runtime {
@@ -99,7 +101,9 @@ struct agr_process_runtime {
     uint32_t next_asset_handle;
     agr_dex_game *dex_game;
     agr_jni_method_table methods;
-    jni_string strings[64]; uint32_t string_count;
+    jni_string *strings; uint32_t string_count, string_capacity;
+    jni_class *classes; uint32_t class_count, class_capacity;
+    java_library *java_libraries; uint32_t java_library_count, java_library_capacity;
     const char *recent_imports[12];
     uint32_t recent_import_index;
     const char *unique_imports[256]; uint32_t unique_import_count;
@@ -325,6 +329,102 @@ static array_entry *find_array(agr_guest *g, uint32_t handle) {
     for (uint32_t i = 0; i < g->array_count; i++) if (g->arrays[i].handle == handle) return &g->arrays[i];
     return NULL;
 }
+static uint32_t jni_class_handle(agr_guest *g,const char *descriptor) {
+    if(!g||!descriptor)return 0;
+    for(uint32_t i=0;i<g->class_count;i++)if(!strcmp(g->classes[i].descriptor,descriptor))return g->classes[i].handle;
+    if(g->class_count==g->class_capacity) {
+        uint32_t next=g->class_capacity?g->class_capacity*2:16;
+        jni_class *grown=realloc(g->classes,(size_t)next*sizeof(*grown));
+        if(!grown)return 0;g->classes=grown;g->class_capacity=next;
+    }
+    char *copy=copy_string(descriptor);if(!copy)return 0;
+    uint32_t handle=0x64000000u+g->class_count*4u;
+    g->classes[g->class_count++]=(jni_class){handle,copy};return handle;
+}
+static const char *jni_class_descriptor(agr_guest *g,uint32_t handle) {
+    for(uint32_t i=0;g&&i<g->class_count;i++)if(g->classes[i].handle==handle)return g->classes[i].descriptor;
+    return NULL;
+}
+static uint32_t jni_string_handle(agr_guest *g,const char *text) {
+    if(!g||!text)return 0;
+    if(g->string_count==g->string_capacity) {
+        uint32_t next=g->string_capacity?g->string_capacity*2:16;
+        jni_string *grown=realloc(g->strings,(size_t)next*sizeof(*grown));
+        if(!grown)return 0;g->strings=grown;g->string_capacity=next;
+    }
+    char *copy=copy_string(text);if(!copy)return 0;
+    uint32_t handle=0x66000000u+g->string_count*4u;
+    g->strings[g->string_count++]=(jni_string){handle,copy};return handle;
+}
+static const char *jni_string_text(agr_guest *g,uint32_t handle) {
+    for(uint32_t i=0;g&&i<g->string_count;i++)if(g->strings[i].handle==handle)return g->strings[i].text;
+    return NULL;
+}
+static char *jni_mangle(const char *text,int descriptor) {
+    if(!text)return NULL;
+    const char *start=text,*end=text+strlen(text);
+    if(descriptor&&start<end&&*start=='L')start++;
+    if(descriptor&&end>start&&end[-1]==';')end--;
+    size_t capacity=(size_t)(end-start)*6+1;char *out=malloc(capacity);if(!out)return NULL;char *at=out;
+    static const char hex[]="0123456789abcdef";
+    for(const unsigned char *p=(const unsigned char *)start;p<(const unsigned char *)end;p++) {
+        unsigned char c=*p;
+        if((c>='a'&&c<='z')||(c>='A'&&c<='Z')||(c>='0'&&c<='9'))*at++=(char)c;
+        else if(c=='/'||c=='.')*at++='_';
+        else if(c=='_'){*at++='_';*at++='1';}
+        else if(c==';'){*at++='_';*at++='2';}
+        else if(c=='['){*at++='_';*at++='3';}
+        else {*at++='_';*at++='0';*at++='0';*at++='0';*at++=hex[c>>4];*at++=hex[c&15];}
+    }
+    *at=0;return out;
+}
+static uint32_t resolve_native_method(agr_guest *g,const char *class_descriptor,
+                                      const char *name,const char *signature) {
+    uint32_t class_handle=jni_class_handle(g,class_descriptor);
+    uint32_t address=agr_jni_method_native_address(&g->methods,class_handle,name,signature);
+    if(address)return address;
+    char *cls=jni_mangle(class_descriptor,1),*method=jni_mangle(name,0);
+    if(!cls||!method){free(cls);free(method);return 0;}
+    size_t short_size=strlen(cls)+strlen(method)+7;
+    char *short_name=malloc(short_size);if(short_name)snprintf(short_name,short_size,"Java_%s_%s",cls,method);
+    address=short_name?agr_find_symbol(g->runtime,short_name):0;
+    if(!address&&signature) {
+        const char *begin=strchr(signature,'('),*end=begin?strchr(begin,')'):NULL;
+        if(begin&&end) {
+            size_t n=(size_t)(end-begin-1);char *params=malloc(n+1);
+            if(params){memcpy(params,begin+1,n);params[n]=0;char *encoded=jni_mangle(params,0);free(params);
+                if(encoded){size_t long_size=short_size+strlen(encoded)+2;char *long_name=malloc(long_size);
+                    if(long_name){snprintf(long_name,long_size,"%s__%s",short_name,encoded);address=agr_find_symbol(g->runtime,long_name);free(long_name);}free(encoded);}}
+        }
+    }
+    free(short_name);free(cls);free(method);return address;
+}
+static int32_t dex_native_bridge(void *user,const char *class_descriptor,
+                                 const char *method_name,const char *signature,int is_static,
+                                 const agr_dex_argument *arguments,uint32_t argument_count,
+                                 agr_dex_argument *result) {
+    agr_guest *g=(agr_guest *)user;
+    uint32_t target=resolve_native_method(g,class_descriptor,method_name,signature);
+    if(!target){snprintf(g->error,sizeof(g->error),"missing native binding %.80s",method_name);return -1;}
+    uint32_t argv[18]={JNI_ENV_PTR,is_static?jni_class_handle(g,class_descriptor):0x60001000u};
+    if(argument_count>16)return -1;
+    uint32_t start=is_static?0:1;
+    for(uint32_t i=start;i<argument_count;i++) {
+        const agr_dex_argument *arg=&arguments[i];uint32_t value=0;
+        if(arg->kind==AGR_DEX_ARG_INT)value=(uint32_t)arg->value.i;
+        else if(arg->kind==AGR_DEX_ARG_FLOAT)memcpy(&value,&arg->value.f,4);
+        else if(arg->kind==AGR_DEX_ARG_STRING)value=jni_string_handle(g,arg->value.string);
+        else if(arg->kind==AGR_DEX_ARG_OBJECT)value=arg->value.object;
+        argv[2+i-start]=value;
+    }
+    int32_t native_result=0;
+    if(call_address(g,target,argv,2+argument_count-start,&native_result))return -1;
+    if(result){result->kind=AGR_DEX_ARG_INT;result->value.i=native_result;}
+    return 0;
+}
+static int32_t dex_load_library(void *user,const char *name) {
+    return agr_guest_load_java_library((agr_guest *)user,name,NULL);
+}
 static int dispatch_jni_impl(agr_guest *g, uint32_t address) {
     record_process_import(g,"JNI");
     agr_guest_thread_context_record_call(guest_context(g),"JNI",
@@ -340,12 +440,32 @@ static int dispatch_jni_impl(agr_guest *g, uint32_t address) {
     }
     if (address < TRAP_BASE + 16 || address >= TRAP_BASE + 233 * 4) return 0;
     uint32_t slot = (address - TRAP_BASE) / 4;
-    if (slot == 31) { guest_return(g,0x64000001u,0); return 1; }
-    if (slot == 33) {
+    if(slot==6) {
+        char name[512];if(read_guest_string(g,argument(g,1),name,sizeof(name))){set_error(g,"JNI FindClass invalid name");return -1;}
+        char descriptor[516];
+        if(name[0]=='['||name[0]=='L')snprintf(descriptor,sizeof(descriptor),"%s",name);
+        else snprintf(descriptor,sizeof(descriptor),"L%s;",name);
+        if(!g->dex_game||agr_dex_game_resolve_class(g->dex_game,descriptor)){
+            guest_return(g,0,0);return 1;
+        }
+        uint32_t handle=jni_class_handle(g,descriptor);
+        if(!handle){set_error(g,"JNI FindClass allocation failed");return -1;}
+        guest_return(g,handle,0);return 1;
+    }
+    if (slot == 31) {
+        const char *activity=agr_dex_game_activity_descriptor(g->dex_game);
+        uint32_t handle=jni_class_handle(g,activity?activity:"Ljava/lang/Object;");
+        guest_return(g,handle,0); return 1;
+    }
+    if (slot == 33 || slot == 113) {
         char name[256], signature[256];
         if (read_guest_string(g,argument(g,2),name,sizeof(name)) ||
             read_guest_string(g,argument(g,3),signature,sizeof(signature))) {
             set_error(g,"JNI GetMethodID invalid strings"); return -1;
+        }
+        const char *descriptor=jni_class_descriptor(g,argument(g,1));
+        if(!descriptor||!g->dex_game||agr_dex_game_resolve_method(g->dex_game,descriptor,name,signature,slot==113)) {
+            guest_return(g,0,0);return 1;
         }
         uint32_t handle=0;
         if (agr_jni_method_id(&g->methods,argument(g,1),name,signature,&handle)) {
@@ -354,14 +474,29 @@ static int dispatch_jni_impl(agr_guest *g, uint32_t address) {
         guest_return(g,handle,0); return 1;
     }
     if (slot == 167) {
-        if (g->string_count >= 64) { set_error(g,"JNI string handle table full"); return -1; }
         char text[512]; if (read_guest_string(g,argument(g,1),text,sizeof(text))) {
             set_error(g,"JNI NewStringUTF invalid string"); return -1;
         }
-        jni_string *string=&g->strings[g->string_count++];
-        string->handle=0x66000000u+(g->string_count-1)*4;
-        string->text=copy_string(text);
-        guest_return(g,string->handle,0); return 1;
+        uint32_t handle=jni_string_handle(g,text);
+        if(!handle){set_error(g,"JNI NewStringUTF allocation failed");return -1;}
+        guest_return(g,handle,0); return 1;
+    }
+    if(slot==168){const char *text=jni_string_text(g,argument(g,1));guest_return(g,text?(uint32_t)strlen(text):0,0);return 1;}
+    if(slot==169){const char *text=jni_string_text(g,argument(g,1));if(!text){set_error(g,"JNI GetStringUTFChars invalid string");return -1;}uint32_t p=agr_alloc_static(g->runtime,text,(uint32_t)strlen(text)+1,1);if(argument(g,2)){uint8_t copy=1;arm_interp_write(guest_cpu(g),argument(g,2),&copy,1);}guest_return(g,p,0);return p?1:-1;}
+    if(slot==170){guest_return(g,0,0);return 1;}
+    if(slot==215) {
+        uint32_t class_handle=argument(g,1),methods=argument(g,2),count=argument(g,3);
+        if(!jni_class_descriptor(g,class_handle)||count>4096){set_error(g,"JNI RegisterNatives invalid class/count");return -1;}
+        for(uint32_t i=0;i<count;i++) {
+            uint32_t name_ptr=read_u32(g,methods+i*12),sig_ptr=read_u32(g,methods+i*12+4),fn=read_u32(g,methods+i*12+8);
+            char name[256],signature[512];
+            if(read_guest_string(g,name_ptr,name,sizeof(name))||read_guest_string(g,sig_ptr,signature,sizeof(signature))||
+               agr_dex_game_resolve_method(g->dex_game,jni_class_descriptor(g,class_handle),name,signature,-1)||
+               agr_jni_method_bind(&g->methods,class_handle,name,signature,fn)) {
+                set_error(g,"JNI RegisterNatives invalid method");return -1;
+            }
+        }
+        guest_return(g,0,0);return 1;
     }
     if (slot == 21 || slot == 23 || slot == 22) {
         guest_return(g,slot==21 ? argument(g,1) : 0,0); return 1;
@@ -370,30 +505,29 @@ static int dispatch_jni_impl(agr_guest *g, uint32_t address) {
         uint32_t method_handle=argument(g,2);
         const agr_jni_method *method=agr_jni_method_lookup(&g->methods,method_handle);
         if (!method) { set_error(g,"JNI CallIntMethod unknown method"); return -1; }
-        if (!strcmp(method->name,"loadImage") && !strcmp(method->signature,"(Ljava/lang/String;)I")) {
-            uint32_t string_handle=slot==49 ? argument(g,3) : read_u32(g,argument(g,3));
-            const char *path=NULL;
-            for (uint32_t i=0; i<g->string_count; i++) if(g->strings[i].handle==string_handle) path=g->strings[i].text;
-            int32_t texture=0;
-            if (!path || !g->dex_game || agr_dex_game_load_image(g->dex_game,path,&texture)) {
-                set_error(g,"JNI loadImage DEX invocation failed"); return -1;
-            }
-            guest_return(g,(uint32_t)texture,0); return 1;
+        agr_dex_argument dex_args[8]; uint32_t dex_count=0, word=0;
+        const char *at=strchr(method->signature,'(');
+        uint32_t argv=argument(g,3);
+        if (!at) { set_error(g,"JNI method signature invalid"); return -1; }
+        for (at++;*at && *at!=')' && dex_count<8;dex_count++) {
+            uint32_t bits=slot==49?argument(g,3+word):read_u32(g,argv+(slot==51?word*8:word*4));
+            if (*at=='F') { float value=0;memcpy(&value,&bits,4);dex_args[dex_count].kind=AGR_DEX_ARG_FLOAT;dex_args[dex_count].value.f=value;at++;word++; }
+            else if (*at=='I'||*at=='Z'||*at=='B'||*at=='C'||*at=='S') { dex_args[dex_count].kind=AGR_DEX_ARG_INT;dex_args[dex_count].value.i=(int32_t)bits;at++;word++; }
+            else if (*at=='L'||*at=='[') {
+                const char *text=NULL;
+                text=jni_string_text(g,bits);
+                if (text) { dex_args[dex_count].kind=AGR_DEX_ARG_STRING;dex_args[dex_count].value.string=text; }
+                else dex_args[dex_count].kind=AGR_DEX_ARG_NULL;
+                if (*at=='L') { while(*at&&*at!=';')at++;if(*at==';')at++; } else { while(*at=='[')at++;if(*at=='L'){while(*at&&*at!=';')at++;if(*at==';')at++;}else if(*at)at++; }
+                word++;
+            } else { set_error(g,"JNI CallIntMethod unsupported argument type");return -1; }
         }
-        if (!strcmp(method->name,"playSound") && !strcmp(method->signature,"(Ljava/lang/String;F)I")) {
-            uint32_t argv=argument(g,3), string_handle=0, float_bits=0;
-            if (slot==49) { string_handle=argv; float_bits=argument(g,4); }
-            else if (slot==50) { string_handle=read_u32(g,argv); float_bits=read_u32(g,argv+4); }
-            else { string_handle=read_u32(g,argv); float_bits=read_u32(g,argv+8); }
-            const char *path=NULL; float direction=0.0f; memcpy(&direction,&float_bits,4);
-            for (uint32_t i=0; i<g->string_count; i++) if(g->strings[i].handle==string_handle) path=g->strings[i].text;
-            int32_t play_id=0;
-            if (!path || !g->dex_game || agr_dex_game_play_sound(g->dex_game,path,direction,&play_id)) {
-                set_error(g,"JNI playSound DEX invocation failed"); return -1;
-            }
-            guest_return(g,(uint32_t)play_id,0); return 1;
+        int32_t value=0;
+        if (!g->dex_game || agr_dex_game_invoke_int(g->dex_game,method->name,method->signature,
+                                                     dex_args,dex_count,&value)) {
+            snprintf(g->error,sizeof(g->error),"JNI generic DEX invocation failed %.80s",method->name);return -1;
         }
-        snprintf(g->error,sizeof(g->error),"JNI CallIntMethod unhandled %.80s",method->name); return -1;
+        guest_return(g,(uint32_t)value,0); return 1;
     }
     if (slot >= 61 && slot <= 63) { guest_return(g,0,0); return 1; }
     uint32_t handle = argument(g, 1);
@@ -862,6 +996,11 @@ void agr_guest_destroy(agr_guest *g) {
     if (g->dex_game) agr_dex_game_destroy(g->dex_game);
     agr_jni_method_table_destroy(&g->methods);
     for (uint32_t i=0; i<g->string_count; i++) free(g->strings[i].text);
+    free(g->strings);
+    for (uint32_t i=0; i<g->class_count; i++) free(g->classes[i].descriptor);
+    free(g->classes);
+    for (uint32_t i=0; i<g->java_library_count; i++) free(g->java_libraries[i].name);
+    free(g->java_libraries);
     if (g->display != EGL_NO_DISPLAY && g->egl_owner_thread_id==g->main_thread->guest_thread_id) {
         eglMakeCurrent(g->display,EGL_NO_SURFACE,EGL_NO_SURFACE,EGL_NO_CONTEXT);
         if (g->context) eglDestroyContext(g->display,g->context);
@@ -886,6 +1025,13 @@ int32_t agr_guest_load_elf_handle(agr_guest *g, const char *name, const void *by
     if (rc) { set_error(g, agr_last_error(g->runtime)); return rc; }
     if (object_handle) *object_handle=out.object_handle;
     return 0;
+}
+int32_t agr_guest_register_elf_source(agr_guest *g, const char *name,
+                                      const void *bytes, uint32_t size) {
+    if (!g || !name || !bytes || !size) return -1;
+    int32_t rc=agr_register_elf_source(g->runtime,name,bytes,size,0);
+    if (rc) set_error(g,"formal linker source registration failed");
+    return rc;
 }
 uint32_t agr_guest_dlopen(agr_guest *g, const char *name) {
     uint32_t handle=g&&name?agr_dlopen(g->runtime,name):0;
@@ -1061,6 +1207,38 @@ int32_t agr_guest_load_dex(agr_guest *g, const char *path) {
     if (!g->dex_game) { set_error(g,"original DEX Runtime creation failed"); return -1; }
     return 0;
 }
+int32_t agr_guest_load_java_library(agr_guest *g,const char *name,int32_t *jni_version) {
+    if(!g||!name||!*name)return -1;
+    char soname[512];size_t n=strlen(name);
+    if(n>6&&!strncmp(name,"lib",3)&&!strcmp(name+n-3,".so"))snprintf(soname,sizeof(soname),"%s",name);
+    else snprintf(soname,sizeof(soname),"lib%s.so",name);
+    for(uint32_t i=0;i<g->java_library_count;i++)if(!strcmp(g->java_libraries[i].name,soname)) {
+        if(jni_version)*jni_version=g->java_libraries[i].jni_version;return 0;
+    }
+    uint32_t handle=agr_guest_dlopen(g,soname);if(!handle)return -1;
+    int32_t version=0;uint32_t on_load=agr_dlsym(g->runtime,handle,"JNI_OnLoad");
+    if(on_load){uint32_t args[2]={JVM_PTR,0};if(call_address(g,on_load,args,2,&version)){agr_guest_dlclose(g,handle);return -1;}}
+    if(g->java_library_count==g->java_library_capacity){uint32_t next=g->java_library_capacity?g->java_library_capacity*2:8;java_library *grown=realloc(g->java_libraries,(size_t)next*sizeof(*grown));if(!grown){agr_guest_dlclose(g,handle);return -1;}g->java_libraries=grown;g->java_library_capacity=next;}
+    char *copy=copy_string(soname);if(!copy){agr_guest_dlclose(g,handle);return -1;}
+    g->java_libraries[g->java_library_count++]=(java_library){copy,handle,version};
+    if(jni_version)*jni_version=version;return 0;
+}
+int32_t agr_guest_load_dex_package(agr_guest *g, const agr_apk_package *package) {
+    if (!g || !package) return -1;
+    if (g->dex_game) agr_dex_game_destroy(g->dex_game);
+    g->dex_game=agr_dex_game_create_from_apk(package);
+    if (!g->dex_game) { set_error(g,"APK-derived DEX Runtime creation failed"); return -1; }
+    agr_dex_game_set_native_callback(g->dex_game,dex_native_bridge,g);
+    agr_dex_game_set_load_library_callback(g->dex_game,dex_load_library,g);
+    return 0;
+}
+int32_t agr_guest_start_dex_activity(agr_guest *g) {
+    if (!g || !g->dex_game || agr_dex_game_start_activity(g->dex_game)) {
+        if (g) set_error(g,"APK-derived Activity DEX startup failed");
+        return -1;
+    }
+    return 0;
+}
 int32_t agr_guest_wait_for_swap(agr_guest *g, uint32_t previous, uint32_t timeout_ms) {
     if (!g) return -1;
     struct timespec delay={0,1000000};
@@ -1143,6 +1321,8 @@ const char *agr_guest_recent_call(agr_guest *g,uint32_t index) {
     uint32_t start=g->recent_import_index>12 ? g->recent_import_index%12 : 0;
     return g->recent_imports[(start+index)%12];
 }
+uint32_t agr_guest_loaded_module_count(agr_guest *g){return g?agr_loaded_module_count(g->runtime):0;}
+const char *agr_guest_loaded_module(agr_guest *g,uint32_t index){return g?agr_loaded_module_name(g->runtime,index):NULL;}
 
 __attribute__((used))
 int32_t agr_guest_unwind_backtrace(agr_guest *g, agr_guest_unwind_frame *frames,

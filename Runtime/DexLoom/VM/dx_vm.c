@@ -1262,6 +1262,7 @@ static DxResult native_system_loadlibrary(DxVM *vm, DxFrame *frame, DxValue *arg
         const char *s = dx_vm_get_string_value(args[0].obj);
         if (s) lib_name = s;
     }
+    if(vm->load_library_fn)return vm->load_library_fn(vm->load_library_user,lib_name)==0?DX_OK:DX_ERR_IO;
     char feat_buf[160];
     snprintf(feat_buf, sizeof(feat_buf), "System.loadLibrary(\"%s\") — native .so loading unsupported", lib_name);
     dx_vm_report_missing_feature(vm, feat_buf);
