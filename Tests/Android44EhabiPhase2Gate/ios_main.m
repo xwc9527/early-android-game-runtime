@@ -21,6 +21,7 @@ extern int agr_ehabi2_run(int argc, char **argv);
         NSBundle *bundle = NSBundle.mainBundle;
         NSString *documents = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
         NSString *output = [documents stringByAppendingPathComponent:@"ehabi2-simulator.json"];
+        NSString *diagnostics = [documents stringByAppendingPathComponent:@"ehabi2-stderr.log"];
         NSString *status = [documents stringByAppendingPathComponent:@"ehabi2-exit.txt"];
         const char *paths[] = {
             "agr-ehabi2-simulator",
@@ -32,9 +33,12 @@ extern int agr_ehabi2_run(int argc, char **argv);
             [[bundle pathForResource:@"libagr_eh2_A" ofType:@"so"] fileSystemRepresentation],
         };
         FILE *stream = freopen(output.fileSystemRepresentation, "w", stdout);
+        FILE *errorStream = freopen(diagnostics.fileSystemRepresentation, "w", stderr);
         int rc = stream ? agr_ehabi2_run(7, (char **)paths) : 125;
         fflush(stdout);
+        fflush(stderr);
         fclose(stdout);
+        if (errorStream) fclose(stderr);
         [[NSString stringWithFormat:@"%d\n", rc] writeToFile:status
                                                        atomically:YES
                                                          encoding:NSUTF8StringEncoding

@@ -60,16 +60,23 @@ codesign --force --sign - "$APP"
 DEVICE="$(xcrun simctl list devices booted -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["udid"] for xs in d.values() for x in xs))')"
 xcrun simctl install "$DEVICE" "$APP"
 DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.ehabi2 data)"
-rm -f "$DATA/Documents/ehabi2-simulator.json" "$DATA/Documents/ehabi2-exit.txt"
+rm -f "$DATA/Documents/ehabi2-simulator.json" \
+      "$DATA/Documents/ehabi2-stderr.log" \
+      "$DATA/Documents/ehabi2-exit.txt"
 xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.ehabi2
 for _ in $(seq 1 180); do
   [[ -s "$DATA/Documents/ehabi2-exit.txt" ]] && break
   sleep 1
 done
+mkdir -p "$BUILD/artifacts"
+for file in ehabi2-simulator.json ehabi2-stderr.log ehabi2-exit.txt; do
+  [[ -f "$DATA/Documents/$file" ]] && cp "$DATA/Documents/$file" "$BUILD/artifacts/$file"
+done
+[[ -f "$BUILD/artifacts/ehabi2-stderr.log" ]] && cat "$BUILD/artifacts/ehabi2-stderr.log"
+[[ -f "$BUILD/artifacts/ehabi2-exit.txt" ]] && cat "$BUILD/artifacts/ehabi2-exit.txt"
 test -s "$DATA/Documents/ehabi2-exit.txt"
 test "$(tr -d '\r\n' < "$DATA/Documents/ehabi2-exit.txt")" = 0
 test -s "$DATA/Documents/ehabi2-simulator.json"
-mkdir -p "$BUILD/artifacts"
 cp "$DATA/Documents/ehabi2-simulator.json" "$BUILD/artifacts/ehabi2-simulator.json"
 python3 - "$BUILD/artifacts/ehabi2-simulator.json" <<'PY'
 import json,sys
