@@ -516,9 +516,11 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
             /* A bounded wait returning 1 means that no new swap arrived inside
              * the checkpoint window.  NativeActivity games may legitimately
              * stop swapping while waiting for the next input; it is not a
-             * Runtime failure.  Preserve the current framebuffer so the
-             * checkpoint still records the state reached by the event. */
-            int32_t bytes=rc>=0?agr_guest_read_rgba(guest,frame,320u*480u*4u):-1;
+             * Runtime failure.  Keep the framebuffer captured at the previous
+             * completed swap instead of entering the graphics readback path
+             * while the guest render thread is idle. */
+            int32_t bytes=rc==0?agr_guest_read_rgba(guest,frame,320u*480u*4u):
+                (rc==1?(int32_t)(320u*480u*4u):-1);
             uint32_t consumed=agr_guest_input_consumed_count(guest)-consumedBefore;
             uint32_t drawDelta=agr_guest_draw_count(guest)-drawsBefore;
             uint32_t swapDelta=agr_guest_swap_count(guest)-swapsBefore;
