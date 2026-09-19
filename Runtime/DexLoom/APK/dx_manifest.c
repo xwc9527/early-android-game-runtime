@@ -357,7 +357,7 @@ static char *attr_string(const DxAxmlParser *axml, uint32_t attr_type, uint32_t 
     return NULL;
 }
 
-// ---- Resolve relative class name (prepend package if starts with '.') ----
+// ---- Resolve Android component class names against the manifest package ----
 static char *resolve_class_name(const char *name, const char *package) {
     if (!name) return NULL;
     if (name[0] == '.' && package) {
@@ -367,6 +367,17 @@ static char *resolve_class_name(const char *name, const char *package) {
         if (full) {
             memcpy(full, package, pkg_len);
             memcpy(full + pkg_len, name, act_len + 1);
+        }
+        return full;
+    }
+    if (!strchr(name, '.') && package) {
+        size_t pkg_len = strlen(package);
+        size_t name_len = strlen(name);
+        char *full = (char *)dx_malloc(pkg_len + name_len + 2);
+        if (full) {
+            memcpy(full, package, pkg_len);
+            full[pkg_len] = '.';
+            memcpy(full + pkg_len + 1, name, name_len + 1);
         }
         return full;
     }
