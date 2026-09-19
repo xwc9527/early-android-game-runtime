@@ -429,6 +429,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
     uint8_t *frame = calloc(320u*480u*4u,1); uint32_t nonblack = 0; int32_t frameBytes = -1;
     uint32_t callbacksFound = 0, activity = 0, callbackWords[16] = {0};
     if (initialized == 0) {
+        writePVSProgress(@"before:nativeactivity.onCreate",guest);
         uint8_t callbacksZero[64] = {0};
         char internalPath[512],externalPath[512],obbPath[512];
         snprintf(internalPath,sizeof(internalPath),"/data/data/%s/files",agr_apk_package_name(package));
@@ -444,30 +445,41 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         uint32_t args[3] = {activity,0,0}; int32_t ignored = 0;
         activityCreated = agr_guest_call_symbol(guest,"ANativeActivity_onCreate",args,3,&ignored);
         agr_guest_record_runtime_event(guest,"nativeactivity.onCreate",activity,0,activityCreated,-1,0,0,-1);
+        writePVSProgress(@"after:nativeactivity.onCreate",guest);
         agr_guest_read(guest,callbacks,callbackWords,sizeof(callbackWords));
         for (uint32_t i = 0; i < 16; i++) if (callbackWords[i]) callbacksFound++;
         if (activityCreated == 0 && callbackWords[0]) {
+            writePVSProgress(@"before:nativeactivity.onStart",guest);
             onStart = agr_guest_call_address(guest,callbackWords[0],args,1,&ignored);
             agr_guest_record_runtime_event(guest,"nativeactivity.onStart",activity,callbackWords[0],onStart,-1,0,0,-1);
+            writePVSProgress(@"after:nativeactivity.onStart",guest);
             if (onStart == 0 && callbackWords[1]) {
+                writePVSProgress(@"before:nativeactivity.onResume",guest);
                 onResume = agr_guest_call_address(guest,callbackWords[1],args,1,&ignored);
                 agr_guest_record_runtime_event(guest,"nativeactivity.onResume",activity,callbackWords[1],onResume,-1,0,0,-1);
+                writePVSProgress(@"after:nativeactivity.onResume",guest);
             }
             if (onResume == 0 && callbackWords[7]) {
                 uint32_t windowArgs[2] = {activity,0x63000000u};
+                writePVSProgress(@"before:nativeactivity.window.created",guest);
                 onWindow = agr_guest_call_address(guest,callbackWords[7],windowArgs,2,&ignored);
                 agr_guest_record_runtime_event(guest,"nativeactivity.window.created",activity,windowArgs[1],onWindow,-1,0,0,-1);
+                writePVSProgress(@"after:nativeactivity.window.created",guest);
                 if (onWindow == 0) {
                     pumped = 0;
                     if (pumped == 0 && callbackWords[11]) {
                         uint32_t inputArgs[2]={activity,agr_guest_input_queue(guest)};
+                        writePVSProgress(@"before:nativeactivity.input.created",guest);
                         onInput=agr_guest_call_address(guest,callbackWords[11],inputArgs,2,&ignored);
                         agr_guest_record_runtime_event(guest,"nativeactivity.input.created",activity,inputArgs[1],onInput,-1,0,0,-1);
+                        writePVSProgress(@"after:nativeactivity.input.created",guest);
                     }
                     if (pumped == 0 && onInput == 0 && callbackWords[6]) {
                         uint32_t focusArgs[2] = {activity,1};
+                        writePVSProgress(@"before:nativeactivity.focus",guest);
                         onFocus = agr_guest_call_address(guest,callbackWords[6],focusArgs,2,&ignored);
                         agr_guest_record_runtime_event(guest,"nativeactivity.focus",activity,0,onFocus,1,0,0,-1);
+                        writePVSProgress(@"after:nativeactivity.focus",guest);
                         /* The worker may finish a visible frame before onFocus
                          * returns, then legitimately wait for player input. */
                         if (onFocus == 0 && frame && agr_guest_swap_count(guest) > 0) {
@@ -519,6 +531,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
             uint32_t drawsBefore=agr_guest_draw_count(guest), swapsBefore=agr_guest_swap_count(guest);
             uint32_t consumedBefore=agr_guest_input_consumed_count(guest);
             uint32_t coverageBefore=agr_guest_unique_import_count(guest);
+            writePVSProgress([NSString stringWithFormat:@"before:replay.%u.inject",replayEvents+1],guest);
             int rc=agr_guest_inject_motion(guest,motionAction,[event[@"x"] floatValue],[event[@"y"] floatValue]);
             int frames=MAX(1,MIN(8,[event[@"frames"] intValue]));
             for(int f=0;rc==0&&f<frames;f++) {
@@ -553,6 +566,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
               @"fingerprint":[NSString stringWithFormat:@"%08x",digest],
               @"coverage_delta":@(agr_guest_unique_import_count(guest)-coverageBefore)}];
             replayEvents++;replayConsumed+=consumed;
+            writePVSProgress([NSString stringWithFormat:@"after:replay.%u.checkpoint",replayEvents],guest);
             if(bytes>0) {
                 NSString *checkpoint=[NSHomeDirectory() stringByAppendingPathComponent:
                     [NSString stringWithFormat:@"Documents/kungfoo-trajectory-%02u.png",replayEvents]];
