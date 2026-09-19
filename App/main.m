@@ -388,6 +388,18 @@ static NSArray *runtimeEventTrace(agr_guest *guest) {
     return events;
 }
 
+static void writePVSProgress(NSString *stage, agr_guest *guest) {
+    NSString *path=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/pvs-progress.json"];
+    const char *lastError=guest?agr_guest_last_error(guest):"guest unavailable";
+    NSDictionary *progress=@{ @"stage":stage?:@"unknown",
+      @"guest_thread_id":@(guest?agr_guest_current_thread_id(guest):0),
+      @"guest_pc":[NSString stringWithFormat:@"%08x",guest?agr_guest_program_counter(guest):0],
+      @"runtime_failure_signature":lastError&&lastError[0]?[NSString stringWithUTF8String:lastError]:@"",
+      @"input_trace":guest?runtimeEventTrace(guest):@[] };
+    NSData *json=[NSJSONSerialization dataWithJSONObject:progress options:0 error:nil];
+    [json writeToFile:path atomically:YES];
+}
+
 static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace,
                                           NSMutableArray<NSString *> *failures, BOOL interactive) {
     agr_guest *guest = agr_guest_create();
@@ -592,10 +604,12 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
           {5,oneArg,1,"nativeactivity.onDestroy"}
         };
         for (uint32_t i=0;i<sizeof(teardown)/sizeof(teardown[0]);i++) if(callbackWords[teardown[i].slot]) {
+            writePVSProgress([NSString stringWithFormat:@"before:%s",teardown[i].event],guest);
             int rc=agr_guest_call_address(guest,callbackWords[teardown[i].slot],
                                           teardown[i].args,teardown[i].count,&ignored);
             agr_guest_record_runtime_event(guest,teardown[i].event,activity,
                                            callbackWords[teardown[i].slot],rc,-1,0,0,-1);
+            writePVSProgress([NSString stringWithFormat:@"after:%s",teardown[i].event],guest);
         }
     }
     free(frame);
@@ -609,6 +623,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         gInteractivePackage=package&&agr_apk_package_name(package)
             ? [NSString stringWithUTF8String:agr_apk_package_name(package)] : @"";
     } else {
+        if (guest) writePVSProgress(@"before:agr_guest_destroy",guest);
         if (guest) agr_guest_destroy(guest);
         agr_dex_set_upload_callback(NULL,NULL);
         agr_afw_destroy(dexAssets); free(dexHost);
