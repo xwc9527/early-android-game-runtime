@@ -513,7 +513,12 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
                 uint32_t priorSwap=agr_guest_swap_count(guest);
                 rc=agr_guest_wait_for_swap(guest,priorSwap,500);
             }
-            int32_t bytes=rc==0?agr_guest_read_rgba(guest,frame,320u*480u*4u):-1;
+            /* A bounded wait returning 1 means that no new swap arrived inside
+             * the checkpoint window.  NativeActivity games may legitimately
+             * stop swapping while waiting for the next input; it is not a
+             * Runtime failure.  Preserve the current framebuffer so the
+             * checkpoint still records the state reached by the event. */
+            int32_t bytes=rc>=0?agr_guest_read_rgba(guest,frame,320u*480u*4u):-1;
             uint32_t consumed=agr_guest_input_consumed_count(guest)-consumedBefore;
             uint32_t drawDelta=agr_guest_draw_count(guest)-drawsBefore;
             uint32_t swapDelta=agr_guest_swap_count(guest)-swapsBefore;
@@ -529,7 +534,8 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
             for(int k=0;k<TRAJECTORY_SIGNATURE_SIZE;k++) digest=(digest^signature[k])*16777619u;
             [trajectory addObject:@{@"action":action,@"x":event[@"x"],@"y":event[@"y"],
               @"requested_frames":@(frames),@"input_consumed":@(consumed),@"draw_delta":@(drawDelta),
-              @"swap_delta":@(swapDelta),@"changed_tiles":@(changed),@"novel_frame":@(novel),
+              @"swap_delta":@(swapDelta),@"wait_result":@(rc),
+              @"changed_tiles":@(changed),@"novel_frame":@(novel),
               @"fingerprint":[NSString stringWithFormat:@"%08x",digest],
               @"coverage_delta":@(agr_guest_unique_import_count(guest)-coverageBefore)}];
             replayEvents++;replayConsumed+=consumed;
@@ -538,9 +544,19 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
                     [NSString stringWithFormat:@"Documents/kungfoo-trajectory-%02u.png",replayEvents]];
                 writeRGBAFramePNG(frame,320,480,checkpoint);
             }
-            if(rc||bytes<=0) {
-                trajectoryFailure=[NSString stringWithUTF8String:agr_guest_last_error(guest)];
-                trajectoryOutcome=@"runtime_failure";break;
+            if(rc<0||bytes<=0) {
+                NSString *runtimeError=[NSString stringWithUTF8String:agr_guest_last_error(guest)];
+                if(runtimeError.length) {
+                    trajectoryFailure=runtimeError;
+                    trajectoryOutcome=@"runtime_failure";
+                } else {
+                    trajectoryFailure=@"checkpoint:framebuffer_unavailable";
+                }
+                break;
+            }
+            if(rc==1) {
+                trajectoryFailure=@"checkpoint:swap_timeout";
+                break;
             }
             if(!consumed||!drawDelta||!swapDelta) {
                 trajectoryFailure=@"checkpoint:input_or_draw_stalled";break;
