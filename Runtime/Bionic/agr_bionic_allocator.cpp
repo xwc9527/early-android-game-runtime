@@ -84,6 +84,24 @@ template <typename T, typename U> static inline bool operator<(agr_guest_ptr<T> 
 template <typename T, typename U> static inline bool operator<=(agr_guest_ptr<T> a, agr_guest_ptr<U> b){return a.address<=b.address;}
 template <typename T, typename U> static inline bool operator>(agr_guest_ptr<T> a, agr_guest_ptr<U> b){return a.address>b.address;}
 template <typename T, typename U> static inline bool operator>=(agr_guest_ptr<T> a, agr_guest_ptr<U> b){return a.address>=b.address;}
+static inline char *operator+(agr_guest_ptr<char> pointer, uint32_t bytes) {
+    return pointer.get() + bytes;
+}
+static inline char *operator+(uint32_t bytes, agr_guest_ptr<char> pointer) {
+    return pointer.get() + bytes;
+}
+template <typename T, typename U> static inline bool operator==(agr_guest_ptr<T> a,U *b){return a.address==agr_dl_host_to_guest(b);}
+template <typename T, typename U> static inline bool operator==(T *a,agr_guest_ptr<U> b){return agr_dl_host_to_guest(a)==b.address;}
+template <typename T, typename U> static inline bool operator!=(agr_guest_ptr<T> a,U *b){return !(a==b);}
+template <typename T, typename U> static inline bool operator!=(T *a,agr_guest_ptr<U> b){return !(a==b);}
+template <typename T, typename U> static inline bool operator<(agr_guest_ptr<T> a,U *b){return a.address<agr_dl_host_to_guest(b);}
+template <typename T, typename U> static inline bool operator<(T *a,agr_guest_ptr<U> b){return agr_dl_host_to_guest(a)<b.address;}
+template <typename T, typename U> static inline bool operator<=(agr_guest_ptr<T> a,U *b){return a.address<=agr_dl_host_to_guest(b);}
+template <typename T, typename U> static inline bool operator<=(T *a,agr_guest_ptr<U> b){return agr_dl_host_to_guest(a)<=b.address;}
+template <typename T, typename U> static inline bool operator>(agr_guest_ptr<T> a,U *b){return a.address>agr_dl_host_to_guest(b);}
+template <typename T, typename U> static inline bool operator>(T *a,agr_guest_ptr<U> b){return agr_dl_host_to_guest(a)>b.address;}
+template <typename T, typename U> static inline bool operator>=(agr_guest_ptr<T> a,U *b){return a.address>=agr_dl_host_to_guest(b);}
+template <typename T, typename U> static inline bool operator>=(T *a,agr_guest_ptr<U> b){return agr_dl_host_to_guest(a)>=b.address;}
 
 struct malloc_params;
 static struct malloc_params *agr_dl_current_params(void) {
