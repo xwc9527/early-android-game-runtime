@@ -14,7 +14,7 @@ git rev-parse HEAD
 
 `git status --short` 必须为空。不要从本机 `build/`、`artifacts/`、`.tools/`、`.tmp/` 或 `App/Resources` 中复制生成物来补仓库；这些目录包含缓存、设备证据或外部游戏输入。干净 checkout 的可重建性由构建脚本和 CI 负责。
 
-当前工程阶段应定义为“部分正式化 Runtime”。AOSP linker/libdl、guest VMA、Bionic pthread/TLS/futex 和线程模型已经完成 production cutover；DEX/Dalvik、JNI lifecycle、完整 libc/libm、C++ EHABI、Framework、NativeActivity/Input 和 Audio 尚未整体闭合。接手后不能恢复“真实游戏撞到一个调用就补一个 shim”的开发方式。
+当前工程阶段应定义为“部分正式化 Runtime”。AOSP linker/libdl、guest VMA、Bionic pthread/TLS/futex、线程模型以及 GCC 4.8 ARM EHABI Phase 1/2A/2B 已完成 production closure；DEX/Dalvik、JNI lifecycle、完整 libc/libm、其余 C++ 标准库表面、Framework、NativeActivity/Input 和 Audio 尚未整体闭合。接手后不能恢复“真实游戏撞到一个调用就补一个 shim”的开发方式。
 
 ## 开发环境
 
@@ -152,13 +152,13 @@ python tools/observe_iphone.py --bundle-id dev.agr.simulator
 
 `Native Android userspace` → `C++ ABI / ARM EHABI` → `剩余 Bionic native environment` → `Dalvik / GC` → `JNI / JavaVM` → `Framework`
 
-当前下一工作包是 ARM C++ ABI / EHABI / unwind 正式迁移。
+ARM C++ ABI / EHABI 的既定 Phase 1、2A、2B 已完成；后续工作包从剩余 Bionic native environment 中单独定义，不得把已闭合的 guest GCC exception ownership 改回 host HLE。
 
 Native Android userspace 剩余基础闭合后，再进入 DEX/Dalvik、GC 与 JNI/JavaVM 正式化。
 
 当前 JNI string / array / trap fixed tables 属于明确技术债，但不得在正式 JNI 迁移前通过扩表、局部 shim 或真实游戏补丁处理。当前 `agr_guest_runtime.c` 的 64 项 string handle 和其他固定容量明确属于未闭合实现。
 
-EHABI unwind foundation 之后的 native 公共环境剩余主体：便携 Bionic libc/libm/stdio、文件和路径语义、真实时钟、signals/fault delivery、API19 allocator source port。当前 free-list allocator 已解决历史分配耗尽，但还不是 Bionic dlmalloc 的正式迁移结果。
+当前 native 公共环境剩余主体：便携 Bionic libc/libm/stdio、文件和路径语义、真实时钟、signals/fault delivery、API19 allocator source port。当前 free-list allocator 已解决历史分配耗尽，但还不是 Bionic dlmalloc 的正式迁移结果。
 
 再之后是 Framework 与设备边界：把 AndroidMini 中的 stub/固定成功行为替换为可声明、可测试的 API19 HLE；随后闭合 NativeActivity/Looper/Input/Window、Bitmap lifecycle 和 Audio/OpenSL ES。未知 API 不得伪造成功。
 

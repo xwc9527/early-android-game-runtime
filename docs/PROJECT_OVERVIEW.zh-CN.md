@@ -51,7 +51,7 @@ Early Android Game Runtime（AGR）是在一个原生 iOS 进程内运行早期 
 - `AndroidMini/dx_android_framework.c` 包含大量 HLE、stub、固定返回值和容量限制。它是兼容实验面，不是正式 Framework 完成证明。
 - NativeActivity、Looper、Window 和触摸已经打通真实样本路径，但生命周期、队列、线程 affinity 和多窗口语义没有完成全面 API19 对照。
 - EGL/GLES1 的真实 draw/swap/readback 已验证；GLES2/3、完整 EGL 对象生命周期和所有 guest pointer/offset 组合尚未声明为完整支持。
-- C++ runtime 只覆盖当前命中的 helper；ARM EHABI 的跨 DSO throw/catch/unwind 尚未正式闭合。
+- ARM EHABI Phase 1、2A、2B 已闭合：未经修改的 NDK r10e GCC 4.8 guest runtime 已通过跨 DSO ARM/Thumb unwind、cleanup/resume、typed catch、继承与多继承调整、pointer catch、rethrow、exception lifetime、nested catch、双 guest thread TLS 隔离及 unload/reload differential。更广的 C++ 标准库能力仍不在该结论内。
 - 音频主要是 Framework stub/HLE，占位行为不能作为 SoundPool、AudioTrack 或 OpenSL ES 已实现的证据。
 - `App/main.m` 仍是测试 harness，包含样本名、固定 native load base、fixture 入口和回归流程；通用 APK launcher 尚未实现。
 
