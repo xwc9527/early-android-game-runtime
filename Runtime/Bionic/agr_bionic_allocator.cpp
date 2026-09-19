@@ -128,11 +128,8 @@ static int agr_dl_destroy_lock(uint32_t *) { return 0; }
 static void *agr_dl_mmap(agr_dl_size_t size);
 static int agr_dl_munmap(void *address, agr_dl_size_t size);
 static void *agr_dl_morecore(agr_dl_ptrdiff_t increment);
-static int agr_dl_getpagesize(void) { return 4096; }
-
 #define ANDROID_CHANGES 1
-#define HAVE_GETPAGESIZE 1
-#define getpagesize agr_dl_getpagesize
+#define malloc_getpagesize ((agr_dl_size_t)4096U)
 #define MALLOC_ALIGNMENT 8U
 #define MALLOC_INSPECT_ALL 1
 #define MSPACES 0
