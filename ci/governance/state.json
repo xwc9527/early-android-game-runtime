@@ -9,9 +9,14 @@
     "target": "PVS1",
     "branch": "playable-vertical-slice-1",
     "lifecycle": "IMPLEMENTED",
-    "primary_blocker": "closure re-verification after correcting the regression harness hard-timeout hierarchy",
-    "first_broken_boundary": "the 180-second outer regression timeout terminated a live 150-second forensic run before its bounded post-run evidence queries completed",
-    "first_broken_boundary_evidence": "closure run 35469009073: contracts, Simulator smoke, and iphoneos passed; simulator-real-apk exited 124 at 180.161s while its process timeline remained alive through the full 150-second observation interval"
+    "observed_discontinuity": "closure run 35469009073 exited 124 at 180.161 seconds while the app remained alive through the full 150-second observation",
+    "android_subsystem": "CI regression harness",
+    "upstream_path": [],
+    "agr_path": ["run-suite outer timeout", "forensic observation", "bounded evidence queries"],
+    "active_explanations": [],
+    "first_proven_semantic_difference": "the outer timeout was shorter than the inner declared maximum duration",
+    "classification": "HARNESS_BUG",
+    "next_validation": "run the exact corrected candidate through one valid closure workflow after budget reset"
   },
   "ci_budget": {
     "valid_discovery_runs": 1,

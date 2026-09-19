@@ -31,18 +31,31 @@ def module_changes(files, modules):
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=("working", "closure", "merge", "post-merge"), default="working")
+    parser.add_argument("--mode", choices=("working", "discovery", "closure", "merge", "post-merge"), default="working")
     parser.add_argument("--summary")
     parser.add_argument("--output", default="build/artifacts/governance-report.json")
     args = parser.parse_args()
-    required = ["AGENTS.md", "docs/ARCHITECTURE.md", "docs/CURRENT_STATE.md", "docs/DECISIONS.md",
+    required = ["AGENTS.md", "docs/ARCHITECTURE.md", "docs/CURRENT_STATE.md", "docs/DECISIONS.md", "docs/UPSTREAM_MAP.md",
                 "docs/MODULE_STATUS.md", "docs/TESTING.md", "ci/governance/state.json",
-                "ci/governance/modules.json", "ci/governance/reopens.json", "ci/governance/closure.json"]
+                "ci/governance/modules.json", "ci/governance/reopens.json", "ci/governance/closure.json",
+                "ci/governance/upstream-map.json", "ci/governance/diagnostic-cutpoints.json",
+                "artifacts/schema/semantic-diff.schema.json"]
     errors = [f"missing:{p}" for p in required if not (ROOT / p).is_file()]
     state, registry, closure = load("ci/governance/state.json"), load("ci/governance/modules.json"), load("ci/governance/closure.json")
+    upstream_map = load("ci/governance/upstream-map.json")
     reopens = load("ci/governance/reopens.json").get("reopens", [])
     if state["baseline"]["last_known_good"] != state["baseline"]["commit"]:
         errors.append("last_known_good must be the formal main baseline commit")
+    if upstream_map.get("android_baseline") != "Android 4.4.4_r2":
+        errors.append("upstream map must use Android 4.4.4_r2")
+    map_keys = {"android_api","subsystem","android_version","upstream_repository","upstream_file","entry_function",
+                "important_callees","observable_semantics","internal_invariants","agr_files","agr_entry",
+                "execution_placement","host_substitutions","known_deviations","contracts"}
+    for index, entry in enumerate(upstream_map.get("entries", [])):
+        missing = sorted(map_keys - set(entry))
+        if missing: errors.append(f"upstream-map entry {index} missing: {','.join(missing)}")
+        for agr_path in entry.get("agr_files", []):
+            if not (ROOT / agr_path).exists(): errors.append(f"upstream-map AGR path does not exist: {agr_path}")
     files = changed_files(state["baseline"]["commit"])
     touched = module_changes(files, registry["modules"])
     stable = [m for m in touched if m["status"] == "stable"]
@@ -63,6 +76,15 @@ def main() -> int:
             if c.get("tested_tree") != tree: errors.append("candidate tree != closure tested tree")
             if not c.get("eligible_for_merge"): errors.append("closure is not merge eligible")
             if not summary.get("run", {}).get("valid_run"): errors.append("closure run is infrastructure-invalid")
+            diagnosis = summary.get("diagnosis", {})
+            if not diagnosis.get("upstream_mapped"): errors.append("closure diagnosis has no upstream mapping")
+            if not diagnosis.get("first_relevant_difference"): errors.append("closure diagnosis has no first relevant semantic difference")
+            if summary.get("diagnostics", {}).get("experimental"): errors.append("closure retains experimental diagnostics")
+            semantic_path = diagnosis.get("semantic_diff_artifact")
+            if semantic_path:
+                semantic = load(semantic_path)
+                if semantic.get("experimental") or semantic.get("needs_experiment"):
+                    errors.append("closure semantic differential still contains an active experiment")
         if unexplained: errors.extend(warnings)
     if args.mode == "merge" and summary:
         base = summary.get("closure", {}).get("base_commit")

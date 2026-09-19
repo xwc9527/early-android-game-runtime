@@ -14,15 +14,39 @@ Lifecycle state: `IMPLEMENTED` (closure candidate under verification, not `CLOSE
 
 Playable Vertical Slice 1 (PVS1): generic APK-derived launch through NativeActivity, window, input, guest progression, bounded stable interaction, and clean teardown.
 
-## Primary Blocker
+## Observed Discontinuity
 
-Closure re-verification after correcting the regression harness hard-timeout hierarchy.
+Closure run `35469009073` terminated `simulator-real-apk` with exit 124 at `180.161s`, while the target app remained alive through the full 150-second observation interval. Independent contracts, Simulator smoke, and iphoneos passed.
 
-Discovery run `35467254664` classified the former unexplained exit as `HOST_CRASH`. The macOS crash report records `EXC_BAD_ACCESS/SIGSEGV` in `dx_vm_get_field`, reached through `dx_vm_execute_method -> agr_dex_game_invoke_int -> call_address -> guest_thread_execute`. Immediately before the crash, DexLoom completed a major GC and the next original DEX instruction was `iget-object` in `loadImage`.
+## Mapped Android Subsystem
 
-The earliest causal defect was lifecycle ownership: `create_game` retained the launched Activity in a host pointer, while the minimal NativeActivity constructor was a no-op and never installed it in `DxVM.activity_instance`, the VM process root traversed by GC. The bounded swap wait was only the last harness marker and now has an independent timing contract.
+The previously observed Runtime crash mapped to Dalvik GC roots and NativeActivity lifecycle ownership. The current discontinuity maps to the CI regression harness and is not an Android Runtime subsystem failure.
 
-Closure run `35469009073` proved the Runtime fix remains alive beyond the former crash and passed independent contracts, Simulator smoke, and iphoneos. Its real-APK regression was externally terminated at `180.161s`: the inner forensic collector was configured for 150 seconds plus two bounded 60-second system-log queries, so the outer 180-second suite timeout could not permit its declared work to finish. The outer bound is now 780 seconds and the app observation bound is 600 seconds, both within the required 10–15 minute ceiling.
+## Upstream Source Path
+
+For the repaired Runtime defect: `frameworks/base/core/java/android/app/NativeActivity.java` keeps the launched Activity in the managed lifecycle, and `dalvik/vm/alloc/MarkSweep.cpp` marks process roots before reclaiming objects.
+
+For the current harness discontinuity there is no Android upstream path; its contract is the test runner's own bounded-time hierarchy.
+
+## AGR Source Path
+
+Runtime path: `Runtime/DexLoom/game_dex_runner.c -> DxVM.activity_instance -> Dalvik root traversal -> original DEX loadImage`.
+
+Harness path: `ci/run-suite.py -> forensic collector 150-second observation -> up to two bounded 60-second evidence queries`.
+
+## First Proven Semantic Difference
+
+The Runtime defect was that `create_game` retained the Activity only in a host pointer while `DxVM.activity_instance` remained unset, allowing a major GC to reclaim it. That defect is fixed and covered by `activity_gc_root_contract`.
+
+The current harness defect was that its 180-second outer timeout was shorter than the collector's declared maximum duration. The timeout hierarchy is corrected in the current candidate.
+
+## Remaining Uncertainty
+
+The corrected candidate has not completed a valid closure run on its exact commit/tree, so PVS1 remains `IMPLEMENTED`.
+
+## Next Validation
+
+Run the exact corrected candidate through one valid closure workflow after the closure budget is explicitly reset. The run must finish its bounded real-APK evidence collection and satisfy the existing PVS1 closure contract.
 
 ## Proven Working
 

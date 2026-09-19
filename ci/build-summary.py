@@ -31,6 +31,7 @@ def main():
     p.add_argument("--regressions-status", default="unknown")
     p.add_argument("--result")
     p.add_argument("--diagnostic")
+    p.add_argument("--semantic-diff")
     p.add_argument("--valid-run", choices=("true","false"), default="true")
     p.add_argument("--output", default="build/artifacts/run-summary.json")
     args = p.parse_args()
@@ -40,6 +41,7 @@ def main():
     target_def = read_json("ci/targets/PVS1.json")
     result = read_json(args.result)
     diagnostic = read_json(args.diagnostic)
+    semantic = read_json(args.semantic_diff)
     head, tree = git("rev-parse","HEAD"), git("rev-parse","HEAD^{tree}")
     baseline = state.get("baseline",{}).get("commit","")
     try: files = [x for x in git("diff","--name-only",f"{baseline}...HEAD").splitlines() if x]
@@ -77,11 +79,24 @@ def main():
       "diagnostics":{"passive":diagnostic.get("passive",True),"intrusive":diagnostic.get("intrusive",False),
                      "primary":args.diagnostic or "","classification":diagnostic.get("classification",""),
                      "remaining_candidates":diagnostic.get("remaining_candidates",[]),
-                     "missing_evidence":diagnostic.get("missing_evidence",[])},
+                     "missing_evidence":diagnostic.get("missing_evidence",[]),
+                     "experimental":diagnostic.get("experimental",False)},
+      "diagnosis":{
+          "observed_discontinuity":semantic.get("observed_discontinuity",diagnostic.get("observed_discontinuity","")),
+          "android_subsystem":semantic.get("subsystem",diagnostic.get("subsystem","")),
+          "upstream_mapped":bool(semantic.get("upstream",{}).get("files") or diagnostic.get("upstream_map_entry")),
+          "upstream_path":semantic.get("upstream",{}).get("call_path",[]),
+          "agr_path":semantic.get("agr",{}).get("call_path",[]),
+          "first_relevant_difference":semantic.get("first_relevant_difference",diagnostic.get("first_relevant_difference","")),
+          "classification":semantic.get("classification",diagnostic.get("classification","UNKNOWN")) or "UNKNOWN",
+          "remaining_uncertainty":semantic.get("active_explanations",diagnostic.get("remaining_candidates",[])),
+          "next_discriminating_action":semantic.get("next_discriminating_action",diagnostic.get("next_discriminating_action","")),
+          "semantic_diff_artifact":args.semantic_diff or diagnostic.get("semantic_diff_artifact","")},
       "closure":{"target":target_def.get("target","PVS1"),"tested_commit":head,"tested_tree":tree,
                  "base_commit":baseline,"state":"CLOSED" if eligible else "IMPLEMENTED",
                  "eligible_for_merge":eligible},
-      "artifacts":{"runtime_result":args.result or "","diagnostics":args.diagnostic or "","full_logs":""}
+      "artifacts":{"runtime_result":args.result or "","diagnostics":args.diagnostic or "",
+                   "semantic_diff":args.semantic_diff or "","full_logs":""}
     }
     out=ROOT/args.output;out.parent.mkdir(parents=True,exist_ok=True)
     out.write_text(json.dumps(summary,indent=2)+"\n",encoding="utf-8")

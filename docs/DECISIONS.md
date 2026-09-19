@@ -53,3 +53,13 @@ Decision: closure attaches to an exact commit and Git tree. The merge candidate 
 Required lifecycle: feature branch, implementation, discovery CI, fix, closure CI, closure evidence, merge review, main merge, post-merge smoke, baseline update.
 
 Reopen only if the source control platform cannot preserve or verify commit/tree identity.
+
+## D008 — API19 behavior oracle and source-first differential
+
+Status: LOCKED
+
+Decision: Android 4.4.4/API19 source and an Android 4.4 ARM reference define the observable compatibility contract. AGR begins diagnosis by mapping that upstream path, extracting behavior and invariants, and locating the first relevant semantic difference. AGR may use different host mechanisms when they preserve those semantics.
+
+Discovery may use marked, temporary counterfactual experiments. Closure excludes them and requires a public fix, focused contract, real-APK confirmation where applicable, and exact commit/tree evidence.
+
+Reopen only if authoritative evidence proves the pinned source/reference cannot define a required observable behavior.

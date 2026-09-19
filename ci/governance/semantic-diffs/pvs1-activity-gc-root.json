@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "classification": "AGR_INTERNAL_BUG",
+  "subsystem": "Dalvik/NativeActivity lifecycle",
+  "observed_discontinuity": "After a major DEX GC, the next original DEX iget-object in loadImage dereferenced an invalid launched Activity object and the Simulator process exited with EXC_BAD_ACCESS.",
+  "upstream": {
+    "version": "Android 4.4.4_r2",
+    "files": [
+      "dalvik/vm/alloc/MarkSweep.cpp",
+      "frameworks/base/core/java/android/app/NativeActivity.java"
+    ],
+    "call_path": [
+      "ActivityThread owns launched Activity",
+      "NativeActivity instance remains strongly reachable",
+      "Dalvik markRootSet marks process roots",
+      "instance fields remain valid after GC"
+    ]
+  },
+  "required_semantics": [
+    "A launched Activity remains strongly reachable for its active lifecycle.",
+    "A host native pointer is not a Dalvik GC root.",
+    "Original DEX may access Activity fields after any major GC while the Activity is active."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/game_dex_runner.c",
+      "Runtime/DexLoom/VM/dx_vm.c"
+    ],
+    "call_path": [
+      "create_game constructs the Activity",
+      "host game state retains a native pointer",
+      "DxVM.activity_instance remains unset",
+      "major GC omits the Activity from the root set",
+      "loadImage executes iget-object on collected storage"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "AGR retained the launched Activity only through a host pointer instead of the VM process root traversed by GC.",
+      "relevance": "This permits collection before the next original DEX field access and directly explains the observed EXC_BAD_ACCESS."
+    }
+  ],
+  "first_relevant_difference": "The Activity is absent from DxVM.activity_instance when the major GC root set is marked.",
+  "confidence": "proven",
+  "needs_experiment": false,
+  "active_explanations": [],
+  "next_discriminating_action": "",
+  "host_adaptation": "Store the active Activity in the existing host-side VM lifecycle root; do not add a game-specific retention path.",
+  "validation": [
+    "activity_gc_root_contract",
+    "bounded Simulator run remained alive beyond the former crash",
+    "original DEX resumed loadImage after major GC"
+  ],
+  "experimental": false
+}

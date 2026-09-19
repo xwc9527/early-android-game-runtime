@@ -11,5 +11,10 @@
     "evidence": {"type":"object"},
     "passive": {"type":"boolean"},
     "intrusive": {"type":"boolean"}
+    ,"classification":{"enum":["ANDROID_SEMANTIC_BUG","HOST_ADAPTATION_BUG","AGR_INTERNAL_BUG","HARNESS_BUG","REFERENCE_MISMATCH","UNKNOWN"]}
+    ,"subsystem":{"type":"string"}
+    ,"upstream_map_entry":{"type":"string"}
+    ,"semantic_diff_artifact":{"type":"string"}
+    ,"experimental":{"type":"boolean"}
   }
 }

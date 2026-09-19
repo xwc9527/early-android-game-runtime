@@ -6,15 +6,19 @@ Make original target Android APK, DEX, and ARMv7 binaries actually run and remai
 
 ## Formal Terms
 
-- **ACTIVE TARGET**: the one user objective currently being advanced.
-- **PRIMARY BLOCKER**: the earliest causal boundary supported by evidence for the active target.
-- **OBSERVATION**: a measured anomaly not yet proven to be the blocker.
-- **STABLE**: the module satisfies its current contract. It is readable and diagnosable, but is not changed unless a reopen condition is met. Stable does not mean complete.
+- **ACTIVE TARGET**: the user objective currently being advanced.
+- **DISCOVERY**: evidence gathering that locates the Android path and the first proven semantic difference. It may retain several active explanations.
+- **OBSERVED DISCONTINUITY**: measured behavior only, without an inferred cause.
+- **SOURCE PATH**: the pinned API19/AOSP call path that owns the observable contract and its AGR counterpart.
+- **ACTIVE EXPLANATIONS**: remaining causal candidates after source inspection; use them only when source evidence does not decide the issue.
+- **FIRST PROVEN SEMANTIC DIFFERENCE**: the earliest evidenced difference that can change guest-visible behavior or a required internal invariant. It is not the first log line, code difference, or exception string.
+- **CLOSURE**: removal of experiments followed by contract, regression, exact-identity, and merge-eligibility verification.
+- **STABLE**: the module satisfies its current contract. Discovery may inspect, trace, or experiment on it; permanent changes require an evidence-backed reopen. Stable does not mean complete.
 - **CLOSED**: one exact commit and tree satisfy the target closure contract with complete closure evidence.
 - **MERGE-ELIGIBLE**: the closure-tested HEAD satisfies every pre-merge check.
 - **MERGED**: the closure-tested tree is present on `main` and the post-merge gate passed.
 - **BASELINE**: the newest commit on formal `main` that passed all required baseline gates.
-- **REOPEN**: new evidence places a stable module on the primary-blocker path.
+- **REOPEN**: evidence proves a stable module contains the public semantic defect selected for a production fix.
 
 `IMPLEMENTED`, `CLOSED`, and `MERGED` are distinct. CI green does not imply CLOSED. CLOSED does not imply MERGED.
 
@@ -23,101 +27,88 @@ Make original target Android APK, DEX, and ARMv7 binaries actually run and remai
 1. `AGENTS.md`
 2. `docs/CURRENT_STATE.md`
 3. latest `run-summary.json`
-4. source directly relevant to the primary blocker
+4. matching entry in `docs/UPSTREAM_MAP.md` and `ci/governance/upstream-map.json`
+5. pinned Android 4.4.4/API19 source when the map is insufficient
+6. AGR source implementing the same observable contract
 
-Read `docs/ARCHITECTURE.md` only if ownership, execution placement, or a locked boundary is involved. Read `docs/DECISIONS.md` only when an existing decision may be changed or reopened. Do not scan the repository by default.
+Read `docs/ARCHITECTURE.md` when ownership, execution placement, or a locked boundary is involved. Read `docs/DECISIONS.md` when an existing decision may be changed or reopened. Do not scan unrelated repository areas by default.
 
 ## Core Rules
 
 - No per-game behavior in Runtime code.
 - Test harnesses may identify a game, replay a game-specific trajectory, and assert its observable results.
 - Do not boot or recreate a complete Android OS/userspace.
-- Android 4.4.4/API19 is the source and behavior baseline.
+- Android 4.4.4/API19 is the behavior oracle. Its internal mechanism may be replaced when guest-visible semantics and required invariants remain equivalent.
 - Original ARMv7 native code and GCC exception runtime execute as GUEST-ARM.
 - DEX remains host-side.
 - The formal linker is the sole ELF owner.
 - UIKit is a host endpoint, not an Android policy owner.
-- Real games expose public-environment defects; confirmed defects become focused contracts.
-- Work on one primary blocker. Keep other findings as secondary observations.
-- Do not infer a cause from the first error line. The first broken boundary is the earliest causal discontinuity demonstrated by evidence.
+- Real games discover public-environment defects and confirm final behavior. Focused contracts isolate the defect.
+- Do not infer a cause from the last marker or first error line.
 - Nonblocking technical debt is not current work.
+
+## Default Discovery Workflow
+
+`observe -> map Android subsystem -> inspect upstream map -> read API19 source -> extract semantics/invariants -> map AGR path -> semantic differential -> first proven semantic difference -> discriminating experiment if needed -> focused validation -> public fix -> contract -> real APK confirmation`
+
+Source inspection precedes open-ended hypotheses whenever Android has an authoritative counterpart. Compare return/error behavior, callback ordering, ownership, blocking and wake behavior, lifecycle, object lifetime, state mutation, memory visibility, and resource visibility. Source-code shape alone is not evidence of a semantic defect.
+
+Every compatibility diagnosis records one classification: `ANDROID_SEMANTIC_BUG`, `HOST_ADAPTATION_BUG`, `AGR_INTERNAL_BUG`, `HARNESS_BUG`, `REFERENCE_MISMATCH`, or `UNKNOWN`.
+
+Use `ci/semantic-diff.py` and `artifacts/schema/semantic-diff.schema.json`. When source evidence leaves multiple causal explanations, record one discriminating experiment. Do not manufacture a hypothesis tree when the first relevant semantic difference is already sufficient.
 
 ## Stable Module Rule
 
-Stable modules may be read and instrumented with passive diagnostics. They are not proactively refactored. A stable module may be modified only when at least one condition is evidenced:
+During Discovery, stable modules may be read, traced, instrumented, or temporarily altered for a marked counterfactual experiment without formal reopen. Experiments may cross adjacent modules but may not change locked ownership or architecture. They are not production fixes and cannot enter closure evidence.
 
-1. its regression gate fails;
-2. the primary blocker directly enters it;
-3. an architecture inconsistency is proven;
-4. public Android behavior cannot be implemented above it.
+When evidence selects a stable module for the permanent public fix, record its `stable_modules_touched` entry and reopen reason before Closure. Closure rejects unexplained stable-module changes and any remaining experimental or behavior-changing diagnostic code.
 
-Every such change requires a `stable_modules_touched` entry and a reopen reason. Suspicion is insufficient.
-
-## Diagnostics
+## Diagnostics and Experiments
 
 Passive diagnostics must use bounded memory, never wait, never call guest code, never alter scheduling, and never change Android-visible behavior.
 
-Intrusive diagnostics include extra guest calls, input injection, lifecycle calls, framebuffer readback, EGL mutation, pauses, and timing changes. Use them only when passive evidence cannot distinguish the remaining hypotheses. Record whether diagnostics were passive or intrusive in `run-summary.json`.
+Discovery may use intrusive diagnostics or temporary counterfactual behavior when source and passive runtime evidence cannot discriminate the remaining explanations. Mark it `EXPERIMENTAL`, record its result in `semantic-diff.json`, and remove it before Closure. Diagnostic cut points are test interfaces, never production compatibility shortcuts.
 
-Store both:
+Differential trace events use: `global_seq`, `monotonic_time`, `host_thread`, `guest_thread`, `guest_pc`, `boundary`, `operation`, `object`, `input_state`, `output_state`, `result`, `frame`, and `swap`.
 
-- `normalized_signature` for clustering;
-- `raw_fingerprint` for deciding whether apparently similar failures are actually identical.
+Store both `normalized_signature` for clustering and `raw_fingerprint` for identity.
 
 ## Test Scheduling
 
 Use the least expensive sufficient layer:
 
-`static -> host unit -> API contract -> ARM synthetic -> Simulator integration -> real APK -> iphoneos -> physical device`
+`static -> host unit -> API19 differential/contract -> ARM synthetic -> Simulator integration -> real APK -> iphoneos -> physical device`
 
-Independent tests continue after independent failures. A hard prerequisite failure blocks or skips dependants. A build failure must not launch a Simulator target.
-
-Every executable test has a hard timeout, an independent result, and a failure signature. One game process must not contaminate another.
+Independent tests continue after independent failures. A hard prerequisite failure blocks or skips dependants. A build failure must not launch a Simulator target. Every executable test has a hard timeout, independent result, and failure signature.
 
 ## CI Budget
 
-Per active task:
+Per active task: local/static/unit/focused checks are reasonably unlimited; one complete valid discovery macOS run and one complete valid closure macOS run are budgeted; iphoneos may run in parallel. A run counts only when required jobs execute on a functioning runner and required evidence uploads. Runner outages, GitHub failures, and artifact failures do not consume budget.
 
-- local/static/unit/focused checks: reasonably unlimited;
-- one complete valid discovery macOS run;
-- one complete valid closure macOS run;
-- iphoneos may run in parallel.
-
-A run consumes this budget only when required jobs execute on a functioning runner and required evidence is uploaded. Runner outages, GitHub service failures, artifact failures, and infrastructure crashes do not consume discovery/closure budget.
-
-After two valid full runs without enough evidence, stop and report the single unknown and the minimum new evidence required.
+After two valid full runs without enough evidence, stop and report the minimum missing evidence.
 
 ## STOP Rule
 
-Stop only when the required fix would change a locked architecture, execution-placement, ownership, process, or guest-binary boundary and existing requirements do not select one unique solution.
-
-Report the conflicting constraints, their provenance, upstream behavior, current AGR behavior, first broken boundary, available choices, and affected locked boundary. Compilation, fixtures, tests, CI wiring, and local implementation defects are not STOP conditions.
+Stop only when the required fix would change a locked architecture, execution-placement, ownership, process, or guest-binary boundary and existing requirements do not select one unique solution. Compilation, fixtures, tests, CI wiring, experiments, and local implementation defects are not STOP conditions.
 
 ## Branch and Closure Governance
 
-The required lifecycle is:
-
 `feature/phase branch -> implementation -> discovery CI -> fix -> closure CI -> closure evidence -> CLOSED -> merge review -> merge main -> post-merge smoke -> baseline update`
 
-Before closure CI, synchronize all required changes to `CURRENT_STATE`, `MODULE_STATUS`, and `DECISIONS` into the candidate commit. Do not append a documentation-only commit after closure and reuse old evidence.
+Before closure CI, synchronize `CURRENT_STATE`, `MODULE_STATUS`, `DECISIONS`, upstream mappings, semantic differential, and required contracts into the candidate commit. Do not append even documentation-only changes after closure and reuse old evidence.
 
-Closure means the target contract was completely verified for one exact commit and tree. It does not mean all Runtime modules are complete and does not prevent a later evidence-based reopen.
-
-Before merge verify:
+Closure means the target contract was completely verified for one exact commit and tree. Before merge verify:
 
 - candidate HEAD equals closure `tested_commit`;
 - candidate tree equals closure `tested_tree`;
 - closure base still matches the integrated base;
-- stable-module changes have valid reopen reasons;
-- no unexplained new relevant warning or failure exists;
-- all required state documents were part of the tested tree;
-- temporary or intrusive diagnostics did not enter Runtime production code.
+- stable-module production changes have valid reopen reasons;
+- no unexplained relevant warning or failure exists;
+- temporary experiments and unnecessary intrusive diagnostics are absent.
 
-If `main` changed after closure, integrate the new base and rerun affected closure gates. Rebase invalidates evidence for the old commit.
+If `main` changed after closure, integrate it and rerun affected closure gates. Prefer fast-forward when strictly ahead; otherwise use an ordinary merge commit. Do not squash by default. A conflict-free merge must satisfy `merged_tree == closure_tested_tree`; otherwise old closure evidence is invalid.
 
-Prefer fast-forward when the branch is strictly ahead. Otherwise use an ordinary merge commit. Do not squash by default. For a conflict-free merge, `merged_tree == closure_tested_tree`; otherwise closure evidence does not cover the merged result.
-
-Post-merge runs only build sanity, critical contracts, the active-module smoke, merged-tree verification, and baseline update. `last_known_good` refers only to formal `main`.
+Post-merge runs build sanity, critical contracts, active-module smoke, merged-tree verification, and baseline update. `last_known_good` refers only to formal `main`.
 
 ## Completion Output
 

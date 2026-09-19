@@ -23,6 +23,18 @@ Warnings are deltas only when they are new relative to the baseline and originat
 
 Passive diagnostics are always available and bounded. Intrusive diagnostics are explicitly marked and cannot supply closure evidence if they change the behavior under test.
 
+## Source and Runtime Differential
+
+For a compatibility failure, identify the owning Android public path before changing Runtime behavior. Consult `ci/governance/upstream-map.json`; if it is incomplete, inspect the pinned Android 4.4.4/API19 source and extend the map. Extract guest-visible semantics and required invariants, then compare the AGR path in `semantic-diff.json`.
+
+The comparison concerns behavior, not implementation shape. Host mechanisms such as Darwin condition variables, pipes, UIKit, or ANGLE may replace Linux/Android internals when return values, errors, ordering, ownership, wake behavior, lifecycle, object lifetime, and visibility remain equivalent.
+
+Where an Android 4.4 ARM reference can execute the contract, run the same input on the reference and AGR. Canonicalize addresses and host timing while comparing results, errno, callback/event sequence, thread semantics, lifetime, state transitions, duration class, and error behavior.
+
+Differential trace records use `global_seq`, `monotonic_time`, `host_thread`, `guest_thread`, `guest_pc`, `boundary`, `operation`, `object`, `input_state`, `output_state`, `result`, `frame`, and `swap`. Once a segment is equivalent, do not keep investigating its internal implementation.
+
+Test-only cut points are registered in `ci/governance/diagnostic-cutpoints.json`. They may inject or observe at a defined boundary, but may not become a production compatibility path.
+
 ## Current Target
 
 The active target contract is machine-readable at `ci/targets/PVS1.json`. CI success and target closure are separate: a workflow may finish green while a target remains active, but closure CI must reject an unmet target requirement.
@@ -33,7 +45,9 @@ Runtime code cannot branch on game/package identity. Test harnesses may select a
 
 ## Discovery and Closure
 
-A discovery run maximizes evidence and may fail. A closure run executes the exact target contract against the final candidate commit/tree. Infrastructure-invalid runs do not consume the run budget.
+A discovery run maximizes evidence and may fail. It may use explicitly marked intrusive diagnostics or counterfactual implementation changes when source evidence cannot choose between active explanations. These experiments must be recorded in the semantic differential and removed before closure.
+
+A closure run executes the exact target contract against the final candidate commit/tree. It rejects active experiments, behavior-changing diagnostics, unexplained stable-module production changes, and semantic differentials that still require an experiment. Infrastructure-invalid runs do not consume the run budget.
 
 Closure evidence must include `tested_commit`, `tested_tree`, `base_commit`, target results, relevant regressions, diagnostics mode, and `eligible_for_merge`.
 

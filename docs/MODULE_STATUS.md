@@ -18,4 +18,4 @@ Status controls modification permission, not total completeness. `stable` means 
 | Audio/OpenSL ES | experimental | — | — | declared gameplay target requires audio |
 | Product UI/library | experimental | — | — | product phase begins |
 
-Stable modules are readable and diagnosable. A change requires an evidence-backed reopen reason in machine-readable run metadata.
+Stable modules are readable and diagnosable. Discovery may trace, instrument, or temporarily experiment on them without a formal reopen. A production change carried into closure requires an evidence-backed reopen reason in machine-readable run metadata. Stable means the current contract is protected, not that the module is complete.

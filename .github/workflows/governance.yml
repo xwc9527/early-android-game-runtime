@@ -21,8 +21,15 @@ jobs:
           fetch-depth: 0
       - name: Compile governance tools
         run: python3 -m py_compile ci/*.py
-      - name: Validate state and stable-module protection
-        run: python3 ci/validate-governance.py --mode working
+      - name: Validate discovery governance and upstream mapping
+        run: python3 ci/validate-governance.py --mode discovery
+      - name: Validate committed semantic differentials
+        run: |
+          for file in ci/governance/semantic-diffs/*.json; do
+            python3 ci/semantic-diff.py validate "$file"
+          done
+      - name: Run Framework V2 contract
+        run: python3 ci/framework-v2-contract.py
       - name: Validate JSON documents
         run: |
           python3 - <<'PY'

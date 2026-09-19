@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://agr.invalid/schema/run-summary.schema.json",
   "type": "object",
-  "required": ["schema_version","run","changes","build","contracts","regressions","target","warnings","diagnostics","closure","artifacts"],
+  "required": ["schema_version","run","changes","build","contracts","regressions","target","warnings","diagnostics","diagnosis","closure","artifacts"],
   "properties": {
     "schema_version": {"const": 1},
     "run": {"type":"object","required":["tested_commit","tested_tree","baseline_commit","branch","platform","valid_run"]},
@@ -13,6 +13,17 @@
     "target": {"type":"object","required":["name","status","stage","normalized_signature","raw_fingerprint"]},
     "warnings": {"type":"object","required":["new","resolved"]},
     "diagnostics": {"type":"object","required":["passive","intrusive"]},
+    "diagnosis": {
+      "type":"object",
+      "required":["observed_discontinuity","android_subsystem","upstream_mapped","upstream_path","agr_path","first_relevant_difference","classification","remaining_uncertainty","next_discriminating_action","semantic_diff_artifact"],
+      "properties": {
+        "classification":{"enum":["ANDROID_SEMANTIC_BUG","HOST_ADAPTATION_BUG","AGR_INTERNAL_BUG","HARNESS_BUG","REFERENCE_MISMATCH","UNKNOWN"]},
+        "upstream_mapped":{"type":"boolean"},
+        "upstream_path":{"type":"array"},
+        "agr_path":{"type":"array"},
+        "remaining_uncertainty":{"type":"array"}
+      }
+    },
     "closure": {"type":"object","required":["target","tested_commit","tested_tree","state","eligible_for_merge"],"properties":{"state":{"enum":["IMPLEMENTED","CLOSED"]}}},
     "artifacts": {"type":"object"}
   }

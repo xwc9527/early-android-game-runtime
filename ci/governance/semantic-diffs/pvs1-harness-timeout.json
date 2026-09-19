@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "classification": "HARNESS_BUG",
+  "subsystem": "CI regression harness",
+  "observed_discontinuity": "Closure run 35469009073 terminated simulator-real-apk with exit 124 at 180.161 seconds while the app process remained alive through its full 150-second observation interval.",
+  "upstream": {
+    "version": "Android 4.4.4_r2",
+    "files": [],
+    "call_path": []
+  },
+  "required_semantics": [
+    "An outer test timeout must exceed the maximum bounded duration of every inner observation and evidence collection step.",
+    "A harness timeout cannot be classified as an Android Runtime semantic failure."
+  ],
+  "agr": {
+    "files": [
+      "ci/run-suite.py",
+      "ci/forensic-simulator-process.py"
+    ],
+    "call_path": [
+      "run-suite starts real-APK regression with a 180-second bound",
+      "collector observes the app for 150 seconds",
+      "collector may issue two bounded 60-second log queries",
+      "outer timeout kills the still-valid collector"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "The outer 180-second timeout was shorter than the inner declared maximum of 270 seconds.",
+      "relevance": "The harness necessarily can terminate a valid run before evidence collection completes."
+    }
+  ],
+  "first_relevant_difference": "The outer suite timeout did not dominate the sum of the collector observation and bounded post-run queries.",
+  "confidence": "proven",
+  "needs_experiment": false,
+  "active_explanations": [],
+  "next_discriminating_action": "",
+  "host_adaptation": "Not applicable; this is outside the Runtime.",
+  "validation": [
+    "run 35469009073 timing evidence",
+    "timeout hierarchy contract",
+    "next exact-candidate closure run"
+  ],
+  "experimental": false
+}

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "rules": {
+    "test_only": true,
+    "production_shortcut": false,
+    "must_preserve_android_visible_behavior": true
+  },
+  "cutpoints": [
+    {"id":"input.host_adapter","subsystem":"NativeActivity/Input","boundary":"UIKit event -> host input adapter"},
+    {"id":"input.queue","subsystem":"NativeActivity/Input","boundary":"host adapter -> AInputQueue"},
+    {"id":"input.guest_callback","subsystem":"NativeActivity/Input","boundary":"ALooper/InputQueue -> guest handler"},
+    {"id":"graphics.guest_gles","subsystem":"EGL/GLES","boundary":"guest GLES -> AGR bridge"},
+    {"id":"graphics.angle","subsystem":"EGL/GLES","boundary":"AGR bridge -> ANGLE"},
+    {"id":"jni.native_bridge","subsystem":"JNI","boundary":"guest native -> JNI bridge"},
+    {"id":"jni.object_model","subsystem":"JNI","boundary":"JNI bridge -> host DEX object model"}
+  ]
+}
