@@ -20,3 +20,5 @@ clang++ -std=c++17 -fno-rtti "${SAN[@]}" "${INC[@]}" -c "$ROOT/Runtime/Bionic/ag
 clang++ -std=c++17 -fno-rtti "${SAN[@]}" "${INC[@]}" -c "$ROOT/Runtime/Bionic/agr_bionic_thread_lifecycle.cpp" -o "$OBJ/lifecycle.o"
 clang++ "${SAN[@]}" "$OBJ/test.o" "$OBJ/runtime.o" "$OBJ/allocator.o" "$OBJ/vma.o" "$OBJ/host-services.o" "$OBJ/thread-attr.o" "$OBJ/linker.o" "$OBJ/dynamic.o" "$OBJ/mmap.o" "$OBJ/futex.o" "$OBJ/sync.o" "$OBJ/tls.o" "$OBJ/errno.o" "$OBJ/lifecycle.o" -pthread -lm -framework CoreFoundation -framework Security -o "$OUT"
 "$OUT"
+"$OUT" invalid-free
+"$OUT" double-free

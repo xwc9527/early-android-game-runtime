@@ -67,6 +67,7 @@ template <typename T> struct agr_guest_ptr {
     template <typename U> operator U *() const {
         return reinterpret_cast<U *>(get());
     }
+    T &operator*() const { return *get(); }
     T *operator->() const { return get(); }
     agr_guest_ptr& operator=(int value) { address=value?(uint32_t)value:0; return *this; }
     agr_guest_ptr& operator=(uint32_t value) { address=value; return *this; }
