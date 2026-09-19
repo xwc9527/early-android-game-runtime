@@ -415,7 +415,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
     int activityCreated = -1, onStart = -1, onResume = -1, onWindow = -1, onFocus = -1, onInput = -1, pumped = -1;
     int framePumpResult = 0; uint32_t framePumps = 0;
     uint8_t *frame = calloc(320u*480u*4u,1); uint32_t nonblack = 0; int32_t frameBytes = -1;
-    uint32_t callbacksFound = 0;
+    uint32_t callbacksFound = 0, activity = 0, callbackWords[16] = {0};
     if (initialized == 0) {
         uint8_t callbacksZero[64] = {0};
         char internalPath[512],externalPath[512],obbPath[512];
@@ -428,11 +428,11 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         uint32_t obb = agr_guest_alloc(guest,obbPath,sizeof(obbPath),1);
         uint32_t activityWords[10] = {callbacks,agr_guest_java_vm(guest),agr_guest_jni_env(guest),
             0x60001000u,internal,external,0,0,0x62000000u,obb};
-        uint32_t activity = agr_guest_alloc(guest,activityWords,sizeof(activityWords),4);
+        activity = agr_guest_alloc(guest,activityWords,sizeof(activityWords),4);
         uint32_t args[3] = {activity,0,0}; int32_t ignored = 0;
         activityCreated = agr_guest_call_symbol(guest,"ANativeActivity_onCreate",args,3,&ignored);
         agr_guest_record_runtime_event(guest,"nativeactivity.onCreate",activity,0,activityCreated,-1,0,0,-1);
-        uint32_t callbackWords[16] = {0}; agr_guest_read(guest,callbacks,callbackWords,sizeof(callbackWords));
+        agr_guest_read(guest,callbacks,callbackWords,sizeof(callbackWords));
         for (uint32_t i = 0; i < 16; i++) if (callbackWords[i]) callbacksFound++;
         if (activityCreated == 0 && callbackWords[0]) {
             onStart = agr_guest_call_address(guest,callbackWords[0],args,1,&ignored);
@@ -572,6 +572,31 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         }
         NSString *trajectoryFrame=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/kungfoo-trajectory-frame.png"];
         writeRGBAFramePNG(frame,320,480,trajectoryFrame);
+    }
+    /* The regression harness owns the host Activity lifecycle.  Stop the
+     * NativeActivity through its real callbacks before destroying ProcessRuntime;
+     * android_native_app_glue turns onDestroy into APP_CMD_DESTROY and joins its
+     * android_main worker.  Runtime teardown must not fabricate that policy. */
+    if (!interactive && activityCreated == 0 && activity) {
+        int32_t ignored = 0;
+        uint32_t oneArg[1] = {activity};
+        uint32_t focusArgs[2] = {activity,0};
+        uint32_t inputArgs[2] = {activity,agr_guest_input_queue(guest)};
+        uint32_t windowArgs[2] = {activity,0x63000000u};
+        struct { uint32_t slot; uint32_t *args; uint32_t count; const char *event; } teardown[] = {
+          {3,oneArg,1,"nativeactivity.onPause"},
+          {6,focusArgs,2,"nativeactivity.focus.lost"},
+          {12,inputArgs,2,"nativeactivity.input.destroyed"},
+          {10,windowArgs,2,"nativeactivity.window.destroyed"},
+          {4,oneArg,1,"nativeactivity.onStop"},
+          {5,oneArg,1,"nativeactivity.onDestroy"}
+        };
+        for (uint32_t i=0;i<sizeof(teardown)/sizeof(teardown[0]);i++) if(callbackWords[teardown[i].slot]) {
+            int rc=agr_guest_call_address(guest,callbackWords[teardown[i].slot],
+                                          teardown[i].args,teardown[i].count,&ignored);
+            agr_guest_record_runtime_event(guest,teardown[i].event,activity,
+                                           callbackWords[teardown[i].slot],rc,-1,0,0,-1);
+        }
     }
     free(frame);
     NSString *error = guest ? [NSString stringWithUTF8String:agr_guest_last_error(guest)] : @"create failed";
