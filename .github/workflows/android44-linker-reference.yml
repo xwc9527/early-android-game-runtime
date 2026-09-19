@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main, bionic-thread-migration]
-    paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Runtime/NativeCore/**','Runtime/Ehabi/**','Tests/AospLinker/**','Tests/Ehabi/**','Tests/Android44Reference/**','Tests/Android44Dynamic/**','Tests/Android44Threads/**','Tests/Android44Unwind/**','Tests/Android44EhabiPhase2Gate/**','Tests/Android44EhabiPhase2BGate/**','scripts/build-android44-unwind-gcc.sh','scripts/build-android44-ehabi-phase2-gate.sh','scripts/build-android44-ehabi-phase2b-gate.sh','.github/workflows/android44-linker-reference.yml']
+    paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Runtime/NativeCore/**','Runtime/Ehabi/**','Tests/AospLinker/**','Tests/Ehabi/**','Tests/Android44Reference/**','Tests/Android44Allocator/**','Tests/Android44Dynamic/**','Tests/Android44Threads/**','Tests/Android44Unwind/**','Tests/Android44EhabiPhase2Gate/**','Tests/Android44EhabiPhase2BGate/**','scripts/build-android44-unwind-gcc.sh','scripts/build-android44-ehabi-phase2-gate.sh','scripts/build-android44-ehabi-phase2b-gate.sh','.github/workflows/android44-linker-reference.yml']
 jobs:
   api19-reference:
     runs-on: ubuntu-latest
@@ -37,6 +37,7 @@ jobs:
           "$CC" "${COMMON[@]}" -Wl,-soname,libagr_bad_symbol.so Tests/Android44Dynamic/bad_symbol.c -o dynamic/libagr_bad_symbol.so
           "$CC" -fPIE -pie Tests/Android44Dynamic/reference.c -ldl -o dynamic/android44-dynamic-reference
           "$CC" -fPIE -pie Tests/Android44Threads/reference.c -pthread -o android44-thread-reference
+          "$CC" -fPIE -pie Tests/Android44Allocator/reference.c -ldl -pthread -o android44-allocator-reference
       - uses: actions/cache@v4
         id: ndk-r10e
         with:
@@ -229,6 +230,35 @@ jobs:
           print('AGR dynamic:',json.dumps(agr,sort_keys=True))
           assert android==agr,(android,agr)
           PY
+          adb push android44-allocator-reference /data/local/tmp/
+          adb shell chmod 755 /data/local/tmp/android44-allocator-reference
+          adb shell /data/local/tmp/android44-allocator-reference | tr -d '\r' > android44-allocator.json
+          clang -std=c11 -O2 -Wall -Wextra -Werror -pthread \
+            -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore \
+            -c Tests/Android44Allocator/agr_differential.c -o agr-allocator-diff.o
+          clang++ agr-allocator-diff.o agr-runtime.o agr-allocator.o agr-vma.o agr-linker.o \
+            agr-dynamic.o agr-mmap.o Runtime/ArmInterpreter/target/release/libtouchhle_arm_interpreter.a \
+            -ldl -lpthread -lm -o agr-allocator-differential
+          ./agr-allocator-differential > agr-allocator.json
+          ./agr-allocator-differential invalid-free
+          ./agr-allocator-differential double-free
+          set +e
+          adb shell /data/local/tmp/android44-allocator-reference invalid-free >/dev/null 2>&1; invalid_rc=$?
+          adb shell /data/local/tmp/android44-allocator-reference double-free >/dev/null 2>&1; double_rc=$?
+          set -e
+          test "$invalid_rc" -ne 0 && test "$invalid_rc" -ne 99
+          test "$double_rc" -ne 0 && test "$double_rc" -ne 99
+          python3 - <<'PY'
+          import json
+          android=json.load(open('android44-allocator.json'))
+          agr=json.load(open('agr-allocator.json'))
+          print('Android 4.4 allocator:',json.dumps(android,sort_keys=True))
+          print('AGR API19 allocator:',json.dumps(agr,sort_keys=True))
+          for key in sorted(set(android)|set(agr)):
+              if android.get(key)!=agr.get(key):
+                  print(f'::error title=API19 allocator differential::{key}: Android={android.get(key)!r} AGR={agr.get(key)!r}')
+          assert android==agr,(android,agr)
+          PY
       - name: API19 pthread sync and TLS differential
         run: |
           adb push android44-thread-reference /data/local/tmp/
@@ -417,6 +447,8 @@ jobs:
             dynamic/*.so
             android44-thread.json
             agr-thread.json
+            android44-allocator.json
+            agr-allocator.json
             android44-unwind.json
             agr-unwind.json
             unwind/*

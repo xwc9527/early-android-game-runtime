@@ -263,6 +263,8 @@ extern "C" uint32_t agr_bionic_allocator_calloc(agr_bionic_allocator*a,uint32_t 
 extern "C" uint32_t agr_bionic_allocator_realloc(agr_bionic_allocator*a,uint32_t p,uint32_t n){return invoke(a,0u,[&]{return guest_pointer(dlrealloc(host_pointer(p),n));});}
 extern "C" void agr_bionic_allocator_free(agr_bionic_allocator*a,uint32_t p){(void)invoke(a,0,[&]{dlfree(host_pointer(p));return 0;});}
 extern "C" uint32_t agr_bionic_allocator_memalign(agr_bionic_allocator*a,uint32_t al,uint32_t n){return invoke(a,0u,[&]{return guest_pointer(dlmemalign(al,n));});}
+extern "C" uint32_t agr_bionic_allocator_valloc(agr_bionic_allocator*a,uint32_t n){return invoke(a,0u,[&]{return guest_pointer(dlvalloc(n));});}
+extern "C" uint32_t agr_bionic_allocator_pvalloc(agr_bionic_allocator*a,uint32_t n){return invoke(a,0u,[&]{return guest_pointer(dlpvalloc(n));});}
 extern "C" int32_t agr_bionic_allocator_posix_memalign(agr_bionic_allocator*a,uint32_t*out,uint32_t al,uint32_t n){
     if(!out)return EINVAL;return invoke(a,EINVAL,[&]{void*p=nullptr;int rc=dlposix_memalign(&p,al,n);*out=guest_pointer(p);return rc;});
 }

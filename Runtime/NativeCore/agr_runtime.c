@@ -509,6 +509,8 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
     else if(!strcmp(name,"free"))agr_free(rt,a);
     else if(!strcmp(name,"realloc"))out->value=agr_realloc(rt,a,b);
     else if(!strcmp(name,"memalign"))out->value=agr_malloc_aligned(rt,b,a);
+    else if(!strcmp(name,"valloc"))out->value=agr_bionic_allocator_valloc(rt->allocator,a);
+    else if(!strcmp(name,"pvalloc"))out->value=agr_bionic_allocator_pvalloc(rt->allocator,a);
     else if(!strcmp(name,"aligned_alloc"))out->value=(a&&b%a==0)?agr_malloc_aligned(rt,b,a):0;
     else if(!strcmp(name,"posix_memalign")){
         uint32_t aligned=0;
@@ -516,6 +518,11 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
         if(!out->value&&!write_mem(rt,a,&aligned,4)){agr_free(rt,aligned);out->value=EFAULT;}
     }
     else if(!strcmp(name,"malloc_usable_size"))out->value=agr_allocation_size(rt,a);
+    else if(!strcmp(name,"mallinfo")){
+        agr_allocator_mallinfo info={0};
+        if(agr_bionic_allocator_mallinfo(rt->allocator,&info)||!write_mem(rt,a,&info,sizeof(info)))return fail(rt,"mallinfo result write");
+        out->value=a;
+    }
     else if(!strcmp(name,"__errno")){
 #if defined(__APPLE__)
         out->value=agr_bionic_tls_errno_address(rt->bionic_tls,agr_current_thread(rt));

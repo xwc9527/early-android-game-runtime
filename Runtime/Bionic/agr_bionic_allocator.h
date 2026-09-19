@@ -36,6 +36,10 @@ uint32_t agr_bionic_allocator_realloc(agr_bionic_allocator *allocator,
 void agr_bionic_allocator_free(agr_bionic_allocator *allocator, uint32_t address);
 uint32_t agr_bionic_allocator_memalign(agr_bionic_allocator *allocator,
                                        uint32_t alignment, uint32_t size);
+uint32_t agr_bionic_allocator_valloc(agr_bionic_allocator *allocator,
+                                     uint32_t size);
+uint32_t agr_bionic_allocator_pvalloc(agr_bionic_allocator *allocator,
+                                      uint32_t size);
 int32_t agr_bionic_allocator_posix_memalign(agr_bionic_allocator *allocator,
                                             uint32_t *address,
                                             uint32_t alignment, uint32_t size);
