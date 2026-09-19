@@ -58,7 +58,15 @@ template <typename T> struct agr_guest_ptr {
     template <typename U> agr_guest_ptr(U *pointer) : address(agr_dl_host_to_guest(pointer)) {}
     template <typename U> agr_guest_ptr(const agr_guest_ptr<U>& other) : address(other.address) {}
     T *get() const { return address ? reinterpret_cast<T *>(agr_dl_guest_base()+address) : nullptr; }
-    operator T *() const { return get(); }
+    /*
+     * Upstream dlmalloc deliberately changes the pointee type while doing
+     * byte-wise chunk arithmetic (for example mchunkptr -> char *).  Keep
+     * that operation transiently host-native while every persisted pointer
+     * remains the 32-bit address above.
+     */
+    template <typename U> operator U *() const {
+        return reinterpret_cast<U *>(get());
+    }
     T *operator->() const { return get(); }
     agr_guest_ptr& operator=(int value) { address=value?(uint32_t)value:0; return *this; }
     agr_guest_ptr& operator=(uint32_t value) { address=value; return *this; }
