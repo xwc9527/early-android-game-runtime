@@ -8,12 +8,30 @@ DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
 RESULT="$DATA/Documents/runtime-smoke.json"
 
 rm -f "$RESULT"
-xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator
+LAUNCH_OUTPUT="$(xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator)"
+echo "$LAUNCH_OUTPUT"
+APP_PID="${LAUNCH_OUTPUT##*: }"
 for _ in $(seq 1 120); do
   [[ -s "$RESULT" ]] && break
   sleep 1
 done
 if [[ ! -s "$RESULT" ]]; then
+  ps -p "$APP_PID" -o pid,ppid,stat,etime,comm > "$ARTIFACTS/pvs-timeout-process.txt" 2>&1 || true
+  xcrun simctl spawn "$DEVICE" log show --last 5m --style compact \
+    --predicate 'process == "AGRSimulator"' > "$ARTIFACTS/pvs-timeout-syslog.txt" 2>&1 || true
+  if kill -0 "$APP_PID" 2>/dev/null; then
+    sample "$APP_PID" 2 > "$ARTIFACTS/pvs-timeout-stack.txt" 2>&1 || true
+    echo "::error title=PVS1 live process::$(tr '\n' ' ' < "$ARTIFACTS/pvs-timeout-process.txt" | cut -c1-1000)"
+    grep -E -A8 -B4 'agr_guest_wait_for_swap|nanosleep|pthread_mutex|agr_guest_record_runtime_event|runNativeActivityApk' \
+      "$ARTIFACTS/pvs-timeout-stack.txt" | head -n 80 | while IFS= read -r line; do
+        echo "::error title=PVS1 host stack::$line"
+      done
+  else
+    echo "::error title=PVS1 process exited::AGRSimulator pid $APP_PID is no longer running"
+    tail -n 40 "$ARTIFACTS/pvs-timeout-syslog.txt" | while IFS= read -r line; do
+      echo "::error title=PVS1 syslog::$line"
+    done
+  fi
   PROGRESS="$DATA/Documents/pvs-progress.json"
   if [[ -s "$PROGRESS" ]]; then
     cp "$PROGRESS" "$ARTIFACTS/pvs-progress.json"
