@@ -15,6 +15,22 @@ typedef struct agr_process_runtime agr_process_runtime;
 typedef agr_process_runtime agr_guest;
 typedef struct agr_apk_package agr_apk_package;
 
+typedef struct agr_guest_runtime_event {
+    const char *type;
+    uint32_t guest_thread_id;
+    uint32_t guest_pc;
+    uint32_t primary_handle;
+    uint32_t secondary_handle;
+    int32_t result;
+    int32_t action;
+    float x;
+    float y;
+    int32_t handled;
+    uint32_t input_consumed;
+    uint32_t frame;
+    uint32_t swap;
+} agr_guest_runtime_event;
+
 enum {
     AGR_ARRAY_SHORT = 1,
     AGR_ARRAY_INT = 2,
@@ -84,6 +100,13 @@ uint32_t agr_guest_asset_open_count(agr_guest *guest);
 int32_t agr_guest_inject_motion(agr_guest *guest, int32_t action, float x, float y);
 uint32_t agr_guest_input_queue(agr_guest *guest);
 uint32_t agr_guest_input_consumed_count(agr_guest *guest);
+void agr_guest_record_runtime_event(agr_guest *guest, const char *type,
+                                    uint32_t primary_handle, uint32_t secondary_handle,
+                                    int32_t result, int32_t action, float x, float y,
+                                    int32_t handled);
+uint32_t agr_guest_runtime_event_count(agr_guest *guest);
+int32_t agr_guest_runtime_event_at(agr_guest *guest, uint32_t index,
+                                   agr_guest_runtime_event *event);
 uint32_t agr_guest_unique_import_count(agr_guest *guest);
 const char *agr_guest_unique_import(agr_guest *guest, uint32_t index);
 uint32_t agr_guest_recent_call_count(agr_guest *guest);

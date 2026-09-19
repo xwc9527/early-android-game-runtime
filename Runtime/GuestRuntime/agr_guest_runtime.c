@@ -53,6 +53,7 @@ extern int32_t arm_interp_run(void *, uint64_t *, uint32_t *);
 #define GUEST_EGL_CONFIG  0x64000002u
 #define GUEST_EGL_SURFACE 0x64000003u
 #define GUEST_EGL_CONTEXT 0x64000004u
+#define RUNTIME_EVENT_CAPACITY 128u
 
 typedef struct { uint32_t address; char *name; } trap_entry;
 typedef struct { uint32_t handle, kind, count, address; } array_entry;
@@ -110,6 +111,8 @@ struct agr_process_runtime {
     uint32_t input_queue_handle, input_ident, input_data;
     input_event input_events[32]; uint32_t input_head, input_count, next_input_handle;
     _Atomic uint32_t input_consumed_count;
+    agr_guest_runtime_event runtime_events[RUNTIME_EVENT_CAPACITY];
+    uint32_t runtime_event_index;
     _Atomic uint32_t draw_count, swap_count;
     uint32_t asset_open_count;
     uint32_t egl_owner_thread_id;
@@ -239,16 +242,24 @@ static int32_t pipe_create_cb(void *user, uint32_t *read_fd, uint32_t *write_fd)
     return -1;
 }
 static uint32_t fd_read_cb(void *user, uint32_t fd, void *data, uint32_t size) {
-    virtual_pipe *p = find_pipe((agr_guest *)user, fd); if (!p || fd != p->read_fd) return 0;
+    agr_guest *g=(agr_guest *)user;
+    virtual_pipe *p = find_pipe(g, fd); if (!p || fd != p->read_fd) return 0;
     uint32_t available = p->size - p->read_offset, count = size < available ? size : available;
     if (count) memcpy(data, p->data + p->read_offset, count); p->read_offset += count;
-    if (p->read_offset == p->size) p->read_offset = p->size = 0; return count;
+    if (p->read_offset == p->size) p->read_offset = p->size = 0;
+    if(count==1)agr_guest_record_runtime_event(g,"native_app_glue.command.read",fd,p->write_fd,
+                                               (int32_t)count,((const uint8_t *)data)[0],0,0,-1);
+    return count;
 }
 static uint32_t fd_write_cb(void *user, uint32_t fd, const void *data, uint32_t size) {
-    virtual_pipe *p = find_pipe((agr_guest *)user, fd); if (!p || fd != p->write_fd) return 0;
+    agr_guest *g=(agr_guest *)user;
+    virtual_pipe *p = find_pipe(g, fd); if (!p || fd != p->write_fd) return 0;
     if (p->read_offset) { memmove(p->data, p->data + p->read_offset, p->size - p->read_offset); p->size -= p->read_offset; p->read_offset = 0; }
     uint32_t room = (uint32_t)sizeof(p->data) - p->size, count = size < room ? size : room;
-    if (count) memcpy(p->data + p->size, data, count); p->size += count; return count;
+    if (count) memcpy(p->data + p->size, data, count); p->size += count;
+    if(count==1)agr_guest_record_runtime_event(g,"native_app_glue.command.write",p->read_fd,fd,
+                                               (int32_t)count,((const uint8_t *)data)[0],0,0,-1);
+    return count;
 }
 static int32_t fd_close_cb(void *user, uint32_t fd) {
     virtual_pipe *p = find_pipe((agr_guest *)user, fd); if (!p) return -1; p->live = 0; return 0;
@@ -328,6 +339,26 @@ static void guest_return(agr_guest *g, uint32_t value, uint32_t value_r1) {
 static array_entry *find_array(agr_guest *g, uint32_t handle) {
     for (uint32_t i = 0; i < g->array_count; i++) if (g->arrays[i].handle == handle) return &g->arrays[i];
     return NULL;
+}
+void agr_guest_record_runtime_event(agr_guest *g, const char *type,
+                                    uint32_t primary_handle, uint32_t secondary_handle,
+                                    int32_t result, int32_t action, float x, float y,
+                                    int32_t handled) {
+    if (!g || !type) return;
+    agr_guest_thread_context *context=guest_context(g);
+    agr_guest_runtime_event event={0};
+    event.type=type;
+    event.guest_thread_id=context?context->guest_thread_id:0;
+    event.guest_pc=context&&context->cpu?arm_interp_get_reg(context->cpu,15):
+        atomic_load_explicit(&g->last_guest_pc,memory_order_acquire);
+    event.primary_handle=primary_handle;event.secondary_handle=secondary_handle;
+    event.result=result;event.action=action;event.x=x;event.y=y;event.handled=handled;
+    event.input_consumed=atomic_load_explicit(&g->input_consumed_count,memory_order_relaxed);
+    event.frame=atomic_load_explicit(&g->draw_count,memory_order_relaxed);
+    event.swap=atomic_load_explicit(&g->swap_count,memory_order_acquire);
+    while (atomic_flag_test_and_set_explicit(&g->diagnostics_lock,memory_order_acquire)) {}
+    g->runtime_events[g->runtime_event_index++%RUNTIME_EVENT_CAPACITY]=event;
+    atomic_flag_clear_explicit(&g->diagnostics_lock,memory_order_release);
 }
 static uint32_t jni_class_handle(agr_guest *g,const char *descriptor) {
     if(!g||!descriptor)return 0;
@@ -756,6 +787,8 @@ static int dispatch_import(agr_guest *g, const char *name) {
     }
     if (!strcmp(name, "ALooper_prepare")) {
         if (!g->looper_handle) g->looper_handle = agr_malloc(g->runtime, 32);
+        agr_guest_record_runtime_event(g,"looper.prepare",g->looper_handle,0,
+                                       g->looper_handle?0:-1,-1,0,0,-1);
         guest_return(g, g->looper_handle, 0); return 1;
     }
     if (!strcmp(name, "ALooper_addFd")) {
@@ -785,41 +818,65 @@ static int dispatch_import(agr_guest *g, const char *name) {
             if (argument(g, 3)) write_u32(g, argument(g, 3), fd->data);
             result = fd->ident; break;
         }
+        if(result!=0xffffffffu)
+            agr_guest_record_runtime_event(g,"looper.poll",g->looper_handle,g->input_queue_handle,
+                                           (int32_t)result,-1,0,0,-1);
         guest_return(g, result, 0);
         return 1;
     }
     if (!strcmp(name,"AInputQueue_attachLooper")) {
         if (argument(g,0)!=g->input_queue_handle) { set_error(g,"AInputQueue_attachLooper invalid queue"); return -1; }
         g->looper_handle=argument(g,1); g->input_ident=argument(g,2); g->input_data=argument(g,4);
+        agr_guest_record_runtime_event(g,"input.attach",argument(g,0),argument(g,1),
+                                       (int32_t)argument(g,2),-1,0,0,-1);
         guest_return(g,0,0); return 1;
     }
-    if (!strcmp(name,"AInputQueue_detachLooper")) { g->input_ident=g->input_data=0; guest_return(g,0,0); return 1; }
+    if (!strcmp(name,"AInputQueue_detachLooper")) {
+        agr_guest_record_runtime_event(g,"input.detach",argument(g,0),g->looper_handle,0,-1,0,0,-1);
+        g->input_ident=g->input_data=0; guest_return(g,0,0); return 1;
+    }
     if (!strcmp(name,"AInputQueue_getEvent")) {
         while (atomic_flag_test_and_set_explicit(&g->input_lock,memory_order_acquire)) {}
         if (argument(g,0)!=g->input_queue_handle || !g->input_count) {
             atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
             guest_return(g,0xffffffffu,0); return 1;
         }
-        uint32_t handle=g->input_events[g->input_head%32].handle;
+        input_event queued=g->input_events[g->input_head%32];
+        uint32_t handle=queued.handle;
         atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
         write_u32(g,argument(g,1),handle);
+        agr_guest_record_runtime_event(g,"input.get",argument(g,0),handle,0,
+                                       (int32_t)queued.action,queued.x,queued.y,-1);
         guest_return(g,0,0); return 1;
     }
-    if (!strcmp(name,"AInputQueue_preDispatchEvent")) { guest_return(g,0,0); return 1; }
+    if (!strcmp(name,"AInputQueue_preDispatchEvent")) {
+        agr_guest_record_runtime_event(g,"input.predispatch",argument(g,0),argument(g,1),0,-1,0,0,-1);
+        guest_return(g,0,0); return 1;
+    }
     if (!strcmp(name,"AInputQueue_finishEvent")) {
+        uint32_t event_handle=argument(g,1);int32_t handled=(int32_t)argument(g,2);
         while (atomic_flag_test_and_set_explicit(&g->input_lock,memory_order_acquire)) {}
-        if (g->input_count && g->input_events[g->input_head%32].handle==argument(g,1)) {
+        if (g->input_count && g->input_events[g->input_head%32].handle==event_handle) {
             g->input_head++; g->input_count--; atomic_fetch_add_explicit(&g->input_consumed_count,1u,memory_order_relaxed);
         }
         atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
+        agr_guest_record_runtime_event(g,"input.finish",argument(g,0),event_handle,0,-1,0,0,handled);
         guest_return(g,0,0); return 1;
     }
     input_event event_value={0}; input_event *event=NULL; uint32_t event_handle=argument(g,0);
     while (atomic_flag_test_and_set_explicit(&g->input_lock,memory_order_acquire)) {}
     for(uint32_t i=0;i<g->input_count;i++){ input_event *candidate=&g->input_events[(g->input_head+i)%32]; if(candidate->handle==event_handle){event_value=*candidate;event=&event_value;break;} }
     atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
-    if (!strcmp(name,"AInputEvent_getType")) { guest_return(g,event?event->type:0,0); return 1; }
-    if (!strcmp(name,"AMotionEvent_getAction")) { guest_return(g,event?event->action:0,0); return 1; }
+    if (!strcmp(name,"AInputEvent_getType")) {
+        agr_guest_record_runtime_event(g,"input.guest_handler",event_handle,0,event?(int32_t)event->type:0,
+                                       event?(int32_t)event->action:-1,event?event->x:0,event?event->y:0,-1);
+        guest_return(g,event?event->type:0,0); return 1;
+    }
+    if (!strcmp(name,"AMotionEvent_getAction")) {
+        agr_guest_record_runtime_event(g,"motion.action",event_handle,0,event?(int32_t)event->action:0,
+                                       event?(int32_t)event->action:-1,event?event->x:0,event?event->y:0,-1);
+        guest_return(g,event?event->action:0,0); return 1;
+    }
     if (!strcmp(name,"AMotionEvent_getPointerCount")) { guest_return(g,event?event->pointer_count:0,0); return 1; }
     if (!strcmp(name,"AMotionEvent_getPointerId")) { guest_return(g,event?event->pointer_id:0,0); return 1; }
     if (!strcmp(name,"AMotionEvent_getX") || !strcmp(name,"AMotionEvent_getY")) {
@@ -1307,11 +1364,29 @@ int32_t agr_guest_inject_motion(agr_guest *g, int32_t action, float x, float y) 
     input_event *e=&g->input_events[(g->input_head+g->input_count)%32];
     *e=(input_event){g->next_input_handle,2u,(uint32_t)action,1u,0u,x,y};
     g->next_input_handle+=4; g->input_count++;
+    uint32_t handle=e->handle;
     atomic_flag_clear_explicit(&g->input_lock,memory_order_release);
+    agr_guest_record_runtime_event(g,"input.inject",g->input_queue_handle,handle,0,action,x,y,-1);
     return 0;
 }
 uint32_t agr_guest_input_queue(agr_guest *g) { return g ? g->input_queue_handle : 0; }
 uint32_t agr_guest_input_consumed_count(agr_guest *g) { return g ? atomic_load_explicit(&g->input_consumed_count,memory_order_relaxed) : 0; }
+uint32_t agr_guest_runtime_event_count(agr_guest *g) {
+    if (!g) return 0;
+    while (atomic_flag_test_and_set_explicit(&g->diagnostics_lock,memory_order_acquire)) {}
+    uint32_t count=g->runtime_event_index<RUNTIME_EVENT_CAPACITY?g->runtime_event_index:RUNTIME_EVENT_CAPACITY;
+    atomic_flag_clear_explicit(&g->diagnostics_lock,memory_order_release);
+    return count;
+}
+int32_t agr_guest_runtime_event_at(agr_guest *g,uint32_t index,agr_guest_runtime_event *event) {
+    if(!g||!event)return -1;
+    while (atomic_flag_test_and_set_explicit(&g->diagnostics_lock,memory_order_acquire)) {}
+    uint32_t count=g->runtime_event_index<RUNTIME_EVENT_CAPACITY?g->runtime_event_index:RUNTIME_EVENT_CAPACITY;
+    if(index>=count){atomic_flag_clear_explicit(&g->diagnostics_lock,memory_order_release);return -1;}
+    uint32_t start=g->runtime_event_index>RUNTIME_EVENT_CAPACITY?g->runtime_event_index%RUNTIME_EVENT_CAPACITY:0;
+    *event=g->runtime_events[(start+index)%RUNTIME_EVENT_CAPACITY];
+    atomic_flag_clear_explicit(&g->diagnostics_lock,memory_order_release);return 0;
+}
 uint32_t agr_guest_unique_import_count(agr_guest *g) { return g ? g->unique_import_count : 0; }
 const char *agr_guest_unique_import(agr_guest *g,uint32_t index) { return g && index<g->unique_import_count ? g->unique_imports[index] : NULL; }
 uint32_t agr_guest_recent_call_count(agr_guest *g) { return g ? (g->recent_import_index < 12 ? g->recent_import_index : 12) : 0; }

@@ -22,5 +22,15 @@ print(json.dumps(r, indent=2))
 if not r["passed"]:
     failures=" | ".join(map(str,r.get("failures",[])))[:900]
     print(f"::error title=Simulator real-game regression::{failures}")
+    evidence={
+        "pvs1_closure":r.get("pvs1_closure",{}),
+        "gameplay_outcome":r.get("gameplay_outcome"),
+        "gameplay_failure":r.get("gameplay_failure"),
+        "runtime_failure_signature":r.get("runtime_failure_signature"),
+        "replay_events":r.get("replay_events"),
+        "replay_consumed":r.get("replay_consumed"),
+        "input_trace":r.get("nativeactivity_input_trace",[])[-64:],
+    }
+    print("PVS1_EVIDENCE "+json.dumps(evidence,separators=(",",":")))
 assert r["passed"], r
 PY

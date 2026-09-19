@@ -370,6 +370,24 @@ static NSDictionary *throwDiagnostic(agr_guest *guest) {
       @"stack_words":stackWords,@"stack_code_candidates":codeCandidates,@"instruction_trace":instructionTrace };
 }
 
+static NSArray *runtimeEventTrace(agr_guest *guest) {
+    NSMutableArray *events=[NSMutableArray array];
+    uint32_t count=agr_guest_runtime_event_count(guest);
+    for(uint32_t i=0;i<count;i++) {
+        agr_guest_runtime_event event={0};
+        if(agr_guest_runtime_event_at(guest,i,&event))continue;
+        [events addObject:@{ @"event":event.type?[NSString stringWithUTF8String:event.type]:@"",
+          @"guest_thread_id":@(event.guest_thread_id),
+          @"guest_pc":[NSString stringWithFormat:@"%08x",event.guest_pc],
+          @"primary_handle":[NSString stringWithFormat:@"%08x",event.primary_handle],
+          @"secondary_handle":[NSString stringWithFormat:@"%08x",event.secondary_handle],
+          @"result":@(event.result),@"action":@(event.action),@"x":@(event.x),@"y":@(event.y),
+          @"handled":@(event.handled),@"input_consumed":@(event.input_consumed),
+          @"frame":@(event.frame),@"swap":@(event.swap) }];
+    }
+    return events;
+}
+
 static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace,
                                           NSMutableArray<NSString *> *failures, BOOL interactive) {
     agr_guest *guest = agr_guest_create();
@@ -413,23 +431,31 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         uint32_t activity = agr_guest_alloc(guest,activityWords,sizeof(activityWords),4);
         uint32_t args[3] = {activity,0,0}; int32_t ignored = 0;
         activityCreated = agr_guest_call_symbol(guest,"ANativeActivity_onCreate",args,3,&ignored);
+        agr_guest_record_runtime_event(guest,"nativeactivity.onCreate",activity,0,activityCreated,-1,0,0,-1);
         uint32_t callbackWords[16] = {0}; agr_guest_read(guest,callbacks,callbackWords,sizeof(callbackWords));
         for (uint32_t i = 0; i < 16; i++) if (callbackWords[i]) callbacksFound++;
         if (activityCreated == 0 && callbackWords[0]) {
             onStart = agr_guest_call_address(guest,callbackWords[0],args,1,&ignored);
-            if (onStart == 0 && callbackWords[1]) onResume = agr_guest_call_address(guest,callbackWords[1],args,1,&ignored);
+            agr_guest_record_runtime_event(guest,"nativeactivity.onStart",activity,callbackWords[0],onStart,-1,0,0,-1);
+            if (onStart == 0 && callbackWords[1]) {
+                onResume = agr_guest_call_address(guest,callbackWords[1],args,1,&ignored);
+                agr_guest_record_runtime_event(guest,"nativeactivity.onResume",activity,callbackWords[1],onResume,-1,0,0,-1);
+            }
             if (onResume == 0 && callbackWords[7]) {
                 uint32_t windowArgs[2] = {activity,0x63000000u};
                 onWindow = agr_guest_call_address(guest,callbackWords[7],windowArgs,2,&ignored);
+                agr_guest_record_runtime_event(guest,"nativeactivity.window.created",activity,windowArgs[1],onWindow,-1,0,0,-1);
                 if (onWindow == 0) {
                     pumped = 0;
                     if (pumped == 0 && callbackWords[11]) {
                         uint32_t inputArgs[2]={activity,agr_guest_input_queue(guest)};
                         onInput=agr_guest_call_address(guest,callbackWords[11],inputArgs,2,&ignored);
+                        agr_guest_record_runtime_event(guest,"nativeactivity.input.created",activity,inputArgs[1],onInput,-1,0,0,-1);
                     }
                     if (pumped == 0 && onInput == 0 && callbackWords[6]) {
                         uint32_t focusArgs[2] = {activity,1};
                         onFocus = agr_guest_call_address(guest,callbackWords[6],focusArgs,2,&ignored);
+                        agr_guest_record_runtime_event(guest,"nativeactivity.focus",activity,0,onFocus,1,0,0,-1);
                         /* The worker may finish a visible frame before onFocus
                          * returns, then legitimately wait for player input. */
                         if (onFocus == 0 && frame && agr_guest_swap_count(guest) > 0) {
@@ -534,6 +560,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
     BOOL passed = package && mounted == 0 && registered == 0 && dexLoaded == 0 && loaded == 0 && jniOnLoad == 0 && dexStarted == 0 && initialized == 0 && activityCreated == 0 && callbacksFound >= 10 && onStart == 0 && onResume == 0 && onWindow == 0 && pumped == 0 && onInput == 0 && onFocus == 0 && framePumpResult == 0 && draws > 0 && swaps > 0 && nonblack > 0;
     if (!passed) [failures addObject:[NSString stringWithFormat:@"apk-native=%d/%d/%d/%d/%d/%d/%u activity=%d callbacks=%u start=%d resume=%d window=%d pump=%d focus=%d frames=%u/%d/%@",mounted,registered,dexLoaded,loaded,jniOnLoad,dexStarted,constructors,activityCreated,callbacksFound,onStart,onResume,onWindow,pumped,onFocus,framePumps,framePumpResult,error]];
     int textureUploads=dexHost->uploads;
+    NSArray *inputTrace=runtimeEventTrace(guest);
     if (interactive && passed) {
         gInteractive=(InteractiveRuntime){guest,dexAssets,dexHost};
         gInteractivePackage=package&&agr_apk_package_name(package)
@@ -558,7 +585,9 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
              @"native_frame_bytes":@(frameBytes),@"gameplay_trajectory":trajectory,
              @"gameplay_outcome":trajectoryOutcome,@"gameplay_failure":trajectoryFailure,
              @"replay_events":@(replayEvents),@"replay_consumed":@(replayConsumed),
-             @"unique_states":@(uniqueStates),@"runtime_coverage":coverage};
+             @"unique_states":@(uniqueStates),@"runtime_coverage":coverage,
+             @"nativeactivity_input_trace":inputTrace,
+             @"runtime_failure_signature":error.length?error:@""};
     agr_apk_package_close(package);
     return result;
 }
@@ -773,6 +802,20 @@ static NSString *runTests(void) {
     NSDictionary *gloomyResult = runGloomyRegression(failures);
     NSDictionary *kungFooDexResult = runKungFooDexRegression(failures);
     NSDictionary *kungFooNativeResult = runKungFooNativeRegression(failures,NO);
+    BOOL pvsBootstrap=[kungFooNativeResult[@"native_activity_created"] boolValue]&&
+        [kungFooNativeResult[@"activity_callbacks"] unsignedIntValue]>0;
+    BOOL pvsWindow=[kungFooNativeResult[@"on_start"] boolValue]&&
+        [kungFooNativeResult[@"on_resume"] boolValue]&&
+        [kungFooNativeResult[@"on_window_created"] boolValue];
+    BOOL pvsReplay=[kungFooNativeResult[@"replay_events"] unsignedIntValue]>0;
+    BOOL pvsInput=!pvsReplay||[kungFooNativeResult[@"replay_consumed"] unsignedIntValue]>0;
+    BOOL pvsNoFailure=![kungFooNativeResult[@"gameplay_outcome"] isEqualToString:@"runtime_failure"]&&
+        ![kungFooNativeResult[@"runtime_failure_signature"] length];
+    if(!pvsBootstrap)[failures addObject:@"pvs1:generic_apk_bootstrap_failed"];
+    if(!pvsWindow)[failures addObject:@"pvs1:nativeactivity_window_failed"];
+    if(!pvsInput)[failures addObject:@"pvs1:injected_input_not_consumed"];
+    if(!pvsNoFailure)[failures addObject:[NSString stringWithFormat:@"pvs1:runtime_failure:%@/%@",
+        kungFooNativeResult[@"gameplay_outcome"]?:@"",kungFooNativeResult[@"runtime_failure_signature"]?:@""]];
     NSArray *batchResults = runBatchCompatibility(gloomyResult,kungFooNativeResult);
     NSArray *componentContracts=@[
       @{@"id":@"dex.jni.roundtrip",@"module":@"DEX_JNI",@"observed":@(dexResult),@"expected":@10,
@@ -786,7 +829,7 @@ static NSString *runTests(void) {
       @{@"id":@"egl.gles.draw.readback",@"module":@"EGL_GLES",@"observed":angleResult[@"angle_draw_passed"]?:@0,@"expected":@1,
         @"source_case":@"CTS OpenGL framebuffer readback pattern"},
       @{@"id":@"nativeactivity.lifecycle.window",@"module":@"NativeActivity_lifecycle",
-        @"observed":@([kungFooNativeResult[@"kungfoo_on_start"] boolValue]&&[kungFooNativeResult[@"kungfoo_on_resume"] boolValue]&&[kungFooNativeResult[@"kungfoo_on_window_created"] boolValue]),@"expected":@1,
+        @"observed":@(pvsWindow),@"expected":@1,
         @"source_case":@"AOSP NativeActivity callback order"}
     ];
     for(NSDictionary *test in componentContracts) {
@@ -805,6 +848,10 @@ static NSString *runTests(void) {
     [result addEntriesFromDictionary:gloomyResult];
     [result addEntriesFromDictionary:kungFooDexResult];
     [result addEntriesFromDictionary:kungFooNativeResult];
+    result[@"pvs1_closure"]=@{ @"generic_apk_bootstrap":@(pvsBootstrap),
+      @"nativeactivity_window":@(pvsWindow),@"replay_present":@(pvsReplay),
+      @"input_consumed":@(pvsInput),@"runtime_failure_absent":@(pvsNoFailure),
+      @"passed":@(pvsBootstrap&&pvsWindow&&pvsInput&&pvsNoFailure) };
     result[@"batch_results"] = batchResults;
     result[@"conformance"] = @{ @"count":@(contractCount),@"passed":@(contractPassed),
       @"reference":@"API19 source-derived expectations; Android 4.4 device differential pending",
@@ -905,7 +952,8 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
       @"heap":@{ @"highest_live_end":[NSString stringWithFormat:@"%08x",heap[0]],
                   @"limit":[NSString stringWithFormat:@"%08x",heap[1]],
                   @"metadata_blocks":@(heap[2]),@"live_count":@(heap[3]),@"live_bytes":@(heap[4]) },
-      @"loaded_dso":modules,@"recent_calls":calls,@"recent_inputs":recentInputs,@"throw_diagnostic":throwDiagnostic(guest),
+      @"loaded_dso":modules,@"recent_calls":calls,@"recent_inputs":recentInputs,
+      @"nativeactivity_input_trace":runtimeEventTrace(guest),@"throw_diagnostic":throwDiagnostic(guest),
       @"android_log":[NSString stringWithUTF8String:guest?agr_guest_last_android_log(guest):""],
       @"runtime_error":[NSString stringWithUTF8String:guest?agr_guest_last_error(guest):""],
       @"failure_signature":failure?:@""};
