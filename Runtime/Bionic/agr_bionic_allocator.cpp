@@ -182,6 +182,11 @@ static void *host_pointer(uint32_t address) {
     return address?agr_dl_context->memory_base+address:nullptr;
 }
 static uint32_t guest_pointer(const void *pointer) { return agr_dl_host_to_guest(pointer); }
+static bool sane_user_pointer(const agr_bionic_allocator *a,uint32_t address) {
+    if(!address)return true;
+    return address>=a->brk_base+2u*sizeof(agr_dl_size_t)&&address<a->heap_limit&&
+           (address&(MALLOC_ALIGNMENT-1u))==0;
+}
 
 static void *agr_dl_mmap(agr_dl_size_t requested) {
     agr_bionic_allocator *a=agr_dl_context;
@@ -261,7 +266,7 @@ extern "C" void agr_bionic_allocator_destroy(agr_bionic_allocator *a){
 extern "C" uint32_t agr_bionic_allocator_malloc(agr_bionic_allocator*a,uint32_t n){return invoke(a,0u,[&]{return guest_pointer(dlmalloc(n));});}
 extern "C" uint32_t agr_bionic_allocator_calloc(agr_bionic_allocator*a,uint32_t n,uint32_t s){return invoke(a,0u,[&]{return guest_pointer(dlcalloc(n,s));});}
 extern "C" uint32_t agr_bionic_allocator_realloc(agr_bionic_allocator*a,uint32_t p,uint32_t n){return invoke(a,0u,[&]{return guest_pointer(dlrealloc(host_pointer(p),n));});}
-extern "C" void agr_bionic_allocator_free(agr_bionic_allocator*a,uint32_t p){(void)invoke(a,0,[&]{dlfree(host_pointer(p));return 0;});}
+extern "C" void agr_bionic_allocator_free(agr_bionic_allocator*a,uint32_t p){(void)invoke(a,0,[&]{if(!sane_user_pointer(a,p))agr_dl_fail(AGR_ALLOCATOR_FATAL_USAGE);dlfree(host_pointer(p));return 0;});}
 extern "C" uint32_t agr_bionic_allocator_memalign(agr_bionic_allocator*a,uint32_t al,uint32_t n){return invoke(a,0u,[&]{return guest_pointer(dlmemalign(al,n));});}
 extern "C" uint32_t agr_bionic_allocator_valloc(agr_bionic_allocator*a,uint32_t n){return invoke(a,0u,[&]{return guest_pointer(dlvalloc(n));});}
 extern "C" uint32_t agr_bionic_allocator_pvalloc(agr_bionic_allocator*a,uint32_t n){return invoke(a,0u,[&]{return guest_pointer(dlpvalloc(n));});}
