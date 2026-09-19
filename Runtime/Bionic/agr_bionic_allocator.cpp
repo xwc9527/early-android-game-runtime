@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mutex>
+#include <type_traits>
 
 typedef uint32_t agr_dl_size_t;
 typedef int32_t agr_dl_ptrdiff_t;
@@ -67,7 +68,9 @@ template <typename T> struct agr_guest_ptr {
     template <typename U> operator U *() const {
         return reinterpret_cast<U *>(get());
     }
-    T &operator*() const { return *get(); }
+    template <typename Q=T,
+              typename std::enable_if<!std::is_void<Q>::value,int>::type=0>
+    Q &operator*() const { return *get(); }
     T *operator->() const { return get(); }
     agr_guest_ptr& operator=(int value) { address=value?(uint32_t)value:0; return *this; }
     agr_guest_ptr& operator=(uint32_t value) { address=value; return *this; }
