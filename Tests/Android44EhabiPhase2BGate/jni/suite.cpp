@@ -104,10 +104,18 @@ extern "C" __attribute__((noinline)) int agr_eh2b_nested(void) {
 
 extern "C" void *__cxa_get_globals(void);
 struct ThreadArg { int id; int result; unsigned long self, globals_before, globals_after; };
+static pthread_mutex_t thread_gate_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t thread_gate_cond = PTHREAD_COND_INITIALIZER;
+static int thread_gate_ready;
 static void *thread_body(void *opaque) {
     ThreadArg *arg = static_cast<ThreadArg*>(opaque); int total = 0;
     arg->self = static_cast<unsigned long>(pthread_self());
     arg->globals_before = reinterpret_cast<unsigned long>(__cxa_get_globals());
+    pthread_mutex_lock(&thread_gate_lock);
+    ++thread_gate_ready;
+    if (thread_gate_ready == 2) pthread_cond_broadcast(&thread_gate_cond);
+    while (thread_gate_ready < 2) pthread_cond_wait(&thread_gate_cond, &thread_gate_lock);
+    pthread_mutex_unlock(&thread_gate_lock);
     for (int i = 0; i < 8; ++i) {
         try {
             try { throw Derived(arg->id * 100 + i); }
@@ -121,6 +129,7 @@ static void *thread_body(void *opaque) {
 
 extern "C" __attribute__((noinline)) int agr_eh2b_threads(void) {
     ThreadArg one = {1, 0, 0, 0, 0}, two = {2, 0, 0, 0, 0}; pthread_t a, b; void *ra = 0, *rb = 0;
+    thread_gate_ready = 0;
     if (pthread_create(&a, 0, thread_body, &one) != 0) return -1;
     if (pthread_create(&b, 0, thread_body, &two) != 0) return -2;
     if (pthread_join(a, &ra) != 0 || pthread_join(b, &rb) != 0) return -3;

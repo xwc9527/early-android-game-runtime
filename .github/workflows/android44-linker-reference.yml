@@ -358,6 +358,7 @@ jobs:
           import json
           r=json.load(open('android44-ehabi2b-gate.json'))
           print('Android 4.4 EHABI Phase 2B oracle:',json.dumps(r,sort_keys=True))
+          print('::notice title=Android 4.4 Phase 2B oracle::'+json.dumps(r,sort_keys=True))
           assert r['typed']==2 and r['inheritance']==21 and r['multiple']==33,r
           assert r['pointer']==43 and r['rethrow']==54 and r['nested']==6199,r
           assert r['lifetime_ref']==r['lifetime_value']==r['lifetime_rethrow']==0,r
