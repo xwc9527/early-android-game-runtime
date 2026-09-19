@@ -872,8 +872,30 @@ const char *agr_guest_last_error(agr_guest *g) { return g ? g->error : "guest cr
 const char *agr_guest_last_android_log(agr_guest *g) { return g ? g->last_log : ""; }
 uint32_t agr_guest_program_counter(agr_guest *g) { return g ? atomic_load_explicit(&g->last_guest_pc,memory_order_acquire) : 0; }
 int32_t agr_guest_load_elf(agr_guest *g, const char *name, const void *bytes, uint32_t size, uint32_t base) {
+    return agr_guest_load_elf_handle(g,name,bytes,size,base,NULL);
+}
+int32_t agr_guest_load_elf_handle(agr_guest *g, const char *name, const void *bytes,
+                                  uint32_t size, uint32_t base, uint32_t *object_handle) {
+    if (!g) return -1;
     agr_load_result out = {0}; int32_t rc = agr_load_elf(g->runtime, name, bytes, size, base, &out);
-    if (rc) set_error(g, agr_last_error(g->runtime)); return rc;
+    if (rc) { set_error(g, agr_last_error(g->runtime)); return rc; }
+    if (object_handle) *object_handle=out.object_handle;
+    return 0;
+}
+uint32_t agr_guest_dlopen(agr_guest *g, const char *name) {
+    uint32_t handle=g&&name?agr_dlopen(g->runtime,name):0;
+    if (!handle && g) { const char *error=agr_dlerror(g->runtime); set_error(g,error?error:"dlopen failed"); }
+    return handle;
+}
+uint32_t agr_guest_dlsym(agr_guest *g, uint32_t object_handle, const char *symbol) {
+    uint32_t address=g&&symbol?agr_dlsym(g->runtime,object_handle,symbol):0;
+    if (!address && g) { const char *error=agr_dlerror(g->runtime); set_error(g,error?error:"dlsym failed"); }
+    return address;
+}
+int32_t agr_guest_dlclose(agr_guest *g, uint32_t object_handle) {
+    int32_t rc=g?(int32_t)agr_dlclose(g->runtime,object_handle):-1;
+    if (rc && g) { const char *error=agr_dlerror(g->runtime); set_error(g,error?error:"dlclose failed"); }
+    return rc;
 }
 uint32_t agr_guest_find_symbol(agr_guest *g, const char *symbol) {
     return g && symbol ? agr_find_symbol(g->runtime, symbol) : 0;

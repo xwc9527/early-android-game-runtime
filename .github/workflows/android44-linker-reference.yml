@@ -465,7 +465,7 @@ jobs:
           import json
           android=json.load(open('reference-artifact/android44-ehabi2b-gate.json'))
           ios=json.load(open('build/artifacts/ehabi2b-guest.json'))
-          for key in ('typed','inheritance','multiple','pointer','rethrow','lifetime_ref','lifetime_value','lifetime_rethrow','nested','threads'):
+          for key in ('typed','inheritance','multiple','pointer','rethrow','lifetime_ref','lifetime_ref_events','lifetime_value','lifetime_value_events','lifetime_rethrow','lifetime_rethrow_events','nested','threads','cross','cross_events','cross_base','cross_derived','reload_cross'):
               assert ios[key]==android[key],(key,android,ios)
           PY
       - name: Upload Simulator Phase 2A evidence

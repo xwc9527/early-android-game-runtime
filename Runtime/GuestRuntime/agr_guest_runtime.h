@@ -28,6 +28,13 @@ uint32_t agr_guest_program_counter(agr_guest *guest);
 
 int32_t agr_guest_load_elf(agr_guest *guest, const char *name,
                            const void *bytes, uint32_t size, uint32_t base);
+int32_t agr_guest_load_elf_handle(agr_guest *guest, const char *name,
+                                  const void *bytes, uint32_t size, uint32_t base,
+                                  uint32_t *object_handle);
+uint32_t agr_guest_dlopen(agr_guest *guest, const char *name);
+uint32_t agr_guest_dlsym(agr_guest *guest, uint32_t object_handle,
+                         const char *symbol);
+int32_t agr_guest_dlclose(agr_guest *guest, uint32_t object_handle);
 uint32_t agr_guest_find_symbol(agr_guest *guest, const char *symbol);
 void agr_guest_set_watch_pc(agr_guest *guest, uint32_t pc);
 uint32_t agr_guest_watch_hits(agr_guest *guest);

@@ -14,7 +14,7 @@ report_failure() {
 trap report_failure ERR
 SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"; TARGET="arm64-apple-ios15.0-simulator"
 COMMON=(-target "$TARGET" -isysroot "$SDK" -mios-simulator-version-min=15.0 -O2)
-for file in libgnustl_shared.so libagr_eh2b_probe.so libagr_eh2b_types.so libagr_eh2b_suite.so; do test -s "$FIXTURES/$file"; done
+for file in libgnustl_shared.so libagr_eh2b_probe.so libagr_eh2b_types.so libagr_eh2b_suite.so libagr_eh2b_C.so libagr_eh2b_B.so libagr_eh2b_A.so; do test -s "$FIXTURES/$file"; done
 clang "${COMMON[@]}" -fobjc-arc -I"$ROOT/Runtime/GuestRuntime" -c "$ROOT/Tests/Android44EhabiPhase2BGate/ios_guest_main.m" -o "$OBJ/agr_ehabi2b_ios_main.o"
 rm -rf "$APP"; mkdir -p "$APP/Frameworks"
 clang++ "${COMMON[@]}" -Wl,-dead_strip -Wl,-rpath,@executable_path/Frameworks -F"$BUILD/angle-frameworks" \
@@ -49,6 +49,7 @@ r=json.load(open(sys.argv[1])); print(json.dumps(r,sort_keys=True))
 assert r['status']==0 and r['typed']==2 and r['inheritance']==21 and r['multiple']==33,r
 assert r['pointer']==43 and r['rethrow']==54 and r['nested']==6199,r
 assert r['lifetime_ref']==r['lifetime_value']==r['lifetime_rethrow']==0,r
+assert r['cross']==1 and r['reload_cross']==1 and r['cross_events']==[810,811,812,813],r
 assert r['threads']==1,r
 assert r['thread_one']==r['thread_ret_one'] and r['thread_two']==r['thread_ret_two'],r
 assert r['thread_id_one'] and r['thread_id_two'] and r['thread_id_one']!=r['thread_id_two'],r
