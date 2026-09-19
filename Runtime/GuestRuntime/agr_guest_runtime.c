@@ -665,8 +665,38 @@ static int dispatch_egl(agr_guest *g, const char *name) {
         guest_return(g,g->context ? GUEST_EGL_CONTEXT : 0,0); return 1;
     }
     if (!strcmp(name, "eglMakeCurrent")) {
-        EGLBoolean ok=eglMakeCurrent(g->display,g->surface,g->surface,g->context);
-        if (ok) { const GLubyte *renderer=glGetString(GL_RENDERER); if (renderer) snprintf(g->renderer,sizeof(g->renderer),"%s",renderer); }
+        uint32_t guest_draw=argument(g,1),guest_read=argument(g,2),guest_context=argument(g,3);
+        EGLSurface draw=guest_draw?g->surface:EGL_NO_SURFACE;
+        EGLSurface read=guest_read?g->surface:EGL_NO_SURFACE;
+        EGLContext context=guest_context?g->context:EGL_NO_CONTEXT;
+        if ((guest_draw&&guest_draw!=GUEST_EGL_SURFACE) ||
+            (guest_read&&guest_read!=GUEST_EGL_SURFACE) ||
+            (guest_context&&guest_context!=GUEST_EGL_CONTEXT)) {
+            guest_return(g,EGL_FALSE,0); return 1;
+        }
+        EGLBoolean ok=eglMakeCurrent(g->display,draw,read,context);
+        if (ok && context!=EGL_NO_CONTEXT) { const GLubyte *renderer=glGetString(GL_RENDERER); if (renderer) snprintf(g->renderer,sizeof(g->renderer),"%s",renderer); }
+        guest_return(g,ok,0); return 1;
+    }
+    if (!strcmp(name,"eglDestroyContext")) {
+        if (argument(g,1)!=GUEST_EGL_CONTEXT || g->context==EGL_NO_CONTEXT) {
+            guest_return(g,EGL_FALSE,0); return 1;
+        }
+        EGLBoolean ok=eglDestroyContext(g->display,g->context);
+        if(ok)g->context=EGL_NO_CONTEXT;
+        guest_return(g,ok,0); return 1;
+    }
+    if (!strcmp(name,"eglDestroySurface")) {
+        if (argument(g,1)!=GUEST_EGL_SURFACE || g->surface==EGL_NO_SURFACE) {
+            guest_return(g,EGL_FALSE,0); return 1;
+        }
+        EGLBoolean ok=eglDestroySurface(g->display,g->surface);
+        if(ok)g->surface=EGL_NO_SURFACE;
+        guest_return(g,ok,0); return 1;
+    }
+    if (!strcmp(name,"eglTerminate")) {
+        EGLBoolean ok=g->display!=EGL_NO_DISPLAY?eglTerminate(g->display):EGL_FALSE;
+        if(ok){g->display=EGL_NO_DISPLAY;g->config=(EGLConfig)0;}
         guest_return(g,ok,0); return 1;
     }
     if (!strcmp(name, "eglQuerySurface")) {
