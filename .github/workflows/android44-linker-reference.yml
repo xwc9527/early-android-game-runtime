@@ -284,6 +284,38 @@ jobs:
           print('Android 4.4 EHABI Phase 2 oracle:',json.dumps(result,sort_keys=True))
           assert result == {'same':[1,2], 'cross':[10,11,12,13], 'same_ok':1}, result
           PY
+      - name: AGR guest GCC EHABI Phase 2 differential
+        run: |
+          clang -std=c11 -O2 -Wall -Wextra -Werror \
+            -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process \
+            -IRuntime/NativeCore -IRuntime/HostServices \
+            -c Tests/Android44EhabiPhase2Gate/agr_differential.c -o agr-ehabi2-diff.o
+          clang++ agr-ehabi2-diff.o agr-runtime.o agr-vma.o agr-linker.o \
+            agr-dynamic.o agr-mmap.o \
+            Runtime/ArmInterpreter/target/release/libtouchhle_arm_interpreter.a \
+            -ldl -lpthread -lm -o agr-ehabi2-differential
+          ./agr-ehabi2-differential \
+            ehabi2-gate/libs/armeabi-v7a/libgnustl_shared.so \
+            ehabi2-gate/libs/armeabi-v7a/libagr_eh2_probe.so \
+            ehabi2-gate/libs/armeabi-v7a/libagr_eh2_same.so \
+            ehabi2-gate/libs/armeabi-v7a/libagr_eh2_C.so \
+            ehabi2-gate/libs/armeabi-v7a/libagr_eh2_B.so \
+            ehabi2-gate/libs/armeabi-v7a/libagr_eh2_A.so \
+            > agr-ehabi2-gate.json
+          python3 - <<'PY'
+          import json
+          android=json.load(open('android44-ehabi2-gate.json'))
+          agr=json.load(open('agr-ehabi2-gate.json'))
+          print('Android 4.4 EHABI2:',json.dumps(android,sort_keys=True))
+          print('AGR guest EHABI2:',json.dumps(agr,sort_keys=True))
+          assert agr['same']==android['same'],(android,agr)
+          assert agr['cross']==android['cross'],(android,agr)
+          assert agr['same_ok']==android['same_ok'],(android,agr)
+          assert agr['cross_ok']==1,agr
+          symbols=[event['symbol'] for event in agr['trace']]
+          for required in ('__cxa_throw','_Unwind_RaiseException','__gxx_personality_v0'):
+            assert required in symbols,(required,symbols)
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -301,6 +333,7 @@ jobs:
             agr-unwind.json
             unwind/*
             android44-ehabi2-gate.json
+            agr-ehabi2-gate.json
             ehabi2-gate/evidence/*
             ehabi2-gate/libs/armeabi-v7a/*
             emulator.log
