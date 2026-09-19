@@ -314,7 +314,7 @@ jobs:
           assert agr['cross_ok']==1,agr
           symbols=[event['symbol'] for event in agr['trace']]
           for required in ('__cxa_throw','_Unwind_RaiseException','__gxx_personality_v0'):
-            assert required in symbols,(required,symbols)
+            assert any(symbol.endswith(required) for symbol in symbols),(required,symbols)
           PY
       - uses: actions/upload-artifact@v4
         if: always()

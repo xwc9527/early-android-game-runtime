@@ -101,9 +101,9 @@ static int call_guest(harness*h,uint32_t target,const uint32_t*args,uint32_t cou
 }
 
 static void*read_file(const char*path,uint32_t*size){FILE*f=fopen(path,"rb");long n;void*p;if(!f)return NULL;fseek(f,0,SEEK_END);n=ftell(f);fseek(f,0,SEEK_SET);p=malloc((size_t)n);if(!p||fread(p,1,(size_t)n,f)!=(size_t)n){free(p);p=NULL;n=0;}fclose(f);*size=(uint32_t)n;return p;}
-static int load(harness*h,const char*name,const char*path,uint32_t base){uint32_t n=0;void*p=read_file(path,&n);int rc=p?agr_load_elf(h->runtime,name,p,n,base,NULL):-1;free(p);if(rc)snprintf(h->error,sizeof(h->error),"load %s: %s",name,agr_last_error(h->runtime));return rc;}
-static void watch(harness*h,const char*name){uint32_t a=agr_find_symbol(h->runtime,name);if(a&&h->watched_count<16){h->watched[h->watched_count]=a;h->watched_names[h->watched_count++]=name;}}
-static int read_events(harness*h,int*out,uint32_t cap){uint32_t c=agr_find_symbol(h->runtime,"agr_eh2_count"),g=agr_find_symbol(h->runtime,"agr_eh2_get");int32_t n=0;if(!c||!g||call_guest(h,c,NULL,0,&n)||n<0||(uint32_t)n>cap)return -1;for(int32_t i=0;i<n;i++){uint32_t a=(uint32_t)i;int32_t v;if(call_guest(h,g,&a,1,&v))return -1;out[i]=v;}return n;}
+static int load(harness*h,const char*name,const char*path,uint32_t base,uint32_t*handle){uint32_t n=0;void*p=read_file(path,&n);int rc=p?agr_load_elf(h->runtime,name,p,n,base,NULL):-1;free(p);if(rc){snprintf(h->error,sizeof(h->error),"load %s: %s",name,agr_last_error(h->runtime));return rc;}*handle=agr_dlopen(h->runtime,name);if(!*handle){snprintf(h->error,sizeof(h->error),"dlopen %s: %s",name,agr_dlerror(h->runtime));return -1;}return 0;}
+static void watch_addr(harness*h,uint32_t handle,const char*name,const char*label){uint32_t a=agr_dlsym(h->runtime,handle,name);if(a&&h->watched_count<16){h->watched[h->watched_count]=a;h->watched_names[h->watched_count++]=label;}}
+static int read_events(harness*h,uint32_t probe,int*out,uint32_t cap){uint32_t c=agr_dlsym(h->runtime,probe,"agr_eh2_count"),g=agr_dlsym(h->runtime,probe,"agr_eh2_get");int32_t n=0;if(!c||!g||call_guest(h,c,NULL,0,&n)||n<0||(uint32_t)n>cap)return -1;for(int32_t i=0;i<n;i++){uint32_t a=(uint32_t)i;int32_t v;if(call_guest(h,g,&a,1,&v))return -1;out[i]=v;}return n;}
 static void print_events(const int*v,int n){putchar('[');for(int i=0;i<n;i++)printf("%s%d",i?",":"",v[i]);putchar(']');}
 static void print_trace(harness*h){putchar('[');for(uint32_t i=0;i<h->trace_count;i++){trace_event*e=&h->trace[i];printf("%s{\"symbol\":\"%s\",\"pc\":%u,\"state\":%u,\"result\":%u,\"sp\":%u,\"lr\":%u}",i?",":"",e->symbol,e->pc,e->r0,e->r0,e->sp,e->lr);}putchar(']');}
 
@@ -112,12 +112,14 @@ int main(int argc,char**argv){
     harness h={0};h.cpu=arm_interp_create();h.next_trap=TRAP_BASE;if(!h.cpu)return 3;
     agr_callbacks cb={0};cb.user=&h;cb.read=mem_read;cb.write=mem_write;cb.loader_write=mem_load;cb.protect=mem_protect;cb.resolve_import=host_import;cb.invoke_guest=invoke_guest;
     h.runtime=agr_runtime_create(&cb,0x0c000000,0x0c100000,0x0d000000,0x0df00000);if(!h.runtime)return 4;
-    if(load(&h,"libgnustl_shared.so",argv[1],0x01000000)||load(&h,"libagr_eh2_probe.so",argv[2],0x03000000)||load(&h,"libagr_eh2_same.so",argv[3],0x04000000)||load(&h,"libagr_eh2_C.so",argv[4],0x05000000)||load(&h,"libagr_eh2_B.so",argv[5],0x06000000)||load(&h,"libagr_eh2_A.so",argv[6],0x07000000)){fprintf(stderr,"%s\n",h.error);return 5;}
-    const char*names[]={"__cxa_throw","_Unwind_RaiseException","__gxx_personality_v0","__aeabi_unwind_cpp_pr0","__aeabi_unwind_cpp_pr1","__aeabi_unwind_cpp_pr2","_Unwind_Resume",NULL};for(uint32_t i=0;names[i];i++)watch(&h,names[i]);
+    uint32_t gnustl=0,probe=0,same_h=0,c_h=0,b_h=0,a_h=0;
+    if(load(&h,"libgnustl_shared.so",argv[1],0x01000000,&gnustl)||load(&h,"libagr_eh2_probe.so",argv[2],0x03000000,&probe)||load(&h,"libagr_eh2_same.so",argv[3],0x04000000,&same_h)||load(&h,"libagr_eh2_C.so",argv[4],0x05000000,&c_h)||load(&h,"libagr_eh2_B.so",argv[5],0x06000000,&b_h)||load(&h,"libagr_eh2_A.so",argv[6],0x07000000,&a_h)){fprintf(stderr,"%s\n",h.error);return 5;}
+    watch_addr(&h,gnustl,"__cxa_throw","__cxa_throw");watch_addr(&h,gnustl,"_Unwind_RaiseException","_Unwind_RaiseException");watch_addr(&h,gnustl,"__gxx_personality_v0","__gxx_personality_v0");watch_addr(&h,gnustl,"__aeabi_unwind_cpp_pr0","__aeabi_unwind_cpp_pr0");watch_addr(&h,gnustl,"__aeabi_unwind_cpp_pr1","__aeabi_unwind_cpp_pr1");watch_addr(&h,gnustl,"__aeabi_unwind_cpp_pr2","__aeabi_unwind_cpp_pr2");watch_addr(&h,gnustl,"_Unwind_Resume","_Unwind_Resume");
+    watch_addr(&h,same_h,"_Unwind_RaiseException","same:_Unwind_RaiseException");watch_addr(&h,same_h,"_Unwind_Resume","same:_Unwind_Resume");watch_addr(&h,b_h,"_Unwind_Resume","B:_Unwind_Resume");watch_addr(&h,c_h,"_Unwind_RaiseException","C:_Unwind_RaiseException");
     int same[32],cross[32],same_n,cross_n,same_ok=0,cross_ok=0;
     uint32_t before=h.trace_count;
-    uint32_t same_fn=agr_find_symbol(h.runtime,"agr_eh2_same_run");if(!same_fn||call_guest(&h,same_fn,NULL,0,&same_ok)||(same_n=read_events(&h,same,32))<0){fprintf(stderr,"same: %s\n",h.error);return 6;}
-    uint32_t same_trace_end=h.trace_count,cross_fn=agr_find_symbol(h.runtime,"agr_eh2_cross_run");if(!cross_fn||call_guest(&h,cross_fn,NULL,0,&cross_ok)||(cross_n=read_events(&h,cross,32))<0){fprintf(stderr,"cross: %s\n",h.error);return 7;}
+    uint32_t same_fn=agr_dlsym(h.runtime,same_h,"agr_eh2_same_run");if(!same_fn||call_guest(&h,same_fn,NULL,0,&same_ok)||(same_n=read_events(&h,probe,same,32))<0){fprintf(stderr,"same: %s\n",h.error);return 6;}
+    uint32_t same_trace_end=h.trace_count,cross_fn=agr_dlsym(h.runtime,a_h,"agr_eh2_cross_run");if(!cross_fn||call_guest(&h,cross_fn,NULL,0,&cross_ok)||(cross_n=read_events(&h,probe,cross,32))<0){fprintf(stderr,"cross: %s\n",h.error);return 7;}
     printf("{\"same\":");print_events(same,same_n);printf(",\"cross\":");print_events(cross,cross_n);printf(",\"same_ok\":%d,\"cross_ok\":%d,\"trace_split\":[%u,%u,%u],\"trace\":",same_ok,cross_ok,before,same_trace_end,h.trace_count);print_trace(&h);printf("}\n");
     agr_runtime_destroy(h.runtime);arm_interp_destroy(h.cpu);return 0;
 }
