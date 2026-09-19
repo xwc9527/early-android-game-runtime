@@ -129,7 +129,7 @@ static void print_events(const int*v,int n){putchar('[');for(int i=0;i<n;i++)pri
 static void print_trace(harness*h){putchar('[');for(uint32_t i=0;i<h->trace_count;i++){trace_event*e=&h->trace[i];printf("%s{\"symbol\":\"%s\",\"pc\":%u,\"state\":%u,\"result\":",i?",":"",e->symbol,e->pc,e->r0);if(e->has_result)printf("%u",e->result);else printf("null");printf(",\"sp\":%u,\"lr\":%u}",e->sp,e->lr);}putchar(']');}
 static void print_exidx(harness*h){putchar('[');for(uint32_t i=0;i<h->exidx_count;i++){exidx_event*e=&h->exidx[i];printf("%s{\"pc\":%u,\"module\":\"%s\",\"result\":%u,\"count\":%u,\"expected\":%u,\"expected_count\":%u}",i?",":"",e->pc,e->module,e->result,e->count,e->expected,e->expected_count);}putchar(']');}
 
-int main(int argc,char**argv){
+int agr_ehabi2_run(int argc,char**argv){
     if(argc!=7){fprintf(stderr,"usage: %s gnustl probe same C B A\n",argv[0]);return 2;}
     harness h={0};h.cpu=arm_interp_create();h.next_trap=TRAP_BASE;if(!h.cpu)return 3;
     agr_callbacks cb={0};cb.user=&h;cb.read=mem_read;cb.write=mem_write;cb.loader_write=mem_load;cb.protect=mem_protect;cb.resolve_import=host_import;cb.invoke_guest=invoke_guest;
@@ -154,3 +154,7 @@ int main(int argc,char**argv){
     printf("{\"same\":");print_events(same,same_n);printf(",\"cross\":");print_events(cross,cross_n);printf(",\"reload_cross\":");print_events(reload_cross,reload_n);printf(",\"same_ok\":%d,\"cross_ok\":%d,\"reload_ok\":%d,\"unload_stale\":%u,\"reload_owned\":%u,\"exidx_mismatches\":%u,\"trace_split\":[%u,%u,%u,%u],\"trace\":",same_ok,cross_ok,reload_ok,stale_count,reload_owned,h.exidx_mismatches,before,same_trace_end,first_cross_end,h.trace_count);print_trace(&h);printf(",\"exidx\":");print_exidx(&h);printf("}\n");
     agr_runtime_destroy(h.runtime);arm_interp_destroy(h.cpu);return 0;
 }
+
+#if !defined(AGR_EHABI2_EMBEDDED)
+int main(int argc,char**argv){return agr_ehabi2_run(argc,argv);}
+#endif

@@ -359,3 +359,38 @@ jobs:
             ehabi2-gate/evidence/*
             ehabi2-gate/libs/armeabi-v7a/*
             emulator.log
+
+  ios-simulator-phase2a:
+    needs: api19-reference
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: android44-linker-differential
+          path: reference-artifact
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build formal Simulator Runtime and run real-game smoke
+        run: bash scripts/build-and-run-simulator.sh
+      - name: Run existing Runtime and real-game regressions
+        run: bash scripts/run-simulator-regressions.sh
+      - name: Run the exact GCC 4.8 guest exception fixtures in Simulator
+        run: |
+          FIXTURES="$(find reference-artifact -type f -name libgnustl_shared.so -print -quit | xargs dirname)"
+          test -n "$FIXTURES"
+          bash scripts/test-ehabi-phase2-simulator.sh "$FIXTURES"
+          python3 - <<'PY'
+          import json
+          android=json.load(open('reference-artifact/android44-ehabi2-gate.json'))
+          simulator=json.load(open('build/artifacts/ehabi2-simulator.json'))
+          for key in ('same','cross','reload_cross','same_ok','cross_ok','reload_ok'):
+            assert simulator[key]==android[key],(key,android,simulator)
+          PY
+      - name: Upload Simulator Phase 2A evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-ehabi-phase2a
+          path: build/artifacts

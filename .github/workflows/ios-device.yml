@@ -7,10 +7,12 @@ on:
     paths:
       - 'scripts/build-iphoneos.sh'
       - 'scripts/test-ehabi-unwind.sh'
+      - 'scripts/test-ehabi-phase2-simulator.sh'
       - 'App/main.m'
       - '.github/workflows/ios-device.yml'
       - 'Runtime/**'
       - 'Tests/Ehabi/**'
+      - 'Tests/Android44EhabiPhase2Gate/**'
 
 jobs:
   iphoneos:
