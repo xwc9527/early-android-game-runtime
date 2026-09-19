@@ -2197,7 +2197,7 @@ typedef unsigned int flag_t;           /* The type of various bit flag sets */
 
 /* ------------------- Chunks sizes and alignments ----------------------- */
 
-#define MCHUNK_SIZE         (sizeof(mchunk))
+#define MCHUNK_SIZE         ((agr_dl_size_t)sizeof(mchunk))
 
 #if FOOTERS
 #define CHUNK_OVERHEAD      (TWO_SIZE_T_SIZES)
@@ -2221,7 +2221,7 @@ typedef unsigned int flag_t;           /* The type of various bit flag sets */
 #define align_as_chunk(A)   (mchunkptr)((A) + align_offset(chunk2mem(A)))
 
 /* Bounds on request (not chunk) sizes. */
-#define MAX_REQUEST         ((-MIN_CHUNK_SIZE) << 2)
+#define MAX_REQUEST         ((agr_dl_size_t)((SIZE_T_ZERO - (agr_dl_size_t)MIN_CHUNK_SIZE) << 2))
 #define MIN_REQUEST         (MIN_CHUNK_SIZE - CHUNK_OVERHEAD - SIZE_T_ONE)
 
 /* pad request bytes into a usable size */
@@ -2685,9 +2685,9 @@ struct malloc_params {
 #define SYS_ALLOC_PADDING (TOP_FOOT_SIZE + MALLOC_ALIGNMENT)
 
 #define is_page_aligned(S)\
-   (((agr_dl_size_t)(S) & (mparams.page_size - SIZE_T_ONE)) == 0)
+   ((agr_dl_host_to_guest((const void*)(S)) & (mparams.page_size - SIZE_T_ONE)) == 0)
 #define is_granularity_aligned(S)\
-   (((agr_dl_size_t)(S) & (mparams.granularity - SIZE_T_ONE)) == 0)
+   ((agr_dl_host_to_guest((const void*)(S)) & (mparams.granularity - SIZE_T_ONE)) == 0)
 
 /*  True if segment S holds address A */
 #define segment_holds(S, A)\
@@ -4113,7 +4113,7 @@ static void* sys_alloc(mstate m, agr_dl_size_t nb) {
         agr_dl_size_t fp;
         /* Adjust to end on a page boundary */
         if (!is_page_aligned(base))
-          ssize += (page_align((agr_dl_size_t)base) - (agr_dl_size_t)base);
+          ssize += (page_align(agr_dl_host_to_guest(base)) - agr_dl_host_to_guest(base));
         fp = m->footprint + ssize; /* recheck limits */
         if (ssize > nb && ssize < HALF_MAX_SIZE_T &&
             (m->footprint_limit == 0 ||
@@ -4972,7 +4972,7 @@ static void* internal_memalign(mstate m, agr_dl_size_t alignment, agr_dl_size_t 
 
       mem = chunk2mem(p);
       assert (chunksize(p) >= nb);
-      assert(((agr_dl_size_t)mem & (alignment - 1)) == 0);
+      assert((agr_dl_host_to_guest(mem) & (alignment - 1)) == 0);
       check_inuse_chunk(m, p);
       POSTACTION(m);
     }
