@@ -1084,10 +1084,19 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
 #endif
     UIViewController *controller = interactive ? [AGRDebugController new] : [UIViewController new]; controller.view.backgroundColor = UIColor.blackColor;
     self.window.rootViewController = controller; [self.window makeKeyAndVisible];
-    if(!interactive){NSString *result = runTests();
-      NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/runtime-smoke.json"];
-      [result writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
-      NSLog(@"AGR_RESULT_BEGIN%@AGR_RESULT_END", result);}
+    if(!interactive){
+      /* Returning from didFinishLaunching promptly is required even for the
+       * headless regression host.  Running the complete APK trajectory here
+       * blocks UIKit's launch handshake long enough for the Simulator launch
+       * watchdog to terminate an otherwise healthy Runtime process. */
+      dispatch_queue_t regressionQueue=dispatch_queue_create("dev.agr.simulator.regression",DISPATCH_QUEUE_SERIAL);
+      dispatch_async(regressionQueue,^{ @autoreleasepool {
+        NSString *result = runTests();
+        NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/runtime-smoke.json"];
+        [result writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+        NSLog(@"AGR_RESULT_BEGIN%@AGR_RESULT_END", result);
+      }});
+    }
     return YES;
 }
 @end
