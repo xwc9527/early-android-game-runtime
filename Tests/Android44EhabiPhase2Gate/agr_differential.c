@@ -47,6 +47,8 @@ static int32_t mem_read(void*o,uint32_t a,void*p,uint32_t n){return arm_interp_r
 static int32_t mem_write(void*o,uint32_t a,const void*p,uint32_t n){return arm_interp_write(((harness*)o)->cpu,a,(const uint8_t*)p,n);}
 static int32_t mem_load(void*o,uint32_t a,const void*p,uint32_t n){return arm_interp_load(((harness*)o)->cpu,a,(const uint8_t*)p,n);}
 static int32_t mem_protect(void*o,uint32_t a,uint32_t n,uint32_t p){return arm_interp_set_page_permissions(((harness*)o)->cpu,a,n,p);}
+static uint32_t current_thread(void*o){(void)o;return 1u;}
+static void* current_thread_context(void*o){return o;}
 static void write_u32(harness*h,uint32_t a,uint32_t v){(void)arm_interp_write(h->cpu,a,(const uint8_t*)&v,4);}
 static uint32_t read_u32(harness*h,uint32_t a){uint32_t v=0;(void)arm_interp_read(h->cpu,a,(uint8_t*)&v,4);return v;}
 
@@ -148,8 +150,10 @@ static void dump_failure(harness*h,const char*stage){
 int agr_ehabi2_run(int argc,char**argv){
     if(argc!=7){fprintf(stderr,"usage: %s gnustl probe same C B A\n",argv[0]);return 2;}
     harness h={0};h.cpu=arm_interp_create();h.next_trap=TRAP_BASE;if(!h.cpu)return 3;
-    agr_callbacks cb={0};cb.user=&h;cb.read=mem_read;cb.write=mem_write;cb.loader_write=mem_load;cb.protect=mem_protect;cb.resolve_import=host_import;cb.invoke_guest=invoke_guest;
+    agr_callbacks cb={0};cb.user=&h;cb.read=mem_read;cb.write=mem_write;cb.loader_write=mem_load;cb.protect=mem_protect;cb.resolve_import=host_import;cb.invoke_guest=invoke_guest;cb.current_thread=current_thread;cb.current_thread_context=current_thread_context;
     h.runtime=agr_runtime_create(&cb,0x0c000000,0x0c100000,0x0d000000,0x0df00000);if(!h.runtime)return 4;
+    uint32_t main_thread_storage=agr_malloc(h.runtime,0x1000u);
+    if(!main_thread_storage||agr_runtime_attach_current_thread(h.runtime,1,1,main_thread_storage+0x1000u-560u)){snprintf(h.error,sizeof(h.error),"attach main guest thread failed: %s",agr_last_error(h.runtime));fprintf(stderr,"%s\n",h.error);return 4;}
     uint32_t gnustl=0,probe=0,same_h=0,c_h=0,b_h=0,a_h=0;
     if(load(&h,"libgnustl_shared.so",argv[1],0x01000000,&gnustl)||load(&h,"libagr_eh2_probe.so",argv[2],0x03000000,&probe)||load(&h,"libagr_eh2_same.so",argv[3],0x04000000,&same_h)||load(&h,"libagr_eh2_C.so",argv[4],0x05000000,&c_h)||load(&h,"libagr_eh2_B.so",argv[5],0x06000000,&b_h)||load(&h,"libagr_eh2_A.so",argv[6],0x07000000,&a_h)){fprintf(stderr,"%s\n",h.error);return 5;}
     watch_addr(&h,gnustl,"__cxa_throw","__cxa_throw");watch_addr(&h,gnustl,"_Unwind_RaiseException","_Unwind_RaiseException");watch_addr(&h,gnustl,"__gxx_personality_v0","__gxx_personality_v0");watch_addr(&h,gnustl,"__aeabi_unwind_cpp_pr0","__aeabi_unwind_cpp_pr0");watch_addr(&h,gnustl,"__aeabi_unwind_cpp_pr1","__aeabi_unwind_cpp_pr1");watch_addr(&h,gnustl,"__aeabi_unwind_cpp_pr2","__aeabi_unwind_cpp_pr2");watch_addr(&h,gnustl,"_Unwind_Resume","_Unwind_Resume");
