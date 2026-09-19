@@ -102,28 +102,38 @@ extern "C" __attribute__((noinline)) int agr_eh2b_nested(void) {
     return outer == 61 && inner == 99 ? 6199 : -2;
 }
 
-struct ThreadArg { int id; int result; };
+extern "C" void *__cxa_get_globals(void);
+struct ThreadArg { int id; int result; unsigned long self, globals_before, globals_after; };
 static void *thread_body(void *opaque) {
     ThreadArg *arg = static_cast<ThreadArg*>(opaque); int total = 0;
+    arg->self = static_cast<unsigned long>(pthread_self());
+    arg->globals_before = reinterpret_cast<unsigned long>(__cxa_get_globals());
     for (int i = 0; i < 8; ++i) {
         try {
             try { throw Derived(arg->id * 100 + i); }
             catch (Base& base) { total += base.base; if ((i & 1) == 0) throw; }
         } catch (Derived& value) { total += value.derived; }
     }
+    arg->globals_after = reinterpret_cast<unsigned long>(__cxa_get_globals());
     arg->result = total;
     return reinterpret_cast<void*>(static_cast<unsigned long>(total));
 }
 
 extern "C" __attribute__((noinline)) int agr_eh2b_threads(void) {
-    ThreadArg one = {1, 0}, two = {2, 0}; pthread_t a, b; void *ra = 0, *rb = 0;
+    ThreadArg one = {1, 0, 0, 0, 0}, two = {2, 0, 0, 0, 0}; pthread_t a, b; void *ra = 0, *rb = 0;
     if (pthread_create(&a, 0, thread_body, &one) != 0) return -1;
     if (pthread_create(&b, 0, thread_body, &two) != 0) return -2;
     if (pthread_join(a, &ra) != 0 || pthread_join(b, &rb) != 0) return -3;
     agr_eh2b_set(20, one.result); agr_eh2b_set(21, two.result);
     agr_eh2b_set(22, static_cast<int>(reinterpret_cast<unsigned long>(ra)));
     agr_eh2b_set(23, static_cast<int>(reinterpret_cast<unsigned long>(rb)));
+    agr_eh2b_set(24, static_cast<int>(one.self)); agr_eh2b_set(25, static_cast<int>(two.self));
+    agr_eh2b_set(26, static_cast<int>(one.globals_before)); agr_eh2b_set(27, static_cast<int>(two.globals_before));
+    agr_eh2b_set(28, static_cast<int>(one.globals_after)); agr_eh2b_set(29, static_cast<int>(two.globals_after));
     return one.result > 0 && two.result > one.result &&
            one.result == static_cast<int>(reinterpret_cast<unsigned long>(ra)) &&
-           two.result == static_cast<int>(reinterpret_cast<unsigned long>(rb));
+           two.result == static_cast<int>(reinterpret_cast<unsigned long>(rb)) &&
+           one.self && two.self && one.self != two.self && one.globals_before &&
+           two.globals_before && one.globals_before != two.globals_before &&
+           one.globals_before == one.globals_after && two.globals_before == two.globals_after;
 }

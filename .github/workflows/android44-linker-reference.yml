@@ -366,6 +366,9 @@ jobs:
           assert r['cross_events']==[810,811,812,813],r
           assert r['threads']==1 and r['thread_one']==r['thread_ret_one'],r
           assert r['thread_two']==r['thread_ret_two'] and r['thread_two']>r['thread_one']>0,r
+          assert r['thread_id_one'] and r['thread_id_two'] and r['thread_id_one']!=r['thread_id_two'],r
+          assert r['globals_one'] and r['globals_two'] and r['globals_one']!=r['globals_two'],r
+          assert r['globals_one']==r['globals_after_one'] and r['globals_two']==r['globals_after_two'],r
           PY
       - name: AGR Linux GCC EHABI Phase 2B differential
         run: |

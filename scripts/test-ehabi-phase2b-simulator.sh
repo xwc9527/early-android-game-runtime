@@ -40,6 +40,10 @@ assert r['status']==0 and r['typed']==2 and r['inheritance']==21 and r['multiple
 assert r['pointer']==43 and r['rethrow']==54 and r['nested']==6199,r
 assert r['lifetime_ref']==r['lifetime_value']==r['lifetime_rethrow']==0,r
 assert r['threads']==1,r
+assert r['thread_one']==r['thread_ret_one'] and r['thread_two']==r['thread_ret_two'],r
+assert r['thread_id_one'] and r['thread_id_two'] and r['thread_id_one']!=r['thread_id_two'],r
+assert r['globals_one'] and r['globals_two'] and r['globals_one']!=r['globals_two'],r
+assert r['globals_one']==r['globals_after_one'] and r['globals_two']==r['globals_after_two'],r
 for forbidden in ('__cxa_allocate_exception','__cxa_free_exception','__cxa_throw','__cxa_type_match','__cxa_begin_catch','__cxa_end_catch','__cxa_rethrow','__gxx_personality_v0','_Unwind_RaiseException','_Unwind_Resume'):
     assert forbidden not in r['imports'],(forbidden,r)
 PY
