@@ -95,7 +95,32 @@ jobs:
         run: bash scripts/test-guest-fd-darwin.sh
       - name: Build and run native Runtime smoke in Simulator
         if: ${{ inputs.contracts_only != true }}
-        run: python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds 900
+        run: |
+          set +e
+          python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds 900
+          STATUS=$?
+          if [[ $STATUS -ne 0 ]]; then
+            for FILE in build/artifacts/simulator-smoke-failure.json \
+                        build/artifacts/simulator-smoke-timeout.json \
+                        build/artifacts/runtime-status.json \
+                        build/artifacts/runtime-failure.json \
+                        build/artifacts/debug-failure.json; do
+              if [[ -s "$FILE" ]]; then
+                echo "::error title=Simulator evidence $(basename "$FILE")::$(tr '\n' ' ' < "$FILE" | cut -c1-3000)"
+              fi
+            done
+            if [[ -s build/artifacts/smoke-stderr.log ]]; then
+              tail -n 30 build/artifacts/smoke-stderr.log | while IFS= read -r line; do
+                echo "::error title=Simulator stderr::$line"
+              done
+            fi
+            if [[ -s build/artifacts/smoke-stdout.log ]]; then
+              tail -n 30 build/artifacts/smoke-stdout.log | while IFS= read -r line; do
+                echo "::error title=Simulator stdout::$line"
+              done
+            fi
+            exit $STATUS
+          fi
       - name: Run existing Runtime and real-game regressions
         if: ${{ inputs.contracts_only != true }}
         run: bash scripts/run-simulator-regressions.sh
