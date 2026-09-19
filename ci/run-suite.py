@@ -22,7 +22,7 @@ SUITES={
   {"id":"arm-exclusive","cmd":["cargo","test","--manifest-path","Runtime/ArmInterpreter/Cargo.toml","--lib","guest_exclusive_monitor_tests"],"timeout":420}
  ],
  "regressions":[
-  {"id":"simulator-real-apk","cmd":["bash","scripts/run-simulator-regressions.sh"],"timeout":180,"requires":["simulator-build"]}
+  {"id":"simulator-real-apk","cmd":["bash","scripts/run-simulator-regressions.sh"],"timeout":780,"requires":["simulator-build"]}
  ]
 }
 

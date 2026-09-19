@@ -9,15 +9,15 @@
     "target": "PVS1",
     "branch": "playable-vertical-slice-1",
     "lifecycle": "IMPLEMENTED",
-    "primary_blocker": "closure verification of the Activity process-root fix and bounded teardown",
-    "first_broken_boundary": "host-side DEX Activity ownership was absent from the VM process roots",
-    "first_broken_boundary_evidence": "discovery run 35467254664: EXC_BAD_ACCESS in dx_vm_get_field immediately after major GC; the minimal NativeActivity constructor was a no-op and create_game retained the receiver only in a host pointer"
+    "primary_blocker": "closure re-verification after correcting the regression harness hard-timeout hierarchy",
+    "first_broken_boundary": "the 180-second outer regression timeout terminated a live 150-second forensic run before its bounded post-run evidence queries completed",
+    "first_broken_boundary_evidence": "closure run 35469009073: contracts, Simulator smoke, and iphoneos passed; simulator-real-apk exited 124 at 180.161s while its process timeline remained alive through the full 150-second observation interval"
   },
   "ci_budget": {
     "valid_discovery_runs": 1,
     "valid_closure_runs": 1,
     "infrastructure_failures_consume_budget": false,
     "discovery_runs_used": 1,
-    "closure_runs_used": 0
+    "closure_runs_used": 1
   }
 }

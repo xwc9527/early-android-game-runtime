@@ -16,11 +16,13 @@ Playable Vertical Slice 1 (PVS1): generic APK-derived launch through NativeActiv
 
 ## Primary Blocker
 
-Closure verification of the Activity process-root fix, focused wait/InputQueue contracts, real-APK progression, and clean teardown.
+Closure re-verification after correcting the regression harness hard-timeout hierarchy.
 
 Discovery run `35467254664` classified the former unexplained exit as `HOST_CRASH`. The macOS crash report records `EXC_BAD_ACCESS/SIGSEGV` in `dx_vm_get_field`, reached through `dx_vm_execute_method -> agr_dex_game_invoke_int -> call_address -> guest_thread_execute`. Immediately before the crash, DexLoom completed a major GC and the next original DEX instruction was `iget-object` in `loadImage`.
 
 The earliest causal defect was lifecycle ownership: `create_game` retained the launched Activity in a host pointer, while the minimal NativeActivity constructor was a no-op and never installed it in `DxVM.activity_instance`, the VM process root traversed by GC. The bounded swap wait was only the last harness marker and now has an independent timing contract.
+
+Closure run `35469009073` proved the Runtime fix remains alive beyond the former crash and passed independent contracts, Simulator smoke, and iphoneos. Its real-APK regression was externally terminated at `180.161s`: the inner forensic collector was configured for 150 seconds plus two bounded 60-second system-log queries, so the outer 180-second suite timeout could not permit its declared work to finish. The outer bound is now 780 seconds and the app observation bound is 600 seconds, both within the required 10–15 minute ceiling.
 
 ## Proven Working
 
@@ -61,7 +63,7 @@ The earliest causal defect was lifecycle ownership: `create_game` retained the l
 
 ## Next Action
 
-Run the single closure Simulator workflow and iphoneos build against one exact candidate commit/tree. PVS1 remains not closed until the resulting evidence proves all closure requirements.
+The configured closure budget has been consumed by run `35469009073`. PVS1 remains not closed. A further closure run requires an explicit budget reset because the corrected harness changes the candidate tree.
 
 ## Closure Contract
 

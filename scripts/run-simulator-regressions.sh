@@ -10,7 +10,7 @@ RESULT="$DATA/Documents/runtime-smoke.json"
 rm -f "$RESULT"
 set +e
 python3 ci/forensic-simulator-process.py --device "$DEVICE" --bundle dev.agr.simulator \
-  --data "$DATA" --artifacts "$ARTIFACTS" --timeout 150
+  --data "$DATA" --artifacts "$ARTIFACTS" --timeout 600
 FORENSIC_STATUS=$?
 set -e
 if [[ ! -s "$RESULT" ]]; then
