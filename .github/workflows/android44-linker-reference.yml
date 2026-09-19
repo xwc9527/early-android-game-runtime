@@ -2,7 +2,7 @@ name: Android 4.4 linker differential
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, bionic-thread-migration]
     paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Runtime/NativeCore/**','Runtime/Ehabi/**','Tests/AospLinker/**','Tests/Ehabi/**','Tests/Android44Reference/**','Tests/Android44Dynamic/**','Tests/Android44Threads/**','Tests/Android44Unwind/**','Tests/Android44EhabiPhase2Gate/**','Tests/Android44EhabiPhase2BGate/**','scripts/build-android44-unwind-gcc.sh','scripts/build-android44-ehabi-phase2-gate.sh','scripts/build-android44-ehabi-phase2b-gate.sh','.github/workflows/android44-linker-reference.yml']
 jobs:
   api19-reference:
