@@ -69,7 +69,11 @@ jobs:
         run: |
           export NDK_R10E="$RUNNER_TEMP/android-ndk-r10e"
           export EHABI2B_GATE_OUT="$GITHUB_WORKSPACE/ehabi2b-gate"
-          bash scripts/build-android44-ehabi-phase2b-gate.sh
+          set -o pipefail
+          bash scripts/build-android44-ehabi-phase2b-gate.sh 2>&1 | tee ehabi2b-build.log || {
+            tail -n 30 ehabi2b-build.log | while IFS= read -r line; do echo "::error title=Phase 2B source gate::$line"; done
+            exit 1
+          }
       - name: Audit GCC 4.8 ARM EHABI unwind fixtures
         run: |
           PRE="$RUNNER_TEMP/android-ndk-r10e/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64/bin"
@@ -419,6 +423,7 @@ jobs:
             agr-ehabi2b-gate.json
             ehabi2b-gate/evidence/*
             ehabi2b-gate/libs/armeabi-v7a/*
+            ehabi2b-build.log
             emulator.log
 
   ios-simulator-phase2a:
