@@ -13,6 +13,8 @@ on:
       - 'Runtime/**'
       - 'Tests/Ehabi/**'
       - 'Tests/Android44EhabiPhase2Gate/**'
+      - 'Tests/Android44EhabiPhase2BGate/**'
+      - 'scripts/build-android44-ehabi-phase2b-gate.sh'
 
 jobs:
   iphoneos:

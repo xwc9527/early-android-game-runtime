@@ -14,6 +14,7 @@ on:
       - 'Tests/Conformance/**'
       - 'Tests/Ehabi/**'
       - 'Tests/Android44EhabiPhase2Gate/**'
+      - 'Tests/Android44EhabiPhase2BGate/**'
       - 'scripts/test-ehabi-unwind.sh'
       - 'scripts/test-ehabi-phase2-simulator.sh'
       - 'App/**'

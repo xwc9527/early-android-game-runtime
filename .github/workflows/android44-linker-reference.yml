@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Runtime/NativeCore/**','Runtime/Ehabi/**','Tests/AospLinker/**','Tests/Ehabi/**','Tests/Android44Reference/**','Tests/Android44Dynamic/**','Tests/Android44Threads/**','Tests/Android44Unwind/**','Tests/Android44EhabiPhase2Gate/**','scripts/build-android44-unwind-gcc.sh','scripts/build-android44-ehabi-phase2-gate.sh','.github/workflows/android44-linker-reference.yml']
+    paths: ['Runtime/AospLinker/**','Runtime/Bionic/**','Runtime/Process/**','Runtime/NativeCore/**','Runtime/Ehabi/**','Tests/AospLinker/**','Tests/Ehabi/**','Tests/Android44Reference/**','Tests/Android44Dynamic/**','Tests/Android44Threads/**','Tests/Android44Unwind/**','Tests/Android44EhabiPhase2Gate/**','Tests/Android44EhabiPhase2BGate/**','scripts/build-android44-unwind-gcc.sh','scripts/build-android44-ehabi-phase2-gate.sh','scripts/build-android44-ehabi-phase2b-gate.sh','.github/workflows/android44-linker-reference.yml']
 jobs:
   api19-reference:
     runs-on: ubuntu-latest
@@ -65,6 +65,11 @@ jobs:
           export NDK_R10E="$RUNNER_TEMP/android-ndk-r10e"
           export EHABI2_GATE_OUT="$GITHUB_WORKSPACE/ehabi2-gate"
           bash scripts/build-android44-ehabi-phase2-gate.sh
+      - name: Build and audit GCC 4.8 EHABI Phase 2B typed-exception fixtures
+        run: |
+          export NDK_R10E="$RUNNER_TEMP/android-ndk-r10e"
+          export EHABI2B_GATE_OUT="$GITHUB_WORKSPACE/ehabi2b-gate"
+          bash scripts/build-android44-ehabi-phase2b-gate.sh
       - name: Audit GCC 4.8 ARM EHABI unwind fixtures
         run: |
           PRE="$RUNNER_TEMP/android-ndk-r10e/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64/bin"
@@ -338,6 +343,58 @@ jobs:
           assert 6 in results,results
           assert 8 in results,results
           PY
+      - name: Android 4.4 GCC EHABI Phase 2B typed-exception oracle
+        run: |
+          adb shell rm -rf /data/local/tmp/ehabi2b
+          adb shell mkdir -p /data/local/tmp/ehabi2b
+          adb push ehabi2b-gate/libs/armeabi-v7a/. /data/local/tmp/ehabi2b/
+          adb shell chmod 755 /data/local/tmp/ehabi2b/agr_eh2b_reference
+          adb shell 'cd /data/local/tmp/ehabi2b && LD_LIBRARY_PATH=/data/local/tmp/ehabi2b ./agr_eh2b_reference' | tr -d '\r' > android44-ehabi2b-gate.json
+          python3 - <<'PY'
+          import json
+          r=json.load(open('android44-ehabi2b-gate.json'))
+          print('Android 4.4 EHABI Phase 2B oracle:',json.dumps(r,sort_keys=True))
+          assert r['typed']==2 and r['inheritance']==21 and r['multiple']==33,r
+          assert r['pointer']==43 and r['rethrow']==54 and r['nested']==6199,r
+          assert r['lifetime_ref']==r['lifetime_value']==r['lifetime_rethrow']==0,r
+          assert r['cross']==r['reload_cross']==1,r
+          assert r['cross_base']==71 and r['cross_derived']==74,r
+          assert r['cross_events']==[810,811,812,813],r
+          assert r['threads']==1 and r['thread_one']==r['thread_ret_one'],r
+          assert r['thread_two']==r['thread_ret_two'] and r['thread_two']>r['thread_one']>0,r
+          PY
+      - name: AGR Linux GCC EHABI Phase 2B differential
+        run: |
+          clang -std=c11 -O2 -Wall -Wextra -Werror \
+            -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process \
+            -IRuntime/NativeCore -IRuntime/HostServices \
+            -c Tests/Android44EhabiPhase2BGate/agr_differential.c -o agr-ehabi2b-diff.o
+          clang++ agr-ehabi2b-diff.o agr-runtime.o agr-vma.o agr-linker.o \
+            agr-dynamic.o agr-mmap.o \
+            Runtime/ArmInterpreter/target/release/libtouchhle_arm_interpreter.a \
+            -ldl -lpthread -lm -o agr-ehabi2b-differential
+          ./agr-ehabi2b-differential \
+            ehabi2b-gate/libs/armeabi-v7a/libgnustl_shared.so \
+            ehabi2b-gate/libs/armeabi-v7a/libagr_eh2b_probe.so \
+            ehabi2b-gate/libs/armeabi-v7a/libagr_eh2b_types.so \
+            ehabi2b-gate/libs/armeabi-v7a/libagr_eh2b_suite.so \
+            ehabi2b-gate/libs/armeabi-v7a/libagr_eh2b_C.so \
+            ehabi2b-gate/libs/armeabi-v7a/libagr_eh2b_B.so \
+            ehabi2b-gate/libs/armeabi-v7a/libagr_eh2b_A.so \
+            > agr-ehabi2b-gate.json
+          python3 - <<'PY'
+          import json
+          a=json.load(open('android44-ehabi2b-gate.json')); b=json.load(open('agr-ehabi2b-gate.json'))
+          keys=('typed','inheritance','multiple','pointer','rethrow','lifetime_ref','lifetime_ref_events','lifetime_value','lifetime_value_events','lifetime_rethrow','lifetime_rethrow_events','nested','cross','cross_events','reload_cross')
+          for key in keys: assert b[key]==a[key],(key,a,b)
+          assert b['unload_stale']==0 and b['reload_owned']==1,b
+          assert b['exidx_mismatches']==0 and b['rtti_owned']==1,b
+          assert b['rtti_owner']=='libagr_eh2b_types.so',b
+          symbols=[x['symbol'] for x in b['trace']]
+          for required in ('__cxa_allocate_exception','__cxa_throw','__cxa_begin_catch','__cxa_end_catch','__cxa_rethrow','__cxa_free_exception','__gxx_personality_v0'):
+            assert required in symbols,(required,symbols)
+          print('AGR Phase 2B:',json.dumps(b,sort_keys=True))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -358,6 +415,10 @@ jobs:
             agr-ehabi2-gate.json
             ehabi2-gate/evidence/*
             ehabi2-gate/libs/armeabi-v7a/*
+            android44-ehabi2b-gate.json
+            agr-ehabi2b-gate.json
+            ehabi2b-gate/evidence/*
+            ehabi2b-gate/libs/armeabi-v7a/*
             emulator.log
 
   ios-simulator-phase2a:
