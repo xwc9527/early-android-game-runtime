@@ -118,7 +118,7 @@ jobs:
             --contracts-status '${{ steps.contracts.outcome }}' \
             --regressions-status '${{ steps.regressions.outcome }}' \
             --result build/artifacts/runtime-smoke.json \
-            --diagnostic build/artifacts/pvs-progress.json
+            --diagnostic build/artifacts/process-forensic.json
       - name: Validate closure candidate identity
         if: ${{ always() && inputs.run_kind == 'closure' }}
         run: python3 ci/validate-governance.py --mode closure --summary build/artifacts/run-summary.json

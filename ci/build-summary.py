@@ -39,6 +39,7 @@ def main():
     reopens = read_json("ci/governance/reopens.json").get("reopens", [])
     target_def = read_json("ci/targets/PVS1.json")
     result = read_json(args.result)
+    diagnostic = read_json(args.diagnostic)
     head, tree = git("rev-parse","HEAD"), git("rev-parse","HEAD^{tree}")
     baseline = state.get("baseline",{}).get("commit","")
     try: files = [x for x in git("diff","--name-only",f"{baseline}...HEAD").splitlines() if x]
@@ -49,7 +50,10 @@ def main():
     clean_teardown=bool(closure_result.get("clean_teardown",result.get("teardown_completed",False)))
     target_pass=bool(closure_result.get("passed",False) and clean_teardown)
     raw_reason=result.get("runtime_failure_signature") or result.get("gameplay_failure") or ""
-    normalized=("pvs1:runtime:failure:runtime" if raw_reason else ("" if target_pass else "pvs1:target:requirements_unmet:closure"))
+    exit_classification=diagnostic.get("classification","")
+    normalized=("pvs1:runtime:failure:runtime" if raw_reason else
+                (f"pvs1:process_exit:{exit_classification.lower()}" if exit_classification and not target_pass else
+                 ("" if target_pass else "pvs1:target:requirements_unmet:closure")))
     raw_hash=hashlib.sha256(json.dumps(result,sort_keys=True).encode()).hexdigest() if result else ""
     valid=args.valid_run=="true"
     eligible=(args.run_kind=="closure" and valid and status(args.build_status)=="pass" and
@@ -66,10 +70,14 @@ def main():
       "regressions":{"status":status(args.regressions_status),"new_failures":[],"resolved_failures":[],"unchanged_failures":[]},
       "target":{"name":target_def.get("target","PVS1"),"status":"pass" if target_pass else "fail",
                 "stage":result.get("gameplay_outcome","not_run"),"normalized_signature":normalized,
-                "raw_fingerprint":raw_hash,"requirements":closure_result,"clean_teardown":clean_teardown},
+                "raw_fingerprint":raw_hash,"requirements":closure_result,"clean_teardown":clean_teardown,
+                "process_exit_classification":exit_classification},
       "coverage_delta":{"new_imports":[],"new_android_api":[],"new_jni":[],"new_lifecycle":[]},
       "behavior_delta":[],"warnings":{"new":[],"resolved":[]},
-      "diagnostics":{"passive":True,"intrusive":False,"primary":args.diagnostic or ""},
+      "diagnostics":{"passive":diagnostic.get("passive",True),"intrusive":diagnostic.get("intrusive",False),
+                     "primary":args.diagnostic or "","classification":diagnostic.get("classification",""),
+                     "remaining_candidates":diagnostic.get("remaining_candidates",[]),
+                     "missing_evidence":diagnostic.get("missing_evidence",[])},
       "closure":{"target":target_def.get("target","PVS1"),"tested_commit":head,"tested_tree":tree,
                  "base_commit":baseline,"state":"CLOSED" if eligible else "IMPLEMENTED",
                  "eligible_for_merge":eligible},
