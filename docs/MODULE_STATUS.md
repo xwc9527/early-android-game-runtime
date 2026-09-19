@@ -12,6 +12,7 @@ Status controls modification permission, not total completeness. `stable` means 
 | NativeActivity/Window | active | — | PVS1 target gate | current active target |
 | Looper/InputQueue | active | — | PVS1 input contract | current active target |
 | Simulator regression harness | active | — | bounded smoke and evidence gate | current primary blocker |
+| DEX Runtime Activity lifecycle | active | — | Activity GC-root contract and PVS1 real-APK gate | discovery proved host-owned launched Activity was absent from VM roots |
 | DEX/Dalvik completeness | experimental | — | focused DEX/JNI contracts | future declared migration target |
 | Framework HLE | experimental | — | focused public API contracts | gameplay proves a public missing behavior |
 | Audio/OpenSL ES | experimental | — | — | declared gameplay target requires audio |

@@ -8,7 +8,7 @@ Last known good: `dd83c7425e49a33b8a87d047b39d1b36a8e5464e` on formal `main`
 
 Active branch: `playable-vertical-slice-1` (the exact tested SHA/tree is recorded only by `run-summary.json`)
 
-Lifecycle state: `ACTIVE` (`IMPLEMENTED` input path, not `CLOSED`, not `MERGED`)
+Lifecycle state: `IMPLEMENTED` (closure candidate under verification, not `CLOSED`, not `MERGED`)
 
 ## Active Target
 
@@ -16,21 +16,11 @@ Playable Vertical Slice 1 (PVS1): generic APK-derived launch through NativeActiv
 
 ## Primary Blocker
 
-The Simulator app process exits after the fourth replay event has been consumed and while the harness is inside the second bounded `agr_guest_wait_for_swap` call.
+Closure verification of the Activity process-root fix, focused wait/InputQueue contracts, real-APK progression, and clean teardown.
 
-Process termination is the earliest evidenced causal boundary. It is not proof that `agr_guest_wait_for_swap` causes the exit; the process may be terminated asynchronously while that call is active. The latest discovery run proves the process is no longer alive, but its available syslog tail contains no crash or termination reason.
+Discovery run `35467254664` classified the former unexplained exit as `HOST_CRASH`. The macOS crash report records `EXC_BAD_ACCESS/SIGSEGV` in `dx_vm_get_field`, reached through `dx_vm_execute_method -> agr_dex_game_invoke_int -> call_address -> guest_thread_execute`. Immediately before the crash, DexLoom completed a major GC and the next original DEX instruction was `iget-object` in `loadImage`.
 
-Latest evidence:
-
-- four injected events reached Looper, `AInputQueue_getEvent`, pre-dispatch, guest handler, and `finishEvent(handled=1)`;
-- `input_consumed=4`;
-- guest worker thread id is 2;
-- draw/swap continued through approximately frame 216 / swap 33;
-- Runtime failure signature is empty;
-- latest progress is `before:replay.4.wait.2.swap.33`;
-- timeout capture reports `AGRSimulator pid 27430 is no longer running`;
-- the captured syslog tail contains UIKit/Metal activation messages but no crash reason;
-- iphoneos arm64 build passed for the preceding Runtime commit.
+The earliest causal defect was lifecycle ownership: `create_game` retained the launched Activity in a host pointer, while the minimal NativeActivity constructor was a no-op and never installed it in `DxVM.activity_instance`, the VM process root traversed by GC. The bounded swap wait was only the last harness marker and now has an independent timing contract.
 
 ## Proven Working
 
@@ -57,8 +47,8 @@ Latest evidence:
 
 ## Current Allowed Work
 
-- passive capture of the current Simulator discontinuity
-- the first public Runtime or harness defect proven by that evidence
+- closure verification of the proven DEX Activity ownership fix
+- focused Activity GC-root, bounded swap-wait, and concurrent InputQueue contracts
 - PVS1 target gate and evidence generation
 - directly required NativeActivity/Input/Looper/window teardown semantics
 
@@ -71,7 +61,7 @@ Latest evidence:
 
 ## Next Action
 
-Capture the Simulator termination status and crash/RunningBoard report for the process that exits after replay event 4. Determine whether the exit is a host crash, watchdog/RunningBoard termination, explicit exit/abort, or external launch replacement. Apply one fix to the proven cause, add a focused contract, and run one closure CI.
+Run the single closure Simulator workflow and iphoneos build against one exact candidate commit/tree. PVS1 remains not closed until the resulting evidence proves all closure requirements.
 
 ## Closure Contract
 

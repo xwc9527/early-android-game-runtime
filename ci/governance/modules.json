@@ -7,6 +7,7 @@
     {"name":"Allocator","status":"stable","paths":["Runtime/NativeCore/agr_bionic_allocator"],"gate":"allocator-contract","reopen_reason":null},
     {"name":"APKBootstrap","status":"stable","paths":["Runtime/Apk/"],"gate":"pvs-bootstrap","reopen_reason":null},
     {"name":"NativeActivityInput","status":"active","paths":["Runtime/GuestRuntime/agr_guest_runtime","App/main.m","Tests/Trajectories/"],"gate":"pvs-input","reopen_reason":"active target"},
+    {"name":"DEXRuntimeLifecycle","status":"active","paths":["Runtime/DexLoom/game_dex_runner"],"gate":"activity-gc-root-contract","reopen_reason":"PVS1 discovery proved a launched Activity was collected while host native code retained it"},
     {"name":"Framework","status":"experimental","paths":["Runtime/DexLoom/AndroidMini/"],"gate":null,"reopen_reason":null},
     {"name":"Audio","status":"experimental","paths":["Runtime/Audio/"],"gate":null,"reopen_reason":null}
   ]

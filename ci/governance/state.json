@@ -8,10 +8,10 @@
   "active": {
     "target": "PVS1",
     "branch": "playable-vertical-slice-1",
-    "lifecycle": "ACTIVE",
-    "primary_blocker": "Simulator app process exits after replay event 4 is consumed while bounded swap wait 2 is active",
-    "first_broken_boundary": "AGRSimulator process lifetime terminates before the bounded post-input wait returns",
-    "first_broken_boundary_evidence": "input_consumed=4, pvs-progress before:replay.4.wait.2, empty runtime failure, timeout process check reports pid no longer running"
+    "lifecycle": "IMPLEMENTED",
+    "primary_blocker": "closure verification of the Activity process-root fix and bounded teardown",
+    "first_broken_boundary": "host-side DEX Activity ownership was absent from the VM process roots",
+    "first_broken_boundary_evidence": "discovery run 35467254664: EXC_BAD_ACCESS in dx_vm_get_field immediately after major GC; the minimal NativeActivity constructor was a no-op and create_game retained the receiver only in a host pointer"
   },
   "ci_budget": {
     "valid_discovery_runs": 1,

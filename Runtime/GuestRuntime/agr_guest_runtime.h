@@ -31,6 +31,20 @@ typedef struct agr_guest_runtime_event {
     uint32_t swap;
 } agr_guest_runtime_event;
 
+typedef struct agr_guest_core_contracts {
+    uint32_t wait_immediate;
+    uint32_t wait_async;
+    uint32_t wait_timeout;
+    uint32_t wait_error;
+    uint32_t wait_shutdown;
+    uint32_t input_ordered;
+    uint32_t input_bounded;
+    uint32_t async_wait_ms;
+    uint32_t timeout_wait_ms;
+    uint32_t input_iterations;
+    uint32_t input_elapsed_ms;
+} agr_guest_core_contracts;
+
 enum {
     AGR_ARRAY_SHORT = 1,
     AGR_ARRAY_INT = 2,
@@ -87,6 +101,7 @@ int32_t agr_guest_load_dex_package(agr_guest *guest, const agr_apk_package *pack
 int32_t agr_guest_start_dex_activity(agr_guest *guest);
 int32_t agr_guest_wait_for_swap(agr_guest *guest, uint32_t previous_swap,
                                 uint32_t timeout_ms);
+int32_t agr_guest_run_core_contracts(agr_guest_core_contracts *results);
 
 int32_t agr_guest_create_gles1_pbuffer(agr_guest *guest, int width, int height);
 void agr_guest_setup_gles1_frame(agr_guest *guest);

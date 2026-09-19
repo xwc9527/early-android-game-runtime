@@ -16,8 +16,7 @@
     "pvs1_closure.nativeactivity_window",
     "pvs1_closure.input_consumed",
     "replay_consumed",
-    "frame_after_input",
-    "swap_after_input",
+    "pvs1_closure.guest_progress_after_input",
     "runtime_failure_signature",
     "pvs1_closure.clean_teardown"
   ],

@@ -401,6 +401,11 @@ static agr_dex_game *create_game(const uint8_t *bytes, uint32_t size,
     game->activity_class=cls;
     game->activity=dx_vm_alloc_object(game->vm,cls);
     if (!game->activity) goto fail;
+    /* ActivityThread owns the launched Activity independently of whether a
+     * framework constructor happens to install the same root.  NativeActivity
+     * in this host-side API19 environment has a no-op constructor, so make the
+     * process root explicit before any allocation can trigger collection. */
+    game->vm->activity_instance=game->activity;
     g_activity=game->activity;
     return game;
 fail:
@@ -499,6 +504,16 @@ void agr_dex_game_destroy(agr_dex_game *game) {
     if (game->vm) dx_vm_destroy(game->vm);
     if (game->dex) dx_dex_free(game->dex);
     free(game->objects); free(game->bytes); free(game);
+}
+
+int agr_dex_game_activity_gc_contract(agr_dex_game *game) {
+    if (!game || !game->vm || !game->activity ||
+        game->vm->activity_instance != game->activity) return -1;
+    if (dx_vm_gc_collect(game->vm) != DX_OK ||
+        game->vm->activity_instance != game->activity) return -1;
+    for (uint32_t i=0; i<game->vm->heap_count; i++)
+        if (game->vm->heap[i] == game->activity) return 0;
+    return -1;
 }
 const char *agr_dex_game_activity_descriptor(const agr_dex_game *game) {
     return game&&game->activity_class?game->activity_class->descriptor:NULL;

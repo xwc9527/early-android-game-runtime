@@ -293,15 +293,21 @@ static NSDictionary *runKungFooDexRegression(NSMutableArray<NSString *> *failure
     char program[] = "dex_game_runner", image[] = "dpad1.png";
     char *argv[] = {program,(char *)dexPath.UTF8String,image};
     int rc = mounted == 0 && dexPath ? agr_dex_game_main(3,argv) : -1;
+    agr_apk_package *gcPackage=apkPath?agr_apk_package_open(apkPath.UTF8String):NULL;
+    agr_dex_game *gcGame=gcPackage?agr_dex_game_create_from_apk(gcPackage):NULL;
+    int gcRootContract=gcGame?agr_dex_game_activity_gc_contract(gcGame):-1;
+    if(gcGame)agr_dex_game_destroy(gcGame);
+    if(gcPackage)agr_apk_package_close(gcPackage);
     GLint texture = 0; glGetIntegerv(GL_TEXTURE_BINDING_2D,&texture); GLenum glError=glGetError();
     const GLubyte *rendererBytes=glGetString(GL_RENDERER);
     NSString *renderer=rendererBytes ? [NSString stringWithUTF8String:(const char *)rendererBytes] : @"";
-    BOOL passed = rc == 0 && host.uploads == 1 && host.width == 256 && host.height == 256 && texture > 0 && glError == GL_NO_ERROR;
+    BOOL passed = rc == 0 && gcRootContract == 0 && host.uploads == 1 && host.width == 256 && host.height == 256 && texture > 0 && glError == GL_NO_ERROR;
     if (!passed) [failures addObject:[NSString stringWithFormat:@"kungfoo-dex=%d/%d/%u/%u/%d/0x%x",rc,host.uploads,host.width,host.height,texture,glError]];
     agr_dex_set_upload_callback(NULL,NULL); agr_afw_destroy(assets);
     eglMakeCurrent(display,EGL_NO_SURFACE,EGL_NO_SURFACE,EGL_NO_CONTEXT); eglDestroyContext(display,context); eglDestroySurface(display,surface); eglTerminate(display);
     return @{@"kungfoo_original_dex_bytes":@([NSData dataWithContentsOfFile:dexPath].length),
-             @"kungfoo_dex_loadimage_passed":@(passed), @"kungfoo_texture_uploads":@(host.uploads),
+              @"kungfoo_dex_loadimage_passed":@(passed), @"activity_gc_root_contract":@(gcRootContract==0),
+              @"kungfoo_texture_uploads":@(host.uploads),
              @"kungfoo_texture_width":@(host.width), @"kungfoo_texture_height":@(host.height),
              @"kungfoo_dex_renderer":renderer};
 }
@@ -425,6 +431,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
     uint32_t constructors = 0;
     int initialized = dexStarted == 0 ? agr_guest_run_constructors(guest,&constructors) : -1;
     int activityCreated = -1, onStart = -1, onResume = -1, onWindow = -1, onFocus = -1, onInput = -1, pumped = -1;
+    BOOL teardownCallbacksPassed=NO, teardownCompleted=NO;
     int framePumpResult = 0; uint32_t framePumps = 0;
     uint8_t *frame = calloc(320u*480u*4u,1); uint32_t nonblack = 0; int32_t frameBytes = -1;
     uint32_t callbacksFound = 0, activity = 0, callbackWords[16] = {0};
@@ -620,6 +627,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
           {4,oneArg,1,"nativeactivity.onStop"},
           {5,oneArg,1,"nativeactivity.onDestroy"}
         };
+        uint32_t teardownCalled=0;BOOL teardownCallsOK=YES;
         for (uint32_t i=0;i<sizeof(teardown)/sizeof(teardown[0]);i++) if(callbackWords[teardown[i].slot]) {
             writePVSProgress([NSString stringWithFormat:@"before:%s",teardown[i].event],guest);
             int rc=agr_guest_call_address(guest,callbackWords[teardown[i].slot],
@@ -627,7 +635,9 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
             agr_guest_record_runtime_event(guest,teardown[i].event,activity,
                                            callbackWords[teardown[i].slot],rc,-1,0,0,-1);
             writePVSProgress([NSString stringWithFormat:@"after:%s",teardown[i].event],guest);
+            teardownCalled++;if(rc)teardownCallsOK=NO;
         }
+        teardownCallbacksPassed=teardownCallsOK&&teardownCalled==sizeof(teardown)/sizeof(teardown[0]);
     }
     free(frame);
     NSString *error = guest ? [NSString stringWithUTF8String:agr_guest_last_error(guest)] : @"create failed";
@@ -642,6 +652,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
     } else {
         if (guest) writePVSProgress(@"before:agr_guest_destroy",guest);
         if (guest) agr_guest_destroy(guest);
+        teardownCompleted=guest!=NULL&&teardownCallbacksPassed;
         agr_dex_set_upload_callback(NULL,NULL);
         agr_afw_destroy(dexAssets); free(dexHost);
     }
@@ -662,6 +673,8 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
              @"replay_events":@(replayEvents),@"replay_consumed":@(replayConsumed),
              @"unique_states":@(uniqueStates),@"runtime_coverage":coverage,
              @"nativeactivity_input_trace":inputTrace,
+             @"teardown_callbacks_passed":@(teardownCallbacksPassed),
+             @"teardown_completed":@(teardownCompleted),
              @"runtime_failure_signature":error.length?error:@""};
     agr_apk_package_close(package);
     return result;
@@ -814,8 +827,8 @@ static NSArray *runBatchCompatibility(NSDictionary *gloomy, NSDictionary *kungfo
 
 static NSString *runTests(void) {
     NSMutableArray<NSString *> *failures = [NSMutableArray array];
-    agr_contract_result contractCases[32]={0};
-    uint32_t contractCount=agr_run_contracts(contractCases,32), contractPassed=0;
+    agr_contract_result contractCases[64]={0};
+    uint32_t contractCount=agr_run_contracts(contractCases,64), contractPassed=0;
     NSMutableArray *contracts=[NSMutableArray array];
     for(uint32_t i=0;i<contractCount;i++) {
         agr_contract_result *test=&contractCases[i]; if(test->passed)contractPassed++;
@@ -877,6 +890,9 @@ static NSString *runTests(void) {
     NSDictionary *gloomyResult = runGloomyRegression(failures);
     NSDictionary *kungFooDexResult = runKungFooDexRegression(failures);
     NSDictionary *kungFooNativeResult = runKungFooNativeRegression(failures,NO);
+    agr_guest_core_contracts coreContracts={0};
+    int coreContractResult=agr_guest_run_core_contracts(&coreContracts);
+    if(coreContractResult)[failures addObject:@"guest-runtime-core-contracts"];
     BOOL pvsBootstrap=[kungFooNativeResult[@"native_activity_created"] boolValue]&&
         [kungFooNativeResult[@"activity_callbacks"] unsignedIntValue]>0;
     BOOL pvsWindow=[kungFooNativeResult[@"on_start"] boolValue]&&
@@ -886,9 +902,16 @@ static NSString *runTests(void) {
     BOOL pvsInput=!pvsReplay||[kungFooNativeResult[@"replay_consumed"] unsignedIntValue]>0;
     BOOL pvsNoFailure=![kungFooNativeResult[@"gameplay_outcome"] isEqualToString:@"runtime_failure"]&&
         ![kungFooNativeResult[@"runtime_failure_signature"] length];
+    BOOL pvsProgress=NO;
+    for(NSDictionary *checkpoint in kungFooNativeResult[@"gameplay_trajectory"])
+        if([checkpoint[@"input_consumed"] unsignedIntValue]>0&&
+           ([checkpoint[@"draw_delta"] unsignedIntValue]>0||[checkpoint[@"swap_delta"] unsignedIntValue]>0))pvsProgress=YES;
+    BOOL pvsTeardown=[kungFooNativeResult[@"teardown_completed"] boolValue];
     if(!pvsBootstrap)[failures addObject:@"pvs1:generic_apk_bootstrap_failed"];
     if(!pvsWindow)[failures addObject:@"pvs1:nativeactivity_window_failed"];
     if(!pvsInput)[failures addObject:@"pvs1:injected_input_not_consumed"];
+    if(!pvsProgress)[failures addObject:@"pvs1:guest_did_not_progress_after_input"];
+    if(!pvsTeardown)[failures addObject:@"pvs1:clean_teardown_failed"];
     if(!pvsNoFailure)[failures addObject:[NSString stringWithFormat:@"pvs1:runtime_failure:%@/%@",
         kungFooNativeResult[@"gameplay_outcome"]?:@"",kungFooNativeResult[@"runtime_failure_signature"]?:@""]];
     NSArray *batchResults = runBatchCompatibility(gloomyResult,kungFooNativeResult);
@@ -905,7 +928,25 @@ static NSString *runTests(void) {
         @"source_case":@"CTS OpenGL framebuffer readback pattern"},
       @{@"id":@"nativeactivity.lifecycle.window",@"module":@"NativeActivity_lifecycle",
         @"observed":@(pvsWindow),@"expected":@1,
-        @"source_case":@"AOSP NativeActivity callback order"}
+        @"source_case":@"AOSP NativeActivity callback order"},
+      @{@"id":@"guest.wait_swap.immediate",@"module":@"GuestRuntime_wait",
+        @"observed":@(coreContracts.wait_immediate),@"expected":@1,
+        @"source_case":[NSString stringWithFormat:@"advanced swap returns immediately; wall_ms<10"]},
+      @{@"id":@"guest.wait_swap.async",@"module":@"GuestRuntime_wait",
+        @"observed":@(coreContracts.wait_async),@"expected":@1,
+        @"source_case":[NSString stringWithFormat:@"async swap; wall_ms=%u",coreContracts.async_wait_ms]},
+      @{@"id":@"guest.wait_swap.timeout",@"module":@"GuestRuntime_wait",
+        @"observed":@(coreContracts.wait_timeout),@"expected":@1,
+        @"source_case":[NSString stringWithFormat:@"30ms bounded timeout; wall_ms=%u",coreContracts.timeout_wait_ms]},
+      @{@"id":@"guest.wait_swap.error_shutdown",@"module":@"GuestRuntime_wait",
+        @"observed":@(coreContracts.wait_error&&coreContracts.wait_shutdown),@"expected":@1,
+        @"source_case":@"Runtime error and shutdown both return failure"},
+      @{@"id":@"input_queue.concurrent_ordered",@"module":@"Looper_InputQueue",
+        @"observed":@(coreContracts.input_ordered),@"expected":@1,
+        @"source_case":[NSString stringWithFormat:@"host producer/consumer ordered iterations=%u",coreContracts.input_iterations]},
+      @{@"id":@"input_queue.concurrent_bounded",@"module":@"Looper_InputQueue",
+        @"observed":@(coreContracts.input_bounded),@"expected":@1,
+        @"source_case":[NSString stringWithFormat:@"100000 event lifecycle wall_ms=%u",coreContracts.input_elapsed_ms]}
     ];
     for(NSDictionary *test in componentContracts) {
         BOOL ok=[test[@"observed"] isEqual:test[@"expected"]]; if(ok) contractPassed++;
@@ -925,8 +966,9 @@ static NSString *runTests(void) {
     [result addEntriesFromDictionary:kungFooNativeResult];
     result[@"pvs1_closure"]=@{ @"generic_apk_bootstrap":@(pvsBootstrap),
       @"nativeactivity_window":@(pvsWindow),@"replay_present":@(pvsReplay),
-      @"input_consumed":@(pvsInput),@"runtime_failure_absent":@(pvsNoFailure),
-      @"passed":@(pvsBootstrap&&pvsWindow&&pvsInput&&pvsNoFailure) };
+      @"input_consumed":@(pvsInput),@"guest_progress_after_input":@(pvsProgress),
+      @"clean_teardown":@(pvsTeardown),@"runtime_failure_absent":@(pvsNoFailure),
+      @"passed":@(pvsBootstrap&&pvsWindow&&pvsInput&&pvsProgress&&pvsTeardown&&pvsNoFailure) };
     result[@"batch_results"] = batchResults;
     result[@"conformance"] = @{ @"count":@(contractCount),@"passed":@(contractPassed),
       @"reference":@"API19 source-derived expectations; Android 4.4 device differential pending",

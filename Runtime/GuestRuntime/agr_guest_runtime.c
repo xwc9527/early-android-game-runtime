@@ -16,6 +16,7 @@
 #include <stdatomic.h>
 #include <time.h>
 #include <pthread.h>
+#include <sched.h>
 #if defined(__APPLE__)
 #include <os/log.h>
 #endif
@@ -251,6 +252,39 @@ static uint32_t fd_read_cb(void *user, uint32_t fd, void *data, uint32_t size) {
     if(count==1)agr_guest_record_runtime_event(g,"native_app_glue.command.read",fd,p->write_fd,
                                                (int32_t)count,((const uint8_t *)data)[0],0,0,-1);
     return count;
+}
+
+static int input_queue_push(agr_guest *g,int32_t action,float x,float y,uint32_t *handle) {
+    int rc=0;
+    pthread_mutex_lock(&g->input_lock);
+    if(g->input_count>=32) rc=-1;
+    else {
+        input_event *e=&g->input_events[(g->input_head+g->input_count)%32];
+        *e=(input_event){g->next_input_handle,2u,(uint32_t)action,1u,0u,x,y};
+        g->next_input_handle+=4;g->input_count++;
+        if(handle)*handle=e->handle;
+    }
+    pthread_mutex_unlock(&g->input_lock);
+    return rc;
+}
+
+static int input_queue_peek(agr_guest *g,input_event *event) {
+    int rc=-1;
+    pthread_mutex_lock(&g->input_lock);
+    if(g->input_count){if(event)*event=g->input_events[g->input_head%32];rc=0;}
+    pthread_mutex_unlock(&g->input_lock);
+    return rc;
+}
+
+static int input_queue_finish(agr_guest *g,uint32_t handle) {
+    int rc=-1;
+    pthread_mutex_lock(&g->input_lock);
+    if(g->input_count&&g->input_events[g->input_head%32].handle==handle){
+        g->input_head++;g->input_count--;
+        atomic_fetch_add_explicit(&g->input_consumed_count,1u,memory_order_relaxed);rc=0;
+    }
+    pthread_mutex_unlock(&g->input_lock);
+    return rc;
 }
 static uint32_t fd_write_cb(void *user, uint32_t fd, const void *data, uint32_t size) {
     agr_guest *g=(agr_guest *)user;
@@ -867,14 +901,11 @@ static int dispatch_import(agr_guest *g, const char *name) {
         g->input_ident=g->input_data=0; guest_return(g,0,0); return 1;
     }
     if (!strcmp(name,"AInputQueue_getEvent")) {
-        pthread_mutex_lock(&g->input_lock);
-        if (argument(g,0)!=g->input_queue_handle || !g->input_count) {
-            pthread_mutex_unlock(&g->input_lock);
+        input_event queued={0};
+        if (argument(g,0)!=g->input_queue_handle || input_queue_peek(g,&queued)) {
             guest_return(g,0xffffffffu,0); return 1;
         }
-        input_event queued=g->input_events[g->input_head%32];
         uint32_t handle=queued.handle;
-        pthread_mutex_unlock(&g->input_lock);
         write_u32(g,argument(g,1),handle);
         agr_guest_record_runtime_event(g,"input.get",argument(g,0),handle,0,
                                        (int32_t)queued.action,queued.x,queued.y,-1);
@@ -886,11 +917,7 @@ static int dispatch_import(agr_guest *g, const char *name) {
     }
     if (!strcmp(name,"AInputQueue_finishEvent")) {
         uint32_t event_handle=argument(g,1);int32_t handled=(int32_t)argument(g,2);
-        pthread_mutex_lock(&g->input_lock);
-        if (g->input_count && g->input_events[g->input_head%32].handle==event_handle) {
-            g->input_head++; g->input_count--; atomic_fetch_add_explicit(&g->input_consumed_count,1u,memory_order_relaxed);
-        }
-        pthread_mutex_unlock(&g->input_lock);
+        input_queue_finish(g,event_handle);
         agr_guest_record_runtime_event(g,"input.finish",argument(g,0),event_handle,0,-1,0,0,handled);
         guest_return(g,0,0); return 1;
     }
@@ -1337,6 +1364,105 @@ int32_t agr_guest_wait_for_swap(agr_guest *g, uint32_t previous, uint32_t timeou
     }
     return 1;
 }
+
+static uint64_t contract_monotonic_ms(void) {
+    struct timespec now={0};clock_gettime(CLOCK_MONOTONIC,&now);
+    return (uint64_t)now.tv_sec*1000u+(uint64_t)now.tv_nsec/1000000u;
+}
+
+typedef struct { agr_guest *guest; uint32_t delay_ms; } wait_contract_state;
+static void *wait_contract_worker(void *opaque) {
+    wait_contract_state *state=(wait_contract_state *)opaque;
+    struct timespec delay={(time_t)(state->delay_ms/1000u),
+                           (long)(state->delay_ms%1000u)*1000000l};
+    nanosleep(&delay,NULL);
+    atomic_fetch_add_explicit(&state->guest->swap_count,1u,memory_order_release);
+    return NULL;
+}
+
+typedef struct {
+    agr_guest *guest;
+    uint32_t iterations;
+    _Atomic int failed;
+    _Atomic int producer_done;
+} input_contract_state;
+
+static void *input_contract_producer(void *opaque) {
+    input_contract_state *state=(input_contract_state *)opaque;
+    for(uint32_t i=0;i<state->iterations&&!atomic_load(&state->failed);) {
+        if(!input_queue_push(state->guest,(int32_t)(i%3u),(float)i,(float)(i+1u),NULL))i++;
+        else sched_yield();
+    }
+    atomic_store(&state->producer_done,1);return NULL;
+}
+
+static void *input_contract_consumer(void *opaque) {
+    input_contract_state *state=(input_contract_state *)opaque;
+    for(uint32_t i=0;i<state->iterations&&!atomic_load(&state->failed);) {
+        input_event event={0};
+        if(input_queue_peek(state->guest,&event)) {
+            if(atomic_load(&state->producer_done)){atomic_store(&state->failed,1);break;}
+            sched_yield();continue;
+        }
+        if(event.action!=i%3u||event.x!=(float)i||event.y!=(float)(i+1u)) {
+            atomic_store(&state->failed,1);break;
+        }
+        if(i%997u==0u&&input_queue_finish(state->guest,event.handle+4u)==0) {
+            atomic_store(&state->failed,1);break;
+        }
+        if(input_queue_finish(state->guest,event.handle)) {
+            atomic_store(&state->failed,1);break;
+        }
+        i++;
+    }
+    return NULL;
+}
+
+int32_t agr_guest_run_core_contracts(agr_guest_core_contracts *out) {
+    if(!out)return -1;memset(out,0,sizeof(*out));
+    agr_guest wait_guest={0};
+    atomic_store(&wait_guest.swap_count,2u);
+    uint64_t started=contract_monotonic_ms();
+    out->wait_immediate=agr_guest_wait_for_swap(&wait_guest,1u,50u)==0&&
+        contract_monotonic_ms()-started<10u;
+    wait_contract_state wait_state={&wait_guest,20u};pthread_t wait_thread;
+    started=contract_monotonic_ms();
+    if(!pthread_create(&wait_thread,NULL,wait_contract_worker,&wait_state)) {
+        int rc=agr_guest_wait_for_swap(&wait_guest,2u,250u);
+        out->async_wait_ms=(uint32_t)(contract_monotonic_ms()-started);
+        pthread_join(wait_thread,NULL);
+        out->wait_async=rc==0&&out->async_wait_ms>=5u&&out->async_wait_ms<250u;
+    }
+    started=contract_monotonic_ms();
+    out->wait_timeout=agr_guest_wait_for_swap(&wait_guest,3u,30u)==1;
+    out->timeout_wait_ms=(uint32_t)(contract_monotonic_ms()-started);
+    out->wait_timeout=out->wait_timeout&&out->timeout_wait_ms>=20u&&out->timeout_wait_ms<250u;
+    snprintf(wait_guest.error,sizeof(wait_guest.error),"contract failure");
+    out->wait_error=agr_guest_wait_for_swap(&wait_guest,3u,50u)==-1;
+    wait_guest.error[0]=0;atomic_store(&wait_guest.shutting_down,1);
+    out->wait_shutdown=agr_guest_wait_for_swap(&wait_guest,3u,50u)==-1;
+
+    agr_guest input_guest={0};pthread_mutex_init(&input_guest.input_lock,NULL);
+    input_guest.next_input_handle=0x66000000u;
+    input_contract_state input_state={&input_guest,100000u,0,0};
+    pthread_t producer,consumer;int consumer_started=0,producer_started=0;
+    started=contract_monotonic_ms();
+    if(!pthread_create(&consumer,NULL,input_contract_consumer,&input_state)) {
+        consumer_started=1;
+        if(!pthread_create(&producer,NULL,input_contract_producer,&input_state))producer_started=1;
+        else atomic_store(&input_state.failed,1);
+    } else atomic_store(&input_state.failed,1);
+    if(producer_started)pthread_join(producer,NULL);
+    if(consumer_started)pthread_join(consumer,NULL);
+    out->input_elapsed_ms=(uint32_t)(contract_monotonic_ms()-started);
+    out->input_iterations=atomic_load(&input_guest.input_consumed_count);
+    out->input_ordered=!atomic_load(&input_state.failed)&&
+        out->input_iterations==input_state.iterations&&input_guest.input_count==0;
+    out->input_bounded=out->input_ordered&&out->input_elapsed_ms<10000u;
+    pthread_mutex_destroy(&input_guest.input_lock);
+    return out->wait_immediate&&out->wait_async&&out->wait_timeout&&out->wait_error&&
+        out->wait_shutdown&&out->input_ordered&&out->input_bounded?0:-1;
+}
 int32_t agr_guest_create_gles1_pbuffer(agr_guest *g, int width, int height) {
     PFNEGLGETPLATFORMDISPLAYEXTPROC getPlatformDisplay = (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
     EGLint da[] = {EGL_PLATFORM_ANGLE_TYPE_ANGLE,
@@ -1390,13 +1516,7 @@ uint32_t agr_guest_swap_count(agr_guest *g) { return g ? atomic_load_explicit(&g
 uint32_t agr_guest_asset_open_count(agr_guest *g) { return g ? g->asset_open_count : 0; }
 int32_t agr_guest_inject_motion(agr_guest *g, int32_t action, float x, float y) {
     if(!g) return -1;
-    pthread_mutex_lock(&g->input_lock);
-    if(g->input_count>=32) { pthread_mutex_unlock(&g->input_lock); return -1; }
-    input_event *e=&g->input_events[(g->input_head+g->input_count)%32];
-    *e=(input_event){g->next_input_handle,2u,(uint32_t)action,1u,0u,x,y};
-    g->next_input_handle+=4; g->input_count++;
-    uint32_t handle=e->handle;
-    pthread_mutex_unlock(&g->input_lock);
+    uint32_t handle=0;if(input_queue_push(g,action,x,y,&handle))return -1;
     agr_guest_record_runtime_event(g,"input.inject",g->input_queue_handle,handle,0,action,x,y,-1);
     return 0;
 }

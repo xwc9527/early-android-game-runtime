@@ -53,6 +53,7 @@ int agr_dex_game_invoke_int(agr_dex_game *game, const char *name, const char *si
                             int32_t *result);
 int agr_dex_game_load_image(agr_dex_game *game, const char *path, int32_t *texture);
 int agr_dex_game_play_sound(agr_dex_game *game, const char *path, float direction, int32_t *play_id);
+int agr_dex_game_activity_gc_contract(agr_dex_game *game);
 void agr_dex_set_upload_callback(int32_t (*callback)(void *, const char *), void *user);
 #ifdef __cplusplus
 }
