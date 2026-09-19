@@ -3,7 +3,7 @@ name: iPhone device build
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, playable-vertical-slice-1]
     paths:
       - 'scripts/build-iphoneos.sh'
       - 'scripts/test-ehabi-unwind.sh'

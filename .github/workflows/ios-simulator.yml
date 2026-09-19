@@ -8,7 +8,7 @@ on:
         type: boolean
         default: false
   push:
-    branches: [main, bionic-thread-migration]
+    branches: [main, bionic-thread-migration, playable-vertical-slice-1]
     paths:
       - 'Runtime/**'
       - 'Tests/Conformance/**'
