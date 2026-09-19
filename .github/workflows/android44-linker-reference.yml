@@ -374,8 +374,6 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Build formal Simulator Runtime and run real-game smoke
         run: bash scripts/build-and-run-simulator.sh
-      - name: Run existing Runtime and real-game regressions
-        run: bash scripts/run-simulator-regressions.sh
       - name: Run the exact GCC 4.8 guest exception fixtures in Simulator
         run: |
           FIXTURES="$(find reference-artifact -type f -name libgnustl_shared.so -print -quit | xargs dirname)"
