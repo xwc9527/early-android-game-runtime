@@ -24,6 +24,7 @@ extern void arm_interp_destroy(void *);
 extern int32_t arm_interp_write(void *, uint32_t, const uint8_t *, uint32_t);
 extern int32_t arm_interp_load(void *, uint32_t, const uint8_t *, uint32_t);
 extern int32_t arm_interp_read(void *, uint32_t, uint8_t *, uint32_t);
+extern uint8_t *arm_interp_memory_base(void *);
 extern int32_t arm_interp_set_page_permissions(void *, uint32_t, uint32_t, uint32_t);
 extern int32_t arm_interp_set_reg(void *, uint32_t, uint32_t);
 extern uint32_t arm_interp_get_reg(void *, uint32_t);
@@ -216,6 +217,9 @@ static int32_t mem_loader_write_cb(void *user, uint32_t address, const void *dat
 }
 static int32_t mem_protect_cb(void *user, uint32_t address, uint32_t size, uint32_t protection) {
     return arm_interp_set_page_permissions(guest_cpu((agr_guest *)user), address, size, protection);
+}
+static uint8_t *mem_base_cb(void *user) {
+    return arm_interp_memory_base(((agr_guest *)user)->process_cpu);
 }
 static virtual_pipe *find_pipe(agr_guest *g, uint32_t fd) {
     for (uint32_t i = 0; i < 8; i++) if (g->pipes[i].live && (g->pipes[i].read_fd == fd || g->pipes[i].write_fd == fd)) return &g->pipes[i];
@@ -829,6 +833,7 @@ agr_guest *agr_guest_create(void) {
     cb.current_thread_context=guest_current_thread_context_cb;
     cb.atomic_load=guest_atomic_load_cb; cb.atomic_cas=guest_atomic_cas_cb;
     cb.atomic_exchange=guest_atomic_exchange_cb; cb.atomic_fetch_sub=guest_atomic_fetch_sub_cb;
+    cb.memory_base=mem_base_cb;
     cb.pipe_create = pipe_create_cb; cb.fd_read = fd_read_cb; cb.fd_write = fd_write_cb; cb.fd_close = fd_close_cb;
     g->runtime = agr_runtime_create(&cb, 0x01008000, 0x01020000, 0x01900000, 0x02000000);
     if (!g->runtime) { agr_guest_thread_context_destroy(g->main_thread); arm_interp_destroy(g->process_cpu); free(g); return NULL; }

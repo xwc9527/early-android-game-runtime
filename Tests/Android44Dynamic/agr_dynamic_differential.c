@@ -6,6 +6,7 @@
 
 enum { STOP_ADDR=0x000fd000, STACK_TOP=0x000fc000 };
 extern void* arm_interp_create(void);
+extern uint8_t* arm_interp_memory_base(void*);
 extern void arm_interp_destroy(void*);
 extern int32_t arm_interp_write(void*,uint32_t,const uint8_t*,uint32_t);
 extern int32_t arm_interp_load(void*,uint32_t,const uint8_t*,uint32_t);
@@ -17,6 +18,7 @@ extern int32_t arm_interp_set_cpsr(void*,uint32_t);
 extern uint32_t arm_interp_get_cpsr(void*);
 extern int32_t arm_interp_run(void*,uint64_t*,uint32_t*);
 typedef struct harness { void*cpu; } harness;
+static uint8_t* memory_base(void*o){return arm_interp_memory_base(((harness*)o)->cpu);}
 static int32_t mem_read(void*o,uint32_t a,void*p,uint32_t n){return arm_interp_read(((harness*)o)->cpu,a,(uint8_t*)p,n);}
 static int32_t mem_write(void*o,uint32_t a,const void*p,uint32_t n){return arm_interp_write(((harness*)o)->cpu,a,(const uint8_t*)p,n);}
 static int32_t mem_load(void*o,uint32_t a,const void*p,uint32_t n){return arm_interp_load(((harness*)o)->cpu,a,(const uint8_t*)p,n);}
@@ -41,7 +43,7 @@ static int read_events(agr_runtime*r,harness*h,char*out,size_t capacity){uint32_
 
 int main(int argc,char**argv){
   if(argc!=8){fprintf(stderr,"usage: %s trace C B A bad-needed bad-symbol missing\n",argv[0]);return 2;}
-  harness h;h.cpu=arm_interp_create();if(!h.cpu)return 3;agr_callbacks cb={0};cb.user=&h;cb.read=mem_read;cb.write=mem_write;cb.loader_write=mem_load;cb.protect=mem_protect;cb.resolve_import=host_import;cb.invoke_guest=invoke_guest;
+  harness h;h.cpu=arm_interp_create();if(!h.cpu)return 3;agr_callbacks cb={0};cb.user=&h;cb.read=mem_read;cb.write=mem_write;cb.loader_write=mem_load;cb.protect=mem_protect;cb.resolve_import=host_import;cb.invoke_guest=invoke_guest;cb.memory_base=memory_base;
   agr_runtime*r=agr_runtime_create(&cb,0x00100000,0x00200000,0x00200000,0x00800000);if(!r)return 4;
   if(reg(r,"libagr_trace.so",argv[1],0x01000000)||reg(r,"libagr_C.so",argv[2],0x02000000)||reg(r,"libagr_B.so",argv[3],0x03000000)||reg(r,"libagr_A.so",argv[4],0x04000000)||reg(r,"libagr_bad_needed.so",argv[5],0x05000000)||reg(r,"libagr_bad_symbol.so",argv[6],0x06000000)){fprintf(stderr,"register failed\n");return 5;}
   uint32_t trace=agr_dlopen(r,"libagr_trace.so");uint32_t reset=agr_dlsym(r,trace,"trace_reset");if(!trace||!reset||call_guest(&h,reset,NULL,0,NULL)){fprintf(stderr,"trace init failed\n");return 10;}

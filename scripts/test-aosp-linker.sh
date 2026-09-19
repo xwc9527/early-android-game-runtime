@@ -8,6 +8,7 @@ INC=(-I"$ROOT/Runtime/AospLinker" -I"$ROOT/Runtime/Bionic" -I"$ROOT/Runtime/Proc
 clang -std=c11 -Wall -Wextra -Werror -O2 "${INC[@]}" -c "$ROOT/Tests/AospLinker/aosp_linker_test.c" -o "$OBJ/test.o"
 clang -std=c11 -Wall -Wextra -Werror -O2 "${INC[@]}" -c "$ROOT/Runtime/Process/agr_guest_vma.c" -o "$OBJ/vma.o"
 clang -std=c11 -O2 "${INC[@]}" -c "$ROOT/Runtime/NativeCore/agr_runtime.c" -o "$OBJ/runtime.o"
+clang++ -std=c++17 -O2 -fno-exceptions -fno-rtti "${INC[@]}" -c "$ROOT/Runtime/Bionic/agr_bionic_allocator.cpp" -o "$OBJ/allocator.o"
 if [[ "$(uname -s)" == Darwin ]]; then
   clang -std=c11 -O2 "${INC[@]}" -c "$ROOT/Runtime/HostServices/agr_host_services_darwin.c" -o "$OBJ/host-services.o"
   clang -std=c11 -O2 "${INC[@]}" -c "$ROOT/Runtime/Bionic/agr_bionic_thread_attr.c" -o "$OBJ/thread-attr.o"
@@ -21,5 +22,5 @@ fi
 clang++ -std=gnu++98 -Wall -Wextra -Werror -O2 -fno-exceptions -fno-rtti "${INC[@]}" -c "$ROOT/Runtime/AospLinker/agr_aosp_linker.cpp" -o "$OBJ/linker.o"
 clang++ -std=gnu++98 -Wall -Wextra -Werror -O2 -fno-exceptions -fno-rtti "${INC[@]}" -c "$ROOT/Runtime/AospLinker/agr_aosp_dynamic.cpp" -o "$OBJ/dynamic.o"
 clang++ -std=gnu++98 -Wall -Wextra -Werror -O2 -fno-exceptions -fno-rtti "${INC[@]}" -c "$ROOT/Runtime/Bionic/agr_bionic_mmap.cpp" -o "$OBJ/mmap.o"
-clang++ "$OBJ/test.o" "$OBJ/vma.o" "$OBJ/runtime.o" "$OBJ/linker.o" "$OBJ/dynamic.o" "$OBJ/mmap.o" "${BIONIC_OBJECTS[@]}" -pthread -lm -o "$OUT"
+clang++ "$OBJ/test.o" "$OBJ/vma.o" "$OBJ/runtime.o" "$OBJ/allocator.o" "$OBJ/linker.o" "$OBJ/dynamic.o" "$OBJ/mmap.o" "${BIONIC_OBJECTS[@]}" -pthread -lm -o "$OUT"
 "$OUT"

@@ -29,6 +29,14 @@ pub unsafe extern "C" fn arm_interp_destroy(ptr: *mut c_void) {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn arm_interp_memory_base(ptr: *mut c_void) -> *mut u8 {
+    if ptr.is_null() { return std::ptr::null_mut(); }
+    let h = &*ptr.cast::<Handle>();
+    let Ok(mut mem) = h.mem.lock() else { return std::ptr::null_mut(); };
+    mem.direct_memory_access_ptr().cast()
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn arm_interp_write(ptr: *mut c_void, addr: u32,
                                             data: *const u8, len: u32) -> i32 {
     if ptr.is_null() || data.is_null() { return -1; }

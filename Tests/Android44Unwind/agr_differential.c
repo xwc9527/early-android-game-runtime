@@ -8,6 +8,7 @@
 
 enum { STACK_TOP = 0x000fc000, STACK_SIZE = 0x10000 };
 extern void *arm_interp_create(void);
+extern uint8_t *arm_interp_memory_base(void *);
 extern void arm_interp_destroy(void *);
 extern int32_t arm_interp_write(void *, uint32_t, const uint8_t *, uint32_t);
 extern int32_t arm_interp_load(void *, uint32_t, const uint8_t *, uint32_t);
@@ -20,6 +21,7 @@ extern uint32_t arm_interp_get_cpsr(void *);
 extern int32_t arm_interp_run(void *, uint64_t *, uint32_t *);
 
 typedef struct harness { void *cpu; } harness;
+static uint8_t *memory_base(void *o) { return arm_interp_memory_base(((harness *)o)->cpu); }
 static void put_u32(uint8_t *p, uint32_t v) { memcpy(p, &v, 4); }
 static void emit_probe_stub(uint8_t *elf, uint32_t size) {
     Elf32_Ehdr eh;
@@ -133,6 +135,7 @@ int main(int argc, char **argv) {
     cb.loader_write = mem_load;
     cb.protect = mem_protect;
     cb.resolve_import = host_import;
+    cb.memory_base = memory_base;
     rt = agr_runtime_create(&cb, 0x00100000, 0x00200000, 0x00200000, 0x00800000);
     if (!rt) return 4;
     emit_probe_stub(probe, sizeof(probe));

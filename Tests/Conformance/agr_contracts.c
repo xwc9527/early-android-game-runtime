@@ -9,6 +9,7 @@
 /* Small deterministic cases adapted from API 19 Bionic string, pthread,
  * errno, time and linker tests. No host libc result is used as an oracle. */
 typedef struct { unsigned char *bytes; uint32_t size; } test_memory;
+static uint8_t *memory_base(void *user){return ((test_memory*)user)->bytes;}
 static int32_t mem_read(void *user,uint32_t address,void *out,uint32_t size){
     test_memory *m=user; if(address>m->size||size>m->size-address)return -1;
     memcpy(out,m->bytes+address,size);return 0;
@@ -47,7 +48,7 @@ static uint32_t run(agr_runtime *rt,const char *name,uint32_t a,uint32_t b,uint3
 } while(0)
 uint32_t agr_run_contracts(agr_contract_result *results,uint32_t capacity){
     uint32_t n=0; test_memory m={calloc(1,1u<<20),1u<<20}; if(!m.bytes)return 0;
-    agr_callbacks cb={0};cb.user=&m;cb.read=mem_read;cb.write=mem_write;
+    agr_callbacks cb={0};cb.user=&m;cb.read=mem_read;cb.write=mem_write;cb.memory_base=memory_base;
 #if defined(__APPLE__)
     cb.current_thread=contract_tid;cb.atomic_load=atomic_load;cb.atomic_cas=atomic_cas;
     cb.atomic_exchange=atomic_exchange;cb.atomic_fetch_sub=atomic_fetch_sub;

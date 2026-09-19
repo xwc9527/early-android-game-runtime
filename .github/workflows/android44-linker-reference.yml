@@ -217,8 +217,9 @@ jobs:
           adb shell 'cd /data/local/tmp/dynamic && LD_LIBRARY_PATH=/data/local/tmp/dynamic ./android44-dynamic-reference' | tr -d '\r' > android44-dynamic.json
           clang -std=c11 -O2 -Wall -Wextra -Werror -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Tests/Android44Dynamic/agr_dynamic_differential.c -o agr-dynamic-diff.o
           clang -std=c11 -O2 -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Runtime/NativeCore/agr_runtime.c -o agr-runtime.o
+          clang++ -std=c++17 -O2 -fno-exceptions -fno-rtti -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -c Runtime/Bionic/agr_bionic_allocator.cpp -o agr-allocator.o
           cargo build --manifest-path Runtime/ArmInterpreter/Cargo.toml --release
-          clang++ agr-dynamic-diff.o agr-runtime.o agr-vma.o agr-linker.o agr-dynamic.o agr-mmap.o Runtime/ArmInterpreter/target/release/libtouchhle_arm_interpreter.a -ldl -lpthread -lm -o agr-dynamic-differential
+          clang++ agr-dynamic-diff.o agr-runtime.o agr-allocator.o agr-vma.o agr-linker.o agr-dynamic.o agr-mmap.o Runtime/ArmInterpreter/target/release/libtouchhle_arm_interpreter.a -ldl -lpthread -lm -o agr-dynamic-differential
           ./agr-dynamic-differential dynamic/libagr_trace.so dynamic/libagr_C.so dynamic/libagr_B.so dynamic/libagr_A.so dynamic/libagr_bad_needed.so dynamic/libagr_bad_symbol.so dynamic/libagr_missing.so > agr-dynamic.json
           python3 - <<'PY'
           import json
@@ -263,7 +264,7 @@ jobs:
           adb shell 'cd /data/local/tmp/unwind && LD_LIBRARY_PATH=/data/local/tmp/unwind ./android44-unwind-reference' | tr -d '\r' > android44-unwind.json
           clang -std=c11 -O2 -Wall -Wextra -Werror -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -IRuntime/Ehabi -IRuntime/GuestRuntime -c Tests/Android44Unwind/agr_differential.c -o agr-unwind-diff.o
           clang -std=c11 -O2 -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process -IRuntime/NativeCore -IRuntime/Ehabi -IRuntime/GuestRuntime -c Runtime/Ehabi/agr_ehabi.c -o agr-ehabi.o
-          clang++ agr-unwind-diff.o agr-ehabi.o agr-runtime.o agr-vma.o agr-linker.o agr-dynamic.o agr-mmap.o Runtime/ArmInterpreter/target/release/libtouchhle_arm_interpreter.a -ldl -lpthread -lm -o agr-unwind-differential
+          clang++ agr-unwind-diff.o agr-ehabi.o agr-runtime.o agr-allocator.o agr-vma.o agr-linker.o agr-dynamic.o agr-mmap.o Runtime/ArmInterpreter/target/release/libtouchhle_arm_interpreter.a -ldl -lpthread -lm -o agr-unwind-differential
           ./agr-unwind-differential unwind/libagr_unwind_C.so unwind/libagr_unwind_B.so unwind/libagr_unwind_A.so > agr-unwind.json
           python3 - <<'PY'
           import json
@@ -303,7 +304,7 @@ jobs:
             -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process \
             -IRuntime/NativeCore -IRuntime/HostServices \
             -c Tests/Android44EhabiPhase2Gate/agr_differential.c -o agr-ehabi2-diff.o
-          clang++ agr-ehabi2-diff.o agr-runtime.o agr-vma.o agr-linker.o \
+          clang++ agr-ehabi2-diff.o agr-runtime.o agr-allocator.o agr-vma.o agr-linker.o \
             agr-dynamic.o agr-mmap.o \
             Runtime/ArmInterpreter/target/release/libtouchhle_arm_interpreter.a \
             -ldl -lpthread -lm -o agr-ehabi2-differential
@@ -377,7 +378,7 @@ jobs:
             -IRuntime/AospLinker -IRuntime/Bionic -IRuntime/Process \
             -IRuntime/NativeCore -IRuntime/HostServices \
             -c Tests/Android44EhabiPhase2BGate/agr_differential.c -o agr-ehabi2b-diff.o
-          clang++ agr-ehabi2b-diff.o agr-runtime.o agr-vma.o agr-linker.o \
+          clang++ agr-ehabi2b-diff.o agr-runtime.o agr-allocator.o agr-vma.o agr-linker.o \
             agr-dynamic.o agr-mmap.o \
             Runtime/ArmInterpreter/target/release/libtouchhle_arm_interpreter.a \
             -ldl -lpthread -lm -o agr-ehabi2b-differential

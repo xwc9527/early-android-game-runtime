@@ -7,6 +7,7 @@
 #include "../Bionic/agr_bionic_thread_attr.h"
 #include "../Bionic/agr_futex_host.h"
 #include "../Bionic/agr_bionic_errno.h"
+#include "../Bionic/agr_bionic_allocator.h"
 #include "../HostServices/agr_host_services.h"
 
 #include <ctype.h>
@@ -31,11 +32,6 @@
 #define AGR_MAX_GUARDS 2048
 #define AGR_MAX_ATEXIT 4096
 
-typedef struct agr_heap_block {
-    uint32_t address, span, requested, alignment;
-    uint8_t live;
-    struct agr_heap_block *prev, *next;
-} agr_heap_block;
 #if !defined(__APPLE__)
 typedef struct { uint32_t id, errno_address; uint32_t tls[AGR_MAX_TLS_KEYS]; } agr_thread;
 typedef struct { uint32_t address, owner, depth, live; } agr_mutex;
@@ -49,7 +45,7 @@ struct agr_runtime {
     char dlerror[512];
     char library_path[1024];
     uint32_t static_ptr, static_limit, heap_base, heap_limit;
-    agr_heap_block *heap_blocks;
+    agr_bionic_allocator *allocator;
     agr_aosp_dynamic *dynamic_linker;
     atomic_uint next_thread;
 #if !defined(__APPLE__)
@@ -193,32 +189,46 @@ static int read_cstr(agr_runtime *rt, uint32_t address, char *out, uint32_t capa
     for (i = 0; i + 1 < capacity; ++i) { if (!read_mem(rt, address + i, out + i, 1)) return 0; if (!out[i]) return 1; }
     out[capacity - 1] = 0; return 1;
 }
+static void allocator_set_errno(void *opaque, int32_t value) {
+    agr_runtime *rt=(agr_runtime *)opaque; uint32_t address=0;
+#if defined(__APPLE__)
+    if (rt->bionic_tls) address=agr_bionic_tls_errno_address(rt->bionic_tls,agr_current_thread(rt));
+#else
+    for(uint32_t i=0;i<rt->thread_count;i++) if(rt->threads[i].id==rt->current_thread) {
+        if(!rt->threads[i].errno_address) {
+            int32_t zero=0;
+            rt->threads[i].errno_address=agr_alloc_static(rt,&zero,4,4);
+        }
+        address=rt->threads[i].errno_address; break;
+    }
+#endif
+    if(address) write_mem(rt,address,&value,4);
+}
 
 agr_runtime *agr_runtime_create(const agr_callbacks *cb, uint32_t sb, uint32_t sl, uint32_t hb, uint32_t hl) {
-    if (!cb || !cb->read || !cb->write || !hb || hb >= hl) return NULL;
+    if (!cb || !cb->read || !cb->write || !cb->memory_base || !hb || hb >= hl) return NULL;
     agr_runtime *rt = (agr_runtime *)calloc(1, sizeof(*rt)); if (!rt) return NULL;
-    rt->heap_blocks = (agr_heap_block *)calloc(1, sizeof(*rt->heap_blocks));
-    if (!rt->heap_blocks) { free(rt); return NULL; }
-    rt->heap_blocks->address = hb; rt->heap_blocks->span = hl - hb;
     atomic_flag_clear_explicit(&rt->heap_lock,memory_order_release);
     atomic_flag_clear_explicit(&rt->static_lock,memory_order_release);
     atomic_flag_clear_explicit(&rt->vma_lock,memory_order_release);
     rt->cb = *cb; rt->static_ptr = sb; rt->static_limit = sl; rt->heap_base = hb; rt->heap_limit = hl;
     if (agr_guest_vma_init(&rt->linker_vma, 4096, 0x10000u, 0x100000000ull)) {
-        free(rt->heap_blocks); free(rt); return NULL;
+        free(rt); return NULL;
     }
     rt->linker_mmap = (agr_bionic_mmap_context){&rt->linker_vma, rt, linker_write, NULL, linker_protect};
+    rt->allocator=agr_bionic_allocator_create(&rt->linker_mmap,cb->memory_base(cb->user),hb,hl,rt,allocator_set_errno);
+    if(!rt->allocator){agr_guest_vma_destroy(&rt->linker_vma);free(rt);return NULL;}
     agr_aosp_dynamic_callbacks dynamic_cb={rt,dynamic_read,linker_write,dynamic_import,NULL};
     if(cb->invoke_guest)dynamic_cb.invoke_guest_function=dynamic_invoke;
     rt->dynamic_linker=agr_aosp_dynamic_create(&rt->linker_mmap,&dynamic_cb);
-    if(!rt->dynamic_linker){agr_guest_vma_destroy(&rt->linker_vma);free(rt->heap_blocks);free(rt);return NULL;}
+    if(!rt->dynamic_linker){agr_bionic_allocator_destroy(rt->allocator);agr_guest_vma_destroy(&rt->linker_vma);free(rt);return NULL;}
 #if !defined(__APPLE__)
     rt->thread_count = 1; rt->threads[0].id = 1; rt->current_thread = 1;
 #endif
     atomic_init(&rt->next_thread,2u);
 #if defined(__APPLE__)
     if (agr_host_services_init_darwin(&rt->host_services) != 0) {
-        agr_aosp_dynamic_destroy(rt->dynamic_linker); agr_guest_vma_destroy(&rt->linker_vma); free(rt->heap_blocks); free(rt); return NULL;
+        agr_aosp_dynamic_destroy(rt->dynamic_linker); agr_bionic_allocator_destroy(rt->allocator); agr_guest_vma_destroy(&rt->linker_vma); free(rt); return NULL;
     }
     rt->bionic_tls = agr_bionic_tls_create(rt,bionic_tls_read,bionic_tls_write,bionic_tls_invoke);
     rt->futex = agr_futex_host_create(rt,bionic_futex_read);
@@ -229,7 +239,7 @@ agr_runtime *agr_runtime_create(const agr_callbacks *cb, uint32_t sb, uint32_t s
     if (!rt->bionic_tls || !rt->futex || !rt->thread_lifecycle) {
         agr_bionic_thread_lifecycle_destroy(rt->thread_lifecycle); agr_futex_host_destroy(rt->futex);
         agr_bionic_tls_destroy(rt->bionic_tls); agr_aosp_dynamic_destroy(rt->dynamic_linker);
-        agr_guest_vma_destroy(&rt->linker_vma); free(rt->heap_blocks); free(rt); return NULL;
+        agr_bionic_allocator_destroy(rt->allocator); agr_guest_vma_destroy(&rt->linker_vma); free(rt); return NULL;
     }
 #endif
 #if !defined(__APPLE__)
@@ -240,7 +250,6 @@ agr_runtime *agr_runtime_create(const agr_callbacks *cb, uint32_t sb, uint32_t s
 void agr_runtime_destroy(agr_runtime *rt) {
     uint32_t i; if (!rt) return;
     agr_runtime_shutdown_workers(rt);
-    for (agr_heap_block *block=rt->heap_blocks,*next; block; block=next) { next=block->next; free(block); }
     (void)i;
 #if defined(__APPLE__)
     agr_bionic_thread_lifecycle_destroy(rt->thread_lifecycle);
@@ -248,6 +257,7 @@ void agr_runtime_destroy(agr_runtime *rt) {
     agr_bionic_tls_destroy(rt->bionic_tls);
 #endif
     agr_aosp_dynamic_destroy(rt->dynamic_linker);
+    agr_bionic_allocator_destroy(rt->allocator);
     agr_guest_vma_destroy(&rt->linker_vma); free(rt);
 }
 const char *agr_last_error(agr_runtime *rt) { return rt ? rt->error : "runtime is null"; }
@@ -270,157 +280,38 @@ void agr_runtime_shutdown_workers(agr_runtime *rt) {
     (void)rt;
 #endif
 }
-static int heap_alignment_valid(uint32_t alignment) {
-    return alignment >= 4 && (alignment & (alignment - 1)) == 0;
+static int allocator_fatal(agr_runtime *rt) {
+    uint32_t fatal=agr_bionic_allocator_fatal(rt->allocator);
+    if(fatal) snprintf(rt->error,sizeof(rt->error),"Bionic allocator fatal: %s",
+                       fatal==AGR_ALLOCATOR_FATAL_USAGE?"usage":"corruption");
+    return fatal!=0;
 }
-static agr_heap_block *heap_find_live(agr_runtime *rt, uint32_t address) {
-    if (!rt || !address) return NULL;
-    for (agr_heap_block *b=rt->heap_blocks; b; b=b->next)
-        if (b->live && b->address == address) return b;
-    return NULL;
+uint32_t agr_malloc_aligned(agr_runtime *rt,uint32_t size,uint32_t alignment) {
+    return rt?agr_bionic_allocator_memalign(rt->allocator,alignment,size):0;
 }
-static void heap_insert_after(agr_heap_block *at, agr_heap_block *node) {
-    node->prev=at; node->next=at->next;
-    if (node->next) node->next->prev=node;
-    at->next=node;
+uint32_t agr_malloc(agr_runtime *rt,uint32_t size) {
+    return rt?agr_bionic_allocator_malloc(rt->allocator,size):0;
 }
-static void heap_remove(agr_runtime *rt, agr_heap_block *node) {
-    if (node->prev) node->prev->next=node->next; else rt->heap_blocks=node->next;
-    if (node->next) node->next->prev=node->prev;
-    free(node);
+uint32_t agr_calloc(agr_runtime *rt,uint32_t count,uint32_t size) {
+    return rt?agr_bionic_allocator_calloc(rt->allocator,count,size):0;
 }
-static agr_heap_block *heap_coalesce(agr_runtime *rt, agr_heap_block *b) {
-    if (b->prev && !b->prev->live) {
-        agr_heap_block *prior=b->prev;
-        prior->span+=b->span; heap_remove(rt,b); b=prior;
-    }
-    if (b->next && !b->next->live) {
-        agr_heap_block *next=b->next;
-        b->span+=next->span; heap_remove(rt,next);
-    }
-    return b;
-}
-static int heap_clear(agr_runtime *rt, uint32_t address, uint32_t size) {
-    static const unsigned char zeros[256] = {0};
-    for (uint32_t at=address,left=size; left;) {
-        uint32_t n=left>sizeof(zeros)?sizeof(zeros):left;
-        if (!write_mem(rt,at,zeros,n)) return 0;
-        at+=n; left-=n;
-    }
-    return 1;
-}
-uint32_t agr_malloc_aligned(agr_runtime *rt, uint32_t size, uint32_t alignment) {
-    if (!rt || !heap_alignment_valid(alignment)) return 0;
-    if (alignment < 8) alignment=8;
-    uint32_t requested=size?size:1;
-    uint64_t rounded=((uint64_t)requested+7u)&~7ull;
-    if (rounded>UINT32_MAX) return 0;
-    uint32_t span=(uint32_t)rounded;
-    uint32_t result=0;
-    runtime_lock(&rt->heap_lock);
-    for (agr_heap_block *b=rt->heap_blocks; b; b=b->next) {
-        if (b->live) continue;
-        uint64_t aligned=((uint64_t)b->address+alignment-1u)&~(uint64_t)(alignment-1u);
-        uint64_t end=aligned+span, block_end=(uint64_t)b->address+b->span;
-        if (aligned>UINT32_MAX || end>block_end) continue;
-        uint32_t prefix=(uint32_t)(aligned-b->address), suffix=(uint32_t)(block_end-end);
-        agr_heap_block *allocated=prefix?(agr_heap_block *)calloc(1,sizeof(*allocated)):b;
-        if (!allocated) break;
-        agr_heap_block *tail=suffix?(agr_heap_block *)calloc(1,sizeof(*tail)):NULL;
-        if (suffix && !tail) { if(prefix)free(allocated); break; }
-        if (!heap_clear(rt,(uint32_t)aligned,span)) {
-            if (prefix) free(allocated); free(tail); break;
-        }
-        if (prefix) { b->span=prefix; heap_insert_after(b,allocated); }
-        allocated->address=(uint32_t)aligned; allocated->span=span;
-        allocated->requested=requested; allocated->alignment=alignment; allocated->live=1;
-        if (tail) { tail->address=(uint32_t)end; tail->span=suffix; heap_insert_after(allocated,tail); }
-        result=allocated->address; break;
-    }
-    runtime_unlock(&rt->heap_lock);
-    return result;
-}
-uint32_t agr_malloc(agr_runtime *rt, uint32_t size) { return agr_malloc_aligned(rt,size,8); }
-uint32_t agr_calloc(agr_runtime *rt, uint32_t count, uint32_t size) {
-    uint64_t total=(uint64_t)count*size;
-    return total>UINT32_MAX?0:agr_malloc(rt,(uint32_t)total);
-}
-void agr_free(agr_runtime *rt, uint32_t address) {
-    if (!rt) return;
-    runtime_lock(&rt->heap_lock);
-    agr_heap_block *b=heap_find_live(rt,address);
-    if (b) { /* free(NULL), invalid and repeated frees cannot corrupt the heap. */
-        b->live=0; b->requested=0; b->alignment=0;
-        heap_coalesce(rt,b);
-    }
-    runtime_unlock(&rt->heap_lock);
-}
-uint32_t agr_allocation_size(agr_runtime *rt,uint32_t address) {
-    if (!rt) return 0;
-    runtime_lock(&rt->heap_lock);
-    agr_heap_block *b=heap_find_live(rt,address);
-    uint32_t size=b?b->requested:0;
-    runtime_unlock(&rt->heap_lock);
-    return size;
-}
-void agr_heap_diagnostics(agr_runtime *rt,uint32_t out[5]) {
-    if (!out) return; memset(out,0,5*sizeof(*out)); if (!rt) return;
-    runtime_lock(&rt->heap_lock);
-    out[0]=rt->heap_base; out[1]=rt->heap_limit;
-    for (agr_heap_block *b=rt->heap_blocks; b; b=b->next) {
-        out[2]++;
-        if (b->live) { out[3]++; out[4]+=b->requested; out[0]=b->address+b->span; }
-    }
-    runtime_unlock(&rt->heap_lock);
+void agr_free(agr_runtime *rt,uint32_t address) {
+    if(rt)agr_bionic_allocator_free(rt->allocator,address);
 }
 uint32_t agr_realloc(agr_runtime *rt,uint32_t address,uint32_t size) {
-    if (!address) return agr_malloc(rt,size);
-    if (!rt) return 0;
-    runtime_lock(&rt->heap_lock);
-    agr_heap_block *b=heap_find_live(rt,address);
-    if (!b) { runtime_unlock(&rt->heap_lock); return 0; }
-    if (!size) {
-        b->live=0; b->requested=0; b->alignment=0; heap_coalesce(rt,b);
-        runtime_unlock(&rt->heap_lock); return 0;
-    }
-    uint64_t rounded=((uint64_t)size+7u)&~7ull;
-    if (rounded>UINT32_MAX) { runtime_unlock(&rt->heap_lock); return 0; }
-    uint32_t new_span=(uint32_t)rounded, old_size=b->requested;
-    if (new_span<=b->span) {
-        uint32_t spare=b->span-new_span;
-        if (spare>=8) {
-            agr_heap_block *tail=(agr_heap_block *)calloc(1,sizeof(*tail));
-            if (tail) {
-                tail->address=b->address+new_span;tail->span=spare;b->span=new_span;
-                heap_insert_after(b,tail);heap_coalesce(rt,tail);
-            }
-        }
-        b->requested=size;runtime_unlock(&rt->heap_lock);return address;
-    }
-    if (b->next && !b->next->live && b->next->span>=new_span-b->span) {
-        if (!heap_clear(rt,address+old_size,size-old_size)) { runtime_unlock(&rt->heap_lock); return 0; }
-        agr_heap_block *next=b->next;
-        uint32_t take=new_span-b->span;
-        b->span=new_span;b->requested=size;
-        next->address+=take;next->span-=take;
-        if (!next->span) heap_remove(rt,next);
-        runtime_unlock(&rt->heap_lock); return address;
-    }
-    uint32_t alignment=b->alignment;
-    runtime_unlock(&rt->heap_lock);
-    uint32_t replacement=agr_malloc_aligned(rt,size,alignment);
-    if (!replacement) return 0;
-    unsigned char buffer[256];
-    for (uint32_t at=0;at<old_size;) {
-        uint32_t n=old_size-at>sizeof(buffer)?sizeof(buffer):old_size-at;
-        if (!read_mem(rt,address+at,buffer,n) || !write_mem(rt,replacement+at,buffer,n)) {
-            agr_free(rt,replacement);return 0;
-        }
-        at+=n;
-    }
-    agr_free(rt,address);return replacement;
+    return rt?agr_bionic_allocator_realloc(rt->allocator,address,size):0;
 }
-
+uint32_t agr_allocation_size(agr_runtime *rt,uint32_t address) {
+    return rt?agr_bionic_allocator_usable_size(rt->allocator,address):0;
+}
+void agr_heap_diagnostics(agr_runtime *rt,uint32_t out[5]) {
+    if(!out)return;memset(out,0,5*sizeof(*out));if(!rt)return;
+    agr_allocator_mallinfo info={0};
+    if(!agr_bionic_allocator_mallinfo(rt->allocator,&info)) {
+        out[0]=rt->heap_base;out[1]=rt->heap_limit;out[2]=info.ordblks;
+        out[3]=info.uordblks;out[4]=info.fordblks;
+    }
+}
 int32_t agr_register_elf_source(agr_runtime *rt,const char *name,const void *bytes,uint32_t size,uint32_t base){
     return rt&&rt->dynamic_linker?agr_aosp_dynamic_register(rt->dynamic_linker,name,bytes,size,base):-1;
 }
@@ -620,18 +511,17 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
     else if(!strcmp(name,"memalign"))out->value=agr_malloc_aligned(rt,b,a);
     else if(!strcmp(name,"aligned_alloc"))out->value=(a&&b%a==0)?agr_malloc_aligned(rt,b,a):0;
     else if(!strcmp(name,"posix_memalign")){
-        if(!heap_alignment_valid(b)){out->value=EINVAL;}
-        else {uint32_t aligned=agr_malloc_aligned(rt,c,b);
-            if(!aligned)out->value=ENOMEM;
-            else if(!write_mem(rt,a,&aligned,4)){agr_free(rt,aligned);out->value=EINVAL;}
-        }
+        uint32_t aligned=0;
+        out->value=(uint32_t)agr_bionic_allocator_posix_memalign(rt->allocator,&aligned,b,c);
+        if(!out->value&&!write_mem(rt,a,&aligned,4)){agr_free(rt,aligned);out->value=EFAULT;}
     }
+    else if(!strcmp(name,"malloc_usable_size"))out->value=agr_allocation_size(rt,a);
     else if(!strcmp(name,"__errno")){
 #if defined(__APPLE__)
         out->value=agr_bionic_tls_errno_address(rt->bionic_tls,agr_current_thread(rt));
         if (!out->value) return fail(rt,"current GuestThreadContext has no Bionic TLS");
 #else
-        agr_thread*t=thread(rt);if(!t->errno_address)t->errno_address=agr_malloc(rt,4);out->value=t->errno_address;
+        agr_thread*t=thread(rt);if(!t->errno_address){int32_t zero=0;t->errno_address=agr_alloc_static(rt,&zero,4,4);}out->value=t->errno_address;
 #endif
     }
     else if(!strcmp(name,"clock_gettime")){rt->clock_ns+=16666667ULL;uint32_t v[2]={(uint32_t)(rt->clock_ns/1000000000ULL),(uint32_t)(rt->clock_ns%1000000000ULL)};write_mem(rt,b,v,8);}
@@ -832,5 +722,6 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
     else if(!strcmp(name,"__cxa_finalize")){for(uint32_t i=rt->atexit_count;i>0;i--){agr_atexit item=rt->atexit[i-1];if(!a||item.dso==a){out->action=AGR_ACTION_FINALIZE;out->action_arg0=item.function;out->action_arg1=item.argument;memmove(&rt->atexit[i-1],&rt->atexit[i],(rt->atexit_count-i)*sizeof(rt->atexit[0]));rt->atexit_count--;break;}}}
     else if(!strcmp(name,"abort")||!strcmp(name,"__stack_chk_fail")||!strcmp(name,"__cxa_pure_virtual")){out->action=AGR_ACTION_ABORT;}
     else {out->handled=0;}
+    if(allocator_fatal(rt))out->action=AGR_ACTION_ABORT;
     return 0;
 }

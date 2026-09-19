@@ -14,6 +14,7 @@ enum { ELF_SIZE = 0x4000, STACK_TOP = 0x000fc000, STACK_SIZE = 0x10000 };
 #define COMPACT_IWMMXT_WR10 0x80c0b000u
 
 extern void *arm_interp_create(void);
+extern uint8_t *arm_interp_memory_base(void *);
 extern void arm_interp_destroy(void *);
 extern int32_t arm_interp_write(void *, uint32_t, const uint8_t *, uint32_t);
 extern int32_t arm_interp_load(void *, uint32_t, const uint8_t *, uint32_t);
@@ -26,6 +27,7 @@ extern uint32_t arm_interp_get_cpsr(void *);
 extern int32_t arm_interp_run(void *, uint64_t *, uint32_t *);
 
 typedef struct harness { void *cpu; } harness;
+static uint8_t *memory_base(void *o) { return arm_interp_memory_base(((harness *)o)->cpu); }
 static int32_t mem_read(void *o, uint32_t a, void *p, uint32_t n) {
     return arm_interp_read(((harness *)o)->cpu, a, (uint8_t *)p, n);
 }
@@ -310,6 +312,7 @@ static agr_runtime *make_runtime(harness *h) {
     cb.loader_write = mem_load;
     cb.protect = mem_protect;
     cb.resolve_import = host_import;
+    cb.memory_base = memory_base;
     return agr_runtime_create(&cb, 0x00100000, 0x00200000, 0x00200000, 0x00800000);
 }
 

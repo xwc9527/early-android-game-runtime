@@ -15,6 +15,7 @@ clang -std=c11 -Wall -Wextra -Werror -O2 "${INC[@]}" -c "$ROOT/Tests/Ehabi/ehabi
 clang -std=c11 -Wall -Wextra -Werror -O2 "${INC[@]}" -c "$ROOT/Runtime/Ehabi/agr_ehabi.c" -o "$OBJ/ehabi.o"
 clang -std=c11 -O2 "${INC[@]}" -c "$ROOT/Runtime/Process/agr_guest_vma.c" -o "$OBJ/vma.o"
 clang -std=c11 -O2 "${INC[@]}" -c "$ROOT/Runtime/NativeCore/agr_runtime.c" -o "$OBJ/runtime.o"
+clang++ -std=c++17 -O2 -fno-exceptions -fno-rtti "${INC[@]}" -c "$ROOT/Runtime/Bionic/agr_bionic_allocator.cpp" -o "$OBJ/allocator.o"
 clang++ -std=gnu++98 -Wall -Wextra -Werror -O2 -fno-exceptions -fno-rtti "${INC[@]}" -c "$ROOT/Runtime/AospLinker/agr_aosp_linker.cpp" -o "$OBJ/linker.o"
 clang++ -std=gnu++98 -Wall -Wextra -Werror -O2 -fno-exceptions -fno-rtti "${INC[@]}" -c "$ROOT/Runtime/AospLinker/agr_aosp_dynamic.cpp" -o "$OBJ/dynamic.o"
 clang++ -std=gnu++98 -Wall -Wextra -Werror -O2 -fno-exceptions -fno-rtti "${INC[@]}" -c "$ROOT/Runtime/Bionic/agr_bionic_mmap.cpp" -o "$OBJ/mmap.o"
@@ -28,5 +29,5 @@ if [[ "$(uname -s)" == Darwin ]]; then
 else
   EXTRA=()
 fi
-clang++ "$OBJ/test.o" "$OBJ/ehabi.o" "$OBJ/vma.o" "$OBJ/runtime.o" "$OBJ/linker.o" "$OBJ/dynamic.o" "$OBJ/mmap.o" "${EXTRA[@]}" "$INTERP" -pthread -ldl -lm -o "$OUT"
+clang++ "$OBJ/test.o" "$OBJ/ehabi.o" "$OBJ/vma.o" "$OBJ/runtime.o" "$OBJ/allocator.o" "$OBJ/linker.o" "$OBJ/dynamic.o" "$OBJ/mmap.o" "${EXTRA[@]}" "$INTERP" -pthread -ldl -lm -o "$OUT"
 "$OUT"

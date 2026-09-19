@@ -21,9 +21,10 @@ static int32_t write_guest(void *context, uint32_t address, const void *src, uin
     memcpy(m->bytes + address, src, size);
     return 0;
 }
+static uint8_t *memory_base(void *context) { return ((memory *)context)->bytes; }
 static agr_runtime *make_runtime(memory *m) {
     agr_callbacks cb = {0};
-    cb.user = m; cb.read = read_guest; cb.write = write_guest;
+    cb.user = m; cb.read = read_guest; cb.write = write_guest; cb.memory_base = memory_base;
     return agr_runtime_create(&cb, 0x1000, 0x10000, HEAP_BASE, HEAP_LIMIT);
 }
 static uint32_t random_word(uint32_t *state) {

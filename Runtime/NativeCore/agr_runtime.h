@@ -50,6 +50,7 @@ typedef int32_t (*agr_atomic_exchange_fn)(void *user, uint32_t address,
                                           uint32_t next, uint32_t *observed);
 typedef int32_t (*agr_atomic_fetch_sub_fn)(void *user, uint32_t address,
                                            uint32_t amount, uint32_t *observed);
+typedef uint8_t *(*agr_memory_base_fn)(void *user);
 
 typedef struct agr_callbacks {
     void *user;
@@ -80,6 +81,7 @@ typedef struct agr_callbacks {
     agr_atomic_cas_fn atomic_cas;
     agr_atomic_exchange_fn atomic_exchange;
     agr_atomic_fetch_sub_fn atomic_fetch_sub;
+    agr_memory_base_fn memory_base;
 } agr_callbacks;
 
 typedef struct agr_runtime agr_runtime;

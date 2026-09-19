@@ -9,6 +9,7 @@ enum { TRAP_BASE=0x0e000000u, STOP_ADDR=0x0ef00000u, STACK_BASE=0x0ee00000u,
        MAX_TRAPS=512, MAX_TRACE=1024, MAX_PENDING=32, MAX_EXIDX=1024 };
 
 extern void* arm_interp_create(void);
+extern uint8_t* arm_interp_memory_base(void*);
 extern void arm_interp_destroy(void*);
 extern int32_t arm_interp_write(void*,uint32_t,const uint8_t*,uint32_t);
 extern int32_t arm_interp_load(void*,uint32_t,const uint8_t*,uint32_t);
@@ -42,6 +43,7 @@ typedef struct harness {
     host_call_event recent_calls[64]; uint32_t recent_call_count;
     char error[512];
 } harness;
+static uint8_t* memory_base(void*o){return arm_interp_memory_base(((harness*)o)->cpu);}
 
 static int32_t mem_read(void*o,uint32_t a,void*p,uint32_t n){return arm_interp_read(((harness*)o)->cpu,a,(uint8_t*)p,n);}
 static int32_t mem_write(void*o,uint32_t a,const void*p,uint32_t n){return arm_interp_write(((harness*)o)->cpu,a,(const uint8_t*)p,n);}
@@ -150,7 +152,7 @@ static void dump_failure(harness*h,const char*stage){
 int agr_ehabi2_run(int argc,char**argv){
     if(argc!=7){fprintf(stderr,"usage: %s gnustl probe same C B A\n",argv[0]);return 2;}
     harness h={0};h.cpu=arm_interp_create();h.next_trap=TRAP_BASE;if(!h.cpu)return 3;
-    agr_callbacks cb={0};cb.user=&h;cb.read=mem_read;cb.write=mem_write;cb.loader_write=mem_load;cb.protect=mem_protect;cb.resolve_import=host_import;cb.invoke_guest=invoke_guest;cb.current_thread=current_thread;cb.current_thread_context=current_thread_context;
+    agr_callbacks cb={0};cb.user=&h;cb.read=mem_read;cb.write=mem_write;cb.loader_write=mem_load;cb.protect=mem_protect;cb.resolve_import=host_import;cb.invoke_guest=invoke_guest;cb.current_thread=current_thread;cb.current_thread_context=current_thread_context;cb.memory_base=memory_base;
     h.runtime=agr_runtime_create(&cb,0x0c000000,0x0c100000,0x0d000000,0x0df00000);if(!h.runtime)return 4;
     uint32_t main_thread_storage=agr_malloc(h.runtime,0x1000u);
     if(!main_thread_storage||agr_runtime_attach_current_thread(h.runtime,1,1,main_thread_storage+0x1000u-560u)){snprintf(h.error,sizeof(h.error),"attach main guest thread failed: %s",agr_last_error(h.runtime));fprintf(stderr,"%s\n",h.error);return 4;}

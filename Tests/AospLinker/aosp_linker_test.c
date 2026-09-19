@@ -10,6 +10,7 @@
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"FAIL %s:%d: %s\n",__FILE__,__LINE__,#x); return 1; } } while (0)
 enum { MEMORY_SIZE = 0x100000, FIXTURE_SIZE = 0x4000 };
 typedef struct harness { uint8_t memory[MEMORY_SIZE]; uint8_t page_protection[MEMORY_SIZE/4096]; const uint8_t *file; uint32_t file_size; } harness;
+static uint8_t *memory_base(void *opaque){return ((harness*)opaque)->memory;}
 
 static int32_t write_guest(void *opaque,uint32_t address,const void *data,uint32_t size){
     harness *h=(harness*)opaque;if(address>MEMORY_SIZE||size>MEMORY_SIZE-address)return EFAULT;
@@ -103,7 +104,7 @@ static int test_linker(void){
 static int test_formal_image_lifecycle(void){
     uint8_t *elf=(uint8_t*)malloc(FIXTURE_SIZE);CHECK(elf);dynamic_fixture(elf);
     harness *h=(harness*)calloc(1,sizeof(*h));CHECK(h);
-    agr_callbacks cb={0};cb.user=h;cb.read=read_guest;cb.write=write_guest;cb.loader_write=write_guest;cb.protect=protect_guest;
+    agr_callbacks cb={0};cb.user=h;cb.read=read_guest;cb.write=write_guest;cb.loader_write=write_guest;cb.protect=protect_guest;cb.memory_base=memory_base;
     agr_runtime *runtime=agr_runtime_create(&cb,0x60000,0x70000,0x70000,0x90000);CHECK(runtime);
     uint32_t first_stack=0;
     CHECK(!agr_runtime_map_thread_stack(runtime,0x10000,0x1000,&first_stack));

@@ -31,7 +31,7 @@ rm -rf "$APP"
 mkdir -p "$APP"
 clang++ "${COMMON[@]}" -Wl,-dead_strip \
   "$OBJ/agr_ehabi2_ios_main.o" "$OBJ/agr_ehabi2_differential.o" \
-  "$OBJ/agr_runtime.o" "$OBJ/agr_guest_vma.o" "$OBJ/agr_host_services_darwin.o" \
+  "$OBJ/agr_runtime.o" "$OBJ/agr_bionic_allocator.o" "$OBJ/agr_guest_vma.o" "$OBJ/agr_host_services_darwin.o" \
   "$OBJ/agr_bionic_thread_attr.o" "$OBJ/agr_futex_host.o" "$OBJ/agr_bionic_sync.o" \
   "$OBJ/agr_bionic_tls.o" "$OBJ/agr_bionic_errno_host.o" "$OBJ/agr_bionic_thread_lifecycle.o" \
   "$OBJ/agr_bionic_mmap.o" "$OBJ/agr_aosp_linker.o" "$OBJ/agr_aosp_dynamic.o" \

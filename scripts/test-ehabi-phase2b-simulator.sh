@@ -18,7 +18,7 @@ for file in libgnustl_shared.so libagr_eh2b_probe.so libagr_eh2b_types.so libagr
 clang "${COMMON[@]}" -fobjc-arc -I"$ROOT/Runtime/GuestRuntime" -c "$ROOT/Tests/Android44EhabiPhase2BGate/ios_guest_main.m" -o "$OBJ/agr_ehabi2b_ios_main.o"
 rm -rf "$APP"; mkdir -p "$APP/Frameworks"
 clang++ "${COMMON[@]}" -Wl,-dead_strip -Wl,-rpath,@executable_path/Frameworks -F"$BUILD/angle-frameworks" \
-  "$OBJ/agr_ehabi2b_ios_main.o" "$OBJ/agr_runtime.o" "$OBJ/agr_guest_vma.o" "$OBJ/agr_host_services_darwin.o" \
+  "$OBJ/agr_ehabi2b_ios_main.o" "$OBJ/agr_runtime.o" "$OBJ/agr_bionic_allocator.o" "$OBJ/agr_guest_vma.o" "$OBJ/agr_host_services_darwin.o" \
   "$OBJ/agr_bionic_thread_attr.o" "$OBJ/agr_futex_host.o" "$OBJ/agr_bionic_sync.o" "$OBJ/agr_bionic_tls.o" \
   "$OBJ/agr_bionic_errno_host.o" "$OBJ/agr_bionic_thread_lifecycle.o" "$OBJ/agr_bionic_mmap.o" \
   "$OBJ/agr_aosp_linker.o" "$OBJ/agr_aosp_dynamic.o" "$OBJ/agr_ehabi.o" "$OBJ/agr_guest_runtime.o" \
