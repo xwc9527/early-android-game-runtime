@@ -533,10 +533,13 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
             uint32_t coverageBefore=agr_guest_unique_import_count(guest);
             writePVSProgress([NSString stringWithFormat:@"before:replay.%u.inject",replayEvents+1],guest);
             int rc=agr_guest_inject_motion(guest,motionAction,[event[@"x"] floatValue],[event[@"y"] floatValue]);
+            writePVSProgress([NSString stringWithFormat:@"after:replay.%u.inject.rc%d",replayEvents+1,rc],guest);
             int frames=MAX(1,MIN(8,[event[@"frames"] intValue]));
             for(int f=0;rc==0&&f<frames;f++) {
                 uint32_t priorSwap=agr_guest_swap_count(guest);
+                writePVSProgress([NSString stringWithFormat:@"before:replay.%u.wait.%d.swap.%u",replayEvents+1,f+1,priorSwap],guest);
                 rc=agr_guest_wait_for_swap(guest,priorSwap,500);
+                writePVSProgress([NSString stringWithFormat:@"after:replay.%u.wait.%d.rc%d",replayEvents+1,f+1,rc],guest);
             }
             /* A bounded wait returning 1 means that no new swap arrived inside
              * the checkpoint window.  NativeActivity games may legitimately

@@ -23,7 +23,7 @@ p=json.load(open(sys.argv[1]))
 trace=p.get("input_trace",[])
 print(json.dumps({"stage":p.get("stage"),"guest_thread_id":p.get("guest_thread_id"),
  "guest_pc":p.get("guest_pc"),"runtime_failure_signature":p.get("runtime_failure_signature"),
- "input_trace":trace[-24:]},separators=(",",":")))
+ "input_trace_count":len(trace),"input_trace":trace[-8:]},separators=(",",":")))
 PY
 )"
     echo "PVS1_TIMEOUT_EVIDENCE $COMPACT"
