@@ -25,6 +25,7 @@ extern void *arm_interp_create(void);
 extern void arm_interp_destroy(void *);
 extern int32_t arm_interp_write(void *, uint32_t, const uint8_t *, uint32_t);
 extern int32_t arm_interp_read(void *, uint32_t, uint8_t *, uint32_t);
+extern uint8_t *arm_interp_memory_base(void *);
 extern int32_t arm_interp_set_reg(void *, uint32_t, uint32_t);
 extern uint32_t arm_interp_get_reg(void *, uint32_t);
 extern int32_t arm_interp_run(void *, uint64_t *, uint32_t *);
@@ -41,6 +42,9 @@ static int32_t guest_read(void *u, uint32_t a, void *p, uint32_t n) {
 }
 static int32_t guest_write(void *u, uint32_t a, const void *p, uint32_t n) {
     return arm_interp_write(((GuestMemory *)u)->cpu, a, p, n);
+}
+static uint8_t *guest_memory_base(void *u) {
+    return arm_interp_memory_base(((GuestMemory *)u)->cpu);
 }
 
 static NSData *bundleData(NSString *name, NSString *extension) {
@@ -717,6 +721,7 @@ static NSString *runTests(void) {
     GuestMemory memory = { cpu };
     agr_callbacks callbacks = {0};
     callbacks.user = &memory; callbacks.read = guest_read; callbacks.write = guest_write;
+    callbacks.memory_base = guest_memory_base;
     agr_runtime *runtime = agr_runtime_create(&callbacks, 0x00100000, 0x00900000,
                                                0x02000000, 0x02800000);
     agr_load_result loaded = {0};
