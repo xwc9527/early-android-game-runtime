@@ -17,6 +17,7 @@ on:
       - 'Tests/Android44EhabiPhase2BGate/**'
       - 'scripts/test-ehabi-unwind.sh'
       - 'scripts/test-ehabi-phase2-simulator.sh'
+      - 'scripts/test-ehabi-phase2b-simulator.sh'
       - 'App/**'
       - 'scripts/build-and-run-simulator.sh'
       - 'scripts/run-simulator-smoke-bounded.py'

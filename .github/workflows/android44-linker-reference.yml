@@ -452,6 +452,18 @@ jobs:
           for key in ('same','cross','reload_cross','same_ok','cross_ok','reload_ok'):
             assert simulator[key]==android[key],(key,android,simulator)
           PY
+      - name: Run Phase 2B typed exceptions through formal GuestRuntime threads
+        run: |
+          FIXTURES="$(find reference-artifact -type f -name libagr_eh2b_suite.so -print -quit | xargs dirname)"
+          test -n "$FIXTURES"
+          bash scripts/test-ehabi-phase2b-simulator.sh "$FIXTURES"
+          python3 - <<'PY'
+          import json
+          android=json.load(open('reference-artifact/android44-ehabi2b-gate.json'))
+          ios=json.load(open('build/artifacts/ehabi2b-guest.json'))
+          for key in ('typed','inheritance','multiple','pointer','rethrow','lifetime_ref','lifetime_value','lifetime_rethrow','nested','threads'):
+              assert ios[key]==android[key],(key,android,ios)
+          PY
       - name: Upload Simulator Phase 2A evidence
         if: always()
         uses: actions/upload-artifact@v4
