@@ -2,6 +2,16 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; FIXTURES="${1:?usage: $0 FIXTURE_DIR}"
 BUILD="$ROOT/build"; OBJ="$BUILD/obj"; APP="$BUILD/AGRPhase2BSimulator.app"
+report_failure() {
+  local rc=$?
+  for file in "$BUILD/artifacts/ehabi2b-guest.json" "$BUILD/artifacts/ehabi2b-guest-exit.txt"; do
+    if [[ -f "$file" ]]; then
+      while IFS= read -r line; do echo "::error title=Phase 2B Simulator evidence::$line"; done < "$file"
+    fi
+  done
+  exit "$rc"
+}
+trap report_failure ERR
 SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"; TARGET="arm64-apple-ios15.0-simulator"
 COMMON=(-target "$TARGET" -isysroot "$SDK" -mios-simulator-version-min=15.0 -O2)
 for file in libgnustl_shared.so libagr_eh2b_probe.so libagr_eh2b_types.so libagr_eh2b_suite.so; do test -s "$FIXTURES/$file"; done
