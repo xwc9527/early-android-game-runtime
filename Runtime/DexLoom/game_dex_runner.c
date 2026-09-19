@@ -452,7 +452,7 @@ static DxResult dex_unbound_native(DxVM *vm, DxFrame *frame, DxMethod *method,
     for(uint32_t i=0;i<count;i++) {
         if(args[i].tag==DX_VAL_INT){native_args[i].kind=AGR_DEX_ARG_INT;native_args[i].value.i=args[i].i;}
         else if(args[i].tag==DX_VAL_FLOAT){native_args[i].kind=AGR_DEX_ARG_FLOAT;native_args[i].value.f=args[i].f;}
-        else if(args[i].tag==DX_VAL_NULL){native_args[i].kind=AGR_DEX_ARG_NULL;}
+        else if(args[i].tag==DX_VAL_OBJ&&!args[i].obj){native_args[i].kind=AGR_DEX_ARG_NULL;}
         else if(args[i].tag==DX_VAL_OBJ&&args[i].obj) {
             const char *text=dx_vm_get_string_value(args[i].obj);
             if(text){native_args[i].kind=AGR_DEX_ARG_STRING;native_args[i].value.string=text;}
