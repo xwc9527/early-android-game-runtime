@@ -4,9 +4,9 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"; FIXTURES="${1:?usage: $0 FIXTURE_DIR}"
 BUILD="$ROOT/build"; OBJ="$BUILD/obj"; APP="$BUILD/AGRPhase2BSimulator.app"
 report_failure() {
   local rc=$?
-  for file in "$BUILD/artifacts/ehabi2b-guest.json" "$BUILD/artifacts/ehabi2b-guest-exit.txt"; do
+  for file in "$BUILD/artifacts/ehabi2b-guest.json" "$BUILD/artifacts/ehabi2b-guest-exit.txt" "$BUILD/artifacts/ehabi2b-guest-error.txt"; do
     if [[ -f "$file" ]]; then
-      while IFS= read -r line; do echo "::error title=Phase 2B Simulator evidence::$line"; done < "$file"
+      while IFS= read -r line || [[ -n "$line" ]]; do echo "::error title=Phase 2B Simulator evidence::$line"; done < "$file"
     fi
   done
   exit "$rc"
@@ -38,10 +38,10 @@ ditto "$BUILD/angle-frameworks/libGLESv2.framework" "$APP/Frameworks/libGLESv2.f
 codesign --force --sign - "$APP/Frameworks/libEGL.framework"; codesign --force --sign - "$APP/Frameworks/libGLESv2.framework"; codesign --force --sign - "$APP"
 DEVICE="$(xcrun simctl list devices booted -j | python3 -c 'import json,sys;d=json.load(sys.stdin)["devices"];print(next(x["udid"] for xs in d.values() for x in xs))')"
 xcrun simctl install "$DEVICE" "$APP"; DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.ehabi2b data)"
-rm -f "$DATA/Documents/ehabi2b-guest.json" "$DATA/Documents/ehabi2b-guest-exit.txt"
+rm -f "$DATA/Documents/ehabi2b-guest.json" "$DATA/Documents/ehabi2b-guest-exit.txt" "$DATA/Documents/ehabi2b-guest-error.txt"
 xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.ehabi2b
 for _ in $(seq 1 120); do [[ -s "$DATA/Documents/ehabi2b-guest-exit.txt" ]] && break; sleep 1; done
-mkdir -p "$BUILD/artifacts"; cp "$DATA/Documents/ehabi2b-guest.json" "$BUILD/artifacts/"; cp "$DATA/Documents/ehabi2b-guest-exit.txt" "$BUILD/artifacts/"
+mkdir -p "$BUILD/artifacts"; cp "$DATA/Documents/ehabi2b-guest.json" "$BUILD/artifacts/"; cp "$DATA/Documents/ehabi2b-guest-exit.txt" "$BUILD/artifacts/"; cp "$DATA/Documents/ehabi2b-guest-error.txt" "$BUILD/artifacts/"
 test "$(tr -d '\r\n' < "$DATA/Documents/ehabi2b-guest-exit.txt")" = 0
 python3 - "$BUILD/artifacts/ehabi2b-guest.json" <<'PY'
 import json,sys

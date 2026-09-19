@@ -30,6 +30,7 @@ static int call_arg(agr_guest *guest, const char *symbol, uint32_t argument, int
         NSString *docs=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
         NSString *resultPath=[docs stringByAppendingPathComponent:@"ehabi2b-guest.json"];
         NSString *statusPath=[docs stringByAppendingPathComponent:@"ehabi2b-guest-exit.txt"];
+        NSString *diagnosticPath=[docs stringByAppendingPathComponent:@"ehabi2b-guest-error.txt"];
         agr_guest *guest=agr_guest_create(); int status=guest?0:2;
         if (!status && (load_fixture(guest,NSBundle.mainBundle,@"libgnustl_shared","libgnustl_shared.so",0x08000000)||
             load_fixture(guest,NSBundle.mainBundle,@"libagr_eh2b_probe","libagr_eh2b_probe.so",0x09000000)||
@@ -48,6 +49,7 @@ static int call_arg(agr_guest *guest, const char *symbol, uint32_t argument, int
         NSData *encoded=[NSJSONSerialization dataWithJSONObject:json options:0 error:nil];
         [encoded writeToFile:resultPath atomically:YES];
         [[NSString stringWithFormat:@"%d\n",status] writeToFile:statusPath atomically:YES encoding:NSUTF8StringEncoding error:nil];
+        [[NSString stringWithFormat:@"%s\n",guest?agr_guest_last_error(guest):"create failed"] writeToFile:diagnosticPath atomically:YES encoding:NSUTF8StringEncoding error:nil];
         if (guest) agr_guest_destroy(guest);
     });
     return YES;
