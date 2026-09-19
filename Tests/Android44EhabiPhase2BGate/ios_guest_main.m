@@ -31,10 +31,10 @@ static int call_arg(agr_guest *guest, const char *symbol, uint32_t argument, int
         NSString *resultPath=[docs stringByAppendingPathComponent:@"ehabi2b-guest.json"];
         NSString *statusPath=[docs stringByAppendingPathComponent:@"ehabi2b-guest-exit.txt"];
         agr_guest *guest=agr_guest_create(); int status=guest?0:2;
-        if (!status && (load_fixture(guest,NSBundle.mainBundle,@"libgnustl_shared","libgnustl_shared.so",0x01000000)||
-            load_fixture(guest,NSBundle.mainBundle,@"libagr_eh2b_probe","libagr_eh2b_probe.so",0x03000000)||
-            load_fixture(guest,NSBundle.mainBundle,@"libagr_eh2b_types","libagr_eh2b_types.so",0x04000000)||
-            load_fixture(guest,NSBundle.mainBundle,@"libagr_eh2b_suite","libagr_eh2b_suite.so",0x05000000))) status=3;
+        if (!status && (load_fixture(guest,NSBundle.mainBundle,@"libgnustl_shared","libgnustl_shared.so",0x08000000)||
+            load_fixture(guest,NSBundle.mainBundle,@"libagr_eh2b_probe","libagr_eh2b_probe.so",0x09000000)||
+            load_fixture(guest,NSBundle.mainBundle,@"libagr_eh2b_types","libagr_eh2b_types.so",0x0a000000)||
+            load_fixture(guest,NSBundle.mainBundle,@"libagr_eh2b_suite","libagr_eh2b_suite.so",0x0b000000))) status=3;
         const char *symbols[]={"agr_eh2b_typed","agr_eh2b_inheritance","agr_eh2b_multiple","agr_eh2b_pointer","agr_eh2b_rethrow","agr_eh2b_lifetime_ref","agr_eh2b_lifetime_value","agr_eh2b_lifetime_rethrow","agr_eh2b_nested","agr_eh2b_threads"};
         int32_t values[10]={0};
         if (!status) for (int i=0;i<10;i++) if (call(guest,symbols[i],&values[i])) { status=10+i; break; }
