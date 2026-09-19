@@ -36,7 +36,6 @@ static int32_t mem_write(void*o,uint32_t a,const void*p,uint32_t n){return arm_i
 static int32_t mem_load(void*o,uint32_t a,const void*p,uint32_t n){return arm_interp_load(((harness*)o)->cpu,a,(const uint8_t*)p,n);}
 static int32_t mem_protect(void*o,uint32_t a,uint32_t n,uint32_t p){return arm_interp_set_page_permissions(((harness*)o)->cpu,a,n,p);}
 static void write_u32(harness*h,uint32_t a,uint32_t v){(void)arm_interp_write(h->cpu,a,(const uint8_t*)&v,4);}
-static int read_cstr(harness*h,uint32_t a,char*out,uint32_t cap){uint32_t i;if(!a||!cap)return -1;for(i=0;i+1<cap;i++){if(arm_interp_read(h->cpu,a+i,(uint8_t*)&out[i],1))return -1;if(!out[i])return 0;}out[cap-1]=0;return -1;}
 
 static const char *const forbidden_host[] = {
     "_Unwind_RaiseException","_Unwind_Resume","__gxx_personality_v0",
