@@ -123,7 +123,14 @@ jobs:
           fi
       - name: Run existing Runtime and real-game regressions
         if: ${{ inputs.contracts_only != true }}
-        run: bash scripts/run-simulator-regressions.sh
+        run: |
+          set -o pipefail
+          bash scripts/run-simulator-regressions.sh 2>&1 | tee simulator-regressions.log || {
+            tail -n 40 simulator-regressions.log | while IFS= read -r line; do
+              echo "::error title=Simulator regression::$line"
+            done
+            exit 1
+          }
       - name: Upload Simulator evidence
         if: always()
         uses: actions/upload-artifact@v4
