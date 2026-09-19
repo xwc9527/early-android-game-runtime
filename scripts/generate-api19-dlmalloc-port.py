@@ -13,6 +13,7 @@ text = source.read_text(encoding="utf-8")
 text = re.sub(r"\bsize_t\b", "agr_dl_size_t", text)
 text = re.sub(r"\bptrdiff_t\b", "agr_dl_ptrdiff_t", text)
 text = re.sub(r"sizeof\(void\s*\*\)", "sizeof(agr_guest_address_t)", text)
+text = text.replace("sizeof(char*)", "sizeof(agr_guest_address_t)")
 
 replacements = {
     "  struct malloc_chunk* fd;": "  agr_guest_ptr<struct malloc_chunk> fd;",
@@ -34,6 +35,14 @@ replacements = {
     "static struct malloc_params mparams;": "#define mparams (*agr_dl_current_params())",
     "static struct malloc_state _gm_;\n#define gm                 (&_gm_)\n#define is_global(M)       ((M) == &_gm_)":
         "#define gm                 (agr_dl_current_gm())\n#define is_global(M)       ((M) == agr_dl_current_gm())",
+    "#define is_aligned(A)       (((agr_dl_size_t)((A)) & (CHUNK_ALIGN_MASK)) == 0)":
+        "#define is_aligned(A)       ((agr_dl_host_to_guest((const void*)(A)) & CHUNK_ALIGN_MASK) == 0)",
+    "#define align_offset(A)\\\n ((((agr_dl_size_t)(A) & CHUNK_ALIGN_MASK) == 0)? 0 :\\\n  ((MALLOC_ALIGNMENT - ((agr_dl_size_t)(A) & CHUNK_ALIGN_MASK)) & CHUNK_ALIGN_MASK))":
+        "#define align_offset(A)\\\n (((agr_dl_host_to_guest((const void*)(A)) & CHUNK_ALIGN_MASK) == 0)? 0 :\\\n  ((MALLOC_ALIGNMENT - (agr_dl_host_to_guest((const void*)(A)) & CHUNK_ALIGN_MASK)) & CHUNK_ALIGN_MASK))",
+    "if ((((agr_dl_size_t)(mem)) & (alignment - 1)) != 0)":
+        "if ((agr_dl_host_to_guest(mem) & (alignment - 1)) != 0)",
+    "char* br = (char*)mem2chunk((agr_dl_size_t)(((agr_dl_size_t)((char*)mem + alignment -\n                                                       SIZE_T_ONE)) &\n                                             -alignment));":
+        "char* br = (char*)mem2chunk(agr_dl_align_host_pointer(mem, alignment));",
 }
 for old, new in replacements.items():
     if old not in text:

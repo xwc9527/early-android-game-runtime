@@ -41,7 +41,13 @@ static uint8_t *agr_dl_guest_base(void) { return agr_dl_context->memory_base; }
 static uint32_t agr_dl_host_to_guest(const void *pointer) {
     if (!pointer) return 0;
     uintptr_t base=(uintptr_t)agr_dl_guest_base(), value=(uintptr_t)pointer;
-    return value>=base && value-base<=UINT32_MAX ? (uint32_t)(value-base) : 0;
+    if(value>=base&&value-base<=UINT32_MAX)return (uint32_t)(value-base);
+    return value<=UINT32_MAX?(uint32_t)value:0;
+}
+static void *agr_dl_align_host_pointer(void *pointer,uint32_t alignment) {
+    uint32_t address=agr_dl_host_to_guest(pointer);
+    address=(address+alignment-1u)&~(alignment-1u);
+    return agr_dl_guest_base()+address;
 }
 
 template <typename T> struct agr_guest_ptr {

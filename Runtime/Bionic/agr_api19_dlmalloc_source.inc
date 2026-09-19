@@ -1615,12 +1615,12 @@ unsigned char _BitScanReverse(unsigned long *index, unsigned long mask);
 #define CHUNK_ALIGN_MASK    (MALLOC_ALIGNMENT - SIZE_T_ONE)
 
 /* True if address a has acceptable alignment */
-#define is_aligned(A)       (((agr_dl_size_t)((A)) & (CHUNK_ALIGN_MASK)) == 0)
+#define is_aligned(A)       ((agr_dl_host_to_guest((const void*)(A)) & CHUNK_ALIGN_MASK) == 0)
 
 /* the number of bytes to offset an address to align it */
 #define align_offset(A)\
- ((((agr_dl_size_t)(A) & CHUNK_ALIGN_MASK) == 0)? 0 :\
-  ((MALLOC_ALIGNMENT - ((agr_dl_size_t)(A) & CHUNK_ALIGN_MASK)) & CHUNK_ALIGN_MASK))
+ (((agr_dl_host_to_guest((const void*)(A)) & CHUNK_ALIGN_MASK) == 0)? 0 :\
+  ((MALLOC_ALIGNMENT - (agr_dl_host_to_guest((const void*)(A)) & CHUNK_ALIGN_MASK)) & CHUNK_ALIGN_MASK))
 
 /* -------------------------- MMAP preliminaries ------------------------- */
 
@@ -3134,7 +3134,7 @@ static int init_mparams(void) {
        alignment must be at least 8.
        Alignment, min chunk size, and page size must all be powers of 2.
     */
-    if ((sizeof(agr_dl_size_t) != sizeof(char*)) ||
+    if ((sizeof(agr_dl_size_t) != sizeof(agr_guest_address_t)) ||
         (MAX_SIZE_T < MIN_CHUNK_SIZE)  ||
         (sizeof(int) < 4)  ||
         (MALLOC_ALIGNMENT < (agr_dl_size_t)8U) ||
@@ -4930,7 +4930,7 @@ static void* internal_memalign(mstate m, agr_dl_size_t alignment, agr_dl_size_t 
       mchunkptr p = mem2chunk(mem);
       if (PREACTION(m))
         return 0;
-      if ((((agr_dl_size_t)(mem)) & (alignment - 1)) != 0) { /* misaligned */
+      if ((agr_dl_host_to_guest(mem) & (alignment - 1)) != 0) { /* misaligned */
         /*
           Find an aligned spot inside chunk.  Since we need to give
           back leading space in a chunk of at least MIN_CHUNK_SIZE, if
@@ -4939,9 +4939,7 @@ static void* internal_memalign(mstate m, agr_dl_size_t alignment, agr_dl_size_t 
           We've allocated enough total room so that this is always
           possible.
         */
-        char* br = (char*)mem2chunk((agr_dl_size_t)(((agr_dl_size_t)((char*)mem + alignment -
-                                                       SIZE_T_ONE)) &
-                                             -alignment));
+        char* br = (char*)mem2chunk(agr_dl_align_host_pointer(mem, alignment));
         char* pos = ((agr_dl_size_t)(br - (char*)(p)) >= MIN_CHUNK_SIZE)?
           br : br+alignment;
         mchunkptr newp = (mchunkptr)pos;
