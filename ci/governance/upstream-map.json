@@ -114,7 +114,7 @@
       "important_callees": ["ResTable::add", "ResTable::getResource"],
       "observable_semantics": ["APK ZIP members open as Android assets", "resource table configuration selects the same value"],
       "internal_invariants": ["asset buffers remain valid for Asset lifetime"],
-      "agr_files": ["Runtime/AndroidFW"],
+      "agr_files": ["Runtime/AndroidFw"],
       "agr_entry": "agr_afw_add_apk / agr_afw_open",
       "execution_placement": "HOST-NATIVE_AOSP",
       "host_substitutions": ["host file callbacks replace Android fd acquisition"],

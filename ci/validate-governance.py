@@ -51,11 +51,13 @@ def main() -> int:
     map_keys = {"android_api","subsystem","android_version","upstream_repository","upstream_file","entry_function",
                 "important_callees","observable_semantics","internal_invariants","agr_files","agr_entry",
                 "execution_placement","host_substitutions","known_deviations","contracts"}
+    tracked = set(git("ls-files").splitlines())
     for index, entry in enumerate(upstream_map.get("entries", [])):
         missing = sorted(map_keys - set(entry))
         if missing: errors.append(f"upstream-map entry {index} missing: {','.join(missing)}")
         for agr_path in entry.get("agr_files", []):
-            if not (ROOT / agr_path).exists(): errors.append(f"upstream-map AGR path does not exist: {agr_path}")
+            tracked_exact = agr_path in tracked or any(path.startswith(agr_path.rstrip("/") + "/") for path in tracked)
+            if not tracked_exact: errors.append(f"upstream-map AGR path is not tracked with exact case: {agr_path}")
     files = changed_files(state["baseline"]["commit"])
     touched = module_changes(files, registry["modules"])
     stable = [m for m in touched if m["status"] == "stable"]

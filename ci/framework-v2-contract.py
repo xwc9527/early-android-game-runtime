@@ -26,6 +26,12 @@ def main():
     require(upstream["android_baseline"] == "Android 4.4.4_r2", "wrong upstream baseline")
     require(len(upstream["entries"]) >= 10, "encountered Runtime paths are not mapped")
     mapped_subsystems = {entry["subsystem"] for entry in upstream["entries"]}
+    import subprocess
+    tracked = set(subprocess.check_output(["git", "ls-files"], cwd=ROOT, text=True).splitlines())
+    for entry in upstream["entries"]:
+        for agr_path in entry["agr_files"]:
+            require(agr_path in tracked or any(path.startswith(agr_path.rstrip("/") + "/") for path in tracked),
+                    f"AGR mapping is not tracked with exact case: {agr_path}")
 
     samples = sorted((ROOT / "ci/governance/semantic-diffs").glob("*.json"))
     require(samples, "no real semantic differential is committed")

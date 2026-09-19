@@ -9,7 +9,7 @@ This is the human-readable index for `ci/governance/upstream-map.json`. It recor
 | Looper/InputQueue | `frameworks/base/native/android/{looper,input}.cpp`, `system/core/libutils/Looper.cpp` | `agr_guest_runtime.c` | HOST-HLE | enqueue, wake, poll, get, finish, thread owner |
 | EGL lifecycle | API19 `eglApi.cpp` | guest EGL imports -> ANGLE | HOST adapter | handle lifetime, current context, swap |
 | JNI binding | Dalvik JNI + nativehelper | `agr_jni_methods.c`, `game_dex_runner.c` | cross-domain bridge | method/object lifetime, thread context |
-| Assets/resources | androidfw `Asset.cpp`, `AssetManager.cpp`, `ResourceTypes.cpp` | `Runtime/AndroidFW` | HOST-NATIVE AOSP | APK assets and resource selection |
+| Assets/resources | androidfw `Asset.cpp`, `AssetManager.cpp`, `ResourceTypes.cpp` | `Runtime/AndroidFw` | HOST-NATIVE AOSP | APK assets and resource selection |
 | pthread/TLS | API19 Bionic pthread sources | `Runtime/Bionic`, `GuestThreadContext` | HOST-NATIVE AOSP + Darwin boundary | thread, TLS, errno, futex-visible semantics |
 | linker/libdl | API19 `bionic/linker` | `Runtime/AospLinker` | HOST-NATIVE AOSP | DSO ownership, lookup, relocation, lifecycle |
 | EHABI | API19 Bionic exidx + NDK r10e libgcc | guest GCC runtime + `Runtime/Ehabi` backtrace support | GUEST-ARM / narrow HOST-HLE | exidx ownership and propagation |
