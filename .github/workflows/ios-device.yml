@@ -63,7 +63,17 @@ jobs:
           echo "IOS_SIGNING_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
           echo "IOS_PROVISIONING_PROFILE=$RUNNER_TEMP/device.mobileprovision" >> "$GITHUB_ENV"
       - name: Build arm64 iPhone app
-        run: bash scripts/build-iphoneos.sh
+        run: |
+          set -o pipefail
+          bash scripts/build-iphoneos.sh 2>&1 | tee iphoneos-build.log || {
+            grep -E '(^|: )(fatal error|error:|undefined symbol|ld:|clang: error)' iphoneos-build.log | tail -n 30 | while IFS= read -r line; do
+              echo "::error title=iPhone build::$line"
+            done
+            tail -n 30 iphoneos-build.log | while IFS= read -r line; do
+              echo "::error title=iPhone build tail::$line"
+            done
+            exit 1
+          }
       - name: Encrypt signed IPA for transfer through public CI
         if: env.IOS_SIGNING_IDENTITY != ''
         run: |
