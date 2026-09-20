@@ -8,7 +8,7 @@
   "active": {
     "target": "Android Framework Continuation Phase 1",
     "branch": "phase/framework-runtime-continuation-1",
-    "lifecycle": "IMPLEMENTED",
+    "lifecycle": "VERIFIED",
     "observed_discontinuity": "Focused Simulator run 35528665347 retained the unchanged Frozen Bubble VM for 2000 ms: performResumeActivity returned, no exception occurred, and no method or Framework event followed.",
     "android_subsystem": "ActivityThread handleResumeActivity window/decor visibility cluster through ViewRoot/Surface handoff",
     "upstream_path": [
@@ -29,16 +29,16 @@
     "causal_status": "REAL_GAME_CONFIRMED",
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "focused Simulator execution of the complete Activity/Window cluster ending at handoff.viewroot_surface",
-    "primary_blocker": "implemented Activity/Window cluster awaits focused Simulator validation",
+    "next_validation": "exact-candidate closure: source contract, focused Simulator, Runtime regressions, iphoneos build, closure evidence",
+    "primary_blocker": "none within the Activity/Window semantic cluster; exact-candidate closure remains",
     "first_broken_boundary": "ActivityThread.handleResumeActivity continuation immediately after performResumeActivity returns",
-    "first_broken_boundary_evidence": "workflow 35528665347 exact method/framework trace on unchanged Frozen Bubble"
+    "first_broken_boundary_evidence": "workflow 35528665347 established the divergence; workflow 35529992439 proves the complete API19 Window/visibility cluster and handoff on synthetic and unchanged Frozen Bubble workloads"
   },
   "ci_budget": {
     "valid_closure_runs": 0,
     "infrastructure_failures_consume_budget": false,
     "closure_runs_used": 0,
-    "last_closure_attempt": "none for current target",
+    "last_closure_attempt": "none for current target; focused discovery 35529992439 passed",
     "automatic_reruns_available": 1,
     "discovery_policy": "information_gain",
     "consecutive_expensive_runs_without_information_gain": 0

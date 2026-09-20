@@ -10,8 +10,8 @@
     {
       "module": "DEXRuntimeLifecycle",
       "target": "Android Framework Continuation Phase 1",
-      "reason": "The active target continues the API19 ActivityThread resume coordinator after the stable onPostResume boundary; passive tracing touches the DEX invocation path without changing dispatch semantics.",
-      "evidence": "closure run 35521035773 records post_resume_complete_no_followup_event on unchanged Frozen Bubble"
+      "reason": "API19 ActivityThread.handleResumeActivity continues after the stable onPostResume boundary through Window/decor attachment, visibility, and idle scheduling; production host-side DEX lifecycle state is changed only within this evidenced cluster.",
+      "evidence": "workflow 35528665347 establishes the first broken boundary; focused workflow 35529992439 proves synthetic and unchanged Frozen Bubble traces reach handoff.viewroot_surface"
     },
     {
       "module": "NativeActivityInput",

@@ -8,7 +8,10 @@
     "map_status": "VALID",
     "revision": "Android 4.4.4_r2",
     "source_verified": true,
-    "files": ["core/java/android/app/ActivityThread.java", "core/java/android/app/Activity.java"],
+    "files": [
+      "core/java/android/app/ActivityThread.java",
+      "core/java/android/app/Activity.java"
+    ],
     "call_path": [
       "ActivityThread.handleResumeActivity",
       "Activity.getWindow",
@@ -26,8 +29,16 @@
     "ViewRoot and Surface work begins at a separate downstream ownership boundary."
   ],
   "agr": {
-    "files": ["Runtime/DexLoom/game_dex_runner.c", "Runtime/DexLoom/game_dex_runner.h", "App/main.m"],
-    "call_path": ["agr_dex_game_start_activity", "dx_vm_execute_method", "runFrameworkRuntimeContinuationDiscovery"]
+    "files": [
+      "Runtime/DexLoom/game_dex_runner.c",
+      "Runtime/DexLoom/game_dex_runner.h",
+      "App/main.m"
+    ],
+    "call_path": [
+      "agr_dex_game_start_activity",
+      "dx_vm_execute_method",
+      "runFrameworkRuntimeContinuationDiscovery"
+    ]
   },
   "differences": [
     {
@@ -47,12 +58,16 @@
     {
       "type": "REAL_GAME",
       "artifact": "workflow 35528665347 exact trace ends at coordinator.performResume.return with no autonomous progress"
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "workflow 35529992439: synthetic contract and unchanged Frozen Bubble both report all Window cluster state and terminal handoff.viewroot_surface"
     }
   ],
   "remaining_uncertainty": [
     "ViewRoot, Surface, traversal, and drawing are downstream of the explicit handoff and are not claimed by this semantic cluster."
   ],
-  "next_action": "Validate the complete Activity/Window cluster on the synthetic contract and unchanged Frozen Bubble, then run exact-candidate closure.",
+  "next_action": "Run exact-candidate closure across source, focused Simulator, Runtime regressions, and iphoneos.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "The host-side ActivityThread coordinator preserves API19 Window/decor object identity, addView ordering, visibility transition, and idle scheduling, then emits an explicit ViewRoot/Surface ownership handoff."

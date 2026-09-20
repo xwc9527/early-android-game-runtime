@@ -6,7 +6,7 @@ Baseline and last known good: `main @ 75fbe9d6dc5ad0e535fcba8e25182927d207bd3e`.
 
 Active branch: `phase/framework-runtime-continuation-1`.
 
-Lifecycle: `IMPLEMENTED`, pending focused Simulator validation.
+Lifecycle: `VERIFIED`, pending exact-candidate closure.
 
 ## Active Target
 
@@ -22,7 +22,9 @@ Classification: `ANDROID_SEMANTIC_BUG`. Semantic class: `PUBLIC_OBSERVABLE`. Cau
 
 The host-side ActivityThread coordinator now owns the continuous Activity/Window state transition. It preserves Window, DecorView, LayoutParams and WindowManager object identity; executes the observable framework calls in API19 order; records attachment/add/visibility/idle state; and stops at `handoff.viewroot_surface`.
 
-The synthetic Activity contract and unchanged Frozen Bubble probe require the complete ordered cluster. A focused Simulator run is the next validation. Exact-candidate Runtime regressions, iphoneos build and closure evidence follow only after focused evidence passes.
+Focused Simulator workflow `35529992439` passed on candidate `d0bda55456600a08fca08e1042f8ff4eb5d1b4b5`. The synthetic contract and unchanged Frozen Bubble both reported `window_attached`, `window_added`, `window_visible`, `idle_handler_scheduled`, and `viewroot_handoff`; the exact ordered trace ended at `handoff.viewroot_surface` with no exception or Runtime error. Runtime, governance, and iphoneos workflows on the same commit also passed.
+
+The next validation is one exact-candidate closure containing the final governance evidence, source contract, focused Simulator result, Runtime regressions, and iphoneos build.
 
 ## Protected Boundaries
 
