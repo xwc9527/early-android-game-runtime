@@ -23,6 +23,8 @@ def main():
             "closure summary must use declared job results")
     require("--runtime-prerequisite build/runtime-input/closure-prerequisite-failure.json" in WORKFLOW,
             "closure summary must classify missing Runtime prerequisites")
+    require("--activity-prerequisite build/artifacts/activity-prerequisite-failure.json" in WORKFLOW,
+            "closure summary must classify missing focused evidence")
     require("framework-activity-simulator-results" in WORKFLOW and
             "framework-activity-runtime-regressions" in WORKFLOW,
             "focused and stable Runtime evidence must use separate artifacts")

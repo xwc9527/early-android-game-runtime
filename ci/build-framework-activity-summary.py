@@ -27,6 +27,7 @@ def main() -> int:
     parser.add_argument("--output", default="build/artifacts/framework-activity-run-summary.json")
     parser.add_argument("--stage-results", default="")
     parser.add_argument("--runtime-prerequisite", default="")
+    parser.add_argument("--activity-prerequisite", default="")
     args = parser.parse_args()
 
     activity = load(args.activity_result)
@@ -155,6 +156,10 @@ def main() -> int:
     attempt_spec.loader.exec_module(attempt_tool)
     if args.runtime_prerequisite and pathlib.Path(args.runtime_prerequisite).is_file():
         prerequisite = json.loads(pathlib.Path(args.runtime_prerequisite).read_text(encoding="utf-8"))
+        summary["run"]["closure_attempt"]["infrastructure_defects"].append(
+            prerequisite.get("failure_classification", "WORKFLOW_DEFECT"))
+    if args.activity_prerequisite and pathlib.Path(args.activity_prerequisite).is_file():
+        prerequisite = json.loads(pathlib.Path(args.activity_prerequisite).read_text(encoding="utf-8"))
         summary["run"]["closure_attempt"]["infrastructure_defects"].append(
             prerequisite.get("failure_classification", "WORKFLOW_DEFECT"))
     classification, reasons = attempt_tool.classify_summary(summary)

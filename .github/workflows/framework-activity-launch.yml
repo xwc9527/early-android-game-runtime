@@ -165,12 +165,14 @@ jobs:
         with:
           fetch-depth: 0
       - name: Download focused evidence
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: framework-activity-simulator-results
           path: build/closure-input
       - name: Download isolated Runtime evidence
         if: always()
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: framework-activity-runtime-regressions
@@ -180,6 +182,15 @@ jobs:
         if: always()
         run: |
           mkdir -p build/artifacts
+          if [[ ! -s build/closure-input/framework-activity-launch.json ]]; then
+            printf '%s\n' '{"passed":false,"contract":{},"real_apks":[]}' > build/closure-input/framework-activity-launch.json
+            python3 - <<'PY'
+            import json
+            json.dump({"classification":"INVALID","failure_classification":"WORKFLOW_DEFECT",
+                       "missing_prerequisite":"framework-activity-launch.json"},
+                      open("build/artifacts/activity-prerequisite-failure.json", "w"), indent=2)
+            PY
+          fi
           python3 - <<'PY'
           import json, os
           mapping = {
@@ -198,7 +209,8 @@ jobs:
           python3 ci/build-framework-activity-summary.py \
             --activity-result build/closure-input/framework-activity-launch.json \
             --stage-results build/artifacts/closure-stage-results.json \
-            --runtime-prerequisite build/runtime-input/closure-prerequisite-failure.json
+            --runtime-prerequisite build/runtime-input/closure-prerequisite-failure.json \
+            --activity-prerequisite build/artifacts/activity-prerequisite-failure.json
           python3 ci/validate-governance.py --mode closure \
             --summary build/artifacts/framework-activity-run-summary.json
         env:
