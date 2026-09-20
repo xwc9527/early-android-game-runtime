@@ -7,7 +7,7 @@
   },
   "active": {
     "target": "Evidence Classifier V2.1 correction",
-    "branch": "fix/evidence-classifier-v2.1",
+    "branch": "feature/evidence-classifier-v2.1",
     "lifecycle": "IMPLEMENTED",
     "observed_discontinuity": "a passing PVS1 target retained a normalized failure signature and unrelated RunningBoard log lines could classify AGR process death",
     "android_subsystem": "governance evidence classifier",

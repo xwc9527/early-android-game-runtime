@@ -6,7 +6,7 @@ Baseline: `main @ 09d6953e3e2f2bf6ca63565e5458a71815d298e7`
 
 Last known good: `09d6953e3e2f2bf6ca63565e5458a71815d298e7` on formal `main`
 
-Active branch: `main` (PVS1 closure-tested tree merged; evidence-classifier governance correction in progress)
+Active branch: `feature/evidence-classifier-v2.1` (PVS1 closure-tested tree merged; evidence-classifier governance correction in progress)
 
 Lifecycle state: `MERGED` (`PVS1` closure-tested tree is on main)
 
