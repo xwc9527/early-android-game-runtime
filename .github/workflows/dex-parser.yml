@@ -36,7 +36,7 @@ jobs:
           set +e
           bash scripts/test-dex-parser.sh \
             build/dex-samples/pixel-dungeon.dex \
-            build/dex-samples/frozen-bubble.dex | tee build/dex-parser-results.jsonl
+            build/dex-samples/frozen-bubble.dex 2>&1 | tee build/dex-parser-results.log
           status=${PIPESTATUS[0]}
           while IFS= read -r result; do
             if [[ "$status" -eq 0 ]]; then
@@ -44,7 +44,7 @@ jobs:
             else
               echo "::error file=Tests/DexLoom/dex_parser_probe.c,title=DEX parser evidence::$result"
             fi
-          done < build/dex-parser-results.jsonl
+          done < build/dex-parser-results.log
           echo "status=$status" >> "$GITHUB_OUTPUT"
           exit 0
       - name: Upload focused evidence
@@ -52,7 +52,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dex-parser-results
-          path: build/dex-parser-results.jsonl
+          path: build/dex-parser-results.log
       - name: Enforce parser result
         if: always()
         run: test "${{ steps.parser.outputs.status }}" = 0
