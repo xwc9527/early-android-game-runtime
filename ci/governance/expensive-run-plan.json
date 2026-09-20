@@ -1,10 +1,18 @@
 {
   "schema_version": 1,
-  "enabled": false,
-  "question": "",
-  "current_uncertainty": [],
-  "expected_outcome_a": {"result": "", "excludes": []},
-  "expected_outcome_b": {"result": "", "excludes": []},
-  "why_cheaper_test_is_insufficient": "",
+  "enabled": true,
+  "question": "Does the corrected generic APK probe make both Pixel Dungeon and Frozen Bubble cross the former dex_parse_failed boundary in the compiled Simulator application?",
+  "current_uncertainty": [
+    "The focused Linux contracts prove both original classes.dex files parse, but do not exercise the Objective-C generic APK probe or bundled Simulator resources."
+  ],
+  "expected_outcome_a": {
+    "result": "Both APKs report dex_loaded and the next generic missing_framework:activity_launch boundary.",
+    "excludes": ["a real parser rejection", "continued coupling to Lpoc/Bridge", "Simulator resource packaging mismatch"]
+  },
+  "expected_outcome_b": {
+    "result": "At least one APK still reports dex_parse with a precise DxResult or fails before parsing.",
+    "excludes": ["the hypothesis that both former failures were fully explained by the shared harness misclassification"]
+  },
+  "why_cheaper_test_is_insufficient": "Source inspection and focused Linux contracts cannot prove that the compiled UIKit harness takes the corrected branch with the APK resources bundled by the Simulator build.",
   "prior_expensive_runs_without_information_gain": 0
 }

@@ -8,7 +8,7 @@
   "active": {
     "target": "DEX Parser Compatibility Phase 1",
     "branch": "phase/dex-parser-compatibility-1",
-    "lifecycle": "DISCOVERY",
+    "lifecycle": "IMPLEMENTED",
     "observed_discontinuity": "Pixel Dungeon and Frozen Bubble were both reported as dex_parse_failed by the generic APK smoke",
     "android_subsystem": "Dalvik/libdex DEX loading",
     "upstream_path": [
@@ -25,13 +25,13 @@
     "active_explanations": [],
     "earliest_evidenced_divergence": "the generic APK smoke calls poc_create, which requires the project-only Lpoc/Bridge class after parsing, and labels any NULL result dex_parse_failed",
     "semantic_class": "PUBLIC_OBSERVABLE",
-    "causal_status": "PLAUSIBLE",
-    "evidence_level": "SOURCE_INFERRED",
+    "causal_status": "CONTRACT_CONFIRMED",
+    "evidence_level": "CONTRACT_CONFIRMED",
     "classification": "HARNESS_BUG",
-    "next_validation": "run the standalone dx_dex_parse probe against both original classes.dex files",
-    "primary_blocker": "the current smoke result does not distinguish parser acceptance from PoC fixture class lookup",
+    "next_validation": "run the corrected generic APK probe in Simulator and identify each APK's next boundary",
+    "primary_blocker": "the corrected App harness has not yet been exercised with bundled APK resources in Simulator",
     "first_broken_boundary": "generic APK probe result classification",
-    "first_broken_boundary_evidence": "App/main.m and Runtime/DexLoom/poc_host.c source path"
+    "first_broken_boundary_evidence": "focused run 35489492142 parsed both original DEX files; run 35489607971 also accepted the project-owned no-Bridge DEX contract"
   },
   "ci_budget": {
     "valid_closure_runs": 1,

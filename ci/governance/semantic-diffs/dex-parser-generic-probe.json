@@ -1,0 +1,74 @@
+{
+  "schema_version": 2,
+  "classification": "HARNESS_BUG",
+  "subsystem": "Dalvik/libdex DEX loading",
+  "observed_discontinuity": "Pixel Dungeon and Frozen Bubble were both reported as dex_parse_failed by the generic APK smoke.",
+  "upstream": {
+    "map_entry": "dalvik.dex.parse",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "vm/RawDexFile.cpp",
+      "vm/analysis/DexPrepare.cpp",
+      "libdex/DexSwapVerify.cpp",
+      "libdex/DexFile.cpp"
+    ],
+    "call_path": [
+      "dvmRawDexFileOpenArray",
+      "dvmPrepareDexInMemory",
+      "dexSwapAndVerify",
+      "dexFileParse",
+      "dexFileSetupBasicPointers"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "A valid API19 DEX is accepted independently of the application classes it defines.",
+    "DEX structural parse failure is reported separately from later VM class resolution and Activity launch failure."
+  ],
+  "agr": {
+    "files": [
+      "App/main.m",
+      "Runtime/DexLoom/poc_host.c",
+      "Runtime/DexLoom/DEX/dx_dex.c"
+    ],
+    "call_path": [
+      "probeGenericSample",
+      "poc_create",
+      "dx_dex_parse",
+      "dx_vm_load_class Lpoc/Bridge;"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "The generic APK smoke used the project PoC constructor, which requires Lpoc/Bridge after successful parsing, and classified every NULL result as dex_parse_failed.",
+      "relevance": "Both real DEX files parse successfully; their shared failure signature came from a post-parse fixture binding requirement."
+    }
+  ],
+  "earliest_evidenced_divergence": "probeGenericSample conflated dx_dex_parse with poc_create's later fixture-specific class and method lookup.",
+  "causal_status": "CONTRACT_CONFIRMED",
+  "evidence_level": "CONTRACT_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "pinned API19 Dalvik sources and upstream-map entry dalvik.dex.parse"
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "focused run 35489492142 parsed Pixel Dungeon and Frozen Bubble DEX 035 files"
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "focused run 35489607971 parsed a project-owned valid DEX with no Lpoc/Bridge descriptor"
+    }
+  ],
+  "remaining_uncertainty": [
+    "The corrected generic probe has not yet run in the Simulator application."
+  ],
+  "next_action": "Run one admitted Simulator discovery to verify both APKs cross the old failure boundary and expose their next boundary.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "Use dx_dex_parse directly for generic parse classification; retain poc_create only for its project-owned JNI fixture."
+}

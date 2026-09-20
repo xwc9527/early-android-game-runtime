@@ -709,6 +709,94 @@
         "activity_gc_root_contract",
         "PVS1 real-APK regression"
       ]
+    },
+    {
+      "id": "dalvik.dex.parse",
+      "subsystem": "Dalvik/libdex",
+      "android_api": "DEX structural parse and in-memory load",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/dalvik",
+        "paths": [
+          "vm/RawDexFile.cpp",
+          "vm/analysis/DexPrepare.cpp",
+          "libdex/DexSwapVerify.cpp",
+          "libdex/DexFile.cpp"
+        ],
+        "symbols": [
+          "dvmRawDexFileOpenArray",
+          "dvmPrepareDexInMemory",
+          "dexSwapAndVerify",
+          "dexFileParse",
+          "dexFileSetupBasicPointers"
+        ],
+        "source_hashes": {
+          "vm/RawDexFile.cpp": "54fb5070eca317e58ad14f6bdce91926ddb1f2d5cb715c6cf2a25f8ec4aa0ffc",
+          "vm/analysis/DexPrepare.cpp": "5e0b8c4f529fcf2eea2a439c850a740ef8070e348b1c1896cc0074a79e7d2b90",
+          "libdex/DexSwapVerify.cpp": "3a147b4d1f9da86c99217113a5c119961b60161ad9c7588f708a12378217d9da",
+          "libdex/DexFile.cpp": "48dbbd4dcf9e279a8d5536777313ad481d8e37dad48fa090440bb53b4d4f6d35"
+        },
+        "source_urls": {
+          "vm/RawDexFile.cpp": "https://android.googlesource.com/platform/dalvik/+/android-4.4.4_r2/vm/RawDexFile.cpp?format=TEXT",
+          "vm/analysis/DexPrepare.cpp": "https://android.googlesource.com/platform/dalvik/+/android-4.4.4_r2/vm/analysis/DexPrepare.cpp?format=TEXT",
+          "libdex/DexSwapVerify.cpp": "https://android.googlesource.com/platform/dalvik/+/android-4.4.4_r2/libdex/DexSwapVerify.cpp?format=TEXT",
+          "libdex/DexFile.cpp": "https://android.googlesource.com/platform/dalvik/+/android-4.4.4_r2/libdex/DexFile.cpp?format=TEXT"
+        },
+        "symbols_by_path": {
+          "vm/RawDexFile.cpp": [
+            "dvmRawDexFileOpenArray"
+          ],
+          "vm/analysis/DexPrepare.cpp": [
+            "dvmPrepareDexInMemory"
+          ],
+          "libdex/DexSwapVerify.cpp": [
+            "dexSwapAndVerify"
+          ],
+          "libdex/DexFile.cpp": [
+            "dexFileParse",
+            "dexFileSetupBasicPointers"
+          ]
+        }
+      },
+      "agr": {
+        "paths": [
+          "App/main.m",
+          "Runtime/DexLoom/DEX/dx_dex.c",
+          "Runtime/DexLoom/poc_host.c"
+        ],
+        "symbols": [
+          "probeGenericSample",
+          "dx_dex_parse",
+          "poc_create"
+        ],
+        "source_hashes": {
+          "App/main.m": "6387105d1d9c9c7bcca5451125877c7a5136f3b7bdca69de9fd21e9a064a8a62",
+          "Runtime/DexLoom/DEX/dx_dex.c": "94cc603e0b985213fddec8b4b3935e5074603fe31f85032963384794da1eb4f8",
+          "Runtime/DexLoom/poc_host.c": "7844c264f4ab1533ac91d4f35af71c07a60cb4ef15c8d6bfab3db5c28f982de1"
+        }
+      },
+      "verified_at_commit": "c592e6bd65b4f59c45e32ea09d471949d835d2cc",
+      "status": "VALID",
+      "dependencies": [],
+      "observable_semantics": [
+        "A valid API19 DEX is accepted independently of which application classes it defines.",
+        "DEX structural parse failure is distinct from later VM class loading or Framework launch failure."
+      ],
+      "internal_invariants": [
+        "Parser success establishes bounded DEX tables and counts before VM class resolution."
+      ],
+      "execution_placement": "HOST-SIDE DEX RUNTIME",
+      "host_substitutions": [
+        "DexLoom provides an API19-compatible host parser implementation."
+      ],
+      "known_deviations": [
+        "The focused AGR parser does not execute Dalvik optimization during this parse-only boundary."
+      ],
+      "contracts": [
+        "dex-parser no-Bridge fixture",
+        "Pixel Dungeon classes.dex parse",
+        "Frozen Bubble classes.dex parse"
+      ]
     }
   ]
 }

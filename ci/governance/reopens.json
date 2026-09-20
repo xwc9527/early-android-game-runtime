@@ -1,4 +1,11 @@
 {
   "schema_version": 1,
-  "reopens": []
+  "reopens": [
+    {
+      "module": "NativeActivityInput",
+      "target": "DEX Parser Compatibility Phase 1",
+      "reason": "App/main.m contains the generic APK smoke harness whose DEX-stage classifier is the evidenced primary blocker; the change does not alter NativeActivity/Input production semantics.",
+      "evidence": "focused runs 35489492142 and 35489607971 prove parser success and isolate the post-parse PoC binding misclassification"
+    }
+  ]
 }

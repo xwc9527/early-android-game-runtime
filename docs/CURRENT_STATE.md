@@ -8,11 +8,13 @@ Last known good: `09d6953e3e2f2bf6ca63565e5458a71815d298e7` on formal `main`
 
 Active branch: `phase/dex-parser-compatibility-1`
 
-Lifecycle state: `DISCOVERY` (`PVS1` remains merged/stable; DEX Parser Compatibility Phase 1 is active)
+Lifecycle state: `IMPLEMENTED` (`PVS1` remains merged/stable; DEX Parser Compatibility Phase 1 awaits Simulator evidence)
 
 ## Active Target
 
 DEX Parser Compatibility Phase 1: identify the precise common or separate reason Pixel Dungeon and Frozen Bubble were reported as `dex_parse_failed`, compare it to pinned API19 Dalvik/libdex, and remove the first generic compatibility defect.
+
+Focused parsing proved both original DEX 035 files are accepted by `dx_dex_parse`. The common defect was the generic smoke calling `poc_create`, whose project-only `Lpoc/Bridge;` binding occurs after parsing, then labelling any NULL result as `dex_parse_failed`. The corrected harness parses independently and reports later Activity/Framework launch as a separate boundary.
 
 ## Observed Discontinuity
 
