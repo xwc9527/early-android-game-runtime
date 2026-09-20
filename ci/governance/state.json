@@ -2,13 +2,13 @@
   "schema_version": 1,
   "baseline": {
     "branch": "main",
-    "commit": "03e104282debde07d331a6e7791a1ab89b18cb09",
-    "last_known_good": "03e104282debde07d331a6e7791a1ab89b18cb09"
+    "commit": "05c6fda91eba054ee7a379cb0aa46d60c032d649",
+    "last_known_good": "05c6fda91eba054ee7a379cb0aa46d60c032d649"
   },
   "active": {
     "target": "Frozen Bubble Post-Resume Compatibility Phase 1",
     "branch": "phase/frozen-bubble-post-resume-1",
-    "lifecycle": "IMPLEMENTED",
+    "lifecycle": "MERGED",
     "observed_discontinuity": "Focused workflow 35519334286 retained the real Frozen Bubble VM after onResume and proved zero subsequent method/instruction progress; API19 Activity.performResume requires onPostResume before resume completes.",
     "android_subsystem": "Android Framework Activity post-resume lifecycle",
     "upstream_path": [
@@ -26,9 +26,9 @@
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
     "next_validation": "exact-candidate closure gates for focused post-resume contract, Runtime regressions, and iphoneos build",
-    "primary_blocker": "none; onPostResume is implemented and focused run 35520119540 records the next boundary as no follow-up event dispatch",
-    "first_broken_boundary": "none for this phase target",
-    "first_broken_boundary_evidence": "focused Simulator run 35520119540"
+    "primary_blocker": "none",
+    "first_broken_boundary": "none",
+    "first_broken_boundary_evidence": "closure evidence"
   },
   "ci_budget": {
     "valid_closure_runs": 0,

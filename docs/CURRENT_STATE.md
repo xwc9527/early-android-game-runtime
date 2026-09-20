@@ -2,13 +2,13 @@
 
 Updated: 2026-09-20
 
-Baseline: `main @ 03e104282debde07d331a6e7791a1ab89b18cb09`
+Baseline: `main @ 05c6fda91eba054ee7a379cb0aa46d60c032d649`
 
-Last known good: `03e104282debde07d331a6e7791a1ab89b18cb09` on formal `main`
+Last known good: `05c6fda91eba054ee7a379cb0aa46d60c032d649` on formal `main`
 
 Active branch: `phase/frozen-bubble-post-resume-1`
 
-Lifecycle state: `IMPLEMENTED` (`Frozen Bubble Post-Resume Compatibility Phase 1`; closure not yet run)
+Lifecycle state: `MERGED` (`Frozen Bubble Post-Resume Compatibility Phase 1` closure-tested tree is on main)
 
 ## Previous Target
 
