@@ -8,4 +8,10 @@ cc -std=c11 -O2 -I"$ROOT/Runtime/DexLoom/Include" \
   "$ROOT/Runtime/DexLoom/Base/dx_memory.c" \
   "$ROOT/Runtime/DexLoom/Base/dx_arena.c" \
   "$ROOT/Runtime/DexLoom/DEX/dx_dex.c" -o "$BUILD/dex_parser_probe"
-for dex in "$@"; do "$BUILD/dex_parser_probe" "$dex"; done
+status=0
+for dex in "$@"; do
+  if ! "$BUILD/dex_parser_probe" "$dex"; then
+    status=1
+  fi
+done
+exit "$status"

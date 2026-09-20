@@ -30,4 +30,25 @@ jobs:
                   (root/f'{name}.dex').write_bytes(apk.read('classes.dex'))
           PY
       - name: Run focused AGR parser
-        run: bash scripts/test-dex-parser.sh build/dex-samples/pixel-dungeon.dex build/dex-samples/frozen-bubble.dex
+        id: parser
+        shell: bash
+        run: |
+          set +e
+          bash scripts/test-dex-parser.sh \
+            build/dex-samples/pixel-dungeon.dex \
+            build/dex-samples/frozen-bubble.dex | tee build/dex-parser-results.jsonl
+          status=${PIPESTATUS[0]}
+          while IFS= read -r result; do
+            echo "::notice title=DEX parser result::$result"
+          done < build/dex-parser-results.jsonl
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Upload focused evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dex-parser-results
+          path: build/dex-parser-results.jsonl
+      - name: Enforce parser result
+        if: always()
+        run: test "${{ steps.parser.outputs.status }}" = 0
