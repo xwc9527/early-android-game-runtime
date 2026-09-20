@@ -102,6 +102,10 @@ if [[ "${DEX_PARSER_COMPATIBILITY:-0}" == "1" ]]; then
   python3 - "$RESULT_PATH" <<'PY'
 import json,sys
 r=json.load(open(sys.argv[1]))
+for item in r.get("results", []):
+    level="notice" if item.get("stage") == "dex_loaded" else "error"
+    compact=json.dumps(item,sort_keys=True,separators=(",",":"))
+    print(f"::{level} title=Simulator DEX evidence::{compact}")
 assert r.get("passed") is True, r
 assert {x.get("id") for x in r.get("results", [])} == {"pixel-dungeon", "frozen-bubble"}, r
 assert all(x.get("stage") == "dex_loaded" for x in r["results"]), r

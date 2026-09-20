@@ -6,6 +6,8 @@
 #include <string.h>
 #include "agr_runtime.h"
 #include "dx_log.h"
+#include "dx_apk.h"
+#include "dx_memory.h"
 #include "dx_vm.h"
 #include "agr_androidfw.h"
 #include "agr_bitmap.h"
@@ -708,12 +710,16 @@ static NSString *failureSignature(NSString *stage, NSString *detail) {
     return [NSString stringWithFormat:@"%@:%@",stage,clean];
 }
 
-static NSData *apkMember(agr_afw_manager *assets, NSString *member) {
-    agr_afw_asset *asset = agr_afw_open(assets,member.UTF8String,3);
-    if (!asset) return nil;
-    const void *bytes = agr_afw_buffer(asset); int64_t length = agr_afw_length(asset);
-    NSData *data = bytes && length > 0 ? [NSData dataWithBytes:bytes length:(NSUInteger)length] : nil;
-    agr_afw_close(asset); return data;
+static NSData *apkMember(NSString *apkPath, NSString *member) {
+    DxApkFile *apk=NULL; const DxZipEntry *entry=NULL; uint8_t *bytes=NULL; uint32_t length=0;
+    if (!apkPath || dx_apk_open_file(apkPath.UTF8String,&apk)!=DX_OK ||
+        dx_apk_find_entry(apk,member.UTF8String,&entry)!=DX_OK ||
+        dx_apk_extract_entry(apk,entry,&bytes,&length)!=DX_OK) {
+        if (apk) dx_apk_close(apk);
+        return nil;
+    }
+    NSData *data=length ? [NSData dataWithBytes:bytes length:length] : [NSData data];
+    dx_free(bytes); dx_apk_close(apk); return data;
 }
 
 static NSDictionary *probeGenericSample(NSDictionary *sample) {
@@ -735,7 +741,7 @@ static NSDictionary *probeGenericSample(NSDictionary *sample) {
     NSArray *libraries = sample[@"armv7_libraries"];
     BOOL hasDex = [sample[@"has_dex"] boolValue];
     if (!libraries.count) {
-        NSData *dex = hasDex ? apkMember(assets,@"classes.dex") : nil;
+        NSData *dex = hasDex ? apkMember(apkPath,@"classes.dex") : nil;
         DxDexFile *parsedDex = NULL;
         DxResult parseResult = dex ? dx_dex_parse(dex.bytes,(uint32_t)dex.length,&parsedDex)
                                    : DX_ERR_NOT_FOUND;
@@ -772,7 +778,7 @@ static NSDictionary *probeGenericSample(NSDictionary *sample) {
         base += 0x01000000u;
     }
     if (!failure && mounted == 0 && hasDex) {
-        NSData *dex = apkMember(assets,@"classes.dex");
+        NSData *dex = apkMember(apkPath,@"classes.dex");
         NSString *dexPath = [NSTemporaryDirectory() stringByAppendingPathComponent:
             [NSString stringWithFormat:@"%@.dex",sample[@"id"]]];
         if (!dex || ![dex writeToFile:dexPath atomically:YES] || agr_guest_load_dex(guest,dexPath.UTF8String)) {
