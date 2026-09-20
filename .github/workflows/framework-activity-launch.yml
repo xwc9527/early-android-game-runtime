@@ -169,13 +169,43 @@ jobs:
         with:
           name: framework-activity-simulator-results
           path: build/closure-input
+      - name: Download isolated Runtime evidence
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: framework-activity-runtime-regressions
+          path: build/runtime-input
+          if-no-files-found: ignore
       - name: Build exact-commit closure summary
-        if: ${{ needs.source-and-fixture.result == 'success' && needs.focused-simulator.result == 'success' && needs.runtime-regressions.result == 'success' && needs.iphoneos.result == 'success' }}
+        if: always()
         run: |
+          mkdir -p build/artifacts
+          python3 - <<'PY'
+          import json, os
+          mapping = {
+              "source_fixture": os.environ["SOURCE_RESULT"],
+              "focused_activity_simulator": os.environ["FOCUSED_RESULT"],
+              "runtime_contracts": os.environ["RUNTIME_RESULT"],
+              "bounded_runtime_smoke": os.environ["RUNTIME_RESULT"],
+              "runtime_regressions": os.environ["RUNTIME_RESULT"],
+              "iphoneos_build": os.environ["IPHONEOS_RESULT"],
+          }
+          translated = {key: ("PASS" if value == "success" else
+                               "BLOCKED_BY_VALID_FAILURE" if value in ("skipped", "cancelled") else "FAIL")
+                        for key, value in mapping.items()}
+          json.dump(translated, open("build/artifacts/closure-stage-results.json", "w"), indent=2)
+          PY
           python3 ci/build-framework-activity-summary.py \
-            --activity-result build/closure-input/framework-activity-launch.json
+            --activity-result build/closure-input/framework-activity-launch.json \
+            --stage-results build/artifacts/closure-stage-results.json \
+            --runtime-prerequisite build/runtime-input/closure-prerequisite-failure.json
           python3 ci/validate-governance.py --mode closure \
             --summary build/artifacts/framework-activity-run-summary.json
+        env:
+          SOURCE_RESULT: ${{ needs.source-and-fixture.result }}
+          FOCUSED_RESULT: ${{ needs.focused-simulator.result }}
+          RUNTIME_RESULT: ${{ needs.runtime-regressions.result }}
+          IPHONEOS_RESULT: ${{ needs.iphoneos.result }}
       - name: Publish closure evidence
         if: always()
         uses: actions/upload-artifact@v4

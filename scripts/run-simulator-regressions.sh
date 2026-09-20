@@ -3,6 +3,17 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ARTIFACTS="$ROOT/build/artifacts"
+for REQUIRED in zero-input-device.txt runtime-smoke.json; do
+  if [[ ! -s "$ARTIFACTS/$REQUIRED" ]]; then
+    echo "MISSING_PREREQUISITE $REQUIRED" >&2
+    python3 - "$REQUIRED" "$ARTIFACTS/closure-prerequisite-failure.json" <<'PY'
+import json, sys
+json.dump({"classification":"INVALID","failure_classification":"WORKFLOW_DEFECT",
+           "missing_prerequisite":sys.argv[1]}, open(sys.argv[2], "w"), indent=2)
+PY
+    exit 78
+  fi
+done
 DEVICE="$(cat "$ARTIFACTS/zero-input-device.txt")"
 DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
 RESULT="$DATA/Documents/runtime-smoke.json"

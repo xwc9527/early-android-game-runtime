@@ -25,6 +25,8 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--activity-result", required=True)
     parser.add_argument("--output", default="build/artifacts/framework-activity-run-summary.json")
+    parser.add_argument("--stage-results", default="")
+    parser.add_argument("--runtime-prerequisite", default="")
     args = parser.parse_args()
 
     activity = load(args.activity_result)
@@ -46,7 +48,7 @@ def main() -> int:
                        synthetic.get("application_root") == 1 and
                        synthetic.get("activity_root") == 1 and crossed)
     raw_fingerprint = hashlib.sha256(json.dumps(activity, sort_keys=True).encode()).hexdigest()
-    stages = {
+    default_stages = {
         "source_fixture": "PASS",
         "focused_activity_simulator": "PASS" if target_pass else "FAIL",
         "runtime_contracts": "PASS",
@@ -54,6 +56,9 @@ def main() -> int:
         "runtime_regressions": "PASS",
         "iphoneos_build": "PASS",
     }
+    stages = default_stages
+    if args.stage_results:
+        stages = json.loads(pathlib.Path(args.stage_results).read_text(encoding="utf-8"))
     evidence = {
         "source_gate": True,
         "synthetic_launch_contract": bool(synthetic),
@@ -148,6 +153,10 @@ def main() -> int:
     attempt_spec = importlib.util.spec_from_file_location("closure_attempt", ROOT / "ci/closure-attempt.py")
     attempt_tool = importlib.util.module_from_spec(attempt_spec)
     attempt_spec.loader.exec_module(attempt_tool)
+    if args.runtime_prerequisite and pathlib.Path(args.runtime_prerequisite).is_file():
+        prerequisite = json.loads(pathlib.Path(args.runtime_prerequisite).read_text(encoding="utf-8"))
+        summary["run"]["closure_attempt"]["infrastructure_defects"].append(
+            prerequisite.get("failure_classification", "WORKFLOW_DEFECT"))
     classification, reasons = attempt_tool.classify_summary(summary)
     summary["run"]["closure_attempt"]["classification"] = classification
     summary["run"]["closure_attempt"]["consumes_budget"] = classification in ("VALID_PASS", "VALID_FAIL")

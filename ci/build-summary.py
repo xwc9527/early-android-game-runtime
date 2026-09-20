@@ -80,6 +80,7 @@ def main():
               "semantic_diff":bool(args.semantic_diff and (ROOT/args.semantic_diff).is_file())}
     defects=list(dict.fromkeys(args.infrastructure_defect))
     if args.run_kind=="closure" and diagnostic.get("classification")=="HARNESS_BUG": defects.append("HARNESS_DEFECT")
+    if args.run_kind=="closure" and diagnostic.get("classification")=="EXTERNAL_SERVICE_FAILURE": defects.append("EXTERNAL_SERVICE_FAILURE")
     attempt={"classification":"NOT_APPLICABLE","consumes_budget":False,"automatic_rerun_permitted":False,
              "required_stages":normalized_stages if args.run_kind=="closure" else {},
              "required_evidence":evidence if args.run_kind=="closure" else {},

@@ -3,7 +3,7 @@ name: AGR governance
 on:
   pull_request:
   push:
-    branches: [main, bionic-thread-migration, playable-vertical-slice-1, 'feature/**', 'phase/**']
+    branches: [main, bionic-thread-migration, playable-vertical-slice-1, 'feature/**', 'phase/**', 'governance/**']
     paths:
       - 'AGENTS.md'
       - 'docs/**'
@@ -33,6 +33,8 @@ jobs:
       - name: Run Framework V2 contract
         run: |
           python3 ci/framework-v2-contract.py
+          python3 ci/test-closure-governance.py
+          python3 ci/test-framework-activity-workflow.py
           python3 ci/test-evidence-classifier.py
       - name: Validate JSON documents
         run: |

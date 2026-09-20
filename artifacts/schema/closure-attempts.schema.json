@@ -16,9 +16,13 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["run_id", "tested_commit", "tested_tree", "classification", "consumes_budget"],
+        "required": ["run_id", "target", "tested_commit", "tested_tree", "classification", "consumes_budget"],
         "properties": {
+          "target": {"type": "string", "minLength": 1},
           "classification": {"enum": ["VALID_PASS", "VALID_FAIL", "INVALID"]},
+          "consumes_budget": {"type": "boolean"},
+          "approval_reference": {"type": "object", "required": ["target", "commit", "tree", "reference"]},
+          "failure_classification": {"enum": ["ANDROID_SEMANTIC_BUG", "HOST_ADAPTATION_BUG", "AGR_INTERNAL_BUG", "HARNESS_BUG", "WORKFLOW_DEFECT", "REFERENCE_MISMATCH", "UNKNOWN", "EXTERNAL_SERVICE_FAILURE"]},
           "defect_class": {"enum": ["HARNESS_DEFECT", "RUNNER_DEFECT", "COLLECTOR_DEFECT", "ARTIFACT_DEFECT", "TIMEOUT_HIERARCHY_DEFECT", "WORKFLOW_DEFECT"]}
         }
       }

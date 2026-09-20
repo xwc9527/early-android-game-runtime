@@ -13,6 +13,7 @@
   "attempts": [
     {
       "run_id": "35469009073",
+      "target": "Framework / Activity Launch Compatibility Phase 1",
       "tested_commit": "15dcd2223eaead03837a4645fbc5d044fb2b3502",
       "tested_tree": "a372ece3c0b62f694abd268a6adf596c878fe0c4",
       "classification": "INVALID",
@@ -23,6 +24,7 @@
     },
     {
       "run_id": "35485955807",
+      "target": "Framework / Activity Launch Compatibility Phase 1",
       "tested_commit": "e271c17a6b8fdc9ed88e6026b8ec67f4b0da245b",
       "tested_tree": "09ac50a654ef99dae72373b9477a1fd0cf9daeae",
       "classification": "INVALID",
@@ -34,6 +36,7 @@
     },
     {
       "run_id": "35504120421",
+      "target": "Framework / Activity Launch Compatibility Phase 1",
       "tested_commit": "67de5e0435e476bca388c5a63c6b56662b86c753",
       "tested_tree": "b94b73df091d8b19af2d7143b5bb4e30c4a2d5f2",
       "classification": "INVALID",
@@ -44,6 +47,7 @@
     },
     {
       "run_id": "35504579645",
+      "target": "Framework / Activity Launch Compatibility Phase 1",
       "tested_commit": "7efa182f78b17d3d8fcd4a4d57b680729bfbf25f",
       "tested_tree": "fe32d9b9db8cd8b838cff3ee885e5eb81f0448f7",
       "classification": "INVALID",
@@ -51,10 +55,11 @@
       "reason": "the closure workflow reused the focused Activity Simulator and app container for the stable PVS regression; the unchanged production tree passes that regression in its isolated workflow, while the shared-runner sequence remained alive for 600 seconds without producing the result",
       "consumes_budget": false,
       "automatic_rerun_of": "35504120421",
-      "automatic_rerun": "AVAILABLE_AFTER_FIX"
+      "automatic_rerun": "USED_BY_35513111351"
     },
     {
       "run_id": "35513111351",
+      "target": "Framework / Activity Launch Compatibility Phase 1",
       "tested_commit": "d4beb208a88dfe27f5a76509ec5607e44063cf0f",
       "tested_tree": "e6c8b4cb91f2ed22519e7d1f6b5fd44029a259ab",
       "classification": "VALID_FAIL",
@@ -64,23 +69,25 @@
     },
     {
       "run_id": "35515337617:attempt-1",
+      "target": "Framework / Activity Launch Compatibility Phase 1",
       "tested_commit": "59d5dce5397c924e0625a73abd34901afd5e2742",
       "tested_tree": "4516436cfd772ad07ec23b1e682141c049f628c0",
       "classification": "INVALID",
       "defect_class": "RUNNER_DEFECT",
       "reason": "the pinned AOSP source service returned HTTP 503 before the source gate could complete",
       "consumes_budget": false,
-      "approval_reference": "explicit user approval for Framework Activity Launch Phase 1 at commit 59d5dce5397c924e0625a73abd34901afd5e2742 tree 4516436cfd772ad07ec23b1e682141c049f628c0",
+      "approval_reference": {"target":"Framework / Activity Launch Compatibility Phase 1","commit":"59d5dce5397c924e0625a73abd34901afd5e2742","tree":"4516436cfd772ad07ec23b1e682141c049f628c0","reference":"user approval in current task"},
       "automatic_rerun": "USED_BY_35515337617_ATTEMPT_2"
     },
     {
       "run_id": "35515337617:attempt-2",
+      "target": "Framework / Activity Launch Compatibility Phase 1",
       "tested_commit": "59d5dce5397c924e0625a73abd34901afd5e2742",
       "tested_tree": "4516436cfd772ad07ec23b1e682141c049f628c0",
       "classification": "VALID_PASS",
       "reason": "all required closure stages and evidence passed on the explicitly approved exact commit and tree",
       "consumes_budget": true,
-      "approval_reference": "explicit user approval for Framework Activity Launch Phase 1 at commit 59d5dce5397c924e0625a73abd34901afd5e2742 tree 4516436cfd772ad07ec23b1e682141c049f628c0",
+      "approval_reference": {"target":"Framework / Activity Launch Compatibility Phase 1","commit":"59d5dce5397c924e0625a73abd34901afd5e2742","tree":"4516436cfd772ad07ec23b1e682141c049f628c0","reference":"user approval in current task"},
       "automatic_rerun_of": "35515337617:attempt-1"
     }
   ]
