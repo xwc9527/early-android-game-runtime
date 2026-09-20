@@ -867,7 +867,7 @@ static NSString *runDexParserCompatibility(void) {
             [failures addObject:[NSString stringWithFormat:@"%@:%@",sampleId,@"sample_missing"]];
     }
     NSDictionary *report=@{@"schema":@"agr.dex-parser-simulator.v1",
-      @"passed":@(failures.count == 0), @"results":results, @"failures":failures};
+      @"passed":failures.count == 0 ? @YES : @NO, @"results":results, @"failures":failures};
     NSData *json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted error:nil];
     return [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
 }
