@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "enabled": true,
-  "question": "Does the API19-derived launch coordinator instantiate, attach, and lifecycle the synthetic Activity/Application and move both unchanged real APKs beyond missing_framework:activity_launch?",
+  "enabled": false,
+  "question": "Resolved by focused Simulator run 35503417335: the coordinator lifecycles the synthetic Application/Activity and moves both unchanged APKs beyond missing_framework:activity_launch.",
   "current_uncertainty": [
-    "Local Windows has no compiler or iOS Simulator, so it cannot prove DEX execution, object attachment, GC roots, or the next real-APK Framework boundary."
+    "No discovery uncertainty remains within the declared Activity launch contract."
   ],
   "expected_outcome_a": {
     "result": "Synthetic lifecycle/GC contract passes and both real APKs enter Activity.onCreate or later.",
@@ -20,5 +20,6 @@
     ]
   },
   "why_cheaper_test_is_insufficient": "Static audit and DEX parsing cannot execute host-side DEX callbacks or prove object reachability in the compiled Simulator Runtime.",
-  "prior_expensive_runs_without_information_gain": 0
+  "prior_expensive_runs_without_information_gain": 0,
+  "resolved_by_run": "35503417335"
 }

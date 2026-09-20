@@ -12,9 +12,16 @@ on:
       - 'tools/scan_apks.py'
       - 'Tests/Samples/fdroid.json'
       - 'ci/governance/**'
+      - 'ci/build-framework-activity-summary.py'
       - 'docs/**'
       - '.github/workflows/framework-activity-launch.yml'
   workflow_dispatch:
+    inputs:
+      run_kind:
+        description: Evidence intent
+        type: choice
+        options: [discovery, closure]
+        default: discovery
 
 jobs:
   source-and-fixture:
@@ -63,7 +70,7 @@ jobs:
   focused-simulator:
     needs: source-and-fixture
     runs-on: macos-15
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -80,9 +87,16 @@ jobs:
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
       - name: Run focused Activity launch compatibility probe
+        id: focused_activity
         env:
           ACTIVITY_LAUNCH_COMPATIBILITY: '1'
         run: bash scripts/build-and-run-simulator.sh
+      - name: Run required Runtime contracts
+        if: ${{ inputs.run_kind == 'closure' }}
+        run: bash ci/run-contracts.sh
+      - name: Run required Runtime and real-game regressions
+        if: ${{ inputs.run_kind == 'closure' }}
+        run: bash ci/run-regressions.sh
       - name: Publish focused Simulator evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -91,3 +105,63 @@ jobs:
           path: |
             build/artifacts/framework-activity-launch.json
             build/artifacts/framework-activity-launch.log
+            build/artifacts/results/contracts.json
+            build/artifacts/results/regressions.json
+
+  iphoneos:
+    if: ${{ inputs.run_kind == 'closure' }}
+    needs: source-and-fixture
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore device build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .tools
+            Vendor/ANGLE-Package
+            Runtime/ArmInterpreter/target
+          key: agr-framework-activity-device-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-iphoneos.sh') }}
+          restore-keys: agr-framework-activity-device-${{ runner.os }}-
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build arm64 iphoneos Runtime
+        run: bash scripts/build-iphoneos.sh
+
+  closure-evidence:
+    if: ${{ always() && inputs.run_kind == 'closure' }}
+    needs: [source-and-fixture, focused-simulator, iphoneos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download focused evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: framework-activity-simulator-results
+          path: build/closure-input
+      - name: Build exact-commit closure summary
+        if: ${{ needs.source-and-fixture.result == 'success' && needs.focused-simulator.result == 'success' && needs.iphoneos.result == 'success' }}
+        run: |
+          python3 ci/build-framework-activity-summary.py \
+            --activity-result build/closure-input/framework-activity-launch.json
+          python3 ci/validate-governance.py --mode closure \
+            --summary build/artifacts/framework-activity-run-summary.json
+      - name: Publish closure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-activity-closure-summary
+          path: build/artifacts/framework-activity-run-summary.json
+          if-no-files-found: error
+      - name: Enforce complete closure opportunity
+        if: always()
+        run: |
+          test '${{ needs.source-and-fixture.result }}' = success
+          test '${{ needs.focused-simulator.result }}' = success
+          test '${{ needs.iphoneos.result }}' = success
+          test -s build/artifacts/framework-activity-run-summary.json

@@ -8,8 +8,8 @@
   "active": {
     "target": "Framework / Activity Launch Compatibility Phase 1",
     "branch": "phase/framework-activity-launch-1",
-    "lifecycle": "IMPLEMENTED",
-    "observed_discontinuity": "Pixel Dungeon and Frozen Bubble both parse successfully but the generic path stops at missing_framework:activity_launch.",
+    "lifecycle": "VERIFIED",
+    "observed_discontinuity": "The generic path previously stopped after DEX parsing at missing_framework:activity_launch; focused Simulator run 35503417335 proves the new coordinator crosses that boundary for both unchanged APKs.",
     "android_subsystem": "Android Framework Activity/Application launch",
     "upstream_path": [
       "platform/frameworks/base@android-4.4.4_r2:core/java/android/app/ActivityThread.java:performLaunchActivity",
@@ -26,13 +26,13 @@
     "active_explanations": [],
     "earliest_evidenced_divergence": "the generic probe returned after DEX parsing instead of passing APK-derived Application and Activity classes into a launch coordinator",
     "semantic_class": "PUBLIC_OBSERVABLE",
-    "causal_status": "CONTRACT_CONFIRMED",
-    "evidence_level": "CONTRACT_CONFIRMED",
+    "causal_status": "REAL_GAME_CONFIRMED",
+    "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "focused source/fixture gate followed by one iOS Simulator discovery using the unchanged Pixel Dungeon and Frozen Bubble APKs",
-    "primary_blocker": "the implemented API19 Activity/Application launch coordinator has not yet executed in Simulator",
-    "first_broken_boundary": "generic DEX-loaded APK to ActivityThread-equivalent launch",
-    "first_broken_boundary_evidence": "run 35500912993: Pixel Dungeon 877 classes/6112 methods and Frozen Bubble 23 classes/333 methods both dex_loaded then missing_framework:activity_launch"
+    "next_validation": "run the exact-candidate closure gate: pinned source and fixture, focused Simulator launch, required contracts/regressions, and iphoneos build",
+    "primary_blocker": "none inside the declared Activity launch contract; closure evidence is pending for the exact candidate commit",
+    "first_broken_boundary": "resolved: generic DEX-loaded APK to ActivityThread-equivalent launch",
+    "first_broken_boundary_evidence": "run 35503417335: synthetic Application/Activity reached resumed with all roots and markers; Pixel Dungeon crossed into Activity.onCreate; Frozen Bubble reached resumed"
   },
   "ci_budget": {
     "valid_closure_runs": 1,

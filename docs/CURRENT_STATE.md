@@ -8,7 +8,7 @@ Last known good: `09d6953e3e2f2bf6ca63565e5458a71815d298e7` on formal `main`
 
 Active branch: `phase/framework-activity-launch-1`
 
-Lifecycle state: `IMPLEMENTED`
+Lifecycle state: `VERIFIED` (closure candidate)
 
 ## Previous Target
 
@@ -34,15 +34,15 @@ The host DEX lifecycle coordinator now resolves the manifest Application and Act
 
 Before this implementation, the generic probe returned immediately after DEX parsing and reported `missing_framework:activity_launch`; it did not call any Activity launch Runtime path. The pre-existing runner separately constructed only a minimal NativeActivity and omitted manifest Application creation, Context/Intent attachment, start, and resume.
 
-Classification: `ANDROID_SEMANTIC_BUG`. Semantic class: `PUBLIC_OBSERVABLE`. Causal status and evidence level: `CONTRACT_CONFIRMED`.
+Classification: `ANDROID_SEMANTIC_BUG`. Semantic class: `PUBLIC_OBSERVABLE`. Causal status and evidence level: `REAL_GAME_CONFIRMED`.
 
-## Current Blocker
+## Current Evidence
 
-The implementation and deterministic synthetic DEX fixture exist, but the compiled iOS Simulator has not executed them. The next real Framework boundary for Pixel Dungeon and Frozen Bubble is therefore still unknown.
+Focused Simulator run `35503417335` executed the exact source-derived path. The synthetic Application/Activity fixture reached `resumed` with both lifecycle markers and both GC roots. Pixel Dungeon crossed the former launch boundary and entered its original `Activity.onCreate`; its next failure is inside subsequent DEX/Framework execution. Frozen Bubble reached `resumed`. No common Activity-launch blocker remains.
 
 ## Next Validation
 
-Run one focused discovery workflow: verify pinned API19 sources, build/parse the synthetic Activity plus Application DEX, execute its lifecycle and GC-root contract in Simulator, then run the same launch coordinator against the unchanged Pixel Dungeon and Frozen Bubble APKs.
+Run the phase closure workflow on one exact candidate commit: pinned source and fixture, focused Simulator launch, required Runtime contracts/regressions, and iphoneos build.
 
 ## Allowed Work
 

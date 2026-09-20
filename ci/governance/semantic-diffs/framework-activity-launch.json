@@ -59,8 +59,8 @@
     }
   ],
   "earliest_evidenced_divergence": "probeGenericSample returned after DEX parsing instead of passing the APK-derived Activity and Application into the host DEX launch Runtime.",
-  "causal_status": "CONTRACT_CONFIRMED",
-  "evidence_level": "CONTRACT_CONFIRMED",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
   "evidence": [
     {
       "type": "SOURCE",
@@ -69,13 +69,16 @@
     {
       "type": "CONTRACT",
       "artifact": "Focused DEX run 35500912993 proves both real APKs cross parsing and reach missing_framework:activity_launch"
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "Focused Simulator run 35503417335: Pixel Dungeon entered its original Activity.onCreate and Frozen Bubble reached resumed; both unchanged APKs crossed the former activity_launch boundary"
     }
   ],
   "remaining_uncertainty": [
-    "The new Activity launch object graph and lifecycle have not yet executed in the iOS Simulator.",
-    "The next Framework boundary reached by each real APK is not yet observed."
+    "Pixel Dungeon's first failure after entering Activity.onCreate is the next subsystem boundary; its empty DEX execution detail does not block or reopen the Activity launch contract."
   ],
-  "next_action": "Run the synthetic launch contract and both unchanged real APKs in the focused Simulator discovery workflow.",
+  "next_action": "Run exact-candidate closure gates without expanding into Pixel Dungeon's next DEX/Framework boundary.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "Represent ActivityThread/Instrumentation/LoadedApk launch semantics as an in-process host DEX lifecycle coordinator while preserving APK classes, callback order, object identity, and GC reachability."
