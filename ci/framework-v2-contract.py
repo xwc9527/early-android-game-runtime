@@ -65,7 +65,7 @@ def main():
     ledger = load("ci/governance/closure-attempts.json")
     require(not attempt_module.validate_ledger(ledger), "invalid closure attempt ledger")
     require(ledger["budget"]["valid_attempts_used"] == 0, "INVALID closure run consumed budget")
-    require(ledger["attempts"][0]["automatic_rerun"] == "AVAILABLE_AFTER_FIX", "corrected INVALID run lacks automatic rerun")
+    require(ledger["attempts"][-1]["automatic_rerun"] == "AVAILABLE_AFTER_FIX", "latest corrected INVALID run lacks automatic rerun")
     cutpoints = load("ci/governance/diagnostic-cutpoints.json")
     require(cutpoints["rules"]["test_only"] is True, "cut points must be test-only")
     require(cutpoints["rules"]["production_shortcut"] is False, "cut points became production shortcuts")

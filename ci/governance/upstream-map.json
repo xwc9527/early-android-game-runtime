@@ -38,8 +38,8 @@
           "runNativeActivityApk / ANativeActivity_onCreate guest entry"
         ],
         "source_hashes": {
-          "App/main.m": "b7c4e8fdd22f363f73e9f4e97bb1d4451b9c6728b6cafce2d3dffd79a6e54ed8",
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "84b85c1b400a56786ce467c953789258a59f1f281c199357b7981498baddea73"
+          "App/main.m": "36fa7a7461825f988c73906a0eecce9b40bbfe4738d6f92e16be687356981a71",
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
@@ -95,7 +95,7 @@
           "pipe_create_cb / ALooper dispatch"
         ],
         "source_hashes": {
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "84b85c1b400a56786ce467c953789258a59f1f281c199357b7981498baddea73",
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
           "Runtime/NativeCore/agr_runtime.c": "8fe5bc168aa590eb56c8817843937e6954cb44245815c4d141e55a666ed74260"
         }
       },
@@ -154,7 +154,7 @@
           "dispatch_import ALooper_*"
         ],
         "source_hashes": {
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "84b85c1b400a56786ce467c953789258a59f1f281c199357b7981498baddea73",
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
           "Runtime/GuestRuntime/agr_service_dispatch.c": "b8972103bc08edbd895fd957baa278286958e1919dee13bfc119ad07a25e242c"
         }
       },
@@ -210,8 +210,8 @@
           "input_queue_push / dispatch_import AInputQueue_*"
         ],
         "source_hashes": {
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "84b85c1b400a56786ce467c953789258a59f1f281c199357b7981498baddea73",
-          "App/main.m": "b7c4e8fdd22f363f73e9f4e97bb1d4451b9c6728b6cafce2d3dffd79a6e54ed8"
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
+          "App/main.m": "36fa7a7461825f988c73906a0eecce9b40bbfe4738d6f92e16be687356981a71"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
@@ -237,8 +237,7 @@
         "current public surface is the PVS1 single-pointer subset"
       ],
       "contracts": [
-        "input_queue.concurrent_ordered",
-        "input_queue.concurrent_bounded"
+        "input_queue.concurrent_ordered"
       ]
     },
     {
@@ -268,7 +267,7 @@
           "dispatch_import egl*"
         ],
         "source_hashes": {
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "84b85c1b400a56786ce467c953789258a59f1f281c199357b7981498baddea73"
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
@@ -327,7 +326,7 @@
         ],
         "source_hashes": {
           "Runtime/GuestRuntime/agr_jni_methods.c": "8bdc5b524175bb6066c696fa347162d43dc494d31a1b6a2b47914a6418f07d3d",
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "84b85c1b400a56786ce467c953789258a59f1f281c199357b7981498baddea73",
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
           "Runtime/DexLoom/game_dex_runner.c": "8810108df3a72c133776f984a8affbd5700f3e99d4dc96cc2c5968bc7d4a530b"
         }
       },

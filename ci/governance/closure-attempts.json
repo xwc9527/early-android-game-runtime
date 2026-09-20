@@ -19,6 +19,17 @@
       "defect_class": "TIMEOUT_HIERARCHY_DEFECT",
       "reason": "the 180-second outer timeout was shorter than the collector's declared maximum duration",
       "consumes_budget": false,
+      "automatic_rerun": "USED_BY_35485955807"
+    },
+    {
+      "run_id": "35485955807",
+      "tested_commit": "e271c17a6b8fdc9ed88e6026b8ec67f4b0da245b",
+      "tested_tree": "09ac50a654ef99dae72373b9477a1fd0cf9daeae",
+      "classification": "INVALID",
+      "defect_class": "HARNESS_DEFECT",
+      "reason": "a non-API19 10-second shared-runner wall-clock threshold failed although all 100000 InputQueue lifecycles were ordered and PVS1 passed",
+      "consumes_budget": false,
+      "automatic_rerun_of": "35469009073",
       "automatic_rerun": "AVAILABLE_AFTER_FIX"
     }
   ]

@@ -1,0 +1,57 @@
+{
+  "schema_version": 2,
+  "classification": "HARNESS_BUG",
+  "subsystem": "Simulator InputQueue contract harness",
+  "observed_discontinuity": "Closure run 35485955807 completed 100000 ordered InputQueue event lifecycles in 32468 ms but failed an arbitrary 10000 ms shared-runner threshold while every PVS1 requirement passed.",
+  "upstream": {
+    "map_entry": "",
+    "map_status": "NOT_APPLICABLE",
+    "revision": "NOT_APPLICABLE",
+    "source_verified": false,
+    "files": [],
+    "call_path": []
+  },
+  "semantic_class": "UPSTREAM_IMPLEMENTATION_DETAIL",
+  "required_semantics": [
+    "InputQueue ordering, lifecycle completion, and guest-visible results are compatibility semantics.",
+    "Elapsed wall time on a shared CI host is diagnostic data and not an API19 InputQueue contract.",
+    "A hard workflow timeout bounds hangs without inventing an Android-visible performance guarantee."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/GuestRuntime/agr_guest_runtime.c",
+      "App/main.m"
+    ],
+    "call_path": [
+      "agr_guest_run_core_contracts completes producer/consumer stress",
+      "input_ordered confirms 100000 ordered event lifecycles",
+      "input_elapsed_ms records host wall time",
+      "App contract incorrectly treats elapsed_ms < 10000 as Android compatibility"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "The harness promoted shared-host elapsed time into a required Android compatibility result.",
+      "relevance": "Correct InputQueue behavior was rejected solely because runner scheduling exceeded a threshold with no API19 source basis."
+    }
+  ],
+  "earliest_evidenced_divergence": "The test converts input_elapsed_ms into input_bounded using a fixed 10000 ms threshold.",
+  "causal_status": "CONTRACT_CONFIRMED",
+  "evidence_level": "CONTRACT_CONFIRMED",
+  "evidence": [
+    {
+      "type": "RUNTIME",
+      "artifact": "closure run 35485955807 input_queue.concurrent_ordered passed with iterations=100000 and elapsed_ms=32468"
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "PVS1 closure requirements all passed while input_queue.concurrent_bounded was the sole regression failure"
+    }
+  ],
+  "remaining_uncertainty": [],
+  "next_action": "retain ordering and lifecycle assertions, keep elapsed time diagnostic, and use the workflow hard timeout as the hang bound",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "Remove the host-performance threshold from compatibility pass/fail without changing InputQueue behavior."
+}
