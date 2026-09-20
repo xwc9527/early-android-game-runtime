@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "target": "Framework / Activity Launch Compatibility Phase 1",
-  "state": "IMPLEMENTED",
-  "closure_tested_commit": null,
-  "closure_tested_tree": null,
+  "state": "MERGED",
+  "closure_tested_commit": "59d5dce5397c924e0625a73abd34901afd5e2742",
+  "closure_tested_tree": "4516436cfd772ad07ec23b1e682141c049f628c0",
   "closure_base_commit": "09d6953e3e2f2bf6ca63565e5458a71815d298e7",
   "eligible_for_merge": false,
-  "merged_commit": null,
-  "merged_tree": null
+  "merged_commit": "59d5dce5397c924e0625a73abd34901afd5e2742",
+  "merged_tree": "4516436cfd772ad07ec23b1e682141c049f628c0"
 }

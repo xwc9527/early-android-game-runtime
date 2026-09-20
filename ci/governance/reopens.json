@@ -6,18 +6,6 @@
       "target": "DEX Parser Compatibility Phase 1",
       "reason": "App/main.m contains the generic APK smoke harness whose DEX-stage classifier is the evidenced primary blocker; the change does not alter NativeActivity/Input production semantics.",
       "evidence": "focused runs 35489492142 and 35489607971 prove parser success and isolate the post-parse PoC binding misclassification"
-    },
-    {
-      "module": "DEXRuntimeLifecycle",
-      "target": "Framework / Activity Launch Compatibility Phase 1",
-      "reason": "Focused run 35500912993 proves both unchanged APKs parse and stop at the Activity launch boundary owned by game_dex_runner; extending this stable module is required to implement the mapped API19 launch contract.",
-      "evidence": "Pixel Dungeon 877 classes/6112 methods and Frozen Bubble 23 classes/333 methods both report dex_loaded then missing_framework:activity_launch at commit a374323."
-    },
-    {
-      "module": "NativeActivityInput",
-      "target": "Framework / Activity Launch Compatibility Phase 1",
-      "reason": "App/main.m owns the focused Simulator harness that must invoke and classify the new generic Activity launch path; production NativeActivity/Input semantics are unchanged.",
-      "evidence": "The earliest evidenced divergence is the generic harness returning after DEX parse without calling the Runtime launch coordinator."
     }
   ]
 }

@@ -7,7 +7,7 @@
     "second_run_after_valid_fail_requires_approval": true
   },
   "budget": {
-    "valid_attempts_used": 1,
+    "valid_attempts_used": 2,
     "valid_attempts_remaining": 0
   },
   "attempts": [
@@ -61,6 +61,27 @@
       "reason": "all required closure stages had an opportunity to complete and evidence was collected; the isolated stable Runtime regression exposed the DEX watchdog carrying its first top-level timestamp across repeated JNI-to-DEX loadImage calls",
       "consumes_budget": true,
       "automatic_rerun_of": "35504579645"
+    },
+    {
+      "run_id": "35515337617:attempt-1",
+      "tested_commit": "59d5dce5397c924e0625a73abd34901afd5e2742",
+      "tested_tree": "4516436cfd772ad07ec23b1e682141c049f628c0",
+      "classification": "INVALID",
+      "defect_class": "RUNNER_DEFECT",
+      "reason": "the pinned AOSP source service returned HTTP 503 before the source gate could complete",
+      "consumes_budget": false,
+      "approval_reference": "explicit user approval for Framework Activity Launch Phase 1 at commit 59d5dce5397c924e0625a73abd34901afd5e2742 tree 4516436cfd772ad07ec23b1e682141c049f628c0",
+      "automatic_rerun": "USED_BY_35515337617_ATTEMPT_2"
+    },
+    {
+      "run_id": "35515337617:attempt-2",
+      "tested_commit": "59d5dce5397c924e0625a73abd34901afd5e2742",
+      "tested_tree": "4516436cfd772ad07ec23b1e682141c049f628c0",
+      "classification": "VALID_PASS",
+      "reason": "all required closure stages and evidence passed on the explicitly approved exact commit and tree",
+      "consumes_budget": true,
+      "approval_reference": "explicit user approval for Framework Activity Launch Phase 1 at commit 59d5dce5397c924e0625a73abd34901afd5e2742 tree 4516436cfd772ad07ec23b1e682141c049f628c0",
+      "automatic_rerun_of": "35515337617:attempt-1"
     }
   ]
 }

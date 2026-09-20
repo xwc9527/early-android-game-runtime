@@ -2,13 +2,13 @@
 
 Updated: 2026-09-20
 
-Baseline: `main @ 09d6953e3e2f2bf6ca63565e5458a71815d298e7`
+Baseline: `main @ 59d5dce5397c924e0625a73abd34901afd5e2742`
 
-Last known good: `09d6953e3e2f2bf6ca63565e5458a71815d298e7` on formal `main`
+Last known good: `59d5dce5397c924e0625a73abd34901afd5e2742` on formal `main`
 
-Active branch: `phase/framework-activity-launch-1`
+Active branch: `main`
 
-Lifecycle state: `VERIFIED` (closure candidate; first valid closure attempt failed)
+Lifecycle state: `MERGED` (`Framework / Activity Launch Compatibility Phase 1` closure-tested tree is on main)
 
 ## Previous Target
 
@@ -44,9 +44,11 @@ Closure run `35513111351` was the first `VALID_FAIL`. Source, focused Activity, 
 
 Discovery run `35514480599` verifies the correction in the compiled Simulator Runtime. The same real-APK regression completed in 64.534 seconds, consumed all 8 replay events, produced no Runtime failure signature, and emitted no watchdog or budget-exhaustion failure. Device build run `35514480598` and focused Activity run `35514480601` also passed for the Runtime fix commit. Governance run `35514607828` passed after its state contract was made ledger-aware.
 
+Closure run `35515337617` attempt 2 is `VALID_PASS` for commit `59d5dce5397c924e0625a73abd34901afd5e2742` and tree `4516436cfd772ad07ec23b1e682141c049f628c0`. The exact tree was fast-forwarded to `main`; post-merge gate `35516313459` passed.
+
 ## Next Validation
 
-The branch is ready for a second valid exact-candidate closure attempt. The governance policy requires explicit approval because run `35513111351` was a `VALID_FAIL`.
+Framework / Activity Launch Compatibility Phase 1 is `MERGED` and its DEX Runtime Activity lifecycle contract is `stable` at the formal `main` baseline.
 
 ## Allowed Work
 

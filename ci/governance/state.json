@@ -2,13 +2,13 @@
   "schema_version": 1,
   "baseline": {
     "branch": "main",
-    "commit": "09d6953e3e2f2bf6ca63565e5458a71815d298e7",
-    "last_known_good": "09d6953e3e2f2bf6ca63565e5458a71815d298e7"
+    "commit": "59d5dce5397c924e0625a73abd34901afd5e2742",
+    "last_known_good": "59d5dce5397c924e0625a73abd34901afd5e2742"
   },
   "active": {
     "target": "Framework / Activity Launch Compatibility Phase 1",
-    "branch": "phase/framework-activity-launch-1",
-    "lifecycle": "VERIFIED",
+    "branch": "main",
+    "lifecycle": "MERGED",
     "observed_discontinuity": "The generic path previously stopped after DEX parsing at missing_framework:activity_launch; focused Simulator run 35503417335 proves the new coordinator crosses that boundary for both unchanged APKs.",
     "android_subsystem": "Android Framework Activity/Application launch",
     "upstream_path": [
@@ -29,16 +29,16 @@
     "causal_status": "REAL_GAME_CONFIRMED",
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "run the second valid exact-candidate closure attempt after explicit approval",
-    "primary_blocker": "none inside the declared Activity launch contract; discovery run 35514480599 removed the cumulative DEX watchdog regression and exact-candidate closure approval is pending",
-    "first_broken_boundary": "resolved: generic DEX-loaded APK to ActivityThread-equivalent launch",
-    "first_broken_boundary_evidence": "run 35503417335: synthetic Application/Activity reached resumed with all roots and markers; Pixel Dungeon crossed into Activity.onCreate; Frozen Bubble reached resumed"
+    "next_validation": "none; closure run 35515337617 and post-merge gate 35516313459 passed",
+    "primary_blocker": "none",
+    "first_broken_boundary": "none",
+    "first_broken_boundary_evidence": "closure evidence"
   },
   "ci_budget": {
-    "valid_closure_runs": 1,
+    "valid_closure_runs": 2,
     "infrastructure_failures_consume_budget": false,
-    "closure_runs_used": 1,
-    "last_closure_attempt": "VALID_FAIL:35513111351",
+    "closure_runs_used": 2,
+    "last_closure_attempt": "VALID_PASS:35515337617:attempt-2",
     "automatic_reruns_available": 0,
     "discovery_policy": "information_gain",
     "consecutive_expensive_runs_without_information_gain": 0
