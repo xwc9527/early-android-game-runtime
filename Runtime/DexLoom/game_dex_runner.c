@@ -295,10 +295,12 @@ static DxResult register_game_framework(DxVM *vm) {
     const char *wrapper_types[] = { "Landroid/content/Context;" };
     own_fields(context_wrapper, 1, wrapper_names, wrapper_types);
     own_fields(application, 0, NULL, NULL);
-    const char *activity_names[] = { "_application", "_intent", "_window", "_windowManager", "_decor" };
+    const char *activity_names[] = { "_application", "_intent", "_window", "_windowManager", "_decor",
+        "_startedActivity", "_finished", "_visibleFromClient", "_visibleFromServer", "_windowAdded" };
     const char *activity_types[] = { "Landroid/app/Application;", "Landroid/content/Intent;",
-        "Landroid/view/Window;", "Landroid/view/WindowManager;", "Landroid/view/View;" };
-    own_fields(activity, 5, activity_names, activity_types);
+        "Landroid/view/Window;", "Landroid/view/WindowManager;", "Landroid/view/View;",
+        "Z", "Z", "Z", "Z", "Z" };
+    own_fields(activity, 10, activity_names, activity_types);
     own_fields(native_activity, 0, NULL, NULL);
     add_method(context, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
     add_method(context_wrapper, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
@@ -324,7 +326,9 @@ static DxResult register_game_framework(DxVM *vm) {
     one_field(view, "_visibility", "I");
     add_method(view, "setVisibility", "VI", DX_ACC_PUBLIC, view_set_visibility, 0);
     DxClass *layout_params = reg_class(vm, "Landroid/view/WindowManager$LayoutParams;", obj);
-    own_fields(layout_params, 0, NULL, NULL);
+    const char *layout_names[] = { "_type", "_softInputMode" };
+    const char *layout_types[] = { "I", "I" };
+    own_fields(layout_params, 2, layout_names, layout_types);
     DxClass *window = reg_class(vm, "Landroid/view/Window;", obj);
     const char *window_names[] = { "_decor", "_attributes" };
     const char *window_types[] = { "Landroid/view/View;", "Landroid/view/WindowManager$LayoutParams;" };
@@ -727,6 +731,13 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     dx_vm_set_field(game->activity,"_window",DX_OBJ_VALUE(game->window));
     dx_vm_set_field(game->activity,"_windowManager",DX_OBJ_VALUE(game->window_manager));
     dx_vm_set_field(game->activity,"_decor",DX_OBJ_VALUE(game->decor));
+    dx_vm_set_field(game->activity,"_startedActivity",DX_INT_VALUE(0));
+    dx_vm_set_field(game->activity,"_finished",DX_INT_VALUE(0));
+    dx_vm_set_field(game->activity,"_visibleFromClient",DX_INT_VALUE(1));
+    dx_vm_set_field(game->activity,"_visibleFromServer",DX_INT_VALUE(0));
+    dx_vm_set_field(game->activity,"_windowAdded",DX_INT_VALUE(0));
+    dx_vm_set_field(game->window_attributes,"_type",DX_INT_VALUE(1));
+    dx_vm_set_field(game->window_attributes,"_softInputMode",DX_INT_VALUE(0));
     dx_vm_set_field(game->decor,"_visibility",DX_INT_VALUE(4));
     game->window_attached=1;
     game->launch_stage=AGR_ACTIVITY_LAUNCH_ACTIVITY_ATTACHED;
@@ -798,11 +809,13 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
                          DX_OBJ_VALUE(game->window_attributes)};
     if (!add_view || dx_vm_execute_method(vm,add_view,add_args,3,NULL)!=DX_OK)
         goto window_cluster_failed;
+    dx_vm_set_field(game->activity,"_windowAdded",DX_INT_VALUE(1));
     game->window_added=1;
     framework_event(game,"window_manager.add_view");
     visibility_args[1]=DX_INT_VALUE(0);
     if (dx_vm_execute_method(vm,set_visibility,visibility_args,2,NULL)!=DX_OK)
         goto window_cluster_failed;
+    dx_vm_set_field(game->activity,"_visibleFromServer",DX_INT_VALUE(1));
     game->window_visible=1;
     framework_event(game,"activity.make_visible");
     game->idle_handler_scheduled=1;

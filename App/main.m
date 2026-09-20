@@ -986,6 +986,7 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(void) {
     NSData *fixture=fixturePath ? [NSData dataWithContentsOfFile:fixturePath] : nil;
     agr_dex_game *contract=fixture ? agr_dex_game_create_for_launch(fixture.bytes,(uint32_t)fixture.length,
         "Ltest/TestActivity;","Ltest/TestApplication;","test.activity.launch") : NULL;
+    if (contract) agr_dex_game_enable_diagnostics(contract,1);
     int contractLaunch=contract ? agr_dex_game_start_activity(contract) : -1;
     int32_t contractMarker=0;
     int contractField=contract ? agr_dex_game_static_int(contract,"Ltest/TestActivity;","activityMarker",&contractMarker) : -1;

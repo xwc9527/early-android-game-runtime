@@ -103,8 +103,8 @@ jobs:
             .tools
             Vendor/ANGLE-Package
             Runtime/ArmInterpreter/target
-          key: agr-frozen-post-resume-runtime-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-and-run-simulator.sh', 'Tests/Samples/fdroid.json') }}
-          restore-keys: agr-frozen-post-resume-runtime-${{ runner.os }}-
+          key: agr-framework-continuation-runtime-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-and-run-simulator.sh', 'Tests/Samples/fdroid.json') }}
+          restore-keys: agr-framework-continuation-runtime-${{ runner.os }}-
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
       - name: Run Runtime contracts
@@ -117,7 +117,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: frozen-post-resume-runtime-regressions
+          name: framework-continuation-runtime-regressions
           path: build/artifacts
 
   iphoneos:
@@ -136,8 +136,8 @@ jobs:
             .tools
             Vendor/ANGLE-Package
             Runtime/ArmInterpreter/target
-          key: agr-frozen-post-resume-device-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-iphoneos.sh') }}
-          restore-keys: agr-frozen-post-resume-device-${{ runner.os }}-
+          key: agr-framework-continuation-device-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-iphoneos.sh') }}
+          restore-keys: agr-framework-continuation-device-${{ runner.os }}-
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
       - name: Build arm64 iphoneos Runtime
@@ -154,19 +154,19 @@ jobs:
       - name: Download focused evidence
         uses: actions/download-artifact@v4
         with:
-          name: frozen-bubble-post-resume-discovery
+          name: framework-runtime-continuation-discovery
           path: build/closure-input
       - name: Build exact-commit closure summary
         if: ${{ needs.source-contract.result == 'success' && needs.focused-simulator.result == 'success' && needs.runtime-regressions.result == 'success' && needs.iphoneos.result == 'success' }}
         run: |
-          python3 ci/build-frozen-post-resume-summary.py --result build/closure-input/frozen-bubble-post-resume.json
-          python3 ci/validate-governance.py --mode closure --summary build/artifacts/frozen-post-resume-run-summary.json
+          python3 ci/build-framework-continuation-summary.py --result build/closure-input/framework-runtime-continuation.json
+          python3 ci/validate-governance.py --mode closure --summary build/artifacts/framework-continuation-run-summary.json
       - name: Publish closure evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: frozen-post-resume-closure-summary
-          path: build/artifacts/frozen-post-resume-run-summary.json
+          name: framework-continuation-closure-summary
+          path: build/artifacts/framework-continuation-run-summary.json
           if-no-files-found: error
       - name: Enforce complete closure opportunity
         if: always()
@@ -175,4 +175,4 @@ jobs:
           test '${{ needs.focused-simulator.result }}' = success
           test '${{ needs.runtime-regressions.result }}' = success
           test '${{ needs.iphoneos.result }}' = success
-          test -s build/artifacts/frozen-post-resume-run-summary.json
+          test -s build/artifacts/framework-continuation-run-summary.json
