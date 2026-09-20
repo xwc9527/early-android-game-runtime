@@ -39,7 +39,11 @@ jobs:
             build/dex-samples/frozen-bubble.dex | tee build/dex-parser-results.jsonl
           status=${PIPESTATUS[0]}
           while IFS= read -r result; do
-            echo "::notice title=DEX parser result::$result"
+            if [[ "$status" -eq 0 ]]; then
+              echo "::notice file=Tests/DexLoom/dex_parser_probe.c,title=DEX parser evidence::$result"
+            else
+              echo "::error file=Tests/DexLoom/dex_parser_probe.c,title=DEX parser evidence::$result"
+            fi
           done < build/dex-parser-results.jsonl
           echo "status=$status" >> "$GITHUB_OUTPUT"
           exit 0
