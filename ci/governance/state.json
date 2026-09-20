@@ -8,9 +8,9 @@
   "active": {
     "target": "Android Framework Continuation Phase 1",
     "branch": "phase/framework-runtime-continuation-1",
-    "lifecycle": "ACTIVE",
-    "observed_discontinuity": "Closure run 35521035773 records post_resume_complete_no_followup_event after the unchanged Frozen Bubble Activity returns from onPostResume.",
-    "android_subsystem": "ActivityThread resume continuation to first stable guest work",
+    "lifecycle": "IMPLEMENTED",
+    "observed_discontinuity": "Focused Simulator run 35528665347 retained the unchanged Frozen Bubble VM for 2000 ms: performResumeActivity returned, no exception occurred, and no method or Framework event followed.",
+    "android_subsystem": "ActivityThread handleResumeActivity window/decor visibility cluster through ViewRoot/Surface handoff",
     "upstream_path": [
       "platform/frameworks/base@android-4.4.4_r2:core/java/android/app/ActivityThread.java:handleResumeActivity"
     ],
@@ -20,19 +20,19 @@
       "Runtime/DexLoom/VM/dx_interpreter.c:dx_vm_execute_method"
     ],
     "active_explanations": [
-      "harness observes no Android coordinator continuation after performResume",
-      "guest work is registered but no scheduler/event source dispatches it",
-      "window/view continuation is absent before the next subsystem handoff"
+      "API19 handleResumeActivity continues from performResumeActivity into Window/decor acquisition",
+      "WindowManager.addView and Activity.makeVisible belong to one continuous ActivityThread-owned state transition",
+      "ViewRoot/Surface begins the next independent ownership boundary"
     ],
-    "earliest_evidenced_divergence": "UNVERIFIED HYPOTHESIS pending bounded method/framework trace workflow",
-    "semantic_class": "UNCLASSIFIED",
-    "causal_status": "OBSERVATION",
-    "evidence_level": "WORKFLOW_OBSERVATION",
-    "classification": "DISCOVERY_REQUIRED",
-    "next_validation": "one focused Simulator discovery collecting bounded method and Framework boundary traces on the unchanged APK",
-    "primary_blocker": "post-resume continuation has no evidenced next handoff",
-    "first_broken_boundary": "not yet established",
-    "first_broken_boundary_evidence": "closure run 35521035773 observation only"
+    "earliest_evidenced_divergence": "After coordinator.performResume.return, API19 handleResumeActivity obtains the Activity Window and DecorView; AGR returned with no further method, instruction, or Framework event.",
+    "semantic_class": "PUBLIC_OBSERVABLE",
+    "causal_status": "REAL_GAME_CONFIRMED",
+    "evidence_level": "REAL_GAME_CONFIRMED",
+    "classification": "ANDROID_SEMANTIC_BUG",
+    "next_validation": "focused Simulator execution of the complete Activity/Window cluster ending at handoff.viewroot_surface",
+    "primary_blocker": "implemented Activity/Window cluster awaits focused Simulator validation",
+    "first_broken_boundary": "ActivityThread.handleResumeActivity continuation immediately after performResumeActivity returns",
+    "first_broken_boundary_evidence": "workflow 35528665347 exact method/framework trace on unchanged Frozen Bubble"
   },
   "ci_budget": {
     "valid_closure_runs": 0,

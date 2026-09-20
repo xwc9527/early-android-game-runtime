@@ -1,0 +1,59 @@
+{
+  "schema_version": 2,
+  "classification": "ANDROID_SEMANTIC_BUG",
+  "subsystem": "ActivityThread resumed Activity window visibility",
+  "observed_discontinuity": "After performResumeActivity returned, the retained Frozen Bubble VM produced no further method, instruction, or Framework event during a bounded 2000 ms observation.",
+  "upstream": {
+    "map_entry": "framework.activity.launch",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": ["core/java/android/app/ActivityThread.java", "core/java/android/app/Activity.java"],
+    "call_path": [
+      "ActivityThread.handleResumeActivity",
+      "Activity.getWindow",
+      "Window.getDecorView",
+      "WindowManager.addView",
+      "Activity.makeVisible",
+      "MessageQueue.addIdleHandler"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "A resumed visible Activity obtains its Window and DecorView after performResumeActivity returns.",
+    "The decor remains invisible until WindowManager.addView completes and Activity visibility is published.",
+    "The resumed Activity schedules the idle-report boundary after visibility handling.",
+    "ViewRoot and Surface work begins at a separate downstream ownership boundary."
+  ],
+  "agr": {
+    "files": ["Runtime/DexLoom/game_dex_runner.c", "Runtime/DexLoom/game_dex_runner.h", "App/main.m"],
+    "call_path": ["agr_dex_game_start_activity", "dx_vm_execute_method", "runFrameworkRuntimeContinuationDiscovery"]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "AGR ended the host-side ActivityThread coordinator immediately after onPostResume instead of continuing the Window/decor visibility state transition.",
+      "relevance": "The original Activity reached RESUMED state without the Android-visible Window attachment and visibility semantics needed by later rendering and input ownership."
+    }
+  ],
+  "earliest_evidenced_divergence": "Immediately after coordinator.performResume.return, before Activity.getWindow and decor acquisition.",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "Android 4.4.4_r2 ActivityThread.java SHA-256 4373bb6a1b9097c136ddab729cafc9884f9c5a70fdf41b43bfd4ba7b083229ae"
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "workflow 35528665347 exact trace ends at coordinator.performResume.return with no autonomous progress"
+    }
+  ],
+  "remaining_uncertainty": [
+    "ViewRoot, Surface, traversal, and drawing are downstream of the explicit handoff and are not claimed by this semantic cluster."
+  ],
+  "next_action": "Validate the complete Activity/Window cluster on the synthetic contract and unchanged Frozen Bubble, then run exact-candidate closure.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "The host-side ActivityThread coordinator preserves API19 Window/decor object identity, addView ordering, visibility transition, and idle scheduling, then emits an explicit ViewRoot/Surface ownership handoff."
+}

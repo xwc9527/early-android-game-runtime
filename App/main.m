@@ -970,6 +970,11 @@ static NSDictionary *dexSnapshotDictionary(const agr_dex_runtime_snapshot *snaps
       @"stack_depth":@(snapshot->stack_depth), @"vm_running":@(snapshot->vm_running!=0),
       @"pending_exception":@(snapshot->pending_exception!=0),
       @"post_resume_completed":snapshot->post_resume_completed ? @YES : @NO,
+      @"window_attached":snapshot->window_attached ? @YES : @NO,
+      @"window_added":snapshot->window_added ? @YES : @NO,
+      @"window_visible":snapshot->window_visible ? @YES : @NO,
+      @"idle_handler_scheduled":snapshot->idle_handler_scheduled ? @YES : @NO,
+      @"viewroot_handoff":snapshot->viewroot_handoff ? @YES : @NO,
       @"last_method":[NSString stringWithUTF8String:snapshot->last_method],
       @"method_trace":methods, @"framework_trace":framework,
       @"exception_class":[NSString stringWithUTF8String:snapshot->exception_class],
@@ -984,11 +989,23 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(void) {
     int contractLaunch=contract ? agr_dex_game_start_activity(contract) : -1;
     int32_t contractMarker=0;
     int contractField=contract ? agr_dex_game_static_int(contract,"Ltest/TestActivity;","activityMarker",&contractMarker) : -1;
+    agr_dex_runtime_snapshot contractSnapshot={0};
+    if (contract) agr_dex_game_runtime_snapshot(contract,&contractSnapshot);
     BOOL contractPassed=contractLaunch==0 && contractField==0 && contractMarker==2 &&
-        agr_dex_game_post_resume_completed(contract)==1;
+        agr_dex_game_post_resume_completed(contract)==1 && contractSnapshot.window_attached &&
+        contractSnapshot.window_added && contractSnapshot.window_visible &&
+        contractSnapshot.idle_handler_scheduled && contractSnapshot.viewroot_handoff &&
+        contractSnapshot.framework_event_count>0 &&
+        strcmp(contractSnapshot.framework_events[contractSnapshot.framework_event_count-1],
+               "handoff.viewroot_surface")==0;
     NSDictionary *contractResult=@{ @"passed":@(contractPassed), @"launch_result":@(contractLaunch),
       @"activity_marker":@(contractMarker),
-      @"post_resume_completed":@(contract && agr_dex_game_post_resume_completed(contract)==1) };
+      @"post_resume_completed":@(contract && agr_dex_game_post_resume_completed(contract)==1),
+      @"window_attached":@(contractSnapshot.window_attached!=0),
+      @"window_added":@(contractSnapshot.window_added!=0),
+      @"window_visible":@(contractSnapshot.window_visible!=0),
+      @"idle_handler_scheduled":@(contractSnapshot.idle_handler_scheduled!=0),
+      @"viewroot_handoff":@(contractSnapshot.viewroot_handoff!=0) };
     if (contract) agr_dex_game_destroy(contract);
     NSString *planPath=[[NSBundle mainBundle] pathForResource:@"batch-plan" ofType:@"json"];
     NSData *planData=planPath ? [NSData dataWithContentsOfFile:planPath] : nil;
@@ -1019,8 +1036,9 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(void) {
       @"harness_retained_runtime":game ? @YES : @NO, @"observation_ms":@2000,
       @"thread_owner":@"focused-regression-serial-queue", @"resume_snapshot":before,
       @"after_snapshot":after, @"autonomous_progress":@(progressed), @"contract":contractResult,
-      @"classification": game && start==0 ? (progressed ? @"guest_progress_observed" :
-          (observed.post_resume_completed ? @"post_resume_complete_no_followup_event" : @"no_post_resume_dispatch_observed"))
+      @"classification": game && start==0 ? (observed.viewroot_handoff ? @"viewroot_surface_handoff" :
+          (progressed ? @"guest_progress_observed" :
+          (observed.post_resume_completed ? @"post_resume_complete_no_followup_event" : @"no_post_resume_dispatch_observed")))
                                              : @"launch_failed" };
     if (game) agr_dex_game_destroy(game);
     if (package) agr_apk_package_close(package);

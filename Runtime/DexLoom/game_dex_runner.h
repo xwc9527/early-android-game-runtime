@@ -48,6 +48,11 @@ typedef struct {
     int vm_running;
     int pending_exception;
     int post_resume_completed;
+    int window_attached;
+    int window_added;
+    int window_visible;
+    int idle_handler_scheduled;
+    int viewroot_handoff;
     char last_method[160];
     char exception_class[160];
     char error[256];

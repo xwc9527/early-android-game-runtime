@@ -167,11 +167,13 @@ assert r.get("harness_retained_runtime") is True, r
 assert r.get("observation_ms") == 2000, r
 assert r.get("contract",{}).get("passed") is True, r
 assert r.get("after_snapshot",{}).get("post_resume_completed") is True, r
+for key in ("window_attached","window_added","window_visible","idle_handler_scheduled","viewroot_handoff"):
+    assert r.get("after_snapshot",{}).get(key) is True, (key,r)
 assert r.get("after_snapshot",{}).get("method_trace"), r
-assert r.get("after_snapshot",{}).get("framework_trace",[])[-1] == "coordinator.performResume.return", r
-assert r.get("classification") == "post_resume_complete_no_followup_event", r
+assert r.get("after_snapshot",{}).get("framework_trace",[])[-1] == "handoff.viewroot_surface", r
+assert r.get("classification") == "viewroot_surface_handoff", r
 PY
-  phase "Framework Runtime continuation discovery evidence captured"
+  phase "Framework Runtime Activity/Window cluster evidence captured"
   exit 0
 fi
 if [[ "${ZERO_INPUT_AB:-0}" == "1" ]]; then

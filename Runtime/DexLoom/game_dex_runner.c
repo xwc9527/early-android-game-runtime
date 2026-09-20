@@ -41,6 +41,62 @@ static DxResult activity_get_application(DxVM *vm, DxFrame *frame,
     return context_get_application_context(vm, frame, args, count);
 }
 
+static DxResult object_field_result(DxFrame *frame, DxValue *args, uint32_t count,
+                                    const char *field) {
+    DxValue value = DX_NULL_VALUE;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return DX_ERR_NULL_PTR;
+    if (dx_vm_get_field(args[0].obj, field, &value) != DX_OK)
+        return DX_ERR_INVALID_FORMAT;
+    frame->result = value;
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult activity_get_window(DxVM *vm, DxFrame *frame,
+                                    DxValue *args, uint32_t count) {
+    (void)vm;
+    return object_field_result(frame, args, count, "_window");
+}
+
+static DxResult activity_get_window_manager(DxVM *vm, DxFrame *frame,
+                                            DxValue *args, uint32_t count) {
+    (void)vm;
+    return object_field_result(frame, args, count, "_windowManager");
+}
+
+static DxResult window_get_decor_view(DxVM *vm, DxFrame *frame,
+                                      DxValue *args, uint32_t count) {
+    (void)vm;
+    return object_field_result(frame, args, count, "_decor");
+}
+
+static DxResult window_get_attributes(DxVM *vm, DxFrame *frame,
+                                      DxValue *args, uint32_t count) {
+    (void)vm;
+    return object_field_result(frame, args, count, "_attributes");
+}
+
+static DxResult view_set_visibility(DxVM *vm, DxFrame *frame,
+                                    DxValue *args, uint32_t count) {
+    (void)vm; (void)frame;
+    if (count < 2 || args[0].tag != DX_VAL_OBJ || !args[0].obj ||
+        args[1].tag != DX_VAL_INT) return DX_ERR_INVALID_FORMAT;
+    return dx_vm_set_field(args[0].obj, "_visibility", args[1]);
+}
+
+static DxResult window_manager_add_view(DxVM *vm, DxFrame *frame,
+                                        DxValue *args, uint32_t count) {
+    (void)vm; (void)frame;
+    if (count < 3 || args[0].tag != DX_VAL_OBJ || !args[0].obj ||
+        args[1].tag != DX_VAL_OBJ || !args[1].obj ||
+        args[2].tag != DX_VAL_OBJ || !args[2].obj)
+        return DX_ERR_INVALID_FORMAT;
+    dx_vm_set_field(args[0].obj, "_lastView", args[1]);
+    dx_vm_set_field(args[0].obj, "_lastLayoutParams", args[2]);
+    return DX_OK;
+}
+
 static DxResult activity_on_post_resume(DxVM *vm, DxFrame *frame,
                                         DxValue *args, uint32_t count) {
     (void)vm; (void)frame; (void)args; (void)count;
@@ -239,9 +295,10 @@ static DxResult register_game_framework(DxVM *vm) {
     const char *wrapper_types[] = { "Landroid/content/Context;" };
     own_fields(context_wrapper, 1, wrapper_names, wrapper_types);
     own_fields(application, 0, NULL, NULL);
-    const char *activity_names[] = { "_application", "_intent" };
-    const char *activity_types[] = { "Landroid/app/Application;", "Landroid/content/Intent;" };
-    own_fields(activity, 2, activity_names, activity_types);
+    const char *activity_names[] = { "_application", "_intent", "_window", "_windowManager", "_decor" };
+    const char *activity_types[] = { "Landroid/app/Application;", "Landroid/content/Intent;",
+        "Landroid/view/Window;", "Landroid/view/WindowManager;", "Landroid/view/View;" };
+    own_fields(activity, 5, activity_names, activity_types);
     own_fields(native_activity, 0, NULL, NULL);
     add_method(context, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
     add_method(context_wrapper, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
@@ -253,6 +310,8 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(activity, "onResume", "V", DX_ACC_PROTECTED, noop, 0);
     add_method(activity, "onPostResume", "V", DX_ACC_PROTECTED, activity_on_post_resume, 0);
     add_method(activity, "getApplication", "L", DX_ACC_PUBLIC, activity_get_application, 0);
+    add_method(activity, "getWindow", "L", DX_ACC_PUBLIC, activity_get_window, 0);
+    add_method(activity, "getWindowManager", "L", DX_ACC_PUBLIC, activity_get_window_manager, 0);
     add_method(native_activity, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
     add_method(native_activity, "onCreate", "VL", DX_ACC_PUBLIC, noop, 0);
     add_method(context, "getAssets", "L", DX_ACC_PUBLIC, context_get_assets, 0);
@@ -260,6 +319,23 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(context, "getPackageName", "L", DX_ACC_PUBLIC, context_get_package_name, 0);
     add_method(context, "getApplicationContext", "L", DX_ACC_PUBLIC,
                context_get_application_context, 0);
+
+    DxClass *view = reg_class(vm, "Landroid/view/View;", obj);
+    one_field(view, "_visibility", "I");
+    add_method(view, "setVisibility", "VI", DX_ACC_PUBLIC, view_set_visibility, 0);
+    DxClass *layout_params = reg_class(vm, "Landroid/view/WindowManager$LayoutParams;", obj);
+    own_fields(layout_params, 0, NULL, NULL);
+    DxClass *window = reg_class(vm, "Landroid/view/Window;", obj);
+    const char *window_names[] = { "_decor", "_attributes" };
+    const char *window_types[] = { "Landroid/view/View;", "Landroid/view/WindowManager$LayoutParams;" };
+    own_fields(window, 2, window_names, window_types);
+    add_method(window, "getDecorView", "L", DX_ACC_PUBLIC, window_get_decor_view, 0);
+    add_method(window, "getAttributes", "L", DX_ACC_PUBLIC, window_get_attributes, 0);
+    DxClass *window_manager = reg_class(vm, "Landroid/view/WindowManager;", obj);
+    const char *manager_names[] = { "_lastView", "_lastLayoutParams" };
+    const char *manager_types[] = { "Landroid/view/View;", "Landroid/view/WindowManager$LayoutParams;" };
+    own_fields(window_manager, 2, manager_names, manager_types);
+    add_method(window_manager, "addView", "VLL", DX_ACC_PUBLIC, window_manager_add_view, 0);
 
     DxClass *asset_manager = reg_class(vm, "Landroid/content/res/AssetManager;", obj);
     add_method(asset_manager, "open", "LL", DX_ACC_PUBLIC, asset_open, 0);
@@ -318,6 +394,10 @@ struct agr_dex_game {
     DxObject *application_context;
     DxObject *activity_context;
     DxObject *intent;
+    DxObject *window;
+    DxObject *decor;
+    DxObject *window_manager;
+    DxObject *window_attributes;
     agr_activity_launch_stage launch_stage;
     char launch_error[256];
     agr_dex_native_callback native_callback;
@@ -325,6 +405,11 @@ struct agr_dex_game {
     struct { uint32_t handle; DxObject *object; } *objects;
     uint32_t object_count, object_capacity;
     int post_resume_completed;
+    int window_attached;
+    int window_added;
+    int window_visible;
+    int idle_handler_scheduled;
+    int viewroot_handoff;
     uint32_t framework_event_count;
     char framework_events[AGR_DEX_FRAMEWORK_TRACE_CAPACITY][96];
 };
@@ -594,7 +679,14 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     game->activity_context=dx_vm_alloc_object(vm,context_class);
     game->intent=dx_vm_alloc_object(vm,intent_class);
     game->application=dx_vm_alloc_object(vm,game->application_class);
-    if (!game->application_context || !game->activity_context || !game->intent || !game->application) {
+    game->window=dx_vm_alloc_object(vm,dx_vm_find_class(vm,"Landroid/view/Window;"));
+    game->decor=dx_vm_alloc_object(vm,dx_vm_find_class(vm,"Landroid/view/View;"));
+    game->window_manager=dx_vm_alloc_object(vm,dx_vm_find_class(vm,"Landroid/view/WindowManager;"));
+    game->window_attributes=dx_vm_alloc_object(vm,
+        dx_vm_find_class(vm,"Landroid/view/WindowManager$LayoutParams;"));
+    if (!game->application_context || !game->activity_context || !game->intent ||
+        !game->application || !game->window || !game->decor || !game->window_manager ||
+        !game->window_attributes) {
         snprintf(game->launch_error,sizeof(game->launch_error),"launch object allocation failed");
         return -1;
     }
@@ -630,8 +722,16 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     dx_vm_set_field(game->activity,"_baseContext",DX_OBJ_VALUE(game->activity_context));
     dx_vm_set_field(game->activity,"_application",DX_OBJ_VALUE(game->application));
     dx_vm_set_field(game->activity,"_intent",DX_OBJ_VALUE(game->intent));
+    dx_vm_set_field(game->window,"_decor",DX_OBJ_VALUE(game->decor));
+    dx_vm_set_field(game->window,"_attributes",DX_OBJ_VALUE(game->window_attributes));
+    dx_vm_set_field(game->activity,"_window",DX_OBJ_VALUE(game->window));
+    dx_vm_set_field(game->activity,"_windowManager",DX_OBJ_VALUE(game->window_manager));
+    dx_vm_set_field(game->activity,"_decor",DX_OBJ_VALUE(game->decor));
+    dx_vm_set_field(game->decor,"_visibility",DX_INT_VALUE(4));
+    game->window_attached=1;
     game->launch_stage=AGR_ACTIVITY_LAUNCH_ACTIVITY_ATTACHED;
     framework_event(game,"launch.activity.attached");
+    framework_event(game,"activity.attach.window");
     DxMethod *on_create=dx_vm_find_method(cls,"onCreate","VL");
     DxValue create_args[2]={DX_OBJ_VALUE(game->activity),DX_NULL_VALUE};
     if (!on_create) {
@@ -661,8 +761,61 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     game->post_resume_completed=1;
     framework_event(game,"lifecycle.onPostResume.return");
     framework_event(game,"coordinator.performResume.return");
+
+    /* API19 ActivityThread.handleResumeActivity owns this continuous semantic
+       cluster after performResumeActivity returns: obtain the Activity window
+       and decor, keep decor invisible while WindowManager attaches it, then
+       publish Activity visibility and schedule the idle-report boundary.  The
+       next owner is ViewRoot/Surface; this phase records that handoff without
+       claiming to implement the downstream subsystem. */
+    DxClass *activity_base=dx_vm_find_class(vm,"Landroid/app/Activity;");
+    DxClass *window_class=dx_vm_find_class(vm,"Landroid/view/Window;");
+    DxClass *view_class=dx_vm_find_class(vm,"Landroid/view/View;");
+    DxClass *manager_class=dx_vm_find_class(vm,"Landroid/view/WindowManager;");
+    DxMethod *get_window=dx_vm_find_method(activity_base,"getWindow","L");
+    DxMethod *get_decor=dx_vm_find_method(window_class,"getDecorView","L");
+    DxMethod *set_visibility=dx_vm_find_method(view_class,"setVisibility","VI");
+    DxMethod *get_manager=dx_vm_find_method(activity_base,"getWindowManager","L");
+    DxMethod *get_attributes=dx_vm_find_method(window_class,"getAttributes","L");
+    DxMethod *add_view=dx_vm_find_method(manager_class,"addView","VLL");
+    DxValue value=DX_NULL_VALUE;
+    if (!get_window || dx_vm_execute_method(vm,get_window,init_args,1,&value)!=DX_OK ||
+        value.tag!=DX_VAL_OBJ || value.obj!=game->window) goto window_cluster_failed;
+    framework_event(game,"window.obtain");
+    DxValue window_args[1]={value};
+    if (!get_decor || dx_vm_execute_method(vm,get_decor,window_args,1,&value)!=DX_OK ||
+        value.tag!=DX_VAL_OBJ || value.obj!=game->decor) goto window_cluster_failed;
+    framework_event(game,"window.decor.obtain");
+    DxValue visibility_args[2]={DX_OBJ_VALUE(game->decor),DX_INT_VALUE(4)};
+    if (!set_visibility || dx_vm_execute_method(vm,set_visibility,visibility_args,2,NULL)!=DX_OK)
+        goto window_cluster_failed;
+    framework_event(game,"window.decor.invisible");
+    if (!get_manager || dx_vm_execute_method(vm,get_manager,init_args,1,&value)!=DX_OK ||
+        value.tag!=DX_VAL_OBJ || value.obj!=game->window_manager) goto window_cluster_failed;
+    if (!get_attributes || dx_vm_execute_method(vm,get_attributes,window_args,1,&value)!=DX_OK ||
+        value.tag!=DX_VAL_OBJ || value.obj!=game->window_attributes) goto window_cluster_failed;
+    DxValue add_args[3]={DX_OBJ_VALUE(game->window_manager),DX_OBJ_VALUE(game->decor),
+                         DX_OBJ_VALUE(game->window_attributes)};
+    if (!add_view || dx_vm_execute_method(vm,add_view,add_args,3,NULL)!=DX_OK)
+        goto window_cluster_failed;
+    game->window_added=1;
+    framework_event(game,"window_manager.add_view");
+    visibility_args[1]=DX_INT_VALUE(0);
+    if (dx_vm_execute_method(vm,set_visibility,visibility_args,2,NULL)!=DX_OK)
+        goto window_cluster_failed;
+    game->window_visible=1;
+    framework_event(game,"activity.make_visible");
+    game->idle_handler_scheduled=1;
+    framework_event(game,"looper.idle_handler.scheduled");
+    game->viewroot_handoff=1;
+    framework_event(game,"handoff.viewroot_surface");
     game->launch_stage=AGR_ACTIVITY_LAUNCH_RESUMED;
     return 0;
+
+window_cluster_failed:
+    snprintf(game->launch_error,sizeof(game->launch_error),
+             "ActivityThread window visibility cluster failed: %s",vm->error_msg);
+    return -1;
 }
 
 void agr_dex_game_enable_diagnostics(agr_dex_game *game, int enabled) {
@@ -680,6 +833,11 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
     snapshot->vm_running=vm->running ? 1 : 0;
     snapshot->pending_exception=vm->pending_exception ? 1 : 0;
     snapshot->post_resume_completed=game->post_resume_completed;
+    snapshot->window_attached=game->window_attached;
+    snapshot->window_added=game->window_added;
+    snapshot->window_visible=game->window_visible;
+    snapshot->idle_handler_scheduled=game->idle_handler_scheduled;
+    snapshot->viewroot_handoff=game->viewroot_handoff;
     snprintf(snapshot->last_method,sizeof(snapshot->last_method),"%s",vm->diagnostic_last_method);
     snprintf(snapshot->error,sizeof(snapshot->error),"%s",vm->error_msg);
     uint32_t method_count=vm->diagnostic_method_event_count;

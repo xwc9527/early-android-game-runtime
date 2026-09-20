@@ -12,7 +12,7 @@ Status controls modification permission, not total completeness. `stable` means 
 | NativeActivity/Window | stable | `09d6953e` | PVS1 target gate | proven lifecycle/window regression |
 | Looper/InputQueue | stable | `09d6953e` | PVS1 input contract | proven queue, ownership, or consumption regression |
 | Simulator regression harness | stable | `09d6953e` | bounded smoke and evidence gate | proven harness contract defect affecting active evidence |
-| DEX Runtime Activity lifecycle | active | `59d5dce` (previous closure) | post-resume source/contract/real-APK gate | current evidenced API19 onPostResume divergence |
+| DEX Runtime Activity lifecycle | active | `59d5dce` (previous closure) | Activity/Window source, contract and real-APK gate | current API19 handleResumeActivity Window/visibility cluster |
 | DEX/Dalvik completeness | experimental | — | focused DEX/JNI contracts | future declared migration target |
 | Framework HLE | experimental | — | focused public API contracts | gameplay proves a public missing behavior |
 | Audio/OpenSL ES | experimental | — | — | declared gameplay target requires audio |
