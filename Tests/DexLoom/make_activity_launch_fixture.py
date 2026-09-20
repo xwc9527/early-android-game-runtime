@@ -28,7 +28,7 @@ def build() -> bytes:
         "<init>", "I", "Landroid/app/Activity;", "Landroid/app/Application;",
         "Landroid/os/Bundle;", "Ltest/TestActivity;", "Ltest/TestApplication;",
         "TestActivity.java", "TestApplication.java", "V", "VL", "appMarker",
-        "activityMarker", "onCreate",
+        "activityMarker", "onCreate", "onPostResume",
     })
     sidx = {s: i for i, s in enumerate(strings)}
     types = sorted({s for s in strings if s in {"I", "V"} or s.startswith("L")},
@@ -48,9 +48,11 @@ def build() -> bytes:
     methods = sorted([
         ("Landroid/app/Activity;", ("V", "V", ()), "<init>"),
         ("Landroid/app/Activity;", ("VL", "V", ("Landroid/os/Bundle;",)), "onCreate"),
+        ("Landroid/app/Activity;", ("V", "V", ()), "onPostResume"),
         ("Landroid/app/Application;", ("V", "V", ()), "<init>"),
         ("Ltest/TestActivity;", ("V", "V", ()), "<init>"),
         ("Ltest/TestActivity;", ("VL", "V", ("Landroid/os/Bundle;",)), "onCreate"),
+        ("Ltest/TestActivity;", ("V", "V", ()), "onPostResume"),
         ("Ltest/TestApplication;", ("V", "V", ()), "<init>"),
         ("Ltest/TestApplication;", ("V", "V", ()), "onCreate"),
     ], key=lambda m: (tidx[m[0]], sidx[m[2]], proto_index[m[1]]))
@@ -94,10 +96,12 @@ def build() -> bytes:
     app_base_init = ("Landroid/app/Application;", ("V", "V", ()), "<init>")
     act_base_init = ("Landroid/app/Activity;", ("V", "V", ()), "<init>")
     act_base_create = ("Landroid/app/Activity;", ("VL", "V", ("Landroid/os/Bundle;",)), "onCreate")
+    act_base_post_resume = ("Landroid/app/Activity;", ("V", "V", ()), "onPostResume")
     app_init = ("Ltest/TestApplication;", ("V", "V", ()), "<init>")
     app_create = ("Ltest/TestApplication;", ("V", "V", ()), "onCreate")
     act_init = ("Ltest/TestActivity;", ("V", "V", ()), "<init>")
     act_create = ("Ltest/TestActivity;", ("VL", "V", ("Landroid/os/Bundle;",)), "onCreate")
+    act_post_resume = ("Ltest/TestActivity;", ("V", "V", ()), "onPostResume")
 
     add_code(app_init, 1, 1, 1, invoke(0x70, app_base_init, [0]) + [0x000E])
     add_code(app_create, 1, 1, 0,
@@ -106,6 +110,9 @@ def build() -> bytes:
     add_code(act_create, 2, 2, 2,
              invoke(0x6F, act_base_create, [0, 1]) +
              [0x1012, 0x0067, fidx[("Ltest/TestActivity;", "I", "activityMarker")], 0x000E])
+    add_code(act_post_resume, 1, 1, 1,
+             invoke(0x6F, act_base_post_resume, [0]) +
+             [0x2012, 0x0067, fidx[("Ltest/TestActivity;", "I", "activityMarker")], 0x000E])
 
     class_data_offsets = {}
 
@@ -122,7 +129,7 @@ def build() -> bytes:
                 data.extend(uleb(code_offsets[method])); previous = current
 
     add_class_data("Ltest/TestApplication;", ("Ltest/TestApplication;", "I", "appMarker"), [app_init], [app_create])
-    add_class_data("Ltest/TestActivity;", ("Ltest/TestActivity;", "I", "activityMarker"), [act_init], [act_create])
+    add_class_data("Ltest/TestActivity;", ("Ltest/TestActivity;", "I", "activityMarker"), [act_init], [act_create, act_post_resume])
 
     # Identifier tables.
     for i, off in enumerate(string_offsets): struct.pack_into("<I", data, string_ids_off + i * 4, off)

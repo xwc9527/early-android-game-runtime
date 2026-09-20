@@ -12,7 +12,33 @@ on:
   workflow_dispatch:
 
 jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify pinned API19 post-resume ordering
+        run: |
+          python3 - <<'PY'
+          import base64,hashlib,urllib.request
+          url='https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/app/Activity.java?format=TEXT'
+          raw=base64.b64decode(urllib.request.urlopen(url,timeout=30).read())
+          assert hashlib.sha256(raw).hexdigest()=='03874ea13f230ff2b92bc6d99522011f63a3076e9101655aa0249addc590cc4b'
+          text=raw.decode()
+          start=text.index('final void performResume()')
+          end=text.index('final void performPause()',start)
+          body=text[start:end]
+          assert body.index('mInstrumentation.callActivityOnResume(this)') < body.index('onPostResume();')
+          print('SOURCE_OK Activity.performResume -> onResume -> onPostResume')
+          PY
+      - name: Build post-resume lifecycle contract fixture
+        run: |
+          mkdir -p build/post-resume
+          python3 Tests/DexLoom/make_activity_launch_fixture.py build/post-resume/activity-launch.dex
+          bash scripts/test-dex-parser.sh build/post-resume/activity-launch.dex
+
   focused-simulator:
+    needs: source-contract
     runs-on: macos-15
     timeout-minutes: 15
     steps:

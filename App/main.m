@@ -923,14 +923,15 @@ static NSString *runActivityLaunchCompatibility(void) {
     int applicationRoot=contract ? agr_dex_game_application_gc_contract(contract) : -1;
     agr_activity_launch_stage contractStage=contract ? agr_dex_game_launch_stage(contract) : AGR_ACTIVITY_LAUNCH_NONE;
     BOOL contractPassed=launch==0 && contractStage==AGR_ACTIVITY_LAUNCH_RESUMED &&
-        appField==0 && appMarker==1 && activityField==0 && activityMarker==1 &&
-        activityRoot==0 && applicationRoot==0;
+        appField==0 && appMarker==1 && activityField==0 && activityMarker==2 &&
+        agr_dex_game_post_resume_completed(contract)==1 && activityRoot==0 && applicationRoot==0;
     if (!contractPassed) [failures addObject:[NSString stringWithFormat:
         @"contract:%@:%d:%d/%d:%d/%d:roots=%d/%d",launchStageName(contractStage),launch,
         appField,appMarker,activityField,activityMarker,activityRoot,applicationRoot]];
     NSDictionary *contractResult=@{@"id":@"synthetic-activity-launch",
       @"passed":@(contractPassed),@"stage":launchStageName(contractStage),
       @"application_marker":@(appMarker),@"activity_marker":@(activityMarker),
+      @"post_resume_completed":@(contract && agr_dex_game_post_resume_completed(contract)==1),
       @"activity_root":@(activityRoot==0),@"application_root":@(applicationRoot==0),
       @"detail":contract ? [NSString stringWithUTF8String:agr_dex_game_launch_error(contract)] : @"fixture unavailable"};
     if (contract) agr_dex_game_destroy(contract);
@@ -959,12 +960,26 @@ static NSDictionary *dexSnapshotDictionary(const agr_dex_runtime_snapshot *snaps
       @"instructions":@(snapshot->instructions_executed),
       @"stack_depth":@(snapshot->stack_depth), @"vm_running":@(snapshot->vm_running!=0),
       @"pending_exception":@(snapshot->pending_exception!=0),
+      @"post_resume_completed":snapshot->post_resume_completed ? @YES : @NO,
       @"last_method":[NSString stringWithUTF8String:snapshot->last_method],
       @"exception_class":[NSString stringWithUTF8String:snapshot->exception_class],
       @"error":[NSString stringWithUTF8String:snapshot->error] };
 }
 
 static NSString *runFrozenBubblePostResumeDiscovery(void) {
+    NSString *fixturePath=[[NSBundle mainBundle] pathForResource:@"activity-launch-fixture" ofType:@"dex"];
+    NSData *fixture=fixturePath ? [NSData dataWithContentsOfFile:fixturePath] : nil;
+    agr_dex_game *contract=fixture ? agr_dex_game_create_for_launch(fixture.bytes,(uint32_t)fixture.length,
+        "Ltest/TestActivity;","Ltest/TestApplication;","test.activity.launch") : NULL;
+    int contractLaunch=contract ? agr_dex_game_start_activity(contract) : -1;
+    int32_t contractMarker=0;
+    int contractField=contract ? agr_dex_game_static_int(contract,"Ltest/TestActivity;","activityMarker",&contractMarker) : -1;
+    BOOL contractPassed=contractLaunch==0 && contractField==0 && contractMarker==2 &&
+        agr_dex_game_post_resume_completed(contract)==1;
+    NSDictionary *contractResult=@{ @"passed":@(contractPassed), @"launch_result":@(contractLaunch),
+      @"activity_marker":@(contractMarker),
+      @"post_resume_completed":@(contract && agr_dex_game_post_resume_completed(contract)==1) };
+    if (contract) agr_dex_game_destroy(contract);
     NSString *planPath=[[NSBundle mainBundle] pathForResource:@"batch-plan" ofType:@"json"];
     NSData *planData=planPath ? [NSData dataWithContentsOfFile:planPath] : nil;
     NSDictionary *plan=planData ? [NSJSONSerialization JSONObjectWithData:planData options:0 error:nil] : nil;
@@ -991,10 +1006,11 @@ static NSString *runFrozenBubblePostResumeDiscovery(void) {
     NSDictionary *report=@{ @"schema":@"agr.frozen-bubble-post-resume.discovery.v1",
       @"sample":sample[@"id"] ?: @"missing", @"package":sample[@"package"] ?: @"missing",
       @"launch_result":@(start), @"launch_stage":launchStageName(game ? agr_dex_game_launch_stage(game) : AGR_ACTIVITY_LAUNCH_NONE),
-      @"harness_retained_runtime":@(game!=NULL), @"observation_ms":@2000,
+      @"harness_retained_runtime":game ? @YES : @NO, @"observation_ms":@2000,
       @"thread_owner":@"focused-regression-serial-queue", @"resume_snapshot":before,
-      @"after_snapshot":after, @"autonomous_progress":@(progressed),
-      @"classification": game && start==0 ? (progressed ? @"guest_progress_observed" : @"no_post_resume_dispatch_observed")
+      @"after_snapshot":after, @"autonomous_progress":@(progressed), @"contract":contractResult,
+      @"classification": game && start==0 ? (progressed ? @"guest_progress_observed" :
+          (observed.post_resume_completed ? @"post_resume_complete_no_followup_event" : @"no_post_resume_dispatch_observed"))
                                              : @"launch_failed" };
     if (game) agr_dex_game_destroy(game);
     if (package) agr_apk_package_close(package);

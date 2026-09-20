@@ -165,6 +165,9 @@ assert r.get("launch_result") == 0, r
 assert r.get("launch_stage") == "resumed", r
 assert r.get("harness_retained_runtime") is True, r
 assert r.get("observation_ms") == 2000, r
+assert r.get("contract",{}).get("passed") is True, r
+assert r.get("after_snapshot",{}).get("post_resume_completed") is True, r
+assert r.get("classification") == "post_resume_complete_no_followup_event", r
 PY
   phase "Frozen Bubble post-resume discovery evidence captured"
   exit 0

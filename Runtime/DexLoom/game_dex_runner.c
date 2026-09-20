@@ -41,6 +41,15 @@ static DxResult activity_get_application(DxVM *vm, DxFrame *frame,
     return context_get_application_context(vm, frame, args, count);
 }
 
+static DxResult activity_on_post_resume(DxVM *vm, DxFrame *frame,
+                                        DxValue *args, uint32_t count) {
+    (void)vm; (void)frame; (void)args; (void)count;
+    /* API19 Activity.onPostResume makes the Window active when one exists.
+       This launch environment has not attached a Window or ActionBar, so the
+       guarded branches have no guest-visible work. */
+    return DX_OK;
+}
+
 static void add_method(DxClass *cls, const char *name, const char *shorty,
                        uint32_t flags, DxNativeMethodFn fn, int direct) {
     DxMethod **methods = direct ? &cls->direct_methods : &cls->virtual_methods;
@@ -242,6 +251,7 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(activity, "onCreate", "VL", DX_ACC_PROTECTED, noop, 0);
     add_method(activity, "onStart", "V", DX_ACC_PROTECTED, noop, 0);
     add_method(activity, "onResume", "V", DX_ACC_PROTECTED, noop, 0);
+    add_method(activity, "onPostResume", "V", DX_ACC_PROTECTED, activity_on_post_resume, 0);
     add_method(activity, "getApplication", "L", DX_ACC_PUBLIC, activity_get_application, 0);
     add_method(native_activity, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
     add_method(native_activity, "onCreate", "VL", DX_ACC_PUBLIC, noop, 0);
@@ -314,6 +324,7 @@ struct agr_dex_game {
     void *native_callback_user;
     struct { uint32_t handle; DxObject *object; } *objects;
     uint32_t object_count, object_capacity;
+    int post_resume_completed;
 };
 
 typedef struct {
@@ -626,6 +637,12 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     game->launch_stage=AGR_ACTIVITY_LAUNCH_STARTED;
     DxMethod *on_resume=dx_vm_find_method(cls,"onResume","V");
     if (on_resume && dx_vm_execute_method(vm,on_resume,init_args,1,NULL)!=DX_OK) return -1;
+    DxMethod *on_post_resume=dx_vm_find_method(cls,"onPostResume","V");
+    if (!on_post_resume || dx_vm_execute_method(vm,on_post_resume,init_args,1,NULL)!=DX_OK) {
+        snprintf(game->launch_error,sizeof(game->launch_error),"Activity.onPostResume failed: %s",vm->error_msg);
+        return -1;
+    }
+    game->post_resume_completed=1;
     game->launch_stage=AGR_ACTIVITY_LAUNCH_RESUMED;
     return 0;
 }
@@ -644,6 +661,7 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
     snapshot->stack_depth=vm->stack_depth;
     snapshot->vm_running=vm->running ? 1 : 0;
     snapshot->pending_exception=vm->pending_exception ? 1 : 0;
+    snapshot->post_resume_completed=game->post_resume_completed;
     snprintf(snapshot->last_method,sizeof(snapshot->last_method),"%s",vm->diagnostic_last_method);
     snprintf(snapshot->error,sizeof(snapshot->error),"%s",vm->error_msg);
     if (vm->pending_exception && vm->pending_exception->klass &&
@@ -651,6 +669,10 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
         snprintf(snapshot->exception_class,sizeof(snapshot->exception_class),"%s",
                  vm->pending_exception->klass->descriptor);
     return 0;
+}
+
+int agr_dex_game_post_resume_completed(const agr_dex_game *game) {
+    return game ? game->post_resume_completed : 0;
 }
 
 agr_dex_game *agr_dex_game_create_for_launch(const void *dex_bytes, uint32_t dex_size,
