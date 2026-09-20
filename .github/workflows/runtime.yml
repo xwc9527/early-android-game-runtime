@@ -43,8 +43,12 @@ jobs:
           if [[ "$RUN_KIND" == "closure" ]]; then
             echo "admitted=true" >> "$GITHUB_OUTPUT"
           else
-            python3 ci/validate-expensive-run.py ci/governance/expensive-run-plan.json
-            echo "admitted=true" >> "$GITHUB_OUTPUT"
+            if python3 ci/validate-expensive-run.py ci/governance/expensive-run-plan.json; then
+              echo "admitted=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "::notice title=AGR discovery admission::Expensive macOS run skipped; no valid information-gain plan is enabled."
+              echo "admitted=false" >> "$GITHUB_OUTPUT"
+            fi
           fi
 
   simulator-runtime:

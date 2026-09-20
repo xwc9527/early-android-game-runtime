@@ -25,10 +25,15 @@ def hash_path(path, tracked):
     matches = [item for item in tracked if item == path or item.startswith(path.rstrip("/") + "/")]
     if not matches:
         return None
+    dirty = subprocess.run(["git", "status", "--porcelain", "--", path], cwd=ROOT, text=True,
+                           capture_output=True, check=True).stdout.strip()
+    if dirty:
+        return "WORKTREE_CHANGED"
     digest = hashlib.sha256()
     for item in matches:
         digest.update(item.encode("utf-8") + b"\0")
-        digest.update(hashlib.sha256((ROOT / item).read_bytes()).digest())
+        blob = subprocess.check_output(["git", "rev-parse", f"HEAD:{item}"], cwd=ROOT, text=True).strip()
+        digest.update(blob.encode("ascii"))
     return digest.hexdigest()
 
 

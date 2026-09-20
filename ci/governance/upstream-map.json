@@ -38,8 +38,8 @@
           "runNativeActivityApk / ANativeActivity_onCreate guest entry"
         ],
         "source_hashes": {
-          "App/main.m": "095e161778b0ef1ca53517e7365583ae6cb49cdd5f2b4d1e384284e534a5f125",
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "88d742449969ba4f93190b73603f25745dbec9b315a87062926ce4de7ccb34fd"
+          "App/main.m": "b7c4e8fdd22f363f73e9f4e97bb1d4451b9c6728b6cafce2d3dffd79a6e54ed8",
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "84b85c1b400a56786ce467c953789258a59f1f281c199357b7981498baddea73"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
@@ -95,8 +95,8 @@
           "pipe_create_cb / ALooper dispatch"
         ],
         "source_hashes": {
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "88d742449969ba4f93190b73603f25745dbec9b315a87062926ce4de7ccb34fd",
-          "Runtime/NativeCore/agr_runtime.c": "875147f8e298f1ce9e4dd73084a498d48545f1e0d8367dac61d4fb6c5639821f"
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "84b85c1b400a56786ce467c953789258a59f1f281c199357b7981498baddea73",
+          "Runtime/NativeCore/agr_runtime.c": "8fe5bc168aa590eb56c8817843937e6954cb44245815c4d141e55a666ed74260"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
@@ -154,8 +154,8 @@
           "dispatch_import ALooper_*"
         ],
         "source_hashes": {
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "88d742449969ba4f93190b73603f25745dbec9b315a87062926ce4de7ccb34fd",
-          "Runtime/GuestRuntime/agr_service_dispatch.c": "1f24d1fd8e19fc760718132f7083420d7edd7444d0b7a5c38707e25c306c0f1e"
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "84b85c1b400a56786ce467c953789258a59f1f281c199357b7981498baddea73",
+          "Runtime/GuestRuntime/agr_service_dispatch.c": "b8972103bc08edbd895fd957baa278286958e1919dee13bfc119ad07a25e242c"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
@@ -210,8 +210,8 @@
           "input_queue_push / dispatch_import AInputQueue_*"
         ],
         "source_hashes": {
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "88d742449969ba4f93190b73603f25745dbec9b315a87062926ce4de7ccb34fd",
-          "App/main.m": "095e161778b0ef1ca53517e7365583ae6cb49cdd5f2b4d1e384284e534a5f125"
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "84b85c1b400a56786ce467c953789258a59f1f281c199357b7981498baddea73",
+          "App/main.m": "b7c4e8fdd22f363f73e9f4e97bb1d4451b9c6728b6cafce2d3dffd79a6e54ed8"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
@@ -268,7 +268,7 @@
           "dispatch_import egl*"
         ],
         "source_hashes": {
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "88d742449969ba4f93190b73603f25745dbec9b315a87062926ce4de7ccb34fd"
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "84b85c1b400a56786ce467c953789258a59f1f281c199357b7981498baddea73"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
@@ -326,9 +326,9 @@
           "agr_jni_method_* / dex_native_bridge"
         ],
         "source_hashes": {
-          "Runtime/GuestRuntime/agr_jni_methods.c": "388175d683fc1f46823c5fb7c83974a36977a5fbea4be5610ff9d6c269ae5d57",
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "88d742449969ba4f93190b73603f25745dbec9b315a87062926ce4de7ccb34fd",
-          "Runtime/DexLoom/game_dex_runner.c": "5faaa12dd5cd4517d535585e96b0666d9730d1dd7527d0be60ccd08efc7cb7ce"
+          "Runtime/GuestRuntime/agr_jni_methods.c": "8bdc5b524175bb6066c696fa347162d43dc494d31a1b6a2b47914a6418f07d3d",
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "84b85c1b400a56786ce467c953789258a59f1f281c199357b7981498baddea73",
+          "Runtime/DexLoom/game_dex_runner.c": "8810108df3a72c133776f984a8affbd5700f3e99d4dc96cc2c5968bc7d4a530b"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
@@ -386,7 +386,7 @@
           "agr_afw_add_apk / agr_afw_open"
         ],
         "source_hashes": {
-          "Runtime/AndroidFw": "caf14b71b883af23b89c8221dce3d1ff2c4f837c485e5699adbc4e859ae3644c"
+          "Runtime/AndroidFw": "c707369f0234b6c06bd6c2c931366e0aab6a4cb02d110514c26d020b874ecc44"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
@@ -441,8 +441,8 @@
           "Bionic source port callbacks"
         ],
         "source_hashes": {
-          "Runtime/Bionic": "c28c9e56671f66f0c02af25562f0f51bef96a7c00a4c65704dab025c1d165323",
-          "Runtime/GuestRuntime/agr_thread_context.c": "99d3c17d86839b50aad1d35b9906ec34b461a2c54346ccc3bbf92a379d476e3d"
+          "Runtime/Bionic": "4cc1ef3b5845c46cf6c18d81aaadbff46d7fd3ab94796c77f5b0bb378f7e1e37",
+          "Runtime/GuestRuntime/agr_thread_context.c": "e07b18ad51e081a2798f5ccbb2a1be7555faa2e1b0f2fc3f3056b16d8dd8540e"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
@@ -496,7 +496,7 @@
           "pinned KitKat linker source port"
         ],
         "source_hashes": {
-          "Runtime/AospLinker": "c112fc1382fec33d284d324074c4aaad252ea736b6ec7f55a3cf782a94d43c32"
+          "Runtime/AospLinker": "ee37c4115b75234b80b0886d4a0e5779a3d97c9d9dee9b2cb47c37b994da407f"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
@@ -550,9 +550,9 @@
           "guest GCC runtime with __gnu_Unwind_Find_exidx HLE"
         ],
         "source_hashes": {
-          "Runtime/Ehabi": "9d4658359ac40136e234e381a383f55310d8141031de8595dedb952ae3394d94",
-          "Runtime/AospLinker": "c112fc1382fec33d284d324074c4aaad252ea736b6ec7f55a3cf782a94d43c32",
-          "Runtime/NativeCore/agr_runtime.c": "875147f8e298f1ce9e4dd73084a498d48545f1e0d8367dac61d4fb6c5639821f"
+          "Runtime/Ehabi": "292215dd0058e64c08f9270ab231d7ae25333166019ca9399465136c60c49888",
+          "Runtime/AospLinker": "ee37c4115b75234b80b0886d4a0e5779a3d97c9d9dee9b2cb47c37b994da407f",
+          "Runtime/NativeCore/agr_runtime.c": "8fe5bc168aa590eb56c8817843937e6954cb44245815c4d141e55a666ed74260"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
@@ -609,9 +609,9 @@
           "API19 dlmalloc source port"
         ],
         "source_hashes": {
-          "Runtime/Bionic/agr_bionic_allocator.cpp": "012bc839c1ed05a4e4c6161f6b1baca019aeda4bf7092bcb4896d530bdcee233",
-          "Runtime/Bionic/agr_api19_dlmalloc_source.inc": "870d4899084033e8871608c6d2b5e940537469b39334b0ff9e6fd5e3575c4353",
-          "Runtime/NativeCore/agr_runtime.c": "875147f8e298f1ce9e4dd73084a498d48545f1e0d8367dac61d4fb6c5639821f"
+          "Runtime/Bionic/agr_bionic_allocator.cpp": "ce6882946cb337bc59dd6c7c9bcde12b6b92ac2ad105d04128b7e5b161fdede9",
+          "Runtime/Bionic/agr_api19_dlmalloc_source.inc": "7e2b26f8ca27d2210bdf8c8b09977788c10a49f5b95d970cedeb83be8265d634",
+          "Runtime/NativeCore/agr_runtime.c": "8fe5bc168aa590eb56c8817843937e6954cb44245815c4d141e55a666ed74260"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
@@ -685,8 +685,8 @@
           "gc_mark_roots"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "5faaa12dd5cd4517d535585e96b0666d9730d1dd7527d0be60ccd08efc7cb7ce",
-          "Runtime/DexLoom/VM/dx_vm.c": "7c281c6d505793743b1f7b4225ec8687c7dce1e8484aeaba195b63a65d2d5c92"
+          "Runtime/DexLoom/game_dex_runner.c": "8810108df3a72c133776f984a8affbd5700f3e99d4dc96cc2c5968bc7d4a530b",
+          "Runtime/DexLoom/VM/dx_vm.c": "7115ff6f08a00cf04acaf8228b5429aef48f82cffcac0d9e77e41515640b56ff"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
