@@ -20,7 +20,7 @@ Framework / Activity Launch Compatibility Phase 1: preserve the API19 observable
 
 ## Upstream Source Path
 
-Pinned Android 4.4.4_r2 path: `ActivityThread.performLaunchActivity -> Instrumentation.newActivity -> LoadedApk.makeApplication -> Activity.attach -> Instrumentation.callActivityOnCreate -> performStartActivity -> handleResumeActivity`.
+Pinned Android 4.4.4_r2 path: `ActivityThread.performLaunchActivity -> Instrumentation.newActivity -> LoadedApk.makeApplication -> Activity.attach -> Instrumentation.callActivityOnCreate -> Activity.performStart -> ActivityThread.handleResumeActivity`.
 
 The source gate pins and hashes `ActivityThread.java`, `Instrumentation.java`, `LoadedApk.java`, `Activity.java`, and `Application.java` and verifies the relevant symbols.
 

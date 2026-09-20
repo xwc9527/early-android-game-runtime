@@ -28,10 +28,10 @@ jobs:
           import base64, hashlib, urllib.request
           base='https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/'
           sources={
-            'core/java/android/app/ActivityThread.java':('4373bb6a1b9097c136ddab729cafc9884f9c5a70fdf41b43bfd4ba7b083229ae',['performLaunchActivity','performStartActivity','handleResumeActivity']),
+            'core/java/android/app/ActivityThread.java':('4373bb6a1b9097c136ddab729cafc9884f9c5a70fdf41b43bfd4ba7b083229ae',['performLaunchActivity','handleResumeActivity']),
             'core/java/android/app/Instrumentation.java':('42d0d5219bb45df106842abd1201526522ae5f06bbdee4288bd1709cd340778c',['newActivity','callActivityOnCreate']),
             'core/java/android/app/LoadedApk.java':('2d862422d943952091aadd33770895b4bc773cb508e4dc8c3bc112c6b1ecf457',['makeApplication']),
-            'core/java/android/app/Activity.java':('03874ea13f230ff2b92bc6d99522011f63a3076e9101655aa0249addc590cc4b',['final void attach','performCreate']),
+            'core/java/android/app/Activity.java':('03874ea13f230ff2b92bc6d99522011f63a3076e9101655aa0249addc590cc4b',['final void attach','performCreate','performStart']),
             'core/java/android/app/Application.java':('1aaa701cead873deb0ead9feae62f345a3799f48885dcec60d6083d54c16b0fb',['final void attach','onCreate']),
           }
           for path,(expected,symbols) in sources.items():

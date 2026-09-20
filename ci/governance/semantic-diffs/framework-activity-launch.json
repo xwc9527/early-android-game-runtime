@@ -21,7 +21,7 @@
       "LoadedApk.makeApplication",
       "Activity.attach",
       "Instrumentation.callActivityOnCreate",
-      "ActivityThread.performStartActivity",
+      "Activity.performStart",
       "ActivityThread.handleResumeActivity"
     ]
   },
