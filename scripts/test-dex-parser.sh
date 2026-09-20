@@ -2,7 +2,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; BUILD="$ROOT/build/dex-parser-contract"
 mkdir -p "$BUILD"
-cc -std=c11 -O2 -I"$ROOT/Runtime/DexLoom/Include" \
+cc -std=c11 -O2 -D_POSIX_C_SOURCE=200809L -I"$ROOT/Runtime/DexLoom/Include" \
   "$ROOT/Tests/DexLoom/dex_parser_probe.c" \
   "$ROOT/Runtime/DexLoom/Base/dx_log.c" \
   "$ROOT/Runtime/DexLoom/Base/dx_memory.c" \
