@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "enabled": true,
-  "question": "Does resetting the DEX instruction and wall-clock budgets at every independent top-level invocation eliminate the proven cumulative loadImage watchdog failure without changing nested-call budgeting?",
+  "enabled": false,
+  "question": "Resolved by discovery run 35514480599: resetting budgets at each top-level invocation removes the cumulative loadImage watchdog failure while the complete Runtime regression passes.",
   "current_uncertainty": [
-    "The source defect and failing trace are exact, but only the compiled Simulator Runtime can prove repeated JNI-to-DEX texture callbacks now continue beyond the former 10-second cumulative boundary."
+    "No discovery uncertainty remains for the cumulative DEX watchdog failure."
   ],
   "expected_outcome_a": {
     "result": "Repeated real loadImage callbacks no longer report DX_ERR_BUDGET_EXHAUSTED, the PVS regression produces its bounded result, and Activity-focused evidence remains unchanged.",
@@ -20,5 +20,5 @@
   },
   "why_cheaper_test_is_insufficient": "Windows cannot build the iOS host target, and source inspection cannot reproduce the real nested DEX calls, elapsed time, texture callback sequence, or compiled Simulator scheduling that triggered the watchdog.",
   "prior_expensive_runs_without_information_gain": 0,
-  "resolved_by_run": null
+  "resolved_by_run": "35514480599"
 }

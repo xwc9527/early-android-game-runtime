@@ -42,9 +42,11 @@ Focused Simulator run `35503417335` executed the exact source-derived path. The 
 
 Closure run `35513111351` was the first `VALID_FAIL`. Source, focused Activity, and iphoneos stages passed. Its isolated stable Runtime regression proved that InputQueue delivery completed through guest handling and `finishEvent`, then a later `loadImage` callback failed because the DEX watchdog retained the timestamp of the VM's first top-level call. The log records successful texture loads followed by `Watchdog timeout (10000ms)` in `FileBackend.loadTexture`; this is a per-invocation budget defect, not an Activity or input-chain failure.
 
+Discovery run `35514480599` verifies the correction in the compiled Simulator Runtime. The same real-APK regression completed in 64.534 seconds, consumed all 8 replay events, produced no Runtime failure signature, and emitted no watchdog or budget-exhaustion failure. Device build run `35514480598` and focused Activity run `35514480601` also passed for the Runtime fix commit. Governance run `35514607828` passed after its state contract was made ledger-aware.
+
 ## Next Validation
 
-Verify that every independent top-level DEX callback starts a fresh instruction and wall-clock budget. A second valid exact-candidate closure attempt requires explicit approval after this focused discovery evidence is complete.
+The branch is ready for a second valid exact-candidate closure attempt. The governance policy requires explicit approval because run `35513111351` was a `VALID_FAIL`.
 
 ## Allowed Work
 
