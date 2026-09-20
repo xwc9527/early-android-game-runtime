@@ -29,12 +29,15 @@ jobs:
               with zipfile.ZipFile(root/f'{name}.apk') as apk:
                   (root/f'{name}.dex').write_bytes(apk.read('classes.dex'))
           PY
+      - name: Build project-owned no-Bridge contract DEX
+        run: python3 Tests/DexLoom/make_no_bridge_fixture.py App/Resources/classes.dex build/dex-samples/no-bridge.dex
       - name: Run focused AGR parser
         id: parser
         shell: bash
         run: |
           set +e
           bash scripts/test-dex-parser.sh \
+            build/dex-samples/no-bridge.dex \
             build/dex-samples/pixel-dungeon.dex \
             build/dex-samples/frozen-bubble.dex 2>&1 | tee build/dex-parser-results.log
           status=${PIPESTATUS[0]}
