@@ -65,7 +65,8 @@
       "name": "DEXRuntimeLifecycle",
       "status": "active",
       "paths": [
-        "Runtime/DexLoom/game_dex_runner"
+        "Runtime/DexLoom/game_dex_runner",
+        "Runtime/DexLoom/VM/dx_interpreter"
       ],
       "gate": "activity-gc-root-contract",
       "reopen_reason": "Framework Activity Launch Phase 1 extends the existing host DEX lifecycle coordinator from the proven Activity GC root into the API19 Application/Activity attach and lifecycle contract."

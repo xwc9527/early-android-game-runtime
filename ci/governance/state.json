@@ -29,17 +29,17 @@
     "causal_status": "REAL_GAME_CONFIRMED",
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "run the exact-candidate closure gate: pinned source and fixture, focused Simulator launch, required contracts/regressions, and iphoneos build",
-    "primary_blocker": "none inside the declared Activity launch contract; closure evidence is pending for the exact candidate commit",
+    "next_validation": "verify the per-top-level DEX watchdog budget fix locally, then seek approval for the second valid exact-candidate closure attempt",
+    "primary_blocker": "the stable Runtime regression exposed a process-lifetime DEX watchdog timestamp: repeated short JNI-to-DEX loadImage calls were incorrectly terminated after cumulative VM wall time exceeded 10 seconds",
     "first_broken_boundary": "resolved: generic DEX-loaded APK to ActivityThread-equivalent launch",
     "first_broken_boundary_evidence": "run 35503417335: synthetic Application/Activity reached resumed with all roots and markers; Pixel Dungeon crossed into Activity.onCreate; Frozen Bubble reached resumed"
   },
   "ci_budget": {
     "valid_closure_runs": 1,
     "infrastructure_failures_consume_budget": false,
-    "closure_runs_used": 0,
-    "last_closure_attempt": "INVALID:35504579645",
-    "automatic_reruns_available": 1,
+    "closure_runs_used": 1,
+    "last_closure_attempt": "VALID_FAIL:35513111351",
+    "automatic_reruns_available": 0,
     "discovery_policy": "information_gain",
     "consecutive_expensive_runs_without_information_gain": 0
   }

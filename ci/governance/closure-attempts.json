@@ -7,8 +7,8 @@
     "second_run_after_valid_fail_requires_approval": true
   },
   "budget": {
-    "valid_attempts_used": 0,
-    "valid_attempts_remaining": 1
+    "valid_attempts_used": 1,
+    "valid_attempts_remaining": 0
   },
   "attempts": [
     {
@@ -52,6 +52,15 @@
       "consumes_budget": false,
       "automatic_rerun_of": "35504120421",
       "automatic_rerun": "AVAILABLE_AFTER_FIX"
+    },
+    {
+      "run_id": "35513111351",
+      "tested_commit": "d4beb208a88dfe27f5a76509ec5607e44063cf0f",
+      "tested_tree": "e6c8b4cb91f2ed22519e7d1f6b5fd44029a259ab",
+      "classification": "VALID_FAIL",
+      "reason": "all required closure stages had an opportunity to complete and evidence was collected; the isolated stable Runtime regression exposed the DEX watchdog carrying its first top-level timestamp across repeated JNI-to-DEX loadImage calls",
+      "consumes_budget": true,
+      "automatic_rerun_of": "35504579645"
     }
   ]
 }

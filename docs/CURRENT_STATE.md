@@ -8,7 +8,7 @@ Last known good: `09d6953e3e2f2bf6ca63565e5458a71815d298e7` on formal `main`
 
 Active branch: `phase/framework-activity-launch-1`
 
-Lifecycle state: `VERIFIED` (closure candidate)
+Lifecycle state: `VERIFIED` (closure candidate; first valid closure attempt failed)
 
 ## Previous Target
 
@@ -40,9 +40,11 @@ Classification: `ANDROID_SEMANTIC_BUG`. Semantic class: `PUBLIC_OBSERVABLE`. Cau
 
 Focused Simulator run `35503417335` executed the exact source-derived path. The synthetic Application/Activity fixture reached `resumed` with both lifecycle markers and both GC roots. Pixel Dungeon crossed the former launch boundary and entered its original `Activity.onCreate`; its next failure is inside subsequent DEX/Framework execution. Frozen Bubble reached `resumed`. No common Activity-launch blocker remains.
 
+Closure run `35513111351` was the first `VALID_FAIL`. Source, focused Activity, and iphoneos stages passed. Its isolated stable Runtime regression proved that InputQueue delivery completed through guest handling and `finishEvent`, then a later `loadImage` callback failed because the DEX watchdog retained the timestamp of the VM's first top-level call. The log records successful texture loads followed by `Watchdog timeout (10000ms)` in `FileBackend.loadTexture`; this is a per-invocation budget defect, not an Activity or input-chain failure.
+
 ## Next Validation
 
-Run the phase closure workflow on one exact candidate commit: pinned source and fixture, focused Simulator launch, required Runtime contracts/regressions, and iphoneos build.
+Verify that every independent top-level DEX callback starts a fresh instruction and wall-clock budget. A second valid exact-candidate closure attempt requires explicit approval after this focused discovery evidence is complete.
 
 ## Allowed Work
 

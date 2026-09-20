@@ -1049,10 +1049,16 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                                uint32_t arg_count, DxValue *result) {
     if (!vm || !method) return DX_ERR_NULL_PTR;
 
-    // Start watchdog timer on top-level call (stack_depth == 0)
-    if (vm->watchdog_timeout_ms > 0 && vm->watchdog_start_time == 0) {
-        vm->watchdog_start_time = dx_current_time_ms();
+    /* Instruction and wall-clock budgets belong to one top-level DEX
+     * invocation.  Nested calls share that budget, but a later independent
+     * JNI -> DEX callback must start a new one.  Keeping the first timestamp
+     * for the lifetime of the VM made repeated short loadImage calls fail once
+     * the process had merely existed for watchdog_timeout_ms. */
+    if (vm->stack_depth == 0) {
+        vm->insn_count = 0;
         vm->watchdog_triggered = false;
+        vm->watchdog_start_time = vm->watchdog_timeout_ms > 0
+            ? dx_current_time_ms() : 0;
     }
 
     // Profiling: record method entry time
