@@ -70,7 +70,7 @@ jobs:
   focused-simulator:
     needs: source-and-fixture
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -91,15 +91,6 @@ jobs:
         env:
           ACTIVITY_LAUNCH_COMPATIBILITY: '1'
         run: bash scripts/build-and-run-simulator.sh
-      - name: Run required Runtime contracts
-        if: ${{ inputs.run_kind == 'closure' }}
-        run: bash ci/run-contracts.sh
-      - name: Establish bounded Simulator Runtime smoke prerequisite
-        if: ${{ inputs.run_kind == 'closure' }}
-        run: python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds 900
-      - name: Run required Runtime and real-game regressions
-        if: ${{ inputs.run_kind == 'closure' }}
-        run: bash ci/run-regressions.sh
       - name: Publish focused Simulator evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -108,11 +99,39 @@ jobs:
           path: |
             build/artifacts/framework-activity-launch.json
             build/artifacts/framework-activity-launch.log
-            build/artifacts/runtime-smoke.json
-            build/artifacts/process-forensic.json
-            build/artifacts/results/contracts.json
-            build/artifacts/results/regressions.json
-            build/artifacts/results/regressions-simulator-real-apk.log
+
+  runtime-regressions:
+    if: ${{ inputs.run_kind == 'closure' }}
+    needs: source-and-fixture
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore Runtime build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .tools
+            Vendor/ANGLE-Package
+            Runtime/ArmInterpreter/target
+          key: agr-framework-activity-runtime-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-and-run-simulator.sh', 'Tests/Samples/fdroid.json') }}
+          restore-keys: agr-framework-activity-runtime-${{ runner.os }}-
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run required Runtime contracts
+        run: bash ci/run-contracts.sh
+      - name: Establish bounded Simulator Runtime smoke prerequisite
+        run: python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds 900
+      - name: Run required Runtime and real-game regressions
+        run: bash ci/run-regressions.sh
+      - name: Publish Runtime regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-activity-runtime-regressions
+          path: build/artifacts
 
   iphoneos:
     if: ${{ inputs.run_kind == 'closure' }}
@@ -139,7 +158,7 @@ jobs:
 
   closure-evidence:
     if: ${{ always() && inputs.run_kind == 'closure' }}
-    needs: [source-and-fixture, focused-simulator, iphoneos]
+    needs: [source-and-fixture, focused-simulator, runtime-regressions, iphoneos]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -151,7 +170,7 @@ jobs:
           name: framework-activity-simulator-results
           path: build/closure-input
       - name: Build exact-commit closure summary
-        if: ${{ needs.source-and-fixture.result == 'success' && needs.focused-simulator.result == 'success' && needs.iphoneos.result == 'success' }}
+        if: ${{ needs.source-and-fixture.result == 'success' && needs.focused-simulator.result == 'success' && needs.runtime-regressions.result == 'success' && needs.iphoneos.result == 'success' }}
         run: |
           python3 ci/build-framework-activity-summary.py \
             --activity-result build/closure-input/framework-activity-launch.json
@@ -169,5 +188,6 @@ jobs:
         run: |
           test '${{ needs.source-and-fixture.result }}' = success
           test '${{ needs.focused-simulator.result }}' = success
+          test '${{ needs.runtime-regressions.result }}' = success
           test '${{ needs.iphoneos.result }}' = success
           test -s build/artifacts/framework-activity-run-summary.json
