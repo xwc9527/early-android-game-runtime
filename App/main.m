@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "agr_runtime.h"
+#include "dx_log.h"
 #include "dx_vm.h"
 #include "agr_androidfw.h"
 #include "agr_bitmap.h"
