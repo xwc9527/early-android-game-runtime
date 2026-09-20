@@ -2,13 +2,13 @@
   "schema_version": 1,
   "baseline": {
     "branch": "main",
-    "commit": "75fbe9d6dc5ad0e535fcba8e25182927d207bd3e",
-    "last_known_good": "75fbe9d6dc5ad0e535fcba8e25182927d207bd3e"
+    "commit": "a5c5958af1a65763808fc2a4de669c4e76694876",
+    "last_known_good": "a5c5958af1a65763808fc2a4de669c4e76694876"
   },
   "active": {
     "target": "Android Framework Continuation Phase 1",
-    "branch": "phase/framework-runtime-continuation-1",
-    "lifecycle": "VERIFIED",
+    "branch": "main",
+    "lifecycle": "MERGED",
     "observed_discontinuity": "Focused Simulator run 35528665347 retained the unchanged Frozen Bubble VM for 2000 ms: performResumeActivity returned, no exception occurred, and no method or Framework event followed.",
     "android_subsystem": "ActivityThread handleResumeActivity window/decor visibility cluster through ViewRoot/Surface handoff",
     "upstream_path": [
@@ -29,16 +29,16 @@
     "causal_status": "REAL_GAME_CONFIRMED",
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "exact-candidate closure: source contract, focused Simulator, Runtime regressions, iphoneos build, closure evidence",
-    "primary_blocker": "none within the Activity/Window semantic cluster; exact-candidate closure remains",
-    "first_broken_boundary": "ActivityThread.handleResumeActivity continuation immediately after performResumeActivity returns",
-    "first_broken_boundary_evidence": "workflow 35528665347 established the divergence; workflow 35529992439 proves the complete API19 Window/visibility cluster and handoff on synthetic and unchanged Frozen Bubble workloads"
+    "next_validation": "select the next subsystem after the ViewRoot/Surface ownership handoff",
+    "primary_blocker": "none",
+    "first_broken_boundary": "none",
+    "first_broken_boundary_evidence": "closure 35530434859 VALID_PASS; post-merge 35530860389 PASS"
   },
   "ci_budget": {
-    "valid_closure_runs": 0,
+    "valid_closure_runs": 1,
     "infrastructure_failures_consume_budget": false,
-    "closure_runs_used": 0,
-    "last_closure_attempt": "none for current target; focused discovery 35529992439 passed",
+    "closure_runs_used": 1,
+    "last_closure_attempt": "35530434859 VALID_PASS",
     "automatic_reruns_available": 1,
     "discovery_policy": "information_gain",
     "consecutive_expensive_runs_without_information_gain": 0

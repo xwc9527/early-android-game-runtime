@@ -2,11 +2,11 @@
 
 Updated: 2026-09-21
 
-Baseline and last known good: `main @ 75fbe9d6dc5ad0e535fcba8e25182927d207bd3e`.
+Baseline and last known good: `main @ a5c5958af1a65763808fc2a4de669c4e76694876`.
 
-Active branch: `phase/framework-runtime-continuation-1`.
+Active branch: `main`.
 
-Lifecycle: `VERIFIED`, pending exact-candidate closure.
+Lifecycle: `MERGED/STABLE`.
 
 ## Active Target
 
@@ -24,7 +24,7 @@ The host-side ActivityThread coordinator now owns the continuous Activity/Window
 
 Focused Simulator workflow `35529992439` passed on candidate `d0bda55456600a08fca08e1042f8ff4eb5d1b4b5`. The synthetic contract and unchanged Frozen Bubble both reported `window_attached`, `window_added`, `window_visible`, `idle_handler_scheduled`, and `viewroot_handoff`; the exact ordered trace ended at `handoff.viewroot_surface` with no exception or Runtime error. Runtime, governance, and iphoneos workflows on the same commit also passed.
 
-The next validation is one exact-candidate closure containing the final governance evidence, source contract, focused Simulator result, Runtime regressions, and iphoneos build.
+Exact-candidate closure `35530434859` passed as `VALID_PASS` for commit `a5c5958af1a65763808fc2a4de669c4e76694876`, tree `ee8c0889437e79dacf9e8ed068a7d569100189de`. The candidate was fast-forwarded to `main` without tree changes. Post-merge gate `35530860389`, governance, and iphoneos all passed. The next subsystem begins at the recorded `ViewRoot/Surface` ownership handoff.
 
 ## Protected Boundaries
 
@@ -35,4 +35,4 @@ The next validation is one exact-candidate closure containing the final governan
 
 ## Closure Contract
 
-One exact commit/tree must prove the pinned API19 ordering, complete synthetic and unchanged-real-APK Window cluster, terminal `handoff.viewroot_surface`, no Runtime exception, required regressions, and iphoneos build. A green discovery run alone does not close the target.
+The closure contract is satisfied and remains protected by the source, focused Simulator, Runtime regression, iphoneos, and post-merge gates above.

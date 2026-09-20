@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "target": "Frozen Bubble Post-Resume Compatibility Phase 1",
+  "target": "Android Framework Continuation Phase 1",
   "state": "MERGED",
-  "closure_tested_commit": "05c6fda91eba054ee7a379cb0aa46d60c032d649",
-  "closure_tested_tree": "8ef3c7f62299319cf43284c3203ab9fb551c848a",
-  "closure_base_commit": "03e104282debde07d331a6e7791a1ab89b18cb09",
+  "closure_tested_commit": "a5c5958af1a65763808fc2a4de669c4e76694876",
+  "closure_tested_tree": "ee8c0889437e79dacf9e8ed068a7d569100189de",
+  "closure_base_commit": "75fbe9d6dc5ad0e535fcba8e25182927d207bd3e",
   "eligible_for_merge": false,
-  "merged_commit": "05c6fda91eba054ee7a379cb0aa46d60c032d649",
-  "merged_tree": "8ef3c7f62299319cf43284c3203ab9fb551c848a"
+  "merged_commit": "a5c5958af1a65763808fc2a4de669c4e76694876",
+  "merged_tree": "ee8c0889437e79dacf9e8ed068a7d569100189de"
 }
