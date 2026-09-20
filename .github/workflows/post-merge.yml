@@ -35,6 +35,10 @@ jobs:
         run: |
           python3 ci/fetch-closure-evidence.py
           python3 ci/verify-merge.py build/artifacts/closure-run-summary.json --merged
+      - name: Check out the exact closure-tested merge point
+        run: |
+          tested_commit=$(python3 -c 'import json; print(json.load(open("build/artifacts/closure-run-summary.json"))["closure"]["tested_commit"])')
+          git checkout --detach "$tested_commit"
       - name: Compile governance tools
         run: python3 -m py_compile ci/*.py
       - name: Critical static and JNI contract
