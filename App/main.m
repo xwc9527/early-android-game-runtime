@@ -735,10 +735,19 @@ static NSDictionary *probeGenericSample(NSDictionary *sample) {
     BOOL hasDex = [sample[@"has_dex"] boolValue];
     if (!libraries.count) {
         NSData *dex = hasDex ? apkMember(assets,@"classes.dex") : nil;
-        DxVM *vm = dex ? poc_create(dex.bytes,(uint32_t)dex.length) : NULL;
-        [result addEntriesFromDictionary:@{@"stage":vm ? @"dex_loaded" : @"dex_parse",
-          @"outcome":vm ? @"known_gap" : @"new_failure",
-          @"signature":vm ? @"missing_framework:activity_launch" : @"dex_parse_failed"}];
+        DxDexFile *parsedDex = NULL;
+        DxResult parseResult = dex ? dx_dex_parse(dex.bytes,(uint32_t)dex.length,&parsedDex)
+                                   : DX_ERR_NOT_FOUND;
+        if (parseResult == DX_OK) {
+            [result addEntriesFromDictionary:@{@"stage":@"dex_loaded", @"outcome":@"known_gap",
+              @"signature":@"missing_framework:activity_launch",
+              @"dex_classes":@(parsedDex->class_count), @"dex_methods":@(parsedDex->method_count)}];
+        } else {
+            NSString *detail = dex ? [NSString stringWithUTF8String:dx_result_string(parseResult)] : @"classes.dex missing";
+            [result addEntriesFromDictionary:@{@"stage":@"dex_parse", @"outcome":@"new_failure",
+              @"signature":failureSignature(@"dex_parse",detail), @"dex_result":@(parseResult)}];
+        }
+        dx_dex_free(parsedDex);
         agr_afw_destroy(assets); return result;
     }
     agr_guest *guest = agr_guest_create();
