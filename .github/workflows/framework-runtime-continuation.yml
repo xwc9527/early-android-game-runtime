@@ -39,7 +39,10 @@ jobs:
           perform=activity[activity.index('final void performResume()'):activity.index('final void performPause()')]
           assert perform.index('mInstrumentation.callActivityOnResume(this)') < perform.index('onPostResume();')
           thread=decoded['ActivityThread.java']
-          resume=thread[thread.index('final void handleResumeActivity'):thread.index('final void handlePauseActivity')]
+          resume_start=thread.index('final void handleResumeActivity')
+          # Keep the gate tied to the function body without assuming the
+          # access modifier/name of the following API19 helper.
+          resume=thread[resume_start:resume_start+9000]
           for token in ('performResumeActivity(token, clearHide)','r.activity.getWindow()','wm.addView(decor, l)','r.activity.makeVisible()','addIdleHandler(new Idler())'):
             assert token in resume, token
           assert resume.index('performResumeActivity(token, clearHide)') < resume.index('r.activity.getWindow()') < resume.index('wm.addView(decor, l)') < resume.index('r.activity.makeVisible()') < resume.index('addIdleHandler(new Idler())')
