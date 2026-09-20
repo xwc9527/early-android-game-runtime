@@ -10,6 +10,12 @@ on:
       - 'Tests/Samples/fdroid.json'
       - '.github/workflows/frozen-bubble-post-resume.yml'
   workflow_dispatch:
+    inputs:
+      run_kind:
+        description: Evidence intent
+        type: choice
+        options: [discovery, closure]
+        default: discovery
 
 jobs:
   source-contract:
@@ -69,3 +75,93 @@ jobs:
             build/artifacts/frozen-bubble-post-resume.json
             build/artifacts/frozen-bubble-post-resume.log
           if-no-files-found: error
+
+  runtime-regressions:
+    if: ${{ inputs.run_kind == 'closure' }}
+    needs: source-contract
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore Runtime build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .tools
+            Vendor/ANGLE-Package
+            Runtime/ArmInterpreter/target
+          key: agr-frozen-post-resume-runtime-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-and-run-simulator.sh', 'Tests/Samples/fdroid.json') }}
+          restore-keys: agr-frozen-post-resume-runtime-${{ runner.os }}-
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run Runtime contracts
+        run: bash ci/run-contracts.sh
+      - name: Run bounded Simulator smoke
+        run: python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds 900
+      - name: Run Runtime and real-game regressions
+        run: bash ci/run-regressions.sh
+      - name: Publish Runtime regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frozen-post-resume-runtime-regressions
+          path: build/artifacts
+
+  iphoneos:
+    if: ${{ inputs.run_kind == 'closure' }}
+    needs: source-contract
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore device build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .tools
+            Vendor/ANGLE-Package
+            Runtime/ArmInterpreter/target
+          key: agr-frozen-post-resume-device-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-iphoneos.sh') }}
+          restore-keys: agr-frozen-post-resume-device-${{ runner.os }}-
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build arm64 iphoneos Runtime
+        run: bash scripts/build-iphoneos.sh
+
+  closure-evidence:
+    if: ${{ always() && inputs.run_kind == 'closure' }}
+    needs: [source-contract, focused-simulator, runtime-regressions, iphoneos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download focused evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: frozen-bubble-post-resume-discovery
+          path: build/closure-input
+      - name: Build exact-commit closure summary
+        if: ${{ needs.source-contract.result == 'success' && needs.focused-simulator.result == 'success' && needs.runtime-regressions.result == 'success' && needs.iphoneos.result == 'success' }}
+        run: |
+          python3 ci/build-frozen-post-resume-summary.py --result build/closure-input/frozen-bubble-post-resume.json
+          python3 ci/validate-governance.py --mode closure --summary build/artifacts/frozen-post-resume-run-summary.json
+      - name: Publish closure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frozen-post-resume-closure-summary
+          path: build/artifacts/frozen-post-resume-run-summary.json
+          if-no-files-found: error
+      - name: Enforce complete closure opportunity
+        if: always()
+        run: |
+          test '${{ needs.source-contract.result }}' = success
+          test '${{ needs.focused-simulator.result }}' = success
+          test '${{ needs.runtime-regressions.result }}' = success
+          test '${{ needs.iphoneos.result }}' = success
+          test -s build/artifacts/frozen-post-resume-run-summary.json

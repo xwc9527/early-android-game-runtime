@@ -1,0 +1,55 @@
+{
+  "schema_version": 2,
+  "classification": "ANDROID_SEMANTIC_BUG",
+  "subsystem": "Framework Activity post-resume lifecycle",
+  "observed_discontinuity": "The unchanged Frozen Bubble APK returned from Activity.onResume, after which the retained AGR VM executed no further method or instruction because the launch coordinator returned immediately.",
+  "upstream": {
+    "map_entry": "framework.activity.launch",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": ["core/java/android/app/Activity.java"],
+    "call_path": ["Activity.performResume", "Instrumentation.callActivityOnResume", "Activity.onPostResume"]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "Activity.performResume invokes onPostResume after onResume returns.",
+    "An application override is dispatched virtually and completes before the Activity is considered fully resumed.",
+    "The callback executes on the same launch/lifecycle thread and an uncaught failure prevents successful resume completion."
+  ],
+  "agr": {
+    "files": ["Runtime/DexLoom/game_dex_runner.c", "App/main.m"],
+    "call_path": ["runFrozenBubblePostResumeDiscovery", "agr_dex_game_start_activity", "dx_vm_execute_method"]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "agr_dex_game_start_activity marked the Activity resumed and returned immediately after onResume without resolving or invoking onPostResume.",
+      "relevance": "The host-side DEX lifecycle ended before the API19 resume sequence was complete."
+    }
+  ],
+  "earliest_evidenced_divergence": "After Activity.onResume returned successfully, API19 Activity.performResume calls onPostResume, while AGR returned from agr_dex_game_start_activity.",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "Android 4.4.4_r2 Activity.java SHA-256 03874ea13f230ff2b92bc6d99522011f63a3076e9101655aa0249addc590cc4b"
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "workflow 35519334286 retained Frozen Bubble for 2000ms: last_method Activity.onResumeV, methods 9, instructions 45, no progress or exception"
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "workflow 35520119540: synthetic marker 2 and post_resume_completed; real Frozen Bubble last_method Activity.onPostResumeV"
+    }
+  ],
+  "remaining_uncertainty": [
+    "No event, callback, or guest method is scheduled after post-resume during the bounded interval; that is the next independent boundary and is outside this phase."
+  ],
+  "next_action": "Run exact-candidate closure without implementing the next event-dispatch boundary.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "The host DEX lifecycle coordinator dispatches the original APK Activity override and uses an API19-equivalent base callback when no Window or ActionBar is attached."
+}

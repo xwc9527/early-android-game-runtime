@@ -2,44 +2,40 @@
   "schema_version": 1,
   "baseline": {
     "branch": "main",
-    "commit": "59d5dce5397c924e0625a73abd34901afd5e2742",
-    "last_known_good": "59d5dce5397c924e0625a73abd34901afd5e2742"
+    "commit": "03e104282debde07d331a6e7791a1ab89b18cb09",
+    "last_known_good": "03e104282debde07d331a6e7791a1ab89b18cb09"
   },
   "active": {
-    "target": "Framework / Activity Launch Compatibility Phase 1",
-    "branch": "main",
-    "lifecycle": "MERGED",
-    "observed_discontinuity": "The generic path previously stopped after DEX parsing at missing_framework:activity_launch; focused Simulator run 35503417335 proves the new coordinator crosses that boundary for both unchanged APKs.",
-    "android_subsystem": "Android Framework Activity/Application launch",
+    "target": "Frozen Bubble Post-Resume Compatibility Phase 1",
+    "branch": "phase/frozen-bubble-post-resume-1",
+    "lifecycle": "IMPLEMENTED",
+    "observed_discontinuity": "Focused workflow 35519334286 retained the real Frozen Bubble VM after onResume and proved zero subsequent method/instruction progress; API19 Activity.performResume requires onPostResume before resume completes.",
+    "android_subsystem": "Android Framework Activity post-resume lifecycle",
     "upstream_path": [
-      "platform/frameworks/base@android-4.4.4_r2:core/java/android/app/ActivityThread.java:performLaunchActivity",
-      "platform/frameworks/base@android-4.4.4_r2:core/java/android/app/Instrumentation.java:newActivity/callActivityOnCreate",
-      "platform/frameworks/base@android-4.4.4_r2:core/java/android/app/LoadedApk.java:makeApplication",
-      "platform/frameworks/base@android-4.4.4_r2:core/java/android/app/Activity.java:attach"
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/app/Activity.java:performResume/onPostResume"
     ],
     "agr_path": [
-      "App/main.m:probeActivityLaunchAPK",
-      "Runtime/DexLoom/APK/dx_manifest.c",
-      "Runtime/DexLoom/game_dex_runner.c:create_game/agr_dex_game_start_activity",
-      "Runtime/DexLoom/VM/dx_vm.c:process GC roots"
+      "App/main.m:runFrozenBubblePostResumeDiscovery",
+      "Runtime/DexLoom/game_dex_runner.c:agr_dex_game_start_activity",
+      "Runtime/DexLoom/VM/dx_interpreter.c:dx_vm_execute_method"
     ],
     "active_explanations": [],
-    "earliest_evidenced_divergence": "the generic probe returned after DEX parsing instead of passing APK-derived Application and Activity classes into a launch coordinator",
+    "earliest_evidenced_divergence": "agr_dex_game_start_activity returned immediately after Activity.onResume and marked the Activity resumed without invoking the API19-mandated onPostResume callback.",
     "semantic_class": "PUBLIC_OBSERVABLE",
     "causal_status": "REAL_GAME_CONFIRMED",
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "none; closure run 35515337617 and post-merge gate 35516313459 passed",
-    "primary_blocker": "none",
-    "first_broken_boundary": "none",
-    "first_broken_boundary_evidence": "closure evidence"
+    "next_validation": "exact-candidate closure gates for focused post-resume contract, Runtime regressions, and iphoneos build",
+    "primary_blocker": "none; onPostResume is implemented and focused run 35520119540 records the next boundary as no follow-up event dispatch",
+    "first_broken_boundary": "none for this phase target",
+    "first_broken_boundary_evidence": "focused Simulator run 35520119540"
   },
   "ci_budget": {
-    "valid_closure_runs": 2,
+    "valid_closure_runs": 0,
     "infrastructure_failures_consume_budget": false,
-    "closure_runs_used": 2,
-    "last_closure_attempt": "VALID_PASS:35515337617:attempt-2",
-    "automatic_reruns_available": 0,
+    "closure_runs_used": 0,
+    "last_closure_attempt": "none for current target",
+    "automatic_reruns_available": 1,
     "discovery_policy": "information_gain",
     "consecutive_expensive_runs_without_information_gain": 0
   }

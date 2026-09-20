@@ -6,6 +6,18 @@
       "target": "DEX Parser Compatibility Phase 1",
       "reason": "App/main.m contains the generic APK smoke harness whose DEX-stage classifier is the evidenced primary blocker; the change does not alter NativeActivity/Input production semantics.",
       "evidence": "focused runs 35489492142 and 35489607971 prove parser success and isolate the post-parse PoC binding misclassification"
+    },
+    {
+      "module": "DEXRuntimeLifecycle",
+      "target": "Frozen Bubble Post-Resume Compatibility Phase 1",
+      "reason": "Focused Simulator run proved the formal launch coordinator returned before API19 Activity.performResume completed onPostResume.",
+      "evidence": "run 35519334286 artifact frozen-bubble-post-resume.json: last method Activity.onResumeV, methods/instructions unchanged over 2000ms"
+    },
+    {
+      "module": "NativeActivityInput",
+      "target": "Frozen Bubble Post-Resume Compatibility Phase 1",
+      "reason": "App/main.m is modified only to host a bounded passive focused probe and emit structured evidence; NativeActivity/Input production semantics are unchanged.",
+      "evidence": "runs 35519334286 and 35520119540; the probe retains the VM and records bounded snapshots without injecting callbacks or input"
     }
   ]
 }

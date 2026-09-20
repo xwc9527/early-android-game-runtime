@@ -2,68 +2,62 @@
 
 Updated: 2026-09-20
 
-Baseline: `main @ 59d5dce5397c924e0625a73abd34901afd5e2742`
+Baseline: `main @ 03e104282debde07d331a6e7791a1ab89b18cb09`
 
-Last known good: `59d5dce5397c924e0625a73abd34901afd5e2742` on formal `main`
+Last known good: `03e104282debde07d331a6e7791a1ab89b18cb09` on formal `main`
 
-Active branch: `main`
+Active branch: `phase/frozen-bubble-post-resume-1`
 
-Lifecycle state: `MERGED` (`Framework / Activity Launch Compatibility Phase 1` closure-tested tree is on main)
+Lifecycle state: `IMPLEMENTED` (`Frozen Bubble Post-Resume Compatibility Phase 1`; closure not yet run)
 
 ## Previous Target
 
-DEX Parser Compatibility Phase 1 is `VERIFIED` at `a37432310af6b304402e546377b4cc3a02a9d081` by focused run `35500912993`. Pixel Dungeon parsed 877 classes and 6112 methods; Frozen Bubble parsed 23 classes and 333 methods. Both unchanged APKs reached `dex_loaded`, and both exposed the next common boundary `missing_framework:activity_launch`. No production parser change was required; the defect was the generic harness conflating parse success with a later project-only class binding.
+Framework / Activity Launch Compatibility Phase 1 is `MERGED/STABLE`. Its exact closure commit was `59d5dce5397c924e0625a73abd34901afd5e2742`; post-merge gate `35516313459` passed and promotion commit `03e104282debde07d331a6e7791a1ab89b18cb09` is the formal baseline.
 
 ## Active Target
 
-Framework / Activity Launch Compatibility Phase 1: preserve the API19 observable launch sequence for a single in-process Android application without importing system_server, Binder, WindowManager, or a full ActivityThread implementation.
+Complete the Android 4.4.4 `Activity.performResume` sequence through the original APK Activity's `onPostResume`, without expanding into the subsequent event/callback boundary.
 
 ## Upstream Source Path
 
-Pinned Android 4.4.4_r2 path: `ActivityThread.performLaunchActivity -> Instrumentation.newActivity -> LoadedApk.makeApplication -> Activity.attach -> Instrumentation.callActivityOnCreate -> Activity.performStart -> ActivityThread.handleResumeActivity`.
+Pinned `Android 4.4.4_r2` `core/java/android/app/Activity.java`, SHA-256 `03874ea13f230ff2b92bc6d99522011f63a3076e9101655aa0249addc590cc4b`:
 
-The source gate pins and hashes `ActivityThread.java`, `Instrumentation.java`, `LoadedApk.java`, `Activity.java`, and `Application.java` and verifies the relevant symbols.
+`Activity.performResume -> Instrumentation.callActivityOnResume -> Activity.onPostResume`.
 
 ## AGR Source Path
 
-`App/main.m:probeActivityLaunchAPK -> agr_apk_package_open -> agr_dex_game_create_from_apk -> create_game -> agr_dex_game_start_activity -> dx_vm_execute_method`.
-
-The host DEX lifecycle coordinator now resolves the manifest Application and Activity, creates stable base Context and Intent objects, attaches their observable relationships, calls Application.onCreate before Activity.onCreate, then starts and resumes the Activity. Process roots preserve Application, Activity, contexts, and launch Intent across GC.
+`App/main.m:runFrozenBubblePostResumeDiscovery -> agr_apk_package_open -> agr_dex_game_create_from_apk -> agr_dex_game_start_activity -> dx_vm_execute_method`.
 
 ## Earliest Evidenced Divergence
 
-Before this implementation, the generic probe returned immediately after DEX parsing and reported `missing_framework:activity_launch`; it did not call any Activity launch Runtime path. The pre-existing runner separately constructed only a minimal NativeActivity and omitted manifest Application creation, Context/Intent attachment, start, and resume.
+Focused workflow `35519334286` retained the unchanged Frozen Bubble VM for 2000 ms after `onResume`. Both snapshots reported methods `9`, instructions `45`, stack depth `0`, no exception, and last method `Landroid/app/Activity;->onResumeV`. AGR had returned from its launch coordinator where API19 proceeds to `onPostResume`.
 
 Classification: `ANDROID_SEMANTIC_BUG`. Semantic class: `PUBLIC_OBSERVABLE`. Causal status and evidence level: `REAL_GAME_CONFIRMED`.
 
 ## Current Evidence
 
-Focused Simulator run `35503417335` executed the exact source-derived path. The synthetic Application/Activity fixture reached `resumed` with both lifecycle markers and both GC roots. Pixel Dungeon crossed the former launch boundary and entered its original `Activity.onCreate`; its next failure is inside subsequent DEX/Framework execution. Frozen Bubble reached `resumed`. No common Activity-launch blocker remains.
+Commit `6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d` restores virtual `onPostResume` dispatch. Focused run `35520119540` passed the pinned source gate and Simulator probe. Its synthetic contract observed marker `2` and `post_resume_completed`; Frozen Bubble's last successful method became `Landroid/app/Activity;->onPostResumeV`, with no exception.
 
-Closure run `35513111351` was the first `VALID_FAIL`. Source, focused Activity, and iphoneos stages passed. Its isolated stable Runtime regression proved that InputQueue delivery completed through guest handling and `finishEvent`, then a later `loadImage` callback failed because the DEX watchdog retained the timestamp of the VM's first top-level call. The log records successful texture loads followed by `Watchdog timeout (10000ms)` in `FileBackend.loadTexture`; this is a per-invocation budget defect, not an Activity or input-chain failure.
+The same artifact records the next independent boundary as `post_resume_complete_no_followup_event`: no method or instruction was scheduled during the following bounded interval. This phase does not implement that next boundary.
 
-Discovery run `35514480599` verifies the correction in the compiled Simulator Runtime. The same real-APK regression completed in 64.534 seconds, consumed all 8 replay events, produced no Runtime failure signature, and emitted no watchdog or budget-exhaustion failure. Device build run `35514480598` and focused Activity run `35514480601` also passed for the Runtime fix commit. Governance run `35514607828` passed after its state contract was made ledger-aware.
-
-Closure run `35515337617` attempt 2 is `VALID_PASS` for commit `59d5dce5397c924e0625a73abd34901afd5e2742` and tree `4516436cfd772ad07ec23b1e682141c049f628c0`. The exact tree was fast-forwarded to `main`; post-merge gate `35516313459` passed.
+Exact-candidate automatic discovery runs also passed Runtime (`35520119547`) and iphoneos (`35520119504`). These are discovery evidence; closure must rerun all required gates on the final candidate commit/tree.
 
 ## Next Validation
 
-Framework / Activity Launch Compatibility Phase 1 is `MERGED` and its DEX Runtime Activity lifecycle contract is `stable` at the formal `main` baseline.
+Run the phase closure workflow on one exact candidate containing source mapping, semantic differential, state, contracts, Runtime regressions, and iphoneos build. Closure success may move the branch to `READY_TO_MERGE`; merge approval remains separate.
 
 ## Allowed Work
 
-- Activity/Application class resolution, construction, attachment, lifecycle, and roots
-- manifest Application discovery
-- focused synthetic and real-APK launch evidence
-- the first directly encountered public API19 Framework behavior required to cross this launch boundary
+- API19 `Activity.performResume/onPostResume` callback order and failure propagation
+- bounded passive method/instruction/lifecycle evidence
+- exact-candidate contract, Runtime regression, iphoneos, and closure evidence
 
 ## Explicitly Not Current Work
 
-- full ActivityThread, Binder, system_server, WindowManager, or Android OS emulation
-- broad Dalvik, JNI, Framework, Audio, Input, filesystem, clock, signal, GLES, or product expansion
+- selecting or implementing the next post-resume event, callback, Looper, View, Surface, rendering, input, audio, or thread boundary
 - per-game Runtime behavior
-- reopening stable linker, pthread, EHABI, allocator, or NativeActivity/Input semantics without evidence
+- reopening linker, pthread, EHABI, allocator, NativeActivity/Input, or broader DEX/Framework behavior without new evidence
 
 ## Closure Contract
 
-This phase can become `CLOSED` only when one exact commit and tree prove the synthetic Application/Activity launch contract, GC root lifetime, and both unchanged real APKs cross the former `activity_launch` boundary; required regressions and iphoneos build must pass on that same candidate. A green discovery workflow alone is not closure.
+One exact commit/tree must prove the pinned API19 ordering, a synthetic overriding `onPostResume` marker, unchanged Frozen Bubble reaching the callback without Runtime error, the new next boundary recorded, stable Runtime/real-game regressions, and iphoneos build. Green discovery CI alone does not close the target.
