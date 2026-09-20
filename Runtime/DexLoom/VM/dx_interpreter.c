@@ -1119,6 +1119,12 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
     // Telemetry: count method invocations
     if (vm->telemetry.telemetry_enabled) {
         vm->telemetry.total_methods_invoked++;
+        snprintf(vm->diagnostic_last_method, sizeof(vm->diagnostic_last_method),
+                 "%s->%s%s",
+                 method->declaring_class && method->declaring_class->descriptor
+                     ? method->declaring_class->descriptor : "?",
+                 method->name ? method->name : "?",
+                 method->shorty ? method->shorty : "");
     }
 
     // Handle native methods

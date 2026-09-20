@@ -953,6 +953,55 @@ static NSString *runActivityLaunchCompatibility(void) {
     return [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
 }
 
+static NSDictionary *dexSnapshotDictionary(const agr_dex_runtime_snapshot *snapshot) {
+    if (!snapshot) return @{};
+    return @{ @"methods":@(snapshot->methods_invoked),
+      @"instructions":@(snapshot->instructions_executed),
+      @"stack_depth":@(snapshot->stack_depth), @"vm_running":@(snapshot->vm_running!=0),
+      @"pending_exception":@(snapshot->pending_exception!=0),
+      @"last_method":[NSString stringWithUTF8String:snapshot->last_method],
+      @"exception_class":[NSString stringWithUTF8String:snapshot->exception_class],
+      @"error":[NSString stringWithUTF8String:snapshot->error] };
+}
+
+static NSString *runFrozenBubblePostResumeDiscovery(void) {
+    NSString *planPath=[[NSBundle mainBundle] pathForResource:@"batch-plan" ofType:@"json"];
+    NSData *planData=planPath ? [NSData dataWithContentsOfFile:planPath] : nil;
+    NSDictionary *plan=planData ? [NSJSONSerialization JSONObjectWithData:planData options:0 error:nil] : nil;
+    NSDictionary *sample=nil;
+    for (NSDictionary *candidate in plan[@"samples"] ?: @[])
+        if ([candidate[@"id"] isEqualToString:@"frozen-bubble"]) { sample=candidate; break; }
+    NSString *resource=sample[@"resource"];
+    NSString *path=resource ? [[NSBundle mainBundle] pathForResource:resource.stringByDeletingPathExtension
+                                                              ofType:resource.pathExtension] : nil;
+    agr_apk_package *package=path ? agr_apk_package_open(path.UTF8String) : NULL;
+    agr_dex_game *game=package ? agr_dex_game_create_from_apk(package) : NULL;
+    if (game) agr_dex_game_enable_diagnostics(game,1);
+    int start=game ? agr_dex_game_start_activity(game) : -1;
+    agr_dex_runtime_snapshot resumed={0},observed={0};
+    if (game) agr_dex_game_runtime_snapshot(game,&resumed);
+    /* Deliberately do not synthesize an Android callback here. This bounded
+       interval distinguishes harness destruction from autonomous Runtime
+       progress without changing Framework behavior. */
+    [NSThread sleepForTimeInterval:2.0];
+    if (game) agr_dex_game_runtime_snapshot(game,&observed);
+    NSDictionary *before=dexSnapshotDictionary(&resumed), *after=dexSnapshotDictionary(&observed);
+    BOOL progressed=observed.methods_invoked!=resumed.methods_invoked ||
+        observed.instructions_executed!=resumed.instructions_executed;
+    NSDictionary *report=@{ @"schema":@"agr.frozen-bubble-post-resume.discovery.v1",
+      @"sample":sample[@"id"] ?: @"missing", @"package":sample[@"package"] ?: @"missing",
+      @"launch_result":@(start), @"launch_stage":launchStageName(game ? agr_dex_game_launch_stage(game) : AGR_ACTIVITY_LAUNCH_NONE),
+      @"harness_retained_runtime":@(game!=NULL), @"observation_ms":@2000,
+      @"thread_owner":@"focused-regression-serial-queue", @"resume_snapshot":before,
+      @"after_snapshot":after, @"autonomous_progress":@(progressed),
+      @"classification": game && start==0 ? (progressed ? @"guest_progress_observed" : @"no_post_resume_dispatch_observed")
+                                             : @"launch_failed" };
+    if (game) agr_dex_game_destroy(game);
+    if (package) agr_apk_package_close(package);
+    NSData *json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted error:nil];
+    return [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
+}
+
 static NSString *runTests(void) {
     NSMutableArray<NSString *> *failures = [NSMutableArray array];
     agr_contract_result contractCases[64]={0};
@@ -1249,6 +1298,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     BOOL interactive=[arguments containsObject:@"--interactive"];
     BOOL dexParserCompatibility=[arguments containsObject:@"--dex-parser-compatibility"];
     BOOL activityLaunchCompatibility=[arguments containsObject:@"--activity-launch-compatibility"];
+    BOOL frozenBubblePostResume=[arguments containsObject:@"--frozen-bubble-post-resume-discovery"];
 #if AGR_DEVICE_INTERACTIVE
     interactive=YES;
 #endif
@@ -1261,10 +1311,12 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
        * watchdog to terminate an otherwise healthy Runtime process. */
       dispatch_queue_t regressionQueue=dispatch_queue_create("dev.agr.simulator.regression",DISPATCH_QUEUE_SERIAL);
       dispatch_async(regressionQueue,^{ @autoreleasepool {
-        NSString *result = activityLaunchCompatibility ? runActivityLaunchCompatibility() :
-            (dexParserCompatibility ? runDexParserCompatibility() : runTests());
-        NSString *file = activityLaunchCompatibility ? @"framework-activity-launch.json" :
-            (dexParserCompatibility ? @"dex-parser-simulator.json" : @"runtime-smoke.json");
+        NSString *result = frozenBubblePostResume ? runFrozenBubblePostResumeDiscovery() :
+            (activityLaunchCompatibility ? runActivityLaunchCompatibility() :
+            (dexParserCompatibility ? runDexParserCompatibility() : runTests()));
+        NSString *file = frozenBubblePostResume ? @"frozen-bubble-post-resume.json" :
+            (activityLaunchCompatibility ? @"framework-activity-launch.json" :
+            (dexParserCompatibility ? @"dex-parser-simulator.json" : @"runtime-smoke.json"));
         NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:
             [@"Documents" stringByAppendingPathComponent:file]];
         [result writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];

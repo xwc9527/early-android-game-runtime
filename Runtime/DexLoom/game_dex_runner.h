@@ -33,6 +33,16 @@ typedef int32_t (*agr_dex_native_callback)(void *user, const char *class_descrip
                                            const char *method_name, const char *signature,
                                            int is_static, const agr_dex_argument *arguments,
                                            uint32_t argument_count, agr_dex_argument *result);
+typedef struct {
+    uint64_t methods_invoked;
+    uint64_t instructions_executed;
+    uint32_t stack_depth;
+    int vm_running;
+    int pending_exception;
+    char last_method[160];
+    char exception_class[160];
+    char error[256];
+} agr_dex_runtime_snapshot;
 
 agr_apk_package *agr_apk_package_open(const char *apk_path);
 void agr_apk_package_close(agr_apk_package *package);
@@ -59,6 +69,8 @@ int agr_dex_game_resolve_class(agr_dex_game *game, const char *descriptor);
 int agr_dex_game_resolve_method(agr_dex_game *game, const char *class_descriptor,
                                 const char *name, const char *signature, int is_static);
 int agr_dex_game_start_activity(agr_dex_game *game);
+void agr_dex_game_enable_diagnostics(agr_dex_game *game, int enabled);
+int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snapshot *snapshot);
 agr_activity_launch_stage agr_dex_game_launch_stage(const agr_dex_game *game);
 const char *agr_dex_game_launch_error(const agr_dex_game *game);
 int agr_dex_game_application_gc_contract(agr_dex_game *game);

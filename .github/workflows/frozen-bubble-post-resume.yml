@@ -1,0 +1,45 @@
+name: Frozen Bubble post-resume discovery
+
+on:
+  push:
+    branches: ['phase/frozen-bubble-post-resume-1']
+    paths:
+      - 'Runtime/DexLoom/**'
+      - 'App/main.m'
+      - 'scripts/build-and-run-simulator.sh'
+      - 'Tests/Samples/fdroid.json'
+      - '.github/workflows/frozen-bubble-post-resume.yml'
+  workflow_dispatch:
+
+jobs:
+  focused-simulator:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore Simulator build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            Runtime/ArmInterpreter/target
+            build/angle-v2.1.28252
+            build/angle-xcframeworks-v2.1.28252.zip
+          key: agr-frozen-post-resume-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-and-run-simulator.sh', 'Tests/Samples/fdroid.json') }}
+          restore-keys: agr-frozen-post-resume-${{ runner.os }}-
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run bounded post-resume discovery
+        env:
+          FROZEN_BUBBLE_POST_RESUME_DISCOVERY: '1'
+        run: bash scripts/build-and-run-simulator.sh
+      - name: Publish discovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frozen-bubble-post-resume-discovery
+          path: |
+            build/artifacts/frozen-bubble-post-resume.json
+            build/artifacts/frozen-bubble-post-resume.log
+          if-no-files-found: error

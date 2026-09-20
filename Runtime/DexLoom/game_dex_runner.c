@@ -630,6 +630,29 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     return 0;
 }
 
+void agr_dex_game_enable_diagnostics(agr_dex_game *game, int enabled) {
+    if (!game || !game->vm) return;
+    dx_vm_set_telemetry_enabled(game->vm, enabled != 0);
+}
+
+int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snapshot *snapshot) {
+    if (!game || !game->vm || !snapshot) return -1;
+    const DxVM *vm=game->vm;
+    memset(snapshot,0,sizeof(*snapshot));
+    snapshot->methods_invoked=vm->telemetry.total_methods_invoked;
+    snapshot->instructions_executed=vm->insn_total;
+    snapshot->stack_depth=vm->stack_depth;
+    snapshot->vm_running=vm->running ? 1 : 0;
+    snapshot->pending_exception=vm->pending_exception ? 1 : 0;
+    snprintf(snapshot->last_method,sizeof(snapshot->last_method),"%s",vm->diagnostic_last_method);
+    snprintf(snapshot->error,sizeof(snapshot->error),"%s",vm->error_msg);
+    if (vm->pending_exception && vm->pending_exception->klass &&
+        vm->pending_exception->klass->descriptor)
+        snprintf(snapshot->exception_class,sizeof(snapshot->exception_class),"%s",
+                 vm->pending_exception->klass->descriptor);
+    return 0;
+}
+
 agr_dex_game *agr_dex_game_create_for_launch(const void *dex_bytes, uint32_t dex_size,
                                               const char *activity_descriptor,
                                               const char *application_descriptor,

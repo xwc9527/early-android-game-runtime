@@ -188,6 +188,8 @@ typedef struct {
     bool     telemetry_enabled;
 } DxTelemetry;
 
+#define DX_DIAGNOSTIC_METHOD_TEXT 160
+
 // VM state
 #define DX_MAX_DEX_FILES 8
 
@@ -233,6 +235,9 @@ struct DxVM {
     // Call stack
     DxFrame   *current_frame;
     uint32_t   stack_depth;
+    /* Passive, bounded execution evidence. Populated only while telemetry is
+       enabled; it never participates in dispatch or exception semantics. */
+    char       diagnostic_last_method[DX_DIAGNOSTIC_METHOD_TEXT];
 
     // Framework classes (pre-registered)
     DxClass   *class_object;        // java/lang/Object

@@ -141,6 +141,34 @@ PY
   phase "focused Framework Activity launch compatibility passed"
   exit 0
 fi
+if [[ "${FROZEN_BUBBLE_POST_RESUME_DISCOVERY:-0}" == "1" ]]; then
+  ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
+  DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
+  RESULT_PATH="$DATA/Documents/frozen-bubble-post-resume.json"
+  rm -f "$RESULT_PATH"
+  phase "launch Frozen Bubble post-resume discovery probe"
+  xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --frozen-bubble-post-resume-discovery
+  for _ in $(seq 1 90); do [[ -s "$RESULT_PATH" ]] && break; sleep 1; done
+  xcrun simctl spawn "$DEVICE" log show --last 3m --style compact \
+    --predicate 'process == "AGRSimulator"' > "$ARTIFACTS/frozen-bubble-post-resume.log" 2>&1 || true
+  if [[ ! -s "$RESULT_PATH" ]]; then
+    echo "Frozen Bubble post-resume result was not produced within 90 seconds" >&2
+    exit 124
+  fi
+  cp "$RESULT_PATH" "$ARTIFACTS/frozen-bubble-post-resume.json"
+  cat "$RESULT_PATH"
+  python3 - "$RESULT_PATH" <<'PY'
+import json,sys
+r=json.load(open(sys.argv[1]))
+assert r.get("sample") == "frozen-bubble", r
+assert r.get("launch_result") == 0, r
+assert r.get("launch_stage") == "resumed", r
+assert r.get("harness_retained_runtime") is True, r
+assert r.get("observation_ms") == 2000, r
+PY
+  phase "Frozen Bubble post-resume discovery evidence captured"
+  exit 0
+fi
 if [[ "${ZERO_INPUT_AB:-0}" == "1" ]]; then
   ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
   DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
