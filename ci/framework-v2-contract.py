@@ -64,8 +64,20 @@ def main():
     attempt_module = importlib.util.module_from_spec(attempt_spec); attempt_spec.loader.exec_module(attempt_module)
     ledger = load("ci/governance/closure-attempts.json")
     require(not attempt_module.validate_ledger(ledger), "invalid closure attempt ledger")
-    require(ledger["budget"]["valid_attempts_used"] == 0, "INVALID closure run consumed budget")
-    require(ledger["attempts"][-1]["automatic_rerun"] == "AVAILABLE_AFTER_FIX", "latest corrected INVALID run lacks automatic rerun")
+    valid_attempts = [item for item in ledger["attempts"]
+                      if item["classification"] in ("VALID_PASS", "VALID_FAIL")]
+    require(ledger["budget"]["valid_attempts_used"] == len(valid_attempts),
+            "valid closure budget does not match the ledger")
+    require(all(not item["consumes_budget"] for item in ledger["attempts"]
+                if item["classification"] == "INVALID"),
+            "INVALID closure run consumed budget")
+    latest_attempt = ledger["attempts"][-1]
+    if latest_attempt["classification"] == "INVALID":
+        require(latest_attempt.get("automatic_rerun") == "AVAILABLE_AFTER_FIX",
+                "latest corrected INVALID run lacks automatic rerun")
+    if latest_attempt["classification"] == "VALID_FAIL":
+        require(ledger["policy"]["second_run_after_valid_fail_requires_approval"] is True,
+                "VALID_FAIL does not protect the next closure attempt")
     cutpoints = load("ci/governance/diagnostic-cutpoints.json")
     require(cutpoints["rules"]["test_only"] is True, "cut points must be test-only")
     require(cutpoints["rules"]["production_shortcut"] is False, "cut points became production shortcuts")
