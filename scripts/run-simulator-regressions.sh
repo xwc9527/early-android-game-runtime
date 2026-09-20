@@ -41,6 +41,18 @@ python3 - "$RESULT" <<'PY'
 import json, sys
 r = json.load(open(sys.argv[1]))
 print(json.dumps(r, indent=2))
+batch={item.get("id"):item for item in r.get("batch_results",[])}
+for sample_id in ("pixel-dungeon","frozen-bubble"):
+    item=batch.get(sample_id)
+    compact=json.dumps(item,separators=(",",":")) if item else "missing"
+    print(f"DEX_PHASE1_EVIDENCE {sample_id} {compact}")
+    if not item:
+        print(f"::error title=DEX Phase 1 {sample_id}::batch result missing")
+    elif item.get("stage")=="dex_parse" or item.get("signature")=="dex_parse_failed":
+        print(f"::error title=DEX Phase 1 {sample_id}::{compact}")
+    else:
+        print(f"::notice title=DEX Phase 1 {sample_id}::{compact}")
+    assert item and item.get("stage")!="dex_parse" and item.get("signature")!="dex_parse_failed", item
 if not r["passed"]:
     failures=" | ".join(map(str,r.get("failures",[])))[:900]
     print(f"::error title=Simulator real-game regression::{failures}")
