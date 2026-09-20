@@ -129,7 +129,19 @@ jobs:
         id: regressions
         continue-on-error: true
         if: ${{ inputs.contracts_only != true && steps.smoke.outcome == 'success' }}
-        run: bash ci/run-regressions.sh
+        run: |
+          set +e
+          bash ci/run-regressions.sh
+          STATUS=$?
+          if [[ $STATUS -ne 0 ]]; then
+            for FILE in build/artifacts/results/regressions-*.log; do
+              [[ -s "$FILE" ]] || continue
+              tail -n 80 "$FILE" | while IFS= read -r line; do
+                echo "::error title=Regression evidence $(basename "$FILE")::$line"
+              done
+            done
+          fi
+          exit $STATUS
       - name: Build AGR run summary
         if: always()
         env:
