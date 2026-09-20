@@ -1,14 +1,20 @@
 # AGR Current State
 
-Updated: 2026-09-20
+Updated: 2026-09-21
 
-Baseline: `main @ 05c6fda91eba054ee7a379cb0aa46d60c032d649`
+Baseline: `main @ 75fbe9d6dc5ad0e535fcba8e25182927d207bd3e`
 
-Last known good: `05c6fda91eba054ee7a379cb0aa46d60c032d649` on formal `main`
+Last known good: `75fbe9d6dc5ad0e535fcba8e25182927d207bd3e` on formal `main`
 
-Active branch: `phase/frozen-bubble-post-resume-1`
+Active branch: `phase/framework-runtime-continuation-1`
 
-Lifecycle state: `MERGED` (`Frozen Bubble Post-Resume Compatibility Phase 1` closure-tested tree is on main)
+Lifecycle state: `ACTIVE` (`Android Framework Continuation Phase 1`)
+
+## Active Target
+
+Continue the unchanged Frozen Bubble VM from the closed `onPostResume` boundary to the first stable guest-visible work or the next independent subsystem handoff. Discovery reuses the existing APK, VM retention, synthetic Activity fixture, method telemetry, focused Simulator workflow, source gate, regression gate and iphoneos gate.
+
+The current primary blocker is an observation, not a root-cause claim: closure run `35521035773` recorded `post_resume_complete_no_followup_event`. The active discovery adds a bounded passive ring of actual method entries and Framework coordinator events so one focused workflow can establish the earliest causal divergence.
 
 ## Previous Target
 

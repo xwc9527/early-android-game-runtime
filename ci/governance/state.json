@@ -2,33 +2,37 @@
   "schema_version": 1,
   "baseline": {
     "branch": "main",
-    "commit": "05c6fda91eba054ee7a379cb0aa46d60c032d649",
-    "last_known_good": "05c6fda91eba054ee7a379cb0aa46d60c032d649"
+    "commit": "75fbe9d6dc5ad0e535fcba8e25182927d207bd3e",
+    "last_known_good": "75fbe9d6dc5ad0e535fcba8e25182927d207bd3e"
   },
   "active": {
-    "target": "Frozen Bubble Post-Resume Compatibility Phase 1",
-    "branch": "phase/frozen-bubble-post-resume-1",
-    "lifecycle": "MERGED",
-    "observed_discontinuity": "Focused workflow 35519334286 retained the real Frozen Bubble VM after onResume and proved zero subsequent method/instruction progress; API19 Activity.performResume requires onPostResume before resume completes.",
-    "android_subsystem": "Android Framework Activity post-resume lifecycle",
+    "target": "Android Framework Continuation Phase 1",
+    "branch": "phase/framework-runtime-continuation-1",
+    "lifecycle": "ACTIVE",
+    "observed_discontinuity": "Closure run 35521035773 records post_resume_complete_no_followup_event after the unchanged Frozen Bubble Activity returns from onPostResume.",
+    "android_subsystem": "ActivityThread resume continuation to first stable guest work",
     "upstream_path": [
-      "platform/frameworks/base@android-4.4.4_r2:core/java/android/app/Activity.java:performResume/onPostResume"
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/app/ActivityThread.java:handleResumeActivity"
     ],
     "agr_path": [
-      "App/main.m:runFrozenBubblePostResumeDiscovery",
+      "App/main.m:runFrameworkRuntimeContinuationDiscovery",
       "Runtime/DexLoom/game_dex_runner.c:agr_dex_game_start_activity",
       "Runtime/DexLoom/VM/dx_interpreter.c:dx_vm_execute_method"
     ],
-    "active_explanations": [],
-    "earliest_evidenced_divergence": "agr_dex_game_start_activity returned immediately after Activity.onResume and marked the Activity resumed without invoking the API19-mandated onPostResume callback.",
-    "semantic_class": "PUBLIC_OBSERVABLE",
-    "causal_status": "REAL_GAME_CONFIRMED",
-    "evidence_level": "REAL_GAME_CONFIRMED",
-    "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "exact-candidate closure gates for focused post-resume contract, Runtime regressions, and iphoneos build",
-    "primary_blocker": "none",
-    "first_broken_boundary": "none",
-    "first_broken_boundary_evidence": "closure evidence"
+    "active_explanations": [
+      "harness observes no Android coordinator continuation after performResume",
+      "guest work is registered but no scheduler/event source dispatches it",
+      "window/view continuation is absent before the next subsystem handoff"
+    ],
+    "earliest_evidenced_divergence": "UNVERIFIED HYPOTHESIS pending bounded method/framework trace workflow",
+    "semantic_class": "UNCLASSIFIED",
+    "causal_status": "OBSERVATION",
+    "evidence_level": "WORKFLOW_OBSERVATION",
+    "classification": "DISCOVERY_REQUIRED",
+    "next_validation": "one focused Simulator discovery collecting bounded method and Framework boundary traces on the unchanged APK",
+    "primary_blocker": "post-resume continuation has no evidenced next handoff",
+    "first_broken_boundary": "not yet established",
+    "first_broken_boundary_evidence": "closure run 35521035773 observation only"
   },
   "ci_budget": {
     "valid_closure_runs": 0,

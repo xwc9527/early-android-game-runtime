@@ -141,21 +141,21 @@ PY
   phase "focused Framework Activity launch compatibility passed"
   exit 0
 fi
-if [[ "${FROZEN_BUBBLE_POST_RESUME_DISCOVERY:-0}" == "1" ]]; then
+if [[ "${FRAMEWORK_RUNTIME_CONTINUATION_DISCOVERY:-0}" == "1" ]]; then
   ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
   DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
-  RESULT_PATH="$DATA/Documents/frozen-bubble-post-resume.json"
+  RESULT_PATH="$DATA/Documents/framework-runtime-continuation.json"
   rm -f "$RESULT_PATH"
-  phase "launch Frozen Bubble post-resume discovery probe"
-  xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --frozen-bubble-post-resume-discovery
+  phase "launch Framework Runtime continuation discovery probe"
+  xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --framework-runtime-continuation-discovery
   for _ in $(seq 1 90); do [[ -s "$RESULT_PATH" ]] && break; sleep 1; done
   xcrun simctl spawn "$DEVICE" log show --last 3m --style compact \
-    --predicate 'process == "AGRSimulator"' > "$ARTIFACTS/frozen-bubble-post-resume.log" 2>&1 || true
+    --predicate 'process == "AGRSimulator"' > "$ARTIFACTS/framework-runtime-continuation.log" 2>&1 || true
   if [[ ! -s "$RESULT_PATH" ]]; then
-    echo "Frozen Bubble post-resume result was not produced within 90 seconds" >&2
+    echo "Framework Runtime continuation result was not produced within 90 seconds" >&2
     exit 124
   fi
-  cp "$RESULT_PATH" "$ARTIFACTS/frozen-bubble-post-resume.json"
+  cp "$RESULT_PATH" "$ARTIFACTS/framework-runtime-continuation.json"
   cat "$RESULT_PATH"
   python3 - "$RESULT_PATH" <<'PY'
 import json,sys
@@ -167,9 +167,11 @@ assert r.get("harness_retained_runtime") is True, r
 assert r.get("observation_ms") == 2000, r
 assert r.get("contract",{}).get("passed") is True, r
 assert r.get("after_snapshot",{}).get("post_resume_completed") is True, r
+assert r.get("after_snapshot",{}).get("method_trace"), r
+assert r.get("after_snapshot",{}).get("framework_trace",[])[-1] == "coordinator.performResume.return", r
 assert r.get("classification") == "post_resume_complete_no_followup_event", r
 PY
-  phase "Frozen Bubble post-resume discovery evidence captured"
+  phase "Framework Runtime continuation discovery evidence captured"
   exit 0
 fi
 if [[ "${ZERO_INPUT_AB:-0}" == "1" ]]; then

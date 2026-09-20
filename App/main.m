@@ -956,17 +956,27 @@ static NSString *runActivityLaunchCompatibility(void) {
 
 static NSDictionary *dexSnapshotDictionary(const agr_dex_runtime_snapshot *snapshot) {
     if (!snapshot) return @{};
+    NSMutableArray *methods=[NSMutableArray array];
+    for(uint32_t i=0;i<snapshot->method_event_count;i++) {
+      const agr_dex_method_event *event=&snapshot->method_events[i];
+      [methods addObject:@{@"sequence":@(event->sequence),@"depth":@(event->depth),
+        @"native":@(event->is_native!=0),@"method":[NSString stringWithUTF8String:event->method]}];
+    }
+    NSMutableArray *framework=[NSMutableArray array];
+    for(uint32_t i=0;i<snapshot->framework_event_count;i++)
+      [framework addObject:[NSString stringWithUTF8String:snapshot->framework_events[i]]];
     return @{ @"methods":@(snapshot->methods_invoked),
       @"instructions":@(snapshot->instructions_executed),
       @"stack_depth":@(snapshot->stack_depth), @"vm_running":@(snapshot->vm_running!=0),
       @"pending_exception":@(snapshot->pending_exception!=0),
       @"post_resume_completed":snapshot->post_resume_completed ? @YES : @NO,
       @"last_method":[NSString stringWithUTF8String:snapshot->last_method],
+      @"method_trace":methods, @"framework_trace":framework,
       @"exception_class":[NSString stringWithUTF8String:snapshot->exception_class],
       @"error":[NSString stringWithUTF8String:snapshot->error] };
 }
 
-static NSString *runFrozenBubblePostResumeDiscovery(void) {
+static NSString *runFrameworkRuntimeContinuationDiscovery(void) {
     NSString *fixturePath=[[NSBundle mainBundle] pathForResource:@"activity-launch-fixture" ofType:@"dex"];
     NSData *fixture=fixturePath ? [NSData dataWithContentsOfFile:fixturePath] : nil;
     agr_dex_game *contract=fixture ? agr_dex_game_create_for_launch(fixture.bytes,(uint32_t)fixture.length,
@@ -1003,7 +1013,7 @@ static NSString *runFrozenBubblePostResumeDiscovery(void) {
     NSDictionary *before=dexSnapshotDictionary(&resumed), *after=dexSnapshotDictionary(&observed);
     BOOL progressed=observed.methods_invoked!=resumed.methods_invoked ||
         observed.instructions_executed!=resumed.instructions_executed;
-    NSDictionary *report=@{ @"schema":@"agr.frozen-bubble-post-resume.discovery.v1",
+    NSDictionary *report=@{ @"schema":@"agr.framework-runtime-continuation.discovery.v1",
       @"sample":sample[@"id"] ?: @"missing", @"package":sample[@"package"] ?: @"missing",
       @"launch_result":@(start), @"launch_stage":launchStageName(game ? agr_dex_game_launch_stage(game) : AGR_ACTIVITY_LAUNCH_NONE),
       @"harness_retained_runtime":game ? @YES : @NO, @"observation_ms":@2000,
@@ -1314,7 +1324,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     BOOL interactive=[arguments containsObject:@"--interactive"];
     BOOL dexParserCompatibility=[arguments containsObject:@"--dex-parser-compatibility"];
     BOOL activityLaunchCompatibility=[arguments containsObject:@"--activity-launch-compatibility"];
-    BOOL frozenBubblePostResume=[arguments containsObject:@"--frozen-bubble-post-resume-discovery"];
+    BOOL frameworkRuntimeContinuation=[arguments containsObject:@"--framework-runtime-continuation-discovery"];
 #if AGR_DEVICE_INTERACTIVE
     interactive=YES;
 #endif
@@ -1327,10 +1337,10 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
        * watchdog to terminate an otherwise healthy Runtime process. */
       dispatch_queue_t regressionQueue=dispatch_queue_create("dev.agr.simulator.regression",DISPATCH_QUEUE_SERIAL);
       dispatch_async(regressionQueue,^{ @autoreleasepool {
-        NSString *result = frozenBubblePostResume ? runFrozenBubblePostResumeDiscovery() :
+        NSString *result = frameworkRuntimeContinuation ? runFrameworkRuntimeContinuationDiscovery() :
             (activityLaunchCompatibility ? runActivityLaunchCompatibility() :
             (dexParserCompatibility ? runDexParserCompatibility() : runTests()));
-        NSString *file = frozenBubblePostResume ? @"frozen-bubble-post-resume.json" :
+        NSString *file = frameworkRuntimeContinuation ? @"framework-runtime-continuation.json" :
             (activityLaunchCompatibility ? @"framework-activity-launch.json" :
             (dexParserCompatibility ? @"dex-parser-simulator.json" : @"runtime-smoke.json"));
         NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:

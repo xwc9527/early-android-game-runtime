@@ -26,6 +26,14 @@ typedef enum {
     AGR_DEX_ARG_OBJECT = 5,
 } agr_dex_arg_kind;
 typedef struct {
+    uint64_t sequence;
+    uint32_t depth;
+    int is_native;
+    char method[160];
+} agr_dex_method_event;
+#define AGR_DEX_METHOD_TRACE_CAPACITY 64
+#define AGR_DEX_FRAMEWORK_TRACE_CAPACITY 32
+typedef struct {
     agr_dex_arg_kind kind;
     union { int32_t i; float f; const char *string; uint32_t object; } value;
 } agr_dex_argument;
@@ -43,6 +51,10 @@ typedef struct {
     char last_method[160];
     char exception_class[160];
     char error[256];
+    uint32_t method_event_count;
+    agr_dex_method_event method_events[AGR_DEX_METHOD_TRACE_CAPACITY];
+    uint32_t framework_event_count;
+    char framework_events[AGR_DEX_FRAMEWORK_TRACE_CAPACITY][96];
 } agr_dex_runtime_snapshot;
 
 agr_apk_package *agr_apk_package_open(const char *apk_path);

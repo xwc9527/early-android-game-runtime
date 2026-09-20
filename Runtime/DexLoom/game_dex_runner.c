@@ -325,7 +325,16 @@ struct agr_dex_game {
     struct { uint32_t handle; DxObject *object; } *objects;
     uint32_t object_count, object_capacity;
     int post_resume_completed;
+    uint32_t framework_event_count;
+    char framework_events[AGR_DEX_FRAMEWORK_TRACE_CAPACITY][96];
 };
+
+static void framework_event(agr_dex_game *game, const char *event) {
+    if (!game || !game->vm || !game->vm->telemetry.telemetry_enabled || !event) return;
+    uint32_t slot = game->framework_event_count % AGR_DEX_FRAMEWORK_TRACE_CAPACITY;
+    snprintf(game->framework_events[slot], sizeof(game->framework_events[slot]), "%s", event);
+    game->framework_event_count++;
+}
 
 typedef struct {
     char *name;
@@ -594,6 +603,7 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     vm->launch_intent=game->intent;
     vm->application_instance=game->application;
     game->launch_stage=AGR_ACTIVITY_LAUNCH_APPLICATION_CREATED;
+    framework_event(game,"launch.application.instantiate");
 
     DxMethod *app_init=dx_vm_find_method(game->application_class,"<init>","V");
     DxValue app_args[1]={DX_OBJ_VALUE(game->application)};
@@ -603,6 +613,7 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     }
     dx_vm_set_field(game->application,"_baseContext",DX_OBJ_VALUE(game->application_context));
     game->launch_stage=AGR_ACTIVITY_LAUNCH_CONTEXT_ATTACHED;
+    framework_event(game,"launch.application.context_attached");
     DxMethod *app_create=dx_vm_find_method(game->application_class,"onCreate","V");
     if (app_create && dx_vm_execute_method(vm,app_create,app_args,1,NULL)!=DX_OK) {
         snprintf(game->launch_error,sizeof(game->launch_error),"Application.onCreate failed: %s",vm->error_msg);
@@ -620,6 +631,7 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     dx_vm_set_field(game->activity,"_application",DX_OBJ_VALUE(game->application));
     dx_vm_set_field(game->activity,"_intent",DX_OBJ_VALUE(game->intent));
     game->launch_stage=AGR_ACTIVITY_LAUNCH_ACTIVITY_ATTACHED;
+    framework_event(game,"launch.activity.attached");
     DxMethod *on_create=dx_vm_find_method(cls,"onCreate","VL");
     DxValue create_args[2]={DX_OBJ_VALUE(game->activity),DX_NULL_VALUE};
     if (!on_create) {
@@ -627,22 +639,28 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
         return -1;
     }
     game->launch_stage=AGR_ACTIVITY_LAUNCH_ON_CREATE_ENTERED;
+    framework_event(game,"lifecycle.onCreate.enter");
     if (dx_vm_execute_method(vm,on_create,create_args,2,NULL)!=DX_OK) {
         snprintf(game->launch_error,sizeof(game->launch_error),"Activity.onCreate failed: %s",vm->error_msg);
         return -1;
     }
     game->launch_stage=AGR_ACTIVITY_LAUNCH_ON_CREATE_RETURNED;
+    framework_event(game,"lifecycle.onCreate.return");
     DxMethod *on_start=dx_vm_find_method(cls,"onStart","V");
     if (on_start && dx_vm_execute_method(vm,on_start,init_args,1,NULL)!=DX_OK) return -1;
     game->launch_stage=AGR_ACTIVITY_LAUNCH_STARTED;
+    framework_event(game,"lifecycle.onStart.return");
     DxMethod *on_resume=dx_vm_find_method(cls,"onResume","V");
     if (on_resume && dx_vm_execute_method(vm,on_resume,init_args,1,NULL)!=DX_OK) return -1;
+    framework_event(game,"lifecycle.onResume.return");
     DxMethod *on_post_resume=dx_vm_find_method(cls,"onPostResume","V");
     if (!on_post_resume || dx_vm_execute_method(vm,on_post_resume,init_args,1,NULL)!=DX_OK) {
         snprintf(game->launch_error,sizeof(game->launch_error),"Activity.onPostResume failed: %s",vm->error_msg);
         return -1;
     }
     game->post_resume_completed=1;
+    framework_event(game,"lifecycle.onPostResume.return");
+    framework_event(game,"coordinator.performResume.return");
     game->launch_stage=AGR_ACTIVITY_LAUNCH_RESUMED;
     return 0;
 }
@@ -664,6 +682,27 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
     snapshot->post_resume_completed=game->post_resume_completed;
     snprintf(snapshot->last_method,sizeof(snapshot->last_method),"%s",vm->diagnostic_last_method);
     snprintf(snapshot->error,sizeof(snapshot->error),"%s",vm->error_msg);
+    uint32_t method_count=vm->diagnostic_method_event_count;
+    uint64_t method_start=vm->diagnostic_method_sequence > method_count
+        ? vm->diagnostic_method_sequence - method_count : 0;
+    snapshot->method_event_count=method_count;
+    for (uint32_t i=0;i<method_count;i++) {
+        const DxDiagnosticMethodEvent *source=
+            &vm->diagnostic_method_events[(method_start+i)%DX_DIAGNOSTIC_METHOD_EVENTS];
+        snapshot->method_events[i].sequence=source->sequence;
+        snapshot->method_events[i].depth=source->depth;
+        snapshot->method_events[i].is_native=source->is_native ? 1 : 0;
+        snprintf(snapshot->method_events[i].method,sizeof(snapshot->method_events[i].method),
+                 "%s",source->method);
+    }
+    uint32_t framework_count=game->framework_event_count < AGR_DEX_FRAMEWORK_TRACE_CAPACITY
+        ? game->framework_event_count : AGR_DEX_FRAMEWORK_TRACE_CAPACITY;
+    uint32_t framework_start=game->framework_event_count > framework_count
+        ? game->framework_event_count-framework_count : 0;
+    snapshot->framework_event_count=framework_count;
+    for (uint32_t i=0;i<framework_count;i++)
+        snprintf(snapshot->framework_events[i],sizeof(snapshot->framework_events[i]),"%s",
+                 game->framework_events[(framework_start+i)%AGR_DEX_FRAMEWORK_TRACE_CAPACITY]);
     if (vm->pending_exception && vm->pending_exception->klass &&
         vm->pending_exception->klass->descriptor)
         snprintf(snapshot->exception_class,sizeof(snapshot->exception_class),"%s",

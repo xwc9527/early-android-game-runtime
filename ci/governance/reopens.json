@@ -6,6 +6,18 @@
       "target": "DEX Parser Compatibility Phase 1",
       "reason": "App/main.m contains the generic APK smoke harness whose DEX-stage classifier is the evidenced primary blocker; the change does not alter NativeActivity/Input production semantics.",
       "evidence": "focused runs 35489492142 and 35489607971 prove parser success and isolate the post-parse PoC binding misclassification"
+    },
+    {
+      "module": "DEXRuntimeLifecycle",
+      "target": "Android Framework Continuation Phase 1",
+      "reason": "The active target continues the API19 ActivityThread resume coordinator after the stable onPostResume boundary; passive tracing touches the DEX invocation path without changing dispatch semantics.",
+      "evidence": "closure run 35521035773 records post_resume_complete_no_followup_event on unchanged Frozen Bubble"
+    },
+    {
+      "module": "NativeActivityInput",
+      "target": "Android Framework Continuation Phase 1",
+      "reason": "App/main.m and the focused Simulator harness are reused to retain the same VM and emit bounded continuation evidence; NativeActivity/Input production behavior is unchanged.",
+      "evidence": "closure run 35521035773 supplies the retained Runtime state and existing focused artifact path"
     }
   ]
 }

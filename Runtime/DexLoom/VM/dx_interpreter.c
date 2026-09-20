@@ -1125,6 +1125,20 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                      ? method->declaring_class->descriptor : "?",
                  method->name ? method->name : "?",
                  method->shorty ? method->shorty : "");
+        uint64_t sequence = vm->diagnostic_method_sequence++;
+        uint32_t slot = (uint32_t)(sequence % DX_DIAGNOSTIC_METHOD_EVENTS);
+        DxDiagnosticMethodEvent *event = &vm->diagnostic_method_events[slot];
+        memset(event, 0, sizeof(*event));
+        event->sequence = sequence;
+        event->depth = vm->stack_depth;
+        event->is_native = method->is_native ? 1 : 0;
+        snprintf(event->method, sizeof(event->method), "%s->%s%s",
+                 method->declaring_class && method->declaring_class->descriptor
+                     ? method->declaring_class->descriptor : "?",
+                 method->name ? method->name : "?",
+                 method->shorty ? method->shorty : "");
+        if (vm->diagnostic_method_event_count < DX_DIAGNOSTIC_METHOD_EVENTS)
+            vm->diagnostic_method_event_count++;
     }
 
     // Handle native methods

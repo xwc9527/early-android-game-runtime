@@ -1,14 +1,14 @@
-name: Frozen Bubble post-resume discovery
+name: Framework Runtime continuation
 
 on:
   push:
-    branches: ['phase/frozen-bubble-post-resume-1']
+    branches: ['phase/framework-runtime-continuation-1']
     paths:
       - 'Runtime/DexLoom/**'
       - 'App/main.m'
       - 'scripts/build-and-run-simulator.sh'
       - 'Tests/Samples/fdroid.json'
-      - '.github/workflows/frozen-bubble-post-resume.yml'
+      - '.github/workflows/framework-runtime-continuation.yml'
   workflow_dispatch:
     inputs:
       run_kind:
@@ -23,19 +23,27 @@ jobs:
     timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
-      - name: Verify pinned API19 post-resume ordering
+      - name: Verify pinned API19 resume-continuation state machine
         run: |
           python3 - <<'PY'
           import base64,hashlib,urllib.request
-          url='https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/app/Activity.java?format=TEXT'
-          raw=base64.b64decode(urllib.request.urlopen(url,timeout=30).read())
-          assert hashlib.sha256(raw).hexdigest()=='03874ea13f230ff2b92bc6d99522011f63a3076e9101655aa0249addc590cc4b'
-          text=raw.decode()
-          start=text.index('final void performResume()')
-          end=text.index('final void performPause()',start)
-          body=text[start:end]
-          assert body.index('mInstrumentation.callActivityOnResume(this)') < body.index('onPostResume();')
-          print('SOURCE_OK Activity.performResume -> onResume -> onPostResume')
+          sources={
+            'Activity.java':('https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/app/Activity.java?format=TEXT','03874ea13f230ff2b92bc6d99522011f63a3076e9101655aa0249addc590cc4b'),
+            'ActivityThread.java':('https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/app/ActivityThread.java?format=TEXT','4373bb6a1b9097c136ddab729cafc9884f9c5a70fdf41b43bfd4ba7b083229ae')}
+          decoded={}
+          for name,(url,digest) in sources.items():
+            raw=base64.b64decode(urllib.request.urlopen(url,timeout=30).read())
+            assert hashlib.sha256(raw).hexdigest()==digest
+            decoded[name]=raw.decode()
+          activity=decoded['Activity.java']
+          perform=activity[activity.index('final void performResume()'):activity.index('final void performPause()')]
+          assert perform.index('mInstrumentation.callActivityOnResume(this)') < perform.index('onPostResume();')
+          thread=decoded['ActivityThread.java']
+          resume=thread[thread.index('final void handleResumeActivity'):thread.index('final void handlePauseActivity')]
+          for token in ('performResumeActivity(token, clearHide)','r.activity.getWindow()','wm.addView(decor, l)','r.activity.makeVisible()','addIdleHandler(new Idler())'):
+            assert token in resume, token
+          assert resume.index('performResumeActivity(token, clearHide)') < resume.index('r.activity.getWindow()') < resume.index('wm.addView(decor, l)') < resume.index('r.activity.makeVisible()') < resume.index('addIdleHandler(new Idler())')
+          print('SOURCE_OK performResume -> window/decor add -> visibility -> idle handoff')
           PY
       - name: Build post-resume lifecycle contract fixture
         run: |
@@ -58,22 +66,22 @@ jobs:
             Runtime/ArmInterpreter/target
             build/angle-v2.1.28252
             build/angle-xcframeworks-v2.1.28252.zip
-          key: agr-frozen-post-resume-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-and-run-simulator.sh', 'Tests/Samples/fdroid.json') }}
-          restore-keys: agr-frozen-post-resume-${{ runner.os }}-
+          key: agr-framework-continuation-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-and-run-simulator.sh', 'Tests/Samples/fdroid.json') }}
+          restore-keys: agr-framework-continuation-${{ runner.os }}-
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Run bounded post-resume discovery
+      - name: Run bounded continuation discovery
         env:
-          FROZEN_BUBBLE_POST_RESUME_DISCOVERY: '1'
+          FRAMEWORK_RUNTIME_CONTINUATION_DISCOVERY: '1'
         run: bash scripts/build-and-run-simulator.sh
       - name: Publish discovery evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: frozen-bubble-post-resume-discovery
+          name: framework-runtime-continuation-discovery
           path: |
-            build/artifacts/frozen-bubble-post-resume.json
-            build/artifacts/frozen-bubble-post-resume.log
+            build/artifacts/framework-runtime-continuation.json
+            build/artifacts/framework-runtime-continuation.log
           if-no-files-found: error
 
   runtime-regressions:

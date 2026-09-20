@@ -189,6 +189,14 @@ typedef struct {
 } DxTelemetry;
 
 #define DX_DIAGNOSTIC_METHOD_TEXT 160
+#define DX_DIAGNOSTIC_METHOD_EVENTS 64
+
+typedef struct {
+    uint64_t sequence;
+    uint32_t depth;
+    uint8_t is_native;
+    char method[DX_DIAGNOSTIC_METHOD_TEXT];
+} DxDiagnosticMethodEvent;
 
 // VM state
 #define DX_MAX_DEX_FILES 8
@@ -238,6 +246,12 @@ struct DxVM {
     /* Passive, bounded execution evidence. Populated only while telemetry is
        enabled; it never participates in dispatch or exception semantics. */
     char       diagnostic_last_method[DX_DIAGNOSTIC_METHOD_TEXT];
+    /* Passive ring of actual guest/framework method entries.  This is
+       discovery evidence only: bounded storage, no guest calls, no waits and
+       no participation in dispatch. */
+    DxDiagnosticMethodEvent diagnostic_method_events[DX_DIAGNOSTIC_METHOD_EVENTS];
+    uint64_t   diagnostic_method_sequence;
+    uint32_t   diagnostic_method_event_count;
 
     // Framework classes (pre-registered)
     DxClass   *class_object;        // java/lang/Object
