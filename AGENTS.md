@@ -11,7 +11,7 @@ Make original target Android APK, DEX, and ARMv7 binaries actually run and remai
 - **OBSERVED DISCONTINUITY**: measured behavior only, without an inferred cause.
 - **SOURCE PATH**: the pinned API19/AOSP call path that owns the observable contract and its AGR counterpart.
 - **ACTIVE EXPLANATIONS**: remaining causal candidates after source inspection; use them only when source evidence does not decide the issue.
-- **FIRST PROVEN SEMANTIC DIFFERENCE**: the earliest evidenced difference that can change guest-visible behavior or a required internal invariant. It is not the first log line, code difference, or exception string.
+- **EARLIEST EVIDENCED DIVERGENCE**: the earliest evidenced difference on the same semantic path. It is an investigation focus, not automatically a defect or root cause.
 - **CLOSURE**: removal of experiments followed by contract, regression, exact-identity, and merge-eligibility verification.
 - **STABLE**: the module satisfies its current contract. Discovery may inspect, trace, or experiment on it; permanent changes require an evidence-backed reopen. Stable does not mean complete.
 - **CLOSED**: one exact commit and tree satisfy the target closure contract with complete closure evidence.
@@ -27,8 +27,8 @@ Make original target Android APK, DEX, and ARMv7 binaries actually run and remai
 1. `AGENTS.md`
 2. `docs/CURRENT_STATE.md`
 3. latest `run-summary.json`
-4. matching entry in `docs/UPSTREAM_MAP.md` and `ci/governance/upstream-map.json`
-5. pinned Android 4.4.4/API19 source when the map is insufficient
+4. matching entry in `docs/UPSTREAM_MAP.md` and `ci/governance/upstream-map.json`, when VALID
+5. pinned Android 4.4.4/API19 source whenever the map is absent, stale, insufficient, or worth bypassing
 6. AGR source implementing the same observable contract
 
 Read `docs/ARCHITECTURE.md` when ownership, execution placement, or a locked boundary is involved. Read `docs/DECISIONS.md` when an existing decision may be changed or reopened. Do not scan unrelated repository areas by default.
@@ -39,6 +39,7 @@ Read `docs/ARCHITECTURE.md` when ownership, execution placement, or a locked bou
 - Test harnesses may identify a game, replay a game-specific trajectory, and assert its observable results.
 - Do not boot or recreate a complete Android OS/userspace.
 - Android 4.4.4/API19 is the behavior oracle. Its internal mechanism may be replaced when guest-visible semantics and required invariants remain equivalent.
+- Evidence priority is pinned source, runtime evidence, validated contract, upstream map, then inference. The upstream map is a navigation cache, never an oracle.
 - Original ARMv7 native code and GCC exception runtime execute as GUEST-ARM.
 - DEX remains host-side.
 - The formal linker is the sole ELF owner.
@@ -49,13 +50,15 @@ Read `docs/ARCHITECTURE.md` when ownership, execution placement, or a locked bou
 
 ## Default Discovery Workflow
 
-`observe -> map Android subsystem -> inspect upstream map -> read API19 source -> extract semantics/invariants -> map AGR path -> semantic differential -> first proven semantic difference -> discriminating experiment if needed -> focused validation -> public fix -> contract -> real APK confirmation`
+`observe -> map Android subsystem -> inspect or bypass upstream map -> read API19 source -> extract semantics/invariants -> map AGR path -> semantic differential -> earliest evidenced divergence -> discriminating experiment if needed -> focused validation -> public fix -> contract -> real APK confirmation`
 
 Source inspection precedes open-ended hypotheses whenever Android has an authoritative counterpart. Compare return/error behavior, callback ordering, ownership, blocking and wake behavior, lifecycle, object lifetime, state mutation, memory visibility, and resource visibility. Source-code shape alone is not evidence of a semantic defect.
 
 Every compatibility diagnosis records one classification: `ANDROID_SEMANTIC_BUG`, `HOST_ADAPTATION_BUG`, `AGR_INTERNAL_BUG`, `HARNESS_BUG`, `REFERENCE_MISMATCH`, or `UNKNOWN`.
 
-Use `ci/semantic-diff.py` and `artifacts/schema/semantic-diff.schema.json`. When source evidence leaves multiple causal explanations, record one discriminating experiment. Do not manufacture a hypothesis tree when the first relevant semantic difference is already sufficient.
+Classify each divergence as `PUBLIC_OBSERVABLE`, `SEMANTIC_INVARIANT`, `ARCHITECTURE_INVARIANT`, or `UPSTREAM_IMPLEMENTATION_DETAIL`. Record causal status separately as `OBSERVED`, `PLAUSIBLE`, `COUNTERFACTUAL_SUPPORTED`, `CONTRACT_CONFIRMED`, or `REAL_GAME_CONFIRMED`. Difference does not imply defect or cause.
+
+Use `ci/semantic-diff.py` and `artifacts/schema/semantic-diff.schema.json`. Evidence level is derived from named artifacts; subjective confidence is forbidden. When source evidence leaves multiple causal explanations, record one experiment that distinguishes at least two concrete explanations. Do not manufacture a hypothesis tree when the divergence already explains the behavior.
 
 ## Stable Module Rule
 
@@ -67,9 +70,11 @@ When evidence selects a stable module for the permanent public fix, record its `
 
 Passive diagnostics must use bounded memory, never wait, never call guest code, never alter scheduling, and never change Android-visible behavior.
 
-Discovery may use intrusive diagnostics or temporary counterfactual behavior when source and passive runtime evidence cannot discriminate the remaining explanations. Mark it `EXPERIMENTAL`, record its result in `semantic-diff.json`, and remove it before Closure. Diagnostic cut points are test interfaces, never production compatibility shortcuts.
+Discovery may use intrusive diagnostics or temporary counterfactual behavior when source and passive runtime evidence cannot discriminate the remaining explanations. Register it in `ci/experiments.json`, enable it through `AGR_EXPERIMENTAL_<NAME>` or a test-only path, record its two-sided expected outcomes, and remove it before Closure. An experimental patch is never promoted directly into the production fix. Diagnostic cut points are test interfaces, never production compatibility shortcuts.
 
-Differential trace events use: `global_seq`, `monotonic_time`, `host_thread`, `guest_thread`, `guest_pc`, `boundary`, `operation`, `object`, `input_state`, `output_state`, `result`, `frame`, and `swap`.
+Differential has three levels: source-derived semantic model by default; executable API19 reference only for unresolved observable ambiguity; targeted runtime trace only for race, timing, cross-thread, callback, or lifecycle ordering. Reference traces are on-demand, not default CI.
+
+Trace boundary events such as enqueue, wake, poll, dequeue, callback enter/exit, finish, lifecycle transition, EGL ownership, JNI crossing, and guest/host crossing. Do not trace every helper, allocation, or instruction unless the active question requires it. Use a fixed-capacity ring buffer with fixed-size records; never wait, allocate unbounded memory, call guest code, or change scheduling. Mark potentially perturbing traces `TIMING_SENSITIVE`; they cannot alone establish causality.
 
 Store both `normalized_signature` for clustering and `raw_fingerprint` for identity.
 
@@ -81,11 +86,13 @@ Use the least expensive sufficient layer:
 
 Independent tests continue after independent failures. A hard prerequisite failure blocks or skips dependants. A build failure must not launch a Simulator target. Every executable test has a hard timeout, independent result, and failure signature.
 
-## CI Budget
+## Expensive Run Admission
 
-Per active task: local/static/unit/focused checks are reasonably unlimited; one complete valid discovery macOS run and one complete valid closure macOS run are budgeted; iphoneos may run in parallel. A run counts only when required jobs execute on a functioning runner and required evidence uploads. Runner outages, GitHub failures, and artifact failures do not consume budget.
+Discovery has no fixed run count. Before each full macOS/Simulator run, record the question, current uncertainty, outcomes A/B and what each excludes, and why source/local/reference/focused tests are insufficient. “Run again” and “add more logs” are not admissible questions.
 
-After two valid full runs without enough evidence, stop and report the minimum missing evidence.
+After two consecutive expensive runs without a new divergence, causal evidence, eliminated major explanation, smaller subsystem, or reproducible contract, stop expensive runs and change strategy to source audit, minimal reproducer, reference differential, counterfactual experiment, or cut-point test.
+
+Closure candidates retain strict run budgeting. Infrastructure-invalid runs do not consume it.
 
 ## STOP Rule
 

@@ -3,7 +3,14 @@
   "rules": {
     "test_only": true,
     "production_shortcut": false,
-    "must_preserve_android_visible_behavior": true
+    "must_preserve_android_visible_behavior": true,
+    "trace_granularity": "BOUNDARY_EVENT",
+    "storage": "FIXED_RECORD_RING_BUFFER",
+    "bounded": true,
+    "may_wait": false,
+    "may_call_guest": false,
+    "may_change_scheduling": false,
+    "timing_sensitive_requires_label": true
   },
   "cutpoints": [
     {"id":"input.host_adapter","subsystem":"NativeActivity/Input","boundary":"UIKit event -> host input adapter"},

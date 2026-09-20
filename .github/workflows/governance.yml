@@ -22,7 +22,9 @@ jobs:
       - name: Compile governance tools
         run: python3 -m py_compile ci/*.py
       - name: Validate discovery governance and upstream mapping
-        run: python3 ci/validate-governance.py --mode discovery
+        run: |
+          python3 ci/upstream-map.py --verify-upstream --require-valid dalvik.nativeactivity.activity_root --output build/artifacts/upstream-map-report.json
+          python3 ci/validate-governance.py --mode discovery
       - name: Validate committed semantic differentials
         run: |
           for file in ci/governance/semantic-diffs/*.json; do
@@ -43,4 +45,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: agr-governance
-          path: build/artifacts/governance-report.json
+          path: |
+            build/artifacts/governance-report.json
+            build/artifacts/upstream-map-report.json

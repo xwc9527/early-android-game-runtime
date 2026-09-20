@@ -1,13 +1,17 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "classification": "AGR_INTERNAL_BUG",
   "subsystem": "Dalvik/NativeActivity lifecycle",
   "observed_discontinuity": "After a major DEX GC, the next original DEX iget-object in loadImage dereferenced an invalid launched Activity object and the Simulator process exited with EXC_BAD_ACCESS.",
   "upstream": {
-    "version": "Android 4.4.4_r2",
+    "map_entry": "dalvik.nativeactivity.activity_root",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
     "files": [
-      "dalvik/vm/alloc/MarkSweep.cpp",
-      "frameworks/base/core/java/android/app/NativeActivity.java"
+      "frameworks/base/core/java/android/app/ActivityThread.java",
+      "frameworks/base/core/java/android/app/NativeActivity.java",
+      "dalvik/vm/alloc/MarkSweep.cpp"
     ],
     "call_path": [
       "ActivityThread owns launched Activity",
@@ -16,6 +20,7 @@
       "instance fields remain valid after GC"
     ]
   },
+  "semantic_class": "SEMANTIC_INVARIANT",
   "required_semantics": [
     "A launched Activity remains strongly reachable for its active lifecycle.",
     "A host native pointer is not a Dalvik GC root.",
@@ -41,16 +46,30 @@
       "relevance": "This permits collection before the next original DEX field access and directly explains the observed EXC_BAD_ACCESS."
     }
   ],
-  "first_relevant_difference": "The Activity is absent from DxVM.activity_instance when the major GC root set is marked.",
-  "confidence": "proven",
-  "needs_experiment": false,
-  "active_explanations": [],
-  "next_discriminating_action": "",
-  "host_adaptation": "Store the active Activity in the existing host-side VM lifecycle root; do not add a game-specific retention path.",
-  "validation": [
-    "activity_gc_root_contract",
-    "bounded Simulator run remained alive beyond the former crash",
-    "original DEX resumed loadImage after major GC"
+  "earliest_evidenced_divergence": "The Activity is absent from DxVM.activity_instance when the major GC root set is marked.",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "pinned AOSP source hashes in upstream-map entry dalvik.nativeactivity.activity_root"
+    },
+    {
+      "type": "RUNTIME",
+      "artifact": "discovery run 35467254664 crash report and major-GC trace"
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "activity_gc_root_contract"
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "closure run 35469009073 remained alive beyond the former real-APK crash"
+    }
   ],
-  "experimental": false
+  "remaining_uncertainty": [],
+  "next_action": "retain focused contract and complete the independent PVS1 closure run",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "Store the active Activity in the existing host-side VM lifecycle root; do not add a game-specific retention path."
 }

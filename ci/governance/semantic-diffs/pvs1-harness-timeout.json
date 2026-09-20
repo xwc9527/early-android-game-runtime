@@ -1,13 +1,17 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "classification": "HARNESS_BUG",
   "subsystem": "CI regression harness",
   "observed_discontinuity": "Closure run 35469009073 terminated simulator-real-apk with exit 124 at 180.161 seconds while the app process remained alive through its full 150-second observation interval.",
   "upstream": {
-    "version": "Android 4.4.4_r2",
+    "map_entry": "",
+    "map_status": "NOT_APPLICABLE",
+    "revision": "NOT_APPLICABLE",
+    "source_verified": false,
     "files": [],
     "call_path": []
   },
+  "semantic_class": "PUBLIC_OBSERVABLE",
   "required_semantics": [
     "An outer test timeout must exceed the maximum bounded duration of every inner observation and evidence collection step.",
     "A harness timeout cannot be classified as an Android Runtime semantic failure."
@@ -31,16 +35,20 @@
       "relevance": "The harness necessarily can terminate a valid run before evidence collection completes."
     }
   ],
-  "first_relevant_difference": "The outer suite timeout did not dominate the sum of the collector observation and bounded post-run queries.",
-  "confidence": "proven",
-  "needs_experiment": false,
-  "active_explanations": [],
-  "next_discriminating_action": "",
-  "host_adaptation": "Not applicable; this is outside the Runtime.",
-  "validation": [
-    "run 35469009073 timing evidence",
-    "timeout hierarchy contract",
-    "next exact-candidate closure run"
+  "earliest_evidenced_divergence": "The outer suite timeout did not dominate the sum of the collector observation and bounded post-run queries.",
+  "causal_status": "PLAUSIBLE",
+  "evidence_level": "RUNTIME_OBSERVED",
+  "evidence": [
+    {
+      "type": "RUNTIME",
+      "artifact": "closure run 35469009073 process timeline and timeout at 180.161 seconds"
+    }
   ],
-  "experimental": false
+  "remaining_uncertainty": [
+    "the corrected timeout hierarchy has not completed an exact-candidate closure run"
+  ],
+  "next_action": "run one exact-candidate closure workflow after budget reset",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "Not applicable; this is outside the Runtime."
 }

@@ -1,193 +1,715 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "android_baseline": "Android 4.4.4_r2",
+  "role": "NAVIGATION_CACHE_NOT_ORACLE",
   "entries": [
     {
+      "id": "nativeactivity.lifecycle",
+      "subsystem": "NativeActivity",
       "android_api": "ANativeActivity lifecycle",
-      "subsystem": "NativeActivity",
-      "android_version": "4.4.4_r2",
-      "upstream_repository": "platform/frameworks/base",
-      "upstream_file": "core/java/android/app/NativeActivity.java; core/jni/android_app_NativeActivity.cpp",
-      "entry_function": "NativeActivity.loadNativeCode / android_app_NativeActivity_onCreate",
-      "important_callees": ["onStart", "onResume", "onNativeWindowCreated", "onInputQueueCreated", "onPause", "onStop", "onDestroy"],
-      "observable_semantics": ["callbacks follow Activity lifecycle order", "window and input queue callbacks carry stable opaque objects", "destroy is delivered before host ownership is released"],
-      "internal_invariants": ["Activity owns the native instance", "callback thread and native glue command ordering remain consistent"],
-      "agr_files": ["App/main.m", "Runtime/GuestRuntime/agr_guest_runtime.c"],
-      "agr_entry": "runNativeActivityApk / ANativeActivity_onCreate guest entry",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "core/java/android/app/NativeActivity.java",
+          "core/jni/android_app_NativeActivity.cpp"
+        ],
+        "symbols": [
+          "NativeActivity.loadNativeCode / android_app_NativeActivity_onCreate",
+          "onStart",
+          "onResume",
+          "onNativeWindowCreated",
+          "onInputQueueCreated",
+          "onPause",
+          "onStop",
+          "onDestroy"
+        ],
+        "source_hashes": {
+          "core/java/android/app/NativeActivity.java": "UNVERIFIED",
+          "core/jni/android_app_NativeActivity.cpp": "UNVERIFIED"
+        }
+      },
+      "agr": {
+        "paths": [
+          "App/main.m",
+          "Runtime/GuestRuntime/agr_guest_runtime.c"
+        ],
+        "symbols": [
+          "runNativeActivityApk / ANativeActivity_onCreate guest entry"
+        ],
+        "source_hashes": {
+          "App/main.m": "095e161778b0ef1ca53517e7365583ae6cb49cdd5f2b4d1e384284e534a5f125",
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "88d742449969ba4f93190b73603f25745dbec9b315a87062926ce4de7ccb34fd"
+        }
+      },
+      "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
+      "status": "UNVERIFIED",
+      "dependencies": [],
+      "observable_semantics": [
+        "callbacks follow Activity lifecycle order",
+        "window and input queue callbacks carry stable opaque objects",
+        "destroy is delivered before host ownership is released"
+      ],
+      "internal_invariants": [
+        "Activity owns the native instance",
+        "callback thread and native glue command ordering remain consistent"
+      ],
       "execution_placement": "HOST-HLE_AND_GUEST-ARM",
-      "host_substitutions": ["UIKit supplies lifecycle and window endpoint"],
-      "known_deviations": ["Binder and system_server are replaced by in-process host coordination"],
-      "contracts": ["nativeactivity.lifecycle.window", "PVS1 lifecycle trace"]
+      "host_substitutions": [
+        "UIKit supplies lifecycle and window endpoint"
+      ],
+      "known_deviations": [
+        "Binder and system_server are replaced by in-process host coordination"
+      ],
+      "contracts": [
+        "nativeactivity.lifecycle.window",
+        "PVS1 lifecycle trace"
+      ]
     },
     {
-      "android_api": "android_native_app_glue",
+      "id": "nativeactivity.native_app_glue",
       "subsystem": "NativeActivity",
-      "android_version": "NDK r10e/API19",
-      "upstream_repository": "android-ndk",
-      "upstream_file": "sources/android/native_app_glue/android_native_app_glue.c",
-      "entry_function": "ANativeActivity_onCreate",
-      "important_callees": ["android_app_entry", "android_app_pre_exec_cmd", "android_app_post_exec_cmd"],
-      "observable_semantics": ["lifecycle commands are delivered through the app command channel", "pre/post handlers mutate app state around the guest callback"],
-      "internal_invariants": ["android_main runs on its own guest pthread", "destroy joins the app worker"],
-      "agr_files": ["Runtime/GuestRuntime/agr_guest_runtime.c", "Runtime/NativeCore/agr_runtime.c"],
-      "agr_entry": "pipe_create_cb / ALooper dispatch",
+      "android_api": "android_native_app_glue",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "android-ndk",
+        "paths": [
+          "sources/android/native_app_glue/android_native_app_glue.c"
+        ],
+        "symbols": [
+          "ANativeActivity_onCreate",
+          "android_app_entry",
+          "android_app_pre_exec_cmd",
+          "android_app_post_exec_cmd"
+        ],
+        "source_hashes": {
+          "sources/android/native_app_glue/android_native_app_glue.c": "UNVERIFIED"
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/GuestRuntime/agr_guest_runtime.c",
+          "Runtime/NativeCore/agr_runtime.c"
+        ],
+        "symbols": [
+          "pipe_create_cb / ALooper dispatch"
+        ],
+        "source_hashes": {
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "88d742449969ba4f93190b73603f25745dbec9b315a87062926ce4de7ccb34fd",
+          "Runtime/NativeCore/agr_runtime.c": "875147f8e298f1ce9e4dd73084a498d48545f1e0d8367dac61d4fb6c5639821f"
+        }
+      },
+      "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
+      "status": "UNVERIFIED",
+      "dependencies": [
+        "nativeactivity.lifecycle",
+        "looper.poll"
+      ],
+      "observable_semantics": [
+        "lifecycle commands are delivered through the app command channel",
+        "pre/post handlers mutate app state around the guest callback"
+      ],
+      "internal_invariants": [
+        "android_main runs on its own guest pthread",
+        "destroy joins the app worker"
+      ],
       "execution_placement": "GUEST-ARM_WITH_HOST_PRIMITIVES",
-      "host_substitutions": ["Darwin pipe and worker primitives back guest glue"],
+      "host_substitutions": [
+        "Darwin pipe and worker primitives back guest glue"
+      ],
       "known_deviations": [],
-      "contracts": ["PVS1 native_app_glue command trace"]
+      "contracts": [
+        "PVS1 native_app_glue command trace"
+      ]
     },
     {
-      "android_api": "ALooper_pollOnce/ALooper_pollAll",
+      "id": "looper.poll",
       "subsystem": "Looper",
-      "android_version": "4.4.4_r2",
-      "upstream_repository": "platform/frameworks/base; platform/system/core",
-      "upstream_file": "native/android/looper.cpp; libutils/Looper.cpp",
-      "entry_function": "ALooper_pollOnce / Looper::pollOnce",
-      "important_callees": ["Looper::pollInner", "wake", "addFd", "removeFd"],
-      "observable_semantics": ["poll blocks only for the requested duration class", "wake makes queued work observable", "ident/callback/data match the registered fd"],
-      "internal_invariants": ["one Looper owner per prepared thread", "queue mutation is visible before wake"],
-      "agr_files": ["Runtime/GuestRuntime/agr_guest_runtime.c", "Runtime/GuestRuntime/agr_service_dispatch.c"],
-      "agr_entry": "dispatch_import ALooper_*",
+      "android_api": "ALooper_pollOnce/ALooper_pollAll",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base; platform/system/core",
+        "paths": [
+          "native/android/looper.cpp",
+          "libutils/Looper.cpp"
+        ],
+        "symbols": [
+          "ALooper_pollOnce / Looper::pollOnce",
+          "Looper::pollInner",
+          "wake",
+          "addFd",
+          "removeFd"
+        ],
+        "source_hashes": {
+          "native/android/looper.cpp": "UNVERIFIED",
+          "libutils/Looper.cpp": "UNVERIFIED"
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/GuestRuntime/agr_guest_runtime.c",
+          "Runtime/GuestRuntime/agr_service_dispatch.c"
+        ],
+        "symbols": [
+          "dispatch_import ALooper_*"
+        ],
+        "source_hashes": {
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "88d742449969ba4f93190b73603f25745dbec9b315a87062926ce4de7ccb34fd",
+          "Runtime/GuestRuntime/agr_service_dispatch.c": "1f24d1fd8e19fc760718132f7083420d7edd7444d0b7a5c38707e25c306c0f1e"
+        }
+      },
+      "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
+      "status": "UNVERIFIED",
+      "dependencies": [],
+      "observable_semantics": [
+        "poll blocks only for the requested duration class",
+        "wake makes queued work observable",
+        "ident/callback/data match the registered fd"
+      ],
+      "internal_invariants": [
+        "one Looper owner per prepared thread",
+        "queue mutation is visible before wake"
+      ],
       "execution_placement": "HOST-HLE",
-      "host_substitutions": ["Darwin synchronization and virtual pipes replace epoll/eventfd"],
+      "host_substitutions": [
+        "Darwin synchronization and virtual pipes replace epoll/eventfd"
+      ],
       "known_deviations": [],
-      "contracts": ["PVS1 Looper trace"]
+      "contracts": [
+        "PVS1 Looper trace"
+      ]
     },
     {
-      "android_api": "AInputQueue_getEvent/AInputQueue_finishEvent",
+      "id": "nativeactivity.input_queue",
       "subsystem": "NativeActivity/Input",
-      "android_version": "4.4.4_r2",
-      "upstream_repository": "platform/frameworks/base",
-      "upstream_file": "core/jni/android_app_NativeActivity.cpp; native/android/input.cpp",
-      "entry_function": "AInputQueue_getEvent",
-      "important_callees": ["AInputQueue_attachLooper", "AInputQueue_preDispatchEvent", "AInputQueue_finishEvent"],
-      "observable_semantics": ["events are ordered and not lost", "attached Looper is woken", "finish consumes exactly the matching head event"],
-      "internal_invariants": ["producer and consumer share one synchronized queue", "event lifetime ends at finishEvent"],
-      "agr_files": ["Runtime/GuestRuntime/agr_guest_runtime.c", "App/main.m"],
-      "agr_entry": "input_queue_push / dispatch_import AInputQueue_*",
+      "android_api": "AInputQueue_getEvent/AInputQueue_finishEvent",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "core/jni/android_app_NativeActivity.cpp",
+          "native/android/input.cpp"
+        ],
+        "symbols": [
+          "AInputQueue_getEvent",
+          "AInputQueue_attachLooper",
+          "AInputQueue_preDispatchEvent",
+          "AInputQueue_finishEvent"
+        ],
+        "source_hashes": {
+          "core/jni/android_app_NativeActivity.cpp": "UNVERIFIED",
+          "native/android/input.cpp": "UNVERIFIED"
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/GuestRuntime/agr_guest_runtime.c",
+          "App/main.m"
+        ],
+        "symbols": [
+          "input_queue_push / dispatch_import AInputQueue_*"
+        ],
+        "source_hashes": {
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "88d742449969ba4f93190b73603f25745dbec9b315a87062926ce4de7ccb34fd",
+          "App/main.m": "095e161778b0ef1ca53517e7365583ae6cb49cdd5f2b4d1e384284e534a5f125"
+        }
+      },
+      "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
+      "status": "UNVERIFIED",
+      "dependencies": [
+        "nativeactivity.lifecycle",
+        "looper.poll"
+      ],
+      "observable_semantics": [
+        "events are ordered and not lost",
+        "attached Looper is woken",
+        "finish consumes exactly the matching head event"
+      ],
+      "internal_invariants": [
+        "producer and consumer share one synchronized queue",
+        "event lifetime ends at finishEvent"
+      ],
       "execution_placement": "HOST-HLE",
-      "host_substitutions": ["UIKit touch becomes an Android MotionEvent record"],
-      "known_deviations": ["current public surface is the PVS1 single-pointer subset"],
-      "contracts": ["input_queue.concurrent_ordered", "input_queue.concurrent_bounded"]
+      "host_substitutions": [
+        "UIKit touch becomes an Android MotionEvent record"
+      ],
+      "known_deviations": [
+        "current public surface is the PVS1 single-pointer subset"
+      ],
+      "contracts": [
+        "input_queue.concurrent_ordered",
+        "input_queue.concurrent_bounded"
+      ]
     },
     {
-      "android_api": "EGL lifecycle and swap",
+      "id": "egl.lifecycle",
       "subsystem": "EGL/GLES",
-      "android_version": "4.4.4_r2",
-      "upstream_repository": "platform/frameworks/base",
-      "upstream_file": "opengl/libs/EGL/eglApi.cpp",
-      "entry_function": "eglCreateWindowSurface / eglMakeCurrent / eglSwapBuffers",
-      "important_callees": ["eglDestroySurface", "eglDestroyContext"],
-      "observable_semantics": ["opaque handles retain type and lifetime", "context ownership is thread-affine", "completed swap exposes a stable frame"],
-      "internal_invariants": ["surface/window lifetime is ordered with NativeActivity callbacks"],
-      "agr_files": ["Runtime/GuestRuntime/agr_guest_runtime.c"],
-      "agr_entry": "dispatch_import egl*",
+      "android_api": "EGL lifecycle and swap",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "opengl/libs/EGL/eglApi.cpp"
+        ],
+        "symbols": [
+          "eglCreateWindowSurface / eglMakeCurrent / eglSwapBuffers",
+          "eglDestroySurface",
+          "eglDestroyContext"
+        ],
+        "source_hashes": {
+          "opengl/libs/EGL/eglApi.cpp": "UNVERIFIED"
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/GuestRuntime/agr_guest_runtime.c"
+        ],
+        "symbols": [
+          "dispatch_import egl*"
+        ],
+        "source_hashes": {
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "88d742449969ba4f93190b73603f25745dbec9b315a87062926ce4de7ccb34fd"
+        }
+      },
+      "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
+      "status": "UNVERIFIED",
+      "dependencies": [],
+      "observable_semantics": [
+        "opaque handles retain type and lifetime",
+        "context ownership is thread-affine",
+        "completed swap exposes a stable frame"
+      ],
+      "internal_invariants": [
+        "surface/window lifetime is ordered with NativeActivity callbacks"
+      ],
       "execution_placement": "HOST_ADAPTER",
-      "host_substitutions": ["ANGLE Metal replaces Android EGL driver/SurfaceFlinger endpoint"],
+      "host_substitutions": [
+        "ANGLE Metal replaces Android EGL driver/SurfaceFlinger endpoint"
+      ],
       "known_deviations": [],
-      "contracts": ["egl.gles.draw.readback", "Gloomy renderer regression"]
+      "contracts": [
+        "egl.gles.draw.readback",
+        "Gloomy renderer regression"
+      ]
     },
     {
-      "android_api": "JNI native binding and invocation",
+      "id": "dalvik.jni.binding",
       "subsystem": "Dalvik/JNI",
-      "android_version": "4.4.4_r2",
-      "upstream_repository": "platform/dalvik; platform/libnativehelper",
-      "upstream_file": "vm/Jni.cpp; include/nativehelper/JNIHelp.h",
-      "entry_function": "RegisterNatives / JNI method invocation",
-      "important_callees": ["FindClass", "GetMethodID", "Call*Method", "NewGlobalRef", "DeleteGlobalRef"],
-      "observable_semantics": ["method dispatch respects descriptor and invocation kind", "references obey local/global/thread lifetime", "callbacks use the current attached thread"],
-      "internal_invariants": ["DEX VM state is process-shared", "JNI local state belongs to GuestThreadContext"],
-      "agr_files": ["Runtime/GuestRuntime/agr_jni_methods.c", "Runtime/GuestRuntime/agr_guest_runtime.c", "Runtime/DexLoom/game_dex_runner.c"],
-      "agr_entry": "agr_jni_method_* / dex_native_bridge",
+      "android_api": "JNI native binding and invocation",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/dalvik; platform/libnativehelper",
+        "paths": [
+          "vm/Jni.cpp",
+          "include/nativehelper/JNIHelp.h"
+        ],
+        "symbols": [
+          "RegisterNatives / JNI method invocation",
+          "FindClass",
+          "GetMethodID",
+          "Call*Method",
+          "NewGlobalRef",
+          "DeleteGlobalRef"
+        ],
+        "source_hashes": {
+          "vm/Jni.cpp": "UNVERIFIED",
+          "include/nativehelper/JNIHelp.h": "UNVERIFIED"
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/GuestRuntime/agr_jni_methods.c",
+          "Runtime/GuestRuntime/agr_guest_runtime.c",
+          "Runtime/DexLoom/game_dex_runner.c"
+        ],
+        "symbols": [
+          "agr_jni_method_* / dex_native_bridge"
+        ],
+        "source_hashes": {
+          "Runtime/GuestRuntime/agr_jni_methods.c": "388175d683fc1f46823c5fb7c83974a36977a5fbea4be5610ff9d6c269ae5d57",
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "88d742449969ba4f93190b73603f25745dbec9b315a87062926ce4de7ccb34fd",
+          "Runtime/DexLoom/game_dex_runner.c": "5faaa12dd5cd4517d535585e96b0666d9730d1dd7527d0be60ccd08efc7cb7ce"
+        }
+      },
+      "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
+      "status": "UNVERIFIED",
+      "dependencies": [],
+      "observable_semantics": [
+        "method dispatch respects descriptor and invocation kind",
+        "references obey local/global/thread lifetime",
+        "callbacks use the current attached thread"
+      ],
+      "internal_invariants": [
+        "DEX VM state is process-shared",
+        "JNI local state belongs to GuestThreadContext"
+      ],
       "execution_placement": "HOST-DEX_CROSS_DOMAIN_BRIDGE",
-      "host_substitutions": ["32-bit guest handles reference host DEX objects"],
-      "known_deviations": ["declared JNI surface is partial"],
-      "contracts": ["dex.jni.roundtrip", "activity GC-root contract"]
+      "host_substitutions": [
+        "32-bit guest handles reference host DEX objects"
+      ],
+      "known_deviations": [
+        "declared JNI surface is partial"
+      ],
+      "contracts": [
+        "dex.jni.roundtrip",
+        "activity GC-root contract"
+      ]
     },
     {
-      "android_api": "AssetManager and resources.arsc",
+      "id": "androidfw.assets_resources",
       "subsystem": "Assets/Resources",
-      "android_version": "4.4.4_r2",
-      "upstream_repository": "platform/frameworks/base",
-      "upstream_file": "libs/androidfw/Asset.cpp; libs/androidfw/AssetManager.cpp; libs/androidfw/ResourceTypes.cpp",
-      "entry_function": "AssetManager::addAssetPath / open / getResources",
-      "important_callees": ["ResTable::add", "ResTable::getResource"],
-      "observable_semantics": ["APK ZIP members open as Android assets", "resource table configuration selects the same value"],
-      "internal_invariants": ["asset buffers remain valid for Asset lifetime"],
-      "agr_files": ["Runtime/AndroidFw"],
-      "agr_entry": "agr_afw_add_apk / agr_afw_open",
+      "android_api": "AssetManager and resources.arsc",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "libs/androidfw/Asset.cpp",
+          "libs/androidfw/AssetManager.cpp",
+          "libs/androidfw/ResourceTypes.cpp"
+        ],
+        "symbols": [
+          "AssetManager::addAssetPath / open / getResources",
+          "ResTable::add",
+          "ResTable::getResource"
+        ],
+        "source_hashes": {
+          "libs/androidfw/Asset.cpp": "UNVERIFIED",
+          "libs/androidfw/AssetManager.cpp": "UNVERIFIED",
+          "libs/androidfw/ResourceTypes.cpp": "UNVERIFIED"
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/AndroidFw"
+        ],
+        "symbols": [
+          "agr_afw_add_apk / agr_afw_open"
+        ],
+        "source_hashes": {
+          "Runtime/AndroidFw": "caf14b71b883af23b89c8221dce3d1ff2c4f837c485e5699adbc4e859ae3644c"
+        }
+      },
+      "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
+      "status": "UNVERIFIED",
+      "dependencies": [],
+      "observable_semantics": [
+        "APK ZIP members open as Android assets",
+        "resource table configuration selects the same value"
+      ],
+      "internal_invariants": [
+        "asset buffers remain valid for Asset lifetime"
+      ],
       "execution_placement": "HOST-NATIVE_AOSP",
-      "host_substitutions": ["host file callbacks replace Android fd acquisition"],
+      "host_substitutions": [
+        "host file callbacks replace Android fd acquisition"
+      ],
       "known_deviations": [],
-      "contracts": ["asset.apk.resources_table", "Bitmap texture regression"]
+      "contracts": [
+        "asset.apk.resources_table",
+        "Bitmap texture regression"
+      ]
     },
     {
-      "android_api": "pthread/TLS/futex",
+      "id": "bionic.pthread_tls_futex",
       "subsystem": "Bionic threading",
-      "android_version": "4.4.4_r2",
-      "upstream_repository": "platform/bionic",
-      "upstream_file": "libc/bionic/pthread*.cpp; libc/bionic/futex.cpp",
-      "entry_function": "pthread_create / pthread_getspecific / __futex_wait",
-      "important_callees": ["pthread_join", "pthread_key_create", "pthread_mutex_lock", "pthread_cond_wait"],
-      "observable_semantics": ["each guest pthread has isolated TLS and errno", "wait/wake and synchronization preserve API19 results"],
-      "internal_invariants": ["one guest pthread maps to one Darwin pthread", "ProcessRuntime remains shared"],
-      "agr_files": ["Runtime/Bionic", "Runtime/GuestRuntime/agr_thread_context.c"],
-      "agr_entry": "Bionic source port callbacks",
+      "android_api": "pthread/TLS/futex",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/bionic",
+        "paths": [
+          "libc/bionic/pthread*.cpp",
+          "libc/bionic/futex.cpp"
+        ],
+        "symbols": [
+          "pthread_create / pthread_getspecific / __futex_wait",
+          "pthread_join",
+          "pthread_key_create",
+          "pthread_mutex_lock",
+          "pthread_cond_wait"
+        ],
+        "source_hashes": {
+          "libc/bionic/pthread*.cpp": "UNVERIFIED",
+          "libc/bionic/futex.cpp": "UNVERIFIED"
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/Bionic",
+          "Runtime/GuestRuntime/agr_thread_context.c"
+        ],
+        "symbols": [
+          "Bionic source port callbacks"
+        ],
+        "source_hashes": {
+          "Runtime/Bionic": "c28c9e56671f66f0c02af25562f0f51bef96a7c00a4c65704dab025c1d165323",
+          "Runtime/GuestRuntime/agr_thread_context.c": "99d3c17d86839b50aad1d35b9906ec34b461a2c54346ccc3bbf92a379d476e3d"
+        }
+      },
+      "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
+      "status": "UNVERIFIED",
+      "dependencies": [],
+      "observable_semantics": [
+        "each guest pthread has isolated TLS and errno",
+        "wait/wake and synchronization preserve API19 results"
+      ],
+      "internal_invariants": [
+        "one guest pthread maps to one Darwin pthread",
+        "ProcessRuntime remains shared"
+      ],
       "execution_placement": "HOST-NATIVE_AOSP",
-      "host_substitutions": ["Darwin pthread/condition primitives replace Linux futex syscall boundary"],
+      "host_substitutions": [
+        "Darwin pthread/condition primitives replace Linux futex syscall boundary"
+      ],
       "known_deviations": [],
-      "contracts": ["Bionic pthread/futex contracts"]
+      "contracts": [
+        "Bionic pthread/futex contracts"
+      ]
     },
     {
-      "android_api": "dlopen/dlsym/dlclose",
+      "id": "bionic.linker_libdl",
       "subsystem": "Bionic linker/libdl",
-      "android_version": "4.4.4_r2",
-      "upstream_repository": "platform/bionic",
-      "upstream_file": "linker/linker.cpp; linker/dlfcn.cpp",
-      "entry_function": "do_dlopen / dlsym / dlclose",
-      "important_callees": ["find_library", "relocate", "call_constructors", "call_destructors"],
-      "observable_semantics": ["DT_NEEDED order and symbol ownership match API19", "refcount controls unload and symbol visibility"],
-      "internal_invariants": ["formal linker is sole DSO owner"],
-      "agr_files": ["Runtime/AospLinker"],
-      "agr_entry": "pinned KitKat linker source port",
+      "android_api": "dlopen/dlsym/dlclose",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/bionic",
+        "paths": [
+          "linker/linker.cpp",
+          "linker/dlfcn.cpp"
+        ],
+        "symbols": [
+          "do_dlopen / dlsym / dlclose",
+          "find_library",
+          "relocate",
+          "call_constructors",
+          "call_destructors"
+        ],
+        "source_hashes": {
+          "linker/linker.cpp": "UNVERIFIED",
+          "linker/dlfcn.cpp": "UNVERIFIED"
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/AospLinker"
+        ],
+        "symbols": [
+          "pinned KitKat linker source port"
+        ],
+        "source_hashes": {
+          "Runtime/AospLinker": "c112fc1382fec33d284d324074c4aaad252ea736b6ec7f55a3cf782a94d43c32"
+        }
+      },
+      "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
+      "status": "UNVERIFIED",
+      "dependencies": [],
+      "observable_semantics": [
+        "DT_NEEDED order and symbol ownership match API19",
+        "refcount controls unload and symbol visibility"
+      ],
+      "internal_invariants": [
+        "formal linker is sole DSO owner"
+      ],
       "execution_placement": "HOST-NATIVE_AOSP",
-      "host_substitutions": ["HostServices supplies raw map/protect/unmap"],
+      "host_substitutions": [
+        "HostServices supplies raw map/protect/unmap"
+      ],
       "known_deviations": [],
-      "contracts": ["API19 linker/libdl differential"]
+      "contracts": [
+        "API19 linker/libdl differential"
+      ]
     },
     {
-      "android_api": "ARM EHABI unwind and C++ propagation",
+      "id": "ehabi.unwind_cpp",
       "subsystem": "EHABI",
-      "android_version": "4.4.4_r2 + NDK r10e GCC 4.8",
-      "upstream_repository": "platform/bionic; GCC libgcc/libsupc++",
-      "upstream_file": "libc/arch-arm/bionic/exidx_dynamic.c; NDK r10e libgnustl_shared/libgcc",
-      "entry_function": "__gnu_Unwind_Find_exidx / _Unwind_RaiseException",
-      "important_callees": ["__gxx_personality_v0", "_Unwind_Resume", "__cxa_throw"],
-      "observable_semantics": ["frame ownership and exidx lookup survive DSO lifecycle", "guest exception search/cleanup/handler ordering matches GCC"],
-      "internal_invariants": ["real exception propagation remains guest ARM", "formal linker owns PT_ARM_EXIDX metadata"],
-      "agr_files": ["Runtime/Ehabi", "Runtime/AospLinker", "Runtime/NativeCore/agr_runtime.c"],
-      "agr_entry": "guest GCC runtime with __gnu_Unwind_Find_exidx HLE",
+      "android_api": "ARM EHABI unwind and C++ propagation",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/bionic; GCC libgcc/libsupc++",
+        "paths": [
+          "libc/arch-arm/bionic/exidx_dynamic.c",
+          "NDK r10e libgnustl_shared/libgcc"
+        ],
+        "symbols": [
+          "__gnu_Unwind_Find_exidx / _Unwind_RaiseException",
+          "__gxx_personality_v0",
+          "_Unwind_Resume",
+          "__cxa_throw"
+        ],
+        "source_hashes": {
+          "libc/arch-arm/bionic/exidx_dynamic.c": "UNVERIFIED",
+          "NDK r10e libgnustl_shared/libgcc": "UNVERIFIED"
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/Ehabi",
+          "Runtime/AospLinker",
+          "Runtime/NativeCore/agr_runtime.c"
+        ],
+        "symbols": [
+          "guest GCC runtime with __gnu_Unwind_Find_exidx HLE"
+        ],
+        "source_hashes": {
+          "Runtime/Ehabi": "9d4658359ac40136e234e381a383f55310d8141031de8595dedb952ae3394d94",
+          "Runtime/AospLinker": "c112fc1382fec33d284d324074c4aaad252ea736b6ec7f55a3cf782a94d43c32",
+          "Runtime/NativeCore/agr_runtime.c": "875147f8e298f1ce9e4dd73084a498d48545f1e0d8367dac61d4fb6c5639821f"
+        }
+      },
+      "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
+      "status": "UNVERIFIED",
+      "dependencies": [
+        "bionic.linker_libdl"
+      ],
+      "observable_semantics": [
+        "frame ownership and exidx lookup survive DSO lifecycle",
+        "guest exception search/cleanup/handler ordering matches GCC"
+      ],
+      "internal_invariants": [
+        "real exception propagation remains guest ARM",
+        "formal linker owns PT_ARM_EXIDX metadata"
+      ],
       "execution_placement": "GUEST-ARM_WITH_NARROW_HOST-HLE",
-      "host_substitutions": ["formal linker metadata answers exidx lookup"],
+      "host_substitutions": [
+        "formal linker metadata answers exidx lookup"
+      ],
       "known_deviations": [],
-      "contracts": ["EHABI Phase 1/2A/2B differential"]
+      "contracts": [
+        "EHABI Phase 1/2A/2B differential"
+      ]
     },
     {
-      "android_api": "malloc family",
+      "id": "bionic.allocator",
       "subsystem": "Bionic allocator",
-      "android_version": "4.4.4_r2",
-      "upstream_repository": "platform/bionic",
-      "upstream_file": "libc/bionic/dlmalloc.c; libc/upstream-dlmalloc/malloc.c",
-      "entry_function": "malloc/calloc/realloc/free/memalign",
-      "important_callees": ["mmap", "munmap", "pthread mutex boundary"],
-      "observable_semantics": ["32-bit guest chunk layout and alignment", "API19 errno/OOM/error behavior", "freed space is reusable"],
-      "internal_invariants": ["guest memory contains authoritative chunk headers", "VMA remains the sole mapping substrate"],
-      "agr_files": ["Runtime/Bionic/agr_bionic_allocator.cpp", "Runtime/Bionic/agr_api19_dlmalloc_source.inc", "Runtime/NativeCore/agr_runtime.c"],
-      "agr_entry": "API19 dlmalloc source port",
+      "android_api": "malloc family",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/bionic",
+        "paths": [
+          "libc/bionic/dlmalloc.c",
+          "libc/upstream-dlmalloc/malloc.c"
+        ],
+        "symbols": [
+          "malloc/calloc/realloc/free/memalign",
+          "mmap",
+          "munmap",
+          "pthread mutex boundary"
+        ],
+        "source_hashes": {
+          "libc/bionic/dlmalloc.c": "UNVERIFIED",
+          "libc/upstream-dlmalloc/malloc.c": "UNVERIFIED"
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/Bionic/agr_bionic_allocator.cpp",
+          "Runtime/Bionic/agr_api19_dlmalloc_source.inc",
+          "Runtime/NativeCore/agr_runtime.c"
+        ],
+        "symbols": [
+          "API19 dlmalloc source port"
+        ],
+        "source_hashes": {
+          "Runtime/Bionic/agr_bionic_allocator.cpp": "012bc839c1ed05a4e4c6161f6b1baca019aeda4bf7092bcb4896d530bdcee233",
+          "Runtime/Bionic/agr_api19_dlmalloc_source.inc": "870d4899084033e8871608c6d2b5e940537469b39334b0ff9e6fd5e3575c4353",
+          "Runtime/NativeCore/agr_runtime.c": "875147f8e298f1ce9e4dd73084a498d48545f1e0d8367dac61d4fb6c5639821f"
+        }
+      },
+      "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
+      "status": "UNVERIFIED",
+      "dependencies": [],
+      "observable_semantics": [
+        "32-bit guest chunk layout and alignment",
+        "API19 errno/OOM/error behavior",
+        "freed space is reusable"
+      ],
+      "internal_invariants": [
+        "guest memory contains authoritative chunk headers",
+        "VMA remains the sole mapping substrate"
+      ],
       "execution_placement": "HOST-NATIVE_AOSP",
-      "host_substitutions": ["guest VMA callbacks replace Linux mapping boundary"],
+      "host_substitutions": [
+        "guest VMA callbacks replace Linux mapping boundary"
+      ],
       "known_deviations": [],
-      "contracts": ["API19 allocator differential and stress"]
+      "contracts": [
+        "API19 allocator differential and stress"
+      ]
+    },
+    {
+      "id": "dalvik.nativeactivity.activity_root",
+      "subsystem": "Dalvik/NativeActivity lifecycle",
+      "android_api": "active Activity GC reachability",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base; platform/dalvik",
+        "paths": [
+          "frameworks/base/core/java/android/app/ActivityThread.java",
+          "frameworks/base/core/java/android/app/NativeActivity.java",
+          "dalvik/vm/alloc/MarkSweep.cpp"
+        ],
+        "symbols": [
+          "ActivityThread.mActivities",
+          "NativeActivity",
+          "dvmHeapMarkRootSet"
+        ],
+        "source_hashes": {
+          "frameworks/base/core/java/android/app/ActivityThread.java": "4373bb6a1b9097c136ddab729cafc9884f9c5a70fdf41b43bfd4ba7b083229ae",
+          "frameworks/base/core/java/android/app/NativeActivity.java": "b7c76355b143559c922adea327b11201b234e53097b267690aa3ad521946d5bc",
+          "dalvik/vm/alloc/MarkSweep.cpp": "bf05e421a49accf1209bb12e83bb2df740d6348d9b6c775f24cebadc6b7b8ab3"
+        },
+        "source_urls": {
+          "frameworks/base/core/java/android/app/ActivityThread.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/app/ActivityThread.java?format=TEXT",
+          "frameworks/base/core/java/android/app/NativeActivity.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/app/NativeActivity.java?format=TEXT",
+          "dalvik/vm/alloc/MarkSweep.cpp": "https://android.googlesource.com/platform/dalvik/+/android-4.4.4_r2/vm/alloc/MarkSweep.cpp?format=TEXT"
+        },
+        "symbols_by_path": {
+          "frameworks/base/core/java/android/app/ActivityThread.java": [
+            "mActivities"
+          ],
+          "frameworks/base/core/java/android/app/NativeActivity.java": [
+            "class NativeActivity"
+          ],
+          "dalvik/vm/alloc/MarkSweep.cpp": [
+            "dvmHeapMarkRootSet"
+          ]
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/DexLoom/VM/dx_vm.c"
+        ],
+        "symbols": [
+          "create_game",
+          "DxVM.activity_instance",
+          "gc_mark_roots"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/game_dex_runner.c": "5faaa12dd5cd4517d535585e96b0666d9730d1dd7527d0be60ccd08efc7cb7ce",
+          "Runtime/DexLoom/VM/dx_vm.c": "7c281c6d505793743b1f7b4225ec8687c7dce1e8484aeaba195b63a65d2d5c92"
+        }
+      },
+      "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
+      "status": "VALID",
+      "dependencies": [],
+      "observable_semantics": [
+        "the active Activity remains reachable throughout its lifecycle",
+        "original DEX field access remains valid across major GC"
+      ],
+      "internal_invariants": [
+        "the active Activity is present in the host DEX VM root set"
+      ],
+      "execution_placement": "HOST-DEX",
+      "host_substitutions": [
+        "DxVM.activity_instance represents the managed lifecycle root"
+      ],
+      "known_deviations": [
+        "AGR has no ActivityThread object graph; it preserves equivalent reachability in the host DEX VM"
+      ],
+      "contracts": [
+        "activity_gc_root_contract",
+        "PVS1 real-APK regression"
+      ]
     }
   ]
 }

@@ -27,9 +27,29 @@ on:
       - 'scripts/build-and-run-simulator.sh'
       - 'scripts/run-simulator-smoke-bounded.py'
       - 'scripts/run-simulator-regressions.sh'
+      - 'ci/governance/expensive-run-plan.json'
 
 jobs:
+  discovery-admission:
+    runs-on: ubuntu-latest
+    outputs:
+      admitted: ${{ steps.admission.outputs.admitted }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: admission
+        env:
+          RUN_KIND: ${{ inputs.run_kind || 'discovery' }}
+        run: |
+          if [[ "$RUN_KIND" == "closure" ]]; then
+            echo "admitted=true" >> "$GITHUB_OUTPUT"
+          else
+            python3 ci/validate-expensive-run.py ci/governance/expensive-run-plan.json
+            echo "admitted=true" >> "$GITHUB_OUTPUT"
+          fi
+
   simulator-runtime:
+    needs: discovery-admission
+    if: needs.discovery-admission.outputs.admitted == 'true'
     runs-on: macos-15
     timeout-minutes: 20
     strategy:

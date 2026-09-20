@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the single compact AGR run-summary from existing result artifacts."""
 
-import argparse, hashlib, json, os, pathlib, subprocess
+import argparse, hashlib, importlib.util, json, os, pathlib, subprocess
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -42,6 +42,13 @@ def main():
     result = read_json(args.result)
     diagnostic = read_json(args.diagnostic)
     semantic = read_json(args.semantic_diff)
+    map_entry = semantic.get("upstream",{}).get("map_entry",diagnostic.get("upstream_map_entry",""))
+    computed_map_status = semantic.get("upstream",{}).get("map_status","UNVERIFIED")
+    if map_entry:
+        spec=importlib.util.spec_from_file_location("upstream_map_tool",ROOT/"ci/upstream-map.py")
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        _,entries=module.evaluate(read_json("ci/governance/upstream-map.json"))
+        computed_map_status=entries.get(map_entry,{}).get("effective_status","INVALID")
     head, tree = git("rev-parse","HEAD"), git("rev-parse","HEAD^{tree}")
     baseline = state.get("baseline",{}).get("commit","")
     try: files = [x for x in git("diff","--name-only",f"{baseline}...HEAD").splitlines() if x]
@@ -84,13 +91,19 @@ def main():
       "diagnosis":{
           "observed_discontinuity":semantic.get("observed_discontinuity",diagnostic.get("observed_discontinuity","")),
           "android_subsystem":semantic.get("subsystem",diagnostic.get("subsystem","")),
-          "upstream_mapped":bool(semantic.get("upstream",{}).get("files") or diagnostic.get("upstream_map_entry")),
-          "upstream_path":semantic.get("upstream",{}).get("call_path",[]),
+          "upstream":{"map_entry":map_entry,
+                      "map_status":computed_map_status,
+                      "revision":semantic.get("upstream",{}).get("revision",""),
+                      "path":semantic.get("upstream",{}).get("call_path",[]),
+                      "source_verified":semantic.get("upstream",{}).get("source_verified",False)},
           "agr_path":semantic.get("agr",{}).get("call_path",[]),
-          "first_relevant_difference":semantic.get("first_relevant_difference",diagnostic.get("first_relevant_difference","")),
+          "earliest_evidenced_divergence":{"description":semantic.get("earliest_evidenced_divergence",diagnostic.get("earliest_evidenced_divergence","")),
+                                            "semantic_class":semantic.get("semantic_class","PUBLIC_OBSERVABLE"),
+                                            "causal_status":semantic.get("causal_status","OBSERVED"),
+                                            "evidence_level":semantic.get("evidence_level","SOURCE_INFERRED")},
           "classification":semantic.get("classification",diagnostic.get("classification","UNKNOWN")) or "UNKNOWN",
-          "remaining_uncertainty":semantic.get("active_explanations",diagnostic.get("remaining_candidates",[])),
-          "next_discriminating_action":semantic.get("next_discriminating_action",diagnostic.get("next_discriminating_action","")),
+          "remaining_uncertainty":semantic.get("remaining_uncertainty",diagnostic.get("remaining_candidates",[])),
+          "next_action":semantic.get("next_action",diagnostic.get("next_action","")),
           "semantic_diff_artifact":args.semantic_diff or diagnostic.get("semantic_diff_artifact","")},
       "closure":{"target":target_def.get("target","PVS1"),"tested_commit":head,"tested_tree":tree,
                  "base_commit":baseline,"state":"CLOSED" if eligible else "IMPLEMENTED",

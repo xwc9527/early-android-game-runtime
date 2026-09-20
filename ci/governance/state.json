@@ -14,15 +14,18 @@
     "upstream_path": [],
     "agr_path": ["run-suite outer timeout", "forensic observation", "bounded evidence queries"],
     "active_explanations": [],
-    "first_proven_semantic_difference": "the outer timeout was shorter than the inner declared maximum duration",
+    "earliest_evidenced_divergence": "the outer timeout was shorter than the inner declared maximum duration",
+    "semantic_class": "PUBLIC_OBSERVABLE",
+    "causal_status": "PLAUSIBLE",
+    "evidence_level": "RUNTIME_OBSERVED",
     "classification": "HARNESS_BUG",
     "next_validation": "run the exact corrected candidate through one valid closure workflow after budget reset"
   },
   "ci_budget": {
-    "valid_discovery_runs": 1,
     "valid_closure_runs": 1,
     "infrastructure_failures_consume_budget": false,
-    "discovery_runs_used": 1,
-    "closure_runs_used": 1
+    "closure_runs_used": 1,
+    "discovery_policy": "information_gain",
+    "consecutive_expensive_runs_without_information_gain": 0
   }
 }

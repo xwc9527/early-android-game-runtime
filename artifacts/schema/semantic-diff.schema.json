@@ -2,38 +2,37 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://agr.invalid/schema/semantic-diff.schema.json",
   "type": "object",
-  "required": ["schema_version", "classification", "subsystem", "observed_discontinuity", "upstream", "required_semantics", "agr", "differences", "first_relevant_difference", "confidence", "needs_experiment", "validation"],
+  "required": ["schema_version", "classification", "subsystem", "observed_discontinuity", "upstream", "semantic_class", "required_semantics", "agr", "differences", "earliest_evidenced_divergence", "causal_status", "evidence_level", "evidence", "remaining_uncertainty", "next_action", "needs_experiment", "experimental"],
   "properties": {
-    "schema_version": {"const": 1},
+    "schema_version": {"const": 2},
     "classification": {"enum": ["ANDROID_SEMANTIC_BUG", "HOST_ADAPTATION_BUG", "AGR_INTERNAL_BUG", "HARNESS_BUG", "REFERENCE_MISMATCH", "UNKNOWN"]},
     "subsystem": {"type": "string", "minLength": 1},
     "observed_discontinuity": {"type": "string", "minLength": 1},
     "upstream": {
       "type": "object",
-      "required": ["version", "files", "call_path"],
+      "required": ["map_entry", "map_status", "revision", "source_verified", "files", "call_path"],
       "properties": {
-        "version": {"const": "Android 4.4.4_r2"},
+        "map_entry": {"type": "string"},
+        "map_status": {"enum": ["VALID", "STALE", "UNVERIFIED", "INVALID", "NOT_APPLICABLE"]},
+        "revision": {"type": "string"},
+        "source_verified": {"type": "boolean"},
         "files": {"type": "array", "items": {"type": "string"}},
         "call_path": {"type": "array", "items": {"type": "string"}}
       }
     },
+    "semantic_class": {"enum": ["PUBLIC_OBSERVABLE", "SEMANTIC_INVARIANT", "ARCHITECTURE_INVARIANT", "UPSTREAM_IMPLEMENTATION_DETAIL"]},
     "required_semantics": {"type": "array", "items": {"type": "string"}},
-    "agr": {
-      "type": "object",
-      "required": ["files", "call_path"],
-      "properties": {
-        "files": {"type": "array", "items": {"type": "string"}},
-        "call_path": {"type": "array", "items": {"type": "string"}}
-      }
-    },
+    "agr": {"type": "object", "required": ["files", "call_path"], "properties": {"files": {"type": "array", "items": {"type": "string"}}, "call_path": {"type": "array", "items": {"type": "string"}}}},
     "differences": {"type": "array", "items": {"type": "object", "required": ["id", "description", "relevance"]}},
-    "first_relevant_difference": {"type": "string"},
-    "confidence": {"enum": ["low", "medium", "high", "proven"]},
+    "earliest_evidenced_divergence": {"type": "string", "minLength": 1},
+    "causal_status": {"enum": ["OBSERVED", "PLAUSIBLE", "COUNTERFACTUAL_SUPPORTED", "CONTRACT_CONFIRMED", "REAL_GAME_CONFIRMED"]},
+    "evidence_level": {"enum": ["SOURCE_INFERRED", "RUNTIME_OBSERVED", "REFERENCE_CONFIRMED", "COUNTERFACTUAL_SUPPORTED", "CONTRACT_CONFIRMED", "REAL_GAME_CONFIRMED"]},
+    "evidence": {"type": "array", "items": {"type": "object", "required": ["type", "artifact"], "properties": {"type": {"enum": ["SOURCE", "RUNTIME", "REFERENCE", "COUNTERFACTUAL", "CONTRACT", "REAL_GAME"]}, "artifact": {"type": "string", "minLength": 1}}}},
+    "remaining_uncertainty": {"type": "array", "items": {"type": "string"}},
+    "next_action": {"type": "string"},
     "needs_experiment": {"type": "boolean"},
-    "active_explanations": {"type": "array", "items": {"type": "string"}},
-    "next_discriminating_action": {"type": "string"},
-    "host_adaptation": {"type": "string"},
-    "validation": {"type": "array", "items": {"type": "string"}},
-    "experimental": {"type": "boolean"}
+    "experiment_id": {"type": "string"},
+    "experimental": {"type": "boolean"},
+    "host_adaptation": {"type": "string"}
   }
 }

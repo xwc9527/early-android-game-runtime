@@ -31,7 +31,9 @@ The comparison concerns behavior, not implementation shape. Host mechanisms such
 
 Where an Android 4.4 ARM reference can execute the contract, run the same input on the reference and AGR. Canonicalize addresses and host timing while comparing results, errno, callback/event sequence, thread semantics, lifetime, state transitions, duration class, and error behavior.
 
-Differential trace records use `global_seq`, `monotonic_time`, `host_thread`, `guest_thread`, `guest_pc`, `boundary`, `operation`, `object`, `input_state`, `output_state`, `result`, `frame`, and `swap`. Once a segment is equivalent, do not keep investigating its internal implementation.
+Differential validation has three levels. Level 1 is the default source-derived semantic model. Level 2 executes a minimum Android 4.4 ARM reference contract only when source cannot uniquely determine observable behavior. Level 3 is a path-scoped runtime trace only for races, timing, cross-thread interaction, callback ordering, or lifecycle sequencing. Reference traces are on-demand and are reduced to stable observable assertions after the contract closes.
+
+Trace records use `seq`, `time_ns`, `host_thread`, `guest_thread`, `guest_pc`, `boundary`, `operation`, `object`, and `result`, with input/output state and frame/swap only when relevant. Trace boundary events, not every function. Storage is a bounded fixed-record ring that does not wait, call guest code, allocate without bound, wake threads, or mutate lifecycle/EGL state. A `TIMING_SENSITIVE` trace cannot alone prove causality.
 
 Test-only cut points are registered in `ci/governance/diagnostic-cutpoints.json`. They may inject or observe at a defined boundary, but may not become a production compatibility path.
 
@@ -46,6 +48,8 @@ Runtime code cannot branch on game/package identity. Test harnesses may select a
 ## Discovery and Closure
 
 A discovery run maximizes evidence and may fail. It may use explicitly marked intrusive diagnostics or counterfactual implementation changes when source evidence cannot choose between active explanations. These experiments must be recorded in the semantic differential and removed before closure.
+
+Before an expensive discovery run, its plan states one question, remaining uncertainty, both expected outcomes and exclusions, and why a cheaper test cannot answer it. Two consecutive expensive runs without information gain stop the expensive loop and require a different diagnostic strategy.
 
 A closure run executes the exact target contract against the final candidate commit/tree. It rejects active experiments, behavior-changing diagnostics, unexplained stable-module production changes, and semantic differentials that still require an experiment. Infrastructure-invalid runs do not consume the run budget.
 

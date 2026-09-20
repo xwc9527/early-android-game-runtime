@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "experiments"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "experiments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "purpose", "explanations", "outcome_a", "outcome_b", "files", "enabled", "status"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "purpose": {"type": "string", "minLength": 1},
+          "explanations": {"type": "array", "minItems": 2, "items": {"type": "string"}},
+          "outcome_a": {"type": "string", "minLength": 1},
+          "outcome_b": {"type": "string", "minLength": 1},
+          "files": {"type": "array", "items": {"type": "string"}},
+          "enabled": {"type": "boolean"},
+          "status": {"enum": ["ACTIVE", "RESOLVED"]}
+        }
+      }
+    }
+  }
+}

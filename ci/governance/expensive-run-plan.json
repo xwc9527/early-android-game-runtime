@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "enabled": false,
+  "question": "",
+  "current_uncertainty": [],
+  "expected_outcome_a": {"result": "", "excludes": []},
+  "expected_outcome_b": {"result": "", "excludes": []},
+  "why_cheaper_test_is_insufficient": "",
+  "prior_expensive_runs_without_information_gain": 0
+}

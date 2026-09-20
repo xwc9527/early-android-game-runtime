@@ -16,5 +16,7 @@
     ,"upstream_map_entry":{"type":"string"}
     ,"semantic_diff_artifact":{"type":"string"}
     ,"experimental":{"type":"boolean"}
+    ,"timing_sensitive":{"type":"boolean"}
+    ,"trace":{"type":"object","properties":{"bounded":{"type":"boolean"},"capacity":{"type":"integer","minimum":1},"record_size":{"type":"integer","minimum":1},"dropped":{"type":"integer","minimum":0}}}
   }
 }

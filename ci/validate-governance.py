@@ -3,6 +3,8 @@
 
 import argparse, fnmatch, json, pathlib, subprocess, sys
 
+from importlib.util import module_from_spec, spec_from_file_location
+
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
@@ -39,25 +41,31 @@ def main() -> int:
                 "docs/MODULE_STATUS.md", "docs/TESTING.md", "ci/governance/state.json",
                 "ci/governance/modules.json", "ci/governance/reopens.json", "ci/governance/closure.json",
                 "ci/governance/upstream-map.json", "ci/governance/diagnostic-cutpoints.json",
-                "artifacts/schema/semantic-diff.schema.json"]
+                "ci/governance/expensive-run-plan.json", "ci/experiments.json",
+                "artifacts/schema/semantic-diff.schema.json", "artifacts/schema/upstream-map.schema.json",
+                "artifacts/schema/experiments.schema.json"]
     errors = [f"missing:{p}" for p in required if not (ROOT / p).is_file()]
     state, registry, closure = load("ci/governance/state.json"), load("ci/governance/modules.json"), load("ci/governance/closure.json")
     upstream_map = load("ci/governance/upstream-map.json")
+    experiments = load("ci/experiments.json")
     reopens = load("ci/governance/reopens.json").get("reopens", [])
     if state["baseline"]["last_known_good"] != state["baseline"]["commit"]:
         errors.append("last_known_good must be the formal main baseline commit")
     if upstream_map.get("android_baseline") != "Android 4.4.4_r2":
         errors.append("upstream map must use Android 4.4.4_r2")
-    map_keys = {"android_api","subsystem","android_version","upstream_repository","upstream_file","entry_function",
-                "important_callees","observable_semantics","internal_invariants","agr_files","agr_entry",
-                "execution_placement","host_substitutions","known_deviations","contracts"}
-    tracked = set(git("ls-files").splitlines())
-    for index, entry in enumerate(upstream_map.get("entries", [])):
-        missing = sorted(map_keys - set(entry))
-        if missing: errors.append(f"upstream-map entry {index} missing: {','.join(missing)}")
-        for agr_path in entry.get("agr_files", []):
-            tracked_exact = agr_path in tracked or any(path.startswith(agr_path.rstrip("/") + "/") for path in tracked)
-            if not tracked_exact: errors.append(f"upstream-map AGR path is not tracked with exact case: {agr_path}")
+    experiment_ids = set()
+    for index, experiment in enumerate(experiments.get("experiments", [])):
+        required_experiment = {"id","purpose","explanations","outcome_a","outcome_b","files","enabled","status"}
+        missing = sorted(required_experiment - set(experiment))
+        if missing: errors.append(f"experiment {index} missing: {','.join(missing)}")
+        if experiment.get("id") in experiment_ids: errors.append(f"duplicate experiment id: {experiment.get('id')}")
+        experiment_ids.add(experiment.get("id"))
+        if len(experiment.get("explanations", [])) < 2: errors.append(f"experiment {experiment.get('id')} does not distinguish two explanations")
+        if experiment.get("status") not in ("ACTIVE", "RESOLVED"): errors.append(f"experiment {experiment.get('id')} has invalid status")
+    map_spec = spec_from_file_location("upstream_map_tool", ROOT / "ci/upstream-map.py")
+    map_tool = module_from_spec(map_spec); map_spec.loader.exec_module(map_tool)
+    map_errors, map_entries = map_tool.evaluate(upstream_map)
+    errors.extend(map_errors)
     files = changed_files(state["baseline"]["commit"])
     touched = module_changes(files, registry["modules"])
     stable = [m for m in touched if m["status"] == "stable"]
@@ -79,14 +87,39 @@ def main() -> int:
             if not c.get("eligible_for_merge"): errors.append("closure is not merge eligible")
             if not summary.get("run", {}).get("valid_run"): errors.append("closure run is infrastructure-invalid")
             diagnosis = summary.get("diagnosis", {})
-            if not diagnosis.get("upstream_mapped"): errors.append("closure diagnosis has no upstream mapping")
-            if not diagnosis.get("first_relevant_difference"): errors.append("closure diagnosis has no first relevant semantic difference")
+            upstream = diagnosis.get("upstream", {})
+            map_entry = upstream.get("map_entry")
+            if upstream.get("map_status") != "NOT_APPLICABLE":
+                if not map_entry: errors.append("closure diagnosis has no upstream map entry")
+                elif map_entries.get(map_entry, {}).get("effective_status") != "VALID": errors.append("closure upstream map entry is not effectively VALID")
+                if not upstream.get("source_verified"): errors.append("closure upstream source is not verified")
+            divergence = diagnosis.get("earliest_evidenced_divergence", {})
+            if not divergence.get("description"): errors.append("closure diagnosis has no earliest evidenced divergence")
             if summary.get("diagnostics", {}).get("experimental"): errors.append("closure retains experimental diagnostics")
+            unresolved = [item.get("id", "") for item in experiments.get("experiments", [])
+                          if item.get("enabled") or item.get("status") != "RESOLVED"]
+            if unresolved: errors.append("closure has enabled or unresolved experiments: " + ",".join(unresolved))
+            runtime_hits = []
+            for base in (ROOT / "Runtime", ROOT / "App"):
+                if not base.exists(): continue
+                for path in base.rglob("*"):
+                    if path.is_file():
+                        try:
+                            if "AGR_EXPERIMENTAL_" in path.read_text(encoding="utf-8", errors="ignore"): runtime_hits.append(str(path.relative_to(ROOT)))
+                        except OSError: pass
+            if runtime_hits: errors.append("closure production tree contains AGR_EXPERIMENTAL_*: " + ",".join(runtime_hits))
             semantic_path = diagnosis.get("semantic_diff_artifact")
             if semantic_path:
                 semantic = load(semantic_path)
+                semantic_spec = spec_from_file_location("semantic_diff_tool", ROOT / "ci/semantic-diff.py")
+                semantic_tool = module_from_spec(semantic_spec); semantic_spec.loader.exec_module(semantic_tool)
+                experiment_ids = {item.get("id") for item in experiments.get("experiments", [])}
+                errors.extend("semantic-diff: " + error for error in semantic_tool.validate(semantic, experiment_ids))
                 if semantic.get("experimental") or semantic.get("needs_experiment"):
                     errors.append("closure semantic differential still contains an active experiment")
+                semantic_entry = semantic.get("upstream", {}).get("map_entry")
+                if semantic_entry and map_entries.get(semantic_entry, {}).get("effective_status") != semantic.get("upstream", {}).get("map_status"):
+                    errors.append("semantic differential map_status differs from computed upstream map status")
         if unexplained: errors.extend(warnings)
     if args.mode == "merge" and summary:
         base = summary.get("closure", {}).get("base_commit")

@@ -34,11 +34,11 @@ Runtime path: `Runtime/DexLoom/game_dex_runner.c -> DxVM.activity_instance -> Da
 
 Harness path: `ci/run-suite.py -> forensic collector 150-second observation -> up to two bounded 60-second evidence queries`.
 
-## First Proven Semantic Difference
+## Earliest Evidenced Divergence
 
-The Runtime defect was that `create_game` retained the Activity only in a host pointer while `DxVM.activity_instance` remained unset, allowing a major GC to reclaim it. That defect is fixed and covered by `activity_gc_root_contract`.
+The Runtime divergence was that `create_game` retained the Activity only in a host pointer while `DxVM.activity_instance` remained unset, allowing a major GC to reclaim it. Semantic class: `SEMANTIC_INVARIANT`. Causal status and evidence level: `REAL_GAME_CONFIRMED`. It is fixed and covered by `activity_gc_root_contract`.
 
-The current harness defect was that its 180-second outer timeout was shorter than the collector's declared maximum duration. The timeout hierarchy is corrected in the current candidate.
+The current harness divergence was that its 180-second outer timeout was shorter than the collector's declared maximum duration. Semantic class: `PUBLIC_OBSERVABLE`. Causal status: `PLAUSIBLE`; evidence level: `RUNTIME_OBSERVED`. The timeout hierarchy is corrected in the current candidate, but exact-candidate closure has not confirmed it.
 
 ## Remaining Uncertainty
 

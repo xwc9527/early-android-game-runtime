@@ -15,12 +15,12 @@
     "diagnostics": {"type":"object","required":["passive","intrusive"]},
     "diagnosis": {
       "type":"object",
-      "required":["observed_discontinuity","android_subsystem","upstream_mapped","upstream_path","agr_path","first_relevant_difference","classification","remaining_uncertainty","next_discriminating_action","semantic_diff_artifact"],
+      "required":["observed_discontinuity","android_subsystem","upstream","agr_path","earliest_evidenced_divergence","classification","remaining_uncertainty","next_action","semantic_diff_artifact"],
       "properties": {
         "classification":{"enum":["ANDROID_SEMANTIC_BUG","HOST_ADAPTATION_BUG","AGR_INTERNAL_BUG","HARNESS_BUG","REFERENCE_MISMATCH","UNKNOWN"]},
-        "upstream_mapped":{"type":"boolean"},
-        "upstream_path":{"type":"array"},
+        "upstream":{"type":"object","required":["map_entry","map_status","revision","path","source_verified"],"properties":{"map_status":{"enum":["VALID","STALE","UNVERIFIED","INVALID","NOT_APPLICABLE"]},"source_verified":{"type":"boolean"},"path":{"type":"array"}}},
         "agr_path":{"type":"array"},
+        "earliest_evidenced_divergence":{"type":"object","required":["description","semantic_class","causal_status","evidence_level"],"properties":{"semantic_class":{"enum":["PUBLIC_OBSERVABLE","SEMANTIC_INVARIANT","ARCHITECTURE_INVARIANT","UPSTREAM_IMPLEMENTATION_DETAIL"]},"causal_status":{"enum":["OBSERVED","PLAUSIBLE","COUNTERFACTUAL_SUPPORTED","CONTRACT_CONFIRMED","REAL_GAME_CONFIRMED"]},"evidence_level":{"enum":["SOURCE_INFERRED","RUNTIME_OBSERVED","REFERENCE_CONFIRMED","COUNTERFACTUAL_SUPPORTED","CONTRACT_CONFIRMED","REAL_GAME_CONFIRMED"]}}},
         "remaining_uncertainty":{"type":"array"}
       }
     },
