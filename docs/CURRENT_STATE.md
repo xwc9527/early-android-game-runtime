@@ -6,13 +6,13 @@ Baseline: `main @ 09d6953e3e2f2bf6ca63565e5458a71815d298e7`
 
 Last known good: `09d6953e3e2f2bf6ca63565e5458a71815d298e7` on formal `main`
 
-Active branch: `feature/evidence-classifier-v2.1` (PVS1 closure-tested tree merged; evidence-classifier governance correction in progress)
+Active branch: `phase/dex-parser-compatibility-1`
 
-Lifecycle state: `MERGED` (`PVS1` closure-tested tree is on main)
+Lifecycle state: `DISCOVERY` (`PVS1` remains merged/stable; DEX Parser Compatibility Phase 1 is active)
 
 ## Active Target
 
-Playable Vertical Slice 1 (PVS1): generic APK-derived launch through NativeActivity, window, input, guest progression, bounded stable interaction, and clean teardown.
+DEX Parser Compatibility Phase 1: identify the precise common or separate reason Pixel Dungeon and Frozen Bubble were reported as `dex_parse_failed`, compare it to pinned API19 Dalvik/libdex, and remove the first generic compatibility defect.
 
 ## Observed Discontinuity
 

@@ -1,0 +1,33 @@
+name: DEX parser compatibility
+
+on:
+  push:
+    branches: ['phase/dex-parser-compatibility-*']
+    paths:
+      - 'Runtime/DexLoom/**'
+      - 'Tests/DexLoom/**'
+      - 'Vendor/AOSP/dalvik-api19/**'
+      - 'scripts/test-dex-parser.sh'
+      - 'tools/fetch_fdroid_samples.py'
+      - '.github/workflows/dex-parser.yml'
+  workflow_dispatch:
+
+jobs:
+  focused-parser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch licensed reference samples
+        run: python3 tools/fetch_fdroid_samples.py --output build/dex-samples --resources build/dex-resources
+      - name: Extract original classes.dex
+        run: |
+          python3 - <<'PY'
+          import pathlib,zipfile
+          root=pathlib.Path('build/dex-samples')
+          for name in ('pixel-dungeon','frozen-bubble'):
+              with zipfile.ZipFile(root/f'{name}.apk') as apk:
+                  (root/f'{name}.dex').write_bytes(apk.read('classes.dex'))
+          PY
+      - name: Run focused AGR parser
+        run: bash scripts/test-dex-parser.sh build/dex-samples/pixel-dungeon.dex build/dex-samples/frozen-bubble.dex

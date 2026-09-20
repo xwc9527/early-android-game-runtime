@@ -6,26 +6,32 @@
     "last_known_good": "09d6953e3e2f2bf6ca63565e5458a71815d298e7"
   },
   "active": {
-    "target": "Evidence Classifier V2.1 correction",
-    "branch": "feature/evidence-classifier-v2.1",
-    "lifecycle": "IMPLEMENTED",
-    "observed_discontinuity": "a passing PVS1 target retained a normalized failure signature and unrelated RunningBoard log lines could classify AGR process death",
-    "android_subsystem": "governance evidence classifier",
-    "upstream_path": [],
+    "target": "DEX Parser Compatibility Phase 1",
+    "branch": "phase/dex-parser-compatibility-1",
+    "lifecycle": "DISCOVERY",
+    "observed_discontinuity": "Pixel Dungeon and Frozen Bubble were both reported as dex_parse_failed by the generic APK smoke",
+    "android_subsystem": "Dalvik/libdex DEX loading",
+    "upstream_path": [
+      "platform/dalvik@android-4.4.4_r2:vm/RawDexFile.cpp:dvmRawDexFileOpenArray",
+      "platform/dalvik@android-4.4.4_r2:vm/analysis/DexPrepare.cpp:dvmPrepareDexInMemory",
+      "platform/dalvik@android-4.4.4_r2:libdex/DexSwapVerify.cpp:dexSwapAndVerify",
+      "platform/dalvik@android-4.4.4_r2:libdex/DexFile.cpp:dexFileParse"
+    ],
     "agr_path": [
-      "ci/build-summary.py",
-      "ci/forensic-simulator-process.py"
+      "App/main.m:probeGenericSample",
+      "Runtime/DexLoom/poc_host.c:poc_create",
+      "Runtime/DexLoom/DEX/dx_dex.c:dx_dex_parse"
     ],
     "active_explanations": [],
-    "earliest_evidenced_divergence": "classification consumed non-failure gameplay markers and unfiltered system-wide termination text before enforcing target identity",
-    "semantic_class": "SEMANTIC_INVARIANT",
-    "causal_status": "CONTRACT_CONFIRMED",
-    "evidence_level": "CONTRACT_CONFIRMED",
+    "earliest_evidenced_divergence": "the generic APK smoke calls poc_create, which requires the project-only Lpoc/Bridge class after parsing, and labels any NULL result dex_parse_failed",
+    "semantic_class": "PUBLIC_OBSERVABLE",
+    "causal_status": "PLAUSIBLE",
+    "evidence_level": "SOURCE_INFERRED",
     "classification": "HARNESS_BUG",
-    "next_validation": "focused evidence-classifier governance contracts",
-    "primary_blocker": "focused governance contracts not yet verified in CI",
-    "first_broken_boundary": "evidence normalization and target identity filtering",
-    "first_broken_boundary_evidence": "PVS1 VALID_PASS artifact and classifier focused contracts"
+    "next_validation": "run the standalone dx_dex_parse probe against both original classes.dex files",
+    "primary_blocker": "the current smoke result does not distinguish parser acceptance from PoC fixture class lookup",
+    "first_broken_boundary": "generic APK probe result classification",
+    "first_broken_boundary_evidence": "App/main.m and Runtime/DexLoom/poc_host.c source path"
   },
   "ci_budget": {
     "valid_closure_runs": 1,
