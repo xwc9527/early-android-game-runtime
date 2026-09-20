@@ -6,103 +6,58 @@ Baseline: `main @ 09d6953e3e2f2bf6ca63565e5458a71815d298e7`
 
 Last known good: `09d6953e3e2f2bf6ca63565e5458a71815d298e7` on formal `main`
 
-Active branch: `phase/dex-parser-compatibility-1`
+Active branch: `phase/framework-activity-launch-1`
 
-Lifecycle state: `IMPLEMENTED` (`PVS1` remains merged/stable; DEX Parser Compatibility Phase 1 awaits Simulator evidence)
+Lifecycle state: `IMPLEMENTED`
+
+## Previous Target
+
+DEX Parser Compatibility Phase 1 is `VERIFIED` at `a37432310af6b304402e546377b4cc3a02a9d081` by focused run `35500912993`. Pixel Dungeon parsed 877 classes and 6112 methods; Frozen Bubble parsed 23 classes and 333 methods. Both unchanged APKs reached `dex_loaded`, and both exposed the next common boundary `missing_framework:activity_launch`. No production parser change was required; the defect was the generic harness conflating parse success with a later project-only class binding.
 
 ## Active Target
 
-DEX Parser Compatibility Phase 1: identify the precise common or separate reason Pixel Dungeon and Frozen Bubble were reported as `dex_parse_failed`, compare it to pinned API19 Dalvik/libdex, and remove the first generic compatibility defect.
-
-Focused parsing proved both original DEX 035 files are accepted by `dx_dex_parse`. The common defect was the generic smoke calling `poc_create`, whose project-only `Lpoc/Bridge;` binding occurs after parsing, then labelling any NULL result as `dex_parse_failed`. The corrected harness parses independently and reports later Activity/Framework launch as a separate boundary.
-
-## Observed Discontinuity
-
-Closure run `35485955807` passed every PVS1 requirement and completed all 100,000 InputQueue lifecycles in order, but the regression harness failed because shared-runner elapsed time was 32.468 seconds instead of an arbitrary 10-second threshold. iphoneos passed on the same commit.
-
-## Mapped Android Subsystem
-
-The previously observed Runtime crash mapped to Dalvik GC roots and NativeActivity lifecycle ownership. The current discontinuity maps to the Simulator InputQueue contract harness and is not an Android Runtime subsystem failure.
+Framework / Activity Launch Compatibility Phase 1: preserve the API19 observable launch sequence for a single in-process Android application without importing system_server, Binder, WindowManager, or a full ActivityThread implementation.
 
 ## Upstream Source Path
 
-For the repaired Runtime defect: `frameworks/base/core/java/android/app/NativeActivity.java` keeps the launched Activity in the managed lifecycle, and `dalvik/vm/alloc/MarkSweep.cpp` marks process roots before reclaiming objects.
+Pinned Android 4.4.4_r2 path: `ActivityThread.performLaunchActivity -> Instrumentation.newActivity -> LoadedApk.makeApplication -> Activity.attach -> Instrumentation.callActivityOnCreate -> performStartActivity -> handleResumeActivity`.
 
-For the current harness discontinuity there is no Android upstream performance path. API19 owns InputQueue ordering and lifecycle behavior, while shared-host elapsed time is not guest-visible compatibility semantics.
+The source gate pins and hashes `ActivityThread.java`, `Instrumentation.java`, `LoadedApk.java`, `Activity.java`, and `Application.java` and verifies the relevant symbols.
 
 ## AGR Source Path
 
-Runtime path: `Runtime/DexLoom/game_dex_runner.c -> DxVM.activity_instance -> Dalvik root traversal -> original DEX loadImage`.
+`App/main.m:probeActivityLaunchAPK -> agr_apk_package_open -> agr_dex_game_create_from_apk -> create_game -> agr_dex_game_start_activity -> dx_vm_execute_method`.
 
-Harness path: `agr_guest_run_core_contracts -> input_elapsed_ms -> fixed 10000 ms pass/fail threshold`.
+The host DEX lifecycle coordinator now resolves the manifest Application and Activity, creates stable base Context and Intent objects, attaches their observable relationships, calls Application.onCreate before Activity.onCreate, then starts and resumes the Activity. Process roots preserve Application, Activity, contexts, and launch Intent across GC.
 
 ## Earliest Evidenced Divergence
 
-The Runtime divergence was that `create_game` retained the Activity only in a host pointer while `DxVM.activity_instance` remained unset, allowing a major GC to reclaim it. Semantic class: `SEMANTIC_INVARIANT`. Causal status and evidence level: `REAL_GAME_CONFIRMED`. It is fixed and covered by `activity_gc_root_contract`.
+Before this implementation, the generic probe returned immediately after DEX parsing and reported `missing_framework:activity_launch`; it did not call any Activity launch Runtime path. The pre-existing runner separately constructed only a minimal NativeActivity and omitted manifest Application creation, Context/Intent attachment, start, and resume.
 
-The current harness divergence is that a fixed wall-clock threshold was treated as Android compatibility even though ordering, lifecycle completion, guest input consumption, progress, and teardown all passed. Semantic class: `UPSTREAM_IMPLEMENTATION_DETAIL`. Causal status and evidence level: `CONTRACT_CONFIRMED`.
+Classification: `ANDROID_SEMANTIC_BUG`. Semantic class: `PUBLIC_OBSERVABLE`. Causal status and evidence level: `CONTRACT_CONFIRMED`.
 
-## Remaining Uncertainty
+## Current Blocker
 
-No PVS1 closure uncertainty remains. The evidence classifier is being corrected so a passing target cannot retain a normalized failure signature or a process-death class inferred from unrelated system logs.
+The implementation and deterministic synthetic DEX fixture exist, but the compiled iOS Simulator has not executed them. The next real Framework boundary for Pixel Dungeon and Frozen Bubble is therefore still unknown.
 
 ## Next Validation
 
-Run the focused evidence-classifier governance contracts. A full PVS1 closure rerun is not required because this correction does not change Runtime production behavior.
+Run one focused discovery workflow: verify pinned API19 sources, build/parse the synthetic Activity plus Application DEX, execute its lifecycle and GC-root contract in Simulator, then run the same launch coordinator against the unchanged Pixel Dungeon and Frozen Bubble APKs.
 
-## Proven Working
+## Allowed Work
 
-- APK-derived package and Activity discovery
-- host-side DEX startup
-- formal linker native load and `JNI_OnLoad`
-- NativeActivity create/start/resume
-- window and input queue creation
-- `APP_CMD_INIT_WINDOW`
-- Looper ownership and polling
-- MotionEvent injection, retrieval, pre-dispatch, guest handling, and finish
-- nonzero guest thread identities
-- continued frame/draw/swap after consumed input
-
-## Excluded Hypotheses
-
-- initial InputQueue routing failure
-- missing Looper attachment
-- first input not reaching guest code
-- coordinates being the reason `input_consumed` remains zero
-- Runtime failure being reported before the current discontinuity
-- synchronous work in `didFinishLaunching` being the remaining cause
-- a live host mutex/wait deadlock at timeout (the process has exited)
-
-## Current Allowed Work
-
-- evidence-classifier governance correction
-- focused failure-signature and target-process termination contracts
-- establishing the next active target from the latest formal main after this governance correction merges
+- Activity/Application class resolution, construction, attachment, lifecycle, and roots
+- manifest Application discovery
+- focused synthetic and real-APK launch evidence
+- the first directly encountered public API19 Framework behavior required to cross this launch boundary
 
 ## Explicitly Not Current Work
 
-- new Dalvik, GC, JNI, Audio, filesystem, clock, signal, GLES, or product features
-- new games or wider compatibility sampling
+- full ActivityThread, Binder, system_server, WindowManager, or Android OS emulation
+- broad Dalvik, JNI, Framework, Audio, Input, filesystem, clock, signal, GLES, or product expansion
 - per-game Runtime behavior
-- reopening stable linker, pthread, EHABI, or allocator modules without evidence
-
-## Next Action
-
-Finish the focused evidence-classifier contracts, then create `DEX Parser Compatibility Phase 1` from the latest formal main.
+- reopening stable linker, pthread, EHABI, allocator, or NativeActivity/Input semantics without evidence
 
 ## Closure Contract
 
-PVS1 is CLOSED only when one exact commit and tree prove:
-
-- generic APK bootstrap succeeds;
-- NativeActivity starts and receives a window;
-- input queue is attached to its owner Looper;
-- injected input is delivered to and consumed by guest code;
-- guest execution and frame/swap progress after input;
-- teardown completes in bounded time;
-- no Runtime failure signature exists;
-- required stable regressions pass;
-- iphoneos arm64 builds from the same candidate tree;
-- closure evidence names that exact commit/tree and marks it merge-eligible.
-
-`novel_frame=false` alone is not a failure.
+This phase can become `CLOSED` only when one exact commit and tree prove the synthetic Application/Activity launch contract, GC root lifetime, and both unchanged real APKs cross the former `activity_launch` boundary; required regressions and iphoneos build must pass on that same candidate. A green discovery workflow alone is not closure.

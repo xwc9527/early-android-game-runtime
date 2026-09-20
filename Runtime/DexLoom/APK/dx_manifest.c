@@ -662,7 +662,7 @@ DxResult dx_manifest_parse(const uint8_t *data, uint32_t size, DxManifest **out)
             } else if (strcmp(tag_name, "application") == 0) {
                 in_application = true;
                 current_comp_type = COMP_APPLICATION;
-                // Extract android:label and android:theme
+                // Extract android:name, android:label and android:theme.
                 for (uint16_t a = 0; a < attr_count; a++) {
                     uint32_t aoff = attr_start + a * 20;
                     if (aoff + 20 > size) break;
@@ -670,6 +670,12 @@ DxResult dx_manifest_parse(const uint8_t *data, uint32_t size, DxManifest **out)
                     uint32_t ani = read_u32(data + aoff + 4);
                     uint32_t atype = read_u32(data + aoff + 12) >> 24;
                     uint32_t adata = read_u32(data + aoff + 16);
+                    if (attr_is_ns(axml, nsi, ani, NS_ANDROID, ATTR_NAME, "name") &&
+                        !manifest->application_name) {
+                        char *raw_name = attr_string(axml, atype, adata);
+                        manifest->application_name = resolve_class_name(raw_name, manifest->package_name);
+                        dx_free(raw_name);
+                    }
                     if (attr_is_ns(axml, nsi, ani, NS_ANDROID, ATTR_LABEL, "label") &&
                         atype == ATTR_TYPE_STRING &&
                         adata < axml->string_count && !manifest->app_label) {
@@ -1154,6 +1160,7 @@ void dx_manifest_free(DxManifest *manifest) {
     dx_free(manifest->main_activity);
     dx_free(manifest->app_label);
     dx_free(manifest->app_theme);
+    dx_free(manifest->application_name);
     free_string_array(manifest->permissions, manifest->permission_count);
     free_string_array(manifest->activities, manifest->activity_count);
     free_string_array(manifest->services, manifest->service_count);

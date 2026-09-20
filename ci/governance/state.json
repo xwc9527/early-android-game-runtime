@@ -6,32 +6,33 @@
     "last_known_good": "09d6953e3e2f2bf6ca63565e5458a71815d298e7"
   },
   "active": {
-    "target": "DEX Parser Compatibility Phase 1",
-    "branch": "phase/dex-parser-compatibility-1",
+    "target": "Framework / Activity Launch Compatibility Phase 1",
+    "branch": "phase/framework-activity-launch-1",
     "lifecycle": "IMPLEMENTED",
-    "observed_discontinuity": "Pixel Dungeon and Frozen Bubble were both reported as dex_parse_failed by the generic APK smoke",
-    "android_subsystem": "Dalvik/libdex DEX loading",
+    "observed_discontinuity": "Pixel Dungeon and Frozen Bubble both parse successfully but the generic path stops at missing_framework:activity_launch.",
+    "android_subsystem": "Android Framework Activity/Application launch",
     "upstream_path": [
-      "platform/dalvik@android-4.4.4_r2:vm/RawDexFile.cpp:dvmRawDexFileOpenArray",
-      "platform/dalvik@android-4.4.4_r2:vm/analysis/DexPrepare.cpp:dvmPrepareDexInMemory",
-      "platform/dalvik@android-4.4.4_r2:libdex/DexSwapVerify.cpp:dexSwapAndVerify",
-      "platform/dalvik@android-4.4.4_r2:libdex/DexFile.cpp:dexFileParse"
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/app/ActivityThread.java:performLaunchActivity",
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/app/Instrumentation.java:newActivity/callActivityOnCreate",
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/app/LoadedApk.java:makeApplication",
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/app/Activity.java:attach"
     ],
     "agr_path": [
-      "App/main.m:probeGenericSample",
-      "Runtime/DexLoom/poc_host.c:poc_create",
-      "Runtime/DexLoom/DEX/dx_dex.c:dx_dex_parse"
+      "App/main.m:probeActivityLaunchAPK",
+      "Runtime/DexLoom/APK/dx_manifest.c",
+      "Runtime/DexLoom/game_dex_runner.c:create_game/agr_dex_game_start_activity",
+      "Runtime/DexLoom/VM/dx_vm.c:process GC roots"
     ],
     "active_explanations": [],
-    "earliest_evidenced_divergence": "the generic APK smoke calls poc_create, which requires the project-only Lpoc/Bridge class after parsing, and labels any NULL result dex_parse_failed",
+    "earliest_evidenced_divergence": "the generic probe returned after DEX parsing instead of passing APK-derived Application and Activity classes into a launch coordinator",
     "semantic_class": "PUBLIC_OBSERVABLE",
     "causal_status": "CONTRACT_CONFIRMED",
     "evidence_level": "CONTRACT_CONFIRMED",
-    "classification": "HARNESS_BUG",
-    "next_validation": "run the corrected generic APK probe in Simulator and identify each APK's next boundary",
-    "primary_blocker": "the corrected App harness has not yet been exercised with bundled APK resources in Simulator",
-    "first_broken_boundary": "generic APK probe result classification",
-    "first_broken_boundary_evidence": "focused run 35489492142 parsed both original DEX files; run 35489607971 also accepted the project-owned no-Bridge DEX contract"
+    "classification": "ANDROID_SEMANTIC_BUG",
+    "next_validation": "focused source/fixture gate followed by one iOS Simulator discovery using the unchanged Pixel Dungeon and Frozen Bubble APKs",
+    "primary_blocker": "the implemented API19 Activity/Application launch coordinator has not yet executed in Simulator",
+    "first_broken_boundary": "generic DEX-loaded APK to ActivityThread-equivalent launch",
+    "first_broken_boundary_evidence": "run 35500912993: Pixel Dungeon 877 classes/6112 methods and Frozen Bubble 23 classes/333 methods both dex_loaded then missing_framework:activity_launch"
   },
   "ci_budget": {
     "valid_closure_runs": 1,

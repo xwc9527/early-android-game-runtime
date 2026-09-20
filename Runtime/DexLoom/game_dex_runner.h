@@ -7,6 +7,18 @@ extern "C" {
 typedef struct agr_dex_game agr_dex_game;
 typedef struct agr_apk_package agr_apk_package;
 typedef enum {
+    AGR_ACTIVITY_LAUNCH_NONE = 0,
+    AGR_ACTIVITY_LAUNCH_CLASS_RESOLVED,
+    AGR_ACTIVITY_LAUNCH_ACTIVITY_INSTANTIATED,
+    AGR_ACTIVITY_LAUNCH_APPLICATION_CREATED,
+    AGR_ACTIVITY_LAUNCH_CONTEXT_ATTACHED,
+    AGR_ACTIVITY_LAUNCH_ACTIVITY_ATTACHED,
+    AGR_ACTIVITY_LAUNCH_ON_CREATE_ENTERED,
+    AGR_ACTIVITY_LAUNCH_ON_CREATE_RETURNED,
+    AGR_ACTIVITY_LAUNCH_STARTED,
+    AGR_ACTIVITY_LAUNCH_RESUMED,
+} agr_activity_launch_stage;
+typedef enum {
     AGR_DEX_ARG_INT = 1,
     AGR_DEX_ARG_FLOAT = 2,
     AGR_DEX_ARG_STRING = 3,
@@ -36,6 +48,10 @@ const void *agr_apk_native_library_bytes(const agr_apk_package *package, uint32_
                                          uint32_t *size);
 
 agr_dex_game *agr_dex_game_create(const char *dex_path);
+agr_dex_game *agr_dex_game_create_for_launch(const void *dex_bytes, uint32_t dex_size,
+                                              const char *activity_descriptor,
+                                              const char *application_descriptor,
+                                              const char *package_name);
 agr_dex_game *agr_dex_game_create_from_apk(const agr_apk_package *package);
 void agr_dex_game_destroy(agr_dex_game *game);
 const char *agr_dex_game_activity_descriptor(const agr_dex_game *game);
@@ -43,6 +59,11 @@ int agr_dex_game_resolve_class(agr_dex_game *game, const char *descriptor);
 int agr_dex_game_resolve_method(agr_dex_game *game, const char *class_descriptor,
                                 const char *name, const char *signature, int is_static);
 int agr_dex_game_start_activity(agr_dex_game *game);
+agr_activity_launch_stage agr_dex_game_launch_stage(const agr_dex_game *game);
+const char *agr_dex_game_launch_error(const agr_dex_game *game);
+int agr_dex_game_application_gc_contract(agr_dex_game *game);
+int agr_dex_game_static_int(agr_dex_game *game, const char *class_descriptor,
+                            const char *field_name, int32_t *value);
 void agr_dex_game_set_native_callback(agr_dex_game *game,
                                       agr_dex_native_callback callback, void *user);
 void agr_dex_game_set_load_library_callback(agr_dex_game *game,

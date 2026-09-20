@@ -4153,8 +4153,10 @@ DxResult dx_vm_load_class(DxVM *vm, const char *descriptor, DxClass **out) {
                         dx_vm_load_class(vm, super_desc, &super);
                     }
                     if (!super) {
-                        DX_WARN(TAG, "Superclass %s not found, defaulting to Object", super_desc);
-                        super = vm->class_object;
+                        DX_ERROR(TAG, "Superclass not found: %s while loading %s", super_desc, type);
+                        vm->dex = prev_dex;
+                        loading_depth--;
+                        return DX_ERR_CLASS_NOT_FOUND;
                     }
                 }
             }
@@ -4574,6 +4576,10 @@ static void gc_mark_stack_process_one(DxVM *vm) {
 static void gc_push_roots(DxVM *vm) {
     // Root 1: activity instance
     gc_mark_stack_push(vm, vm->activity_instance);
+    gc_mark_stack_push(vm, vm->application_instance);
+    gc_mark_stack_push(vm, vm->application_context);
+    gc_mark_stack_push(vm, vm->activity_context);
+    gc_mark_stack_push(vm, vm->launch_intent);
 
     // Root 2: all registers in the current frame chain
     DxFrame *frame = vm->current_frame;
@@ -4799,6 +4805,10 @@ DxResult dx_vm_gc(DxVM *vm) {
 
     // Root 1: activity instance
     gc_mark_object(vm->activity_instance);
+    gc_mark_object(vm->application_instance);
+    gc_mark_object(vm->application_context);
+    gc_mark_object(vm->activity_context);
+    gc_mark_object(vm->launch_intent);
 
     // Root 2: all registers in the current frame chain
     DxFrame *frame = vm->current_frame;
@@ -4932,6 +4942,10 @@ DxResult dx_vm_gc(DxVM *vm) {
         DX_WARN(TAG, "GC: nulling dangling activity_instance");
         vm->activity_instance = NULL;
     }
+    if (vm->application_instance && !vm->application_instance->gc_mark) vm->application_instance = NULL;
+    if (vm->application_context && !vm->application_context->gc_mark) vm->application_context = NULL;
+    if (vm->activity_context && !vm->activity_context->gc_mark) vm->activity_context = NULL;
+    if (vm->launch_intent && !vm->launch_intent->gc_mark) vm->launch_intent = NULL;
 
     // Scrub pending exception
     if (vm->pending_exception && !vm->pending_exception->gc_mark) {
@@ -6111,6 +6125,10 @@ DxResult dx_vm_gc_minor(DxVM *vm) {
 
     // Root 1: activity instance
     if (vm->activity_instance) gc_mark_object_young(vm->activity_instance);
+    if (vm->application_instance) gc_mark_object_young(vm->application_instance);
+    if (vm->application_context) gc_mark_object_young(vm->application_context);
+    if (vm->activity_context) gc_mark_object_young(vm->activity_context);
+    if (vm->launch_intent) gc_mark_object_young(vm->launch_intent);
 
     // Root 2: frame registers
     DxFrame *frame = vm->current_frame;

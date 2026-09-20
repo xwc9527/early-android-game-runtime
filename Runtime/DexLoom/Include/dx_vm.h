@@ -260,6 +260,12 @@ struct DxVM {
 
     // Current activity instance
     DxObject  *activity_instance;
+    // Process launch roots corresponding to LoadedApk.mApplication and the
+    // ContextImpl objects retained by the application process.
+    DxObject  *application_instance;
+    DxObject  *application_context;
+    DxObject  *activity_context;
+    DxObject  *launch_intent;
 
     // Activity back-stack for startActivityForResult / finish
     #define DX_MAX_ACTIVITY_STACK 16

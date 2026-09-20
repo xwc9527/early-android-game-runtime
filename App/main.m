@@ -872,6 +872,87 @@ static NSString *runDexParserCompatibility(void) {
     return [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
 }
 
+static NSString *launchStageName(agr_activity_launch_stage stage) {
+    switch (stage) {
+        case AGR_ACTIVITY_LAUNCH_CLASS_RESOLVED: return @"class_resolved";
+        case AGR_ACTIVITY_LAUNCH_ACTIVITY_INSTANTIATED: return @"activity_instantiated";
+        case AGR_ACTIVITY_LAUNCH_APPLICATION_CREATED: return @"application_created";
+        case AGR_ACTIVITY_LAUNCH_CONTEXT_ATTACHED: return @"context_attached";
+        case AGR_ACTIVITY_LAUNCH_ACTIVITY_ATTACHED: return @"activity_attached";
+        case AGR_ACTIVITY_LAUNCH_ON_CREATE_ENTERED: return @"on_create_entered";
+        case AGR_ACTIVITY_LAUNCH_ON_CREATE_RETURNED: return @"on_create_returned";
+        case AGR_ACTIVITY_LAUNCH_STARTED: return @"started";
+        case AGR_ACTIVITY_LAUNCH_RESUMED: return @"resumed";
+        default: return @"none";
+    }
+}
+
+static NSDictionary *probeActivityLaunchAPK(NSDictionary *sample) {
+    NSString *resource=sample[@"resource"];
+    NSString *path=[[NSBundle mainBundle] pathForResource:resource.stringByDeletingPathExtension
+                                                   ofType:resource.pathExtension];
+    agr_apk_package *package=path ? agr_apk_package_open(path.UTF8String) : NULL;
+    agr_dex_game *game=package ? agr_dex_game_create_from_apk(package) : NULL;
+    int start=game ? agr_dex_game_start_activity(game) : -1;
+    agr_activity_launch_stage stage=game ? agr_dex_game_launch_stage(game) : AGR_ACTIVITY_LAUNCH_NONE;
+    NSString *detail=game ? [NSString stringWithUTF8String:agr_dex_game_launch_error(game)]
+                          : (package ? @"DEX Runtime creation failed" : @"APK package open failed");
+    BOOL crossed=stage>=AGR_ACTIVITY_LAUNCH_ON_CREATE_ENTERED;
+    NSDictionary *result=@{@"id":sample[@"id"] ?: @"unknown",
+      @"package":sample[@"package"] ?: @"unknown", @"stage":launchStageName(stage),
+      @"activity_launch_crossed":@(crossed), @"launch_result":@(start),
+      @"signature":start==0 ? @"success:activity_resumed" :
+          [NSString stringWithFormat:@"missing_framework:%@",detail.length ? detail : @"activity_launch"],
+      @"detail":detail ?: @""};
+    if (game) agr_dex_game_destroy(game);
+    if (package) agr_apk_package_close(package);
+    return result;
+}
+
+static NSString *runActivityLaunchCompatibility(void) {
+    NSMutableArray *failures=[NSMutableArray array];
+    NSString *fixturePath=[[NSBundle mainBundle] pathForResource:@"activity-launch-fixture" ofType:@"dex"];
+    NSData *fixture=fixturePath ? [NSData dataWithContentsOfFile:fixturePath] : nil;
+    agr_dex_game *contract=fixture ? agr_dex_game_create_for_launch(fixture.bytes,(uint32_t)fixture.length,
+        "Ltest/TestActivity;","Ltest/TestApplication;","test.activity.launch") : NULL;
+    int launch=contract ? agr_dex_game_start_activity(contract) : -1;
+    int32_t appMarker=0,activityMarker=0;
+    int appField=contract ? agr_dex_game_static_int(contract,"Ltest/TestApplication;","appMarker",&appMarker) : -1;
+    int activityField=contract ? agr_dex_game_static_int(contract,"Ltest/TestActivity;","activityMarker",&activityMarker) : -1;
+    int activityRoot=contract ? agr_dex_game_activity_gc_contract(contract) : -1;
+    int applicationRoot=contract ? agr_dex_game_application_gc_contract(contract) : -1;
+    agr_activity_launch_stage contractStage=contract ? agr_dex_game_launch_stage(contract) : AGR_ACTIVITY_LAUNCH_NONE;
+    BOOL contractPassed=launch==0 && contractStage==AGR_ACTIVITY_LAUNCH_RESUMED &&
+        appField==0 && appMarker==1 && activityField==0 && activityMarker==1 &&
+        activityRoot==0 && applicationRoot==0;
+    if (!contractPassed) [failures addObject:[NSString stringWithFormat:
+        @"contract:%@:%d:%d/%d:%d/%d:roots=%d/%d",launchStageName(contractStage),launch,
+        appField,appMarker,activityField,activityMarker,activityRoot,applicationRoot]];
+    NSDictionary *contractResult=@{@"id":@"synthetic-activity-launch",
+      @"passed":@(contractPassed),@"stage":launchStageName(contractStage),
+      @"application_marker":@(appMarker),@"activity_marker":@(activityMarker),
+      @"activity_root":@(activityRoot==0),@"application_root":@(applicationRoot==0),
+      @"detail":contract ? [NSString stringWithUTF8String:agr_dex_game_launch_error(contract)] : @"fixture unavailable"};
+    if (contract) agr_dex_game_destroy(contract);
+
+    NSString *planPath=[[NSBundle mainBundle] pathForResource:@"batch-plan" ofType:@"json"];
+    NSData *planData=planPath ? [NSData dataWithContentsOfFile:planPath] : nil;
+    NSDictionary *plan=planData ? [NSJSONSerialization JSONObjectWithData:planData options:0 error:nil] : nil;
+    NSMutableArray *real=[NSMutableArray array];
+    NSSet *required=[NSSet setWithArray:@[@"pixel-dungeon",@"frozen-bubble"]];
+    for (NSDictionary *sample in plan[@"samples"] ?: @[]) if ([required containsObject:sample[@"id"]]) {
+        NSDictionary *result=probeActivityLaunchAPK(sample); [real addObject:result];
+        if (![result[@"activity_launch_crossed"] boolValue])
+            [failures addObject:[NSString stringWithFormat:@"%@:%@",sample[@"id"],result[@"signature"]]];
+    }
+    if (real.count!=required.count) [failures addObject:@"required real APK result missing"];
+    NSDictionary *report=@{@"schema":@"agr.framework-activity-launch.v1",
+      @"passed":failures.count==0 ? @YES : @NO,@"contract":contractResult,
+      @"real_apks":real,@"failures":failures};
+    NSData *json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted error:nil];
+    return [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
+}
+
 static NSString *runTests(void) {
     NSMutableArray<NSString *> *failures = [NSMutableArray array];
     agr_contract_result contractCases[64]={0};
@@ -1167,6 +1248,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     NSArray<NSString *> *arguments=NSProcessInfo.processInfo.arguments;
     BOOL interactive=[arguments containsObject:@"--interactive"];
     BOOL dexParserCompatibility=[arguments containsObject:@"--dex-parser-compatibility"];
+    BOOL activityLaunchCompatibility=[arguments containsObject:@"--activity-launch-compatibility"];
 #if AGR_DEVICE_INTERACTIVE
     interactive=YES;
 #endif
@@ -1179,8 +1261,10 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
        * watchdog to terminate an otherwise healthy Runtime process. */
       dispatch_queue_t regressionQueue=dispatch_queue_create("dev.agr.simulator.regression",DISPATCH_QUEUE_SERIAL);
       dispatch_async(regressionQueue,^{ @autoreleasepool {
-        NSString *result = dexParserCompatibility ? runDexParserCompatibility() : runTests();
-        NSString *file = dexParserCompatibility ? @"dex-parser-simulator.json" : @"runtime-smoke.json";
+        NSString *result = activityLaunchCompatibility ? runActivityLaunchCompatibility() :
+            (dexParserCompatibility ? runDexParserCompatibility() : runTests());
+        NSString *file = activityLaunchCompatibility ? @"framework-activity-launch.json" :
+            (dexParserCompatibility ? @"dex-parser-simulator.json" : @"runtime-smoke.json");
         NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:
             [@"Documents" stringByAppendingPathComponent:file]];
         [result writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];

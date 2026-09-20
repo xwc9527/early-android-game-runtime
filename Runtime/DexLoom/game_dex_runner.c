@@ -27,6 +27,20 @@ static int32_t g_log_calls = 0;
 static int32_t g_next_sound = 1;
 static char g_package_name[256];
 
+static DxResult context_get_application_context(DxVM *vm, DxFrame *frame,
+                                                DxValue *args, uint32_t count) {
+    (void)args; (void)count;
+    frame->result = vm->application_instance ? DX_OBJ_VALUE(vm->application_instance)
+                                             : DX_NULL_VALUE;
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult activity_get_application(DxVM *vm, DxFrame *frame,
+                                         DxValue *args, uint32_t count) {
+    return context_get_application_context(vm, frame, args, count);
+}
+
 static void add_method(DxClass *cls, const char *name, const char *shorty,
                        uint32_t flags, DxNativeMethodFn fn, int direct) {
     DxMethod **methods = direct ? &cls->direct_methods : &cls->virtual_methods;
@@ -70,6 +84,20 @@ static void one_field(DxClass *cls, const char *name, const char *type) {
     cls->field_defs[0].type = type;
     cls->field_defs[0].flags = DX_ACC_PUBLIC;
     cls->field_defs[0].slot_index = 0;
+}
+
+static void own_fields(DxClass *cls, uint32_t count,
+                       const char *const *names, const char *const *types) {
+    uint32_t inherited = cls->super_class ? cls->super_class->instance_field_count : 0;
+    cls->instance_field_count = inherited + count;
+    if (!count) return;
+    cls->field_defs = dx_malloc((size_t)count * sizeof(*cls->field_defs));
+    for (uint32_t i = 0; i < count; i++) {
+        cls->field_defs[i].name = names[i];
+        cls->field_defs[i].type = types[i];
+        cls->field_defs[i].flags = DX_ACC_PUBLIC;
+        cls->field_defs[i].slot_index = inherited + i;
+    }
 }
 
 static DxResult noop(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
@@ -194,12 +222,34 @@ static DxResult log_call(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count
 static DxResult register_game_framework(DxVM *vm) {
     DxClass *obj = vm->class_object;
     DxClass *context = reg_class(vm, "Landroid/content/Context;", obj);
-    DxClass *native_activity = reg_class(vm, "Landroid/app/NativeActivity;", context);
+    DxClass *context_wrapper = reg_class(vm, "Landroid/content/ContextWrapper;", context);
+    DxClass *application = reg_class(vm, "Landroid/app/Application;", context_wrapper);
+    DxClass *activity = reg_class(vm, "Landroid/app/Activity;", context_wrapper);
+    DxClass *native_activity = reg_class(vm, "Landroid/app/NativeActivity;", activity);
+    const char *wrapper_names[] = { "_baseContext" };
+    const char *wrapper_types[] = { "Landroid/content/Context;" };
+    own_fields(context_wrapper, 1, wrapper_names, wrapper_types);
+    own_fields(application, 0, NULL, NULL);
+    const char *activity_names[] = { "_application", "_intent" };
+    const char *activity_types[] = { "Landroid/app/Application;", "Landroid/content/Intent;" };
+    own_fields(activity, 2, activity_names, activity_types);
+    own_fields(native_activity, 0, NULL, NULL);
+    add_method(context, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
+    add_method(context_wrapper, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
+    add_method(application, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
+    add_method(application, "onCreate", "V", DX_ACC_PUBLIC, noop, 0);
+    add_method(activity, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
+    add_method(activity, "onCreate", "VL", DX_ACC_PROTECTED, noop, 0);
+    add_method(activity, "onStart", "V", DX_ACC_PROTECTED, noop, 0);
+    add_method(activity, "onResume", "V", DX_ACC_PROTECTED, noop, 0);
+    add_method(activity, "getApplication", "L", DX_ACC_PUBLIC, activity_get_application, 0);
     add_method(native_activity, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
     add_method(native_activity, "onCreate", "VL", DX_ACC_PUBLIC, noop, 0);
     add_method(context, "getAssets", "L", DX_ACC_PUBLIC, context_get_assets, 0);
     add_method(context, "getResources", "L", DX_ACC_PUBLIC, context_get_resources, 0);
     add_method(context, "getPackageName", "L", DX_ACC_PUBLIC, context_get_package_name, 0);
+    add_method(context, "getApplicationContext", "L", DX_ACC_PUBLIC,
+               context_get_application_context, 0);
 
     DxClass *asset_manager = reg_class(vm, "Landroid/content/res/AssetManager;", obj);
     add_method(asset_manager, "open", "LL", DX_ACC_PUBLIC, asset_open, 0);
@@ -253,6 +303,13 @@ struct agr_dex_game {
     DxVM *vm;
     DxObject *activity;
     DxClass *activity_class;
+    DxObject *application;
+    DxClass *application_class;
+    DxObject *application_context;
+    DxObject *activity_context;
+    DxObject *intent;
+    agr_activity_launch_stage launch_stage;
+    char launch_error[256];
     agr_dex_native_callback native_callback;
     void *native_callback_user;
     struct { uint32_t handle; DxObject *object; } *objects;
@@ -271,6 +328,7 @@ struct agr_apk_package {
     uint8_t *dex_bytes;
     uint32_t dex_size;
     char *activity_descriptor;
+    char *application_descriptor;
     char *native_library;
     agr_apk_library *libraries;
     uint32_t library_count;
@@ -314,6 +372,9 @@ agr_apk_package *agr_apk_package_open(const char *apk_path) {
         !package->manifest->package_name || !package->manifest->main_activity) goto fail;
     dx_free(manifest_bytes); manifest_bytes=NULL;
     package->activity_descriptor=class_descriptor(package->manifest->main_activity);
+    package->application_descriptor=package->manifest->application_name
+        ? class_descriptor(package->manifest->application_name)
+        : copy_text("Landroid/app/Application;");
     const DxComponent *activity=dx_manifest_find_activity(package->manifest,
                                                            package->manifest->main_activity);
     const char *lib=component_metadata(activity,"android.app.lib_name");
@@ -325,7 +386,7 @@ agr_apk_package *agr_apk_package_open(const char *apk_path) {
         package->native_library=malloc(lib_length+7);
         if (package->native_library) snprintf(package->native_library,lib_length+7,"lib%s.so",lib);
     }
-    if (!package->activity_descriptor || !package->native_library ||
+    if (!package->activity_descriptor || !package->application_descriptor ||
         dx_apk_find_entry(package->apk,"classes.dex",&entry)!=DX_OK ||
         dx_apk_extract_entry(package->apk,entry,&package->dex_bytes,&package->dex_size)!=DX_OK)
         goto fail;
@@ -353,7 +414,6 @@ agr_apk_package *agr_apk_package_open(const char *apk_path) {
                                                     &library->size)!=DX_OK) goto fail;
         package->library_count++;
     }
-    if (!package->library_count) goto fail;
     return package;
 fail:
     dx_free(manifest_bytes);
@@ -366,7 +426,8 @@ void agr_apk_package_close(agr_apk_package *package) {
     for (uint32_t i=0;i<package->library_count;i++) {
         free(package->libraries[i].name); dx_free(package->libraries[i].bytes);
     }
-    free(package->libraries); free(package->activity_descriptor); free(package->native_library);
+    free(package->libraries); free(package->activity_descriptor); free(package->application_descriptor);
+    free(package->native_library);
     dx_free(package->dex_bytes); dx_manifest_free(package->manifest);
     if (package->apk) dx_apk_close(package->apk);
     free(package);
@@ -383,6 +444,7 @@ const void *agr_apk_native_library_bytes(const agr_apk_package *p,uint32_t i,uin
 
 static agr_dex_game *create_game(const uint8_t *bytes, uint32_t size,
                                  const char *activity_descriptor,
+                                 const char *application_descriptor,
                                  const char *package_name) {
     agr_dex_game *game = calloc(1,sizeof(*game));
     if (!game) return NULL;
@@ -395,18 +457,33 @@ static agr_dex_game *create_game(const uint8_t *bytes, uint32_t size,
         !(game->vm=dx_vm_create(NULL)) ||
         dx_vm_load_dex(game->vm,game->dex)!=DX_OK ||
         dx_register_java_lang(game->vm)!=DX_OK ||
-        register_game_framework(game->vm)!=DX_OK ||
-        dx_vm_load_class(game->vm,activity_descriptor,&cls)!=DX_OK || !cls)
+        register_game_framework(game->vm)!=DX_OK)
         goto fail;
+    if (dx_vm_load_class(game->vm,activity_descriptor,&cls)!=DX_OK || !cls) {
+        snprintf(game->launch_error,sizeof(game->launch_error),
+                 "activity class resolution failed: %s",activity_descriptor);
+        return game;
+    }
+    game->launch_stage=AGR_ACTIVITY_LAUNCH_CLASS_RESOLVED;
     game->activity_class=cls;
     game->activity=dx_vm_alloc_object(game->vm,cls);
     if (!game->activity) goto fail;
+    /* performLaunchActivity retains the new Activity in process launch state
+     * while LoadedApk creates/initializes the Application. */
+    game->vm->activity_instance=game->activity;
+    g_activity=game->activity;
+    game->launch_stage=AGR_ACTIVITY_LAUNCH_ACTIVITY_INSTANTIATED;
+    const char *app_desc=application_descriptor&&application_descriptor[0]
+        ? application_descriptor : "Landroid/app/Application;";
+    if (dx_vm_load_class(game->vm,app_desc,&game->application_class)!=DX_OK ||
+        !game->application_class) {
+        snprintf(game->launch_error,sizeof(game->launch_error),"application class not found: %s",app_desc);
+        return game;
+    }
     /* ActivityThread owns the launched Activity independently of whether a
      * framework constructor happens to install the same root.  NativeActivity
      * in this host-side API19 environment has a no-op constructor, so make the
      * process root explicit before any allocation can trigger collection. */
-    game->vm->activity_instance=game->activity;
-    g_activity=game->activity;
     return game;
 fail:
     agr_dex_game_destroy(game); return NULL;
@@ -489,13 +566,83 @@ void agr_dex_game_set_load_library_callback(agr_dex_game *game,
 
 int agr_dex_game_start_activity(agr_dex_game *game) {
     if (!game || !game->activity_class || !game->activity) return -1;
+    DxVM *vm=game->vm;
+    DxClass *context_class=dx_vm_find_class(vm,"Landroid/content/Context;");
+    DxClass *intent_class=dx_vm_find_class(vm,"Landroid/content/Intent;");
+    if (!intent_class) intent_class=reg_class(vm,"Landroid/content/Intent;",vm->class_object);
+    game->application_context=dx_vm_alloc_object(vm,context_class);
+    game->activity_context=dx_vm_alloc_object(vm,context_class);
+    game->intent=dx_vm_alloc_object(vm,intent_class);
+    game->application=dx_vm_alloc_object(vm,game->application_class);
+    if (!game->application_context || !game->activity_context || !game->intent || !game->application) {
+        snprintf(game->launch_error,sizeof(game->launch_error),"launch object allocation failed");
+        return -1;
+    }
+    vm->application_context=game->application_context;
+    vm->activity_context=game->activity_context;
+    vm->launch_intent=game->intent;
+    vm->application_instance=game->application;
+    game->launch_stage=AGR_ACTIVITY_LAUNCH_APPLICATION_CREATED;
+
+    DxMethod *app_init=dx_vm_find_method(game->application_class,"<init>","V");
+    DxValue app_args[1]={DX_OBJ_VALUE(game->application)};
+    if (!app_init || dx_vm_execute_method(vm,app_init,app_args,1,NULL)!=DX_OK) {
+        snprintf(game->launch_error,sizeof(game->launch_error),"Application constructor failed");
+        return -1;
+    }
+    dx_vm_set_field(game->application,"_baseContext",DX_OBJ_VALUE(game->application_context));
+    game->launch_stage=AGR_ACTIVITY_LAUNCH_CONTEXT_ATTACHED;
+    DxMethod *app_create=dx_vm_find_method(game->application_class,"onCreate","V");
+    if (app_create && dx_vm_execute_method(vm,app_create,app_args,1,NULL)!=DX_OK) {
+        snprintf(game->launch_error,sizeof(game->launch_error),"Application.onCreate failed: %s",vm->error_msg);
+        return -1;
+    }
+
     DxClass *cls=game->activity_class;
     DxMethod *init=dx_vm_find_method(cls,"<init>","V");
     DxValue init_args[1]={DX_OBJ_VALUE(game->activity)};
-    if (!init || dx_vm_execute_method(game->vm,init,init_args,1,NULL)!=DX_OK) return -1;
+    if (!init || dx_vm_execute_method(vm,init,init_args,1,NULL)!=DX_OK) {
+        snprintf(game->launch_error,sizeof(game->launch_error),"Activity constructor failed: %s",vm->error_msg);
+        return -1;
+    }
+    dx_vm_set_field(game->activity,"_baseContext",DX_OBJ_VALUE(game->activity_context));
+    dx_vm_set_field(game->activity,"_application",DX_OBJ_VALUE(game->application));
+    dx_vm_set_field(game->activity,"_intent",DX_OBJ_VALUE(game->intent));
+    game->launch_stage=AGR_ACTIVITY_LAUNCH_ACTIVITY_ATTACHED;
     DxMethod *on_create=dx_vm_find_method(cls,"onCreate","VL");
     DxValue create_args[2]={DX_OBJ_VALUE(game->activity),DX_NULL_VALUE};
-    return !on_create || dx_vm_execute_method(game->vm,on_create,create_args,2,NULL)!=DX_OK ? -1 : 0;
+    if (!on_create) {
+        snprintf(game->launch_error,sizeof(game->launch_error),"Activity.onCreate unresolved");
+        return -1;
+    }
+    game->launch_stage=AGR_ACTIVITY_LAUNCH_ON_CREATE_ENTERED;
+    if (dx_vm_execute_method(vm,on_create,create_args,2,NULL)!=DX_OK) {
+        snprintf(game->launch_error,sizeof(game->launch_error),"Activity.onCreate failed: %s",vm->error_msg);
+        return -1;
+    }
+    game->launch_stage=AGR_ACTIVITY_LAUNCH_ON_CREATE_RETURNED;
+    DxMethod *on_start=dx_vm_find_method(cls,"onStart","V");
+    if (on_start && dx_vm_execute_method(vm,on_start,init_args,1,NULL)!=DX_OK) return -1;
+    game->launch_stage=AGR_ACTIVITY_LAUNCH_STARTED;
+    DxMethod *on_resume=dx_vm_find_method(cls,"onResume","V");
+    if (on_resume && dx_vm_execute_method(vm,on_resume,init_args,1,NULL)!=DX_OK) return -1;
+    game->launch_stage=AGR_ACTIVITY_LAUNCH_RESUMED;
+    return 0;
+}
+
+agr_dex_game *agr_dex_game_create_for_launch(const void *dex_bytes, uint32_t dex_size,
+                                              const char *activity_descriptor,
+                                              const char *application_descriptor,
+                                              const char *package_name) {
+    return create_game((const uint8_t *)dex_bytes,dex_size,activity_descriptor,
+                       application_descriptor,package_name);
+}
+
+agr_activity_launch_stage agr_dex_game_launch_stage(const agr_dex_game *game) {
+    return game ? game->launch_stage : AGR_ACTIVITY_LAUNCH_NONE;
+}
+const char *agr_dex_game_launch_error(const agr_dex_game *game) {
+    return game ? game->launch_error : "game unavailable";
 }
 
 void agr_dex_game_destroy(agr_dex_game *game) {
@@ -513,6 +660,31 @@ int agr_dex_game_activity_gc_contract(agr_dex_game *game) {
         game->vm->activity_instance != game->activity) return -1;
     for (uint32_t i=0; i<game->vm->heap_count; i++)
         if (game->vm->heap[i] == game->activity) return 0;
+    return -1;
+}
+int agr_dex_game_application_gc_contract(agr_dex_game *game) {
+    if (!game || !game->vm || !game->application ||
+        game->vm->application_instance != game->application) return -1;
+    if (dx_vm_gc_collect(game->vm) != DX_OK ||
+        game->vm->application_instance != game->application) return -1;
+    for (uint32_t i=0; i<game->vm->heap_count; i++)
+        if (game->vm->heap[i] == game->application) return 0;
+    return -1;
+}
+int agr_dex_game_static_int(agr_dex_game *game, const char *class_descriptor,
+                            const char *field_name, int32_t *value) {
+    if (!game || !class_descriptor || !field_name || !value) return -1;
+    DxClass *cls=dx_vm_find_class(game->vm,class_descriptor);
+    if (!cls || !cls->dex_file || !cls->static_fields ||
+        cls->dex_class_def_idx>=cls->dex_file->class_count) return -1;
+    DxDexClassData *data=cls->dex_file->class_data[cls->dex_class_def_idx];
+    if (!data) return -1;
+    for (uint32_t i=0;i<data->static_fields_count;i++) {
+        const char *name=dx_dex_get_field_name(cls->dex_file,data->static_fields[i].field_idx);
+        if (name && !strcmp(name,field_name) && cls->static_fields[i].tag==DX_VAL_INT) {
+            *value=cls->static_fields[i].i; return 0;
+        }
+    }
     return -1;
 }
 const char *agr_dex_game_activity_descriptor(const agr_dex_game *game) {
@@ -581,6 +753,7 @@ agr_dex_game *agr_dex_game_create(const char *dex_path) {
     if (!read_file(dex_path,&bytes,&size)) return NULL;
     agr_dex_game *game=create_game(bytes,size,
         "Lcom/onetwofivegames/kungfoobarracuda/KungFooBarracudaNativeActivity;",
+        "Landroid/app/Application;",
         "com.onetwofivegames.kungfoobarracuda");
     free(bytes);
     if (game && agr_dex_game_start_activity(game)) { agr_dex_game_destroy(game);game=NULL; }
@@ -589,7 +762,8 @@ agr_dex_game *agr_dex_game_create(const char *dex_path) {
 
 agr_dex_game *agr_dex_game_create_from_apk(const agr_apk_package *package) {
     return package?create_game(package->dex_bytes,package->dex_size,
-        package->activity_descriptor,package->manifest->package_name):NULL;
+        package->activity_descriptor,package->application_descriptor,
+        package->manifest->package_name):NULL;
 }
 
 int agr_dex_game_play_sound(agr_dex_game *game, const char *path, float direction, int32_t *play_id) {

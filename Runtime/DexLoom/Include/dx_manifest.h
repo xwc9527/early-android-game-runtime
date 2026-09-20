@@ -66,6 +66,7 @@ typedef struct {
     int32_t  target_sdk;
     char    *app_label;
     char    *app_theme;        // android:theme resource reference
+    char    *application_name; // fully qualified android:name, NULL = android.app.Application
 
     // Component arrays (simple name strings kept for backward compat)
     char    **permissions;

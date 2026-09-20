@@ -7,6 +7,7 @@ mkdir -p "$BUILD/obj" "$APP"
 phase "fetch samples"
 python3 "$ROOT/tools/fetch_fdroid_samples.py"
 python3 "$ROOT/tools/scan_apks.py" --shard-index "${SHARD_INDEX:-0}" --shard-count "${SHARD_COUNT:-1}"
+python3 "$ROOT/Tests/DexLoom/make_activity_launch_fixture.py" "$ROOT/App/Resources/activity-launch-fixture.dex"
 ANGLE_VERSION="v2.1.28252"
 ANGLE_SHA256="59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be"
 ANGLE_ARCHIVE="$BUILD/angle-xcframeworks-$ANGLE_VERSION.zip"
@@ -111,6 +112,33 @@ assert {x.get("id") for x in r.get("results", [])} == {"pixel-dungeon", "frozen-
 assert all(x.get("stage") == "dex_loaded" for x in r["results"]), r
 PY
   phase "focused DEX parser compatibility probe passed"
+  exit 0
+fi
+if [[ "${ACTIVITY_LAUNCH_COMPATIBILITY:-0}" == "1" ]]; then
+  ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
+  DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
+  RESULT_PATH="$DATA/Documents/framework-activity-launch.json"
+  rm -f "$RESULT_PATH"
+  phase "launch focused Framework Activity compatibility probe"
+  xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --activity-launch-compatibility
+  for _ in $(seq 1 90); do [[ -s "$RESULT_PATH" ]] && break; sleep 1; done
+  if [[ ! -s "$RESULT_PATH" ]]; then
+    xcrun simctl spawn "$DEVICE" log show --last 2m --style compact \
+      --predicate 'process == "AGRSimulator"' > "$ARTIFACTS/framework-activity-launch.log" 2>&1 || true
+    echo "focused Activity launch result was not produced within 90 seconds" >&2
+    exit 124
+  fi
+  cp "$RESULT_PATH" "$ARTIFACTS/framework-activity-launch.json"
+  cat "$RESULT_PATH"
+  python3 - "$RESULT_PATH" <<'PY'
+import json,sys
+r=json.load(open(sys.argv[1]))
+assert r.get("contract",{}).get("passed") is True, r
+assert {x.get("id") for x in r.get("real_apks",[])} == {"pixel-dungeon","frozen-bubble"}, r
+assert all(x.get("activity_launch_crossed") is True for x in r["real_apks"]), r
+assert r.get("passed") is True, r
+PY
+  phase "focused Framework Activity launch compatibility passed"
   exit 0
 fi
 if [[ "${ZERO_INPUT_AB:-0}" == "1" ]]; then

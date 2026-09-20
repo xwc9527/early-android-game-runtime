@@ -1,0 +1,89 @@
+name: Framework Activity launch compatibility
+
+on:
+  push:
+    branches: ['phase/framework-activity-launch-*']
+    paths:
+      - 'Runtime/DexLoom/**'
+      - 'Tests/DexLoom/**'
+      - 'App/main.m'
+      - 'scripts/build-and-run-simulator.sh'
+      - 'tools/fetch_fdroid_samples.py'
+      - 'tools/scan_apks.py'
+      - 'Tests/Samples/fdroid.json'
+      - 'ci/governance/**'
+      - 'docs/**'
+      - '.github/workflows/framework-activity-launch.yml'
+  workflow_dispatch:
+
+jobs:
+  source-and-fixture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify pinned API19 Activity launch sources
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, urllib.request
+          base='https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/'
+          sources={
+            'core/java/android/app/ActivityThread.java':('4373bb6a1b9097c136ddab729cafc9884f9c5a70fdf41b43bfd4ba7b083229ae',['performLaunchActivity','performStartActivity','handleResumeActivity']),
+            'core/java/android/app/Instrumentation.java':('42d0d5219bb45df106842abd1201526522ae5f06bbdee4288bd1709cd340778c',['newActivity','callActivityOnCreate']),
+            'core/java/android/app/LoadedApk.java':('2d862422d943952091aadd33770895b4bc773cb508e4dc8c3bc112c6b1ecf457',['makeApplication']),
+            'core/java/android/app/Activity.java':('03874ea13f230ff2b92bc6d99522011f63a3076e9101655aa0249addc590cc4b',['final void attach','performCreate']),
+            'core/java/android/app/Application.java':('1aaa701cead873deb0ead9feae62f345a3799f48885dcec60d6083d54c16b0fb',['final void attach','onCreate']),
+          }
+          for path,(expected,symbols) in sources.items():
+              raw=base64.b64decode(urllib.request.urlopen(base+path+'?format=TEXT',timeout=30).read())
+              actual=hashlib.sha256(raw).hexdigest()
+              assert actual==expected,(path,actual,expected)
+              text=raw.decode('utf-8')
+              for symbol in symbols: assert symbol in text,(path,symbol)
+              print(f'SOURCE_OK {path} {actual}')
+          PY
+      - name: Build and parse synthetic Activity launch DEX
+        run: |
+          mkdir -p build/activity-launch
+          python3 Tests/DexLoom/make_activity_launch_fixture.py build/activity-launch/activity-launch.dex
+          bash scripts/test-dex-parser.sh build/activity-launch/activity-launch.dex | tee build/activity-launch/parser.log
+      - name: Validate governance artifacts
+        run: |
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-activity-launch.json
+          python3 ci/validate-governance.py --mode discovery
+      - name: Publish source and fixture evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-activity-source-fixture
+          path: build/activity-launch/
+
+  focused-simulator:
+    needs: source-and-fixture
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore Simulator build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            Runtime/ArmInterpreter/target
+            build/angle-v2.1.28252
+            build/angle-xcframeworks-v2.1.28252.zip
+          key: agr-framework-activity-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-and-run-simulator.sh', 'Tests/Samples/fdroid.json') }}
+          restore-keys: agr-framework-activity-${{ runner.os }}-
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run focused Activity launch compatibility probe
+        env:
+          ACTIVITY_LAUNCH_COMPATIBILITY: '1'
+        run: bash scripts/build-and-run-simulator.sh
+      - name: Publish focused Simulator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-activity-simulator-results
+          path: |
+            build/artifacts/framework-activity-launch.json
+            build/artifacts/framework-activity-launch.log

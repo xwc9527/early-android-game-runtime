@@ -1,0 +1,82 @@
+{
+  "schema_version": 2,
+  "classification": "ANDROID_SEMANTIC_BUG",
+  "subsystem": "Framework Activity launch",
+  "observed_discontinuity": "After valid DEX parsing, Pixel Dungeon and Frozen Bubble stopped at missing_framework:activity_launch because the generic path did not instantiate or attach the manifest Activity.",
+  "upstream": {
+    "map_entry": "framework.activity.launch",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "core/java/android/app/ActivityThread.java",
+      "core/java/android/app/Instrumentation.java",
+      "core/java/android/app/LoadedApk.java",
+      "core/java/android/app/Activity.java",
+      "core/java/android/app/Application.java"
+    ],
+    "call_path": [
+      "ActivityThread.performLaunchActivity",
+      "Instrumentation.newActivity",
+      "LoadedApk.makeApplication",
+      "Activity.attach",
+      "Instrumentation.callActivityOnCreate",
+      "ActivityThread.performStartActivity",
+      "ActivityThread.handleResumeActivity"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "The manifest Application is instantiated once, attached to a base Context, made process-reachable, and receives onCreate before Activity.onCreate.",
+    "The manifest Activity is resolved by its DEX class, instantiated, attached to its base Context, Application, and Intent, then receives create, start, and resume callbacks in API19 order.",
+    "Application and active Activity roots remain reachable across host DEX garbage collection."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/APK/dx_manifest.c",
+      "Runtime/DexLoom/game_dex_runner.c",
+      "Runtime/DexLoom/VM/dx_vm.c",
+      "App/main.m"
+    ],
+    "call_path": [
+      "agr_apk_package_open",
+      "agr_dex_game_create_from_apk",
+      "create_game",
+      "agr_dex_game_start_activity",
+      "dx_vm_execute_method"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "The generic real-APK harness stopped immediately after parsing and emitted missing_framework:activity_launch without invoking a Runtime launch path.",
+      "relevance": "The prior result proved a classification boundary rather than an attempted Activity launch."
+    },
+    {
+      "id": "D2",
+      "description": "The existing game DEX runner directly constructed a minimal NativeActivity and invoked constructor/onCreate without a manifest Application, base Context attachment, Intent, start, or resume lifecycle.",
+      "relevance": "Ordinary Java Activity APKs could not observe the API19 launch object graph or lifecycle order."
+    }
+  ],
+  "earliest_evidenced_divergence": "probeGenericSample returned after DEX parsing instead of passing the APK-derived Activity and Application into the host DEX launch Runtime.",
+  "causal_status": "CONTRACT_CONFIRMED",
+  "evidence_level": "CONTRACT_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "Pinned Android 4.4.4_r2 ActivityThread, Instrumentation, LoadedApk, Activity, and Application source hashes and symbols"
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Focused DEX run 35500912993 proves both real APKs cross parsing and reach missing_framework:activity_launch"
+    }
+  ],
+  "remaining_uncertainty": [
+    "The new Activity launch object graph and lifecycle have not yet executed in the iOS Simulator.",
+    "The next Framework boundary reached by each real APK is not yet observed."
+  ],
+  "next_action": "Run the synthetic launch contract and both unchanged real APKs in the focused Simulator discovery workflow.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "Represent ActivityThread/Instrumentation/LoadedApk launch semantics as an in-process host DEX lifecycle coordinator while preserving APK classes, callback order, object identity, and GC reachability."
+}
