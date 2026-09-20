@@ -17,6 +17,24 @@ def read(path):
 def bounded_lines(text,pattern,limit=80):
  rx=re.compile(pattern,re.I)
  return [line[-2000:] for line in text.splitlines() if rx.search(line)][-limit:]
+def target_lines(text,pid,bundle,process="AGRSimulator"):
+ markers=[re.compile(rf"(?<!\d){pid}(?!\d)") if pid else None,
+          re.compile(re.escape(bundle),re.I) if bundle else None,
+          re.compile(rf"\b{re.escape(process)}\b",re.I) if process else None]
+ return [line for line in text.splitlines() if any(rx and rx.search(line) for rx in markers)]
+def classify_target_exit(pid,disappeared,result_produced,launch_rc,launch_text,app_text,system_text,crash_reports,bundle):
+ """Classify only direct target-process evidence; empty means no evidenced death."""
+ target_system="\n".join(target_lines(system_text,pid,bundle))
+ target_app="\n".join(target_lines(app_text,pid,bundle)) or app_text
+ if crash_reports:return "HOST_CRASH"
+ if disappeared is None:
+  return "" if result_produced or launch_rc==0 else ("LAUNCH_REPLACEMENT" if "already running" in launch_text.lower() else "")
+ if re.search(r"exception type|crashed thread|segmentation fault|exc_bad_access",target_system,re.I):return "HOST_CRASH"
+ if re.search(r"watchdog|0x8badf00d|jetsam",target_system,re.I):return "WATCHDOG"
+ if re.search(r"runningboard[^\n]*(?:terminate|kill)|termination namespace|termination reason",target_system,re.I):return "RUNNINGBOARD_TERMINATION"
+ if re.search(r"(?:called abort|abort\(\)|SIGABRT|signal 6)",target_app,re.I):return "EXPLICIT_ABORT_OR_EXIT"
+ if re.search(r"(?:termination request from|requested termination|launch replacement)",target_system,re.I):return "EXTERNAL_TERMINATION"
+ return "TARGET_PROCESS_DISAPPEARED"
 def main():
  p=argparse.ArgumentParser();p.add_argument("--device",required=True);p.add_argument("--bundle",required=True);p.add_argument("--data",required=True);p.add_argument("--artifacts",required=True);p.add_argument("--timeout",type=int,default=150);a=p.parse_args()
  art=pathlib.Path(a.artifacts);art.mkdir(parents=True,exist_ok=True);data=pathlib.Path(a.data);documents=data/"Documents";result=documents/"runtime-smoke.json"
@@ -76,22 +94,18 @@ def main():
  evidence_paths=[art/"pvs-app-stdout.txt",art/"pvs-app-stderr.txt",art/"pvs-host-log-stream.txt",art/"pvs-simulator-log-stream.txt",art/"pvs-host-log-show.txt",art/"pvs-simulator-log-show.txt",*map(pathlib.Path,reports)]
  for path in evidence_paths:
   if path.exists():texts.append(read(path))
- joined="\n".join(texts);classification="UNKNOWN_WITH_PRECISE_MISSING_EVIDENCE";remaining=[]
+ joined="\n".join(texts);remaining=[]
  crash_fields=bounded_lines("\n".join(read(pathlib.Path(p)) for p in reports),r"exception type|exception codes|termination reason|termination namespace|crashed thread|triggered by thread|faulting thread|fault address|signal")
  system_events=bounded_lines(joined,r"runningboard|termination|terminate|watchdog|jetsam|killed|exited|exit status|signal|crash|abort|invalidated",120)
  app_events=bounded_lines(read(app_stdout)+"\n"+read(app_stderr),r"abort|exit|fatal|exception|failure|guest|runtime|assert",80)
- if reports or re.search(r"exception type|crashed thread|segmentation fault|exc_bad_access",joined,re.I):classification="HOST_CRASH"
- elif re.search(r"watchdog|runningboard[^\n]*(?:terminate|kill)|jetsam|0x8badf00d",joined,re.I):classification="OS_WATCHDOG_OR_RUNNINGBOARD_TERMINATION"
- elif re.search(r"(?:called abort|abort\(\)|SIGABRT|exited? due to signal 6|termination reason[^\n]*abort)",joined,re.I):classification="EXPLICIT_ABORT_OR_EXIT"
- elif re.search(r"(?:termination request from|requested termination|killed by (?!watchdog)|launch replacement)",joined,re.I):classification="EXTERNAL_PROCESS_TERMINATION"
- elif result.is_file() and result.stat().st_size:classification="TEST_HARNESS_TERMINATION"
- elif rc!=0:classification="LAUNCH_REPLACEMENT" if "already running" in (out+err).lower() else "UNKNOWN_WITH_PRECISE_MISSING_EVIDENCE";remaining=[] if classification!="UNKNOWN_WITH_PRECISE_MISSING_EVIDENCE" else ["LAUNCH_FAILURE_WITHOUT_CLASSIFIED_REASON"]
- else:remaining=["HOST_CRASH_WITHOUT_DIAGNOSTIC_REPORT","EXTERNAL_OR_OS_TERMINATION_WITHOUT_RECORDED_CALLER"]
+ result_produced=result.is_file() and result.stat().st_size>0
+ classification=classify_target_exit(pid,disappeared,result_produced,rc,out+err,read(app_stdout)+"\n"+read(app_stderr),joined,reports,a.bundle)
+ if not classification and not result_produced and disappeared is not None:remaining=["TARGET_DISAPPEARED_WITHOUT_TYPED_TERMINATION_EVIDENCE"]
  evidence={"schema_version":1,"classification":classification,"pid":pid,"launch_rc":rc,"launch_timestamp":launch_time,
   "last_alive_timestamp":last_alive,"disappearance_timestamp":disappeared,"collection_end_timestamp":ended,
-  "result_produced":result.is_file() and result.stat().st_size>0,"crash_reports":reports,"crash_report_fields":crash_fields,
+  "result_produced":result_produced,"crash_reports":reports,"crash_report_fields":crash_fields,
   "system_termination_events":system_events,"app_failure_events":app_events,"state_files":state_files,"remaining_candidates":remaining,
-  "missing_evidence":[] if classification!="UNKNOWN_WITH_PRECISE_MISSING_EVIDENCE" else ["termination namespace/code or caller identity"],
+  "missing_evidence":remaining,
   "passive":True,"intrusive":False}
  (art/"process-forensic.json").write_text(json.dumps(evidence,indent=2)+"\n",encoding="utf-8");print(json.dumps(evidence,separators=(",",":")))
  return 0 if evidence["result_produced"] else 1

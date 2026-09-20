@@ -2,13 +2,13 @@
 
 Updated: 2026-09-20
 
-Baseline: `main @ dd83c7425e49a33b8a87d047b39d1b36a8e5464e`
+Baseline: `main @ 09d6953e3e2f2bf6ca63565e5458a71815d298e7`
 
-Last known good: `dd83c7425e49a33b8a87d047b39d1b36a8e5464e` on formal `main`
+Last known good: `09d6953e3e2f2bf6ca63565e5458a71815d298e7` on formal `main`
 
-Active branch: `feature/engineering-framework-v2` (PVS1 candidate plus the governance framework required before closure; the exact tested SHA/tree is recorded only by `run-summary.json`)
+Active branch: `main` (PVS1 closure-tested tree merged; evidence-classifier governance correction in progress)
 
-Lifecycle state: `IMPLEMENTED` (closure candidate under verification, not `CLOSED`, not `MERGED`)
+Lifecycle state: `MERGED` (`PVS1` closure-tested tree is on main)
 
 ## Active Target
 
@@ -42,11 +42,11 @@ The current harness divergence is that a fixed wall-clock threshold was treated 
 
 ## Remaining Uncertainty
 
-The corrected candidate has not completed a valid closure run on its exact commit/tree, so PVS1 remains `IMPLEMENTED`.
+No PVS1 closure uncertainty remains. The evidence classifier is being corrected so a passing target cannot retain a normalized failure signature or a process-death class inferred from unrelated system logs.
 
 ## Next Validation
 
-Use the single automatic rerun permitted after correcting invalid closure attempt `35485955807`. The rerun must retain the 100,000-event ordering stress, finish bounded real-APK evidence collection, and satisfy the existing PVS1 closure contract.
+Run the focused evidence-classifier governance contracts. A full PVS1 closure rerun is not required because this correction does not change Runtime production behavior.
 
 ## Proven Working
 
@@ -73,10 +73,9 @@ Use the single automatic rerun permitted after correcting invalid closure attemp
 
 ## Current Allowed Work
 
-- closure verification of the proven DEX Activity ownership fix
-- focused Activity GC-root, bounded swap-wait, and concurrent InputQueue contracts
-- PVS1 target gate and evidence generation
-- directly required NativeActivity/Input/Looper/window teardown semantics
+- evidence-classifier governance correction
+- focused failure-signature and target-process termination contracts
+- establishing the next active target from the latest formal main after this governance correction merges
 
 ## Explicitly Not Current Work
 
@@ -87,7 +86,7 @@ Use the single automatic rerun permitted after correcting invalid closure attemp
 
 ## Next Action
 
-Runs `35469009073` and `35485955807` are `INVALID` harness attempts and consumed no valid closure budget. The first automatic rerun exposed a second independent harness defect: a host-performance threshold with no API19 semantic basis. That defect is corrected, so one automatic rerun of `35485955807` is permitted without additional approval. PVS1 remains not closed until the exact-candidate rerun is `VALID_PASS`.
+Finish the focused evidence-classifier contracts, then create `DEX Parser Compatibility Phase 1` from the latest formal main.
 
 ## Closure Contract
 

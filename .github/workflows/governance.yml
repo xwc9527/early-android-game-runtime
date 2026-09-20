@@ -31,7 +31,9 @@ jobs:
             python3 ci/semantic-diff.py validate "$file"
           done
       - name: Run Framework V2 contract
-        run: python3 ci/framework-v2-contract.py
+        run: |
+          python3 ci/framework-v2-contract.py
+          python3 ci/test-evidence-classifier.py
       - name: Validate JSON documents
         run: |
           python3 - <<'PY'

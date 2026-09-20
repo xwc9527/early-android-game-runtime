@@ -1,12 +1,4 @@
 {
   "schema_version": 1,
-  "reopens": [
-    {
-      "target": "PVS1",
-      "module": "Linker",
-      "reason": "Generic APK bootstrap required formal linker API exposure without changing linker ownership",
-      "evidence": "commit 1111664 and required linker contract regression",
-      "allowed_condition": "current gameplay blocker directly entered formal linker load/binding"
-    }
-  ]
+  "reopens": []
 }

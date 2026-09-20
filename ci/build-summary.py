@@ -58,11 +58,14 @@ def main():
     closure_result=result.get("pvs1_closure",{})
     clean_teardown=bool(closure_result.get("clean_teardown",result.get("teardown_completed",False)))
     target_pass=bool(closure_result.get("passed",False) and clean_teardown)
-    raw_reason=result.get("runtime_failure_signature") or result.get("gameplay_failure") or ""
-    exit_classification=diagnostic.get("classification","")
-    normalized=("pvs1:runtime:failure:runtime" if raw_reason else
-                (f"pvs1:process_exit:{exit_classification.lower()}" if exit_classification and not target_pass else
-                 ("" if target_pass else "pvs1:target:requirements_unmet:closure")))
+    runtime_reason=result.get("runtime_failure_signature") or ""
+    runtime_outcome=result.get("gameplay_outcome")=="runtime_failure"
+    raw_reason=runtime_reason or (result.get("gameplay_failure") or "" if runtime_outcome else "")
+    exit_classification="" if target_pass else diagnostic.get("classification","")
+    normalized=("" if target_pass else
+                ("pvs1:runtime:failure:runtime" if raw_reason else
+                 (f"pvs1:process_exit:{exit_classification.lower()}" if exit_classification else
+                  "pvs1:target:requirements_unmet:closure")))
     raw_hash=hashlib.sha256(json.dumps(result,sort_keys=True).encode()).hexdigest() if result else ""
     normalized_stages={
       "contracts":{"pass":"PASS","fail":"FAIL","blocked":"NOT_RUN_DEFECT","skipped":"NOT_RUN_DEFECT","unknown":"NOT_RUN_DEFECT"}[status(args.contracts_status)],

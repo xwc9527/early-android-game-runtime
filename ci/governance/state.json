@@ -2,24 +2,30 @@
   "schema_version": 1,
   "baseline": {
     "branch": "main",
-    "commit": "dd83c7425e49a33b8a87d047b39d1b36a8e5464e",
-    "last_known_good": "dd83c7425e49a33b8a87d047b39d1b36a8e5464e"
+    "commit": "09d6953e3e2f2bf6ca63565e5458a71815d298e7",
+    "last_known_good": "09d6953e3e2f2bf6ca63565e5458a71815d298e7"
   },
   "active": {
-    "target": "PVS1",
-    "branch": "feature/engineering-framework-v2",
+    "target": "Evidence Classifier V2.1 correction",
+    "branch": "fix/evidence-classifier-v2.1",
     "lifecycle": "IMPLEMENTED",
-    "observed_discontinuity": "closure run 35485955807 passed every PVS1 requirement and 100000 ordered InputQueue lifecycles but failed a non-API19 10-second shared-runner wall-clock threshold",
-    "android_subsystem": "Simulator InputQueue contract harness",
+    "observed_discontinuity": "a passing PVS1 target retained a normalized failure signature and unrelated RunningBoard log lines could classify AGR process death",
+    "android_subsystem": "governance evidence classifier",
     "upstream_path": [],
-    "agr_path": ["agr_guest_run_core_contracts", "input_elapsed_ms", "fixed 10000 ms compatibility threshold"],
+    "agr_path": [
+      "ci/build-summary.py",
+      "ci/forensic-simulator-process.py"
+    ],
     "active_explanations": [],
-    "earliest_evidenced_divergence": "the harness converted shared-host elapsed time into an Android compatibility result",
-    "semantic_class": "UPSTREAM_IMPLEMENTATION_DETAIL",
+    "earliest_evidenced_divergence": "classification consumed non-failure gameplay markers and unfiltered system-wide termination text before enforcing target identity",
+    "semantic_class": "SEMANTIC_INVARIANT",
     "causal_status": "CONTRACT_CONFIRMED",
     "evidence_level": "CONTRACT_CONFIRMED",
     "classification": "HARNESS_BUG",
-    "next_validation": "use the one automatic rerun permitted after correcting INVALID closure attempt 35485955807"
+    "next_validation": "focused evidence-classifier governance contracts",
+    "primary_blocker": "focused governance contracts not yet verified in CI",
+    "first_broken_boundary": "evidence normalization and target identity filtering",
+    "first_broken_boundary_evidence": "PVS1 VALID_PASS artifact and classifier focused contracts"
   },
   "ci_budget": {
     "valid_closure_runs": 1,

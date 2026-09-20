@@ -9,10 +9,10 @@ Status controls modification permission, not total completeness. `stable` means 
 | EHABI/C++ exceptions | stable | `503f88a`/`eb024d4`/`da20772` lineage | EHABI Phase 1/2A/2B differential | guest GCC exception regression |
 | API19 allocator | stable | `dd83c742` baseline lineage | allocator contract/stress and API19 differential | heap semantic regression on primary path |
 | APK bootstrap | stable | `1111664` | PVS bootstrap gate | manifest, DEX startup, loadLibrary, or binding regression |
-| NativeActivity/Window | active | — | PVS1 target gate | current active target |
-| Looper/InputQueue | active | — | PVS1 input contract | current active target |
-| Simulator regression harness | active | — | bounded smoke and evidence gate | current primary blocker |
-| DEX Runtime Activity lifecycle | active | — | Activity GC-root contract and PVS1 real-APK gate | discovery proved host-owned launched Activity was absent from VM roots |
+| NativeActivity/Window | stable | `09d6953e` | PVS1 target gate | proven lifecycle/window regression |
+| Looper/InputQueue | stable | `09d6953e` | PVS1 input contract | proven queue, ownership, or consumption regression |
+| Simulator regression harness | stable | `09d6953e` | bounded smoke and evidence gate | proven harness contract defect affecting active evidence |
+| DEX Runtime Activity lifecycle | stable | `09d6953e` | Activity GC-root contract and PVS1 real-APK gate | proven Activity/root lifetime regression |
 | DEX/Dalvik completeness | experimental | — | focused DEX/JNI contracts | future declared migration target |
 | Framework HLE | experimental | — | focused public API contracts | gameplay proves a public missing behavior |
 | Audio/OpenSL ES | experimental | — | — | declared gameplay target requires audio |

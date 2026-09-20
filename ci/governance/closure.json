@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "target": "PVS1",
-  "state": "ACTIVE",
-  "closure_tested_commit": null,
-  "closure_tested_tree": null,
+  "state": "MERGED",
+  "closure_tested_commit": "09d6953e3e2f2bf6ca63565e5458a71815d298e7",
+  "closure_tested_tree": "3beff7b289adf09ca755bf5c7ea1e2ac3e5c3298",
   "closure_base_commit": "dd83c7425e49a33b8a87d047b39d1b36a8e5464e",
   "eligible_for_merge": false,
-  "merged_commit": null,
-  "merged_tree": null
+  "merged_commit": "09d6953e3e2f2bf6ca63565e5458a71815d298e7",
+  "merged_tree": "3beff7b289adf09ca755bf5c7ea1e2ac3e5c3298"
 }
