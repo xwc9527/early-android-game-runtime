@@ -32,7 +32,7 @@ def main():
     p.add_argument("--result")
     p.add_argument("--diagnostic")
     p.add_argument("--semantic-diff")
-    p.add_argument("--valid-run", choices=("true","false"), default="true")
+    p.add_argument("--infrastructure-defect", action="append", default=[], choices=("HARNESS_DEFECT","RUNNER_DEFECT","COLLECTOR_DEFECT","ARTIFACT_DEFECT","TIMEOUT_HIERARCHY_DEFECT","WORKFLOW_DEFECT"))
     p.add_argument("--output", default="build/artifacts/run-summary.json")
     args = p.parse_args()
     state = read_json("ci/governance/state.json")
@@ -64,14 +64,29 @@ def main():
                 (f"pvs1:process_exit:{exit_classification.lower()}" if exit_classification and not target_pass else
                  ("" if target_pass else "pvs1:target:requirements_unmet:closure")))
     raw_hash=hashlib.sha256(json.dumps(result,sort_keys=True).encode()).hexdigest() if result else ""
-    valid=args.valid_run=="true"
-    eligible=(args.run_kind=="closure" and valid and status(args.build_status)=="pass" and
-              status(args.contracts_status)=="pass" and status(args.regressions_status)=="pass" and target_pass)
+    normalized_stages={
+      "contracts":{"pass":"PASS","fail":"FAIL","blocked":"NOT_RUN_DEFECT","skipped":"NOT_RUN_DEFECT","unknown":"NOT_RUN_DEFECT"}[status(args.contracts_status)],
+      "simulator_smoke":{"pass":"PASS","fail":"FAIL","blocked":"NOT_RUN_DEFECT","skipped":"NOT_RUN_DEFECT","unknown":"NOT_RUN_DEFECT"}[status(args.build_status)],
+      "regressions":{"pass":"PASS","fail":"FAIL","blocked":"BLOCKED_BY_VALID_FAILURE" if status(args.build_status)=="fail" else "NOT_RUN_DEFECT",
+                     "skipped":"BLOCKED_BY_VALID_FAILURE" if status(args.build_status)=="fail" else "NOT_RUN_DEFECT",
+                     "unknown":"NOT_RUN_DEFECT"}[status(args.regressions_status)]}
+    result_present=bool(args.result and (ROOT/args.result).is_file())
+    diagnostic_present=bool(args.diagnostic and (ROOT/args.diagnostic).is_file())
+    evidence={"target_or_failure_evidence":result_present or diagnostic_present,
+              "diagnostic":diagnostic_present,
+              "semantic_diff":bool(args.semantic_diff and (ROOT/args.semantic_diff).is_file())}
+    defects=list(dict.fromkeys(args.infrastructure_defect))
+    if args.run_kind=="closure" and diagnostic.get("classification")=="HARNESS_BUG": defects.append("HARNESS_DEFECT")
+    attempt={"classification":"NOT_APPLICABLE","consumes_budget":False,"automatic_rerun_permitted":False,
+             "required_stages":normalized_stages if args.run_kind=="closure" else {},
+             "required_evidence":evidence if args.run_kind=="closure" else {},
+             "infrastructure_defects":list(dict.fromkeys(defects))}
     summary={
       "schema_version":1,
       "run":{"workflow_id":os.getenv("GITHUB_RUN_ID","local"),"tested_commit":head,"tested_tree":tree,
              "baseline_commit":baseline,"branch":os.getenv("GITHUB_REF_NAME",git("branch","--show-current")),
-             "platform":args.platform,"runner":os.getenv("RUNNER_OS","local"),"valid_run":valid,"kind":args.run_kind},
+             "platform":args.platform,"runner":os.getenv("RUNNER_OS","local"),"valid_run":False,"kind":args.run_kind,
+             "closure_attempt":attempt},
       "changes":{"files":files,"modules":touched,"stable_modules_touched":stable,
                  "stable_module_reopens":[r for r in reopens if r.get("target")==state.get("active",{}).get("target") and r.get("module") in stable]},
       "build":{"status":status(args.build_status)},
@@ -106,11 +121,24 @@ def main():
           "next_action":semantic.get("next_action",diagnostic.get("next_action","")),
           "semantic_diff_artifact":args.semantic_diff or diagnostic.get("semantic_diff_artifact","")},
       "closure":{"target":target_def.get("target","PVS1"),"tested_commit":head,"tested_tree":tree,
-                 "base_commit":baseline,"state":"CLOSED" if eligible else "IMPLEMENTED",
-                 "eligible_for_merge":eligible},
+                 "base_commit":baseline,"state":"IMPLEMENTED","eligible_for_merge":False},
       "artifacts":{"runtime_result":args.result or "","diagnostics":args.diagnostic or "",
                    "semantic_diff":args.semantic_diff or "","full_logs":""}
     }
+    if args.run_kind=="closure":
+        spec=importlib.util.spec_from_file_location("closure_attempt_tool",ROOT/"ci/closure-attempt.py")
+        attempt_tool=importlib.util.module_from_spec(spec);spec.loader.exec_module(attempt_tool)
+        classification,reasons=attempt_tool.classify_summary(summary)
+        attempt.update({"classification":classification,"reasons":reasons,
+                        "consumes_budget":classification in ("VALID_PASS","VALID_FAIL"),
+                        "automatic_rerun_permitted":classification=="INVALID"})
+        summary["run"]["valid_run"]=classification in ("VALID_PASS","VALID_FAIL")
+        eligible=(classification=="VALID_PASS" and status(args.build_status)=="pass" and
+                  status(args.contracts_status)=="pass" and status(args.regressions_status)=="pass" and target_pass)
+        summary["closure"]["state"]="CLOSED" if eligible else "IMPLEMENTED"
+        summary["closure"]["eligible_for_merge"]=eligible
+    else:
+        eligible=False
     out=ROOT/args.output;out.parent.mkdir(parents=True,exist_ok=True)
     out.write_text(json.dumps(summary,indent=2)+"\n",encoding="utf-8")
     print("AGR RUN SUMMARY")

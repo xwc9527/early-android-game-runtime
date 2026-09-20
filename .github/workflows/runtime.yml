@@ -144,15 +144,30 @@ jobs:
             --result build/artifacts/runtime-smoke.json \
             --diagnostic build/artifacts/process-forensic.json \
             --semantic-diff ci/governance/semantic-diffs/pvs1-activity-gc-root.json
-      - name: Validate closure candidate identity
-        if: ${{ always() && inputs.run_kind == 'closure' }}
-        run: python3 ci/validate-governance.py --mode closure --summary build/artifacts/run-summary.json
       - name: Upload Simulator evidence
+        id: evidence_upload
+        continue-on-error: true
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ios-simulator-runtime-smoke-${{ matrix.shard }}
-          path: build/artifacts
+          path: |
+            build/artifacts
+            !build/artifacts/run-summary.json
+      - name: Finalize closure attempt validity
+        if: ${{ always() && inputs.run_kind == 'closure' && steps.evidence_upload.outcome != 'success' }}
+        run: python3 ci/closure-attempt.py --invalidate-summary build/artifacts/run-summary.json --defect ARTIFACT_DEFECT
+      - name: Validate closure candidate identity
+        id: closure_validation
+        continue-on-error: true
+        if: ${{ always() && inputs.run_kind == 'closure' }}
+        run: python3 ci/validate-governance.py --mode closure --summary build/artifacts/run-summary.json
+      - name: Upload finalized closure summary
+        if: ${{ always() && inputs.run_kind == 'closure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-closure-summary-${{ matrix.shard }}
+          path: build/artifacts/run-summary.json
       - name: Enforce Runtime result
         if: always()
         run: |
@@ -160,4 +175,7 @@ jobs:
           if [[ '${{ inputs.contracts_only }}' != 'true' ]]; then
             test '${{ steps.smoke.outcome }}' = success
             test '${{ steps.regressions.outcome }}' = success
+          fi
+          if [[ '${{ inputs.run_kind }}' == 'closure' ]]; then
+            test '${{ steps.closure_validation.outcome }}' = success
           fi

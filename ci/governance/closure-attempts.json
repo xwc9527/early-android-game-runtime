@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "policy": {
+    "valid_attempt_budget": 1,
+    "invalid_attempts_consume_budget": false,
+    "automatic_reruns_after_invalid": 1,
+    "second_run_after_valid_fail_requires_approval": true
+  },
+  "budget": {
+    "valid_attempts_used": 0,
+    "valid_attempts_remaining": 1
+  },
+  "attempts": [
+    {
+      "run_id": "35469009073",
+      "tested_commit": "15dcd2223eaead03837a4645fbc5d044fb2b3502",
+      "tested_tree": "a372ece3c0b62f694abd268a6adf596c878fe0c4",
+      "classification": "INVALID",
+      "defect_class": "TIMEOUT_HIERARCHY_DEFECT",
+      "reason": "the 180-second outer timeout was shorter than the collector's declared maximum duration",
+      "consumes_budget": false,
+      "automatic_rerun": "AVAILABLE_AFTER_FIX"
+    }
+  ]
+}

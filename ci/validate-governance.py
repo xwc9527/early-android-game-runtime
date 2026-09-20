@@ -41,14 +41,17 @@ def main() -> int:
                 "docs/MODULE_STATUS.md", "docs/TESTING.md", "ci/governance/state.json",
                 "ci/governance/modules.json", "ci/governance/reopens.json", "ci/governance/closure.json",
                 "ci/governance/upstream-map.json", "ci/governance/diagnostic-cutpoints.json",
-                "ci/governance/expensive-run-plan.json", "ci/experiments.json",
+                "ci/governance/expensive-run-plan.json", "ci/governance/closure-attempts.json", "ci/experiments.json",
                 "artifacts/schema/semantic-diff.schema.json", "artifacts/schema/upstream-map.schema.json",
-                "artifacts/schema/experiments.schema.json"]
+                "artifacts/schema/experiments.schema.json", "artifacts/schema/closure-attempts.schema.json"]
     errors = [f"missing:{p}" for p in required if not (ROOT / p).is_file()]
     state, registry, closure = load("ci/governance/state.json"), load("ci/governance/modules.json"), load("ci/governance/closure.json")
     upstream_map = load("ci/governance/upstream-map.json")
     experiments = load("ci/experiments.json")
     reopens = load("ci/governance/reopens.json").get("reopens", [])
+    attempt_spec = spec_from_file_location("closure_attempt_tool", ROOT / "ci/closure-attempt.py")
+    attempt_tool = module_from_spec(attempt_spec); attempt_spec.loader.exec_module(attempt_tool)
+    errors.extend(attempt_tool.validate_ledger(load("ci/governance/closure-attempts.json")))
     if state["baseline"]["last_known_good"] != state["baseline"]["commit"]:
         errors.append("last_known_good must be the formal main baseline commit")
     if upstream_map.get("android_baseline") != "Android 4.4.4_r2":
@@ -85,7 +88,10 @@ def main() -> int:
             if c.get("tested_commit") != head: errors.append("MERGE_CANDIDATE_HEAD != CLOSURE_TESTED_COMMIT")
             if c.get("tested_tree") != tree: errors.append("candidate tree != closure tested tree")
             if not c.get("eligible_for_merge"): errors.append("closure is not merge eligible")
-            if not summary.get("run", {}).get("valid_run"): errors.append("closure run is infrastructure-invalid")
+            classification, classification_reasons = attempt_tool.classify_summary(summary)
+            declared = summary.get("run", {}).get("closure_attempt", {}).get("classification")
+            if declared != classification: errors.append(f"closure attempt classification mismatch: {declared} != {classification}")
+            if classification != "VALID_PASS": errors.append("closure attempt is not VALID_PASS: " + "; ".join(classification_reasons))
             diagnosis = summary.get("diagnosis", {})
             upstream = diagnosis.get("upstream", {})
             map_entry = upstream.get("map_entry")

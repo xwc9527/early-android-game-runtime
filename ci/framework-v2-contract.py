@@ -60,6 +60,12 @@ def main():
 
     schema = load("artifacts/schema/run-summary.schema.json")
     require("diagnosis" in schema["required"], "run summary does not require diagnosis")
+    attempt_spec = importlib.util.spec_from_file_location("closure_attempt", ROOT / "ci/closure-attempt.py")
+    attempt_module = importlib.util.module_from_spec(attempt_spec); attempt_spec.loader.exec_module(attempt_module)
+    ledger = load("ci/governance/closure-attempts.json")
+    require(not attempt_module.validate_ledger(ledger), "invalid closure attempt ledger")
+    require(ledger["budget"]["valid_attempts_used"] == 0, "INVALID closure run consumed budget")
+    require(ledger["attempts"][0]["automatic_rerun"] == "AVAILABLE_AFTER_FIX", "corrected INVALID run lacks automatic rerun")
     cutpoints = load("ci/governance/diagnostic-cutpoints.json")
     require(cutpoints["rules"]["test_only"] is True, "cut points must be test-only")
     require(cutpoints["rules"]["production_shortcut"] is False, "cut points became production shortcuts")

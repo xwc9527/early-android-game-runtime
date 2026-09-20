@@ -51,7 +51,9 @@ A discovery run maximizes evidence and may fail. It may use explicitly marked in
 
 Before an expensive discovery run, its plan states one question, remaining uncertainty, both expected outcomes and exclusions, and why a cheaper test cannot answer it. Two consecutive expensive runs without information gain stop the expensive loop and require a different diagnostic strategy.
 
-A closure run executes the exact target contract against the final candidate commit/tree. It rejects active experiments, behavior-changing diagnostics, unexplained stable-module production changes, and semantic differentials that still require an experiment. Infrastructure-invalid runs do not consume the run budget.
+A closure run executes the exact target contract against the final candidate commit/tree. It rejects active experiments, behavior-changing diagnostics, unexplained stable-module production changes, and semantic differentials that still require an experiment.
+
+Closure attempts are classified as `VALID_PASS`, `VALID_FAIL`, or `INVALID`. Only the two `VALID_*` outcomes consume closure budget. Validity requires every required closure stage to have its configured completion opportunity and all required evidence to be collected. Harness, runner, collector, artifact, timeout-hierarchy, and workflow defects force `INVALID`. Once such a defect is fixed, one automatic rerun is allowed without user approval. After a `VALID_FAIL`, a second run requires explicit approval. `ci/governance/closure-attempts.json` is the accounting ledger; `ci/closure-attempt.py` rejects inconsistent classifications or counters.
 
 Closure evidence must include `tested_commit`, `tested_tree`, `base_commit`, target results, relevant regressions, diagnostics mode, and `eligible_for_merge`.
 

@@ -7,7 +7,7 @@
   },
   "active": {
     "target": "PVS1",
-    "branch": "playable-vertical-slice-1",
+    "branch": "feature/engineering-framework-v2",
     "lifecycle": "IMPLEMENTED",
     "observed_discontinuity": "closure run 35469009073 exited 124 at 180.161 seconds while the app remained alive through the full 150-second observation",
     "android_subsystem": "CI regression harness",
@@ -19,12 +19,14 @@
     "causal_status": "PLAUSIBLE",
     "evidence_level": "RUNTIME_OBSERVED",
     "classification": "HARNESS_BUG",
-    "next_validation": "run the exact corrected candidate through one valid closure workflow after budget reset"
+    "next_validation": "use the one automatic rerun permitted after correcting INVALID closure attempt 35469009073"
   },
   "ci_budget": {
     "valid_closure_runs": 1,
     "infrastructure_failures_consume_budget": false,
-    "closure_runs_used": 1,
+    "closure_runs_used": 0,
+    "last_closure_attempt": "INVALID",
+    "automatic_reruns_available": 1,
     "discovery_policy": "information_gain",
     "consecutive_expensive_runs_without_information_gain": 0
   }

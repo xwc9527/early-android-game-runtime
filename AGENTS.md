@@ -92,7 +92,7 @@ Discovery has no fixed run count. Before each full macOS/Simulator run, record t
 
 After two consecutive expensive runs without a new divergence, causal evidence, eliminated major explanation, smaller subsystem, or reproducible contract, stop expensive runs and change strategy to source audit, minimal reproducer, reference differential, counterfactual experiment, or cut-point test.
 
-Closure candidates retain strict run budgeting. Infrastructure-invalid runs do not consume it.
+Closure candidates retain strict run budgeting. Only a `VALID_PASS` or `VALID_FAIL` attempt consumes budget. A closure attempt is valid only when every required stage had its configured opportunity to reach a terminal result and all required evidence was collected. Harness, runner, collector, artifact, timeout-hierarchy, and workflow defects classify the attempt as `INVALID` and consume no budget. After fixing an `INVALID` attempt, one automatic rerun is permitted without user approval. A second run after `VALID_FAIL` requires explicit approval.
 
 ## STOP Rule
 

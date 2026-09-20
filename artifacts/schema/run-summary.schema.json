@@ -5,7 +5,7 @@
   "required": ["schema_version","run","changes","build","contracts","regressions","target","warnings","diagnostics","diagnosis","closure","artifacts"],
   "properties": {
     "schema_version": {"const": 1},
-    "run": {"type":"object","required":["tested_commit","tested_tree","baseline_commit","branch","platform","valid_run"]},
+    "run": {"type":"object","required":["tested_commit","tested_tree","baseline_commit","branch","platform","valid_run","closure_attempt"],"properties":{"closure_attempt":{"type":"object","required":["classification","consumes_budget","automatic_rerun_permitted","required_stages","required_evidence","infrastructure_defects"],"properties":{"classification":{"enum":["NOT_APPLICABLE","VALID_PASS","VALID_FAIL","INVALID"]},"consumes_budget":{"type":"boolean"},"automatic_rerun_permitted":{"type":"boolean"}}}}},
     "changes": {"type":"object","required":["files","modules","stable_modules_touched"]},
     "build": {"type":"object","required":["status"]},
     "contracts": {"type":"object","required":["status","new_failures","resolved_failures"]},

@@ -6,7 +6,7 @@ Baseline: `main @ dd83c7425e49a33b8a87d047b39d1b36a8e5464e`
 
 Last known good: `dd83c7425e49a33b8a87d047b39d1b36a8e5464e` on formal `main`
 
-Active branch: `playable-vertical-slice-1` (the exact tested SHA/tree is recorded only by `run-summary.json`)
+Active branch: `feature/engineering-framework-v2` (PVS1 candidate plus the governance framework required before closure; the exact tested SHA/tree is recorded only by `run-summary.json`)
 
 Lifecycle state: `IMPLEMENTED` (closure candidate under verification, not `CLOSED`, not `MERGED`)
 
@@ -46,7 +46,7 @@ The corrected candidate has not completed a valid closure run on its exact commi
 
 ## Next Validation
 
-Run the exact corrected candidate through one valid closure workflow after the closure budget is explicitly reset. The run must finish its bounded real-APK evidence collection and satisfy the existing PVS1 closure contract.
+Use the single automatic rerun permitted after correcting invalid closure attempt `35469009073`. The rerun must finish its bounded real-APK evidence collection and satisfy the existing PVS1 closure contract.
 
 ## Proven Working
 
@@ -87,7 +87,7 @@ Run the exact corrected candidate through one valid closure workflow after the c
 
 ## Next Action
 
-The configured closure budget has been consumed by run `35469009073`. PVS1 remains not closed. A further closure run requires an explicit budget reset because the corrected harness changes the candidate tree.
+Run `35469009073` is `INVALID`: its timeout hierarchy could terminate the collector before its configured evidence window completed. It consumed no valid closure budget. The harness defect is corrected, so one automatic rerun is permitted without additional approval. PVS1 remains not closed until that exact-candidate rerun is `VALID_PASS`.
 
 ## Closure Contract
 

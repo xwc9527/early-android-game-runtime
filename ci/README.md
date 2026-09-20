@@ -11,6 +11,7 @@
 - `semantic-diff.py` creates and validates the source/runtime semantic differential used during discovery and closure.
 - `upstream-map.py` computes VALID/STALE/UNVERIFIED/INVALID map state from pinned revision, tracked AGR hashes, and dependencies. The map is a cache, not an oracle.
 - `validate-expensive-run.py` admits a discovery Simulator run only when the committed plan asks a discriminating question and the loop breaker permits it.
+- `closure-attempt.py` derives and validates `VALID_PASS`, `VALID_FAIL`, and `INVALID` closure-attempt accounting. Only valid attempts consume budget.
 - `experiments.json` registers temporary counterfactual code. Closure rejects enabled or unresolved entries and `AGR_EXPERIMENTAL_*` in production code.
 - `governance/diagnostic-cutpoints.json` registers test-only cut points.
 

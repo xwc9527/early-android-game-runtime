@@ -19,7 +19,7 @@ def main():
   for run in runs.get("workflow_runs",[]):
    arts=api(run["artifacts_url"])
    for art in arts.get("artifacts",[]):
-    if not art["name"].startswith("ios-simulator-runtime-smoke-"):continue
+    if not art["name"].startswith("ios-simulator-closure-summary-"):continue
     with zipfile.ZipFile(io.BytesIO(bytes_url(art["archive_download_url"]))) as z:
      names=[n for n in z.namelist() if n.endswith("run-summary.json")]
      if not names:continue

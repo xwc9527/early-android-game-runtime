@@ -47,7 +47,7 @@
   "remaining_uncertainty": [
     "the corrected timeout hierarchy has not completed an exact-candidate closure run"
   ],
-  "next_action": "run one exact-candidate closure workflow after budget reset",
+  "next_action": "use the one automatic exact-candidate rerun permitted after correction of an INVALID closure attempt",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "Not applicable; this is outside the Runtime."
