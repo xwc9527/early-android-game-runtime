@@ -18,7 +18,8 @@ def bytes_url(url):
  req=urllib.request.Request(url,headers={"Authorization":f"Bearer {os.environ['GITHUB_TOKEN']}","Accept":"application/vnd.github+json"})
  with urllib.request.build_opener(ArtifactRedirectHandler()).open(req,timeout=60) as r:return r.read()
 def main():
- repo=os.environ["GITHUB_REPOSITORY"];parents=git("rev-list","--parents","-n1","HEAD").split();candidates=parents
+ repo=os.environ["GITHUB_REPOSITORY"]
+ candidates=git("rev-list","--first-parent","--max-count=64","HEAD").splitlines()
  for sha in candidates:
   candidate_tree=git("rev-parse",f"{sha}^{{tree}}")
   runs=api(f"https://api.github.com/repos/{repo}/actions/workflows/runtime.yml/runs?head_sha={sha}&status=success&per_page=20")
