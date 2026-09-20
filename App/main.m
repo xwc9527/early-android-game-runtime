@@ -835,6 +835,37 @@ static NSArray *runBatchCompatibility(NSDictionary *gloomy, NSDictionary *kungfo
     return results;
 }
 
+static NSString *runDexParserCompatibility(void) {
+    NSString *path=[[NSBundle mainBundle] pathForResource:@"batch-plan" ofType:@"json"];
+    NSData *data=path ? [NSData dataWithContentsOfFile:path] : nil;
+    NSDictionary *plan=data ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
+    NSMutableArray *results=[NSMutableArray array];
+    NSMutableArray *failures=[NSMutableArray array];
+    NSSet *required=[NSSet setWithArray:@[@"pixel-dungeon",@"frozen-bubble"]];
+    NSMutableSet *observed=[NSMutableSet set];
+    for (NSDictionary *sample in plan[@"samples"] ?: @[]) {
+        NSString *sampleId=sample[@"id"];
+        if (![required containsObject:sampleId]) continue;
+        NSDictionary *result=probeGenericSample(sample);
+        [results addObject:result];
+        [observed addObject:sampleId];
+        NSString *stage=result[@"stage"], *signature=result[@"signature"];
+        if (![stage isEqualToString:@"dex_loaded"] || [signature hasPrefix:@"dex_parse"] ||
+            [signature isEqualToString:@"dex_parse_failed"]) {
+            [failures addObject:[NSString stringWithFormat:@"%@:%@:%@",sampleId ?: @"unknown",
+                stage ?: @"missing_stage",signature ?: @"missing_signature"]];
+        }
+    }
+    for (NSString *sampleId in required) {
+        if (![observed containsObject:sampleId])
+            [failures addObject:[NSString stringWithFormat:@"%@:%@",sampleId,@"sample_missing"]];
+    }
+    NSDictionary *report=@{@"schema":@"agr.dex-parser-simulator.v1",
+      @"passed":@(failures.count == 0), @"results":results, @"failures":failures};
+    NSData *json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted error:nil];
+    return [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
+}
+
 static NSString *runTests(void) {
     NSMutableArray<NSString *> *failures = [NSMutableArray array];
     agr_contract_result contractCases[64]={0};
@@ -1127,7 +1158,9 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)options {
     (void)application; (void)options;
     self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
-    BOOL interactive=[NSProcessInfo.processInfo.arguments containsObject:@"--interactive"];
+    NSArray<NSString *> *arguments=NSProcessInfo.processInfo.arguments;
+    BOOL interactive=[arguments containsObject:@"--interactive"];
+    BOOL dexParserCompatibility=[arguments containsObject:@"--dex-parser-compatibility"];
 #if AGR_DEVICE_INTERACTIVE
     interactive=YES;
 #endif
@@ -1140,8 +1173,10 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
        * watchdog to terminate an otherwise healthy Runtime process. */
       dispatch_queue_t regressionQueue=dispatch_queue_create("dev.agr.simulator.regression",DISPATCH_QUEUE_SERIAL);
       dispatch_async(regressionQueue,^{ @autoreleasepool {
-        NSString *result = runTests();
-        NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/runtime-smoke.json"];
+        NSString *result = dexParserCompatibility ? runDexParserCompatibility() : runTests();
+        NSString *file = dexParserCompatibility ? @"dex-parser-simulator.json" : @"runtime-smoke.json";
+        NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:
+            [@"Documents" stringByAppendingPathComponent:file]];
         [result writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
         NSLog(@"AGR_RESULT_BEGIN%@AGR_RESULT_END", result);
       }});

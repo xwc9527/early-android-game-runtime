@@ -8,7 +8,11 @@ on:
       - 'Tests/DexLoom/**'
       - 'Vendor/AOSP/dalvik-api19/**'
       - 'scripts/test-dex-parser.sh'
+      - 'scripts/build-and-run-simulator.sh'
       - 'tools/fetch_fdroid_samples.py'
+      - 'tools/scan_apks.py'
+      - 'Tests/Samples/fdroid.json'
+      - 'App/main.m'
       - '.github/workflows/dex-parser.yml'
   workflow_dispatch:
 
@@ -59,3 +63,33 @@ jobs:
       - name: Enforce parser result
         if: always()
         run: test "${{ steps.parser.outputs.status }}" = 0
+
+  focused-simulator:
+    needs: focused-parser
+    runs-on: macos-15
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore Simulator build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            Runtime/ArmInterpreter/target
+            build/angle-v2.1.28252
+            build/angle-xcframeworks-v2.1.28252.zip
+          key: agr-dex-simulator-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-and-run-simulator.sh', 'Tests/Samples/fdroid.json') }}
+          restore-keys: agr-dex-simulator-${{ runner.os }}-
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run focused real-APK DEX probe in Simulator
+        env:
+          DEX_PARSER_COMPATIBILITY: '1'
+        run: bash scripts/build-and-run-simulator.sh
+      - name: Publish focused Simulator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dex-parser-simulator-results
+          path: |
+            build/artifacts/dex-parser-simulator.json
+            build/artifacts/dex-parser-simulator.log

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "enabled": true,
+  "enabled": false,
   "question": "Does the corrected generic APK probe make both Pixel Dungeon and Frozen Bubble cross the former dex_parse_failed boundary in the compiled Simulator application?",
   "current_uncertainty": [
     "The focused Linux contracts prove both original classes.dex files parse, but do not exercise the Objective-C generic APK probe or bundled Simulator resources."

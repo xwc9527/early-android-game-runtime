@@ -83,6 +83,32 @@ phase "boot Simulator $DEVICE"
 xcrun simctl boot "$DEVICE" 2>/dev/null || true; xcrun simctl bootstatus "$DEVICE" -b
 phase "install Runtime app"
 xcrun simctl install "$DEVICE" "$APP"
+if [[ "${DEX_PARSER_COMPATIBILITY:-0}" == "1" ]]; then
+  ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
+  DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
+  RESULT_PATH="$DATA/Documents/dex-parser-simulator.json"
+  rm -f "$RESULT_PATH"
+  phase "launch focused DEX parser compatibility probe"
+  xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --dex-parser-compatibility
+  for _ in $(seq 1 60); do [[ -s "$RESULT_PATH" ]] && break; sleep 1; done
+  if [[ ! -s "$RESULT_PATH" ]]; then
+    echo "focused DEX parser result was not produced within 60 seconds" >&2
+    xcrun simctl spawn "$DEVICE" log show --last 2m --style compact \
+      --predicate 'process == "AGRSimulator"' > "$ARTIFACTS/dex-parser-simulator.log" 2>&1 || true
+    exit 124
+  fi
+  cp "$RESULT_PATH" "$ARTIFACTS/dex-parser-simulator.json"
+  cat "$RESULT_PATH"
+  python3 - "$RESULT_PATH" <<'PY'
+import json,sys
+r=json.load(open(sys.argv[1]))
+assert r.get("passed") is True, r
+assert {x.get("id") for x in r.get("results", [])} == {"pixel-dungeon", "frozen-bubble"}, r
+assert all(x.get("stage") == "dex_loaded" for x in r["results"]), r
+PY
+  phase "focused DEX parser compatibility probe passed"
+  exit 0
+fi
 if [[ "${ZERO_INPUT_AB:-0}" == "1" ]]; then
   ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
   DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
