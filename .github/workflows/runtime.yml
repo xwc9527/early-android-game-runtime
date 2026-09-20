@@ -28,6 +28,7 @@ on:
       - 'scripts/run-simulator-smoke-bounded.py'
       - 'scripts/run-simulator-regressions.sh'
       - 'ci/governance/expensive-run-plan.json'
+      - '.github/workflows/runtime.yml'
 
 jobs:
   discovery-admission:
