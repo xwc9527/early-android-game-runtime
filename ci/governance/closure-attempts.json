@@ -31,6 +31,16 @@
       "consumes_budget": false,
       "automatic_rerun_of": "35469009073",
       "automatic_rerun": "AVAILABLE_AFTER_FIX"
+    },
+    {
+      "run_id": "35504120421",
+      "tested_commit": "67de5e0435e476bca388c5a63c6b56662b86c753",
+      "tested_tree": "b94b73df091d8b19af2d7143b5bb4e30c4a2d5f2",
+      "classification": "INVALID",
+      "defect_class": "WORKFLOW_DEFECT",
+      "reason": "the focused Activity mode exited before creating zero-input-device.txt, but the closure workflow incorrectly declared simulator-build satisfied and launched the dependent real-game regression",
+      "consumes_budget": false,
+      "automatic_rerun": "AVAILABLE_AFTER_FIX"
     }
   ]
 }

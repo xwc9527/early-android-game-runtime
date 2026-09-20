@@ -38,7 +38,7 @@
     "valid_closure_runs": 1,
     "infrastructure_failures_consume_budget": false,
     "closure_runs_used": 0,
-    "last_closure_attempt": "INVALID:35485955807",
+    "last_closure_attempt": "INVALID:35504120421",
     "automatic_reruns_available": 1,
     "discovery_policy": "information_gain",
     "consecutive_expensive_runs_without_information_gain": 0

@@ -94,6 +94,9 @@ jobs:
       - name: Run required Runtime contracts
         if: ${{ inputs.run_kind == 'closure' }}
         run: bash ci/run-contracts.sh
+      - name: Establish bounded Simulator Runtime smoke prerequisite
+        if: ${{ inputs.run_kind == 'closure' }}
+        run: python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds 900
       - name: Run required Runtime and real-game regressions
         if: ${{ inputs.run_kind == 'closure' }}
         run: bash ci/run-regressions.sh
@@ -105,8 +108,11 @@ jobs:
           path: |
             build/artifacts/framework-activity-launch.json
             build/artifacts/framework-activity-launch.log
+            build/artifacts/runtime-smoke.json
+            build/artifacts/process-forensic.json
             build/artifacts/results/contracts.json
             build/artifacts/results/regressions.json
+            build/artifacts/results/regressions-simulator-real-apk.log
 
   iphoneos:
     if: ${{ inputs.run_kind == 'closure' }}

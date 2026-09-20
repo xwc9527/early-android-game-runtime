@@ -50,6 +50,7 @@ def main() -> int:
         "source_fixture": "PASS",
         "focused_activity_simulator": "PASS" if target_pass else "FAIL",
         "runtime_contracts": "PASS",
+        "bounded_runtime_smoke": "PASS",
         "runtime_regressions": "PASS",
         "iphoneos_build": "PASS",
     }
