@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "experiment": "Baseline Compensation Validation - post First-Traversal formal main",
-  "status": "BLOCKED_PRECONDITION",
+  "status": "PENDING_MEASUREMENT",
   "original_experiment": {
     "name": "Architecture Falsification - baseline 5a6962d2",
     "runtime_baseline_commit": "5a6962d2c84b06425e8c489e855d71529f50ba3b",
@@ -18,12 +18,12 @@
     "preserved_unmodified": true
   },
   "precondition": {
-    "satisfied": false,
-    "formal_main_commit": "5a6962d2c84b06425e8c489e855d71529f50ba3b",
-    "formal_main_tree": "b4c8f919bd7581878867a3d2f29a5737773900ef",
-    "governance_baseline_commit": "a6256ba4e4f0d8124bc5a2348039b882f2c91dc8",
+    "satisfied": true,
+    "formal_main_commit": "6e47ce9ab6da32483f049731ac04f2a8356a4b67",
+    "formal_main_tree": "c7a9302d350c7ff02ada3e9340438f91dcf986cd",
+    "governance_baseline_commit": "3e3db84a53ad0957e9217f804b6f718a942b9a11",
     "first_traversal_head": "3e3db84a53ad0957e9217f804b6f718a942b9a11",
-    "first_traversal_on_main": false,
+    "first_traversal_on_main": true,
     "authoritative_closure": {
       "run_id": "35634763769",
       "classification": "VALID_PASS",
@@ -38,15 +38,10 @@
     },
     "candidate_commit_ledger_is_not_negative_evidence": true,
     "formal_main_closure_state": "MERGED",
-    "formal_main_post_merge_run": "35598935478",
-    "post_merge_pass": false,
-    "baseline_promoted": false,
-    "blocking_reasons": [
-      "First Traversal tested commit 3e3db84a is not on formal main 5a6962d2; the phase is not MERGED.",
-      "No VALID_PASS post-merge gate is recorded on formal main for First Traversal closure run 35634763769.",
-      "Governance baseline on formal main is a6256ba4, which does not yet name the merged First Traversal commit; the baseline was not promoted.",
-      "Formal main is still the exact baseline the original dynamic runs used, so a compensation run would reproduce the original experiment rather than validate it against a deeper frontier."
-    ]
+    "formal_main_post_merge_run": "35662355600",
+    "post_merge_pass": true,
+    "baseline_promoted": true,
+    "blocking_reasons": []
   },
   "frozen_inputs": {
     "granularity_fingerprint": "62d94962023b26bb3cc18fa4ef772f63098a7680b1f89a5103f22efe1f9d6b59",
@@ -79,8 +74,8 @@
   },
   "compensation_run": {
     "run_id": null,
-    "new_formal_main_commit": null,
-    "new_formal_main_tree": null,
+    "new_formal_main_commit": "6e47ce9ab6da32483f049731ac04f2a8356a4b67",
+    "new_formal_main_tree": "c7a9302d350c7ff02ada3e9340438f91dcf986cd",
     "sample_profile": "falsification-compensation",
     "expensive_runs_added": 0
   },
@@ -357,8 +352,8 @@
     ]
   },
   "H1": {
-    "verdict": "INHERITED_PASS_NOT_REVALIDATED",
-    "basis": "No newer formal baseline exists to test, so the original H1 PASS stands unchanged and unchallenged by this task."
+    "verdict": "INHERITED_PASS_PENDING",
+    "basis": "H1 is inherited unless the new run exposes a gameplay-critical irreducible dependency."
   },
   "H2": {
     "verdict": "NOT_ESTABLISHED",
@@ -369,8 +364,8 @@
     "basis": "Both frozen sets must be measured on the new baseline before H2 can be restated. Absent evidence is not a pass."
   },
   "PROJECT": {
-    "verdict": "UNCHANGED_FROM_ORIGINAL",
-    "basis": "The compensation run was not executed, so the original CONTINUE verdict is neither confirmed nor revised."
+    "verdict": "NOT_ESTABLISHED",
+    "basis": "No new dynamic evidence yet."
   },
   "limitations": [
     "First-blocker censoring still applies: each run shows only the frontmost blocker of each game on the baseline it ran against.",

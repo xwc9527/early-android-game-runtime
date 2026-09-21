@@ -273,7 +273,7 @@ is to re-measure H2 on a newer formal baseline that includes First Traversal, wi
 sample sets, frozen granularity fingerprint and frozen thresholds, so that a deeper frontier is
 allowed to overturn the earlier `PASS`.
 
-### Status: `BLOCKED_PRECONDITION` — not run
+### Status: precondition met — one compensation run requested
 
 Machine-readable: `build/artifacts/architecture-falsification-compensation.json`.
 
@@ -301,12 +301,14 @@ Verified against the live remote before any compensation run:
 | Check | Required | Observed |
 |---|---|---|
 | Closure run `35634763769` | `VALID_PASS` for commit `3e3db84` / tree `1af351eb` | yes; protected regressions PASS; iphoneos PASS |
-| Phase merged into formal `main` | tested commit is an ancestor of `main` | not yet; `main` is still `5a6962d2` |
-| Post-merge gate for this phase | `VALID_PASS` bound to run `35634763769` | not yet; newest `main` gate is the ViewRoot lineage |
-| Baseline promoted | governance baseline names the merged First Traversal commit | not yet; governance baseline on `main` is still `a6256ba4` |
+| Phase merged into formal `main` | tested commit is an ancestor of `main` | yes; fast-forward, merged commit `3e3db84a53ad0957e9217f804b6f718a942b9a11`, merged tree `1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa` |
+| Post-merge gate for this phase | `VALID_PASS` bound to run `35634763769` | yes; run `35662355600` on follow-up `79d47bc6578a36c7af6a10d5b5ec03122fdbd1da` |
+| Baseline promoted | governance baseline names the merged First Traversal commit | yes; baseline commit `3e3db84a53ad0957e9217f804b6f718a942b9a11` on formal `main` `6e47ce9ab6da32483f049731ac04f2a8356a4b67` |
 
-The compensation run stays unspent for those three remaining gates only. It is not
-waiting on another First Traversal closure.
+An earlier governance check on the binding commit, run `35662355588`, failed while fetching
+`dalvik/vm/alloc/MarkSweep.cpp` (`HTTPError`) and is not a closure defect. The promotion commit
+retried that check as run `35662648091` and it passed. The compensation measurement is the one
+remaining expensive run. It is not another First Traversal closure.
 
 ### Prepared so the compensation run is a single action
 
@@ -325,9 +327,8 @@ locally without any macOS run:
   comparison and the frozen-threshold H2 restatement, and refuses to emit a verdict while the
   precondition is unmet.
 
-Once First Traversal is `CLOSED`, merged, post-merge green and baseline-promoted, the compensation
-run is triggered by setting `ci/falsification-run-request.json` to
-`sample_set: "falsification-compensation"` with an incremented `request_id`.
+Those gates are now met. `ci/falsification-run-request.json` request `3` sets
+`sample_set: "falsification-compensation"`. That change is the single expensive run.
 
 ### What this section does and does not claim
 
