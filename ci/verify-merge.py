@@ -16,8 +16,11 @@ GOVERNANCE_FOLLOWUP_FILES = {
     "ci/governance/post-merge-binding.json",
     "ci/governance/closure-attempts.json",
     "ci/governance/closure.json",
+    "ci/governance/reopens.json",
     "ci/governance/state.json",
+    "ci/test-closure-attempt-ledger.py",
     "docs/CURRENT_STATE.md",
+    "docs/MODULE_STATUS.md",
 }
 
 

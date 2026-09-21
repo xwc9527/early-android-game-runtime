@@ -23,5 +23,11 @@
     "classification": "INVALID",
     "defect_class": "ARTIFACT_DEFECT",
     "reason": "historical PVS1 closure 35486652372 was selected and smoke ran at 09d6953 instead of merged ViewRoot main a6256ba"
+  },
+  "invalid_followup_run": {
+    "run_id": "35599369321",
+    "classification": "INVALID",
+    "defect_class": "GOVERNANCE_GATE_DEFECT",
+    "reason": "promotion-only governance files were omitted from the post-merge follow-up allowlist; no Runtime files changed"
   }
 }

@@ -73,6 +73,12 @@ def test_identity_cases():
     assert errors(followup) == [], errors(followup)
     followup[5]["followup_changes"] = ["Runtime/DexLoom/game_dex_runner.c"]
     assert any(e.startswith("POST_MERGE_UNVERIFIED_FOLLOWUP") for e in errors(followup))
+    promotion = copy.deepcopy(base)
+    promotion[5].update(head="f" * 40, head_tree="1" * 40,
+                        followup_changes=["ci/governance/reopens.json",
+                                          "ci/test-closure-attempt-ledger.py",
+                                          "docs/MODULE_STATUS.md"])
+    assert errors(promotion) == [], errors(promotion)
 
 
 def test_formal_binding():
