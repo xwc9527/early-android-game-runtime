@@ -42,6 +42,8 @@ jobs:
       sample_lock_present: ${{ steps.sample_lock.outputs.present }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: sample_lock
         name: Check pinned sample lock
         run: |
