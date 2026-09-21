@@ -106,6 +106,18 @@
       "classification": "VALID_PASS",
       "reason": "all required closure stages and exact-candidate evidence passed",
       "consumes_budget": true
+    },
+    {
+      "target": "Android Framework ViewRoot Attach Phase 1",
+      "target_evidence": "run 35592070195 targeted ViewRoot Attach at the exact approved candidate, but its generated summary attributed the closure to the historical Continuation target",
+      "run_id": "35592070195",
+      "tested_commit": "604fef0edd153bccb221e9c4c749cf33f31c5efe",
+      "tested_tree": "0667d08aff197a105fd1d5ed761699eb4a3c3b09",
+      "classification": "INVALID",
+      "defect_class": "ARTIFACT_DEFECT",
+      "reason": "closure artifact target attribution defect: all execution stages completed, but the generated summary named the historical Continuation target instead of the active ViewRoot target",
+      "consumes_budget": false,
+      "automatic_rerun": "AVAILABLE_AFTER_FIX"
     }
   ],
   "active_target": "Android Framework ViewRoot Attach Phase 1"

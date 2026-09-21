@@ -3,15 +3,23 @@
 import argparse,hashlib,importlib.util,json,os,pathlib,subprocess
 
 ROOT=pathlib.Path(__file__).resolve().parents[1]
-TARGET="Android Framework Continuation Phase 1"
 def git(*args): return subprocess.check_output(["git",*args],cwd=ROOT,text=True).strip()
 def load(path): return json.loads((ROOT/path).read_text(encoding="utf-8"))
+
+def governance_target():
+    state=load("ci/governance/state.json")
+    closure=load("ci/governance/closure.json")
+    active=state.get("active",{}).get("target")
+    declared=closure.get("target")
+    if not active or active != declared:
+        raise SystemExit(f"CLOSURE_TARGET_MISMATCH: state.active.target={active!r} closure.target={declared!r}")
+    return active
 
 def main():
     p=argparse.ArgumentParser(); p.add_argument("--result",required=True)
     p.add_argument("--output",default="build/artifacts/framework-viewroot-run-summary.json")
     a=p.parse_args(); result=load(a.result); semantic_path="ci/governance/semantic-diffs/framework-viewroot-attach.json"
-    semantic=load(semantic_path); state=load("ci/governance/state.json")
+    semantic=load(semantic_path); state=load("ci/governance/state.json"); TARGET=governance_target()
     head=git("rev-parse","HEAD"); tree=git("rev-parse","HEAD^{tree}"); base=state["baseline"]["commit"]
     files=[x for x in git("diff","--name-only",f"{base}...HEAD").splitlines() if x]
     contract=result.get("contract",{}); after=result.get("after_snapshot",{})
@@ -26,6 +34,12 @@ def main():
             "runtime_contracts_regressions":"PASS","iphoneos_build":"PASS"}
     evidence={"pinned_api19_source":True,"synthetic_post_resume_contract":bool(contract),
               "real_apk_post_resume_result":bool(result),"semantic_diff":True}
+    stable_modules_touched=["DEXRuntimeLifecycle","NativeActivityInput"]
+    reopens=[x for x in load("ci/governance/reopens.json").get("reopens",[])
+             if x.get("target")==TARGET and x.get("module") in stable_modules_touched
+             and x.get("reason") and x.get("evidence")]
+    if {x.get("module") for x in reopens} != set(stable_modules_touched):
+        raise SystemExit("STABLE_REOPEN_MISSING: current target lacks a reason/evidence record for every stable module touched")
     summary={
       "schema_version":1,
       "run":{"workflow_id":os.getenv("GITHUB_RUN_ID","local"),"tested_commit":head,"tested_tree":tree,
@@ -34,9 +48,9 @@ def main():
         "valid_run":target_pass,"kind":"closure","closure_attempt":{"classification":"VALID_PASS" if target_pass else "VALID_FAIL",
           "consumes_budget":True,"automatic_rerun_permitted":False,"required_stages":stages,
           "required_evidence":evidence,"infrastructure_defects":[]}},
-      "changes":{"files":files,"modules":["DEXRuntimeLifecycle","NativeActivityInput"],
-        "stable_modules_touched":["DEXRuntimeLifecycle","NativeActivityInput"],
-        "stable_module_reopens":[x for x in load("ci/governance/reopens.json").get("reopens",[]) if x.get("target")==TARGET]},
+      "changes":{"files":files,"modules":stable_modules_touched,
+        "stable_modules_touched":stable_modules_touched,
+        "stable_module_reopens":reopens},
       "build":{"status":"pass"},"contracts":{"status":"pass","new_failures":[],"resolved_failures":[]},
       "regressions":{"status":"pass","new_failures":[],"resolved_failures":[],"unchanged_failures":[]},
       "target":{"name":TARGET,"status":"pass" if target_pass else "fail",

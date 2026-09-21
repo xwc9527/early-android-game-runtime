@@ -31,6 +31,43 @@ def module_changes(files, modules):
     return touched
 
 
+def target_identity_errors(summary, state, closure, ledger):
+    """Ensure every closure artifact names the same active governance target."""
+    active = state.get("active", {}).get("target")
+    summary_target = summary.get("target", {}).get("name")
+    summary_closure_target = summary.get("closure", {}).get("target")
+    closure_target = closure.get("target")
+    ledger_target = ledger.get("active_target")
+    errors = []
+    values = (active, summary_target, summary_closure_target, closure_target, ledger_target)
+    if any(value is None for value in values) or len(set(values)) != 1:
+        errors.append("CLOSURE_TARGET_MISMATCH")
+    if summary_target != active:
+        errors.append("SUMMARY_TARGET != ACTIVE_TARGET")
+    if summary_closure_target != active:
+        errors.append("SUMMARY_CLOSURE_TARGET != ACTIVE_TARGET")
+    if ledger_target != active:
+        errors.append("LEDGER_ACTIVE_TARGET != ACTIVE_TARGET")
+    return errors
+
+
+def stable_reopen_errors(summary, stable_modules, reopens, active_target):
+    """Require current-target reopen evidence and exact summary projection."""
+    names = {module.get("name") for module in stable_modules}
+    current = [record for record in reopens
+               if record.get("target") == active_target and record.get("module") in names
+               and record.get("reason") and record.get("evidence")]
+    errors = []
+    for name in sorted(names):
+        if not any(record.get("module") == name for record in current):
+            errors.append(f"STABLE_REOPEN_MISSING:{name}")
+    declared = summary.get("changes", {}).get("stable_module_reopens", [])
+    key = lambda record: (record.get("module"), record.get("target"), record.get("reason"), record.get("evidence"))
+    if {key(record) for record in declared} != {key(record) for record in current}:
+        errors.append("STABLE_REOPENS_SUMMARY_MISMATCH")
+    return errors
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=("working", "discovery", "closure", "merge", "post-merge"), default="working")
@@ -86,6 +123,8 @@ def main() -> int:
         if not summary:
             errors.append("closure summary is required")
         else:
+            errors.extend(target_identity_errors(summary, state, closure, attempt_ledger))
+            errors.extend(stable_reopen_errors(summary, stable, reopens, active_target))
             c = summary.get("closure", {})
             if c.get("tested_commit") != head: errors.append("MERGE_CANDIDATE_HEAD != CLOSURE_TESTED_COMMIT")
             if c.get("tested_tree") != tree: errors.append("candidate tree != closure tested tree")

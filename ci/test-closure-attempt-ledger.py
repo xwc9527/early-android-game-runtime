@@ -9,6 +9,9 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("closure_attempt", ROOT / "ci/closure-attempt.py")
 closure_attempt = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(closure_attempt)
+gov_spec = importlib.util.spec_from_file_location("validate_governance", ROOT / "ci/validate-governance.py")
+validate_governance = importlib.util.module_from_spec(gov_spec)
+gov_spec.loader.exec_module(validate_governance)
 
 
 def require(condition, message):
@@ -120,11 +123,54 @@ def test_g_current_repository_records_match():
             "G: schema does not require attempt target attribution")
 
 
+def _current_governance_fixture():
+    state = json.loads((ROOT / "ci/governance/state.json").read_text(encoding="utf-8"))
+    closure = json.loads((ROOT / "ci/governance/closure.json").read_text(encoding="utf-8"))
+    ledger_doc = json.loads((ROOT / "ci/governance/closure-attempts.json").read_text(encoding="utf-8"))
+    reopens = json.loads((ROOT / "ci/governance/reopens.json").read_text(encoding="utf-8"))["reopens"]
+    active = state["active"]["target"]
+    stable = [{"name": "DEXRuntimeLifecycle"}, {"name": "NativeActivityInput"}]
+    summary = {
+        "target": {"name": active},
+        "closure": {"target": active},
+        "changes": {"stable_module_reopens": [r for r in reopens if r.get("target") == active]},
+    }
+    return state, closure, ledger_doc, reopens, stable, summary
+
+
+def test_h_target_binding_contracts():
+    state, closure, ledger_doc, reopens, stable, summary = _current_governance_fixture()
+    require(not validate_governance.target_identity_errors(summary, state, closure, ledger_doc),
+            "H-A: matching target identities should pass")
+    old = "Android Framework Continuation Phase 1"
+    summary["target"]["name"] = old
+    errors = validate_governance.target_identity_errors(summary, state, closure, ledger_doc)
+    require("CLOSURE_TARGET_MISMATCH" in errors, "H-B: stale summary target must fail")
+    summary["target"]["name"] = state["active"]["target"]
+    closure["target"] = old
+    require("CLOSURE_TARGET_MISMATCH" in validate_governance.target_identity_errors(summary, state, closure, ledger_doc),
+            "H-C: closure target mismatch must fail")
+    closure["target"] = state["active"]["target"]
+    ledger_doc["active_target"] = old
+    require("CLOSURE_TARGET_MISMATCH" in validate_governance.target_identity_errors(summary, state, closure, ledger_doc),
+            "H-D: ledger active target mismatch must fail")
+    ledger_doc["active_target"] = state["active"]["target"]
+    stale_reopens = [dict(record) for record in reopens]
+    for record in stale_reopens:
+        if record.get("target") == state["active"]["target"] and record.get("module") == "DEXRuntimeLifecycle":
+            record["target"] = old
+    errors = validate_governance.stable_reopen_errors(summary, stable, stale_reopens, state["active"]["target"])
+    require("STABLE_REOPEN_MISSING:DEXRuntimeLifecycle" in errors, "H-E: stale-target reopen must fail")
+    summary["changes"]["stable_module_reopens"] = []
+    errors = validate_governance.stable_reopen_errors(summary, stable, reopens, state["active"]["target"])
+    require("STABLE_REOPENS_SUMMARY_MISMATCH" in errors, "H-F: missing current-target reopen projection must fail")
+
+
 def main():
     tests = [test_a_invalid_then_auto_rerun_pass, test_b_valid_fail_requires_approval,
              test_c_approval_is_target_scoped, test_d_budget_is_active_target_only,
              test_e_state_requires_ledger_attempt, test_f_closure_commit_tree_must_match_ledger,
-             test_g_current_repository_records_match]
+             test_g_current_repository_records_match, test_h_target_binding_contracts]
     for test in tests:
         test()
         print(f"PASS {test.__name__}")
