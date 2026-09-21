@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "enabled": true,
-  "question": "Does one unchanged Frozen Bubble launch, with CADisplayLink calling agr_dex_game_choreographer_frame and no harness do_traversal, go from traversal_scheduled count 0 through two host frames to a persistent Surface and viewroot.perform_draw?",
+  "enabled": false,
+  "question": "Resolved by discovery run 35666933096: unchanged Frozen Bubble with CADisplayLink and no harness do_traversal reached viewroot_draw_entered, traversal_count 2, surface_generation 1, draw_count 1.",
   "current_uncertainty": [
-    "The Linux host pump proves the callback contract on a synthetic Activity. It does not prove UIKit CADisplayLink fires on a headless Simulator or that the real APK start path reaches the same two-frame chain."
+    "No discovery uncertainty remains for host-frame consumption of the scheduled traversal."
   ],
   "expected_outcome_a": {
     "result": "classification viewroot_draw_entered, host_vsync_count at least 2, traversal_count 2, persistent surface_generation 1, draw_count at least 1, harness_called_do_traversal false",
@@ -18,5 +18,6 @@
     ]
   },
   "why_cheaper_test_is_insufficient": "The Linux host contract cannot execute UIKit CADisplayLink or the unchanged Frozen Bubble APK process.",
-  "prior_expensive_runs_without_information_gain": 0
+  "prior_expensive_runs_without_information_gain": 0,
+  "resolved_by_run": "35666933096"
 }

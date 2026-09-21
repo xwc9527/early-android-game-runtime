@@ -62,18 +62,21 @@ jobs:
           python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --verify-upstream --verify-only framework.viewroot.traversal_dispatch --output build/artifacts/traversal-dispatch-upstream-map.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-traversal-dispatch.json
           python3 ci/validate-governance.py --mode discovery
-          python3 ci/validate-expensive-run.py ci/governance/expensive-run-plan.json
           python3 ci/test-closure-attempt-ledger.py
           python3 ci/test-post-merge-evidence.py
 
   simulator-focused:
     needs: linux-source-contract
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-15
     timeout-minutes: 90
     env:
       AGR_SIMULATOR_PROFILE: ${{ (inputs.run_kind == 'validation' || inputs.run_kind == 'closure') && 'full' || 'focused-framework' }}
     steps:
       - uses: actions/checkout@v4
+      - name: Admit a new discovery simulator
+        if: ${{ inputs.run_kind == 'discovery' }}
+        run: python3 ci/validate-expensive-run.py ci/governance/expensive-run-plan.json
       - uses: dtolnay/rust-toolchain@stable
       - name: Restore pinned APK inputs
         uses: actions/cache/restore@v4

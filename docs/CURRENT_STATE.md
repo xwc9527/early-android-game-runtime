@@ -6,7 +6,7 @@ Active target: Android Framework Runtime Traversal Dispatch / Surface Draw Consu
 
 Normal Activity start still returns at `handoff.viewroot_traversal` with the traversal scheduled and `traversal_count` 0. API19 `ViewRootImpl.scheduleTraversals` posts `Choreographer.CALLBACK_TRAVERSAL` and does not call `doTraversal`. `doCallbacks` extracts due callbacks before running them, so a Surface-acquisition reschedule waits for the next frame. AGR's public consumer is one host frame: `agr_dex_game_choreographer_frame` calls `agr_viewroot_choreographer_frame` once. The first frame may acquire the Surface and reschedule; the second frame keeps that Surface and enters `performDraw`. `start_activity` does not call `do_traversal`. The closed explicit first traversal still ends at `handoff.viewroot_surface_ready` with `draw_count` 0.
 
-The Linux host contract confirms that chain on a synthetic Activity. The unchanged Frozen Bubble APK has not yet been observed on UIKit `CADisplayLink`. `performDraw` of the host Decor is not a first frame. The next public boundary after a successful second traversal is `Activity.setContentView` / `SurfaceView.surfaceCreated`.
+Discovery run `35666933096` launched unchanged Frozen Bubble with UIKit `CADisplayLink` and no harness `do_traversal`. The report is `viewroot_draw_entered`: vsync 2, traversal counts 0 then 1 then 2, Surface generation 1, `draw_count` 1. The job then failed in the contract checker because NSJSON encoded the synthetic `passed` flag as `1`. That is a harness defect. `performDraw` of the host Decor is not a first frame. `FrozenBubble.onCreate` returned without `Activity.setContentView(View)`; AGR registers only `setContentView(I)`, so GameView is never installed.
 
 ## Merged First Traversal baseline
 

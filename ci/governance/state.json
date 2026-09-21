@@ -27,13 +27,13 @@
     ],
     "earliest_evidenced_divergence": "Immediately after handoff.viewroot_traversal on the normal start path: API19's posted CALLBACK_TRAVERSAL is consumed by the next Choreographer.doFrame, while AGR returned with traversal_count 0.",
     "semantic_class": "PUBLIC_OBSERVABLE",
-    "causal_status": "CONTRACT_CONFIRMED",
-    "evidence_level": "CONTRACT_CONFIRMED",
+    "causal_status": "REAL_GAME_CONFIRMED",
+    "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "one focused Simulator discovery of unchanged Frozen Bubble with no harness do_traversal",
-    "primary_blocker": "normal Runtime start does not consume a scheduled traversal",
-    "first_broken_boundary": "host-frame consumption of CALLBACK_TRAVERSAL",
-    "first_broken_boundary_evidence": "Linux host contract agr.framework-traversal-dispatch.host.v1"
+    "next_validation": "Activity.setContentView(View) on the normal path",
+    "primary_blocker": "Activity.setContentView(View) is unregistered, so Frozen Bubble never installs GameView",
+    "first_broken_boundary": "Activity.setContentView(Landroid/view/View;)V",
+    "first_broken_boundary_evidence": "discovery run 35666933096 method trace ends in FrozenBubble.onCreate without setContentView; performDraw still runs on the host Decor"
   },
   "ci_budget": {
     "valid_closure_runs": 1,

@@ -40,7 +40,7 @@ def main():
     before = result.get("resume_snapshot", {})
     after = result.get("after_snapshot", {})
     target_pass = (
-        contract.get("passed") is True
+        contract.get("passed") in (True, 1)
         and result.get("launch_result") == 0
         and result.get("launch_stage") == "resumed"
         and result.get("real_owner_graph") is True
@@ -113,7 +113,7 @@ def main():
             "normalized_signature": "" if target_pass else "framework:traversal_dispatch:closure_failed",
             "raw_fingerprint": hashlib.sha256(json.dumps(result, sort_keys=True).encode()).hexdigest(),
             "requirements": {
-                "synthetic_contract": contract.get("passed") is True,
+                "synthetic_contract": contract.get("passed") in (True, 1),
                 "real_apk_draw_entered": result.get("classification") == "viewroot_draw_entered",
                 "harness_did_not_call_do_traversal": result.get("harness_called_do_traversal") is False,
                 "second_traversal_count": after.get("traversal_count"),

@@ -11,6 +11,15 @@ def require(condition, detail):
         raise SystemExit(f"traversal dispatch contract failed: {detail}")
 
 
+def flag(value):
+    """NSJSONSerialization boxes some ObjC expressions as 0/1."""
+    return value is True or value == 1
+
+
+def clear(value):
+    return value is False or value == 0
+
+
 def check_host(result):
     require(result.get("passed") is True, result)
     require(result["frame1"]["traversal_count"] == 1, result["frame1"])
@@ -41,27 +50,27 @@ def ordered(trace, events):
 def check_discovery(result):
     require(result.get("sample") == "frozen-bubble", result.get("sample"))
     require(result.get("consumer") == "uikit-cadisplaylink", result.get("consumer"))
-    require(result.get("harness_called_do_traversal") is False, result)
+    require(clear(result.get("harness_called_do_traversal")), result)
     require(result.get("host_vsync_count", 0) >= 2, result.get("host_vsync_count"))
     require(result.get("launch_result") == 0, result.get("launch_result"))
     require(result.get("launch_stage") == "resumed", result.get("launch_stage"))
-    require(result.get("real_owner_graph") is True, result)
+    require(flag(result.get("real_owner_graph")), result)
     require(result.get("classification") == "viewroot_draw_entered", result.get("classification"))
     before = result["resume_snapshot"]
-    require(before["traversal_count"] == 0 and before["traversal_scheduled"] is True, before)
-    require(before["draw_count"] == 0 and before["surface_valid"] is False, before)
+    require(before["traversal_count"] == 0 and flag(before["traversal_scheduled"]), before)
+    require(before["draw_count"] == 0 and clear(before["surface_valid"]), before)
     frames = result["frames"]
     require(len(frames) >= 2, frames)
     first, second = frames[0], frames[1]
     require(first["traversal_count"] == 1 and first["draw_count"] == 0, first)
-    require(first["surface_valid"] is True and first["traversal_scheduled"] is True, first)
+    require(flag(first["surface_valid"]) and flag(first["traversal_scheduled"]), first)
     require(first["surface_generation"] == 1, first)
     require(second["traversal_count"] == 2 and second["draw_count"] >= 1, second)
-    require(second["traversal_scheduled"] is False and second["surface_generation"] == 1, second)
-    require(second["surface_valid"] is True, second)
+    require(clear(second["traversal_scheduled"]) and second["surface_generation"] == 1, second)
+    require(flag(second["surface_valid"]), second)
     after = result["after_snapshot"]
     require(after["traversal_count"] == 2 and after["draw_count"] >= 1, after)
-    require(after["surface_valid"] is True and after["traversal_scheduled"] is False, after)
+    require(flag(after["surface_valid"]) and clear(after["traversal_scheduled"]), after)
     trace = after["framework_trace"]
     ordered(trace, (
         "choreographer.frame",
@@ -77,10 +86,10 @@ def check_discovery(result):
     require(len(consumed) >= 2 and consumed[1] > trace.index("viewroot.traversal.rescheduled"), trace)
     require("viewroot.perform_draw" not in first["framework_trace"], first["framework_trace"])
     contract = result["contract"]
-    require(contract.get("passed") is True, contract)
+    require(flag(contract.get("passed")), contract.get("passed"))
     require(contract.get("consumer") == "synthetic-host-pump", contract)
-    require(contract.get("same_backing") is True, contract)
-    require(contract.get("closed_explicit_passed") is True, contract)
+    require(flag(contract.get("same_backing")), contract)
+    require(flag(contract.get("closed_explicit_passed")), contract)
     closed = contract["closed_first"]
     require(closed["framework_trace"][-1] == "handoff.viewroot_surface_ready", closed["framework_trace"])
     require(closed["draw_count"] == 0, closed)

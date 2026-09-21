@@ -1196,7 +1196,7 @@
       ],
       "known_deviations": [
         "performDraw records View.draw of the host Decor and does not claim a first frame",
-        "Activity.setContentView and SurfaceView surfaceCreated remain the next public boundary"
+        "Activity.setContentView(View) is unregistered; setContentView(I) does not install Frozen Bubble GameView"
       ],
       "contracts": [
         "framework.traversal_dispatch.host",

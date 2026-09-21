@@ -55,8 +55,8 @@
     }
   ],
   "earliest_evidenced_divergence": "Immediately after handoff.viewroot_traversal on the normal start path: API19's posted CALLBACK_TRAVERSAL is consumed by the next Choreographer.doFrame, while AGR returned with traversal_count 0.",
-  "causal_status": "CONTRACT_CONFIRMED",
-  "evidence_level": "CONTRACT_CONFIRMED",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
   "evidence": [
     {
       "type": "SOURCE",
@@ -65,13 +65,17 @@
     {
       "type": "CONTRACT",
       "artifact": "Linux host contract agr.framework-traversal-dispatch.host.v1: frame 1 consumes and reschedules with draw_count 0; frame 2 enters performDraw with the same Surface generation; an explicit first do_traversal still ends at handoff.viewroot_surface_ready"
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "Simulator discovery 35666933096 unchanged Frozen Bubble: classification viewroot_draw_entered, host_vsync_count 2, harness_called_do_traversal false, traversal_count 2, surface_generation 1, draw_count 1. The job failed afterward in the contract checker because NSJSON passed was 1."
     }
   ],
   "remaining_uncertainty": [
-    "UIKit CADisplayLink on a headless Simulator has not yet consumed a real APK traversal.",
-    "After the second traversal, Activity.setContentView and SurfaceView.surfaceCreated are the next public boundary. performDraw of the host Decor is not a first frame."
+    "performDraw of the host Decor is not a first frame.",
+    "FrozenBubble.onCreate returned without Activity.setContentView(View). AGR registers setContentView(I) only, so the View overload is skipped and GameView/SurfaceView is never installed."
   ],
-  "next_action": "Run one focused Simulator discovery of unchanged Frozen Bubble with no harness do_traversal.",
+  "next_action": "Implement the public Activity.setContentView(View) contract. Do not treat performDraw of the empty Decor as a first frame.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "UIKit CADisplayLink is the vsync endpoint in place of DisplayEventReceiver. One host frame runs at most one posted traversal callback. There is no Looper sync barrier and the frame function is not re-entered."
