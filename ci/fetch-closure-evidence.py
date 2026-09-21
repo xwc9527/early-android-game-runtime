@@ -4,7 +4,6 @@
 import io,json,os,pathlib,urllib.parse,urllib.request,zipfile
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 OUT=ROOT/"build"/"artifacts"/"closure-run-summary.json"
-FOCUSED_OUT=ROOT/"build"/"artifacts"/"framework-viewroot-attach.json"
 def load(path):return json.loads((ROOT/path).read_text(encoding="utf-8"))
 def api(url):
  req=urllib.request.Request(url,headers={"Authorization":f"Bearer {os.environ['GITHUB_TOKEN']}","Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"})
@@ -55,7 +54,8 @@ def main():
  focused=artifact_entry(artifacts,binding["focused_artifact"],binding["focused_entry"])
  OUT.parent.mkdir(parents=True,exist_ok=True)
  OUT.write_text(json.dumps(summary,indent=2)+"\n",encoding="utf-8")
- FOCUSED_OUT.write_bytes(focused)
+ focused_out=OUT.parent/binding["focused_entry"]
+ focused_out.write_bytes(focused)
  print(f"closure evidence run {binding['closure_run_id']} target {target} commit {c['tested_commit']}")
  return 0
 if __name__=="__main__":raise SystemExit(main())

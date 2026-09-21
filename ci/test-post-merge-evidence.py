@@ -83,11 +83,17 @@ def test_identity_cases():
 
 def test_formal_binding():
     binding = json.loads((ROOT / "ci/governance/post-merge-binding.json").read_text(encoding="utf-8"))
-    assert binding["target"] == "Android Framework ViewRoot Attach Phase 1"
-    assert binding["closure_run_id"] == "35595440089"
+    assert binding["target"] == "Android Framework First Traversal / Relayout / Surface Acquisition Phase 1"
+    assert binding["closure_run_id"] == "35634763769"
+    assert binding["closure_artifact"] == "framework-first-traversal-closure-summary"
+    assert binding["focused_artifact"] == "framework-first-traversal-focused"
+    assert binding["focused_entry"] == "framework-first-traversal.json"
+    assert binding["closure_tested_commit"] == "3e3db84a53ad0957e9217f804b6f718a942b9a11"
+    assert binding["closure_tested_tree"] == "1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa"
     assert binding["closure_tested_commit"] == binding["merged_commit"]
     assert binding["closure_tested_tree"] == binding["merged_tree"]
     assert binding["invalid_post_merge_run"]["run_id"] == "35596315143"
+    assert binding["invalid_followup_run"]["run_id"] == "35599369321"
 
 
 if __name__ == "__main__":

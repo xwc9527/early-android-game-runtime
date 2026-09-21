@@ -315,15 +315,18 @@ static DxResult register_game_framework(DxVM *vm) {
                context_get_application_context, 0);
 
     DxClass *view = reg_class(vm, "Landroid/view/View;", obj);
-    const char *view_names[] = { "_visibility", "_layoutParams", "_parent" };
+    const char *view_names[] = { "_visibility", "_layoutParams", "_parent", "_attachInfo",
+                                 "_attachedToWindow", "_measuredWidth", "_measuredHeight",
+                                 "_left", "_top", "_right", "_bottom" };
     const char *view_types[] = { "I", "Landroid/view/WindowManager$LayoutParams;",
-                                 "Landroid/view/ViewRootImpl;" };
-    own_fields(view, 3, view_names, view_types);
+                                 "Landroid/view/ViewRootImpl;", "Landroid/view/View$AttachInfo;",
+                                 "Z", "I", "I", "I", "I", "I", "I" };
+    own_fields(view, 11, view_names, view_types);
     add_method(view, "setVisibility", "VI", DX_ACC_PUBLIC, view_set_visibility, 0);
     DxClass *layout_params = reg_class(vm, "Landroid/view/WindowManager$LayoutParams;", obj);
-    const char *layout_names[] = { "_type", "_softInputMode" };
-    const char *layout_types[] = { "I", "I" };
-    own_fields(layout_params, 2, layout_names, layout_types);
+    const char *layout_names[] = { "_type", "_softInputMode", "_width", "_height" };
+    const char *layout_types[] = { "I", "I", "I", "I" };
+    own_fields(layout_params, 4, layout_names, layout_types);
     DxClass *window = reg_class(vm, "Landroid/view/Window;", obj);
     const char *window_names[] = { "_decor", "_attributes" };
     const char *window_types[] = { "Landroid/view/View;", "Landroid/view/WindowManager$LayoutParams;" };
@@ -338,18 +341,28 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(window_manager, "addView", "VLL", DX_ACC_PUBLIC, window_manager_add_view, 0);
     DxClass *viewroot = reg_class(vm, "Landroid/view/ViewRootImpl;", obj);
     const char *root_names[] = { "_view", "_layoutParams", "_session", "_attachInfo", "_added",
-                                 "_layoutRequested", "_traversalPending" };
+                                 "_layoutRequested", "_traversalPending", "_surface",
+                                 "_frameLeft", "_frameTop", "_frameRight", "_frameBottom" };
     const char *root_types[] = { "Landroid/view/View;", "Landroid/view/WindowManager$LayoutParams;",
                                  "Landroid/view/IWindowSession;", "Landroid/view/View$AttachInfo;",
-                                 "Z", "Z", "Z" };
-    own_fields(viewroot, 7, root_names, root_types);
+                                 "Z", "Z", "Z", "Landroid/view/Surface;", "I", "I", "I", "I" };
+    own_fields(viewroot, 12, root_names, root_types);
     DxClass *attach_info = reg_class(vm, "Landroid/view/View$AttachInfo;", obj);
-    one_field(attach_info, "_rootView", "Landroid/view/View;");
+    const char *attach_names[] = { "_rootView", "_surface", "_windowVisibility" };
+    const char *attach_types[] = { "Landroid/view/View;", "Landroid/view/Surface;", "I" };
+    own_fields(attach_info, 3, attach_names, attach_types);
     DxClass *session = reg_class(vm, "Landroid/view/IWindowSession;", obj);
     const char *session_names[] = { "_attachedWindow", "_inputChannelOwned", "_contentInsetLeft",
-                                    "_contentInsetTop", "_contentInsetRight", "_contentInsetBottom" };
-    const char *session_types[] = { "Landroid/view/Window;", "Z", "I", "I", "I", "I" };
-    own_fields(session, 6, session_names, session_types);
+                                    "_contentInsetTop", "_contentInsetRight", "_contentInsetBottom",
+                                    "_requestedWidth", "_requestedHeight", "_viewVisibility",
+                                    "_frameLeft", "_frameTop", "_frameRight", "_frameBottom", "_surface" };
+    const char *session_types[] = { "Landroid/view/Window;", "Z", "I", "I", "I", "I",
+                                    "I", "I", "I", "I", "I", "I", "I", "Landroid/view/Surface;" };
+    own_fields(session, 14, session_names, session_types);
+    DxClass *surface = reg_class(vm, "Landroid/view/Surface;", obj);
+    const char *surface_names[] = { "_ownerWindow", "_valid", "_generation", "_width", "_height" };
+    const char *surface_types[] = { "Landroid/view/Window;", "Z", "I", "I", "I" };
+    own_fields(surface, 5, surface_names, surface_types);
 
     DxClass *asset_manager = reg_class(vm, "Landroid/content/res/AssetManager;", obj);
     add_method(asset_manager, "open", "LL", DX_ACC_PUBLIC, asset_open, 0);
@@ -773,6 +786,8 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     dx_vm_set_field(game->activity,"_windowAdded",DX_INT_VALUE(0));
     dx_vm_set_field(game->window_attributes,"_type",DX_INT_VALUE(1));
     dx_vm_set_field(game->window_attributes,"_softInputMode",DX_INT_VALUE(0));
+    dx_vm_set_field(game->window_attributes,"_width",DX_INT_VALUE(-1));
+    dx_vm_set_field(game->window_attributes,"_height",DX_INT_VALUE(-1));
     dx_vm_set_field(game->decor,"_visibility",DX_INT_VALUE(4));
     game->window_attached=1;
     game->launch_stage=AGR_ACTIVITY_LAUNCH_ACTIVITY_ATTACHED;
@@ -901,6 +916,18 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
         dx_vm_get_field(game->decor,"_parent",&parent)==DX_OK &&
         parent.tag==DX_VAL_OBJ && parent.obj==game->viewroot.root;
     snapshot->viewroot_attach_completed=game->viewroot.attach_complete;
+    snapshot->hierarchy_attached=game->viewroot.hierarchy_attached;
+    snapshot->traversal_phase=(int)game->viewroot.traversal_phase;
+    snapshot->traversal_count=game->viewroot.traversal_count;
+    snapshot->measured_width=game->viewroot.measured_width;
+    snapshot->measured_height=game->viewroot.measured_height;
+    snapshot->frame_left=game->viewroot.frame_left;
+    snapshot->frame_top=game->viewroot.frame_top;
+    snapshot->frame_right=game->viewroot.frame_right;
+    snapshot->frame_bottom=game->viewroot.frame_bottom;
+    snapshot->layout_complete=game->viewroot.layout_complete;
+    snapshot->surface_valid=agr_viewroot_surface_valid(&game->viewroot);
+    snapshot->surface_generation=game->viewroot.backing.generation;
     snprintf(snapshot->last_method,sizeof(snapshot->last_method),"%s",vm->diagnostic_last_method);
     snprintf(snapshot->error,sizeof(snapshot->error),"%s",vm->error_msg);
     uint32_t method_count=vm->diagnostic_method_event_count;
@@ -981,9 +1008,55 @@ const char *agr_dex_game_launch_error(const agr_dex_game *game) {
 void agr_dex_game_destroy(agr_dex_game *game) {
     if (!game) return;
     if (g_activity==game->activity) g_activity=NULL;
+    agr_viewroot_release(&game->viewroot);
     if (game->vm) dx_vm_destroy(game->vm);
     if (game->dex) dx_dex_free(game->dex);
     free(game->objects); free(game->bytes); free(game);
+}
+
+int agr_dex_game_do_traversal(agr_dex_game *game, uint32_t width, uint32_t height) {
+    if (!game || !game->vm) return -1;
+    agr_viewroot_display display = { width, height };
+    DxResult result = agr_viewroot_do_traversal(game->vm, &game->viewroot,
+                                                display, viewroot_event, game);
+    if (result != DX_OK) {
+        snprintf(game->launch_error, sizeof(game->launch_error),
+                 "first ViewRoot traversal failed: %d", (int)result);
+        return -1;
+    }
+    return 0;
+}
+
+int agr_dex_game_set_surface_allocator(agr_dex_game *game,
+                                       void *(*allocate)(void *, size_t),
+                                       void (*release)(void *, void *), void *user) {
+    if (!game || !!allocate != !!release || game->viewroot.backing.pixels) return -1;
+    game->viewroot.pixel_alloc = allocate;
+    game->viewroot.pixel_free = release;
+    game->viewroot.pixel_user = user;
+    return 0;
+}
+
+int agr_dex_game_set_relayout_gate(agr_dex_game *game,
+                                   int (*gate)(void *, uint32_t, uint32_t, int),
+                                   void *user) {
+    if (!game) return -1;
+    game->viewroot.relayout_gate = gate;
+    game->viewroot.relayout_user = user;
+    return 0;
+}
+
+int agr_dex_game_root_surface(agr_dex_game *game, void **pixels,
+                              uint32_t *width, uint32_t *height,
+                              uint32_t *stride, uint32_t *generation) {
+    if (!game || !pixels || !width || !height || !stride || !generation ||
+        !agr_viewroot_surface_valid(&game->viewroot)) return -1;
+    *pixels = game->viewroot.backing.pixels;
+    *width = game->viewroot.backing.width;
+    *height = game->viewroot.backing.height;
+    *stride = game->viewroot.backing.stride;
+    *generation = game->viewroot.backing.generation;
+    return 0;
 }
 
 int agr_dex_game_activity_gc_contract(agr_dex_game *game) {

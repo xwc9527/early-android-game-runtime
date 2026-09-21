@@ -130,7 +130,17 @@
       "consumes_budget": true,
       "automatic_rerun_of": "35592070195",
       "approval_reference": "explicit user approval for corrected ViewRoot closure at commit a6256ba4e4f0d8124bc5a2348039b882f2c91dc8 tree 9d0dedc1b6bcd92ad40a595b386ce798d5da3025"
+    },
+    {
+      "target": "Android Framework First Traversal / Relayout / Surface Acquisition Phase 1",
+      "target_evidence": "workflow_dispatch closure run 35634763769 on phase/framework-first-traversal-surface-1; head_sha and artifact framework-first-traversal-closure-summary both name this commit and tree as VALID_PASS",
+      "run_id": "35634763769",
+      "tested_commit": "3e3db84a53ad0957e9217f804b6f718a942b9a11",
+      "tested_tree": "1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa",
+      "classification": "VALID_PASS",
+      "reason": "linux-source-contract, focused Simulator, protected Runtime contracts, bounded smoke, protected regressions, iphoneos and exact-commit closure evidence all passed",
+      "consumes_budget": true
     }
   ],
-  "active_target": "Android Framework ViewRoot Attach Phase 1"
+  "active_target": "Android Framework First Traversal / Relayout / Surface Acquisition Phase 1"
 }

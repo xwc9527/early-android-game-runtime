@@ -274,6 +274,25 @@ PY
   phase "architecture falsification frontier evidence captured"
   exit 0
 fi
+if [[ "${FRAMEWORK_FIRST_TRAVERSAL_DISCOVERY:-0}" == "1" ]]; then
+  ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
+  DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
+  RESULT_PATH="$DATA/Documents/framework-first-traversal.json"
+  rm -f "$RESULT_PATH"
+  phase "launch focused Framework first traversal probe"
+  xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --framework-first-traversal-discovery
+  for _ in $(seq 1 90); do [[ -s "$RESULT_PATH" ]] && break; sleep 1; done
+  xcrun simctl spawn "$DEVICE" log show --last 3m --style compact \
+    --predicate 'process == "AGRSimulator"' > "$ARTIFACTS/framework-first-traversal.log" 2>&1 || true
+  if [[ ! -s "$RESULT_PATH" ]]; then
+    echo "Framework first traversal result was not produced within 90 seconds" >&2
+    exit 124
+  fi
+  cp "$RESULT_PATH" "$ARTIFACTS/framework-first-traversal.json"
+  python3 ci/framework-first-traversal-contract.py "$RESULT_PATH"
+  phase "Framework first traversal evidence captured"
+  exit 0
+fi
 if [[ "${ZERO_INPUT_AB:-0}" == "1" ]]; then
   ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
   DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"

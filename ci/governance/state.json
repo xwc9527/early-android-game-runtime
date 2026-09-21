@@ -2,34 +2,34 @@
   "schema_version": 1,
   "baseline": {
     "branch": "main",
-    "commit": "a6256ba4e4f0d8124bc5a2348039b882f2c91dc8",
-    "last_known_good": "a6256ba4e4f0d8124bc5a2348039b882f2c91dc8"
+    "commit": "3e3db84a53ad0957e9217f804b6f718a942b9a11",
+    "last_known_good": "3e3db84a53ad0957e9217f804b6f718a942b9a11"
   },
   "active": {
-    "target": "Android Framework ViewRoot Attach Phase 1",
+    "target": "Android Framework First Traversal / Relayout / Surface Acquisition Phase 1",
     "branch": "main",
     "lifecycle": "MERGED",
-    "observed_discontinuity": "API19 ViewRoot attach cluster was previously represented only by a surface handoff marker.",
-    "android_subsystem": "WindowManagerImpl/WindowManagerGlobal/ViewRootImpl attach through initial traversal scheduling",
+    "observed_discontinuity": "The closed ViewRoot attach contract ends with a scheduled traversal but has no executed measure, relayout, layout or root Surface.",
+    "android_subsystem": "ViewRootImpl first performTraversals, IWindowSession.relayout and root Surface acquisition",
     "upstream_path": [
-      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/WindowManagerImpl.java:addView",
-      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/ViewRootImpl.java:setView"
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/ViewRootImpl.java:performTraversals",
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/IWindowSession.aidl:relayout"
     ],
     "agr_path": [
-      "Runtime/DexLoom/AndroidMini/framework_viewroot.c:agr_viewroot_add_view",
-      "Runtime/DexLoom/game_dex_runner.c:window_manager_add_view"
+      "Runtime/DexLoom/AndroidMini/framework_viewroot.c:agr_viewroot_do_traversal",
+      "Runtime/DexLoom/game_dex_runner.c:agr_dex_game_do_traversal"
     ],
     "active_explanations": [
-      "ViewRoot creation and root/parent assignment are observable before downstream traversal",
-      "initial traversal scheduling is recorded but not executed in this phase",
-      "Binder/system_server is replaced by in-process opaque WindowSession"
+      "AOSP first traversal consumes the pending callback and publishes attached-to-window state",
+      "measure and relayout establish frame and a persistent root Surface before layout completes",
+      "a newly acquired Surface causes another traversal before drawing"
     ],
-    "earliest_evidenced_divergence": "After WindowManager.addView, before a formal ViewRoot attach state existed.",
+    "earliest_evidenced_divergence": "Immediately after the scheduled traversal handoff: API19 executes performTraversals while prior AGR stopped at the marker.",
     "semantic_class": "PUBLIC_OBSERVABLE",
-    "causal_status": "OBSERVED",
-    "evidence_level": "SOURCE_INFERRED",
+    "causal_status": "CONTRACT_CONFIRMED",
+    "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "source map, synthetic contract, unchanged Frozen Bubble Simulator probe and protected regressions",
+    "next_validation": "none for this contract",
     "primary_blocker": "none",
     "first_broken_boundary": "none",
     "first_broken_boundary_evidence": "closure evidence"
@@ -38,7 +38,7 @@
     "valid_closure_runs": 1,
     "infrastructure_failures_consume_budget": false,
     "closure_runs_used": 1,
-    "last_closure_attempt": "35595440089 VALID_PASS",
+    "last_closure_attempt": "35634763769 VALID_PASS",
     "automatic_reruns_available": 0,
     "discovery_policy": "information_gain",
     "consecutive_expensive_runs_without_information_gain": 0

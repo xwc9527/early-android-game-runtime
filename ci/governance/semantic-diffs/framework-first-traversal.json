@@ -1,0 +1,83 @@
+{
+  "schema_version": 2,
+  "classification": "ANDROID_SEMANTIC_BUG",
+  "subsystem": "API19 ViewRootImpl first traversal, IWindowSession relayout and root Surface",
+  "observed_discontinuity": "The closed ViewRoot attach path scheduled a traversal, but had no consumer, measured root, relayout result, window frame, layout, or root Surface.",
+  "upstream": {
+    "map_entry": "framework.viewroot.first_traversal",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "core/java/android/view/ViewRootImpl.java",
+      "core/java/android/view/View.java",
+      "core/java/android/view/ViewGroup.java",
+      "core/java/android/view/IWindowSession.aidl",
+      "core/java/android/view/Surface.java"
+    ],
+    "call_path": [
+      "ViewRootImpl.doTraversal",
+      "ViewRootImpl.performTraversals",
+      "View.dispatchAttachedToWindow",
+      "ViewRootImpl.getRootMeasureSpec",
+      "View.measure",
+      "IWindowSession.relayout",
+      "View.layout",
+      "ViewRootImpl.scheduleTraversals"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "The scheduled first traversal is consumed before performTraversals executes.",
+    "The root hierarchy is attached before measurement and relayout; measured dimensions derive from display constraints and LayoutParams.",
+    "WindowSession relayout maintains window identity, visibility, requested size, frame/insets and a persistent Surface result.",
+    "A previously invalid Surface becoming valid schedules another traversal before draw."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+      "Runtime/DexLoom/AndroidMini/framework_viewroot.h",
+      "Runtime/DexLoom/game_dex_runner.c",
+      "App/main.m"
+    ],
+    "call_path": [
+      "agr_dex_game_do_traversal",
+      "agr_viewroot_do_traversal",
+      "session_relayout",
+      "agr_dex_game_root_surface",
+      "handoff.viewroot_surface_ready"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "AGR previously ended at a scheduled traversal marker with no API19 first traversal state transition or Surface acquisition.",
+      "relevance": "The original APK could not proceed into an attached, measured root window with a valid Surface."
+    }
+  ],
+  "earliest_evidenced_divergence": "Immediately after handoff.viewroot_traversal, where API19 doTraversal consumes the pending callback.",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "Pinned android-4.4.4_r2 ViewRootImpl.java, View.java, ViewGroup.java, IWindowSession.aidl and Surface.java source hashes in upstream map"
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Simulator run 35631242737 framework-first-traversal.json: synthetic ordered first traversal, relayout failure, Surface allocation failure/retry and persistent second traversal"
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "Simulator run 35631242737 unchanged Frozen Bubble APK: classification=viewroot_surface_ready, launch_result=0, valid Surface and completed layout"
+    }
+  ],
+  "remaining_uncertainty": [
+    "Protected Runtime regressions and iphoneos arm64 build are pending.",
+    "Drawing and SurfaceView/GLSurfaceView are a downstream ownership boundary."
+  ],
+  "next_action": "Run protected regression and iphoneos validation before exact-commit closure.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "UIKit supplies display dimensions; host-side ViewRoot and in-process WindowSession HLE preserve API19 ordering and own persistent root Surface backing without system_server or Binder."
+}

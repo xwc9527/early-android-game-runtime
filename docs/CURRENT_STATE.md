@@ -1,14 +1,20 @@
 # AGR Current State
 
-Updated: 2026-09-21
+Updated: 2026-09-22
 
-Runtime baseline and last known good: `main @ a6256ba4e4f0d8124bc5a2348039b882f2c91dc8`. The governance-only follow-up `beff6b2232c5473bc09fc2145abefda30c117b91` passed post-merge gate `35598935478`.
+Formal baseline and last known good: `main @ 3e3db84a53ad0957e9217f804b6f718a942b9a11` / tree `1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa`. First Traversal is `MERGED`. Closure run `35634763769` is `VALID_PASS`: linux-source-contract, focused Simulator, protected Runtime contracts, bounded Simulator smoke, protected Runtime and real-game regressions, and the arm64 iphoneos build all passed. Post-merge run `35662355600` passed on governance-only follow-up `79d47bc6578a36c7af6a10d5b5ec03122fdbd1da`.
 
-Active branch: `main`; next phase branches from this formal main.
+The candidate commit's ledger still said `IMPLEMENTED` with `closure_tested_commit = null` because that commit is the exact tested tree. The closure artifact was produced after it. That ledger is not evidence that closure did not occur.
 
-Lifecycle: `MERGED/STABLE`. ViewRoot closure-tested commit `a6256ba4e4f0d8124bc5a2348039b882f2c91dc8` / tree `9d0dedc1b6bcd92ad40a595b386ce798d5da3025`; exact-target post-merge run `35598935478` passed on governance-only follow-up `beff6b2232c5473bc09fc2145abefda30c117b91`.
+The prior `handoff.viewroot_traversal` is now consumed by a host-side API19 ViewRoot first traversal. Focused Simulator run `35631242737` executed a synthetic Activity and the unchanged Frozen Bubble APK through attachment, root measurement, WindowSession relayout, persistent Surface acquisition and layout. The synthetic contract also observed first-Surface rescheduling, the second traversal retaining the same backing identity, relayout rejection, Surface allocation failure and retry. The current terminal is `handoff.viewroot_surface_ready`; draw/Canvas/GLSurfaceView and gameplay remain outside this phase.
 
-## Active Target
+The authoritative source path is pinned `android-4.4.4_r2` `ViewRootImpl.doTraversal/performTraversals`, `View.measure/layout`, `IWindowSession.relayout`, and `Surface` validity. UIKit supplies display dimensions; the in-process WindowSession HLE owns Android frame/Surface policy. The source map and semantic differential for this phase are under `ci/governance`.
+
+## Previous closed ViewRoot attach baseline
+
+Prior ViewRoot attach lifecycle: `MERGED/STABLE`. Its closure-tested commit `a6256ba4e4f0d8124bc5a2348039b882f2c91dc8` / tree `9d0dedc1b6bcd92ad40a595b386ce798d5da3025` passed exact-target post-merge run `35598935478`.
+
+## Previous target
 
 Migrate the Android 4.4.4 ViewRoot attach cluster after WindowManager.addView: ViewRoot creation, root/parent assignment, initial traversal scheduling, WindowSession attachment, and attach completion. The phase ends at `handoff.viewroot_traversal`; performTraversals, relayout, Surface and drawing remain downstream.
 
@@ -40,16 +46,11 @@ from discovery run `35654415068` and blind holdout run `35656209596`. No product
 behavior was changed by the experiment. Its meaning is bounded by first-blocker censoring: it
 describes the compatibility frontier currently reached, not complete gameplay paths.
 
-The requested Baseline Compensation Validation is `BLOCKED_PRECONDITION`
-(`build/artifacts/architecture-falsification-compensation.json`). First Traversal closure run
-`35634763769` is `VALID_PASS` for commit `3e3db84a53ad0957e9217f804b6f718a942b9a11` / tree
-`1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa`, including protected regressions and the iphoneos
-build. The candidate commit's `IMPLEMENTED` ledger is the pre-artifact tested tree, not evidence
-that closure did not occur. The phase is not yet on formal `main`, has no post-merge gate, and
-the governance baseline is still `a6256ba4`. Formal `main` remains `5a6962d2`, so the permitted
-expensive run was not spent. The combined 15-sample profile is ready; the run is triggered by
-setting `ci/falsification-run-request.json` to `falsification-compensation` once First Traversal
-is merged, post-merge green, and baseline-promoted.
+First Traversal is `MERGED` on formal `main`. Closure run `35634763769` is `VALID_PASS` for
+commit `3e3db84a53ad0957e9217f804b6f718a942b9a11` / tree
+`1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa`. Post-merge run `35662355600` passed. The governance
+baseline commit is that tested commit. The single compensation run uses
+`sample_set: falsification-compensation` against this Runtime, with production behavior frozen.
 
 ## Closure Contract
 

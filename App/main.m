@@ -981,13 +981,40 @@ static NSDictionary *dexSnapshotDictionary(const agr_dex_runtime_snapshot *snaps
       @"window_session_attached":snapshot->window_session_attached ? @YES : @NO,
       @"view_parent_assigned":snapshot->view_parent_assigned ? @YES : @NO,
       @"viewroot_attach_completed":snapshot->viewroot_attach_completed ? @YES : @NO,
+      @"hierarchy_attached":snapshot->hierarchy_attached ? @YES : @NO,
+      @"traversal_phase":@(snapshot->traversal_phase),
+      @"traversal_count":@(snapshot->traversal_count),
+      @"measured_width":@(snapshot->measured_width),
+      @"measured_height":@(snapshot->measured_height),
+      @"frame":@[@(snapshot->frame_left),@(snapshot->frame_top),
+                  @(snapshot->frame_right),@(snapshot->frame_bottom)],
+      @"layout_complete":snapshot->layout_complete ? @YES : @NO,
+      @"surface_valid":snapshot->surface_valid ? @YES : @NO,
+      @"surface_generation":@(snapshot->surface_generation),
       @"last_method":[NSString stringWithUTF8String:snapshot->last_method],
       @"method_trace":methods, @"framework_trace":framework,
       @"exception_class":[NSString stringWithUTF8String:snapshot->exception_class],
       @"error":[NSString stringWithUTF8String:snapshot->error] };
 }
 
-static NSString *runFrameworkRuntimeContinuationDiscovery(void) {
+static void *rejectSurfaceAllocation(void *user, size_t bytes) {
+    (void)user; (void)bytes;
+    return NULL;
+}
+
+static void rejectSurfaceRelease(void *user, void *pixels) {
+    (void)user; (void)pixels;
+}
+
+static int rejectRelayout(void *user, uint32_t width, uint32_t height,
+                          int visibility) {
+    (void)user; (void)width; (void)height; (void)visibility;
+    return -1;
+}
+
+static NSString *runFrameworkRuntimeContinuationDiscovery(BOOL runTraversal,
+                                                           uint32_t displayWidth,
+                                                           uint32_t displayHeight) {
     NSString *fixturePath=[[NSBundle mainBundle] pathForResource:@"activity-launch-fixture" ofType:@"dex"];
     NSData *fixture=fixturePath ? [NSData dataWithContentsOfFile:fixturePath] : nil;
     agr_dex_game *contract=fixture ? agr_dex_game_create_for_launch(fixture.bytes,(uint32_t)fixture.length,
@@ -999,6 +1026,25 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(void) {
     agr_dex_runtime_snapshot contractSnapshot={0};
     if (contract) agr_dex_game_runtime_snapshot(contract,&contractSnapshot);
     BOOL ownerGraph=contract && agr_dex_game_viewroot_contract(contract)==1;
+    int contractTraversal=runTraversal && contract
+        ? agr_dex_game_do_traversal(contract,displayWidth,displayHeight) : -1;
+    agr_dex_runtime_snapshot contractAfter={0};
+    if (contract) agr_dex_game_runtime_snapshot(contract,&contractAfter);
+    void *firstPixels=NULL,*secondPixels=NULL;
+    uint32_t firstWidth=0,firstHeight=0,firstStride=0,firstGeneration=0;
+    uint32_t secondWidth=0,secondHeight=0,secondStride=0,secondGeneration=0;
+    int firstSurface=runTraversal && contract ? agr_dex_game_root_surface(contract,&firstPixels,
+        &firstWidth,&firstHeight,&firstStride,&firstGeneration) : -1;
+    int secondTraversal=runTraversal && contract && contractTraversal==0
+        ? agr_dex_game_do_traversal(contract,displayWidth,displayHeight) : -1;
+    agr_dex_runtime_snapshot contractSecond={0};
+    if (contract) agr_dex_game_runtime_snapshot(contract,&contractSecond);
+    int secondSurface=runTraversal && contract ? agr_dex_game_root_surface(contract,&secondPixels,
+        &secondWidth,&secondHeight,&secondStride,&secondGeneration) : -1;
+    BOOL surfacePersistent=runTraversal && firstSurface==0 && secondTraversal==0 &&
+        secondSurface==0 && firstPixels==secondPixels && firstGeneration==secondGeneration &&
+        firstWidth==secondWidth && firstHeight==secondHeight && firstStride==secondStride &&
+        contractSecond.traversal_count==2 && !contractSecond.traversal_scheduled;
     NSMutableArray *contractTrace=[NSMutableArray array];
     for (uint32_t i=0;i<contractSnapshot.framework_event_count;i++)
       [contractTrace addObject:[NSString stringWithUTF8String:contractSnapshot.framework_events[i]]];
@@ -1013,6 +1059,43 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(void) {
         contractSnapshot.framework_event_count>0 &&
         strcmp(contractSnapshot.framework_events[contractSnapshot.framework_event_count-1],
                "handoff.viewroot_traversal")==0;
+    if (runTraversal) contractPassed=contractPassed && contractTraversal==0 &&
+        contractAfter.hierarchy_attached && contractAfter.traversal_count==1 &&
+        contractAfter.measured_width>0 && contractAfter.measured_height>0 &&
+        contractAfter.layout_complete && contractAfter.surface_valid &&
+        contractAfter.surface_generation==1 && contractAfter.traversal_scheduled &&
+        surfacePersistent;
+    int invalidTraversal=-1,relayoutFailure=-1,allocationFailure=-1,retryAfterFailure=-1;
+    agr_dex_runtime_snapshot relayoutFailureSnapshot={0},allocationFailureSnapshot={0},retrySnapshot={0};
+    if (runTraversal && fixture) {
+      agr_dex_game *failureGame=agr_dex_game_create_for_launch(fixture.bytes,(uint32_t)fixture.length,
+          "Ltest/TestActivity;","Ltest/TestApplication;","test.activity.launch");
+      if (failureGame) {
+        invalidTraversal=agr_dex_game_do_traversal(failureGame,displayWidth,displayHeight);
+        if (agr_dex_game_start_activity(failureGame)==0 &&
+            agr_dex_game_set_relayout_gate(failureGame,rejectRelayout,NULL)==0) {
+          relayoutFailure=agr_dex_game_do_traversal(failureGame,displayWidth,displayHeight);
+          agr_dex_game_runtime_snapshot(failureGame,&relayoutFailureSnapshot);
+        }
+        if (agr_dex_game_set_relayout_gate(failureGame,NULL,NULL)==0 &&
+            agr_dex_game_set_surface_allocator(failureGame,rejectSurfaceAllocation,
+                                               rejectSurfaceRelease,NULL)==0) {
+          allocationFailure=agr_dex_game_do_traversal(failureGame,displayWidth,displayHeight);
+          agr_dex_game_runtime_snapshot(failureGame,&allocationFailureSnapshot);
+          if (agr_dex_game_set_surface_allocator(failureGame,NULL,NULL,NULL)==0) {
+            retryAfterFailure=agr_dex_game_do_traversal(failureGame,displayWidth,displayHeight);
+            agr_dex_game_runtime_snapshot(failureGame,&retrySnapshot);
+          }
+        }
+        agr_dex_game_destroy(failureGame);
+      }
+      contractPassed=contractPassed && invalidTraversal!=0 && relayoutFailure!=0 &&
+          !relayoutFailureSnapshot.surface_valid &&
+          relayoutFailureSnapshot.traversal_scheduled && allocationFailure!=0 &&
+          !allocationFailureSnapshot.surface_valid &&
+          allocationFailureSnapshot.traversal_scheduled && retryAfterFailure==0 &&
+          retrySnapshot.surface_valid && retrySnapshot.layout_complete;
+    }
     NSDictionary *contractResult=@{ @"passed":@(contractPassed), @"launch_result":@(contractLaunch),
       @"activity_marker":@(contractMarker),
       @"post_resume_completed":@(contract && agr_dex_game_post_resume_completed(contract)==1),
@@ -1027,7 +1110,19 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(void) {
       @"window_session_attached":@(contractSnapshot.window_session_attached!=0),
       @"view_parent_assigned":@(contractSnapshot.view_parent_assigned!=0),
       @"viewroot_attach_completed":@(contractSnapshot.viewroot_attach_completed!=0),
-      @"owner_graph":@(ownerGraph), @"framework_trace":contractTrace };
+      @"owner_graph":@(ownerGraph), @"framework_trace":contractTrace,
+      @"traversal_result":@(contractTraversal),
+      @"second_traversal_result":@(secondTraversal),
+      @"surface_persistent":@(surfacePersistent),
+      @"second_traversal":dexSnapshotDictionary(&contractSecond),
+      @"invalid_traversal_result":@(invalidTraversal),
+      @"relayout_failure_result":@(relayoutFailure),
+      @"relayout_failure_snapshot":dexSnapshotDictionary(&relayoutFailureSnapshot),
+      @"surface_failure_result":@(allocationFailure),
+      @"surface_failure_snapshot":dexSnapshotDictionary(&allocationFailureSnapshot),
+      @"retry_result":@(retryAfterFailure),
+      @"retry_snapshot":dexSnapshotDictionary(&retrySnapshot),
+      @"after_traversal":dexSnapshotDictionary(&contractAfter) };
     if (contract) agr_dex_game_destroy(contract);
     NSString *planPath=[[NSBundle mainBundle] pathForResource:@"batch-plan" ofType:@"json"];
     NSData *planData=planPath ? [NSData dataWithContentsOfFile:planPath] : nil;
@@ -1045,6 +1140,8 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(void) {
     BOOL realOwnerGraph=game && agr_dex_game_viewroot_contract(game)==1;
     agr_dex_runtime_snapshot resumed={0},observed={0};
     if (game) agr_dex_game_runtime_snapshot(game,&resumed);
+    int realTraversal=runTraversal && game && start==0
+        ? agr_dex_game_do_traversal(game,displayWidth,displayHeight) : -1;
     /* Deliberately do not synthesize an Android callback here. This bounded
        interval distinguishes harness destruction from autonomous Runtime
        progress without changing Framework behavior. */
@@ -1052,18 +1149,25 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(void) {
     if (game) agr_dex_game_runtime_snapshot(game,&observed);
     NSDictionary *before=dexSnapshotDictionary(&resumed), *after=dexSnapshotDictionary(&observed);
     BOOL progressed=observed.methods_invoked!=resumed.methods_invoked ||
-        observed.instructions_executed!=resumed.instructions_executed;
-    NSDictionary *report=@{ @"schema":@"agr.framework-viewroot-attach.discovery.v1",
+        observed.instructions_executed!=resumed.instructions_executed ||
+        observed.traversal_count!=resumed.traversal_count;
+    NSString *classification=runTraversal
+        ? (game && start==0 && realTraversal==0 && observed.surface_valid &&
+           observed.hierarchy_attached && observed.layout_complete
+           ? @"viewroot_surface_ready" : @"first_traversal_failed")
+        : (game && start==0 ? (observed.viewroot_attach_completed ? @"viewroot_traversal_handoff" :
+          (progressed ? @"guest_progress_observed" :
+          (observed.post_resume_completed ? @"post_resume_complete_no_followup_event" : @"no_post_resume_dispatch_observed")))
+          : @"launch_failed");
+    NSDictionary *report=@{ @"schema":runTraversal ? @"agr.framework-first-traversal.discovery.v1" : @"agr.framework-viewroot-attach.discovery.v1",
       @"sample":sample[@"id"] ?: @"missing", @"package":sample[@"package"] ?: @"missing",
       @"launch_result":@(start), @"launch_stage":launchStageName(game ? agr_dex_game_launch_stage(game) : AGR_ACTIVITY_LAUNCH_NONE),
       @"harness_retained_runtime":game ? @YES : @NO, @"observation_ms":@2000,
       @"thread_owner":@"focused-regression-serial-queue", @"resume_snapshot":before,
       @"after_snapshot":after, @"autonomous_progress":@(progressed), @"contract":contractResult,
-      @"real_owner_graph":@(realOwnerGraph),
-      @"classification": game && start==0 ? (observed.viewroot_attach_completed ? @"viewroot_traversal_handoff" :
-          (progressed ? @"guest_progress_observed" :
-          (observed.post_resume_completed ? @"post_resume_complete_no_followup_event" : @"no_post_resume_dispatch_observed")))
-                                             : @"launch_failed" };
+      @"real_owner_graph":@(realOwnerGraph), @"traversal_result":@(realTraversal),
+      @"display_width":@(displayWidth), @"display_height":@(displayHeight),
+      @"classification":classification };
     if (game) agr_dex_game_destroy(game);
     if (package) agr_apk_package_close(package);
     NSData *json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted error:nil];
@@ -1428,11 +1532,13 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     BOOL activityLaunchCompatibility=[arguments containsObject:@"--activity-launch-compatibility"];
     BOOL frameworkRuntimeContinuation=[arguments containsObject:@"--framework-viewroot-attach-discovery"];
     BOOL architectureFalsification=[arguments containsObject:@"--architecture-falsification-discovery"];
+    BOOL firstTraversalDiscovery=[arguments containsObject:@"--framework-first-traversal-discovery"];
 #if AGR_DEVICE_INTERACTIVE
     interactive=YES;
 #endif
     UIViewController *controller = interactive ? [AGRDebugController new] : [UIViewController new]; controller.view.backgroundColor = UIColor.blackColor;
     self.window.rootViewController = controller; [self.window makeKeyAndVisible];
+    CGSize displayPixels=UIScreen.mainScreen.nativeBounds.size;
     if(!interactive){
       /* Returning from didFinishLaunching promptly is required even for the
        * headless regression host.  Running the complete APK trajectory here
@@ -1441,13 +1547,16 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
       dispatch_queue_t regressionQueue=dispatch_queue_create("dev.agr.simulator.regression",DISPATCH_QUEUE_SERIAL);
       dispatch_async(regressionQueue,^{ @autoreleasepool {
         NSString *result = architectureFalsification ? runArchitectureFalsificationDiscovery() :
-            (frameworkRuntimeContinuation ? runFrameworkRuntimeContinuationDiscovery() :
+            ((frameworkRuntimeContinuation || firstTraversalDiscovery)
+            ? runFrameworkRuntimeContinuationDiscovery(firstTraversalDiscovery,
+                (uint32_t)displayPixels.width,(uint32_t)displayPixels.height) :
             (activityLaunchCompatibility ? runActivityLaunchCompatibility() :
             (dexParserCompatibility ? runDexParserCompatibility() : runTests())));
         NSString *file = architectureFalsification ? @"architecture-falsification-discovery.json" :
+            (firstTraversalDiscovery ? @"framework-first-traversal.json" :
             (frameworkRuntimeContinuation ? @"framework-viewroot-attach.json" :
             (activityLaunchCompatibility ? @"framework-activity-launch.json" :
-            (dexParserCompatibility ? @"dex-parser-simulator.json" : @"runtime-smoke.json")));
+            (dexParserCompatibility ? @"dex-parser-simulator.json" : @"runtime-smoke.json"))));
         NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:
             [@"Documents" stringByAppendingPathComponent:file]];
         [result writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
