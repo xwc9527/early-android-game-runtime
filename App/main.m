@@ -1174,6 +1174,66 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(BOOL runTraversal,
     return [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
 }
 
+/* Architecture falsification discovery: drive every planned sample through the
+   current Runtime frontier unchanged and record where each one stops. Results
+   are flushed after every sample so that one sample terminating the process
+   still leaves the evidence collected up to that point. */
+static NSDictionary *probeFalsificationFrontier(NSDictionary *sample) {
+    NSString *resource=sample[@"resource"];
+    NSString *path=resource ? [[NSBundle mainBundle] pathForResource:resource.stringByDeletingPathExtension
+                                                              ofType:resource.pathExtension] : nil;
+    NSDate *started=[NSDate date];
+    agr_apk_package *package=path ? agr_apk_package_open(path.UTF8String) : NULL;
+    agr_dex_game *game=package ? agr_dex_game_create_from_apk(package) : NULL;
+    if (game) agr_dex_game_enable_diagnostics(game,1);
+    int start=game ? agr_dex_game_start_activity(game) : -1;
+    agr_activity_launch_stage stage=game ? agr_dex_game_launch_stage(game) : AGR_ACTIVITY_LAUNCH_NONE;
+    NSString *detail=game ? [NSString stringWithUTF8String:agr_dex_game_launch_error(game)]
+                          : (package ? @"DEX Runtime creation failed" : @"APK package open failed");
+    agr_dex_runtime_snapshot snapshot={0};
+    if (game) agr_dex_game_runtime_snapshot(game,&snapshot);
+    NSDictionary *result=@{ @"id":sample[@"id"] ?: @"unknown",
+      @"package":sample[@"package"] ?: @"unknown",
+      @"static_cluster":sample[@"static_cluster"] ?: @"",
+      @"has_dex":sample[@"has_dex"] ?: @NO,
+      @"armv7_library_count":@([sample[@"armv7_libraries"] count]),
+      @"launch_result":@(start), @"last_stage":launchStageName(stage),
+      @"activity_launch_crossed":@(stage>=AGR_ACTIVITY_LAUNCH_ON_CREATE_ENTERED),
+      @"viewroot_attach_completed":@(snapshot.viewroot_attach_completed!=0),
+      @"failure_signature":start==0 ? @"success:activity_resumed"
+          : [NSString stringWithFormat:@"missing_framework:%@",detail.length ? detail : @"activity_launch"],
+      @"raw_detail":detail ?: @"",
+      @"snapshot":dexSnapshotDictionary(&snapshot),
+      @"elapsed_ms":@((uint32_t)([[NSDate date] timeIntervalSinceDate:started]*1000.0)) };
+    if (game) agr_dex_game_destroy(game);
+    if (package) agr_apk_package_close(package);
+    return result;
+}
+
+static NSString *runArchitectureFalsificationDiscovery(void) {
+    NSString *planPath=[[NSBundle mainBundle] pathForResource:@"batch-plan" ofType:@"json"];
+    NSData *planData=planPath ? [NSData dataWithContentsOfFile:planPath] : nil;
+    NSDictionary *plan=planData ? [NSJSONSerialization JSONObjectWithData:planData options:0 error:nil] : nil;
+    NSArray *samples=plan[@"samples"] ?: @[];
+    NSString *output=[NSHomeDirectory() stringByAppendingPathComponent:
+        @"Documents/architecture-falsification-discovery.json"];
+    NSMutableArray *records=[NSMutableArray array];
+    for (NSDictionary *sample in samples) {
+        [records addObject:probeFalsificationFrontier(sample)];
+        NSDictionary *partial=@{ @"schema":@"agr.architecture-falsification.discovery.v1",
+          @"planned":@(samples.count), @"completed":@(records.count),
+          @"complete":@(records.count==samples.count), @"results":records };
+        NSData *json=[NSJSONSerialization dataWithJSONObject:partial
+            options:NSJSONWritingPrettyPrinted error:nil];
+        [json writeToFile:output atomically:YES];
+    }
+    NSDictionary *report=@{ @"schema":@"agr.architecture-falsification.discovery.v1",
+      @"planned":@(samples.count), @"completed":@(records.count), @"complete":@YES,
+      @"results":records };
+    NSData *json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted error:nil];
+    return [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
+}
+
 static NSString *runTests(void) {
     NSMutableArray<NSString *> *failures = [NSMutableArray array];
     agr_contract_result contractCases[64]={0};
@@ -1471,6 +1531,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     BOOL dexParserCompatibility=[arguments containsObject:@"--dex-parser-compatibility"];
     BOOL activityLaunchCompatibility=[arguments containsObject:@"--activity-launch-compatibility"];
     BOOL frameworkRuntimeContinuation=[arguments containsObject:@"--framework-viewroot-attach-discovery"];
+    BOOL architectureFalsification=[arguments containsObject:@"--architecture-falsification-discovery"];
     BOOL firstTraversalDiscovery=[arguments containsObject:@"--framework-first-traversal-discovery"];
 #if AGR_DEVICE_INTERACTIVE
     interactive=YES;
@@ -1485,15 +1546,17 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
        * watchdog to terminate an otherwise healthy Runtime process. */
       dispatch_queue_t regressionQueue=dispatch_queue_create("dev.agr.simulator.regression",DISPATCH_QUEUE_SERIAL);
       dispatch_async(regressionQueue,^{ @autoreleasepool {
-        NSString *result = (frameworkRuntimeContinuation || firstTraversalDiscovery)
+        NSString *result = architectureFalsification ? runArchitectureFalsificationDiscovery() :
+            ((frameworkRuntimeContinuation || firstTraversalDiscovery)
             ? runFrameworkRuntimeContinuationDiscovery(firstTraversalDiscovery,
                 (uint32_t)displayPixels.width,(uint32_t)displayPixels.height) :
             (activityLaunchCompatibility ? runActivityLaunchCompatibility() :
-            (dexParserCompatibility ? runDexParserCompatibility() : runTests()));
-        NSString *file = firstTraversalDiscovery ? @"framework-first-traversal.json" :
+            (dexParserCompatibility ? runDexParserCompatibility() : runTests())));
+        NSString *file = architectureFalsification ? @"architecture-falsification-discovery.json" :
+            (firstTraversalDiscovery ? @"framework-first-traversal.json" :
             (frameworkRuntimeContinuation ? @"framework-viewroot-attach.json" :
             (activityLaunchCompatibility ? @"framework-activity-launch.json" :
-            (dexParserCompatibility ? @"dex-parser-simulator.json" : @"runtime-smoke.json")));
+            (dexParserCompatibility ? @"dex-parser-simulator.json" : @"runtime-smoke.json"))));
         NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:
             [@"Documents" stringByAppendingPathComponent:file]];
         [result writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];

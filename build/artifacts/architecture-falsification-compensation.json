@@ -1,0 +1,599 @@
+{
+  "schema_version": 1,
+  "experiment": "Baseline Compensation Validation - post First-Traversal formal main",
+  "status": "MEASURED",
+  "original_experiment": {
+    "name": "Architecture Falsification - baseline 5a6962d2",
+    "runtime_baseline_commit": "5a6962d2c84b06425e8c489e855d71529f50ba3b",
+    "run_ids": {
+      "discovery": "35654415068",
+      "holdout": "35656209596",
+      "falsification_branch_commit": "bae6d40a83bdf28e055dbfe4fdb9b6ed15ed08b4"
+    },
+    "verdicts": {
+      "H1": "PASS",
+      "H2": "PASS",
+      "PROJECT": "CONTINUE"
+    },
+    "preserved_unmodified": true
+  },
+  "precondition": {
+    "satisfied": true,
+    "formal_main_commit": "6e47ce9ab6da32483f049731ac04f2a8356a4b67",
+    "formal_main_tree": "c7a9302d350c7ff02ada3e9340438f91dcf986cd",
+    "governance_baseline_commit": "3e3db84a53ad0957e9217f804b6f718a942b9a11",
+    "first_traversal_head": "3e3db84a53ad0957e9217f804b6f718a942b9a11",
+    "first_traversal_on_main": true,
+    "authoritative_closure": {
+      "run_id": "35634763769",
+      "classification": "VALID_PASS",
+      "tested_commit": "3e3db84a53ad0957e9217f804b6f718a942b9a11",
+      "tested_tree": "1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa",
+      "closure_base_commit": "5a6962d2c84b06425e8c489e855d71529f50ba3b",
+      "protected_regressions": "PASS",
+      "iphoneos": "PASS",
+      "linux_source_contract": "PASS",
+      "simulator_focused": "PASS",
+      "source": "GitHub Actions run 35634763769 artifact framework-first-traversal-closure-summary"
+    },
+    "candidate_commit_ledger_is_not_negative_evidence": true,
+    "formal_main_closure_state": "MERGED",
+    "formal_main_post_merge_run": "35662355600",
+    "post_merge_pass": true,
+    "baseline_promoted": true,
+    "blocking_reasons": []
+  },
+  "frozen_inputs": {
+    "granularity_fingerprint": "62d94962023b26bb3cc18fa4ef772f63098a7680b1f89a5103f22efe1f9d6b59",
+    "discovery_order": [
+      "crosswords",
+      "gloomy-dungeons-1",
+      "kungfoo-barracuda",
+      "minilens",
+      "minetest",
+      "flickit",
+      "andors-trail",
+      "pixel-dungeon",
+      "a2048",
+      "pysolfc"
+    ],
+    "holdout": [
+      "qt-minesweeper",
+      "meritous",
+      "heriswap",
+      "geometri-destroyer",
+      "droidfish"
+    ],
+    "thresholds": {
+      "h1_irreducible_trigger": "same or equivalent irreducible gameplay-critical dependency in >=3 in-scope games from >=2 unrelated clusters",
+      "h2_marginal": "C_last <= 0.50 * C_first over the fixed Discovery order",
+      "h2_holdout_reuse": "holdout_reuse_ratio >= 0.70",
+      "h2_game_specific": "0 GAME_SPECIFIC production requirements from Holdout"
+    },
+    "production_runtime_modified_by_this_task": false
+  },
+  "compensation_run": {
+    "run_id": "35662803136",
+    "new_formal_main_commit": "6e47ce9ab6da32483f049731ac04f2a8356a4b67",
+    "new_formal_main_tree": "c7a9302d350c7ff02ada3e9340438f91dcf986cd",
+    "sample_profile": "falsification-compensation",
+    "expensive_runs_added": 1
+  },
+  "discovery_metrics": {
+    "old": {
+      "C_first": 1.8,
+      "C_last": 0.2,
+      "c_last_over_c_first": 0.1111,
+      "threshold_marginal_pass": true,
+      "known_over_in_scope_ratio": 0.8889,
+      "holdout_reuse_ratio": null,
+      "classification_counts": {
+        "KNOWN_PUBLIC_CONTRACT": 8,
+        "NEW_PUBLIC_CONTRACT": 1,
+        "RUNTIME_INTERNAL_GAP": 1
+      }
+    },
+    "new": {
+      "C_first": 1.8,
+      "C_last": 0.2,
+      "c_last_over_c_first": 0.1111,
+      "threshold_marginal_pass": true,
+      "known_over_in_scope_ratio": 0.8889,
+      "holdout_reuse_ratio": null,
+      "classification_counts": {
+        "KNOWN_PUBLIC_CONTRACT": 8,
+        "NEW_PUBLIC_CONTRACT": 1,
+        "RUNTIME_INTERNAL_GAP": 1
+      }
+    }
+  },
+  "holdout_metrics": {
+    "old": {
+      "C_first": 3.0,
+      "C_last": 0.0,
+      "c_last_over_c_first": 0.0,
+      "threshold_marginal_pass": true,
+      "known_over_in_scope_ratio": 1.0,
+      "holdout_reuse_ratio": 1.0,
+      "classification_counts": {
+        "KNOWN_PUBLIC_CONTRACT": 3,
+        "RUNTIME_INTERNAL_GAP": 2
+      }
+    },
+    "new": {
+      "C_first": 3.0,
+      "C_last": 0.0,
+      "c_last_over_c_first": 0.0,
+      "threshold_marginal_pass": true,
+      "known_over_in_scope_ratio": 1.0,
+      "holdout_reuse_ratio": 1.0,
+      "classification_counts": {
+        "KNOWN_PUBLIC_CONTRACT": 3,
+        "RUNTIME_INTERNAL_GAP": 2
+      }
+    }
+  },
+  "per_game_frontier_comparison": {
+    "discovery": [
+      {
+        "id": "crosswords",
+        "cluster": "custom-jni-canvas",
+        "old_last_stage": "none",
+        "old_classification": "KNOWN_PUBLIC_CONTRACT",
+        "old_blocking_family": "app.activity_lifecycle",
+        "old_blocking_method": "activity class resolution of a platform Activity subclass",
+        "old_executed_families": [],
+        "new_last_stage": "none",
+        "new_classification": "KNOWN_PUBLIC_CONTRACT",
+        "new_blocking_family": "app.activity_lifecycle",
+        "new_blocking_method": "activity class resolution of a platform Activity subclass",
+        "new_executed_families": [],
+        "contract_families_gained": [],
+        "contract_families_no_longer_observed": [],
+        "frontier_change": "UNCHANGED"
+      },
+      {
+        "id": "gloomy-dungeons-1",
+        "cluster": "custom-jni-gl",
+        "old_last_stage": "on_create_entered",
+        "old_classification": "NEW_PUBLIC_CONTRACT",
+        "old_blocking_family": "audio.soundpool",
+        "old_blocking_method": "Landroid/media/SoundPool;->loadILII",
+        "old_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context",
+          "resources.asset_access",
+          "system.log",
+          "audio.soundpool"
+        ],
+        "new_last_stage": "on_create_entered",
+        "new_classification": "NEW_PUBLIC_CONTRACT",
+        "new_blocking_family": "audio.soundpool",
+        "new_blocking_method": "Landroid/media/SoundPool;->loadILII",
+        "new_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context",
+          "resources.asset_access",
+          "system.log",
+          "audio.soundpool"
+        ],
+        "contract_families_gained": [],
+        "contract_families_no_longer_observed": [],
+        "frontier_change": "UNCHANGED"
+      },
+      {
+        "id": "kungfoo-barracuda",
+        "cluster": "custom-nativeactivity",
+        "old_last_stage": "resumed",
+        "old_classification": "KNOWN_PUBLIC_CONTRACT",
+        "old_blocking_family": null,
+        "old_blocking_method": null,
+        "old_executed_families": [
+          "app.application_lifecycle",
+          "app.native_activity",
+          "audio.soundpool",
+          "app.activity_lifecycle",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "new_last_stage": "resumed",
+        "new_classification": "KNOWN_PUBLIC_CONTRACT",
+        "new_blocking_family": null,
+        "new_blocking_method": null,
+        "new_executed_families": [
+          "app.application_lifecycle",
+          "app.native_activity",
+          "audio.soundpool",
+          "app.activity_lifecycle",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "contract_families_gained": [],
+        "contract_families_no_longer_observed": [],
+        "frontier_change": "UNCHANGED"
+      },
+      {
+        "id": "minilens",
+        "cluster": "godot",
+        "old_last_stage": "resumed",
+        "old_classification": "KNOWN_PUBLIC_CONTRACT",
+        "old_blocking_family": null,
+        "old_blocking_method": null,
+        "old_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context",
+          "resources.asset_access",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "new_last_stage": "resumed",
+        "new_classification": "KNOWN_PUBLIC_CONTRACT",
+        "new_blocking_family": null,
+        "new_blocking_method": null,
+        "new_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context",
+          "resources.asset_access",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "contract_families_gained": [],
+        "contract_families_no_longer_observed": [],
+        "frontier_change": "UNCHANGED"
+      },
+      {
+        "id": "minetest",
+        "cluster": "irrlicht-nativeactivity",
+        "old_last_stage": "resumed",
+        "old_classification": "KNOWN_PUBLIC_CONTRACT",
+        "old_blocking_family": null,
+        "old_blocking_method": null,
+        "old_executed_families": [
+          "app.application_lifecycle",
+          "app.native_activity",
+          "app.activity_lifecycle",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "new_last_stage": "resumed",
+        "new_classification": "KNOWN_PUBLIC_CONTRACT",
+        "new_blocking_family": null,
+        "new_blocking_method": null,
+        "new_executed_families": [
+          "app.application_lifecycle",
+          "app.native_activity",
+          "app.activity_lifecycle",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "contract_families_gained": [],
+        "contract_families_no_longer_observed": [],
+        "frontier_change": "UNCHANGED"
+      },
+      {
+        "id": "flickit",
+        "cluster": "libgdx",
+        "old_last_stage": "context_attached",
+        "old_classification": "RUNTIME_INTERNAL_GAP",
+        "old_blocking_family": null,
+        "old_blocking_method": "Ljava/lang/Object;-><init>V during com.badlogic.gdx.utils.Array.<init>",
+        "old_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle"
+        ],
+        "new_last_stage": "context_attached",
+        "new_classification": "RUNTIME_INTERNAL_GAP",
+        "new_blocking_family": null,
+        "new_blocking_method": "Ljava/lang/Object;-><init>V during com.badlogic.gdx.utils.Array.<init>",
+        "new_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle"
+        ],
+        "contract_families_gained": [],
+        "contract_families_no_longer_observed": [],
+        "frontier_change": "UNCHANGED"
+      },
+      {
+        "id": "andors-trail",
+        "cluster": "pure-java-canvas",
+        "old_last_stage": "on_create_entered",
+        "old_classification": "KNOWN_PUBLIC_CONTRACT",
+        "old_blocking_family": "app.context",
+        "old_blocking_method": "Landroid/content/Context;->getResourcesL",
+        "old_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context"
+        ],
+        "new_last_stage": "on_create_entered",
+        "new_classification": "KNOWN_PUBLIC_CONTRACT",
+        "new_blocking_family": "app.context",
+        "new_blocking_method": "Landroid/content/Context;->getResourcesL",
+        "new_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context"
+        ],
+        "contract_families_gained": [],
+        "contract_families_no_longer_observed": [],
+        "frontier_change": "UNCHANGED"
+      },
+      {
+        "id": "pixel-dungeon",
+        "cluster": "pure-java-gl",
+        "old_last_stage": "on_create_entered",
+        "old_classification": "KNOWN_PUBLIC_CONTRACT",
+        "old_blocking_family": "app.context",
+        "old_blocking_method": "Landroid/content/Context;->getPackageNameL",
+        "old_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context"
+        ],
+        "new_last_stage": "on_create_entered",
+        "new_classification": "KNOWN_PUBLIC_CONTRACT",
+        "new_blocking_family": "app.context",
+        "new_blocking_method": "Landroid/content/Context;->getPackageNameL",
+        "new_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context"
+        ],
+        "contract_families_gained": [],
+        "contract_families_no_longer_observed": [],
+        "frontier_change": "UNCHANGED"
+      },
+      {
+        "id": "a2048",
+        "cluster": "pure-java-webview",
+        "old_last_stage": "resumed",
+        "old_classification": "KNOWN_PUBLIC_CONTRACT",
+        "old_blocking_family": null,
+        "old_blocking_method": null,
+        "old_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "new_last_stage": "resumed",
+        "new_classification": "KNOWN_PUBLIC_CONTRACT",
+        "new_blocking_family": null,
+        "new_blocking_method": null,
+        "new_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "contract_families_gained": [],
+        "contract_families_no_longer_observed": [],
+        "frontier_change": "UNCHANGED"
+      },
+      {
+        "id": "pysolfc",
+        "cluster": "python-sdl",
+        "old_last_stage": "resumed",
+        "old_classification": "KNOWN_PUBLIC_CONTRACT",
+        "old_blocking_family": null,
+        "old_blocking_method": null,
+        "old_executed_families": [
+          "app.activity_lifecycle",
+          "app.context",
+          "resources.asset_access",
+          "graphics.bitmap",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "new_last_stage": "resumed",
+        "new_classification": "KNOWN_PUBLIC_CONTRACT",
+        "new_blocking_family": null,
+        "new_blocking_method": null,
+        "new_executed_families": [
+          "app.activity_lifecycle",
+          "app.context",
+          "resources.asset_access",
+          "graphics.bitmap",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "contract_families_gained": [],
+        "contract_families_no_longer_observed": [],
+        "frontier_change": "UNCHANGED"
+      }
+    ],
+    "holdout": [
+      {
+        "id": "qt-minesweeper",
+        "cluster": "qt",
+        "old_last_stage": "on_create_entered",
+        "old_classification": "RUNTIME_INTERNAL_GAP",
+        "old_blocking_family": null,
+        "old_blocking_method": "Ljava/lang/Class;->getDeclaredFieldsL after Class.forName",
+        "old_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle"
+        ],
+        "new_last_stage": "on_create_entered",
+        "new_classification": "RUNTIME_INTERNAL_GAP",
+        "new_blocking_family": null,
+        "new_blocking_method": "Ljava/lang/Class;->getDeclaredFieldsL after Class.forName",
+        "new_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle"
+        ],
+        "contract_families_gained": [],
+        "contract_families_no_longer_observed": [],
+        "frontier_change": "UNCHANGED"
+      },
+      {
+        "id": "meritous",
+        "cluster": "sdl",
+        "old_last_stage": "resumed",
+        "old_classification": "KNOWN_PUBLIC_CONTRACT",
+        "old_blocking_family": null,
+        "old_blocking_method": null,
+        "old_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context",
+          "resources.asset_access",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "new_last_stage": "resumed",
+        "new_classification": "KNOWN_PUBLIC_CONTRACT",
+        "new_blocking_family": null,
+        "new_blocking_method": null,
+        "new_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context",
+          "resources.asset_access",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "contract_families_gained": [],
+        "contract_families_no_longer_observed": [],
+        "frontier_change": "UNCHANGED"
+      },
+      {
+        "id": "heriswap",
+        "cluster": "soupeaucaillou",
+        "old_last_stage": "on_create_entered",
+        "old_classification": "KNOWN_PUBLIC_CONTRACT",
+        "old_blocking_family": "app.activity_lifecycle",
+        "old_blocking_method": "Landroid/app/Activity;->onCreateVL",
+        "old_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle"
+        ],
+        "new_last_stage": "on_create_entered",
+        "new_classification": "KNOWN_PUBLIC_CONTRACT",
+        "new_blocking_family": "app.activity_lifecycle",
+        "new_blocking_method": "Landroid/app/Activity;->onCreateVL",
+        "new_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle"
+        ],
+        "contract_families_gained": [],
+        "contract_families_no_longer_observed": [],
+        "frontier_change": "UNCHANGED"
+      },
+      {
+        "id": "geometri-destroyer",
+        "cluster": "libgdx",
+        "old_last_stage": "context_attached",
+        "old_classification": "RUNTIME_INTERNAL_GAP",
+        "old_blocking_family": null,
+        "old_blocking_method": "Ljava/lang/Object;-><init>V during com.badlogic.gdx.utils.Array.<init>",
+        "old_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle"
+        ],
+        "new_last_stage": "context_attached",
+        "new_classification": "RUNTIME_INTERNAL_GAP",
+        "new_blocking_family": null,
+        "new_blocking_method": "Ljava/lang/Object;-><init>V during com.badlogic.gdx.utils.Array.<init>",
+        "new_executed_families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle"
+        ],
+        "contract_families_gained": [],
+        "contract_families_no_longer_observed": [],
+        "frontier_change": "UNCHANGED"
+      },
+      {
+        "id": "droidfish",
+        "cluster": "custom-jni-canvas",
+        "old_last_stage": "on_create_entered",
+        "old_classification": "KNOWN_PUBLIC_CONTRACT",
+        "old_blocking_family": "app.activity_lifecycle",
+        "old_blocking_method": "Landroid/app/Activity;->getWindowL",
+        "old_executed_families": [
+          "app.context",
+          "app.activity_lifecycle"
+        ],
+        "new_last_stage": "on_create_entered",
+        "new_classification": "KNOWN_PUBLIC_CONTRACT",
+        "new_blocking_family": "app.activity_lifecycle",
+        "new_blocking_method": "Landroid/app/Activity;->getWindowL",
+        "new_executed_families": [
+          "app.context",
+          "app.activity_lifecycle"
+        ],
+        "contract_families_gained": [],
+        "contract_families_no_longer_observed": [],
+        "frontier_change": "UNCHANGED"
+      }
+    ]
+  },
+  "H1": {
+    "verdict": "PASS",
+    "basis": "The deeper frontier exposed no gameplay-critical irreducible system dependency, so the original H1 PASS is inherited."
+  },
+  "H2": {
+    "verdict": "PASS",
+    "conditions": {
+      "no_new_per_game_production_branch": true,
+      "marginal_threshold_met": true,
+      "holdout_reuse_threshold_met": true,
+      "discovery_game_specific_zero": true,
+      "holdout_game_specific_zero": true
+    },
+    "checks": {
+      "C_first": 1.8,
+      "C_last": 0.2,
+      "c_last_over_c_first": 0.1111,
+      "holdout_total_samples": 5,
+      "holdout_public_contract_observable": 3,
+      "holdout_reuse_numerator": 3,
+      "holdout_reuse_ratio": 1.0,
+      "discovery_classification_counts": {
+        "KNOWN_PUBLIC_CONTRACT": 8,
+        "NEW_PUBLIC_CONTRACT": 1,
+        "RUNTIME_INTERNAL_GAP": 1
+      },
+      "holdout_classification_counts": {
+        "KNOWN_PUBLIC_CONTRACT": 3,
+        "RUNTIME_INTERNAL_GAP": 2
+      }
+    },
+    "order_sensitivity": {
+      "registered_ratio": 0.11111111111111112,
+      "reversed_ratio": 0.4285714285714286,
+      "fraction_of_permutations_meeting_threshold": 0.9552
+    },
+    "basis": "All frozen H2 conditions hold on the new baseline."
+  },
+  "PROJECT": {
+    "verdict": "CONTINUE",
+    "basis": "The original falsification result survived a deeper Runtime frontier."
+  },
+  "limitations": [
+    "First-blocker censoring still applies: each run shows only the frontmost blocker of each game on the baseline it ran against.",
+    "The Holdout is a frozen non-adaptive holdout validation, not a blind holdout, because the same members were already observed on the previous baseline.",
+    "The formal Runtime includes First Traversal, but this probe snapshots after start_activity. No sample executed measure, layout, Surface acquisition or draw; the scheduled traversal remains unconsumed. The PASS is a revalidation of the same stopping points on that Runtime."
+  ],
+  "observed_launch_depth": {
+    "surface_layout_draw_reached": false,
+    "samples_with_traversal_phase_1": [
+      "kungfoo-barracuda",
+      "minilens",
+      "minetest",
+      "a2048",
+      "pysolfc",
+      "meritous"
+    ],
+    "traversal_count_max": 0,
+    "surface_valid_any": false,
+    "layout_complete_any": false,
+    "note": "Executed contract families, last_stage and blockers match baseline 5a6962d2. Resumed samples record a scheduled traversal phase and do not complete measure, layout or a valid root Surface before the start_activity snapshot."
+  }
+}

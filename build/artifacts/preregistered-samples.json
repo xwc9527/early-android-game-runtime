@@ -1,0 +1,813 @@
+{
+  "schema_version": 1,
+  "frozen_before": "any AGR dynamic run of the expanded census",
+  "granularity_fingerprint": "62d94962023b26bb3cc18fa4ef772f63098a7680b1f89a5103f22efe1f9d6b59",
+  "rule_fingerprint": "f994baa2b74376f8f428c01a393e29ef9b04fc4fddffa5b5a6f42c516481896c",
+  "in_scope_clusters": {
+    "custom-jni-canvas": [
+      "crosswords",
+      "droidfish",
+      "hyperroid",
+      "sgt-puzzles"
+    ],
+    "custom-jni-gl": [
+      "gloomy-dungeons-1",
+      "gloomy-dungeons-2",
+      "liquid-wars"
+    ],
+    "custom-nativeactivity": [
+      "kungfoo-barracuda"
+    ],
+    "godot": [
+      "minilens",
+      "tanks-of-freedom"
+    ],
+    "irrlicht-nativeactivity": [
+      "minetest"
+    ],
+    "libgdx": [
+      "flickit",
+      "geometri-destroyer",
+      "glxy",
+      "kids-memory",
+      "vector-pinball"
+    ],
+    "pure-java-canvas": [
+      "andors-trail",
+      "blockinger",
+      "frozen-bubble",
+      "gravity-defied"
+    ],
+    "pure-java-gl": [
+      "pixel-dungeon",
+      "replica-island",
+      "shattered-pixel"
+    ],
+    "pure-java-webview": [
+      "a2048",
+      "sudoku-free"
+    ],
+    "python-sdl": [
+      "pysolfc"
+    ],
+    "qt": [
+      "qt-minesweeper"
+    ],
+    "sdl": [
+      "meritous"
+    ],
+    "soupeaucaillou": [
+      "heriswap",
+      "recursive-runner"
+    ]
+  },
+  "phase_c": {
+    "purpose": "API19 reference and source verification of the highest-risk, mutually heterogeneous samples",
+    "count": 12,
+    "samples": [
+      {
+        "id": "a2048",
+        "package": "com.uberspot.a2048",
+        "cluster": "pure-java-webview",
+        "execution_mode": "pure_dex",
+        "engines": [],
+        "graphics_paths": [
+          "bitmap",
+          "canvas",
+          "webview"
+        ],
+        "audio_paths": [],
+        "system_services": [
+          "audio_policy",
+          "binder_direct",
+          "connectivity",
+          "power",
+          "search",
+          "window"
+        ],
+        "core_contract_family_count": 27,
+        "risk_basis": "Entire presentation is an in-process WebView over bundled HTML/JS, the single highest-cost core family in the census."
+      },
+      {
+        "id": "crosswords",
+        "package": "org.eehouse.android.xw4",
+        "cluster": "custom-jni-canvas",
+        "execution_mode": "dex_plus_jni",
+        "engines": [],
+        "graphics_paths": [
+          "bitmap",
+          "canvas",
+          "webview"
+        ],
+        "audio_paths": [],
+        "system_services": [
+          "alarm",
+          "build_info",
+          "connectivity",
+          "notification"
+        ],
+        "core_contract_family_count": 25,
+        "risk_basis": "Widest non-graphics system-service use: own ContentProvider, relay Service, broadcast receiver, SMS and clipboard, on a JNI+Canvas core."
+      },
+      {
+        "id": "flickit",
+        "package": "com.studio332.flickit",
+        "cluster": "libgdx",
+        "execution_mode": "dex_plus_jni",
+        "engines": [
+          "libgdx"
+        ],
+        "graphics_paths": [
+          "egl_java",
+          "gles1",
+          "gles2",
+          "glsurfaceview",
+          "surface",
+          "surfaceview"
+        ],
+        "audio_paths": [
+          "audiorecord",
+          "audiotrack",
+          "mediaplayer",
+          "soundpool"
+        ],
+        "system_services": [
+          "build_info",
+          "ime",
+          "power",
+          "sensor",
+          "vibrator",
+          "window"
+        ],
+        "core_contract_family_count": 34,
+        "risk_basis": "Largest libGDX Framework surface with AudioRecord/AudioTrack and a declared wallpaper component."
+      },
+      {
+        "id": "gloomy-dungeons-2",
+        "package": "org.zamedev.gloomydungeons2.opensource",
+        "cluster": "custom-jni-gl",
+        "execution_mode": "dex_plus_jni",
+        "engines": [],
+        "graphics_paths": [
+          "bitmap",
+          "canvas",
+          "egl_java",
+          "gles1",
+          "surfaceview",
+          "webview"
+        ],
+        "audio_paths": [
+          "mediaplayer",
+          "soundpool"
+        ],
+        "system_services": [
+          "activity_manager",
+          "audio_policy",
+          "binder_direct",
+          "connectivity",
+          "ime",
+          "power",
+          "search",
+          "sensor",
+          "settings",
+          "vibrator",
+          "window"
+        ],
+        "core_contract_family_count": 39,
+        "risk_basis": "Largest Java Framework surface in the census (320 core classes) with widget, wallpaper and a bundled UI compatibility layer."
+      },
+      {
+        "id": "heriswap",
+        "package": "net.damsy.soupeaucaillou.heriswap",
+        "cluster": "soupeaucaillou",
+        "execution_mode": "dex_plus_jni",
+        "engines": [
+          "soupeaucaillou"
+        ],
+        "graphics_paths": [
+          "gles2",
+          "glsurfaceview",
+          "surfaceview"
+        ],
+        "audio_paths": [
+          "audiotrack",
+          "soundpool"
+        ],
+        "system_services": [
+          "ime",
+          "power",
+          "vibrator",
+          "window"
+        ],
+        "core_contract_family_count": 25,
+        "risk_basis": "Self-written native engine (SoupeAuCaillou) driving GLSurfaceView with both AudioTrack and SoundPool."
+      },
+      {
+        "id": "kungfoo-barracuda",
+        "package": "com.onetwofivegames.kungfoobarracuda",
+        "cluster": "custom-nativeactivity",
+        "execution_mode": "native_activity",
+        "engines": [],
+        "graphics_paths": [
+          "bitmap",
+          "gles1",
+          "gles2"
+        ],
+        "audio_paths": [
+          "mediaplayer",
+          "soundpool"
+        ],
+        "system_services": [
+          "vibrator"
+        ],
+        "core_contract_family_count": 22,
+        "risk_basis": "Pure NativeActivity baseline with no Java engine layer."
+      },
+      {
+        "id": "meritous",
+        "package": "net.asceai.meritous",
+        "cluster": "sdl",
+        "execution_mode": "dex_plus_jni",
+        "engines": [
+          "sdl"
+        ],
+        "graphics_paths": [
+          "bitmap",
+          "egl_java",
+          "gles1",
+          "surfaceview"
+        ],
+        "audio_paths": [
+          "audiotrack"
+        ],
+        "system_services": [
+          "alarm",
+          "build_info",
+          "ime",
+          "notification",
+          "sensor",
+          "window"
+        ],
+        "core_contract_family_count": 29,
+        "risk_basis": "Classic SDL port: software surface presentation plus AudioTrack, 47 JNI methods."
+      },
+      {
+        "id": "minetest",
+        "package": "net.minetest.minetest",
+        "cluster": "irrlicht-nativeactivity",
+        "execution_mode": "native_activity",
+        "engines": [
+          "irrlicht",
+          "openal"
+        ],
+        "graphics_paths": [
+          "gles1",
+          "gles2"
+        ],
+        "audio_paths": [],
+        "system_services": [
+          "window"
+        ],
+        "core_contract_family_count": 26,
+        "risk_basis": "NativeActivity with a self-contained C++ engine, both GLES1 and GLES2, OpenAL over the native audio path, no Java engine layer to absorb divergence."
+      },
+      {
+        "id": "pysolfc",
+        "package": "org.lufebe16.pysolfc",
+        "cluster": "python-sdl",
+        "execution_mode": "dex_plus_jni",
+        "engines": [
+          "python-sdl",
+          "sdl"
+        ],
+        "graphics_paths": [
+          "gles1",
+          "gles2",
+          "surfaceview"
+        ],
+        "audio_paths": [
+          "audiotrack"
+        ],
+        "system_services": [
+          "build_info",
+          "connectivity",
+          "ime",
+          "power",
+          "sensor",
+          "vibrator",
+          "wifi",
+          "window"
+        ],
+        "core_contract_family_count": 34,
+        "risk_basis": "SDL2 plus an embedded CPython interpreter; unusual loader, threading and asset topology relative to every other sample."
+      },
+      {
+        "id": "qt-minesweeper",
+        "package": "csd.qtproject.minesweeper",
+        "cluster": "qt",
+        "execution_mode": "native_activity",
+        "engines": [
+          "qt"
+        ],
+        "graphics_paths": [
+          "bitmap",
+          "canvas",
+          "gles2",
+          "surfaceview"
+        ],
+        "audio_paths": [
+          "mediaplayer",
+          "opensles"
+        ],
+        "system_services": [
+          "binder_direct",
+          "clipboard",
+          "ime",
+          "window"
+        ],
+        "core_contract_family_count": 38,
+        "risk_basis": "Largest native topology in the census (55 ARMv7 libraries), direct libOpenSLES and libjnigraphics, LocalSocket/LocalServerSocket and local Binder use, 87 JNI methods."
+      },
+      {
+        "id": "replica-island",
+        "package": "com.replica.replicaisland",
+        "cluster": "pure-java-gl",
+        "execution_mode": "pure_dex",
+        "engines": [],
+        "graphics_paths": [
+          "bitmap",
+          "egl_java",
+          "gles1",
+          "surfaceview"
+        ],
+        "audio_paths": [
+          "soundpool"
+        ],
+        "system_services": [
+          "build_info",
+          "sensor",
+          "vibrator",
+          "window"
+        ],
+        "core_contract_family_count": 26,
+        "risk_basis": "Pure Java GLES1 engine with SoundPool, the canonical early-Android game structure."
+      },
+      {
+        "id": "tanks-of-freedom",
+        "package": "in.p1x.tanks_of_freedom",
+        "cluster": "godot",
+        "execution_mode": "dex_plus_jni",
+        "engines": [
+          "godot"
+        ],
+        "graphics_paths": [
+          "egl_java",
+          "gles1",
+          "gles2",
+          "glsurfaceview",
+          "surfaceview"
+        ],
+        "audio_paths": [
+          "audiotrack",
+          "mediaplayer",
+          "opensles"
+        ],
+        "system_services": [
+          "alarm",
+          "binder_direct",
+          "build_info",
+          "connectivity",
+          "ime",
+          "notification",
+          "power",
+          "sensor",
+          "settings",
+          "telephony",
+          "wifi",
+          "window"
+        ],
+        "core_contract_family_count": 36,
+        "risk_basis": "Godot 2 with the widest system-service breadth in the census (13 categories) plus Messenger/Binder and AudioTrack."
+      }
+    ]
+  },
+  "phase_d": {
+    "discovery_rule": "Discovery set = the first 10 in-scope execution clusters in alphabetical order by cluster name, taking the alphabetically first in-scope sample id in each cluster. The Discovery execution order is that same cluster-alphabetical order. The rule is mechanical and independent of expected difficulty, expected contract count and of any run result.",
+    "holdout_rule": "Holdout set = the 3 in-scope clusters not used by Discovery (one alphabetically first sample each), plus the alphabetically second in-scope sample of the two largest Discovery clusters. Holdout membership is frozen at the same moment as Discovery and may not influence any production change until Discovery is complete.",
+    "discovery_order": [
+      {
+        "position": 0,
+        "cluster": "custom-jni-canvas",
+        "id": "crosswords",
+        "package": "org.eehouse.android.xw4",
+        "execution_mode": "dex_plus_jni",
+        "engines": [],
+        "graphics_paths": [
+          "bitmap",
+          "canvas",
+          "webview"
+        ],
+        "audio_paths": [],
+        "system_services": [
+          "alarm",
+          "build_info",
+          "connectivity",
+          "notification"
+        ],
+        "core_contract_family_count": 25
+      },
+      {
+        "position": 1,
+        "cluster": "custom-jni-gl",
+        "id": "gloomy-dungeons-1",
+        "package": "zame.GloomyDungeons.opensource.game",
+        "execution_mode": "dex_plus_jni",
+        "engines": [],
+        "graphics_paths": [
+          "bitmap",
+          "canvas",
+          "gles1",
+          "glsurfaceview"
+        ],
+        "audio_paths": [
+          "mediaplayer",
+          "soundpool"
+        ],
+        "system_services": [
+          "build_info",
+          "notification",
+          "power",
+          "sensor",
+          "settings",
+          "telephony",
+          "window"
+        ],
+        "core_contract_family_count": 32
+      },
+      {
+        "position": 2,
+        "cluster": "custom-nativeactivity",
+        "id": "kungfoo-barracuda",
+        "package": "com.onetwofivegames.kungfoobarracuda",
+        "execution_mode": "native_activity",
+        "engines": [],
+        "graphics_paths": [
+          "bitmap",
+          "gles1",
+          "gles2"
+        ],
+        "audio_paths": [
+          "mediaplayer",
+          "soundpool"
+        ],
+        "system_services": [
+          "vibrator"
+        ],
+        "core_contract_family_count": 22
+      },
+      {
+        "position": 3,
+        "cluster": "godot",
+        "id": "minilens",
+        "package": "io.github.kobuge.games.minilens",
+        "execution_mode": "dex_plus_jni",
+        "engines": [
+          "godot"
+        ],
+        "graphics_paths": [
+          "egl_java",
+          "gles1",
+          "gles2",
+          "glsurfaceview",
+          "surfaceview"
+        ],
+        "audio_paths": [
+          "audiotrack",
+          "mediaplayer",
+          "opensles"
+        ],
+        "system_services": [
+          "alarm",
+          "binder_direct",
+          "build_info",
+          "connectivity",
+          "ime",
+          "notification",
+          "power",
+          "sensor",
+          "settings",
+          "telephony",
+          "wifi",
+          "window"
+        ],
+        "core_contract_family_count": 39
+      },
+      {
+        "position": 4,
+        "cluster": "irrlicht-nativeactivity",
+        "id": "minetest",
+        "package": "net.minetest.minetest",
+        "execution_mode": "native_activity",
+        "engines": [
+          "irrlicht",
+          "openal"
+        ],
+        "graphics_paths": [
+          "gles1",
+          "gles2"
+        ],
+        "audio_paths": [],
+        "system_services": [
+          "window"
+        ],
+        "core_contract_family_count": 26
+      },
+      {
+        "position": 5,
+        "cluster": "libgdx",
+        "id": "flickit",
+        "package": "com.studio332.flickit",
+        "execution_mode": "dex_plus_jni",
+        "engines": [
+          "libgdx"
+        ],
+        "graphics_paths": [
+          "egl_java",
+          "gles1",
+          "gles2",
+          "glsurfaceview",
+          "surface",
+          "surfaceview"
+        ],
+        "audio_paths": [
+          "audiorecord",
+          "audiotrack",
+          "mediaplayer",
+          "soundpool"
+        ],
+        "system_services": [
+          "build_info",
+          "ime",
+          "power",
+          "sensor",
+          "vibrator",
+          "window"
+        ],
+        "core_contract_family_count": 34
+      },
+      {
+        "position": 6,
+        "cluster": "pure-java-canvas",
+        "id": "andors-trail",
+        "package": "com.gpl.rpg.AndorsTrail",
+        "execution_mode": "pure_dex",
+        "engines": [],
+        "graphics_paths": [
+          "bitmap",
+          "canvas",
+          "surfaceview"
+        ],
+        "audio_paths": [],
+        "system_services": [
+          "binder_direct"
+        ],
+        "core_contract_family_count": 18
+      },
+      {
+        "position": 7,
+        "cluster": "pure-java-gl",
+        "id": "pixel-dungeon",
+        "package": "com.watabou.pixeldungeon",
+        "execution_mode": "pure_dex",
+        "engines": [],
+        "graphics_paths": [
+          "bitmap",
+          "canvas",
+          "gles2",
+          "glsurfaceview"
+        ],
+        "audio_paths": [
+          "mediaplayer",
+          "soundpool"
+        ],
+        "system_services": [
+          "vibrator",
+          "window"
+        ],
+        "core_contract_family_count": 21
+      },
+      {
+        "position": 8,
+        "cluster": "pure-java-webview",
+        "id": "a2048",
+        "package": "com.uberspot.a2048",
+        "execution_mode": "pure_dex",
+        "engines": [],
+        "graphics_paths": [
+          "bitmap",
+          "canvas",
+          "webview"
+        ],
+        "audio_paths": [],
+        "system_services": [
+          "audio_policy",
+          "binder_direct",
+          "connectivity",
+          "power",
+          "search",
+          "window"
+        ],
+        "core_contract_family_count": 27
+      },
+      {
+        "position": 9,
+        "cluster": "python-sdl",
+        "id": "pysolfc",
+        "package": "org.lufebe16.pysolfc",
+        "execution_mode": "dex_plus_jni",
+        "engines": [
+          "python-sdl",
+          "sdl"
+        ],
+        "graphics_paths": [
+          "gles1",
+          "gles2",
+          "surfaceview"
+        ],
+        "audio_paths": [
+          "audiotrack"
+        ],
+        "system_services": [
+          "build_info",
+          "connectivity",
+          "ime",
+          "power",
+          "sensor",
+          "vibrator",
+          "wifi",
+          "window"
+        ],
+        "core_contract_family_count": 34
+      }
+    ],
+    "holdout": [
+      {
+        "cluster": "custom-jni-canvas",
+        "id": "droidfish",
+        "package": "org.petero.droidfish",
+        "execution_mode": "dex_plus_jni",
+        "engines": [],
+        "graphics_paths": [
+          "bitmap",
+          "canvas",
+          "webview"
+        ],
+        "audio_paths": [
+          "mediaplayer"
+        ],
+        "system_services": [
+          "build_info",
+          "clipboard",
+          "notification",
+          "power",
+          "vibrator"
+        ],
+        "core_contract_family_count": 24
+      },
+      {
+        "cluster": "libgdx",
+        "id": "geometri-destroyer",
+        "package": "se.danielj.geometridestroyer",
+        "execution_mode": "dex_plus_jni",
+        "engines": [
+          "libgdx"
+        ],
+        "graphics_paths": [
+          "egl_java",
+          "gles1",
+          "gles2",
+          "glsurfaceview",
+          "surfaceview"
+        ],
+        "audio_paths": [
+          "audiorecord",
+          "audiotrack",
+          "mediaplayer",
+          "soundpool"
+        ],
+        "system_services": [
+          "build_info",
+          "ime",
+          "power",
+          "sensor",
+          "vibrator",
+          "window"
+        ],
+        "core_contract_family_count": 33
+      },
+      {
+        "cluster": "qt",
+        "id": "qt-minesweeper",
+        "package": "csd.qtproject.minesweeper",
+        "execution_mode": "native_activity",
+        "engines": [
+          "qt"
+        ],
+        "graphics_paths": [
+          "bitmap",
+          "canvas",
+          "gles2",
+          "surfaceview"
+        ],
+        "audio_paths": [
+          "mediaplayer",
+          "opensles"
+        ],
+        "system_services": [
+          "binder_direct",
+          "clipboard",
+          "ime",
+          "window"
+        ],
+        "core_contract_family_count": 38
+      },
+      {
+        "cluster": "sdl",
+        "id": "meritous",
+        "package": "net.asceai.meritous",
+        "execution_mode": "dex_plus_jni",
+        "engines": [
+          "sdl"
+        ],
+        "graphics_paths": [
+          "bitmap",
+          "egl_java",
+          "gles1",
+          "surfaceview"
+        ],
+        "audio_paths": [
+          "audiotrack"
+        ],
+        "system_services": [
+          "alarm",
+          "build_info",
+          "ime",
+          "notification",
+          "sensor",
+          "window"
+        ],
+        "core_contract_family_count": 29
+      },
+      {
+        "cluster": "soupeaucaillou",
+        "id": "heriswap",
+        "package": "net.damsy.soupeaucaillou.heriswap",
+        "execution_mode": "dex_plus_jni",
+        "engines": [
+          "soupeaucaillou"
+        ],
+        "graphics_paths": [
+          "gles2",
+          "glsurfaceview",
+          "surfaceview"
+        ],
+        "audio_paths": [
+          "audiotrack",
+          "soundpool"
+        ],
+        "system_services": [
+          "ime",
+          "power",
+          "vibrator",
+          "window"
+        ],
+        "core_contract_family_count": 25
+      }
+    ],
+    "discovery_ids": [
+      "crosswords",
+      "gloomy-dungeons-1",
+      "kungfoo-barracuda",
+      "minilens",
+      "minetest",
+      "flickit",
+      "andors-trail",
+      "pixel-dungeon",
+      "a2048",
+      "pysolfc"
+    ],
+    "holdout_ids": [
+      "qt-minesweeper",
+      "meritous",
+      "heriswap",
+      "geometri-destroyer",
+      "droidfish"
+    ]
+  },
+  "thresholds": {
+    "h1_irreducible_trigger": "same or equivalent irreducible gameplay-critical dependency in >=3 in-scope games from >=2 unrelated clusters",
+    "h2_marginal": "C_last <= 0.50 * C_first over the fixed Discovery order",
+    "h2_holdout_reuse": "holdout_reuse_ratio >= 0.70",
+    "h2_game_specific": "0 GAME_SPECIFIC production requirements from Holdout"
+  }
+}

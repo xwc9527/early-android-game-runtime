@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "request_id": 3,
+  "sample_set": "falsification-compensation",
+  "run_kind": "frozen-non-adaptive-holdout",
+  "question": "On the formal baseline that includes First Traversal, do the same frozen Discovery 10 and Holdout 5 still satisfy C_last <= 0.50 * C_first, holdout reuse >= 0.70, and GAME_SPECIFIC = 0?",
+  "current_uncertainty": [
+    "The original H2 PASS was measured on main 5a6962d2, before First Traversal extended the Runtime through measure, relayout, layout and a persistent root Surface.",
+    "A deeper frontier can expose new public contracts or a gameplay-critical irreducible dependency that the shallower baseline censored."
+  ],
+  "expected_outcome_a": {
+    "result": "The frozen thresholds still hold on the deeper frontier, with no new gameplay-critical irreducible dependency and GAME_SPECIFIC = 0.",
+    "excludes": [
+      "the explanation that the original PASS was only an artifact of stopping before first traversal"
+    ]
+  },
+  "expected_outcome_b": {
+    "result": "C_last exceeds half of C_first, holdout reuse falls below 0.70, a game-specific production requirement appears, or a repeated gameplay-critical irreducible dependency appears.",
+    "excludes": [
+      "the explanation that public contracts keep converging once the Runtime reaches the First Traversal frontier"
+    ]
+  },
+  "why_cheaper_test_is_insufficient": "The question is the guest-visible frontier of the merged Runtime on the frozen 15 APKs. Static census and the previous dynamic runs used the pre-traversal baseline, and no focused contract covers this combined sample.",
+  "expensive_run_budget": 3,
+  "expensive_runs_used": 2,
+  "prior_expensive_runs_without_information_gain": 0,
+  "production_runtime_frozen": true,
+  "notes": "One combined Discovery-10 then Holdout-5 Simulator run. No production compatibility fix. Prior runs: discovery 35654415068, holdout 35656209596. First Traversal closure 35634763769, post-merge 35662355600, baseline commit 3e3db84a53ad0957e9217f804b6f718a942b9a11."
+}

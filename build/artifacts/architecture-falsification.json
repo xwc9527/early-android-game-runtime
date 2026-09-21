@@ -1,0 +1,1309 @@
+{
+  "schema_version": 1,
+  "tested_commit": "79313186846f722cad695c7bdd63f5e0928ede00",
+  "tested_tree": "2aa5d208e72b7aadaa668917172a45d6d4563a6c",
+  "ci_runs": [
+    {
+      "run_id": "35654415068",
+      "tested_commit": "7790fa47c0ac2b7fc92aec9b718ad41be2f6556e",
+      "tested_tree": "e19033e5822a0ecfd9178b2f7892047e1f0ba118",
+      "purpose": "discovery"
+    },
+    {
+      "run_id": "35656209596",
+      "tested_commit": "79313186846f722cad695c7bdd63f5e0928ede00",
+      "tested_tree": "2aa5d208e72b7aadaa668917172a45d6d4563a6c",
+      "purpose": "blind-holdout"
+    }
+  ],
+  "granularity_fingerprint": "62d94962023b26bb3cc18fa4ef772f63098a7680b1f89a5103f22efe1f9d6b59",
+  "census": {
+    "sample_count": 32,
+    "execution_clusters": {
+      "custom-jni-canvas": 5,
+      "custom-jni-gl": 4,
+      "custom-nativeactivity": 1,
+      "godot": 2,
+      "irrlicht-nativeactivity": 1,
+      "libgdx": 5,
+      "pure-java-canvas": 4,
+      "pure-java-gl": 3,
+      "pure-java-webview": 2,
+      "python-sdl": 1,
+      "qt": 1,
+      "sdl": 1,
+      "soupeaucaillou": 2
+    },
+    "scope_counts": {
+      "IN_SCOPE": 26,
+      "IN_SCOPE_WITH_OPTIONAL_EXTERNAL_FEATURES": 4,
+      "OUT_OF_SCOPE_EXTERNAL_DEPENDENCY": 2
+    },
+    "provenance": [
+      {
+        "id": "kungfoo-barracuda",
+        "package": "com.onetwofivegames.kungfoobarracuda",
+        "version_code": 3,
+        "version_name": "1.2",
+        "sha256": "097ade628ad0837e312da4ca48afe0906eb99c3b992d497c7da33e2b2267eb22",
+        "license": "GPL-3.0-only",
+        "source": "https://github.com/poseidn/KungFoo",
+        "repository": "archive"
+      },
+      {
+        "id": "gloomy-dungeons-2",
+        "package": "org.zamedev.gloomydungeons2.opensource",
+        "version_code": 1602221800,
+        "version_name": "2016.02.22.1800",
+        "sha256": "40a67842345b879fc4b4be90159787f04664d9530f6a3e676c13fa412ad98733",
+        "license": "MIT",
+        "source": "https://github.com/restorer/gloomy-dungeons-2",
+        "repository": "archive"
+      },
+      {
+        "id": "pixel-dungeon",
+        "package": "com.watabou.pixeldungeon",
+        "version_code": 59,
+        "version_name": "1.7.1c",
+        "sha256": "c33f4bdc9117f265a2fae7d5182a77462dd0ac7e2c1c1e96e41f70a8eb4635d2",
+        "license": "GPL-3.0-only",
+        "source": "https://github.com/watabou/pixel-dungeon",
+        "repository": "archive"
+      },
+      {
+        "id": "frozen-bubble",
+        "package": "org.jfedor.frozenbubble",
+        "version_code": 8,
+        "version_name": "1.7",
+        "sha256": "57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569",
+        "license": "GPL-2.0-or-later",
+        "source": "https://github.com/videogameboy76/frozenbubbleandroid",
+        "repository": "archive"
+      },
+      {
+        "id": "vector-pinball",
+        "package": "com.dozingcatsoftware.bouncy",
+        "version_code": 4,
+        "version_name": "1.1",
+        "sha256": "627371d260d22ef33523561e3fa892cb45784cf83804ec0a02c73f5478a0d698",
+        "license": "GPL-3.0-only",
+        "source": "https://github.com/dozingcat/Vector-Pinball",
+        "repository": "archive"
+      },
+      {
+        "id": "prboom",
+        "package": "android.game.prboom",
+        "version_code": 31,
+        "version_name": "1.3.1-beta",
+        "sha256": "0a88b31c5cc465d83fc77703adddf3f4769af32a9c6505b636ae062a7d351bc0",
+        "license": "GPL-3.0-only",
+        "source": "https://archive.softwareheritage.org/browse/origin/http://prboom4android.googlecode.com/svn//directory/",
+        "repository": "archive"
+      },
+      {
+        "id": "minetest",
+        "package": "net.minetest.minetest",
+        "version_code": 14,
+        "version_name": "0.4.14.14",
+        "sha256": "0cd51f8c848fee540269ef3d2edfaa4a70712558c3e1f8e4c66934272a5f9a89",
+        "license": "LGPL-2.1-or-later",
+        "source": "https://github.com/luanti-org/luanti",
+        "repository": "archive"
+      },
+      {
+        "id": "tanks-of-freedom",
+        "package": "in.p1x.tanks_of_freedom",
+        "version_code": 1,
+        "version_name": "0.1",
+        "sha256": "10bed0cc3b7a76f0d2410f19480d4e3c52a3da112ef2318feb540cc5c5930fb7",
+        "license": "MIT",
+        "source": "https://github.com/w84death/Tanks-of-Freedom",
+        "repository": "archive"
+      },
+      {
+        "id": "minilens",
+        "package": "io.github.kobuge.games.minilens",
+        "version_code": 2,
+        "version_name": "1.2",
+        "sha256": "c5d39e570e742ba005b7e0fa364e40b6b8e70e0553923968f307878ad6e78148",
+        "license": "GPL-3.0-or-later",
+        "source": "https://github.com/KOBUGE-Games/minilens",
+        "repository": "archive"
+      },
+      {
+        "id": "qt-minesweeper",
+        "package": "csd.qtproject.minesweeper",
+        "version_code": 1,
+        "version_name": "bourlotieris",
+        "sha256": "a3c39f32fa62125888c4ce13c53a1bedc2047e4f934200c1fee4bceb082637b7",
+        "license": "GPL-3.0-only",
+        "source": "https://github.com/vamartid/Minesweeper",
+        "repository": "archive"
+      },
+      {
+        "id": "pysolfc",
+        "package": "org.lufebe16.pysolfc",
+        "version_code": 8,
+        "version_name": "0.8",
+        "sha256": "000e62bfb5c1e5695d73a8cb8977a9286d336df06d9efa64ff080687d3fce96b",
+        "license": "GPL-3.0-only",
+        "source": "https://github.com/shlomif/PySolFC",
+        "repository": "archive"
+      },
+      {
+        "id": "heriswap",
+        "package": "net.damsy.soupeaucaillou.heriswap",
+        "version_code": 1403101249,
+        "version_name": "2.0.4",
+        "sha256": "38eb7e9b0688e2f7f8a51ce11e275aca9f4e2a60faa1ae49d9416f89d824b23e",
+        "license": "GPL-3.0-only",
+        "source": "https://github.com/SoupeauCaillou/heriswap",
+        "repository": "archive"
+      },
+      {
+        "id": "recursive-runner",
+        "package": "net.damsy.soupeaucaillou.recursiveRunner",
+        "version_code": 1410222222,
+        "version_name": "3.0.0",
+        "sha256": "90f35b9d10760aa979e6449dc13f71f10b153866ac2e3fd798a4b7d2a98373a0",
+        "license": "GPL-3.0-only",
+        "source": "https://github.com/SoupeauCaillou/recursive-runner",
+        "repository": "archive"
+      },
+      {
+        "id": "liquid-wars",
+        "package": "com.xenris.liquidwarsos",
+        "version_code": 10,
+        "version_name": "1.41",
+        "sha256": "138a8c351cb6ecb6f9727f1ce416433ea2964a185128176856f66d997b45c568",
+        "license": "GPL-3.0-or-later",
+        "source": "https://github.com/xenris/liquid-wars-android",
+        "repository": "repo"
+      },
+      {
+        "id": "meritous",
+        "package": "net.asceai.meritous",
+        "version_code": 1,
+        "version_name": "0.0.1",
+        "sha256": "6348595114d756420731e9e46cb898301a4f7dc13c2b45ba274bb402abb4d575",
+        "license": "GPL-3.0-or-later",
+        "source": "https://gitlab.com/meritous/sdl_android",
+        "repository": "repo"
+      },
+      {
+        "id": "gloomy-dungeons-1",
+        "package": "zame.GloomyDungeons.opensource.game",
+        "version_code": 1362629775,
+        "version_name": "2013.03.07.0416",
+        "sha256": "8b95f70df2e6095476020711c00a5b4a62d7c8376a8a1fd8ef205943d499b8e0",
+        "license": "MIT",
+        "source": "https://github.com/restorer/gloomy-dungeons-3d",
+        "repository": "archive"
+      },
+      {
+        "id": "clash-of-balls",
+        "package": "com.sapos_aplastados.game.clash_of_balls",
+        "version_code": 111,
+        "version_name": "1.11",
+        "sha256": "137ed6f3c06ff2a03a24c428280a635b2299ddcfa9915f476d3f175eb7085ff6",
+        "license": "GPL-3.0-only",
+        "source": "https://github.com/bkueng/clash_of_balls",
+        "repository": "archive"
+      },
+      {
+        "id": "hyperroid",
+        "package": "com.roguetemple.hyperroid",
+        "version_code": 370,
+        "version_name": "3.7",
+        "sha256": "b8187a93f5fffe34c22cb83658ec59daaeedba6ffe4d913316fc8fb1abd11665",
+        "license": "GPL-2.0-only",
+        "source": "https://github.com/zenorogue/hyperrogue",
+        "repository": "archive"
+      },
+      {
+        "id": "sgt-puzzles",
+        "package": "name.boyle.chris.sgtpuzzles",
+        "version_code": 72,
+        "version_name": "9561.1",
+        "sha256": "a649bc8e6c1299b5f5cd8949907797f4041a05b35abfcdaee0a5a99e92d4624f",
+        "license": "MIT",
+        "source": "https://github.com/chrisboyle/sgtpuzzles",
+        "repository": "archive"
+      },
+      {
+        "id": "droidfish",
+        "package": "org.petero.droidfish",
+        "version_code": 51,
+        "version_name": "1.44",
+        "sha256": "483d8bf7fd58e207449695a65b1e76a2b7d522daec46bb1d03069776fbaced93",
+        "license": "GPL-3.0-only",
+        "source": "https://github.com/peterosterlund2/droidfish",
+        "repository": "archive"
+      },
+      {
+        "id": "crosswords",
+        "package": "org.eehouse.android.xw4",
+        "version_code": 26,
+        "version_name": "4.4 beta 33",
+        "sha256": "add308ee4fa946b30faa33c4d4a6911b02c373199bcb36aa19954912827d3f46",
+        "license": "GPL-2.0-only",
+        "source": "http://xwords.sourceforge.net/source.php",
+        "repository": "archive"
+      },
+      {
+        "id": "flickit",
+        "package": "com.studio332.flickit",
+        "version_code": 3,
+        "version_name": "1.2",
+        "sha256": "742f30fdb2b4bca1042dabb7e9d695b38a5e6c672a56e58aa5404052f6bcba52",
+        "license": "Apache-2.0",
+        "source": "https://github.com/louffoster/FlickIt",
+        "repository": "archive"
+      },
+      {
+        "id": "geometri-destroyer",
+        "package": "se.danielj.geometridestroyer",
+        "version_code": 2,
+        "version_name": "1.0.1",
+        "sha256": "0f42255bad46353a537208d85b413ef607ac06925c95daee2a025dba1e359f33",
+        "license": "GPL-3.0-only",
+        "source": "https://github.com/MaTachi/geometri-destroyer",
+        "repository": "archive"
+      },
+      {
+        "id": "kids-memory",
+        "package": "se.tube42.kidsmem.android",
+        "version_code": 14,
+        "version_name": "1.4",
+        "sha256": "4b0951a95f1f79fffba10326725feef2989f658bf60b9913f9533ca323f17512",
+        "license": "GPL-2.0-only",
+        "source": "https://github.com/tube42/candymem",
+        "repository": "repo"
+      },
+      {
+        "id": "glxy",
+        "package": "com.kaeruct.glxy",
+        "version_code": 1,
+        "version_name": "1.0",
+        "sha256": "dea4e47b7d12e3af35fbcda186a8c82369dc1a44e9d029e32607c6a0a9ef1145",
+        "license": "Apache-2.0",
+        "source": "https://github.com/KaeruCT/GLXY",
+        "repository": "repo"
+      },
+      {
+        "id": "replica-island",
+        "package": "com.replica.replicaisland",
+        "version_code": 14,
+        "version_name": "1.4",
+        "sha256": "35d900fabe6bbc05899c3fcc0fb5926a5a901d807889d0d111b34a1e87d7acde",
+        "license": "Apache-2.0",
+        "source": "https://archive.softwareheritage.org/browse/origin/http://replicaisland.googlecode.com/svn//directory/",
+        "repository": "archive"
+      },
+      {
+        "id": "shattered-pixel",
+        "package": "com.shatteredpixel.shatteredpixeldungeon",
+        "version_code": 14,
+        "version_name": "0.2.2a",
+        "sha256": "9cf612ba3c48c5e9697c7e8f689ed0a807299a86131bc1dec17510765b156b99",
+        "license": "GPL-3.0-only",
+        "source": "https://github.com/00-Evan/shattered-pixel-dungeon",
+        "repository": "archive"
+      },
+      {
+        "id": "andors-trail",
+        "package": "com.gpl.rpg.AndorsTrail",
+        "version_code": 20,
+        "version_name": "0.6.9",
+        "sha256": "764d45683b8c47add677de516412b21f917f5f2b7d54abed1ba8b4d458e860ef",
+        "license": "GPL-2.0-only",
+        "source": "https://github.com/AndorsTrailRelease/andors-trail",
+        "repository": "archive"
+      },
+      {
+        "id": "blockinger",
+        "package": "org.blockinger.game",
+        "version_code": 7,
+        "version_name": "1.4.4",
+        "sha256": "0b524aebbf6af060d571159a85ded6cc4a13db94dd0d9b8315c2295d0d6b5a86",
+        "license": "GPL-3.0-or-later",
+        "source": "https://github.com/vocollapse/Blockinger",
+        "repository": "archive"
+      },
+      {
+        "id": "gravity-defied",
+        "package": "org.happysanta.gd",
+        "version_code": 29,
+        "version_name": "1.1.1",
+        "sha256": "b1c98167a6f35476bc4b52fe2063f60c012076ed52382938ed417c21643677b5",
+        "license": "GPL-2.0-only",
+        "source": "https://github.com/gch1p/gravitydefied",
+        "repository": "archive"
+      },
+      {
+        "id": "a2048",
+        "package": "com.uberspot.a2048",
+        "version_code": 9,
+        "version_name": "1.8",
+        "sha256": "898143ddf877a008d9d6577cdd906188cf3d02d20c04a3f8bec83c584d26d5c6",
+        "license": "MIT",
+        "source": "https://github.com/uberspot/2048-android",
+        "repository": "archive"
+      },
+      {
+        "id": "sudoku-free",
+        "package": "com.app2go.sudokufree",
+        "version_code": 3,
+        "version_name": "1.1",
+        "sha256": "005c157adf66be3fe13431a82e3bc2b03e0dc3f4a9a3af14d268128c2b715b46",
+        "license": "GPL-3.0-only",
+        "source": "https://code.google.com/p/sudoku-pro-android/source",
+        "repository": "archive"
+      }
+    ]
+  },
+  "static_surface": {
+    "core_contract_family_union": [
+      "app.activity_lifecycle",
+      "app.application_lifecycle",
+      "app.context",
+      "app.intent",
+      "app.native_activity",
+      "app.package_info",
+      "app.uri",
+      "audio.audiotrack",
+      "audio.mediaplayer",
+      "audio.opensles",
+      "audio.policy",
+      "audio.soundpool",
+      "bionic.libc",
+      "concurrency.async_task",
+      "concurrency.handler_looper",
+      "graphics.bitmap",
+      "graphics.bitmap_native",
+      "graphics.canvas_2d",
+      "graphics.egl_java",
+      "graphics.egl_native",
+      "graphics.gles_java",
+      "graphics.gles_native",
+      "graphics.glsurfaceview",
+      "graphics.surface_lifecycle",
+      "input.key_event",
+      "input.motion_event",
+      "ipc.parcel_binder",
+      "jni.bridge",
+      "native.app_glue",
+      "native.asset_manager",
+      "native.configuration",
+      "native.input_queue",
+      "native.log",
+      "native.looper",
+      "native.native_window",
+      "native.sensor",
+      "native.stlport_gnustl",
+      "native.zlib",
+      "resources.asset_access",
+      "runtime.dex_classloader",
+      "sensor.event_stream",
+      "storage.filesystem",
+      "storage.shared_preferences",
+      "system.build_info",
+      "system.clock",
+      "system.log",
+      "system.misc_util",
+      "system.process_info",
+      "system.vibrator",
+      "system.wakelock",
+      "util.library",
+      "view.hierarchy",
+      "window.display_metrics",
+      "window.session"
+    ],
+    "raw_core_class_union": 454,
+    "raw_core_method_union": 3201,
+    "core_family_curve": [
+      {
+        "index": 0,
+        "id": "kungfoo-barracuda",
+        "cluster": "custom-nativeactivity",
+        "marginal_new": 22,
+        "cumulative_unique": 22,
+        "reuse_ratio": 0.0
+      },
+      {
+        "index": 1,
+        "id": "gloomy-dungeons-2",
+        "cluster": "custom-jni-gl",
+        "marginal_new": 25,
+        "cumulative_unique": 47,
+        "reuse_ratio": 0.359
+      },
+      {
+        "index": 2,
+        "id": "pixel-dungeon",
+        "cluster": "pure-java-gl",
+        "marginal_new": 1,
+        "cumulative_unique": 48,
+        "reuse_ratio": 0.9524
+      },
+      {
+        "index": 3,
+        "id": "frozen-bubble",
+        "cluster": "pure-java-canvas",
+        "marginal_new": 0,
+        "cumulative_unique": 48,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 4,
+        "id": "vector-pinball",
+        "cluster": "libgdx",
+        "marginal_new": 0,
+        "cumulative_unique": 48,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 5,
+        "id": "minetest",
+        "cluster": "irrlicht-nativeactivity",
+        "marginal_new": 2,
+        "cumulative_unique": 50,
+        "reuse_ratio": 0.9231
+      },
+      {
+        "index": 6,
+        "id": "tanks-of-freedom",
+        "cluster": "godot",
+        "marginal_new": 2,
+        "cumulative_unique": 52,
+        "reuse_ratio": 0.9444
+      },
+      {
+        "index": 7,
+        "id": "minilens",
+        "cluster": "godot",
+        "marginal_new": 0,
+        "cumulative_unique": 52,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 8,
+        "id": "qt-minesweeper",
+        "cluster": "qt",
+        "marginal_new": 2,
+        "cumulative_unique": 54,
+        "reuse_ratio": 0.9474
+      },
+      {
+        "index": 9,
+        "id": "pysolfc",
+        "cluster": "python-sdl",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 10,
+        "id": "heriswap",
+        "cluster": "soupeaucaillou",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 11,
+        "id": "recursive-runner",
+        "cluster": "soupeaucaillou",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 12,
+        "id": "liquid-wars",
+        "cluster": "custom-jni-gl",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 13,
+        "id": "meritous",
+        "cluster": "sdl",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 14,
+        "id": "gloomy-dungeons-1",
+        "cluster": "custom-jni-gl",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 15,
+        "id": "hyperroid",
+        "cluster": "custom-jni-canvas",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 16,
+        "id": "sgt-puzzles",
+        "cluster": "custom-jni-canvas",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 17,
+        "id": "droidfish",
+        "cluster": "custom-jni-canvas",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 18,
+        "id": "crosswords",
+        "cluster": "custom-jni-canvas",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 19,
+        "id": "flickit",
+        "cluster": "libgdx",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 20,
+        "id": "geometri-destroyer",
+        "cluster": "libgdx",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 21,
+        "id": "kids-memory",
+        "cluster": "libgdx",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 22,
+        "id": "glxy",
+        "cluster": "libgdx",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 23,
+        "id": "replica-island",
+        "cluster": "pure-java-gl",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 24,
+        "id": "shattered-pixel",
+        "cluster": "pure-java-gl",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 25,
+        "id": "andors-trail",
+        "cluster": "pure-java-canvas",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 26,
+        "id": "blockinger",
+        "cluster": "pure-java-canvas",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 27,
+        "id": "gravity-defied",
+        "cluster": "pure-java-canvas",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 28,
+        "id": "a2048",
+        "cluster": "pure-java-webview",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      },
+      {
+        "index": 29,
+        "id": "sudoku-free",
+        "cluster": "pure-java-webview",
+        "marginal_new": 0,
+        "cumulative_unique": 54,
+        "reuse_ratio": 1.0
+      }
+    ]
+  },
+  "system_boundaries": {
+    "status_index": {
+      "OPTIONAL_EXTERNAL": [
+        "app.wallpaper_service",
+        "hardware.camera",
+        "net.connectivity",
+        "net.wifi",
+        "system.alarm",
+        "system.appwidget",
+        "system.backup",
+        "system.notification",
+        "system.print",
+        "system.search",
+        "system.telephony",
+        "ui.accessibility"
+      ],
+      "REDUCIBLE_HLE": [
+        "app.activity_lifecycle",
+        "app.application_lifecycle",
+        "app.broadcast",
+        "app.context",
+        "app.intent",
+        "app.native_activity",
+        "app.package_info",
+        "app.service_lifecycle",
+        "app.uri",
+        "audio.audiorecord",
+        "audio.audiotrack",
+        "audio.mediaplayer",
+        "audio.opensles",
+        "audio.policy",
+        "audio.soundpool",
+        "audio.system_media",
+        "bionic.libc",
+        "concurrency.async_task",
+        "concurrency.handler_looper",
+        "graphics.bitmap",
+        "graphics.bitmap_native",
+        "graphics.canvas_2d",
+        "graphics.drawable",
+        "graphics.egl_java",
+        "graphics.egl_native",
+        "graphics.gles_java",
+        "graphics.gles_native",
+        "graphics.glsurfaceview",
+        "graphics.surface_lifecycle",
+        "input.ime",
+        "input.key_event",
+        "input.motion_event",
+        "ipc.local_socket",
+        "ipc.parcel_binder",
+        "jni.bridge",
+        "native.app_glue",
+        "native.asset_manager",
+        "native.configuration",
+        "native.input_queue",
+        "native.log",
+        "native.looper",
+        "native.native_window",
+        "native.openmaxal",
+        "native.sensor",
+        "native.stlport_gnustl",
+        "native.zlib",
+        "resources.asset_access",
+        "runtime.dex_classloader",
+        "sensor.event_stream",
+        "storage.content_provider",
+        "storage.filesystem",
+        "storage.shared_preferences",
+        "storage.sqlite",
+        "system.build_info",
+        "system.clipboard",
+        "system.clock",
+        "system.display_input_service",
+        "system.log",
+        "system.misc_util",
+        "system.process_info",
+        "system.settings",
+        "system.vibrator",
+        "system.wakelock",
+        "text.layout",
+        "ui.animation",
+        "ui.dialog",
+        "ui.menu",
+        "ui.preferences",
+        "ui.support_compat",
+        "ui.toolkit",
+        "ui.webview",
+        "util.library",
+        "view.hierarchy",
+        "window.display_metrics",
+        "window.session"
+      ]
+    },
+    "high_risk_count": 38
+  },
+  "preregistration": {
+    "discovery_order": [
+      "crosswords",
+      "gloomy-dungeons-1",
+      "kungfoo-barracuda",
+      "minilens",
+      "minetest",
+      "flickit",
+      "andors-trail",
+      "pixel-dungeon",
+      "a2048",
+      "pysolfc"
+    ],
+    "holdout": [
+      "qt-minesweeper",
+      "meritous",
+      "heriswap",
+      "geometri-destroyer",
+      "droidfish"
+    ],
+    "phase_c": [
+      "a2048",
+      "crosswords",
+      "flickit",
+      "gloomy-dungeons-2",
+      "heriswap",
+      "kungfoo-barracuda",
+      "meritous",
+      "minetest",
+      "pysolfc",
+      "qt-minesweeper",
+      "replica-island",
+      "tanks-of-freedom"
+    ],
+    "thresholds": {
+      "h1_irreducible_trigger": "same or equivalent irreducible gameplay-critical dependency in >=3 in-scope games from >=2 unrelated clusters",
+      "h2_marginal": "C_last <= 0.50 * C_first over the fixed Discovery order",
+      "h2_holdout_reuse": "holdout_reuse_ratio >= 0.70",
+      "h2_game_specific": "0 GAME_SPECIFIC production requirements from Holdout"
+    }
+  },
+  "order_sensitivity": {
+    "schema_version": 1,
+    "source": "build/artifacts/frontier-classification-discovery.json",
+    "registered_order": [
+      "crosswords",
+      "gloomy-dungeons-1",
+      "kungfoo-barracuda",
+      "minilens",
+      "minetest",
+      "flickit",
+      "andors-trail",
+      "pixel-dungeon",
+      "a2048",
+      "pysolfc"
+    ],
+    "registered_ratio": 0.11111111111111112,
+    "reversed_ratio": 0.4285714285714286,
+    "permutations_evaluated": 20000,
+    "exhaustive": false,
+    "ratio_distribution": {
+      "min": 0.0,
+      "median": 0.11111111111111112,
+      "mean": 0.2003,
+      "max": 1.0,
+      "fraction_meeting_threshold": 0.9552
+    },
+    "per_sample_family_counts": [
+      {
+        "id": "crosswords",
+        "cluster": "custom-jni-canvas",
+        "families": 0
+      },
+      {
+        "id": "gloomy-dungeons-1",
+        "cluster": "custom-jni-gl",
+        "families": 6
+      },
+      {
+        "id": "kungfoo-barracuda",
+        "cluster": "custom-nativeactivity",
+        "families": 6
+      },
+      {
+        "id": "minilens",
+        "cluster": "godot",
+        "families": 6
+      },
+      {
+        "id": "minetest",
+        "cluster": "irrlicht-nativeactivity",
+        "families": 5
+      },
+      {
+        "id": "flickit",
+        "cluster": "libgdx",
+        "families": 2
+      },
+      {
+        "id": "andors-trail",
+        "cluster": "pure-java-canvas",
+        "families": 3
+      },
+      {
+        "id": "pixel-dungeon",
+        "cluster": "pure-java-gl",
+        "families": 3
+      },
+      {
+        "id": "a2048",
+        "cluster": "pure-java-webview",
+        "families": 5
+      },
+      {
+        "id": "pysolfc",
+        "cluster": "python-sdl",
+        "families": 6
+      }
+    ],
+    "interpretation_rule": "If the threshold is met under the registered order, the reversed order and the large majority of permutations, the convergence is a property of the sample set rather than of the chosen order."
+  },
+  "dynamic": {
+    "discovery": {
+      "C_first": 1.8,
+      "C_last": 0.2,
+      "c_last_over_c_first": 0.1111,
+      "threshold_marginal_pass": true,
+      "known_over_in_scope_ratio": 0.8889,
+      "holdout_reuse_ratio": null,
+      "classification_counts": {
+        "KNOWN_PUBLIC_CONTRACT": 8,
+        "NEW_PUBLIC_CONTRACT": 1,
+        "RUNTIME_INTERNAL_GAP": 1
+      }
+    },
+    "discovery_rows": [
+      {
+        "index": 0,
+        "id": "crosswords",
+        "cluster": "custom-jni-canvas",
+        "last_stage": "none",
+        "activity_launch_crossed": 0,
+        "viewroot_attach_completed": 0,
+        "failure_signature": "missing_framework:activity class resolution failed: Lorg/eehouse/android/xw4/GamesList;",
+        "raw_detail": "activity class resolution failed: Lorg/eehouse/android/xw4/GamesList;",
+        "framework_trace_length": 0,
+        "elapsed_ms": 15,
+        "classification": "KNOWN_PUBLIC_CONTRACT",
+        "blocking_family": "app.activity_lifecycle",
+        "blocking_method": "activity class resolution of a platform Activity subclass",
+        "basis": "The launcher activity chain in the APK is GamesList -> XWListActivity -> android.app.ListActivity, verified from classes.dex. AGR resolves only android.app.Activity as an Activity base, so this is a gap inside the already implemented activity lifecycle contract, shared by every app using a platform Activity subclass.",
+        "families": []
+      },
+      {
+        "index": 1,
+        "id": "gloomy-dungeons-1",
+        "cluster": "custom-jni-gl",
+        "last_stage": "on_create_entered",
+        "activity_launch_crossed": 1,
+        "viewroot_attach_completed": 0,
+        "failure_signature": "missing_framework:Activity.onCreate failed: ",
+        "raw_detail": "Activity.onCreate failed: ",
+        "framework_trace_length": 5,
+        "elapsed_ms": 29,
+        "classification": "NEW_PUBLIC_CONTRACT",
+        "families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context",
+          "resources.asset_access",
+          "system.log",
+          "audio.soundpool"
+        ],
+        "blocking_family": "audio.soundpool",
+        "blocking_method": "Landroid/media/SoundPool;->loadILII",
+        "basis": "blocked on a public API19 contract AGR has not implemented"
+      },
+      {
+        "index": 2,
+        "id": "kungfoo-barracuda",
+        "cluster": "custom-nativeactivity",
+        "last_stage": "resumed",
+        "activity_launch_crossed": 1,
+        "viewroot_attach_completed": 1,
+        "failure_signature": "success:activity_resumed",
+        "raw_detail": "",
+        "framework_trace_length": 27,
+        "elapsed_ms": 118,
+        "classification": "KNOWN_PUBLIC_CONTRACT",
+        "families": [
+          "app.application_lifecycle",
+          "app.native_activity",
+          "audio.soundpool",
+          "app.activity_lifecycle",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "blocking_family": null,
+        "blocking_method": null,
+        "basis": "sample reached activity_resumed on the unchanged Runtime"
+      },
+      {
+        "index": 3,
+        "id": "minilens",
+        "cluster": "godot",
+        "last_stage": "resumed",
+        "activity_launch_crossed": 1,
+        "viewroot_attach_completed": 1,
+        "failure_signature": "success:activity_resumed",
+        "raw_detail": "",
+        "framework_trace_length": 27,
+        "elapsed_ms": 360,
+        "classification": "KNOWN_PUBLIC_CONTRACT",
+        "families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context",
+          "resources.asset_access",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "blocking_family": null,
+        "blocking_method": null,
+        "basis": "sample reached activity_resumed on the unchanged Runtime"
+      },
+      {
+        "index": 4,
+        "id": "minetest",
+        "cluster": "irrlicht-nativeactivity",
+        "last_stage": "resumed",
+        "activity_launch_crossed": 1,
+        "viewroot_attach_completed": 1,
+        "failure_signature": "success:activity_resumed",
+        "raw_detail": "",
+        "framework_trace_length": 27,
+        "elapsed_ms": 768,
+        "classification": "KNOWN_PUBLIC_CONTRACT",
+        "families": [
+          "app.application_lifecycle",
+          "app.native_activity",
+          "app.activity_lifecycle",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "blocking_family": null,
+        "blocking_method": null,
+        "basis": "sample reached activity_resumed on the unchanged Runtime"
+      },
+      {
+        "index": 5,
+        "id": "flickit",
+        "cluster": "libgdx",
+        "last_stage": "context_attached",
+        "activity_launch_crossed": 0,
+        "viewroot_attach_completed": 0,
+        "failure_signature": "missing_framework:Activity constructor failed: ",
+        "raw_detail": "Activity constructor failed: ",
+        "framework_trace_length": 2,
+        "elapsed_ms": 70,
+        "classification": "RUNTIME_INTERNAL_GAP",
+        "blocking_family": null,
+        "blocking_method": "Ljava/lang/Object;-><init>V during com.badlogic.gdx.utils.Array.<init>",
+        "basis": "ClassCastException raised by AGR's host DEX type system while constructing a generic array inside the engine's own code, two frames below any Android API. This is an AGR interpreter completeness defect, not an Android public contract and not specific to this game; it is excluded from the public-contract counts.",
+        "families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle"
+        ]
+      },
+      {
+        "index": 6,
+        "id": "andors-trail",
+        "cluster": "pure-java-canvas",
+        "last_stage": "on_create_entered",
+        "activity_launch_crossed": 1,
+        "viewroot_attach_completed": 0,
+        "failure_signature": "missing_framework:Activity.onCreate failed: ",
+        "raw_detail": "Activity.onCreate failed: ",
+        "framework_trace_length": 5,
+        "elapsed_ms": 51,
+        "classification": "KNOWN_PUBLIC_CONTRACT",
+        "families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context"
+        ],
+        "blocking_family": "app.context",
+        "blocking_method": "Landroid/content/Context;->getResourcesL",
+        "basis": "blocked inside an already implemented public contract"
+      },
+      {
+        "index": 7,
+        "id": "pixel-dungeon",
+        "cluster": "pure-java-gl",
+        "last_stage": "on_create_entered",
+        "activity_launch_crossed": 1,
+        "viewroot_attach_completed": 0,
+        "failure_signature": "missing_framework:Activity.onCreate failed: ",
+        "raw_detail": "Activity.onCreate failed: ",
+        "framework_trace_length": 5,
+        "elapsed_ms": 19,
+        "classification": "KNOWN_PUBLIC_CONTRACT",
+        "families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context"
+        ],
+        "blocking_family": "app.context",
+        "blocking_method": "Landroid/content/Context;->getPackageNameL",
+        "basis": "blocked inside an already implemented public contract"
+      },
+      {
+        "index": 8,
+        "id": "a2048",
+        "cluster": "pure-java-webview",
+        "last_stage": "resumed",
+        "activity_launch_crossed": 1,
+        "viewroot_attach_completed": 1,
+        "failure_signature": "success:activity_resumed",
+        "raw_detail": "",
+        "framework_trace_length": 27,
+        "elapsed_ms": 25,
+        "classification": "KNOWN_PUBLIC_CONTRACT",
+        "families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "blocking_family": null,
+        "blocking_method": null,
+        "basis": "sample reached activity_resumed on the unchanged Runtime"
+      },
+      {
+        "index": 9,
+        "id": "pysolfc",
+        "cluster": "python-sdl",
+        "last_stage": "resumed",
+        "activity_launch_crossed": 1,
+        "viewroot_attach_completed": 1,
+        "failure_signature": "success:activity_resumed",
+        "raw_detail": "",
+        "framework_trace_length": 27,
+        "elapsed_ms": 99,
+        "classification": "KNOWN_PUBLIC_CONTRACT",
+        "families": [
+          "app.activity_lifecycle",
+          "app.context",
+          "resources.asset_access",
+          "graphics.bitmap",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "blocking_family": null,
+        "blocking_method": null,
+        "basis": "sample reached activity_resumed on the unchanged Runtime"
+      }
+    ],
+    "holdout": {
+      "C_first": 3.0,
+      "C_last": 0.0,
+      "c_last_over_c_first": 0.0,
+      "threshold_marginal_pass": true,
+      "known_over_in_scope_ratio": 1.0,
+      "holdout_reuse_ratio": 1.0,
+      "classification_counts": {
+        "KNOWN_PUBLIC_CONTRACT": 3,
+        "RUNTIME_INTERNAL_GAP": 2
+      }
+    },
+    "holdout_rows": [
+      {
+        "index": 0,
+        "id": "qt-minesweeper",
+        "cluster": "qt",
+        "last_stage": "on_create_entered",
+        "activity_launch_crossed": 1,
+        "viewroot_attach_completed": 0,
+        "failure_signature": "missing_framework:Activity.onCreate failed: ",
+        "raw_detail": "Activity.onCreate failed: ",
+        "framework_trace_length": 5,
+        "elapsed_ms": 838,
+        "classification": "RUNTIME_INTERNAL_GAP",
+        "blocking_family": null,
+        "blocking_method": "Ljava/lang/Class;->getDeclaredFieldsL after Class.forName",
+        "basis": "The stop is in java.lang.Class reflection inside AGR's host DEX runtime, not in any android.* contract. It is a core library completeness gap shared by every app that reflects over its own classes; excluded from the public-contract counts.",
+        "families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle"
+        ]
+      },
+      {
+        "index": 1,
+        "id": "meritous",
+        "cluster": "sdl",
+        "last_stage": "resumed",
+        "activity_launch_crossed": 1,
+        "viewroot_attach_completed": 1,
+        "failure_signature": "success:activity_resumed",
+        "raw_detail": "",
+        "framework_trace_length": 27,
+        "elapsed_ms": 37,
+        "classification": "KNOWN_PUBLIC_CONTRACT",
+        "families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle",
+          "app.context",
+          "resources.asset_access",
+          "window.session",
+          "view.hierarchy"
+        ],
+        "blocking_family": null,
+        "blocking_method": null,
+        "basis": "sample reached activity_resumed on the unchanged Runtime"
+      },
+      {
+        "index": 2,
+        "id": "heriswap",
+        "cluster": "soupeaucaillou",
+        "last_stage": "on_create_entered",
+        "activity_launch_crossed": 1,
+        "viewroot_attach_completed": 0,
+        "failure_signature": "missing_framework:Activity.onCreate failed: ",
+        "raw_detail": "Activity.onCreate failed: ",
+        "framework_trace_length": 5,
+        "elapsed_ms": 49,
+        "classification": "KNOWN_PUBLIC_CONTRACT",
+        "families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle"
+        ],
+        "blocking_family": "app.activity_lifecycle",
+        "blocking_method": "Landroid/app/Activity;->onCreateVL",
+        "basis": "blocked inside an already implemented public contract"
+      },
+      {
+        "index": 3,
+        "id": "geometri-destroyer",
+        "cluster": "libgdx",
+        "last_stage": "context_attached",
+        "activity_launch_crossed": 0,
+        "viewroot_attach_completed": 0,
+        "failure_signature": "missing_framework:Activity constructor failed: ",
+        "raw_detail": "Activity constructor failed: ",
+        "framework_trace_length": 2,
+        "elapsed_ms": 37,
+        "classification": "RUNTIME_INTERNAL_GAP",
+        "blocking_family": null,
+        "blocking_method": "Ljava/lang/Object;-><init>V during com.badlogic.gdx.utils.Array.<init>",
+        "basis": "Identical ClassCastException and identical stopping frame as flickit, in the same engine code path. Same AGR DEX type-system defect, not an Android public contract; excluded from the public-contract counts.",
+        "families": [
+          "app.application_lifecycle",
+          "app.activity_lifecycle"
+        ]
+      },
+      {
+        "index": 4,
+        "id": "droidfish",
+        "cluster": "custom-jni-canvas",
+        "last_stage": "on_create_entered",
+        "activity_launch_crossed": 1,
+        "viewroot_attach_completed": 0,
+        "failure_signature": "missing_framework:Activity.onCreate failed: ",
+        "raw_detail": "Activity.onCreate failed: ",
+        "framework_trace_length": 5,
+        "elapsed_ms": 27,
+        "classification": "KNOWN_PUBLIC_CONTRACT",
+        "families": [
+          "app.context",
+          "app.activity_lifecycle"
+        ],
+        "blocking_family": "app.activity_lifecycle",
+        "blocking_method": "Landroid/app/Activity;->getWindowL",
+        "basis": "blocked inside an already implemented public contract"
+      }
+    ]
+  },
+  "H1": {
+    "verdict": "PASS",
+    "basis": "No gameplay-critical boundary is irreducible or unresolved; every core system-service behavior the in-scope games reach reduces to a finite guest-visible local contract.",
+    "threshold_triggered": [],
+    "gameplay_critical_irreducible": [],
+    "gameplay_critical_unresolved": [],
+    "optional_external_boundaries": [
+      "app.wallpaper_service",
+      "hardware.camera",
+      "net.connectivity",
+      "net.wifi",
+      "system.alarm",
+      "system.appwidget",
+      "system.backup",
+      "system.notification",
+      "system.print",
+      "system.search",
+      "system.telephony",
+      "ui.accessibility"
+    ],
+    "exclusion_list": [
+      {
+        "id": "prboom",
+        "scope": "OUT_OF_SCOPE_EXTERNAL_DEPENDENCY",
+        "reason": "Core game content (Doom IWAD) is acquired by doom.util.GameFileDownloader from a retired remote host; only the engine WAD (assets/prboom.zip) ships in the APK. Content-provisioning exclusion, not an Android cross-process semantic dependency."
+      },
+      {
+        "id": "clash-of-balls",
+        "scope": "OUT_OF_SCOPE_EXTERNAL_DEPENDENCY",
+        "reason": "Multiplayer-only over AllJoyn WiFi transport; DEX contains no single-player, AI or offline game mode. Explicitly out of product scope per the multiplayer-only rule."
+      }
+    ]
+  },
+  "H2": {
+    "verdict": "PASS",
+    "conditions": {
+      "no_new_per_game_production_branch": true,
+      "marginal_threshold_met": true,
+      "holdout_reuse_threshold_met": true,
+      "holdout_game_specific_zero": true
+    },
+    "checks": {
+      "C_first": 1.8,
+      "C_last": 0.2,
+      "marginal_threshold_met": true,
+      "discovery_game_specific": 0,
+      "discovery_unresolved": 0,
+      "holdout_reuse_ratio": 1.0,
+      "holdout_reuse_threshold_met": true,
+      "holdout_game_specific": 0
+    },
+    "basis": "All four pre-registered H2 conditions hold.",
+    "order_sensitivity": {
+      "registered_ratio": 0.11111111111111112,
+      "reversed_ratio": 0.4285714285714286,
+      "fraction_of_permutations_meeting_threshold": 0.9552,
+      "permutations_evaluated": 20000
+    }
+  },
+  "PROJECT": {
+    "verdict": "CONTINUE",
+    "basis": "H1 PASS and H2 PASS."
+  },
+  "limitations": [
+    "First-blocker censoring: one run of a game exposes only its current frontmost blocker, not every gap on its complete gameplay path.",
+    "Static reference analysis shows reachable code, not executed code.",
+    "Any H2 result describes the currently reached compatibility frontier only, and must not be read as proof that complete gameplay paths converge."
+  ],
+  "d001_reopen_triggered": false
+}

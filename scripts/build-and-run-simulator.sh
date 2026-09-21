@@ -235,6 +235,45 @@ PY
   phase "Framework ViewRoot attach evidence captured"
   exit 0
 fi
+if [[ "${ARCHITECTURE_FALSIFICATION_DISCOVERY:-0}" == "1" ]]; then
+  ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
+  DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
+  RESULT_PATH="$DATA/Documents/architecture-falsification-discovery.json"
+  rm -f "$RESULT_PATH"
+  phase "launch architecture falsification frontier probe"
+  xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator \
+    --args --architecture-falsification-discovery
+  # Poll for completion rather than first bytes: the probe rewrites the file
+  # after every sample so that a terminating sample still leaves evidence.
+  COMPLETE=0
+  for _ in $(seq 1 600); do
+    if [[ -s "$RESULT_PATH" ]] && python3 -c 'import json,sys;sys.exit(0 if json.load(open(sys.argv[1])).get("complete") else 1)' "$RESULT_PATH" 2>/dev/null; then
+      COMPLETE=1; break
+    fi
+    sleep 1
+  done
+  xcrun simctl spawn "$DEVICE" log show --last 15m --style compact \
+    --predicate 'process == "AGRSimulator"' > "$ARTIFACTS/architecture-falsification-discovery.log" 2>&1 || true
+  if [[ ! -s "$RESULT_PATH" ]]; then
+    echo "architecture falsification probe produced no result within 600 seconds" >&2
+    exit 124
+  fi
+  cp "$RESULT_PATH" "$ARTIFACTS/architecture-falsification-discovery.json"
+  cp "$ROOT/samples/resolved.json" "$ARTIFACTS/falsification-resolved.json"
+  python3 - "$RESULT_PATH" <<'PY'
+import json,sys
+r=json.load(open(sys.argv[1]))
+print(json.dumps({k:v for k,v in r.items() if k!="results"}, indent=2))
+for item in r["results"]:
+    print(f"{item['id']:<22} {item['last_stage']:<22} {item['failure_signature'][:110]}")
+PY
+  if [[ "$COMPLETE" != "1" ]]; then
+    echo "probe stopped before completing every planned sample; partial evidence retained" >&2
+    exit 125
+  fi
+  phase "architecture falsification frontier evidence captured"
+  exit 0
+fi
 if [[ "${FRAMEWORK_FIRST_TRAVERSAL_DISCOVERY:-0}" == "1" ]]; then
   ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
   DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"

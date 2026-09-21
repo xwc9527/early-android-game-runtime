@@ -16,12 +16,43 @@ INDEXES = (
     ("repo", "https://f-droid.org/repo/index-v1.json"),
     ("archive", "https://f-droid.org/archive/index-v1.json"),
 )
+# The Runtime migration baseline set. `full` stays pinned to it so that closure
+# and validation runs of the existing workflows keep their exact sample scope
+# while the architecture census uses a wider, separate profile.
+RUNTIME_BASELINE = {
+    "kungfoo-barracuda", "gloomy-dungeons-2", "pixel-dungeon",
+    "frozen-bubble", "vector-pinball",
+}
+# Frozen in build/artifacts/preregistered-samples.json before any dynamic run.
+FALSIFICATION_DISCOVERY = {
+    "crosswords", "gloomy-dungeons-1", "kungfoo-barracuda", "minilens", "minetest",
+    "flickit", "andors-trail", "pixel-dungeon", "a2048", "pysolfc",
+}
+FALSIFICATION_HOLDOUT = {
+    "qt-minesweeper", "meritous", "heriswap", "geometri-destroyer", "droidfish",
+}
+# Both frozen sets in one profile so a baseline-compensation run can observe all
+# 15 samples in a single compile, ANGLE preparation, Simulator boot and Runtime
+# binary. Membership is exactly the union; nothing is added or re-selected.
+FALSIFICATION_COMPENSATION = FALSIFICATION_DISCOVERY | FALSIFICATION_HOLDOUT
+# Discovery first, in the frozen Discovery order, then Holdout. Each probe runs
+# on a fresh Runtime instance, so this ordering is for auditability, not effect.
+FALSIFICATION_COMPENSATION_ORDER = [
+    "crosswords", "gloomy-dungeons-1", "kungfoo-barracuda", "minilens", "minetest",
+    "flickit", "andors-trail", "pixel-dungeon", "a2048", "pysolfc",
+    "droidfish", "geometri-destroyer", "heriswap", "meritous", "qt-minesweeper",
+]
 PROFILES = {
     "focused-activity": {"pixel-dungeon", "frozen-bubble"},
     "focused-framework": {"frozen-bubble"},
-    "runtime-regression": None,
-    "full": None,
+    "runtime-regression": RUNTIME_BASELINE,
+    "full": RUNTIME_BASELINE,
+    "census": None,
+    "falsification-discovery": FALSIFICATION_DISCOVERY,
+    "falsification-holdout": FALSIFICATION_HOLDOUT,
+    "falsification-compensation": FALSIFICATION_COMPENSATION,
 }
+PROFILE_ORDER = {"falsification-compensation": FALSIFICATION_COMPENSATION_ORDER}
 
 
 def fetch_json(url: str, cache: pathlib.Path) -> dict:
@@ -125,6 +156,12 @@ def select_profile(samples: list[dict], profile: str) -> list[dict]:
     result = [item for item in samples if item["id"] in selected_ids]
     if {item["id"] for item in result} != selected_ids:
         raise RuntimeError(f"sample lock does not contain the {profile} sample set")
+    order = PROFILE_ORDER.get(profile)
+    if order:
+        if set(order) != selected_ids:
+            raise RuntimeError(f"{profile}: fixed order does not match profile membership")
+        position = {sample_id: index for index, sample_id in enumerate(order)}
+        result.sort(key=lambda item: position[item["id"]])
     return result
 
 

@@ -37,6 +37,23 @@ The exact candidate passed focused contract, unchanged real-APK regression, Simu
 - Existing linker, pthread, EHABI, allocator, NativeActivity/Input and graphics contracts remain protected.
 - No per-game Runtime behavior is permitted; the harness may identify Frozen Bubble and assert its expected observable trace.
 
+## Architecture Falsification Gate
+
+The falsification experiment on `phase/architecture-falsification-1` returned `H1 = PASS`,
+`H2 = PASS`, `PROJECT = CONTINUE`; `D001` was not reopened. Evidence is
+`docs/ARCHITECTURE_FALSIFICATION_REPORT.md` and `build/artifacts/architecture-falsification.json`,
+from discovery run `35654415068` and blind holdout run `35656209596`. No production Runtime
+behavior was changed by the experiment. Its meaning is bounded by first-blocker censoring: it
+describes the compatibility frontier currently reached, not complete gameplay paths.
+
+First Traversal is `MERGED` on formal `main`. Closure run `35634763769` is `VALID_PASS` for
+commit `3e3db84a53ad0957e9217f804b6f718a942b9a11` / tree
+`1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa`. Post-merge run `35662355600` passed. The governance
+baseline commit is that tested commit. Compensation run `35662803136` remeasured the frozen 15
+APKs on that Runtime: `H1 = PASS`, `H2 = PASS` (`C_first 1.8`, `C_last 0.2`, holdout reuse
+`3/3`), `GAME_SPECIFIC = 0`, `PROJECT = CONTINUE`. Last stage, blocker, and executed families
+were unchanged; no sample completed a root Surface.
+
 ## Closure Contract
 
 Exact-commit closure and corrected post-merge validation are complete. ViewRoot attach is MERGED/STABLE for this contract. No Surface, relayout or rendering claim is made.
