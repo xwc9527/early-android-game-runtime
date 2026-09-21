@@ -277,29 +277,36 @@ allowed to overturn the earlier `PASS`.
 
 Machine-readable: `build/artifacts/architecture-falsification-compensation.json`.
 
-First Traversal has **not** entered the formal baseline. Verified against the live remote:
+Correction of an earlier draft of this section: First Traversal **does** have a completed
+closure. Run `35634763769` finished `success` on
+`phase/framework-first-traversal-surface-1` with `head_sha`
+`3e3db84a53ad0957e9217f804b6f718a942b9a11`. Its `closure-evidence` job printed
+`classification = VALID_PASS`, `target_pass = true`, tested commit
+`3e3db84a53ad0957e9217f804b6f718a942b9a11`, tested tree
+`1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa`. The same run's jobs all passed:
+`linux-source-contract`, `simulator-focused` (including Protected Runtime contracts,
+Bounded Simulator Runtime smoke, and Protected Runtime and real-game regressions),
+`iphoneos`, and `closure-evidence`. The closure summary records
+`runtime_contracts_regressions = PASS` and `iphoneos_build = PASS`.
+
+The candidate commit still contains `closure_tested_commit = null`,
+`eligible_for_merge = false`, `state = IMPLEMENTED`, and `closure_runs_used = 0`.
+That ledger is inside the exact tested tree. The closure artifact was produced
+afterwards. Writing the result back into that commit would have created a new tree
+and invalidated the evidence. The branch file is not evidence that closure did not
+occur, and `docs/CURRENT_STATE.md` on that commit is stale relative to the artifact.
+
+Verified against the live remote before any compensation run:
 
 | Check | Required | Observed |
 |---|---|---|
-| Phase merged into formal `main` | yes | `3e3db84a` is **not** an ancestor of `main` |
-| Closure ledger state | `MERGED` | `IMPLEMENTED`, `closure_tested_commit: null`, `eligible_for_merge: false` |
-| Closure attempts used | ≥ 1 `VALID_PASS` | `0`, `last_closure_attempt: "none for current target"` |
-| Post-merge gate passed for the phase | yes | newest `main` gate is `35599543077` at `5a6962d2`, the ViewRoot lineage |
-| Baseline promoted | to the merged phase commit | governance baseline on `main` is still `a6256ba4` |
-| Formal `main` advanced | beyond `5a6962d2` | still exactly `5a6962d2` |
+| Closure run `35634763769` | `VALID_PASS` for commit `3e3db84` / tree `1af351eb` | yes; protected regressions PASS; iphoneos PASS |
+| Phase merged into formal `main` | tested commit is an ancestor of `main` | not yet; `main` is still `5a6962d2` |
+| Post-merge gate for this phase | `VALID_PASS` bound to run `35634763769` | not yet; newest `main` gate is the ViewRoot lineage |
+| Baseline promoted | governance baseline names the merged First Traversal commit | not yet; governance baseline on `main` is still `a6256ba4` |
 
-`phase/framework-first-traversal-surface-1` carries six unmerged commits and only *discovery* CI
-runs (latest `35634763769`, success). Its own `docs/CURRENT_STATE.md` states
-`Lifecycle: IMPLEMENTED / UNVERIFIED; no closure or merge claim applies to this branch`, and
-records that protected regressions and the iphoneos build have not yet been verified for the
-candidate.
-
-The compensation task's own precondition rule requires stopping in exactly this situation, so the
-single permitted expensive macOS run was **not** spent. Running it now would have re-measured the
-identical `5a6962d2` Runtime and produced the original numbers again while consuming the budget.
-
-Note on the request's premise: First Traversal has not merely failed to merge, it has not yet had
-a closure attempt at all. The next step is its closure CI, not a merge.
+The compensation run stays unspent for those three remaining gates only. It is not
+waiting on another First Traversal closure.
 
 ### Prepared so the compensation run is a single action
 

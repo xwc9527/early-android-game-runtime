@@ -27,6 +27,24 @@ ORIGINAL_RUNS = {
     "falsification_branch_commit": "bae6d40a83bdf28e055dbfe4fdb9b6ed15ed08b4",
 }
 FIRST_TRAVERSAL_BRANCH = "phase/framework-first-traversal-surface-1"
+FIRST_TRAVERSAL_TARGET = (
+    "Android Framework First Traversal / Relayout / Surface Acquisition Phase 1"
+)
+# The closure artifact is produced after the tested commit. The candidate
+# commit's own ledger therefore still says IMPLEMENTED / null, and that ledger
+# is not evidence that closure did not happen.
+AUTHORITATIVE_CLOSURE = {
+    "run_id": "35634763769",
+    "classification": "VALID_PASS",
+    "tested_commit": "3e3db84a53ad0957e9217f804b6f718a942b9a11",
+    "tested_tree": "1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa",
+    "closure_base_commit": ORIGINAL_BASELINE,
+    "protected_regressions": "PASS",
+    "iphoneos": "PASS",
+    "linux_source_contract": "PASS",
+    "simulator_focused": "PASS",
+    "source": "GitHub Actions run 35634763769 artifact framework-first-traversal-closure-summary",
+}
 
 
 def git(*args: str) -> str:
@@ -37,37 +55,61 @@ def load(path: pathlib.Path):
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
 
 
+def show_json(rev: str, path: str) -> dict:
+    raw = git("show", f"{rev}:{path}")
+    return json.loads(raw) if raw else {}
+
+
 def check_precondition(root: pathlib.Path) -> dict:
-    """Is a newer formal baseline containing First Traversal actually available?"""
+    """Is First Traversal merged, post-merge passed, and baseline-promoted?
+
+    Closure itself is taken from the authoritative Actions artifact. A stale
+    IMPLEMENTED ledger inside the tested commit is expected and is not a block.
+    """
     main = git("rev-parse", "origin/main")
     main_tree = git("rev-parse", "origin/main^{tree}")
     traversal = git("rev-parse", f"origin/{FIRST_TRAVERSAL_BRANCH}")
-    merged = bool(traversal) and bool(main) and subprocess.run(
-        ["git", "merge-base", "--is-ancestor", traversal, main]).returncode == 0
+    tested = AUTHORITATIVE_CLOSURE["tested_commit"]
+    tested_tree = AUTHORITATIVE_CLOSURE["tested_tree"]
+    on_main = bool(tested) and bool(main) and subprocess.run(
+        ["git", "merge-base", "--is-ancestor", tested, main]).returncode == 0
 
-    state = json.loads(git("show", "origin/main:ci/governance/state.json") or "{}")
+    state = show_json("origin/main", "ci/governance/state.json")
+    closure = show_json("origin/main", "ci/governance/closure.json")
+    binding = show_json("origin/main", "ci/governance/post-merge-binding.json")
     baseline = (state.get("baseline") or {}).get("commit")
-    promoted = merged and baseline == main
-
-    try:
-        closure = json.loads(git("show", f"origin/{FIRST_TRAVERSAL_BRANCH}:ci/governance/closure.json") or "{}")
-    except json.JSONDecodeError:
-        closure = {}
+    post_merge = binding.get("valid_post_merge_run") or {}
+    post_merge_pass = (
+        binding.get("target") == FIRST_TRAVERSAL_TARGET
+        and str(binding.get("closure_run_id")) == AUTHORITATIVE_CLOSURE["run_id"]
+        and binding.get("closure_tested_commit") == tested
+        and binding.get("closure_tested_tree") == tested_tree
+        and post_merge.get("classification") == "VALID_PASS"
+        and str(post_merge.get("closure_run_id")) == AUTHORITATIVE_CLOSURE["run_id"]
+    )
+    promoted = (
+        on_main
+        and closure.get("state") == "MERGED"
+        and closure.get("target") == FIRST_TRAVERSAL_TARGET
+        and closure.get("closure_tested_commit") == tested
+        and closure.get("merged_commit") == tested
+        and closure.get("merged_tree") == tested_tree
+        and baseline == tested
+    )
 
     reasons = []
-    if not merged:
+    if not on_main:
         reasons.append(
-            f"First Traversal head {traversal[:8] or 'unknown'} is not an ancestor of formal "
-            f"main {main[:8] or 'unknown'}; the phase is not MERGED.")
-    if closure.get("state") and closure["state"] != "MERGED":
+            f"First Traversal tested commit {tested[:8]} is not on formal main "
+            f"{(main or 'unknown')[:8]}; the phase is not MERGED.")
+    if not post_merge_pass:
         reasons.append(
-            f"First Traversal closure ledger state is {closure['state']!r} with "
-            f"closure_tested_commit={closure.get('closure_tested_commit')!r} and "
-            f"eligible_for_merge={closure.get('eligible_for_merge')!r}.")
+            "No VALID_PASS post-merge gate is recorded on formal main for First Traversal "
+            f"closure run {AUTHORITATIVE_CLOSURE['run_id']}.")
     if not promoted:
         reasons.append(
-            f"Governance baseline on formal main is {str(baseline)[:8]}, which is not the "
-            "merged First Traversal commit; the baseline was not promoted.")
+            f"Governance baseline on formal main is {str(baseline)[:8]}, which does not yet "
+            "name the merged First Traversal commit; the baseline was not promoted.")
     if main == ORIGINAL_BASELINE:
         reasons.append(
             "Formal main is still the exact baseline the original dynamic runs used, so a "
@@ -75,15 +117,17 @@ def check_precondition(root: pathlib.Path) -> dict:
             "against a deeper frontier.")
 
     return {
-        "satisfied": bool(merged and promoted and main != ORIGINAL_BASELINE),
+        "satisfied": bool(on_main and post_merge_pass and promoted and main != ORIGINAL_BASELINE),
         "formal_main_commit": main,
         "formal_main_tree": main_tree,
         "governance_baseline_commit": baseline,
         "first_traversal_head": traversal,
-        "first_traversal_merged_into_main": merged,
-        "first_traversal_closure_state": closure.get("state"),
-        "first_traversal_closure_tested_commit": closure.get("closure_tested_commit"),
-        "first_traversal_eligible_for_merge": closure.get("eligible_for_merge"),
+        "first_traversal_on_main": on_main,
+        "authoritative_closure": AUTHORITATIVE_CLOSURE,
+        "candidate_commit_ledger_is_not_negative_evidence": True,
+        "formal_main_closure_state": closure.get("state"),
+        "formal_main_post_merge_run": post_merge.get("run_id"),
+        "post_merge_pass": post_merge_pass,
         "baseline_promoted": promoted,
         "blocking_reasons": reasons,
     }

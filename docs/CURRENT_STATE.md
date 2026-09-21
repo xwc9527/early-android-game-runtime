@@ -41,14 +41,15 @@ behavior was changed by the experiment. Its meaning is bounded by first-blocker 
 describes the compatibility frontier currently reached, not complete gameplay paths.
 
 The requested Baseline Compensation Validation is `BLOCKED_PRECONDITION`
-(`build/artifacts/architecture-falsification-compensation.json`). First Traversal / Relayout /
-Surface Acquisition is still `IMPLEMENTED` on `phase/framework-first-traversal-surface-1` with no
-closure attempt, is not an ancestor of formal `main`, and the governance baseline is still
-`a6256ba4`. Formal `main` remains `5a6962d2`, the exact baseline the original dynamic runs used, so
-the permitted expensive run was not spent. The combined 15-sample profile and comparison tooling
-are prepared and locally verified; the run is triggered by setting
-`ci/falsification-run-request.json` to `falsification-compensation` once First Traversal is closed,
-merged, post-merge green and baseline-promoted.
+(`build/artifacts/architecture-falsification-compensation.json`). First Traversal closure run
+`35634763769` is `VALID_PASS` for commit `3e3db84a53ad0957e9217f804b6f718a942b9a11` / tree
+`1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa`, including protected regressions and the iphoneos
+build. The candidate commit's `IMPLEMENTED` ledger is the pre-artifact tested tree, not evidence
+that closure did not occur. The phase is not yet on formal `main`, has no post-merge gate, and
+the governance baseline is still `a6256ba4`. Formal `main` remains `5a6962d2`, so the permitted
+expensive run was not spent. The combined 15-sample profile is ready; the run is triggered by
+setting `ci/falsification-run-request.json` to `falsification-compensation` once First Traversal
+is merged, post-merge green, and baseline-promoted.
 
 ## Closure Contract
 
