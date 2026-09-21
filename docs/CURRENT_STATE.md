@@ -40,6 +40,16 @@ from discovery run `35654415068` and blind holdout run `35656209596`. No product
 behavior was changed by the experiment. Its meaning is bounded by first-blocker censoring: it
 describes the compatibility frontier currently reached, not complete gameplay paths.
 
+The requested Baseline Compensation Validation is `BLOCKED_PRECONDITION`
+(`build/artifacts/architecture-falsification-compensation.json`). First Traversal / Relayout /
+Surface Acquisition is still `IMPLEMENTED` on `phase/framework-first-traversal-surface-1` with no
+closure attempt, is not an ancestor of formal `main`, and the governance baseline is still
+`a6256ba4`. Formal `main` remains `5a6962d2`, the exact baseline the original dynamic runs used, so
+the permitted expensive run was not spent. The combined 15-sample profile and comparison tooling
+are prepared and locally verified; the run is triggered by setting
+`ci/falsification-run-request.json` to `falsification-compensation` once First Traversal is closed,
+merged, post-merge green and baseline-promoted.
+
 ## Closure Contract
 
 Exact-commit closure and corrected post-merge validation are complete. ViewRoot attach is MERGED/STABLE for this contract. No Surface, relayout or rendering claim is made.

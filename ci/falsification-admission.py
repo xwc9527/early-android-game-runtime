@@ -6,7 +6,7 @@ import json
 import os
 import pathlib
 
-VALID = ("falsification-discovery", "falsification-holdout")
+VALID = ("falsification-discovery", "falsification-holdout", "falsification-compensation")
 REQUIRED = (
     "question", "current_uncertainty", "expected_outcome_a", "expected_outcome_b",
     "why_cheaper_test_is_insufficient",

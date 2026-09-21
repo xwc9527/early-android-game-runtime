@@ -258,6 +258,78 @@ Exclusion list, with objective reasons, stays as recorded in the census: `prboom
 AllJoyn, no single-player mode in the DEX). Neither is an Android cross-process semantic
 dependency, so neither bears on H1.
 
+## Baseline Compensation Validation — post First-Traversal formal main
+
+This section is appended, not a rewrite. Everything above describes
+**Architecture Falsification — baseline `5a6962d2`** and is preserved unmodified.
+
+### Why a compensation run was requested
+
+The dynamic Discovery and Holdout runs above executed against formal
+`main @ 5a6962d2c84b06425e8c489e855d71529f50ba3b`. The
+`First Traversal / Relayout / Surface Acquisition Phase 1` work was not in that baseline, so the
+observed frontier could have been shallower than the Runtime's real reach. The compensation task
+is to re-measure H2 on a newer formal baseline that includes First Traversal, with the frozen
+sample sets, frozen granularity fingerprint and frozen thresholds, so that a deeper frontier is
+allowed to overturn the earlier `PASS`.
+
+### Status: `BLOCKED_PRECONDITION` — not run
+
+Machine-readable: `build/artifacts/architecture-falsification-compensation.json`.
+
+First Traversal has **not** entered the formal baseline. Verified against the live remote:
+
+| Check | Required | Observed |
+|---|---|---|
+| Phase merged into formal `main` | yes | `3e3db84a` is **not** an ancestor of `main` |
+| Closure ledger state | `MERGED` | `IMPLEMENTED`, `closure_tested_commit: null`, `eligible_for_merge: false` |
+| Closure attempts used | ≥ 1 `VALID_PASS` | `0`, `last_closure_attempt: "none for current target"` |
+| Post-merge gate passed for the phase | yes | newest `main` gate is `35599543077` at `5a6962d2`, the ViewRoot lineage |
+| Baseline promoted | to the merged phase commit | governance baseline on `main` is still `a6256ba4` |
+| Formal `main` advanced | beyond `5a6962d2` | still exactly `5a6962d2` |
+
+`phase/framework-first-traversal-surface-1` carries six unmerged commits and only *discovery* CI
+runs (latest `35634763769`, success). Its own `docs/CURRENT_STATE.md` states
+`Lifecycle: IMPLEMENTED / UNVERIFIED; no closure or merge claim applies to this branch`, and
+records that protected regressions and the iphoneos build have not yet been verified for the
+candidate.
+
+The compensation task's own precondition rule requires stopping in exactly this situation, so the
+single permitted expensive macOS run was **not** spent. Running it now would have re-measured the
+identical `5a6962d2` Runtime and produced the original numbers again while consuming the budget.
+
+Note on the request's premise: First Traversal has not merely failed to merge, it has not yet had
+a closure attempt at all. The next step is its closure CI, not a merge.
+
+### Prepared so the compensation run is a single action
+
+No production Runtime code was touched. The following is measurement plumbing only, verified
+locally without any macOS run:
+
+- `falsification-compensation` sample profile: the exact union of the frozen Discovery 10 and
+  Holdout 5, ordered Discovery-first in the frozen Discovery order, so all 15 samples are probed
+  in one compile, one ANGLE preparation, one Simulator boot and one Runtime binary.
+- The workflow classifies a combined result file against each frozen set separately, emitting
+  both `frontier-classification-discovery.json` and `frontier-classification-holdout.json`.
+- Verified by replaying the two previous run results as one combined file: the split reproduces
+  both committed classifications bit-for-bit, including `C_first 1.8 / C_last 0.2` and
+  `holdout_reuse_ratio 1.00`.
+- `tools/baseline_compensation.py` performs the precondition check, the old/new per-game frontier
+  comparison and the frozen-threshold H2 restatement, and refuses to emit a verdict while the
+  precondition is unmet.
+
+Once First Traversal is `CLOSED`, merged, post-merge green and baseline-promoted, the compensation
+run is triggered by setting `ci/falsification-run-request.json` to
+`sample_set: "falsification-compensation"` with an incremented `request_id`.
+
+### What this section does and does not claim
+
+It does not revalidate H2 on a deeper frontier, and it does not weaken the original result. The
+original verdicts stand as measured on `5a6962d2`, with the first-blocker censoring limit already
+stated above. Whether the convergence survives the deeper First Traversal frontier is still an
+open question, and this task deliberately left the expensive run unspent rather than answer it
+with the wrong Runtime.
+
 ## Final answer
 
 On a heterogeneous set of 32 real API19-era games spanning 13 execution clusters, no gameplay-

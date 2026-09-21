@@ -15,7 +15,7 @@ on:
       sample_profile:
         description: Pre-registered sample set to probe
         type: choice
-        options: [falsification-discovery, falsification-holdout]
+        options: [falsification-discovery, falsification-holdout, falsification-compensation]
         default: falsification-discovery
 
 jobs:
@@ -115,10 +115,21 @@ jobs:
         if: ${{ always() }}
         continue-on-error: true
         run: |
-          python3 tools/classify_frontier.py \
-            --results build/artifacts/architecture-falsification-discovery.json \
-            --set "${{ needs.admission.outputs.profile }}" \
-            --output build/artifacts/frontier-classification.json
+          RESULTS=build/artifacts/architecture-falsification-discovery.json
+          if [[ "${{ needs.admission.outputs.profile }}" == "falsification-compensation" ]]; then
+            # One probe run covers both frozen sets; classify each against its own
+            # pre-registered membership and order.
+            python3 tools/classify_frontier.py --results "$RESULTS" \
+              --set falsification-discovery \
+              --output build/artifacts/frontier-classification-discovery.json
+            python3 tools/classify_frontier.py --results "$RESULTS" \
+              --set falsification-holdout \
+              --output build/artifacts/frontier-classification-holdout.json
+          else
+            python3 tools/classify_frontier.py --results "$RESULTS" \
+              --set "${{ needs.admission.outputs.profile }}" \
+              --output build/artifacts/frontier-classification.json
+          fi
       - name: Publish frontier evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -128,6 +139,8 @@ jobs:
             build/artifacts/architecture-falsification-discovery.json
             build/artifacts/architecture-falsification-discovery.log
             build/artifacts/frontier-classification.json
+            build/artifacts/frontier-classification-discovery.json
+            build/artifacts/frontier-classification-holdout.json
             build/artifacts/falsification-resolved.json
             build/artifacts/ci-stage-timings.jsonl
           if-no-files-found: warn
