@@ -273,7 +273,7 @@ is to re-measure H2 on a newer formal baseline that includes First Traversal, wi
 sample sets, frozen granularity fingerprint and frozen thresholds, so that a deeper frontier is
 allowed to overturn the earlier `PASS`.
 
-### Status: precondition met — one compensation run requested
+### Status: `MEASURED` — `H1 = PASS`, `H2 = PASS`, `PROJECT = CONTINUE`
 
 Machine-readable: `build/artifacts/architecture-falsification-compensation.json`.
 
