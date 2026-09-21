@@ -2,7 +2,7 @@
 
 Updated: 2026-09-22
 
-Formal `main` contains First Traversal by fast-forward of closure-tested commit `3e3db84a53ad0957e9217f804b6f718a942b9a11` / tree `1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa`. Closure run `35634763769` is `VALID_PASS`: linux-source-contract, focused Simulator, protected Runtime contracts, bounded Simulator smoke, protected Runtime and real-game regressions, and the arm64 iphoneos build all passed. Lifecycle: `CLOSED`. The governance baseline commit is still the closure base `5a6962d2c84b06425e8c489e855d71529f50ba3b` until the post-merge gate passes and promotion records `MERGED`.
+Formal baseline and last known good: `main @ 3e3db84a53ad0957e9217f804b6f718a942b9a11` / tree `1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa`. First Traversal is `MERGED`. Closure run `35634763769` is `VALID_PASS`: linux-source-contract, focused Simulator, protected Runtime contracts, bounded Simulator smoke, protected Runtime and real-game regressions, and the arm64 iphoneos build all passed. Post-merge run `35662355600` passed on governance-only follow-up `79d47bc6578a36c7af6a10d5b5ec03122fdbd1da`.
 
 The candidate commit's ledger still said `IMPLEMENTED` with `closure_tested_commit = null` because that commit is the exact tested tree. The closure artifact was produced after it. That ledger is not evidence that closure did not occur.
 

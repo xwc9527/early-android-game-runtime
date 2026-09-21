@@ -2,13 +2,13 @@
   "schema_version": 1,
   "baseline": {
     "branch": "main",
-    "commit": "5a6962d2c84b06425e8c489e855d71529f50ba3b",
-    "last_known_good": "5a6962d2c84b06425e8c489e855d71529f50ba3b"
+    "commit": "3e3db84a53ad0957e9217f804b6f718a942b9a11",
+    "last_known_good": "3e3db84a53ad0957e9217f804b6f718a942b9a11"
   },
   "active": {
     "target": "Android Framework First Traversal / Relayout / Surface Acquisition Phase 1",
     "branch": "main",
-    "lifecycle": "CLOSED",
+    "lifecycle": "MERGED",
     "observed_discontinuity": "The closed ViewRoot attach contract ends with a scheduled traversal but has no executed measure, relayout, layout or root Surface.",
     "android_subsystem": "ViewRootImpl first performTraversals, IWindowSession.relayout and root Surface acquisition",
     "upstream_path": [
@@ -29,8 +29,8 @@
     "causal_status": "CONTRACT_CONFIRMED",
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "cheap post-merge gate, then baseline promotion",
-    "primary_blocker": "post-merge gate and baseline promotion have not run",
+    "next_validation": "none for this contract",
+    "primary_blocker": "none",
     "first_broken_boundary": "none",
     "first_broken_boundary_evidence": "closure evidence"
   },

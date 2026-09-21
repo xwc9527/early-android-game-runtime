@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "target": "Android Framework First Traversal / Relayout / Surface Acquisition Phase 1",
-  "state": "CLOSED",
+  "state": "MERGED",
   "closure_tested_commit": "3e3db84a53ad0957e9217f804b6f718a942b9a11",
   "closure_tested_tree": "1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa",
   "closure_base_commit": "5a6962d2c84b06425e8c489e855d71529f50ba3b",
-  "eligible_for_merge": true,
+  "eligible_for_merge": false,
   "merged_commit": "3e3db84a53ad0957e9217f804b6f718a942b9a11",
   "merged_tree": "1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa"
 }
