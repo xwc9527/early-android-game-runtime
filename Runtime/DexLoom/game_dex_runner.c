@@ -87,16 +87,7 @@ static DxResult view_set_visibility(DxVM *vm, DxFrame *frame,
 }
 
 static DxResult window_manager_add_view(DxVM *vm, DxFrame *frame,
-                                        DxValue *args, uint32_t count) {
-    (void)vm; (void)frame;
-    if (count < 3 || args[0].tag != DX_VAL_OBJ || !args[0].obj ||
-        args[1].tag != DX_VAL_OBJ || !args[1].obj ||
-        args[2].tag != DX_VAL_OBJ || !args[2].obj)
-        return DX_ERR_INVALID_FORMAT;
-    dx_vm_set_field(args[0].obj, "_lastView", args[1]);
-    dx_vm_set_field(args[0].obj, "_lastLayoutParams", args[2]);
-    return DX_OK;
-}
+                                        DxValue *args, uint32_t count);
 
 static DxResult activity_on_post_resume(DxVM *vm, DxFrame *frame,
                                         DxValue *args, uint32_t count) {
@@ -324,7 +315,10 @@ static DxResult register_game_framework(DxVM *vm) {
                context_get_application_context, 0);
 
     DxClass *view = reg_class(vm, "Landroid/view/View;", obj);
-    one_field(view, "_visibility", "I");
+    const char *view_names[] = { "_visibility", "_layoutParams", "_parent" };
+    const char *view_types[] = { "I", "Landroid/view/WindowManager$LayoutParams;",
+                                 "Landroid/view/ViewRootImpl;" };
+    own_fields(view, 3, view_names, view_types);
     add_method(view, "setVisibility", "VI", DX_ACC_PUBLIC, view_set_visibility, 0);
     DxClass *layout_params = reg_class(vm, "Landroid/view/WindowManager$LayoutParams;", obj);
     const char *layout_names[] = { "_type", "_softInputMode" };
@@ -337,10 +331,25 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(window, "getDecorView", "L", DX_ACC_PUBLIC, window_get_decor_view, 0);
     add_method(window, "getAttributes", "L", DX_ACC_PUBLIC, window_get_attributes, 0);
     DxClass *window_manager = reg_class(vm, "Landroid/view/WindowManager;", obj);
-    const char *manager_names[] = { "_lastView", "_lastLayoutParams" };
-    const char *manager_types[] = { "Landroid/view/View;", "Landroid/view/WindowManager$LayoutParams;" };
-    own_fields(window_manager, 2, manager_names, manager_types);
+    const char *manager_names[] = { "_lastView", "_lastLayoutParams", "_viewRoot" };
+    const char *manager_types[] = { "Landroid/view/View;", "Landroid/view/WindowManager$LayoutParams;",
+                                    "Landroid/view/ViewRootImpl;" };
+    own_fields(window_manager, 3, manager_names, manager_types);
     add_method(window_manager, "addView", "VLL", DX_ACC_PUBLIC, window_manager_add_view, 0);
+    DxClass *viewroot = reg_class(vm, "Landroid/view/ViewRootImpl;", obj);
+    const char *root_names[] = { "_view", "_layoutParams", "_session", "_attachInfo", "_added",
+                                 "_layoutRequested", "_traversalPending" };
+    const char *root_types[] = { "Landroid/view/View;", "Landroid/view/WindowManager$LayoutParams;",
+                                 "Landroid/view/IWindowSession;", "Landroid/view/View$AttachInfo;",
+                                 "Z", "Z", "Z" };
+    own_fields(viewroot, 7, root_names, root_types);
+    DxClass *attach_info = reg_class(vm, "Landroid/view/View$AttachInfo;", obj);
+    one_field(attach_info, "_rootView", "Landroid/view/View;");
+    DxClass *session = reg_class(vm, "Landroid/view/IWindowSession;", obj);
+    const char *session_names[] = { "_attachedWindow", "_inputChannelOwned", "_contentInsetLeft",
+                                    "_contentInsetTop", "_contentInsetRight", "_contentInsetBottom" };
+    const char *session_types[] = { "Landroid/view/Window;", "Z", "I", "I", "I", "I" };
+    own_fields(session, 6, session_names, session_types);
 
     DxClass *asset_manager = reg_class(vm, "Landroid/content/res/AssetManager;", obj);
     add_method(asset_manager, "open", "LL", DX_ACC_PUBLIC, asset_open, 0);
@@ -425,6 +434,29 @@ static void framework_event(agr_dex_game *game, const char *event) {
     uint32_t slot = game->framework_event_count % AGR_DEX_FRAMEWORK_TRACE_CAPACITY;
     snprintf(game->framework_events[slot], sizeof(game->framework_events[slot]), "%s", event);
     game->framework_event_count++;
+}
+
+static void viewroot_event(void *user, const char *event) {
+    framework_event((agr_dex_game *)user, event);
+}
+
+static DxResult window_manager_add_view(DxVM *vm, DxFrame *frame,
+                                        DxValue *args, uint32_t count) {
+    (void)frame;
+    agr_dex_game *game = vm ? (agr_dex_game *)vm->framework_user : NULL;
+    if (!game || count < 3 || args[0].tag != DX_VAL_OBJ ||
+        args[0].obj != game->window_manager ||
+        args[1].tag != DX_VAL_OBJ || !args[1].obj ||
+        args[2].tag != DX_VAL_OBJ || !args[2].obj)
+        return DX_ERR_INVALID_FORMAT;
+    DxResult result = agr_viewroot_add_view(vm, &game->viewroot, args[0].obj,
+                                            args[1].obj, args[2].obj,
+                                            game->window, viewroot_event, game);
+    if (result != DX_OK) return result;
+    if (dx_vm_set_field(args[0].obj, "_lastView", args[1]) != DX_OK ||
+        dx_vm_set_field(args[0].obj, "_lastLayoutParams", args[2]) != DX_OK)
+        return DX_ERR_INVALID_FORMAT;
+    return DX_OK;
 }
 
 typedef struct {
@@ -570,6 +602,7 @@ static agr_dex_game *create_game(const uint8_t *bytes, uint32_t size,
         dx_register_java_lang(game->vm)!=DX_OK ||
         register_game_framework(game->vm)!=DX_OK)
         goto fail;
+    game->vm->framework_user=game;
     if (dx_vm_load_class(game->vm,activity_descriptor,&cls)!=DX_OK || !cls) {
         snprintf(game->launch_error,sizeof(game->launch_error),
                  "activity class resolution failed: %s",activity_descriptor);
@@ -822,22 +855,12 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     framework_event(game,"activity.make_visible");
     game->idle_handler_scheduled=1;
     framework_event(game,"looper.idle_handler.scheduled");
-    /* API19 ViewRootImpl.setView ownership.  This is the terminal boundary
-       for this phase; traversal/surface work belongs to the next owner. */
-    /* API19's session is represented by the process-owned WindowManager
-       endpoint in this host boundary; no Binder/system_server is introduced. */
-    DxObject *window_session = game->window_manager;
-    if (agr_viewroot_attach(&game->viewroot, game->decor,
-                                               game->window_manager,
-                                               game->window_attributes,
-                                               window_session) != 0)
+    if (!game->viewroot.attach_complete || !game->viewroot.pending_first_traversal ||
+        game->viewroot.decor != game->decor ||
+        game->viewroot.layout_params != game->window_attributes ||
+        game->viewroot.attached_window != game->window)
         goto window_cluster_failed;
     game->viewroot_handoff=1;
-    framework_event(game,"viewroot.created");
-    framework_event(game,"viewroot.root.assigned");
-    framework_event(game,"viewroot.traversal.scheduled");
-    framework_event(game,"viewroot.window_session.attached");
-    framework_event(game,"viewroot.parent.assigned");
     framework_event(game,"handoff.viewroot_traversal");
     game->launch_stage=AGR_ACTIVITY_LAUNCH_RESUMED;
     return 0;
@@ -868,12 +891,16 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
     snapshot->window_visible=game->window_visible;
     snapshot->idle_handler_scheduled=game->idle_handler_scheduled;
     snapshot->viewroot_handoff=game->viewroot_handoff;
-    snapshot->viewroot_created=game->viewroot.created;
-    snapshot->viewroot_root_assigned=game->viewroot.root_assigned;
-    snapshot->traversal_scheduled=game->viewroot.traversal_scheduled;
-    snapshot->window_session_attached=game->viewroot.window_session_attached;
-    snapshot->view_parent_assigned=game->viewroot.parent_assigned;
-    snapshot->viewroot_attach_completed=game->viewroot.attach_completed;
+    snapshot->viewroot_created=game->viewroot.root!=NULL;
+    snapshot->viewroot_root_assigned=game->viewroot.decor==game->decor &&
+        game->viewroot.layout_params==game->window_attributes;
+    snapshot->traversal_scheduled=game->viewroot.pending_first_traversal;
+    snapshot->window_session_attached=game->viewroot.attached_window==game->window;
+    DxValue parent=DX_NULL_VALUE;
+    snapshot->view_parent_assigned=game->decor && game->viewroot.root &&
+        dx_vm_get_field(game->decor,"_parent",&parent)==DX_OK &&
+        parent.tag==DX_VAL_OBJ && parent.obj==game->viewroot.root;
+    snapshot->viewroot_attach_completed=game->viewroot.attach_complete;
     snprintf(snapshot->last_method,sizeof(snapshot->last_method),"%s",vm->diagnostic_last_method);
     snprintf(snapshot->error,sizeof(snapshot->error),"%s",vm->error_msg);
     uint32_t method_count=vm->diagnostic_method_event_count;
@@ -902,6 +929,34 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
         snprintf(snapshot->exception_class,sizeof(snapshot->exception_class),"%s",
                  vm->pending_exception->klass->descriptor);
     return 0;
+}
+
+static int field_is_object(DxObject *owner, const char *name, DxObject *expected) {
+    DxValue value=DX_NULL_VALUE;
+    return owner && dx_vm_get_field(owner,name,&value)==DX_OK &&
+           value.tag==DX_VAL_OBJ && value.obj==expected;
+}
+
+int agr_dex_game_viewroot_contract(agr_dex_game *game) {
+    if (!game || !game->vm || !game->viewroot.attach_complete ||
+        !game->viewroot.layout_requested || game->viewroot.pending_first_traversal!=1 ||
+        !game->viewroot.input_channel_owned || !game->viewroot.app_visible ||
+        game->viewroot.decor!=game->decor ||
+        game->viewroot.layout_params!=game->window_attributes ||
+        game->viewroot.attached_window!=game->window)
+        return 0;
+    if (!field_is_object(game->window_manager,"_lastView",game->decor) ||
+        !field_is_object(game->window_manager,"_lastLayoutParams",game->window_attributes) ||
+        !field_is_object(game->window_manager,"_viewRoot",game->viewroot.root) ||
+        !field_is_object(game->viewroot.root,"_view",game->decor) ||
+        !field_is_object(game->viewroot.root,"_layoutParams",game->window_attributes) ||
+        !field_is_object(game->viewroot.root,"_session",game->viewroot.session) ||
+        !field_is_object(game->viewroot.root,"_attachInfo",game->viewroot.attach_info) ||
+        !field_is_object(game->viewroot.attach_info,"_rootView",game->decor) ||
+        !field_is_object(game->decor,"_parent",game->viewroot.root) ||
+        !field_is_object(game->viewroot.session,"_attachedWindow",game->window))
+        return 0;
+    return 1;
 }
 
 int agr_dex_game_post_resume_completed(const agr_dex_game *game) {

@@ -13,7 +13,7 @@ Status controls modification permission, not total completeness. `stable` means 
 | Looper/InputQueue | stable | `09d6953e` | PVS1 input contract | proven queue, ownership, or consumption regression |
 | Simulator regression harness | stable | `09d6953e` | bounded smoke and evidence gate | proven harness contract defect affecting active evidence |
 | DEX Runtime Activity lifecycle | stable | `a5c5958` | Activity/Window source, contract and real-APK gate | proven regression before or within the ViewRoot/Surface handoff |
-| Framework ViewRoot attach | active | `d4050bf` (implemented, not closed) | focused ViewRoot attach contract and real-APK gate | proven attach-order, parent, traversal-schedule, or session-ownership regression |
+| Framework ViewRoot attach | active | `phase/framework-viewroot-attach-1` (implemented, not closed) | focused ViewRoot attach contract and real-APK gate | proven attach-order, parent, traversal-schedule, or session-ownership regression |
 | DEX/Dalvik completeness | experimental | — | focused DEX/JNI contracts | future declared migration target |
 | Framework HLE | experimental | — | focused public API contracts | gameplay proves a public missing behavior |
 | Audio/OpenSL ES | experimental | — | — | declared gameplay target requires audio |

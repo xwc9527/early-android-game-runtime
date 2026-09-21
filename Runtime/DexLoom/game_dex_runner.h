@@ -96,6 +96,7 @@ int agr_dex_game_start_activity(agr_dex_game *game);
 void agr_dex_game_enable_diagnostics(agr_dex_game *game, int enabled);
 int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snapshot *snapshot);
 int agr_dex_game_post_resume_completed(const agr_dex_game *game);
+int agr_dex_game_viewroot_contract(agr_dex_game *game);
 agr_activity_launch_stage agr_dex_game_launch_stage(const agr_dex_game *game);
 const char *agr_dex_game_launch_error(const agr_dex_game *game);
 int agr_dex_game_application_gc_contract(agr_dex_game *game);

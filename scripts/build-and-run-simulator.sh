@@ -186,21 +186,21 @@ PY
   phase "focused Framework Activity launch compatibility passed"
   exit 0
 fi
-if [[ "${FRAMEWORK_RUNTIME_CONTINUATION_DISCOVERY:-0}" == "1" ]]; then
+if [[ "${FRAMEWORK_VIEWROOT_ATTACH_DISCOVERY:-0}" == "1" ]]; then
   ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
   DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
-  RESULT_PATH="$DATA/Documents/framework-runtime-continuation.json"
+  RESULT_PATH="$DATA/Documents/framework-viewroot-attach.json"
   rm -f "$RESULT_PATH"
-  phase "launch Framework Runtime continuation discovery probe"
-  xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --framework-runtime-continuation-discovery
+  phase "launch Framework ViewRoot attach discovery probe"
+  xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --framework-viewroot-attach-discovery
   for _ in $(seq 1 90); do [[ -s "$RESULT_PATH" ]] && break; sleep 1; done
   xcrun simctl spawn "$DEVICE" log show --last 3m --style compact \
-    --predicate 'process == "AGRSimulator"' > "$ARTIFACTS/framework-runtime-continuation.log" 2>&1 || true
+    --predicate 'process == "AGRSimulator"' > "$ARTIFACTS/framework-viewroot-attach.log" 2>&1 || true
   if [[ ! -s "$RESULT_PATH" ]]; then
-    echo "Framework Runtime continuation result was not produced within 90 seconds" >&2
+    echo "Framework ViewRoot attach result was not produced within 90 seconds" >&2
     exit 124
   fi
-  cp "$RESULT_PATH" "$ARTIFACTS/framework-runtime-continuation.json"
+  cp "$RESULT_PATH" "$ARTIFACTS/framework-viewroot-attach.json"
   cat "$RESULT_PATH"
   python3 - "$RESULT_PATH" <<'PY'
 import json,sys
@@ -212,13 +212,27 @@ assert r.get("harness_retained_runtime") is True, r
 assert r.get("observation_ms") == 2000, r
 assert r.get("contract",{}).get("passed") is True, r
 assert r.get("after_snapshot",{}).get("post_resume_completed") is True, r
-for key in ("window_attached","window_added","window_visible","idle_handler_scheduled","viewroot_handoff"):
+for key in ("window_attached","window_added","window_visible","idle_handler_scheduled","viewroot_handoff",
+            "viewroot_created","viewroot_root_assigned","traversal_scheduled",
+            "window_session_attached","view_parent_assigned","viewroot_attach_completed"):
     assert r.get("after_snapshot",{}).get(key) is True, (key,r)
 assert r.get("after_snapshot",{}).get("method_trace"), r
-assert r.get("after_snapshot",{}).get("framework_trace",[])[-1] == "handoff.viewroot_surface", r
-assert r.get("classification") == "viewroot_surface_handoff", r
+trace=r.get("after_snapshot",{}).get("framework_trace",[])
+for item in ("window_manager.add_view.enter","window_manager_global.add_view","viewroot.create",
+             "viewroot.set_view.enter","viewroot.root_assigned","viewroot.request_layout",
+             "viewroot.traversal.scheduled","window_session.add_to_display",
+             "viewroot.parent_assigned","viewroot.attach.complete","handoff.viewroot_traversal"):
+    assert item in trace, (item,r)
+assert [trace.index(x) for x in ("viewroot.traversal.scheduled","window_session.add_to_display",
+                                "viewroot.parent_assigned","viewroot.attach.complete")] == sorted(
+       trace.index(x) for x in ("viewroot.traversal.scheduled","window_session.add_to_display",
+                                "viewroot.parent_assigned","viewroot.attach.complete")), r
+assert trace[-1] == "handoff.viewroot_traversal", r
+assert r.get("classification") == "viewroot_traversal_handoff", r
+assert r.get("after_snapshot",{}).get("pending_exception") is False, r
+assert not r.get("after_snapshot",{}).get("error"), r
 PY
-  phase "Framework Runtime Activity/Window cluster evidence captured"
+  phase "Framework ViewRoot attach evidence captured"
   exit 0
 fi
 if [[ "${ZERO_INPUT_AB:-0}" == "1" ]]; then

@@ -2,8 +2,8 @@
   "schema_version": 1,
   "baseline": {
     "branch": "main",
-    "commit": "a5c5958af1a65763808fc2a4de669c4e76694876",
-    "last_known_good": "a5c5958af1a65763808fc2a4de669c4e76694876"
+    "commit": "975eed33963118dae1986797125b8c5ac136c834",
+    "last_known_good": "975eed33963118dae1986797125b8c5ac136c834"
   },
   "active": {
     "target": "Android Framework ViewRoot Attach Phase 1",
@@ -16,8 +16,8 @@
       "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/ViewRootImpl.java:setView"
     ],
     "agr_path": [
-      "Runtime/DexLoom/AndroidMini/framework_viewroot.c:agr_viewroot_attach",
-      "Runtime/DexLoom/game_dex_runner.c:agr_dex_game_start_activity"
+      "Runtime/DexLoom/AndroidMini/framework_viewroot.c:agr_viewroot_add_view",
+      "Runtime/DexLoom/game_dex_runner.c:window_manager_add_view"
     ],
     "active_explanations": [
       "ViewRoot creation and root/parent assignment are observable before downstream traversal",
@@ -26,13 +26,13 @@
     ],
     "earliest_evidenced_divergence": "After WindowManager.addView, before a formal ViewRoot attach state existed.",
     "semantic_class": "PUBLIC_OBSERVABLE",
-    "causal_status": "IMPLEMENTED",
-    "evidence_level": "SYNTHETIC_PENDING",
+    "causal_status": "OBSERVED",
+    "evidence_level": "SOURCE_INFERRED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "focused ViewRoot attach contract and unchanged Frozen Bubble regression",
-    "primary_blocker": "none",
-    "first_broken_boundary": "none",
-    "first_broken_boundary_evidence": "phase implementation pending focused contract"
+    "next_validation": "source map, synthetic contract, unchanged Frozen Bubble Simulator probe and protected regressions",
+    "primary_blocker": "Prior closed Activity/Window path has no ViewRoot owner after WindowManager.addView.",
+    "first_broken_boundary": "handoff.viewroot_surface -> WindowManagerGlobal.addView creates ViewRootImpl",
+    "first_broken_boundary_evidence": "Android 4.4.4_r2 source and prior closed boundary; current implementation still requires focused Simulator verification"
   },
   "ci_budget": {
     "valid_closure_runs": 0,

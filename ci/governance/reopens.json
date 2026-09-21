@@ -16,8 +16,8 @@
     {
       "module": "DEXRuntimeLifecycle",
       "target": "Android Framework ViewRoot Attach Phase 1",
-      "reason": "The ViewRoot attach state is emitted by the existing DEX Activity launch coordinator and extends its lifecycle snapshot; the prior lifecycle contract remains unchanged.",
-      "evidence": "framework-viewroot-attach semantic diff and agr_viewroot_attach owner."
+      "reason": "Previous stable contract ended at handoff.viewroot_surface; this phase extends the downstream API19 ViewRoot owner from that explicit boundary rather than repairing an unproven regression inside the previous closed contract.",
+      "evidence": "Prior Activity/Window closure terminal handoff.viewroot_surface and Android 4.4.4_r2 WindowManagerGlobal.addView -> ViewRootImpl.setView source sequence."
     }
   ]
 }

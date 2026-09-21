@@ -1,45 +1,72 @@
 {
   "schema_version": 2,
   "classification": "ANDROID_SEMANTIC_BUG",
-  "subsystem": "ViewRoot attach",
+  "subsystem": "API19 WindowManagerGlobal and ViewRootImpl initial attach",
+  "observed_discontinuity": "The prior closed Activity/Window contract deliberately ended after WindowManager.addView at handoff.viewroot_surface. It did not create the downstream ViewRoot owner or schedule its first traversal.",
   "upstream": {
     "map_entry": "framework.viewroot.attach",
+    "map_status": "VALID",
     "revision": "Android 4.4.4_r2",
-    "source_verified": false,
+    "source_verified": true,
+    "files": [
+      "core/java/android/view/WindowManagerImpl.java",
+      "core/java/android/view/WindowManagerGlobal.java",
+      "core/java/android/view/ViewRootImpl.java"
+    ],
     "call_path": [
       "WindowManagerImpl.addView",
       "WindowManagerGlobal.addView",
-      "new ViewRootImpl",
       "ViewRootImpl.setView",
-      "requestLayout",
-      "scheduleTraversals",
-      "IWindowSession.addToDisplay"
+      "ViewRootImpl.requestLayout",
+      "ViewRootImpl.scheduleTraversals",
+      "IWindowSession.addToDisplay",
+      "View.assignParent"
     ]
   },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "WindowManagerGlobal creates and owns one ViewRootImpl for the attached Decor and LayoutParams.",
+    "setView establishes root state and schedules the initial traversal before IWindowSession.addToDisplay.",
+    "Successful session attachment preserves the window and initial input/inset identity before assigning the Decor parent.",
+    "The first traversal remains pending at the handoff; no traversal, relayout or Surface is performed in this phase."
+  ],
   "agr": {
     "files": [
       "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+      "Runtime/DexLoom/AndroidMini/framework_viewroot.h",
       "Runtime/DexLoom/game_dex_runner.c",
       "App/main.m"
     ],
-    "terminal": "handoff.viewroot_traversal"
+    "call_path": [
+      "window_manager_add_view",
+      "agr_viewroot_add_view",
+      "request_first_layout",
+      "session_add_to_display",
+      "handoff.viewroot_traversal"
+    ]
   },
-  "required_semantics": [
-    "ViewRoot creation",
-    "root assignment",
-    "initial traversal scheduling",
-    "window session attachment",
-    "parent assignment",
-    "attach completion"
-  ],
   "differences": [
     {
       "id": "D1",
-      "description": "AGR replaces the system_server/Binder session with an in-process opaque endpoint while preserving API19 attach ordering.",
-      "relevance": "Only the downstream traversal/surface owner remains outside this phase."
+      "description": "The previously closed AGR coordinator stored the Decor and LayoutParams but had no ViewRoot owner, pending initial traversal, attached session or Decor-parent relationship.",
+      "relevance": "A resumed Activity had no API19 ViewRoot initial-attach state after the explicit prior handoff."
     }
   ],
-  "causal_status": "IMPLEMENTED",
-  "evidence_level": "SYNTHETIC_CONTRACT_PENDING",
-  "next_action": "Run focused synthetic contract, unchanged real APK, regressions, and device build."
+  "earliest_evidenced_divergence": "Immediately downstream of the previous handoff, when API19 WindowManagerGlobal.addView constructs ViewRootImpl.",
+  "causal_status": "OBSERVED",
+  "evidence_level": "SOURCE_INFERRED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "platform/frameworks/base android-4.4.4_r2 WindowManagerImpl.java, WindowManagerGlobal.java and ViewRootImpl.java pinned in upstream map"
+    }
+  ],
+  "remaining_uncertainty": [
+    "The focused Simulator contract and unchanged Frozen Bubble path must establish the actual initial-attach ordering and ownership.",
+    "performTraversals, relayout and Surface are downstream and unclaimed."
+  ],
+  "next_action": "Run source verification, synthetic ViewRoot contract, unchanged Frozen Bubble focused Simulator probe and protected regressions.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "An in-process WindowSession endpoint replaces the Binder/system_server boundary while ViewRoot and Decor ownership remain in host-side Framework state."
 }

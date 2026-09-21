@@ -219,6 +219,8 @@ struct DxVM {
     void                   *unbound_native_user;
     int32_t               (*load_library_fn)(void *user, const char *name);
     void                   *load_library_user;
+    /* Per-process Framework owner for host-side Activity/Window callbacks. */
+    void                   *framework_user;
 
     // Per-DEX class cache: maps class_def_index -> already-loaded DxClass*
     // Avoids re-parsing the same class_def on repeated load_class calls

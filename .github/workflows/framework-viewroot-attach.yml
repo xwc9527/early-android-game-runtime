@@ -1,0 +1,456 @@
+name: Framework ViewRoot attach
+
+on:
+  push:
+    branches: ['phase/framework-viewroot-attach-1']
+    paths:
+      - 'Runtime/DexLoom/**'
+      - 'App/main.m'
+      - 'scripts/build-and-run-simulator.sh'
+      - 'scripts/prepare-run-simulator.sh'
+      - 'scripts/run-ci-stage.sh'
+      - 'scripts/build-iphoneos.sh'
+      - 'tools/fetch_fdroid_samples.py'
+      - 'tools/scan_apks.py'
+      - 'Tests/Samples/fdroid.json'
+      - 'Tests/Samples/fdroid.lock.json'
+      - 'Tests/DexLoom/make_activity_launch_fixture.py'
+      - 'Tests/Trajectories/**'
+      - 'ci/run-contracts.sh'
+      - 'ci/run-regressions.sh'
+      - 'ci/build-framework-viewroot-summary.py'
+      - 'ci/framework-viewroot-attach-contract.py'
+      - 'Runtime/DexLoom/AndroidMini/framework_viewroot.c'
+      - 'Runtime/DexLoom/AndroidMini/framework_viewroot.h'
+      - 'ci/governance/upstream-map.json'
+      - 'ci/governance/semantic-diffs/framework-viewroot-attach.json'
+      - 'docs/CI_EXECUTION_COMPOSITION_BASELINE.md'
+      - '.github/workflows/framework-viewroot-attach.yml'
+  workflow_dispatch:
+    inputs:
+      run_kind:
+        description: Evidence intent
+        type: choice
+        options: [discovery, validation, closure]
+        default: discovery
+
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    outputs:
+      sample_lock_present: ${{ steps.sample_lock.outputs.present }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: sample_lock
+        name: Check pinned sample lock
+        run: |
+          if [[ -s Tests/Samples/fdroid.lock.json ]]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Verify pinned API19 ViewRoot attach source
+        run: |
+          python3 ci/upstream-map.py --require-valid framework.viewroot.attach --verify-upstream
+          python3 ci/validate-governance.py --mode discovery
+      - name: Build post-resume lifecycle contract fixture
+        run: |
+          mkdir -p build/post-resume
+          python3 Tests/DexLoom/make_activity_launch_fixture.py build/post-resume/activity-launch.dex
+          bash scripts/test-dex-parser.sh build/post-resume/activity-launch.dex
+
+  sample-preparation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      ready: ${{ steps.prepare.outputs.ready }}
+      cache_hit: ${{ steps.samples-cache.outputs.cache-hit || 'false' }}
+    env:
+      AGR_SIMULATOR_PROFILE: ${{ (inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: sample-lock
+        name: Check fixed sample lock
+        run: |
+          if [[ -s Tests/Samples/fdroid.lock.json ]]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Restore sample input cache
+        id: samples-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-${{ (inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Prepare hash-verified fixed APK inputs
+        id: prepare
+        if: ${{ steps.sample-lock.outputs.present == 'true' }}
+        run: |
+          bash scripts/run-ci-stage.sh sample_preparation python3 tools/fetch_fdroid_samples.py --profile "$AGR_SIMULATOR_PROFILE" --inputs-only
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+      - name: Save verified sample input cache
+        if: ${{ always() && steps.prepare.outcome == 'success' && steps.samples-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-${{ (inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Package sample identity and timing evidence
+        if: always()
+        run: |
+          mkdir -p build/sample-preparation-evidence
+          if [[ -s Tests/Samples/fdroid.lock.json ]]; then cp Tests/Samples/fdroid.lock.json build/sample-preparation-evidence/; fi
+          if [[ -s samples/resolved.json ]]; then cp samples/resolved.json build/sample-preparation-evidence/; fi
+          if [[ -s build/artifacts/ci-stage-timings.jsonl ]]; then cp build/artifacts/ci-stage-timings.jsonl build/sample-preparation-evidence/; fi
+      - name: Publish pinned sample preparation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agr-sample-preparation-evidence
+          path: build/sample-preparation-evidence/**
+          if-no-files-found: warn
+
+  simulator-validation:
+    needs: [source-contract, sample-preparation]
+    if: ${{ needs.source-contract.outputs.sample_lock_present == 'true' && needs.sample-preparation.outputs.ready == 'true' }}
+    runs-on: macos-15
+    timeout-minutes: 90
+    outputs:
+      setup: ${{ steps.setup.outcome }}
+      focused: ${{ steps.focused.outcome }}
+      contracts: ${{ steps.contracts.outcome }}
+      smoke: ${{ steps.smoke.outcome }}
+      regressions: ${{ steps.regressions.outcome }}
+      samples_cache_hit: ${{ steps.samples-cache.outputs.cache-hit || 'false' }}
+      angle_cache_hit: ${{ steps.angle-cache.outputs.cache-hit || 'false' }}
+      rust_cache_hit: ${{ steps.rust-cache.outputs.cache-hit || 'false' }}
+    env:
+      RUN_KIND: ${{ github.event_name == 'push' && github.ref_name == 'phase/ci-execution-composition-1' && 'validation' || inputs.run_kind || 'discovery' }}
+      AGR_SIMULATOR_PROFILE: ${{ (inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - id: rust-version
+        run: echo "key=$(rustc --version | shasum -a 256 | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - name: Restore prepared sample inputs
+        id: samples-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-${{ (inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Restore ANGLE simulator package
+        id: angle-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            build/angle-v2.1.28252
+            build/angle-xcframeworks-v2.1.28252.zip
+          key: agr-angle-ios-simulator-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Restore ARM interpreter build and Rust registry
+        id: rust-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            Runtime/ArmInterpreter/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
+      - name: Prepare samples and app while Simulator boots
+        id: setup
+        timeout-minutes: 25
+        run: bash scripts/prepare-run-simulator.sh "$AGR_SIMULATOR_PROFILE"
+      - name: Run focused ViewRoot attach probe
+        id: focused
+        if: ${{ always() && steps.setup.outcome == 'success' }}
+        timeout-minutes: 5
+        continue-on-error: true
+        env:
+          FRAMEWORK_VIEWROOT_ATTACH_DISCOVERY: '1'
+        run: bash scripts/run-ci-stage.sh focused_probe bash scripts/build-and-run-simulator.sh run
+          python3 ci/framework-viewroot-attach-contract.py build/artifacts/framework-viewroot-attach.json
+      - name: Publish focused Simulator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-viewroot-attach-discovery
+          path: |
+            build/artifacts/framework-viewroot-attach.json
+            build/artifacts/framework-viewroot-attach.log
+          if-no-files-found: warn
+      - name: Runtime contracts
+        id: contracts
+        if: ${{ always() && env.RUN_KIND != 'discovery' }}
+        timeout-minutes: 12
+        continue-on-error: true
+        run: bash scripts/run-ci-stage.sh runtime_contracts bash ci/run-contracts.sh
+      - name: Bounded Runtime Simulator smoke
+        id: smoke
+        if: ${{ always() && env.RUN_KIND != 'discovery' && steps.setup.outcome == 'success' }}
+        timeout-minutes: 16
+        continue-on-error: true
+        run: bash scripts/run-ci-stage.sh bounded_smoke python3 scripts/run-simulator-smoke-bounded.py --mode run --timeout-seconds 900
+      - name: Runtime and real-game regressions
+        id: regressions
+        if: ${{ always() && env.RUN_KIND != 'discovery' && steps.setup.outcome == 'success' }}
+        timeout-minutes: 18
+        continue-on-error: true
+        run: bash scripts/run-ci-stage.sh real_apk_regressions bash ci/run-regressions.sh
+      - name: Publish shared Simulator preparation and stage timings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-viewroot-simulator-timings
+          path: |
+            build/artifacts/ci-stage-timings.jsonl
+            build/artifacts/simulator-boot.log
+            build/artifacts/simulator-device.txt
+            build/artifacts/zero-input-device.txt
+          if-no-files-found: warn
+      - name: Publish Runtime contract evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-viewroot-runtime-contracts
+          path: build/artifacts/results
+          if-no-files-found: warn
+      - name: Publish Runtime smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-viewroot-runtime-smoke
+          path: build/artifacts
+          if-no-files-found: warn
+      - name: Publish Runtime regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-viewroot-runtime-regressions
+          path: |
+            build/artifacts/results/regressions-*.log
+            build/artifacts/runtime-smoke.json
+            build/artifacts/process-forensic.json
+            build/artifacts/pvs-progress.json
+          if-no-files-found: warn
+      - name: Save verified sample input cache
+        if: ${{ always() && steps.setup.outcome == 'success' && steps.samples-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-${{ (inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Save verified ANGLE package cache
+        if: ${{ always() && steps.setup.outcome == 'success' && steps.angle-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            build/angle-v2.1.28252
+            build/angle-xcframeworks-v2.1.28252.zip
+          key: agr-angle-ios-simulator-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Save Rust build and registry cache
+        if: ${{ always() && steps.setup.outcome == 'success' && steps.rust-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            Runtime/ArmInterpreter/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
+      - name: Enforce Simulator validation stages
+        if: always()
+        run: |
+          test '${{ steps.setup.outcome }}' = success
+          test '${{ steps.focused.outcome }}' = success
+          if [[ "$RUN_KIND" != discovery ]]; then
+            test '${{ steps.contracts.outcome }}' = success
+            test '${{ steps.smoke.outcome }}' = success
+            test '${{ steps.regressions.outcome }}' = success
+          fi
+
+  iphoneos:
+    if: ${{ (inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && needs.sample-preparation.outputs.ready == 'true' }}
+    needs: [source-contract, sample-preparation]
+    runs-on: macos-15
+    timeout-minutes: 25
+    outputs:
+      build: ${{ steps.device_build.outcome }}
+      samples_cache_hit: ${{ steps.samples-cache.outputs.cache-hit || 'false' }}
+      angle_cache_hit: ${{ steps.angle-cache.outputs.cache-hit || 'false' }}
+      rust_cache_hit: ${{ steps.rust-cache.outputs.cache-hit || 'false' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - id: rust-version
+        run: echo "key=$(rustc --version | shasum -a 256 | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - name: Restore prepared sample inputs
+        id: samples-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-full-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Restore device ANGLE package
+        id: angle-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            build/iphoneos/angle-v2.1.28252
+            build/iphoneos/angle-xcframeworks-v2.1.28252.zip
+          key: agr-angle-iphoneos-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Restore device ARM interpreter and Rust registry
+        id: rust-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            Runtime/ArmInterpreter/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-iphoneos-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
+      - name: Build arm64 iphoneos Runtime
+        id: device_build
+        run: bash scripts/run-ci-stage.sh iphoneos_build bash scripts/build-iphoneos.sh
+      - name: Save full sample input cache
+        if: ${{ always() && steps.device_build.outcome == 'success' && steps.samples-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-full-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Save device ANGLE package cache
+        if: ${{ always() && steps.device_build.outcome == 'success' && steps.angle-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            build/iphoneos/angle-v2.1.28252
+            build/iphoneos/angle-xcframeworks-v2.1.28252.zip
+          key: agr-angle-iphoneos-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Save device Rust build and registry cache
+        if: ${{ always() && steps.device_build.outcome == 'success' && steps.rust-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            Runtime/ArmInterpreter/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-iphoneos-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
+      - name: Publish iphoneos stage timings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-viewroot-iphoneos-timings
+          path: build/artifacts/ci-stage-timings.jsonl
+          if-no-files-found: warn
+
+  ci-validation-summary:
+    if: ${{ always() && ((github.event_name == 'push' && github.ref_name == 'phase/ci-execution-composition-1') || inputs.run_kind == 'validation') }}
+    needs: [source-contract, sample-preparation, simulator-validation, iphoneos]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download shared Simulator timing evidence
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: framework-viewroot-simulator-timings
+          path: build/artifacts
+      - name: Download sample preparation evidence
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: agr-sample-preparation-evidence
+          path: build/sample-preparation-evidence
+      - name: Download iphoneos timing evidence
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: framework-viewroot-iphoneos-timings
+          path: build/iphoneos-evidence
+      - name: Build exact-tree CI optimization summary
+        if: always()
+        env:
+          RUN_KIND: validation
+          AGR_SIMULATOR_PROFILE: ${{ (inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}
+          CACHE_SAMPLES_HIT: ${{ needs.simulator-validation.outputs.samples_cache_hit }}
+          CACHE_SAMPLES_SEED_HIT: ${{ needs.sample-preparation.outputs.cache_hit }}
+          CACHE_ANGLE_HIT: ${{ needs.simulator-validation.outputs.angle_cache_hit }}
+          CACHE_RUST_HIT: ${{ needs.simulator-validation.outputs.rust_cache_hit }}
+          CACHE_IPHONEOS_SAMPLES_HIT: ${{ needs.iphoneos.outputs.samples_cache_hit }}
+          CACHE_IPHONEOS_ANGLE_HIT: ${{ needs.iphoneos.outputs.angle_cache_hit }}
+          CACHE_IPHONEOS_RUST_HIT: ${{ needs.iphoneos.outputs.rust_cache_hit }}
+          STAGE_SOURCE_CONTRACT: ${{ needs.source-contract.result }}
+          STAGE_SETUP: ${{ needs.simulator-validation.outputs.setup }}
+          STAGE_FOCUSED: ${{ needs.simulator-validation.outputs.focused }}
+          STAGE_CONTRACTS: ${{ needs.simulator-validation.outputs.contracts }}
+          STAGE_SMOKE: ${{ needs.simulator-validation.outputs.smoke }}
+          STAGE_REGRESSIONS: ${{ needs.simulator-validation.outputs.regressions }}
+          STAGE_IPHONEOS: ${{ needs.iphoneos.outputs.build }}
+        run: python3 ci/build-ci-execution-summary.py
+      - name: Upload exact-tree CI optimization summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agr-ci-execution-summary-${{ github.sha }}
+          path: |
+            build/artifacts/ci-validation-summary.json
+            build/artifacts/ci-stage-timings.jsonl
+          if-no-files-found: warn
+      - name: Enforce requested CI validation stages
+        if: ${{ always() }}
+        run: |
+          test '${{ needs.source-contract.result }}' = success
+          test '${{ needs.sample-preparation.outputs.ready }}' = true
+          test '${{ needs.simulator-validation.result }}' = success
+          test '${{ needs.iphoneos.result }}' = success
+
+  closure-evidence:
+    if: ${{ always() && inputs.run_kind == 'closure' }}
+    needs: [source-contract, sample-preparation, simulator-validation, iphoneos]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download focused evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: framework-viewroot-attach-discovery
+          path: build/closure-input
+      - name: Download locked APK identity evidence
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: agr-sample-preparation-evidence
+          path: build/sample-preparation-evidence
+      - name: Build exact-commit closure summary
+        if: ${{ needs.source-contract.result == 'success' && needs.sample-preparation.result == 'success' && needs.simulator-validation.result == 'success' && needs.iphoneos.result == 'success' }}
+        run: |
+          python3 ci/build-framework-viewroot-summary.py --result build/closure-input/framework-viewroot-attach.json
+          python3 ci/validate-governance.py --mode closure --summary build/artifacts/framework-viewroot-run-summary.json
+      - name: Publish closure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-viewroot-closure-summary
+          path: build/artifacts/framework-viewroot-run-summary.json
+          if-no-files-found: error
+      - name: Enforce complete closure opportunity
+        if: always()
+        run: |
+          test '${{ needs.source-contract.result }}' = success
+          test '${{ needs.sample-preparation.result }}' = success
+          test '${{ needs.simulator-validation.result }}' = success
+          test '${{ needs.iphoneos.result }}' = success
+          test -s build/artifacts/framework-viewroot-run-summary.json

@@ -998,13 +998,21 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(void) {
     int contractField=contract ? agr_dex_game_static_int(contract,"Ltest/TestActivity;","activityMarker",&contractMarker) : -1;
     agr_dex_runtime_snapshot contractSnapshot={0};
     if (contract) agr_dex_game_runtime_snapshot(contract,&contractSnapshot);
+    BOOL ownerGraph=contract && agr_dex_game_viewroot_contract(contract)==1;
+    NSMutableArray *contractTrace=[NSMutableArray array];
+    for (uint32_t i=0;i<contractSnapshot.framework_event_count;i++)
+      [contractTrace addObject:[NSString stringWithUTF8String:contractSnapshot.framework_events[i]]];
     BOOL contractPassed=contractLaunch==0 && contractField==0 && contractMarker==2 &&
+        ownerGraph &&
         agr_dex_game_post_resume_completed(contract)==1 && contractSnapshot.window_attached &&
         contractSnapshot.window_added && contractSnapshot.window_visible &&
         contractSnapshot.idle_handler_scheduled && contractSnapshot.viewroot_handoff &&
+        contractSnapshot.viewroot_created && contractSnapshot.viewroot_root_assigned &&
+        contractSnapshot.traversal_scheduled && contractSnapshot.window_session_attached &&
+        contractSnapshot.view_parent_assigned && contractSnapshot.viewroot_attach_completed &&
         contractSnapshot.framework_event_count>0 &&
         strcmp(contractSnapshot.framework_events[contractSnapshot.framework_event_count-1],
-               "handoff.viewroot_surface")==0;
+               "handoff.viewroot_traversal")==0;
     NSDictionary *contractResult=@{ @"passed":@(contractPassed), @"launch_result":@(contractLaunch),
       @"activity_marker":@(contractMarker),
       @"post_resume_completed":@(contract && agr_dex_game_post_resume_completed(contract)==1),
@@ -1012,7 +1020,14 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(void) {
       @"window_added":@(contractSnapshot.window_added!=0),
       @"window_visible":@(contractSnapshot.window_visible!=0),
       @"idle_handler_scheduled":@(contractSnapshot.idle_handler_scheduled!=0),
-      @"viewroot_handoff":@(contractSnapshot.viewroot_handoff!=0) };
+      @"viewroot_handoff":@(contractSnapshot.viewroot_handoff!=0),
+      @"viewroot_created":@(contractSnapshot.viewroot_created!=0),
+      @"viewroot_root_assigned":@(contractSnapshot.viewroot_root_assigned!=0),
+      @"traversal_scheduled":@(contractSnapshot.traversal_scheduled!=0),
+      @"window_session_attached":@(contractSnapshot.window_session_attached!=0),
+      @"view_parent_assigned":@(contractSnapshot.view_parent_assigned!=0),
+      @"viewroot_attach_completed":@(contractSnapshot.viewroot_attach_completed!=0),
+      @"owner_graph":@(ownerGraph), @"framework_trace":contractTrace };
     if (contract) agr_dex_game_destroy(contract);
     NSString *planPath=[[NSBundle mainBundle] pathForResource:@"batch-plan" ofType:@"json"];
     NSData *planData=planPath ? [NSData dataWithContentsOfFile:planPath] : nil;
@@ -1027,6 +1042,7 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(void) {
     agr_dex_game *game=package ? agr_dex_game_create_from_apk(package) : NULL;
     if (game) agr_dex_game_enable_diagnostics(game,1);
     int start=game ? agr_dex_game_start_activity(game) : -1;
+    BOOL realOwnerGraph=game && agr_dex_game_viewroot_contract(game)==1;
     agr_dex_runtime_snapshot resumed={0},observed={0};
     if (game) agr_dex_game_runtime_snapshot(game,&resumed);
     /* Deliberately do not synthesize an Android callback here. This bounded
@@ -1037,13 +1053,14 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(void) {
     NSDictionary *before=dexSnapshotDictionary(&resumed), *after=dexSnapshotDictionary(&observed);
     BOOL progressed=observed.methods_invoked!=resumed.methods_invoked ||
         observed.instructions_executed!=resumed.instructions_executed;
-    NSDictionary *report=@{ @"schema":@"agr.framework-runtime-continuation.discovery.v1",
+    NSDictionary *report=@{ @"schema":@"agr.framework-viewroot-attach.discovery.v1",
       @"sample":sample[@"id"] ?: @"missing", @"package":sample[@"package"] ?: @"missing",
       @"launch_result":@(start), @"launch_stage":launchStageName(game ? agr_dex_game_launch_stage(game) : AGR_ACTIVITY_LAUNCH_NONE),
       @"harness_retained_runtime":game ? @YES : @NO, @"observation_ms":@2000,
       @"thread_owner":@"focused-regression-serial-queue", @"resume_snapshot":before,
       @"after_snapshot":after, @"autonomous_progress":@(progressed), @"contract":contractResult,
-      @"classification": game && start==0 ? (observed.viewroot_handoff ? @"viewroot_surface_handoff" :
+      @"real_owner_graph":@(realOwnerGraph),
+      @"classification": game && start==0 ? (observed.viewroot_attach_completed ? @"viewroot_traversal_handoff" :
           (progressed ? @"guest_progress_observed" :
           (observed.post_resume_completed ? @"post_resume_complete_no_followup_event" : @"no_post_resume_dispatch_observed")))
                                              : @"launch_failed" };
@@ -1349,7 +1366,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     BOOL interactive=[arguments containsObject:@"--interactive"];
     BOOL dexParserCompatibility=[arguments containsObject:@"--dex-parser-compatibility"];
     BOOL activityLaunchCompatibility=[arguments containsObject:@"--activity-launch-compatibility"];
-    BOOL frameworkRuntimeContinuation=[arguments containsObject:@"--framework-runtime-continuation-discovery"];
+    BOOL frameworkRuntimeContinuation=[arguments containsObject:@"--framework-viewroot-attach-discovery"];
 #if AGR_DEVICE_INTERACTIVE
     interactive=YES;
 #endif
@@ -1365,7 +1382,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
         NSString *result = frameworkRuntimeContinuation ? runFrameworkRuntimeContinuationDiscovery() :
             (activityLaunchCompatibility ? runActivityLaunchCompatibility() :
             (dexParserCompatibility ? runDexParserCompatibility() : runTests()));
-        NSString *file = frameworkRuntimeContinuation ? @"framework-runtime-continuation.json" :
+        NSString *file = frameworkRuntimeContinuation ? @"framework-viewroot-attach.json" :
             (activityLaunchCompatibility ? @"framework-activity-launch.json" :
             (dexParserCompatibility ? @"dex-parser-simulator.json" : @"runtime-smoke.json"));
         NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:

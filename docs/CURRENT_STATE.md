@@ -2,7 +2,7 @@
 
 Updated: 2026-09-21
 
-Baseline and last known good: `main @ 97bd9802c5b8e1e904a611be94412c07a73ddbce`.
+Baseline and last known good: `main @ 975eed33963118dae1986797125b8c5ac136c834`.
 
 Active branch: `phase/framework-viewroot-attach-1`.
 
@@ -20,7 +20,7 @@ Classification: `ANDROID_SEMANTIC_BUG`. Semantic class: `PUBLIC_OBSERVABLE`. Cau
 
 ## Implemented Candidate
 
-`agr_viewroot_attach` is the formal API19 host-side ViewRoot owner. It records the ordered attach state and assigns the decor root, WindowSession endpoint, traversal-scheduled marker and parent before emitting `handoff.viewroot_traversal`. The source map and semantic diff are recorded for `WindowManagerImpl.addView`, `WindowManagerGlobal.addView`, and `ViewRootImpl.setView/requestLayout/scheduleTraversals`.
+`agr_viewroot_attach` is the formal API19 host-side ViewRoot owner. It owns a ViewRoot and AttachInfo object, Decor/parent relation, a pending first traversal and an in-process WindowSession attachment before emitting `handoff.viewroot_traversal`. The source map and semantic diff are recorded for `WindowManagerImpl.addView`, `WindowManagerGlobal.addView`, and `ViewRootImpl.setView/requestLayout/scheduleTraversals`.
 
 This candidate is implemented but not closed. Focused contract, unchanged real-APK regression, Simulator, iphoneos and closure evidence are still required.
 
@@ -33,4 +33,4 @@ This candidate is implemented but not closed. Focused contract, unchanged real-A
 
 ## Closure Contract
 
-The closure contract is satisfied and remains protected by the source, focused Simulator, Runtime regression, iphoneos, and post-merge gates above.
+The candidate remains IMPLEMENTED / UNVERIFIED. Source verification, focused Simulator synthetic and unchanged Frozen Bubble results, protected regressions and iphoneos build are required before exact-commit closure. No Surface, relayout or rendering claim is made.
