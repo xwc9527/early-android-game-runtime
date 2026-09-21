@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "policy": {
     "valid_attempt_budget": 1,
     "invalid_attempts_consume_budget": false,
@@ -7,7 +7,7 @@
     "second_run_after_valid_fail_requires_approval": true
   },
   "budget": {
-    "valid_attempts_used": 2,
+    "valid_attempts_used": 1,
     "valid_attempts_remaining": 0
   },
   "attempts": [
@@ -19,7 +19,9 @@
       "defect_class": "TIMEOUT_HIERARCHY_DEFECT",
       "reason": "the 180-second outer timeout was shorter than the collector's declared maximum duration",
       "consumes_budget": false,
-      "automatic_rerun": "USED_BY_35485955807"
+      "automatic_rerun": "USED_BY_35485955807",
+      "target": "PVS1",
+      "target_evidence": "run commit 15dcd222 active state identifies PVS1; run was the PVS1 simulator-real-apk closure"
     },
     {
       "run_id": "35485955807",
@@ -30,7 +32,9 @@
       "reason": "a non-API19 10-second shared-runner wall-clock threshold failed although all 100000 InputQueue lifecycles were ordered and PVS1 passed",
       "consumes_budget": false,
       "automatic_rerun_of": "35469009073",
-      "automatic_rerun": "AVAILABLE_AFTER_FIX"
+      "automatic_rerun": "AVAILABLE_AFTER_FIX",
+      "target": "PVS1",
+      "target_evidence": "commit e271c17 ci/governance/state.json identifies PVS1; semantic differential pvs1-input-wallclock.json cites this run"
     },
     {
       "run_id": "35504120421",
@@ -40,7 +44,9 @@
       "defect_class": "WORKFLOW_DEFECT",
       "reason": "the focused Activity mode exited before creating zero-input-device.txt, but the closure workflow incorrectly declared simulator-build satisfied and launched the dependent real-game regression",
       "consumes_budget": false,
-      "automatic_rerun": "USED_BY_35504579645"
+      "automatic_rerun": "USED_BY_35504579645",
+      "target": "Framework / Activity Launch Compatibility Phase 1",
+      "target_evidence": "run branch phase/framework-activity-launch-1 and commit 67de5e0 state identify Framework / Activity Launch Compatibility Phase 1"
     },
     {
       "run_id": "35504579645",
@@ -51,7 +57,9 @@
       "reason": "the closure workflow reused the focused Activity Simulator and app container for the stable PVS regression; the unchanged production tree passes that regression in its isolated workflow, while the shared-runner sequence remained alive for 600 seconds without producing the result",
       "consumes_budget": false,
       "automatic_rerun_of": "35504120421",
-      "automatic_rerun": "AVAILABLE_AFTER_FIX"
+      "automatic_rerun": "AVAILABLE_AFTER_FIX",
+      "target": "Framework / Activity Launch Compatibility Phase 1",
+      "target_evidence": "run branch phase/framework-activity-launch-1 and commit 7efa182 state identify Framework / Activity Launch Compatibility Phase 1"
     },
     {
       "run_id": "35513111351",
@@ -60,7 +68,9 @@
       "classification": "VALID_FAIL",
       "reason": "all required closure stages had an opportunity to complete and evidence was collected; the isolated stable Runtime regression exposed the DEX watchdog carrying its first top-level timestamp across repeated JNI-to-DEX loadImage calls",
       "consumes_budget": true,
-      "automatic_rerun_of": "35504579645"
+      "automatic_rerun_of": "35504579645",
+      "target": "Framework / Activity Launch Compatibility Phase 1",
+      "target_evidence": "run branch phase/framework-activity-launch-1 and commit d4beb20 state identify Framework / Activity Launch Compatibility Phase 1"
     },
     {
       "run_id": "35515337617:attempt-1",
@@ -71,7 +81,9 @@
       "reason": "the pinned AOSP source service returned HTTP 503 before the source gate could complete",
       "consumes_budget": false,
       "approval_reference": "explicit user approval for Framework Activity Launch Phase 1 at commit 59d5dce5397c924e0625a73abd34901afd5e2742 tree 4516436cfd772ad07ec23b1e682141c049f628c0",
-      "automatic_rerun": "USED_BY_35515337617_ATTEMPT_2"
+      "automatic_rerun": "USED_BY_35515337617_ATTEMPT_2",
+      "target": "Framework / Activity Launch Compatibility Phase 1",
+      "target_evidence": "exact approval and run branch bind Framework / Activity Launch Compatibility Phase 1 at 59d5dce tree 4516436"
     },
     {
       "run_id": "35515337617:attempt-2",
@@ -81,7 +93,20 @@
       "reason": "all required closure stages and evidence passed on the explicitly approved exact commit and tree",
       "consumes_budget": true,
       "approval_reference": "explicit user approval for Framework Activity Launch Phase 1 at commit 59d5dce5397c924e0625a73abd34901afd5e2742 tree 4516436cfd772ad07ec23b1e682141c049f628c0",
-      "automatic_rerun_of": "35515337617:attempt-1"
+      "automatic_rerun_of": "35515337617:attempt-1",
+      "target": "Framework / Activity Launch Compatibility Phase 1",
+      "target_evidence": "exact approval and run branch bind Framework / Activity Launch Compatibility Phase 1 at 59d5dce tree 4516436"
+    },
+    {
+      "target": "Android Framework Continuation Phase 1",
+      "target_evidence": "state.json and closure.json identify the merged target; run 35530434859 is the exact VALID_PASS recorded in CURRENT_STATE.md",
+      "run_id": "35530434859",
+      "tested_commit": "a5c5958af1a65763808fc2a4de669c4e76694876",
+      "tested_tree": "ee8c0889437e79dacf9e8ed068a7d569100189de",
+      "classification": "VALID_PASS",
+      "reason": "all required closure stages and exact-candidate evidence passed",
+      "consumes_budget": true
     }
-  ]
+  ],
+  "active_target": "Android Framework Continuation Phase 1"
 }

@@ -34,6 +34,7 @@ jobs:
         run: |
           python3 ci/framework-v2-contract.py
           python3 ci/test-evidence-classifier.py
+          python3 ci/test-closure-attempt-ledger.py
       - name: Validate JSON documents
         run: |
           python3 - <<'PY'

@@ -51,7 +51,9 @@ def main() -> int:
     reopens = load("ci/governance/reopens.json").get("reopens", [])
     attempt_spec = spec_from_file_location("closure_attempt_tool", ROOT / "ci/closure-attempt.py")
     attempt_tool = module_from_spec(attempt_spec); attempt_spec.loader.exec_module(attempt_tool)
-    errors.extend(attempt_tool.validate_ledger(load("ci/governance/closure-attempts.json")))
+    attempt_ledger = load("ci/governance/closure-attempts.json")
+    errors.extend(attempt_tool.validate_ledger(attempt_ledger))
+    errors.extend(attempt_tool.validate_governance_records(state, closure, attempt_ledger))
     if state["baseline"]["last_known_good"] != state["baseline"]["commit"]:
         errors.append("last_known_good must be the formal main baseline commit")
     if upstream_map.get("android_baseline") != "Android 4.4.4_r2":

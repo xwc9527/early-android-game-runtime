@@ -1,9 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
-  "required": ["schema_version", "policy", "budget", "attempts"],
+  "required": ["schema_version", "active_target", "policy", "budget", "attempts"],
   "properties": {
-    "schema_version": {"const": 1},
+    "schema_version": {"const": 2},
+    "active_target": {"type": "string", "minLength": 1},
     "policy": {
       "type": "object",
       "required": ["valid_attempt_budget", "invalid_attempts_consume_budget", "automatic_reruns_after_invalid", "second_run_after_valid_fail_requires_approval"]
@@ -16,11 +17,25 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["run_id", "tested_commit", "tested_tree", "classification", "consumes_budget"],
+        "required": ["target", "target_evidence", "run_id", "tested_commit", "tested_tree", "classification", "consumes_budget"],
         "properties": {
+          "target": {"type": "string", "minLength": 1},
+          "target_evidence": {"type": "string", "minLength": 1},
+          "run_id": {"type": "string", "minLength": 1},
+          "tested_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "tested_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
           "classification": {"enum": ["VALID_PASS", "VALID_FAIL", "INVALID"]},
+          "consumes_budget": {"type": "boolean"},
+          "reason": {"type": "string"},
+          "approval_reference": {"type": "string", "minLength": 1},
+          "automatic_rerun_of": {"type": "string", "minLength": 1},
+          "automatic_rerun": {"type": "string", "minLength": 1},
           "defect_class": {"enum": ["HARNESS_DEFECT", "RUNNER_DEFECT", "COLLECTOR_DEFECT", "ARTIFACT_DEFECT", "TIMEOUT_HIERARCHY_DEFECT", "WORKFLOW_DEFECT"]}
-        }
+        },
+        "allOf": [{
+          "if": {"properties": {"classification": {"const": "INVALID"}}, "required": ["classification"]},
+          "then": {"required": ["defect_class", "reason"]}
+        }]
       }
     }
   }
