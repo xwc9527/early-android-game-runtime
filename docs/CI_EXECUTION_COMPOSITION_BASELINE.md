@@ -78,3 +78,23 @@ GitHub Actions run `35555626085` validated commit `ad731b64ee3d1f55fb3ef7a508a92
 The run's emitted `simulator_boot_total=199s` is **not** an isolated boot measurement: the previous timer began before sample/dependency/build work and ended when the already-running boot process was joined. It is excluded from boot comparisons. The boot script now emits request/ready markers so the next validation measures only that interval. This is an instrumentation correction; it does not change build, install, test, or Runtime behavior.
 
 Compared with the pre-change run, aggregate macOS execution fell from about **12m16s** (11m19s across two overlapping Simulator jobs plus 57s iphoneos) to about **7m20s** across the composed Simulator and device-build jobs on the first successful composed run. The second run remained about **7m26s wall time** because it exercised the corrected sample and Rust cache miss paths; the cold download itself took 12s and the miss did not duplicate Simulator setup. Wall time is not yet claimed as improved. The validated gain is reduced macOS runner consumption and removal of the duplicate Simulator build/boot/install path.
+
+## Third composed validation (warm caches and isolated boot measurement)
+
+GitHub Actions run `35556516634` validated commit `509886c9f91b272581725e2b966f9397d97cf6c6`, tree `1dec562148d8316b44c54ff7d324457918235bf5`. The source-contract, sample preparation, focused probe, Runtime contracts, bounded smoke, real-APK regressions, iphoneos build, and exact-tree summary all passed; closure evidence was skipped. Workflow wall time was **6m45s**. The Simulator job took **6m09s**; the parallel iphoneos build job took **43s**.
+
+| Stage | Seconds | Cache / execution evidence |
+|---|---:|---|
+| Sample preparation | 1 | full sample cache hit; fixed APK hashes checked |
+| Dependency preparation | 4 | completed |
+| Compile/link | 142 | ANGLE and Simulator Rust caches hit |
+| Simulator boot request → ready | 69 | isolated from sample/dependency/build using the new markers |
+| Boot wait after build | 0 | Simulator was ready before build completed |
+| Install | 18 | one install for the Simulator lane |
+| Focused probe | 13 | pass |
+| Runtime contracts | 67 | pass |
+| Bounded smoke | 16 | pass, reusing installed app and booted Simulator |
+| Real-APK regressions | 73 | pass, same Simulator |
+| iphoneos build | 25 | pass; device ANGLE and Rust caches hit |
+
+The workflow wall time is 9 seconds below the pre-change closure run's 6m54s, while total macOS runner consumption fell from about 12m16s to **6m52s** (Simulator 6m09s + iphoneos 43s), a reduction of about **44%**. Most of the runner-time reduction comes from consolidating two Simulator jobs and eliminating the second build/boot/install; the sample cache miss and warm-cache runs establish both input paths. This comparison is based on the pinned run/job timings above, not cache result reuse.
