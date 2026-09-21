@@ -2,13 +2,13 @@
   "schema_version": 1,
   "baseline": {
     "branch": "main",
-    "commit": "975eed33963118dae1986797125b8c5ac136c834",
-    "last_known_good": "975eed33963118dae1986797125b8c5ac136c834"
+    "commit": "a6256ba4e4f0d8124bc5a2348039b882f2c91dc8",
+    "last_known_good": "a6256ba4e4f0d8124bc5a2348039b882f2c91dc8"
   },
   "active": {
     "target": "Android Framework ViewRoot Attach Phase 1",
-    "branch": "phase/framework-viewroot-attach-1",
-    "lifecycle": "CLOSED",
+    "branch": "main",
+    "lifecycle": "MERGED",
     "observed_discontinuity": "API19 ViewRoot attach cluster was previously represented only by a surface handoff marker.",
     "android_subsystem": "WindowManagerImpl/WindowManagerGlobal/ViewRootImpl attach through initial traversal scheduling",
     "upstream_path": [
@@ -30,9 +30,9 @@
     "evidence_level": "SOURCE_INFERRED",
     "classification": "ANDROID_SEMANTIC_BUG",
     "next_validation": "source map, synthetic contract, unchanged Frozen Bubble Simulator probe and protected regressions",
-    "primary_blocker": "Prior closed Activity/Window path has no ViewRoot owner after WindowManager.addView.",
-    "first_broken_boundary": "handoff.viewroot_surface -> WindowManagerGlobal.addView creates ViewRootImpl",
-    "first_broken_boundary_evidence": "Android 4.4.4_r2 source and prior closed boundary; current implementation still requires focused Simulator verification"
+    "primary_blocker": "none",
+    "first_broken_boundary": "none",
+    "first_broken_boundary_evidence": "closure evidence"
   },
   "ci_budget": {
     "valid_closure_runs": 1,

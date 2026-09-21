@@ -10,6 +10,14 @@
   "closure_tested_tree": "9d0dedc1b6bcd92ad40a595b386ce798d5da3025",
   "merged_commit": "a6256ba4e4f0d8124bc5a2348039b882f2c91dc8",
   "merged_tree": "9d0dedc1b6bcd92ad40a595b386ce798d5da3025",
+  "valid_post_merge_run": {
+    "run_id": "35598935478",
+    "main_commit": "beff6b2232c5473bc09fc2145abefda30c117b91",
+    "main_tree": "8cf1cdcbe5a6fd5f23d0c000d96ae514f24b0fed",
+    "classification": "VALID_PASS",
+    "target": "Android Framework ViewRoot Attach Phase 1",
+    "closure_run_id": "35595440089"
+  },
   "invalid_post_merge_run": {
     "run_id": "35596315143",
     "classification": "INVALID",

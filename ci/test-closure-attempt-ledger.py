@@ -162,7 +162,12 @@ def test_h_target_binding_contracts():
     errors = validate_governance.stable_reopen_errors(summary, stable, stale_reopens, state["active"]["target"])
     require("STABLE_REOPEN_MISSING:DEXRuntimeLifecycle" in errors, "H-E: stale-target reopen must fail")
     summary["changes"]["stable_module_reopens"] = []
-    errors = validate_governance.stable_reopen_errors(summary, stable, reopens, state["active"]["target"])
+    # MERGED targets remove their reopen records. Keep this contract fixture
+    # independent of whether the current target is still active or promoted.
+    active_reopen = {"module": "DEXRuntimeLifecycle", "target": state["active"]["target"],
+                     "reason": "fixture", "evidence": "fixture"}
+    errors = validate_governance.stable_reopen_errors(
+        summary, stable, reopens + [active_reopen], state["active"]["target"])
     require("STABLE_REOPENS_SUMMARY_MISMATCH" in errors, "H-F: missing current-target reopen projection must fail")
 
 

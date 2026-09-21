@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "target": "Android Framework ViewRoot Attach Phase 1",
-  "state": "CLOSED",
+  "state": "MERGED",
   "closure_tested_commit": "a6256ba4e4f0d8124bc5a2348039b882f2c91dc8",
   "closure_tested_tree": "9d0dedc1b6bcd92ad40a595b386ce798d5da3025",
   "closure_base_commit": "975eed33963118dae1986797125b8c5ac136c834",
-  "eligible_for_merge": true,
+  "eligible_for_merge": false,
   "merged_commit": "a6256ba4e4f0d8124bc5a2348039b882f2c91dc8",
   "merged_tree": "9d0dedc1b6bcd92ad40a595b386ce798d5da3025"
 }
