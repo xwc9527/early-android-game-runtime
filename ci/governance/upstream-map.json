@@ -928,9 +928,9 @@
           "ViewRootImpl.scheduleTraversals"
         ],
         "source_hashes": {
-          "core/java/android/view/WindowManagerImpl.java": "c5357b9484a4cb83260e8b43b2afa9f0666b77d51037501ac52022f3db748d25",
-          "core/java/android/view/WindowManagerGlobal.java": "8cd84db82a24a719be19fdb1b227727e1673ae3168c70a3e5410408aae4b6298",
-          "core/java/android/view/ViewRootImpl.java": "d6c645e1a3d4d3d2c16a79d198692538164a5c8875d29d5b2522cdc28e5377e5"
+          "core/java/android/view/WindowManagerImpl.java": "041b3a683fe51e6768f56884f1c5a28e1266fc596cf7ebef8167d8edc7b63ca3",
+          "core/java/android/view/WindowManagerGlobal.java": "41ed3bd2240e534c78108ddd7bb5c80d2e59f49fd853bd78388bc9415675681d",
+          "core/java/android/view/ViewRootImpl.java": "340519423463b22b9afe192052e809936ba2523dda4abcb40cda7659c5ab779d"
         },
         "source_urls": {
           "core/java/android/view/WindowManagerImpl.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/view/WindowManagerImpl.java?format=TEXT",
