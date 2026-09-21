@@ -1,0 +1,31 @@
+name: Framework first traversal discovery
+
+on:
+  push:
+    branches: ['phase/framework-first-traversal-surface-1']
+    paths:
+      - 'Runtime/DexLoom/**'
+      - 'App/main.m'
+      - 'ci/framework-first-traversal-contract.py'
+      - '.github/workflows/framework-first-traversal.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install GLES headers
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libgles2-mesa-dev
+      - name: Compile first traversal production sources
+        run: |
+          cc -std=gnu11 -Wall -Wextra -Werror -fsyntax-only \
+            -I Runtime/DexLoom/Include \
+            Runtime/DexLoom/AndroidMini/framework_viewroot.c
+          cc -std=gnu11 -Wall -Wextra -fsyntax-only \
+            -I Runtime/DexLoom/Include \
+            Runtime/DexLoom/game_dex_runner.c

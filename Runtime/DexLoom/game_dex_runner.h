@@ -1,6 +1,7 @@
 #ifndef AGR_GAME_DEX_RUNNER_H
 #define AGR_GAME_DEX_RUNNER_H
 #include <stdint.h>
+#include <stddef.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -59,6 +60,18 @@ typedef struct {
     int window_session_attached;
     int view_parent_assigned;
     int viewroot_attach_completed;
+    int hierarchy_attached;
+    int traversal_phase;
+    uint32_t traversal_count;
+    int measured_width;
+    int measured_height;
+    int frame_left;
+    int frame_top;
+    int frame_right;
+    int frame_bottom;
+    int layout_complete;
+    int surface_valid;
+    uint32_t surface_generation;
     char last_method[160];
     char exception_class[160];
     char error[256];
@@ -97,6 +110,11 @@ void agr_dex_game_enable_diagnostics(agr_dex_game *game, int enabled);
 int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snapshot *snapshot);
 int agr_dex_game_post_resume_completed(const agr_dex_game *game);
 int agr_dex_game_viewroot_contract(agr_dex_game *game);
+int agr_dex_game_do_traversal(agr_dex_game *game, uint32_t display_width_pixels,
+                              uint32_t display_height_pixels);
+int agr_dex_game_set_surface_allocator(agr_dex_game *game,
+                                       void *(*allocate)(void *user, size_t bytes),
+                                       void (*release)(void *user, void *pixels), void *user);
 agr_activity_launch_stage agr_dex_game_launch_stage(const agr_dex_game *game);
 const char *agr_dex_game_launch_error(const agr_dex_game *game);
 int agr_dex_game_application_gc_contract(agr_dex_game *game);
