@@ -2,15 +2,15 @@
 
 Updated: 2026-09-21
 
-Baseline and last known good: `main @ a5c5958af1a65763808fc2a4de669c4e76694876`.
+Baseline and last known good: `main @ 97bd9802c5b8e1e904a611be94412c07a73ddbce`.
 
-Active branch: `main`.
+Active branch: `phase/framework-viewroot-attach-1`.
 
-Lifecycle: `MERGED/STABLE`.
+Lifecycle: `IMPLEMENTED`.
 
 ## Active Target
 
-Migrate the Android 4.4.4 `ActivityThread.handleResumeActivity` semantic cluster from a successfully resumed Activity through Window/decor attachment, `WindowManager.addView`, Activity visibility, and idle-handler scheduling. The cluster ends at the explicit `ViewRoot/Surface` ownership handoff; ViewRoot, Surface and traversal are not claimed by this phase.
+Migrate the Android 4.4.4 ViewRoot attach cluster after WindowManager.addView: ViewRoot creation, root/parent assignment, initial traversal scheduling, WindowSession attachment, and attach completion. The phase ends at `handoff.viewroot_traversal`; performTraversals, relayout, Surface and drawing remain downstream.
 
 ## Earliest Evidenced Divergence
 
@@ -20,11 +20,9 @@ Classification: `ANDROID_SEMANTIC_BUG`. Semantic class: `PUBLIC_OBSERVABLE`. Cau
 
 ## Implemented Candidate
 
-The host-side ActivityThread coordinator now owns the continuous Activity/Window state transition. It preserves Window, DecorView, LayoutParams and WindowManager object identity; executes the observable framework calls in API19 order; records attachment/add/visibility/idle state; and stops at `handoff.viewroot_surface`.
+`agr_viewroot_attach` is the formal API19 host-side ViewRoot owner. It records the ordered attach state and assigns the decor root, WindowSession endpoint, traversal-scheduled marker and parent before emitting `handoff.viewroot_traversal`. The source map and semantic diff are recorded for `WindowManagerImpl.addView`, `WindowManagerGlobal.addView`, and `ViewRootImpl.setView/requestLayout/scheduleTraversals`.
 
-Focused Simulator workflow `35529992439` passed on candidate `d0bda55456600a08fca08e1042f8ff4eb5d1b4b5`. The synthetic contract and unchanged Frozen Bubble both reported `window_attached`, `window_added`, `window_visible`, `idle_handler_scheduled`, and `viewroot_handoff`; the exact ordered trace ended at `handoff.viewroot_surface` with no exception or Runtime error. Runtime, governance, and iphoneos workflows on the same commit also passed.
-
-Exact-candidate closure `35530434859` passed as `VALID_PASS` for commit `a5c5958af1a65763808fc2a4de669c4e76694876`, tree `ee8c0889437e79dacf9e8ed068a7d569100189de`. The candidate was fast-forwarded to `main` without tree changes. Post-merge gate `35530860389`, governance, and iphoneos all passed. The next subsystem begins at the recorded `ViewRoot/Surface` ownership handoff.
+This candidate is implemented but not closed. Focused contract, unchanged real-APK regression, Simulator, iphoneos and closure evidence are still required.
 
 ## Protected Boundaries
 
