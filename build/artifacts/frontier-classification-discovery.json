@@ -1,0 +1,362 @@
+{
+  "schema_version": 1,
+  "sample_set": "falsification-discovery",
+  "granularity_fingerprint": "62d94962023b26bb3cc18fa4ef772f63098a7680b1f89a5103f22efe1f9d6b59",
+  "order_source": "build/artifacts/preregistered-samples.json",
+  "rows": [
+    {
+      "index": 0,
+      "id": "crosswords",
+      "cluster": "custom-jni-canvas",
+      "last_stage": "none",
+      "activity_launch_crossed": 0,
+      "viewroot_attach_completed": 0,
+      "failure_signature": "missing_framework:activity class resolution failed: Lorg/eehouse/android/xw4/GamesList;",
+      "raw_detail": "activity class resolution failed: Lorg/eehouse/android/xw4/GamesList;",
+      "framework_trace_length": 0,
+      "elapsed_ms": 15,
+      "classification": "KNOWN_PUBLIC_CONTRACT",
+      "blocking_family": "app.activity_lifecycle",
+      "blocking_method": "activity class resolution of a platform Activity subclass",
+      "basis": "The launcher activity chain in the APK is GamesList -> XWListActivity -> android.app.ListActivity, verified from classes.dex. AGR resolves only android.app.Activity as an Activity base, so this is a gap inside the already implemented activity lifecycle contract, shared by every app using a platform Activity subclass.",
+      "families": []
+    },
+    {
+      "index": 1,
+      "id": "gloomy-dungeons-1",
+      "cluster": "custom-jni-gl",
+      "last_stage": "on_create_entered",
+      "activity_launch_crossed": 1,
+      "viewroot_attach_completed": 0,
+      "failure_signature": "missing_framework:Activity.onCreate failed: ",
+      "raw_detail": "Activity.onCreate failed: ",
+      "framework_trace_length": 5,
+      "elapsed_ms": 29,
+      "classification": "NEW_PUBLIC_CONTRACT",
+      "families": [
+        "app.application_lifecycle",
+        "app.activity_lifecycle",
+        "app.context",
+        "resources.asset_access",
+        "system.log",
+        "audio.soundpool"
+      ],
+      "blocking_family": "audio.soundpool",
+      "blocking_method": "Landroid/media/SoundPool;->loadILII",
+      "basis": "blocked on a public API19 contract AGR has not implemented"
+    },
+    {
+      "index": 2,
+      "id": "kungfoo-barracuda",
+      "cluster": "custom-nativeactivity",
+      "last_stage": "resumed",
+      "activity_launch_crossed": 1,
+      "viewroot_attach_completed": 1,
+      "failure_signature": "success:activity_resumed",
+      "raw_detail": "",
+      "framework_trace_length": 27,
+      "elapsed_ms": 118,
+      "classification": "KNOWN_PUBLIC_CONTRACT",
+      "families": [
+        "app.application_lifecycle",
+        "app.native_activity",
+        "audio.soundpool",
+        "app.activity_lifecycle",
+        "window.session",
+        "view.hierarchy"
+      ],
+      "blocking_family": null,
+      "blocking_method": null,
+      "basis": "sample reached activity_resumed on the unchanged Runtime"
+    },
+    {
+      "index": 3,
+      "id": "minilens",
+      "cluster": "godot",
+      "last_stage": "resumed",
+      "activity_launch_crossed": 1,
+      "viewroot_attach_completed": 1,
+      "failure_signature": "success:activity_resumed",
+      "raw_detail": "",
+      "framework_trace_length": 27,
+      "elapsed_ms": 360,
+      "classification": "KNOWN_PUBLIC_CONTRACT",
+      "families": [
+        "app.application_lifecycle",
+        "app.activity_lifecycle",
+        "app.context",
+        "resources.asset_access",
+        "window.session",
+        "view.hierarchy"
+      ],
+      "blocking_family": null,
+      "blocking_method": null,
+      "basis": "sample reached activity_resumed on the unchanged Runtime"
+    },
+    {
+      "index": 4,
+      "id": "minetest",
+      "cluster": "irrlicht-nativeactivity",
+      "last_stage": "resumed",
+      "activity_launch_crossed": 1,
+      "viewroot_attach_completed": 1,
+      "failure_signature": "success:activity_resumed",
+      "raw_detail": "",
+      "framework_trace_length": 27,
+      "elapsed_ms": 768,
+      "classification": "KNOWN_PUBLIC_CONTRACT",
+      "families": [
+        "app.application_lifecycle",
+        "app.native_activity",
+        "app.activity_lifecycle",
+        "window.session",
+        "view.hierarchy"
+      ],
+      "blocking_family": null,
+      "blocking_method": null,
+      "basis": "sample reached activity_resumed on the unchanged Runtime"
+    },
+    {
+      "index": 5,
+      "id": "flickit",
+      "cluster": "libgdx",
+      "last_stage": "context_attached",
+      "activity_launch_crossed": 0,
+      "viewroot_attach_completed": 0,
+      "failure_signature": "missing_framework:Activity constructor failed: ",
+      "raw_detail": "Activity constructor failed: ",
+      "framework_trace_length": 2,
+      "elapsed_ms": 70,
+      "classification": "RUNTIME_INTERNAL_GAP",
+      "blocking_family": null,
+      "blocking_method": "Ljava/lang/Object;-><init>V during com.badlogic.gdx.utils.Array.<init>",
+      "basis": "ClassCastException raised by AGR's host DEX type system while constructing a generic array inside the engine's own code, two frames below any Android API. This is an AGR interpreter completeness defect, not an Android public contract and not specific to this game; it is excluded from the public-contract counts.",
+      "families": [
+        "app.application_lifecycle",
+        "app.activity_lifecycle"
+      ]
+    },
+    {
+      "index": 6,
+      "id": "andors-trail",
+      "cluster": "pure-java-canvas",
+      "last_stage": "on_create_entered",
+      "activity_launch_crossed": 1,
+      "viewroot_attach_completed": 0,
+      "failure_signature": "missing_framework:Activity.onCreate failed: ",
+      "raw_detail": "Activity.onCreate failed: ",
+      "framework_trace_length": 5,
+      "elapsed_ms": 51,
+      "classification": "KNOWN_PUBLIC_CONTRACT",
+      "families": [
+        "app.application_lifecycle",
+        "app.activity_lifecycle",
+        "app.context"
+      ],
+      "blocking_family": "app.context",
+      "blocking_method": "Landroid/content/Context;->getResourcesL",
+      "basis": "blocked inside an already implemented public contract"
+    },
+    {
+      "index": 7,
+      "id": "pixel-dungeon",
+      "cluster": "pure-java-gl",
+      "last_stage": "on_create_entered",
+      "activity_launch_crossed": 1,
+      "viewroot_attach_completed": 0,
+      "failure_signature": "missing_framework:Activity.onCreate failed: ",
+      "raw_detail": "Activity.onCreate failed: ",
+      "framework_trace_length": 5,
+      "elapsed_ms": 19,
+      "classification": "KNOWN_PUBLIC_CONTRACT",
+      "families": [
+        "app.application_lifecycle",
+        "app.activity_lifecycle",
+        "app.context"
+      ],
+      "blocking_family": "app.context",
+      "blocking_method": "Landroid/content/Context;->getPackageNameL",
+      "basis": "blocked inside an already implemented public contract"
+    },
+    {
+      "index": 8,
+      "id": "a2048",
+      "cluster": "pure-java-webview",
+      "last_stage": "resumed",
+      "activity_launch_crossed": 1,
+      "viewroot_attach_completed": 1,
+      "failure_signature": "success:activity_resumed",
+      "raw_detail": "",
+      "framework_trace_length": 27,
+      "elapsed_ms": 25,
+      "classification": "KNOWN_PUBLIC_CONTRACT",
+      "families": [
+        "app.application_lifecycle",
+        "app.activity_lifecycle",
+        "app.context",
+        "window.session",
+        "view.hierarchy"
+      ],
+      "blocking_family": null,
+      "blocking_method": null,
+      "basis": "sample reached activity_resumed on the unchanged Runtime"
+    },
+    {
+      "index": 9,
+      "id": "pysolfc",
+      "cluster": "python-sdl",
+      "last_stage": "resumed",
+      "activity_launch_crossed": 1,
+      "viewroot_attach_completed": 1,
+      "failure_signature": "success:activity_resumed",
+      "raw_detail": "",
+      "framework_trace_length": 27,
+      "elapsed_ms": 99,
+      "classification": "KNOWN_PUBLIC_CONTRACT",
+      "families": [
+        "app.activity_lifecycle",
+        "app.context",
+        "resources.asset_access",
+        "graphics.bitmap",
+        "window.session",
+        "view.hierarchy"
+      ],
+      "blocking_family": null,
+      "blocking_method": null,
+      "basis": "sample reached activity_resumed on the unchanged Runtime"
+    }
+  ],
+  "curve": [
+    {
+      "index": 0,
+      "id": "crosswords",
+      "cluster": "custom-jni-canvas",
+      "touched": 0,
+      "marginal_new_contracts": 0,
+      "cumulative_unique_contracts": 0,
+      "contract_reuse_ratio": null,
+      "new_contracts": []
+    },
+    {
+      "index": 1,
+      "id": "gloomy-dungeons-1",
+      "cluster": "custom-jni-gl",
+      "touched": 6,
+      "marginal_new_contracts": 6,
+      "cumulative_unique_contracts": 6,
+      "contract_reuse_ratio": 0.0,
+      "new_contracts": [
+        "app.activity_lifecycle",
+        "app.application_lifecycle",
+        "app.context",
+        "audio.soundpool",
+        "resources.asset_access",
+        "system.log"
+      ]
+    },
+    {
+      "index": 2,
+      "id": "kungfoo-barracuda",
+      "cluster": "custom-nativeactivity",
+      "touched": 6,
+      "marginal_new_contracts": 3,
+      "cumulative_unique_contracts": 9,
+      "contract_reuse_ratio": 0.5,
+      "new_contracts": [
+        "app.native_activity",
+        "view.hierarchy",
+        "window.session"
+      ]
+    },
+    {
+      "index": 3,
+      "id": "minilens",
+      "cluster": "godot",
+      "touched": 6,
+      "marginal_new_contracts": 0,
+      "cumulative_unique_contracts": 9,
+      "contract_reuse_ratio": 1.0,
+      "new_contracts": []
+    },
+    {
+      "index": 4,
+      "id": "minetest",
+      "cluster": "irrlicht-nativeactivity",
+      "touched": 5,
+      "marginal_new_contracts": 0,
+      "cumulative_unique_contracts": 9,
+      "contract_reuse_ratio": 1.0,
+      "new_contracts": []
+    },
+    {
+      "index": 5,
+      "id": "flickit",
+      "cluster": "libgdx",
+      "touched": 2,
+      "marginal_new_contracts": 0,
+      "cumulative_unique_contracts": 9,
+      "contract_reuse_ratio": 1.0,
+      "new_contracts": []
+    },
+    {
+      "index": 6,
+      "id": "andors-trail",
+      "cluster": "pure-java-canvas",
+      "touched": 3,
+      "marginal_new_contracts": 0,
+      "cumulative_unique_contracts": 9,
+      "contract_reuse_ratio": 1.0,
+      "new_contracts": []
+    },
+    {
+      "index": 7,
+      "id": "pixel-dungeon",
+      "cluster": "pure-java-gl",
+      "touched": 3,
+      "marginal_new_contracts": 0,
+      "cumulative_unique_contracts": 9,
+      "contract_reuse_ratio": 1.0,
+      "new_contracts": []
+    },
+    {
+      "index": 8,
+      "id": "a2048",
+      "cluster": "pure-java-webview",
+      "touched": 5,
+      "marginal_new_contracts": 0,
+      "cumulative_unique_contracts": 9,
+      "contract_reuse_ratio": 1.0,
+      "new_contracts": []
+    },
+    {
+      "index": 9,
+      "id": "pysolfc",
+      "cluster": "python-sdl",
+      "touched": 6,
+      "marginal_new_contracts": 1,
+      "cumulative_unique_contracts": 10,
+      "contract_reuse_ratio": 0.8333,
+      "new_contracts": [
+        "graphics.bitmap"
+      ]
+    }
+  ],
+  "metrics": {
+    "C_first": 1.8,
+    "C_last": 0.2,
+    "c_last_over_c_first": 0.1111,
+    "threshold_marginal_pass": true,
+    "known_over_in_scope_ratio": 0.8889,
+    "holdout_reuse_ratio": null,
+    "classification_counts": {
+      "KNOWN_PUBLIC_CONTRACT": 8,
+      "NEW_PUBLIC_CONTRACT": 1,
+      "RUNTIME_INTERNAL_GAP": 1
+    }
+  },
+  "unmapped_families_seen": [],
+  "limitations": [
+    "A single run exposes only the first blocker of each game, not every gap on its complete gameplay path.",
+    "These numbers describe the current compatibility frontier only."
+  ]
+}

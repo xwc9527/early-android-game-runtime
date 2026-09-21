@@ -1,0 +1,2800 @@
+{
+  "complete" : true,
+  "results" : [
+    {
+      "id" : "kungfoo-barracuda",
+      "activity_launch_crossed" : 1,
+      "static_cluster" : "mixed|libEGL.so|libGLESv1_CM.so|libGLESv2.so|libandroid.so|libc.so|libdl.so|liblog.so|libm.so|libstdc++.so",
+      "last_stage" : "resumed",
+      "raw_detail" : "",
+      "armv7_library_count" : 1,
+      "snapshot" : {
+        "traversal_scheduled" : true,
+        "framework_trace" : [
+          "launch.application.instantiate",
+          "launch.application.context_attached",
+          "launch.activity.attached",
+          "activity.attach.window",
+          "lifecycle.onCreate.enter",
+          "lifecycle.onCreate.return",
+          "lifecycle.onStart.return",
+          "lifecycle.onResume.return",
+          "lifecycle.onPostResume.return",
+          "coordinator.performResume.return",
+          "window.obtain",
+          "window.decor.obtain",
+          "window.decor.invisible",
+          "window_manager.add_view.enter",
+          "window_manager_global.add_view",
+          "viewroot.create",
+          "viewroot.set_view.enter",
+          "viewroot.root_assigned",
+          "viewroot.request_layout",
+          "viewroot.traversal.scheduled",
+          "window_session.add_to_display",
+          "viewroot.parent_assigned",
+          "viewroot.attach.complete",
+          "window_manager.add_view",
+          "activity.make_visible",
+          "looper.idle_handler.scheduled",
+          "handoff.viewroot_traversal"
+        ],
+        "view_parent_assigned" : true,
+        "method_trace" : [
+          {
+            "sequence" : 0,
+            "native" : 1,
+            "method" : "Landroid\/app\/Application;-><init>V",
+            "depth" : 0
+          },
+          {
+            "sequence" : 1,
+            "native" : 1,
+            "method" : "Landroid\/app\/Application;->onCreateV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 2,
+            "native" : 0,
+            "method" : "Lcom\/onetwofivegames\/kungfoobarracuda\/KungFooBarracudaNativeActivity;-><init>V",
+            "depth" : 0
+          },
+          {
+            "sequence" : 3,
+            "native" : 1,
+            "method" : "Landroid\/app\/NativeActivity;-><init>V",
+            "depth" : 1
+          },
+          {
+            "sequence" : 4,
+            "native" : 0,
+            "method" : "Lcom\/onetwofivegames\/kungfoobarracuda\/KungFooBarracudaNativeActivity;->onCreateVL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 5,
+            "native" : 1,
+            "method" : "Landroid\/app\/NativeActivity;->onCreateVL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 6,
+            "native" : 0,
+            "method" : "Lcom\/onetwofivegames\/kungfoobarracuda\/resources\/FileBackend;-><clinit>V",
+            "depth" : 1
+          },
+          {
+            "sequence" : 7,
+            "native" : 0,
+            "method" : "Lcom\/onetwofivegames\/kungfoobarracuda\/resources\/FileBackend;-><init>VL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 8,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 9,
+            "native" : 0,
+            "method" : "Lcom\/onetwofivegames\/kungfoobarracuda\/sound\/SoundBackend;-><clinit>V",
+            "depth" : 1
+          },
+          {
+            "sequence" : 10,
+            "native" : 0,
+            "method" : "Lcom\/onetwofivegames\/kungfoobarracuda\/sound\/SoundBackend;-><init>VL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 11,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 12,
+            "native" : 0,
+            "method" : "Lcom\/onetwofivegames\/kungfoobarracuda\/sound\/SoundBackend$MusicMap;-><init>VLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 13,
+            "native" : 0,
+            "method" : "Lcom\/onetwofivegames\/kungfoobarracuda\/sound\/SoundBackend$MusicMap;-><init>VL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 14,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;-><init>V",
+            "depth" : 4
+          },
+          {
+            "sequence" : 15,
+            "native" : 0,
+            "method" : "Lcom\/onetwofivegames\/kungfoobarracuda\/sound\/SoundBackend$SampleMap;-><init>VLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 16,
+            "native" : 0,
+            "method" : "Lcom\/onetwofivegames\/kungfoobarracuda\/sound\/SoundBackend$SampleMap;-><init>VL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 17,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;-><init>V",
+            "depth" : 4
+          },
+          {
+            "sequence" : 18,
+            "native" : 1,
+            "method" : "Landroid\/media\/SoundPool;-><init>VIII",
+            "depth" : 2
+          },
+          {
+            "sequence" : 19,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onStartV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 20,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onResumeV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 21,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onPostResumeV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 22,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getWindowL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 23,
+            "native" : 1,
+            "method" : "Landroid\/view\/Window;->getDecorViewL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 24,
+            "native" : 1,
+            "method" : "Landroid\/view\/View;->setVisibilityVI",
+            "depth" : 0
+          },
+          {
+            "sequence" : 25,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getWindowManagerL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 26,
+            "native" : 1,
+            "method" : "Landroid\/view\/Window;->getAttributesL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 27,
+            "native" : 1,
+            "method" : "Landroid\/view\/WindowManager;->addViewVLL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 28,
+            "native" : 1,
+            "method" : "Landroid\/view\/View;->setVisibilityVI",
+            "depth" : 0
+          }
+        ],
+        "last_method" : "Landroid\/view\/View;->setVisibilityVI",
+        "instructions" : 56,
+        "vm_running" : 0,
+        "viewroot_created" : true,
+        "window_visible" : true,
+        "viewroot_handoff" : true,
+        "window_attached" : true,
+        "viewroot_root_assigned" : true,
+        "stack_depth" : 0,
+        "viewroot_attach_completed" : true,
+        "window_session_attached" : true,
+        "error" : "",
+        "window_added" : true,
+        "exception_class" : "",
+        "methods" : 29,
+        "idle_handler_scheduled" : true,
+        "post_resume_completed" : true,
+        "pending_exception" : 0
+      },
+      "has_dex" : true,
+      "elapsed_ms" : 118,
+      "package" : "com.onetwofivegames.kungfoobarracuda",
+      "failure_signature" : "success:activity_resumed",
+      "launch_result" : 0,
+      "viewroot_attach_completed" : 1
+    },
+    {
+      "id" : "pixel-dungeon",
+      "activity_launch_crossed" : 1,
+      "static_cluster" : "dex",
+      "last_stage" : "on_create_entered",
+      "raw_detail" : "Activity.onCreate failed: ",
+      "armv7_library_count" : 0,
+      "snapshot" : {
+        "traversal_scheduled" : false,
+        "framework_trace" : [
+          "launch.application.instantiate",
+          "launch.application.context_attached",
+          "launch.activity.attached",
+          "activity.attach.window",
+          "lifecycle.onCreate.enter"
+        ],
+        "view_parent_assigned" : false,
+        "method_trace" : [
+          {
+            "sequence" : 0,
+            "native" : 1,
+            "method" : "Landroid\/app\/Application;-><init>V",
+            "depth" : 0
+          },
+          {
+            "sequence" : 1,
+            "native" : 1,
+            "method" : "Landroid\/app\/Application;->onCreateV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 2,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/pixeldungeon\/PixelDungeon;-><init>V",
+            "depth" : 0
+          },
+          {
+            "sequence" : 3,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/noosa\/Game;-><init>VL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 4,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 5,
+            "native" : 1,
+            "method" : "Ljava\/util\/ArrayList;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 6,
+            "native" : 1,
+            "method" : "Ljava\/util\/ArrayList;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 7,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/utils\/Bundle;->addAliasVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 8,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getNameL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 9,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;->putLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 10,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/utils\/Bundle;->addAliasVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 11,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getNameL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 12,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;->putLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 13,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/utils\/Bundle;->addAliasVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 14,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getNameL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 15,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;->putLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 16,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/utils\/Bundle;->addAliasVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 17,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getNameL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 18,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;->putLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 19,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/utils\/Bundle;->addAliasVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 20,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getNameL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 21,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;->putLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 22,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/utils\/Bundle;->addAliasVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 23,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getNameL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 24,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;->putLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 25,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/utils\/Bundle;->addAliasVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 26,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getNameL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 27,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;->putLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 28,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/utils\/Bundle;->addAliasVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 29,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getNameL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 30,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;->putLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 31,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/utils\/Bundle;->addAliasVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 32,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getNameL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 33,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;->putLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 34,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/utils\/Bundle;->addAliasVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 35,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getNameL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 36,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;->putLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 37,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/utils\/Bundle;->addAliasVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 38,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getNameL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 39,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;->putLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 40,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/utils\/Bundle;->addAliasVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 41,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getNameL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 42,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;->putLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 43,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/utils\/Bundle;->addAliasVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 44,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getNameL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 45,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;->putLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 46,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/utils\/Bundle;->addAliasVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 47,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getNameL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 48,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;->putLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 49,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/utils\/Bundle;->addAliasVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 50,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getNameL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 51,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;->putLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 52,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/pixeldungeon\/PixelDungeon;->onCreateVL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 53,
+            "native" : 0,
+            "method" : "Lcom\/watabou\/noosa\/Game;->onCreateVL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 54,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onCreateVL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 55,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getWindowManagerL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 56,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getPackageNameL",
+            "depth" : 2
+          }
+        ],
+        "last_method" : "Landroid\/content\/Context;->getPackageNameL",
+        "instructions" : 159,
+        "vm_running" : 0,
+        "viewroot_created" : false,
+        "window_visible" : false,
+        "viewroot_handoff" : false,
+        "window_attached" : true,
+        "viewroot_root_assigned" : false,
+        "stack_depth" : 0,
+        "viewroot_attach_completed" : false,
+        "window_session_attached" : false,
+        "error" : "",
+        "window_added" : false,
+        "exception_class" : "Ljava\/lang\/NullPointerException;",
+        "methods" : 57,
+        "idle_handler_scheduled" : false,
+        "post_resume_completed" : false,
+        "pending_exception" : 1
+      },
+      "has_dex" : true,
+      "elapsed_ms" : 19,
+      "package" : "com.watabou.pixeldungeon",
+      "failure_signature" : "missing_framework:Activity.onCreate failed: ",
+      "launch_result" : -1,
+      "viewroot_attach_completed" : 0
+    },
+    {
+      "id" : "minetest",
+      "activity_launch_crossed" : 1,
+      "static_cluster" : "mixed|libEGL.so|libGLESv1_CM.so|libGLESv2.so|libandroid.so|libc.so|libdl.so|libgmp.so|libiconv.so|liblog.so|libm.so|libogg.so|libopenal.so|libstdc++.so|libvorbis.so|libz.so",
+      "last_stage" : "resumed",
+      "raw_detail" : "",
+      "armv7_library_count" : 6,
+      "snapshot" : {
+        "traversal_scheduled" : true,
+        "framework_trace" : [
+          "launch.application.instantiate",
+          "launch.application.context_attached",
+          "launch.activity.attached",
+          "activity.attach.window",
+          "lifecycle.onCreate.enter",
+          "lifecycle.onCreate.return",
+          "lifecycle.onStart.return",
+          "lifecycle.onResume.return",
+          "lifecycle.onPostResume.return",
+          "coordinator.performResume.return",
+          "window.obtain",
+          "window.decor.obtain",
+          "window.decor.invisible",
+          "window_manager.add_view.enter",
+          "window_manager_global.add_view",
+          "viewroot.create",
+          "viewroot.set_view.enter",
+          "viewroot.root_assigned",
+          "viewroot.request_layout",
+          "viewroot.traversal.scheduled",
+          "window_session.add_to_display",
+          "viewroot.parent_assigned",
+          "viewroot.attach.complete",
+          "window_manager.add_view",
+          "activity.make_visible",
+          "looper.idle_handler.scheduled",
+          "handoff.viewroot_traversal"
+        ],
+        "view_parent_assigned" : true,
+        "method_trace" : [
+          {
+            "sequence" : 0,
+            "native" : 1,
+            "method" : "Landroid\/app\/Application;-><init>V",
+            "depth" : 0
+          },
+          {
+            "sequence" : 1,
+            "native" : 1,
+            "method" : "Landroid\/app\/Application;->onCreateV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 2,
+            "native" : 0,
+            "method" : "Lnet\/minetest\/minetest\/MtNativeActivity;-><init>V",
+            "depth" : 0
+          },
+          {
+            "sequence" : 3,
+            "native" : 1,
+            "method" : "Landroid\/app\/NativeActivity;-><init>V",
+            "depth" : 1
+          },
+          {
+            "sequence" : 4,
+            "native" : 0,
+            "method" : "Lnet\/minetest\/minetest\/MtNativeActivity;->onCreateVL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 5,
+            "native" : 1,
+            "method" : "Landroid\/app\/NativeActivity;->onCreateVL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 6,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onStartV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 7,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onResumeV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 8,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onPostResumeV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 9,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getWindowL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 10,
+            "native" : 1,
+            "method" : "Landroid\/view\/Window;->getDecorViewL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 11,
+            "native" : 1,
+            "method" : "Landroid\/view\/View;->setVisibilityVI",
+            "depth" : 0
+          },
+          {
+            "sequence" : 12,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getWindowManagerL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 13,
+            "native" : 1,
+            "method" : "Landroid\/view\/Window;->getAttributesL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 14,
+            "native" : 1,
+            "method" : "Landroid\/view\/WindowManager;->addViewVLL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 15,
+            "native" : 1,
+            "method" : "Landroid\/view\/View;->setVisibilityVI",
+            "depth" : 0
+          }
+        ],
+        "last_method" : "Landroid\/view\/View;->setVisibilityVI",
+        "instructions" : 8,
+        "vm_running" : 0,
+        "viewroot_created" : true,
+        "window_visible" : true,
+        "viewroot_handoff" : true,
+        "window_attached" : true,
+        "viewroot_root_assigned" : true,
+        "stack_depth" : 0,
+        "viewroot_attach_completed" : true,
+        "window_session_attached" : true,
+        "error" : "",
+        "window_added" : true,
+        "exception_class" : "",
+        "methods" : 16,
+        "idle_handler_scheduled" : true,
+        "post_resume_completed" : true,
+        "pending_exception" : 0
+      },
+      "has_dex" : true,
+      "elapsed_ms" : 768,
+      "package" : "net.minetest.minetest",
+      "failure_signature" : "success:activity_resumed",
+      "launch_result" : 0,
+      "viewroot_attach_completed" : 1
+    },
+    {
+      "id" : "minilens",
+      "activity_launch_crossed" : 1,
+      "static_cluster" : "mixed|libEGL.so|libGLESv1_CM.so|libGLESv2.so|libOpenSLES.so|libandroid.so|libc.so|libdl.so|liblog.so|libm.so|libstdc++.so|libz.so",
+      "last_stage" : "resumed",
+      "raw_detail" : "",
+      "armv7_library_count" : 1,
+      "snapshot" : {
+        "traversal_scheduled" : true,
+        "framework_trace" : [
+          "launch.application.instantiate",
+          "launch.application.context_attached",
+          "launch.activity.attached",
+          "activity.attach.window",
+          "lifecycle.onCreate.enter",
+          "lifecycle.onCreate.return",
+          "lifecycle.onStart.return",
+          "lifecycle.onResume.return",
+          "lifecycle.onPostResume.return",
+          "coordinator.performResume.return",
+          "window.obtain",
+          "window.decor.obtain",
+          "window.decor.invisible",
+          "window_manager.add_view.enter",
+          "window_manager_global.add_view",
+          "viewroot.create",
+          "viewroot.set_view.enter",
+          "viewroot.root_assigned",
+          "viewroot.request_layout",
+          "viewroot.traversal.scheduled",
+          "window_session.add_to_display",
+          "viewroot.parent_assigned",
+          "viewroot.attach.complete",
+          "window_manager.add_view",
+          "activity.make_visible",
+          "looper.idle_handler.scheduled",
+          "handoff.viewroot_traversal"
+        ],
+        "view_parent_assigned" : true,
+        "method_trace" : [
+          {
+            "sequence" : 0,
+            "native" : 1,
+            "method" : "Landroid\/app\/Application;-><init>V",
+            "depth" : 0
+          },
+          {
+            "sequence" : 1,
+            "native" : 1,
+            "method" : "Landroid\/app\/Application;->onCreateV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 2,
+            "native" : 0,
+            "method" : "Lorg\/godotengine\/godot\/Godot;-><init>V",
+            "depth" : 0
+          },
+          {
+            "sequence" : 3,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;-><init>V",
+            "depth" : 1
+          },
+          {
+            "sequence" : 4,
+            "native" : 0,
+            "method" : "Lorg\/godotengine\/godot\/Godot;->onCreateVL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 5,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onCreateVL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 6,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getWindowL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 7,
+            "native" : 0,
+            "method" : "Lorg\/godotengine\/godot\/Godot;->getCommandLineL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 8,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getAssetsL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 9,
+            "native" : 1,
+            "method" : "Landroid\/content\/res\/AssetManager;->openLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 10,
+            "native" : 0,
+            "method" : "Lorg\/godotengine\/godot\/Godot;->initializeGodotV",
+            "depth" : 1
+          },
+          {
+            "sequence" : 11,
+            "native" : 0,
+            "method" : "Lorg\/godotengine\/godot\/GodotIO;-><clinit>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 12,
+            "native" : 0,
+            "method" : "Lorg\/godotengine\/godot\/GodotIO;-><init>VL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 13,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 3
+          },
+          {
+            "sequence" : 14,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getAssetsL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 15,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;-><init>V",
+            "depth" : 3
+          },
+          {
+            "sequence" : 16,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;-><init>V",
+            "depth" : 3
+          },
+          {
+            "sequence" : 17,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getApplicationContextL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 18,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 19,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 20,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 21,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 22,
+            "native" : 0,
+            "method" : "Lorg\/godotengine\/godot\/GodotIO;->needsReloadHooksZ",
+            "depth" : 2
+          },
+          {
+            "sequence" : 23,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getAssetsL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 24,
+            "native" : 0,
+            "method" : "Lorg\/godotengine\/godot\/GodotLib;->initializeVLZLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 25,
+            "native" : 0,
+            "method" : "Lorg\/godotengine\/godot\/payments\/PaymentsManager;->createManagerLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 26,
+            "native" : 0,
+            "method" : "Lorg\/godotengine\/godot\/payments\/PaymentsManager;-><clinit>V",
+            "depth" : 3
+          },
+          {
+            "sequence" : 27,
+            "native" : 0,
+            "method" : "Lorg\/godotengine\/godot\/payments\/PaymentsManager;-><init>VL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 28,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 4
+          },
+          {
+            "sequence" : 29,
+            "native" : 0,
+            "method" : "Lorg\/godotengine\/godot\/payments\/PaymentsManager$1;-><init>VL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 30,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 5
+          },
+          {
+            "sequence" : 31,
+            "native" : 0,
+            "method" : "Lorg\/godotengine\/godot\/payments\/PaymentsManager;->initServiceL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 32,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 3
+          },
+          {
+            "sequence" : 33,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onStartV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 34,
+            "native" : 0,
+            "method" : "Lorg\/godotengine\/godot\/Godot;->onResumeV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 35,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onResumeV",
+            "depth" : 1
+          },
+          {
+            "sequence" : 36,
+            "native" : 0,
+            "method" : "Lorg\/godotengine\/godot\/GodotLib;->focusinV",
+            "depth" : 1
+          },
+          {
+            "sequence" : 37,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onPostResumeV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 38,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getWindowL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 39,
+            "native" : 1,
+            "method" : "Landroid\/view\/Window;->getDecorViewL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 40,
+            "native" : 1,
+            "method" : "Landroid\/view\/View;->setVisibilityVI",
+            "depth" : 0
+          },
+          {
+            "sequence" : 41,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getWindowManagerL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 42,
+            "native" : 1,
+            "method" : "Landroid\/view\/Window;->getAttributesL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 43,
+            "native" : 1,
+            "method" : "Landroid\/view\/WindowManager;->addViewVLL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 44,
+            "native" : 1,
+            "method" : "Landroid\/view\/View;->setVisibilityVI",
+            "depth" : 0
+          }
+        ],
+        "last_method" : "Landroid\/view\/View;->setVisibilityVI",
+        "instructions" : 218,
+        "vm_running" : 0,
+        "viewroot_created" : true,
+        "window_visible" : true,
+        "viewroot_handoff" : true,
+        "window_attached" : true,
+        "viewroot_root_assigned" : true,
+        "stack_depth" : 0,
+        "viewroot_attach_completed" : true,
+        "window_session_attached" : true,
+        "error" : "",
+        "window_added" : true,
+        "exception_class" : "",
+        "methods" : 45,
+        "idle_handler_scheduled" : true,
+        "post_resume_completed" : true,
+        "pending_exception" : 0
+      },
+      "has_dex" : true,
+      "elapsed_ms" : 360,
+      "package" : "io.github.kobuge.games.minilens",
+      "failure_signature" : "success:activity_resumed",
+      "launch_result" : 0,
+      "viewroot_attach_completed" : 1
+    },
+    {
+      "id" : "pysolfc",
+      "activity_launch_crossed" : 1,
+      "static_cluster" : "mixed|libGLESv1_CM.so|libGLESv2.so|libSDL2.so|libandroid.so|libc.so|libdl.so|liblog.so|libm.so|libpython2.7.so|libstdc++.so|libz.so",
+      "last_stage" : "resumed",
+      "raw_detail" : "",
+      "armv7_library_count" : 6,
+      "snapshot" : {
+        "traversal_scheduled" : true,
+        "framework_trace" : [
+          "launch.application.instantiate",
+          "launch.application.context_attached",
+          "launch.activity.attached",
+          "activity.attach.window",
+          "lifecycle.onCreate.enter",
+          "lifecycle.onCreate.return",
+          "lifecycle.onStart.return",
+          "lifecycle.onResume.return",
+          "lifecycle.onPostResume.return",
+          "coordinator.performResume.return",
+          "window.obtain",
+          "window.decor.obtain",
+          "window.decor.invisible",
+          "window_manager.add_view.enter",
+          "window_manager_global.add_view",
+          "viewroot.create",
+          "viewroot.set_view.enter",
+          "viewroot.root_assigned",
+          "viewroot.request_layout",
+          "viewroot.traversal.scheduled",
+          "window_session.add_to_display",
+          "viewroot.parent_assigned",
+          "viewroot.attach.complete",
+          "window_manager.add_view",
+          "activity.make_visible",
+          "looper.idle_handler.scheduled",
+          "handoff.viewroot_traversal"
+        ],
+        "view_parent_assigned" : true,
+        "method_trace" : [
+          {
+            "sequence" : 17,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 18,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 19,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 20,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 21,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 22,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onCreateVL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 23,
+            "native" : 0,
+            "method" : "Lorg\/libsdl\/app\/SDLActivity;->initializeV",
+            "depth" : 2
+          },
+          {
+            "sequence" : 24,
+            "native" : 0,
+            "method" : "Lorg\/kivy\/android\/PythonActivity;->showLoadingScreenV",
+            "depth" : 1
+          },
+          {
+            "sequence" : 25,
+            "native" : 0,
+            "method" : "Lorg\/renpy\/android\/ResourceManager;->getIdentifierILL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 26,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 3
+          },
+          {
+            "sequence" : 27,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 28,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 29,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 30,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 31,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 32,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 3
+          },
+          {
+            "sequence" : 33,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 34,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getPackageNameL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 35,
+            "native" : 1,
+            "method" : "Landroid\/content\/res\/Resources;->getIdentifierILLL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 36,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 37,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 38,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getPackageNameL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 39,
+            "native" : 1,
+            "method" : "Landroid\/content\/res\/Resources;->getIdentifierILLL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 40,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getResourcesL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 41,
+            "native" : 1,
+            "method" : "Landroid\/graphics\/BitmapFactory;->decodeStreamLLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 42,
+            "native" : 1,
+            "method" : "Ljava\/io\/InputStream;->closeV",
+            "depth" : 2
+          },
+          {
+            "sequence" : 43,
+            "native" : 0,
+            "method" : "Lorg\/renpy\/android\/ResourceManager;->getStringLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 44,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 3
+          },
+          {
+            "sequence" : 45,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 46,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 47,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 48,
+            "native" : 0,
+            "method" : "Lorg\/renpy\/android\/ResourceManager;->getIdentifierILL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 49,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 4
+          },
+          {
+            "sequence" : 50,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 51,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 52,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 53,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 54,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 55,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 4
+          },
+          {
+            "sequence" : 56,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 57,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getPackageNameL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 58,
+            "native" : 1,
+            "method" : "Landroid\/content\/res\/Resources;->getIdentifierILLL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 59,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 60,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 61,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getPackageNameL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 62,
+            "native" : 1,
+            "method" : "Landroid\/content\/res\/Resources;->getIdentifierILLL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 63,
+            "native" : 0,
+            "method" : "Lorg\/kivy\/android\/PythonActivity;->getAppRootL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 64,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 65,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 66,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 67,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 68,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onStartV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 69,
+            "native" : 0,
+            "method" : "Lorg\/kivy\/android\/PythonActivity;->onResumeV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 70,
+            "native" : 0,
+            "method" : "Lorg\/libsdl\/app\/SDLActivity;->onResumeV",
+            "depth" : 1
+          },
+          {
+            "sequence" : 71,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onResumeV",
+            "depth" : 2
+          },
+          {
+            "sequence" : 72,
+            "native" : 0,
+            "method" : "Lorg\/libsdl\/app\/SDLActivity;->handleResumeV",
+            "depth" : 2
+          },
+          {
+            "sequence" : 73,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onPostResumeV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 74,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getWindowL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 75,
+            "native" : 1,
+            "method" : "Landroid\/view\/Window;->getDecorViewL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 76,
+            "native" : 1,
+            "method" : "Landroid\/view\/View;->setVisibilityVI",
+            "depth" : 0
+          },
+          {
+            "sequence" : 77,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getWindowManagerL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 78,
+            "native" : 1,
+            "method" : "Landroid\/view\/Window;->getAttributesL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 79,
+            "native" : 1,
+            "method" : "Landroid\/view\/WindowManager;->addViewVLL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 80,
+            "native" : 1,
+            "method" : "Landroid\/view\/View;->setVisibilityVI",
+            "depth" : 0
+          }
+        ],
+        "last_method" : "Landroid\/view\/View;->setVisibilityVI",
+        "instructions" : 284,
+        "vm_running" : 0,
+        "viewroot_created" : true,
+        "window_visible" : true,
+        "viewroot_handoff" : true,
+        "window_attached" : true,
+        "viewroot_root_assigned" : true,
+        "stack_depth" : 0,
+        "viewroot_attach_completed" : true,
+        "window_session_attached" : true,
+        "error" : "",
+        "window_added" : true,
+        "exception_class" : "",
+        "methods" : 81,
+        "idle_handler_scheduled" : true,
+        "post_resume_completed" : true,
+        "pending_exception" : 0
+      },
+      "has_dex" : true,
+      "elapsed_ms" : 99,
+      "package" : "org.lufebe16.pysolfc",
+      "failure_signature" : "success:activity_resumed",
+      "launch_result" : 0,
+      "viewroot_attach_completed" : 1
+    },
+    {
+      "id" : "gloomy-dungeons-1",
+      "activity_launch_crossed" : 1,
+      "static_cluster" : "mixed|libGLESv1_CM.so|libc.so|libdl.so|liblog.so|libm.so|libstdc++.so",
+      "last_stage" : "on_create_entered",
+      "raw_detail" : "Activity.onCreate failed: ",
+      "armv7_library_count" : 1,
+      "snapshot" : {
+        "traversal_scheduled" : false,
+        "framework_trace" : [
+          "launch.application.instantiate",
+          "launch.application.context_attached",
+          "launch.activity.attached",
+          "activity.attach.window",
+          "lifecycle.onCreate.enter"
+        ],
+        "view_parent_assigned" : false,
+        "method_trace" : [
+          {
+            "sequence" : 0,
+            "native" : 0,
+            "method" : "Lzame\/GloomyDungeons\/opensource\/game\/ZameApplication;-><init>V",
+            "depth" : 0
+          },
+          {
+            "sequence" : 1,
+            "native" : 1,
+            "method" : "Landroid\/app\/Application;-><init>V",
+            "depth" : 1
+          },
+          {
+            "sequence" : 2,
+            "native" : 0,
+            "method" : "Lzame\/GloomyDungeons\/opensource\/game\/ZameApplication;->onCreateV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 3,
+            "native" : 0,
+            "method" : "Lorg\/acra\/ACRA;->initVL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 4,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;->getClassL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 5,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Class;->getAnnotationLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 6,
+            "native" : 1,
+            "method" : "Landroid\/app\/Application;->onCreateV",
+            "depth" : 1
+          },
+          {
+            "sequence" : 7,
+            "native" : 0,
+            "method" : "Lzame\/GloomyDungeons\/opensource\/game\/MenuActivity;-><init>V",
+            "depth" : 0
+          },
+          {
+            "sequence" : 8,
+            "native" : 0,
+            "method" : "Lcom\/google\/android\/apps\/analytics\/easytracking\/TrackedActivity;-><init>V",
+            "depth" : 1
+          },
+          {
+            "sequence" : 9,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 10,
+            "native" : 0,
+            "method" : "Lzame\/GloomyDungeons\/opensource\/game\/MenuActivity;->onCreateVL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 11,
+            "native" : 0,
+            "method" : "Lcom\/google\/android\/apps\/analytics\/easytracking\/TrackedActivity;->onCreateVL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 12,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onCreateVL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 13,
+            "native" : 0,
+            "method" : "Lcom\/google\/android\/apps\/analytics\/easytracking\/EasyTracker;->getTrackerL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 14,
+            "native" : 0,
+            "method" : "Lcom\/google\/android\/apps\/analytics\/easytracking\/EasyTracker;-><init>V",
+            "depth" : 3
+          },
+          {
+            "sequence" : 15,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 4
+          },
+          {
+            "sequence" : 16,
+            "native" : 1,
+            "method" : "Ljava\/util\/HashMap;-><init>V",
+            "depth" : 4
+          },
+          {
+            "sequence" : 17,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 4
+          },
+          {
+            "sequence" : 18,
+            "native" : 0,
+            "method" : "Lcom\/google\/android\/apps\/analytics\/easytracking\/EasyTracker;->setContextVL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 19,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getApplicationContextL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 20,
+            "native" : 0,
+            "method" : "Lcom\/google\/android\/apps\/analytics\/easytracking\/ParameterLoaderImpl;-><init>VL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 21,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 4
+          },
+          {
+            "sequence" : 22,
+            "native" : 0,
+            "method" : "Lcom\/google\/android\/apps\/analytics\/easytracking\/EasyTracker;->loadParametersV",
+            "depth" : 3
+          },
+          {
+            "sequence" : 23,
+            "native" : 0,
+            "method" : "Lcom\/google\/android\/apps\/analytics\/easytracking\/ParameterLoaderImpl;->getStringLL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 24,
+            "native" : 0,
+            "method" : "Lcom\/google\/android\/apps\/analytics\/easytracking\/ParameterLoaderImpl;->getResourceIdForTypeILL",
+            "depth" : 5
+          },
+          {
+            "sequence" : 25,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getResourcesL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 26,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getPackageNameL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 27,
+            "native" : 1,
+            "method" : "Landroid\/content\/res\/Resources;->getIdentifierILLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 28,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getApplicationContextL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 29,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getResourcesL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 30,
+            "native" : 0,
+            "method" : "Lzame\/GloomyDungeons\/opensource\/game\/Game;->initPathsVL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 31,
+            "native" : 0,
+            "method" : "Lzame\/GloomyDungeons\/opensource\/game\/Game;->getInternalStoragePathLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 32,
+            "native" : 1,
+            "method" : "Landroid\/util\/Log;->eILL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 33,
+            "native" : 1,
+            "method" : "Ljava\/lang\/String;->equalsZL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 34,
+            "native" : 0,
+            "method" : "Lzame\/GloomyDungeons\/opensource\/game\/Game;->getExternalStoragePathL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 35,
+            "native" : 1,
+            "method" : "Ljava\/lang\/String;->formatLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 36,
+            "native" : 0,
+            "method" : "Lzame\/GloomyDungeons\/opensource\/game\/Game;->getExternalStoragePathL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 37,
+            "native" : 1,
+            "method" : "Ljava\/lang\/String;->formatLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 38,
+            "native" : 0,
+            "method" : "Lzame\/GloomyDungeons\/opensource\/game\/Game;->getExternalStoragePathL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 39,
+            "native" : 1,
+            "method" : "Ljava\/lang\/String;->formatLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 40,
+            "native" : 1,
+            "method" : "Ljava\/lang\/String;->formatLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 41,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 42,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 43,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 44,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 45,
+            "native" : 1,
+            "method" : "Ljava\/lang\/String;->formatLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 46,
+            "native" : 1,
+            "method" : "Ljava\/lang\/String;->formatLLL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 47,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getAssetsL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 48,
+            "native" : 0,
+            "method" : "Lzame\/GloomyDungeons\/opensource\/game\/SoundManager;->initVLLZ",
+            "depth" : 1
+          },
+          {
+            "sequence" : 49,
+            "native" : 0,
+            "method" : "Lzame\/GloomyDungeons\/opensource\/game\/SoundManager$1;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 50,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 3
+          },
+          {
+            "sequence" : 51,
+            "native" : 0,
+            "method" : "Lzame\/GloomyDungeons\/opensource\/game\/SoundManager$2;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 52,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 3
+          },
+          {
+            "sequence" : 53,
+            "native" : 1,
+            "method" : "Landroid\/media\/SoundPool;-><init>VIII",
+            "depth" : 2
+          },
+          {
+            "sequence" : 54,
+            "native" : 0,
+            "method" : "Lzame\/GloomyDungeons\/opensource\/game\/SoundManager;->loadSoundVLIF",
+            "depth" : 2
+          },
+          {
+            "sequence" : 55,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 3
+          },
+          {
+            "sequence" : 56,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 57,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 58,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 59,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 3
+          },
+          {
+            "sequence" : 60,
+            "native" : 1,
+            "method" : "Landroid\/media\/SoundPool;->loadILII",
+            "depth" : 3
+          }
+        ],
+        "last_method" : "Landroid\/media\/SoundPool;->loadILII",
+        "instructions" : 340,
+        "vm_running" : 0,
+        "viewroot_created" : false,
+        "window_visible" : false,
+        "viewroot_handoff" : false,
+        "window_attached" : true,
+        "viewroot_root_assigned" : false,
+        "stack_depth" : 0,
+        "viewroot_attach_completed" : false,
+        "window_session_attached" : false,
+        "error" : "",
+        "window_added" : false,
+        "exception_class" : "Ljava\/lang\/NullPointerException;",
+        "methods" : 61,
+        "idle_handler_scheduled" : false,
+        "post_resume_completed" : false,
+        "pending_exception" : 1
+      },
+      "has_dex" : true,
+      "elapsed_ms" : 29,
+      "package" : "zame.GloomyDungeons.opensource.game",
+      "failure_signature" : "missing_framework:Activity.onCreate failed: ",
+      "launch_result" : -1,
+      "viewroot_attach_completed" : 0
+    },
+    {
+      "id" : "crosswords",
+      "activity_launch_crossed" : 0,
+      "static_cluster" : "mixed|libc.so|libdl.so|liblog.so|libm.so|libstdc++.so|libz.so",
+      "last_stage" : "none",
+      "raw_detail" : "activity class resolution failed: Lorg\/eehouse\/android\/xw4\/GamesList;",
+      "armv7_library_count" : 1,
+      "snapshot" : {
+        "traversal_scheduled" : false,
+        "framework_trace" : [
+
+        ],
+        "view_parent_assigned" : false,
+        "method_trace" : [
+
+        ],
+        "last_method" : "",
+        "instructions" : 0,
+        "vm_running" : 0,
+        "viewroot_created" : false,
+        "window_visible" : false,
+        "viewroot_handoff" : false,
+        "window_attached" : false,
+        "viewroot_root_assigned" : true,
+        "stack_depth" : 0,
+        "viewroot_attach_completed" : false,
+        "window_session_attached" : true,
+        "error" : "",
+        "window_added" : false,
+        "exception_class" : "",
+        "methods" : 0,
+        "idle_handler_scheduled" : false,
+        "post_resume_completed" : false,
+        "pending_exception" : 0
+      },
+      "has_dex" : true,
+      "elapsed_ms" : 15,
+      "package" : "org.eehouse.android.xw4",
+      "failure_signature" : "missing_framework:activity class resolution failed: Lorg\/eehouse\/android\/xw4\/GamesList;",
+      "launch_result" : -1,
+      "viewroot_attach_completed" : 0
+    },
+    {
+      "id" : "flickit",
+      "activity_launch_crossed" : 0,
+      "static_cluster" : "mixed|libGLESv2.so|libc.so|libdl.so|liblog.so|libm.so|libstdc++.so",
+      "last_stage" : "context_attached",
+      "raw_detail" : "Activity constructor failed: ",
+      "armv7_library_count" : 1,
+      "snapshot" : {
+        "traversal_scheduled" : false,
+        "framework_trace" : [
+          "launch.application.instantiate",
+          "launch.application.context_attached"
+        ],
+        "view_parent_assigned" : false,
+        "method_trace" : [
+          {
+            "sequence" : 0,
+            "native" : 1,
+            "method" : "Landroid\/app\/Application;-><init>V",
+            "depth" : 0
+          },
+          {
+            "sequence" : 1,
+            "native" : 1,
+            "method" : "Landroid\/app\/Application;->onCreateV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 2,
+            "native" : 0,
+            "method" : "Lcom\/studio332\/flickit\/MainActivity;-><init>V",
+            "depth" : 0
+          },
+          {
+            "sequence" : 3,
+            "native" : 0,
+            "method" : "Lcom\/badlogic\/gdx\/backends\/android\/AndroidApplication;-><init>V",
+            "depth" : 1
+          },
+          {
+            "sequence" : 4,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 5,
+            "native" : 0,
+            "method" : "Lcom\/badlogic\/gdx\/utils\/Array;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 6,
+            "native" : 0,
+            "method" : "Lcom\/badlogic\/gdx\/utils\/Array;-><init>VZI",
+            "depth" : 3
+          },
+          {
+            "sequence" : 7,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 4
+          }
+        ],
+        "last_method" : "Ljava\/lang\/Object;-><init>V",
+        "instructions" : 13,
+        "vm_running" : 0,
+        "viewroot_created" : false,
+        "window_visible" : false,
+        "viewroot_handoff" : false,
+        "window_attached" : false,
+        "viewroot_root_assigned" : false,
+        "stack_depth" : 0,
+        "viewroot_attach_completed" : false,
+        "window_session_attached" : false,
+        "error" : "",
+        "window_added" : false,
+        "exception_class" : "Ljava\/lang\/ClassCastException;",
+        "methods" : 8,
+        "idle_handler_scheduled" : false,
+        "post_resume_completed" : false,
+        "pending_exception" : 1
+      },
+      "has_dex" : true,
+      "elapsed_ms" : 70,
+      "package" : "com.studio332.flickit",
+      "failure_signature" : "missing_framework:Activity constructor failed: ",
+      "launch_result" : -1,
+      "viewroot_attach_completed" : 0
+    },
+    {
+      "id" : "andors-trail",
+      "activity_launch_crossed" : 1,
+      "static_cluster" : "dex",
+      "last_stage" : "on_create_entered",
+      "raw_detail" : "Activity.onCreate failed: ",
+      "armv7_library_count" : 0,
+      "snapshot" : {
+        "traversal_scheduled" : false,
+        "framework_trace" : [
+          "launch.application.instantiate",
+          "launch.application.context_attached",
+          "launch.activity.attached",
+          "activity.attach.window",
+          "lifecycle.onCreate.enter"
+        ],
+        "view_parent_assigned" : false,
+        "method_trace" : [
+          {
+            "sequence" : 503,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 504,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 505,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 6
+          },
+          {
+            "sequence" : 506,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 507,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 508,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 509,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 6
+          },
+          {
+            "sequence" : 510,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 511,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 512,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 513,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 6
+          },
+          {
+            "sequence" : 514,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 515,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 516,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 517,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 6
+          },
+          {
+            "sequence" : 518,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 519,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 520,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 521,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 6
+          },
+          {
+            "sequence" : 522,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 523,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 524,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 525,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 6
+          },
+          {
+            "sequence" : 526,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 527,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 528,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 529,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 6
+          },
+          {
+            "sequence" : 530,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 531,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 532,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 6
+          },
+          {
+            "sequence" : 533,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 534,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 535,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 4
+          },
+          {
+            "sequence" : 536,
+            "native" : 0,
+            "method" : "Lcom\/gpl\/rpg\/AndorsTrail\/model\/ability\/ActorConditionTypeCollection;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 537,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 3
+          },
+          {
+            "sequence" : 538,
+            "native" : 1,
+            "method" : "Ljava\/util\/ArrayList;-><init>V",
+            "depth" : 3
+          },
+          {
+            "sequence" : 539,
+            "native" : 0,
+            "method" : "Lcom\/gpl\/rpg\/AndorsTrail\/WorldSetup;-><init>VLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 540,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 541,
+            "native" : 0,
+            "method" : "Lcom\/gpl\/rpg\/AndorsTrail\/AndorsTrailPreferences;-><init>V",
+            "depth" : 1
+          },
+          {
+            "sequence" : 542,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 543,
+            "native" : 1,
+            "method" : "Landroid\/app\/Application;->onCreateV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 544,
+            "native" : 0,
+            "method" : "Lcom\/gpl\/rpg\/AndorsTrail\/activity\/StartScreenActivity;-><init>V",
+            "depth" : 0
+          },
+          {
+            "sequence" : 545,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;-><init>V",
+            "depth" : 1
+          },
+          {
+            "sequence" : 546,
+            "native" : 0,
+            "method" : "Lcom\/gpl\/rpg\/AndorsTrail\/activity\/StartScreenActivity;->onCreateVL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 547,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onCreateVL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 548,
+            "native" : 0,
+            "method" : "Lcom\/gpl\/rpg\/AndorsTrail\/AndorsTrailApplication;->getApplicationFromActivityLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 549,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getApplicationL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 550,
+            "native" : 0,
+            "method" : "Lcom\/gpl\/rpg\/AndorsTrail\/AndorsTrailPreferences;->readVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 551,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;->toStringL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 552,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;->toStringL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 553,
+            "native" : 0,
+            "method" : "Lcom\/gpl\/rpg\/AndorsTrail\/AndorsTrailApplication;->setWindowParametersVLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 554,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getWindowL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 555,
+            "native" : 0,
+            "method" : "Lcom\/gpl\/rpg\/AndorsTrail\/activity\/StartScreenActivity$1;-><init>VL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 556,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 557,
+            "native" : 0,
+            "method" : "Lcom\/gpl\/rpg\/AndorsTrail\/activity\/StartScreenActivity$2;-><init>VL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 558,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 559,
+            "native" : 0,
+            "method" : "Lcom\/gpl\/rpg\/AndorsTrail\/activity\/StartScreenActivity$3;-><init>VL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 560,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 561,
+            "native" : 0,
+            "method" : "Lcom\/gpl\/rpg\/AndorsTrail\/activity\/StartScreenActivity$4;-><init>VL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 562,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 563,
+            "native" : 0,
+            "method" : "Lcom\/gpl\/rpg\/AndorsTrail\/activity\/StartScreenActivity$5;-><init>VL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 564,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 565,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getResourcesL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 566,
+            "native" : 0,
+            "method" : "Lcom\/gpl\/rpg\/AndorsTrail\/resource\/TileStore;->setDensityVL",
+            "depth" : 1
+          }
+        ],
+        "last_method" : "Lcom\/gpl\/rpg\/AndorsTrail\/resource\/TileStore;->setDensityVL",
+        "instructions" : 1756,
+        "vm_running" : 0,
+        "viewroot_created" : false,
+        "window_visible" : false,
+        "viewroot_handoff" : false,
+        "window_attached" : true,
+        "viewroot_root_assigned" : false,
+        "stack_depth" : 0,
+        "viewroot_attach_completed" : false,
+        "window_session_attached" : false,
+        "error" : "",
+        "window_added" : false,
+        "exception_class" : "Ljava\/lang\/NullPointerException;",
+        "methods" : 567,
+        "idle_handler_scheduled" : false,
+        "post_resume_completed" : false,
+        "pending_exception" : 1
+      },
+      "has_dex" : true,
+      "elapsed_ms" : 51,
+      "package" : "com.gpl.rpg.AndorsTrail",
+      "failure_signature" : "missing_framework:Activity.onCreate failed: ",
+      "launch_result" : -1,
+      "viewroot_attach_completed" : 0
+    },
+    {
+      "id" : "a2048",
+      "activity_launch_crossed" : 1,
+      "static_cluster" : "dex",
+      "last_stage" : "resumed",
+      "raw_detail" : "",
+      "armv7_library_count" : 0,
+      "snapshot" : {
+        "traversal_scheduled" : true,
+        "framework_trace" : [
+          "launch.application.instantiate",
+          "launch.application.context_attached",
+          "launch.activity.attached",
+          "activity.attach.window",
+          "lifecycle.onCreate.enter",
+          "lifecycle.onCreate.return",
+          "lifecycle.onStart.return",
+          "lifecycle.onResume.return",
+          "lifecycle.onPostResume.return",
+          "coordinator.performResume.return",
+          "window.obtain",
+          "window.decor.obtain",
+          "window.decor.invisible",
+          "window_manager.add_view.enter",
+          "window_manager_global.add_view",
+          "viewroot.create",
+          "viewroot.set_view.enter",
+          "viewroot.root_assigned",
+          "viewroot.request_layout",
+          "viewroot.traversal.scheduled",
+          "window_session.add_to_display",
+          "viewroot.parent_assigned",
+          "viewroot.attach.complete",
+          "window_manager.add_view",
+          "activity.make_visible",
+          "looper.idle_handler.scheduled",
+          "handoff.viewroot_traversal"
+        ],
+        "view_parent_assigned" : true,
+        "method_trace" : [
+          {
+            "sequence" : 0,
+            "native" : 1,
+            "method" : "Landroid\/app\/Application;-><init>V",
+            "depth" : 0
+          },
+          {
+            "sequence" : 1,
+            "native" : 1,
+            "method" : "Landroid\/app\/Application;->onCreateV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 2,
+            "native" : 0,
+            "method" : "Lcom\/uberspot\/a2048\/MainActivity;-><init>V",
+            "depth" : 0
+          },
+          {
+            "sequence" : 3,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;-><init>V",
+            "depth" : 1
+          },
+          {
+            "sequence" : 4,
+            "native" : 0,
+            "method" : "Lcom\/uberspot\/a2048\/MainActivity;->onCreateVL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 5,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onCreateVL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 6,
+            "native" : 0,
+            "method" : "Lcom\/uberspot\/a2048\/MainActivity;->isFullScreenZ",
+            "depth" : 1
+          },
+          {
+            "sequence" : 7,
+            "native" : 0,
+            "method" : "Lcom\/uberspot\/a2048\/MainActivity;->applyFullScreenVZ",
+            "depth" : 1
+          },
+          {
+            "sequence" : 8,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getWindowL",
+            "depth" : 2
+          },
+          {
+            "sequence" : 9,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getPackageNameL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 10,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;-><init>V",
+            "depth" : 1
+          },
+          {
+            "sequence" : 11,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 12,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 13,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->appendLL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 14,
+            "native" : 1,
+            "method" : "Ljava\/lang\/StringBuilder;->toStringL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 15,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getApplicationL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 16,
+            "native" : 0,
+            "method" : "Lcom\/uberspot\/a2048\/MainActivity$1;-><init>VL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 17,
+            "native" : 1,
+            "method" : "Ljava\/lang\/Object;-><init>V",
+            "depth" : 2
+          },
+          {
+            "sequence" : 18,
+            "native" : 1,
+            "method" : "Landroid\/content\/Context;->getApplicationContextL",
+            "depth" : 1
+          },
+          {
+            "sequence" : 19,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onStartV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 20,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onResumeV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 21,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->onPostResumeV",
+            "depth" : 0
+          },
+          {
+            "sequence" : 22,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getWindowL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 23,
+            "native" : 1,
+            "method" : "Landroid\/view\/Window;->getDecorViewL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 24,
+            "native" : 1,
+            "method" : "Landroid\/view\/View;->setVisibilityVI",
+            "depth" : 0
+          },
+          {
+            "sequence" : 25,
+            "native" : 1,
+            "method" : "Landroid\/app\/Activity;->getWindowManagerL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 26,
+            "native" : 1,
+            "method" : "Landroid\/view\/Window;->getAttributesL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 27,
+            "native" : 1,
+            "method" : "Landroid\/view\/WindowManager;->addViewVLL",
+            "depth" : 0
+          },
+          {
+            "sequence" : 28,
+            "native" : 1,
+            "method" : "Landroid\/view\/View;->setVisibilityVI",
+            "depth" : 0
+          }
+        ],
+        "last_method" : "Landroid\/view\/View;->setVisibilityVI",
+        "instructions" : 76,
+        "vm_running" : 0,
+        "viewroot_created" : true,
+        "window_visible" : true,
+        "viewroot_handoff" : true,
+        "window_attached" : true,
+        "viewroot_root_assigned" : true,
+        "stack_depth" : 0,
+        "viewroot_attach_completed" : true,
+        "window_session_attached" : true,
+        "error" : "",
+        "window_added" : true,
+        "exception_class" : "",
+        "methods" : 29,
+        "idle_handler_scheduled" : true,
+        "post_resume_completed" : true,
+        "pending_exception" : 0
+      },
+      "has_dex" : true,
+      "elapsed_ms" : 25,
+      "package" : "com.uberspot.a2048",
+      "failure_signature" : "success:activity_resumed",
+      "launch_result" : 0,
+      "viewroot_attach_completed" : 1
+    }
+  ],
+  "schema" : "agr.architecture-falsification.discovery.v1",
+  "planned" : 10,
+  "completed" : 10
+}

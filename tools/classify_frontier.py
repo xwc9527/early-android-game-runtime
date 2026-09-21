@@ -35,6 +35,31 @@ IMPLEMENTED = {
 DESCRIPTOR = re.compile(r"L([A-Za-z0-9_$/]+);")
 DOTTED = re.compile(r"\b((?:android|dalvik|javax\.microedition)(?:\.[A-Za-z0-9_$]+)+)")
 
+# Attribution the automatic rule cannot make, each backed by evidence that is
+# independent of the metric it affects. Recorded explicitly so a reviewer can
+# check the attribution instead of trusting it.
+MANUAL_ATTRIBUTION: dict[str, dict] = {
+    "crosswords": {
+        "classification": "KNOWN_PUBLIC_CONTRACT",
+        "blocking_family": "app.activity_lifecycle",
+        "blocking_method": "activity class resolution of a platform Activity subclass",
+        "basis": "The launcher activity chain in the APK is GamesList -> XWListActivity -> "
+                 "android.app.ListActivity, verified from classes.dex. AGR resolves only "
+                 "android.app.Activity as an Activity base, so this is a gap inside the already "
+                 "implemented activity lifecycle contract, shared by every app using a platform "
+                 "Activity subclass.",
+    },
+    "flickit": {
+        "classification": "RUNTIME_INTERNAL_GAP",
+        "blocking_family": None,
+        "blocking_method": "Ljava/lang/Object;-><init>V during com.badlogic.gdx.utils.Array.<init>",
+        "basis": "ClassCastException raised by AGR's host DEX type system while constructing a "
+                 "generic array inside the engine's own code, two frames below any Android API. "
+                 "This is an AGR interpreter completeness defect, not an Android public contract "
+                 "and not specific to this game; it is excluded from the public-contract counts.",
+    },
+}
+
 HARNESS_MARKERS = (
     "APK package open failed", "apk_missing", "batch-plan", "resource missing",
     "DEX Runtime creation failed",
@@ -53,31 +78,75 @@ def families_in(detail: str) -> list[str]:
     return found
 
 
+def executed_families(record: dict) -> list[str]:
+    """Families of API19 methods the sample actually executed.
+
+    The method trace is a bounded ring, so this is a lower bound on what the
+    sample reached, never an upper bound.
+    """
+    snapshot = record.get("snapshot") or {}
+    found: list[str] = []
+    for event in snapshot.get("method_trace") or []:
+        name = (event.get("method") or "").split(";->")[0]
+        if not name.startswith("L"):
+            continue
+        family = family_for_class(name[1:].replace("/", "."))
+        if family and family not in found:
+            found.append(family)
+    return found
+
+
+def blocking_method_family(record: dict) -> tuple[str | None, str | None]:
+    """The last API19 method the sample executed before it stopped."""
+    snapshot = record.get("snapshot") or {}
+    last = snapshot.get("last_method") or ""
+    name = last.split(";->")[0]
+    if name.startswith("L"):
+        family = family_for_class(name[1:].replace("/", "."))
+        if family:
+            return family, last
+    for event in reversed(snapshot.get("method_trace") or []):
+        method = event.get("method") or ""
+        owner = method.split(";->")[0]
+        if not owner.startswith("L"):
+            continue
+        family = family_for_class(owner[1:].replace("/", "."))
+        if family:
+            return family, method
+    return None, last or None
+
+
 def classify(record: dict, scope: str) -> dict:
     detail = f"{record.get('failure_signature','')} {record.get('raw_detail','')}"
     snapshot = record.get("snapshot") or {}
     detail = f"{detail} {snapshot.get('error','')} {snapshot.get('exception_class','')}"
-    found = families_in(detail)
+    found = executed_families(record) or families_in(detail)
     if record.get("launch_result") == 0:
         return {"classification": "KNOWN_PUBLIC_CONTRACT", "families": found,
-                "blocking_family": None,
+                "blocking_family": None, "blocking_method": None,
                 "basis": "sample reached activity_resumed on the unchanged Runtime"}
     if any(marker.lower() in detail.lower() for marker in HARNESS_MARKERS):
         return {"classification": "HARNESS_DEFECT", "families": found, "blocking_family": None,
+                "blocking_method": None,
                 "basis": "input or harness precondition failed before Runtime semantics applied"}
     if not scope.startswith("IN_SCOPE"):
         return {"classification": "OUT_OF_SCOPE", "families": found, "blocking_family": None,
-                "basis": f"sample scope is {scope}"}
-    if not found:
-        return {"classification": "UNRESOLVED", "families": [], "blocking_family": None,
-                "basis": "no Android public API could be extracted from the stopping evidence; "
+                "blocking_method": None, "basis": f"sample scope is {scope}"}
+    override = MANUAL_ATTRIBUTION.get(record.get("id"))
+    if override:
+        return {**override, "families": found or override.get("families", [])}
+    blocking, method = blocking_method_family(record)
+    if blocking is None:
+        return {"classification": "UNRESOLVED", "families": found, "blocking_family": None,
+                "blocking_method": method,
+                "basis": "no Android public API could be attributed to the stopping point; "
                          "requires manual source attribution"}
-    blocking = found[0]
     known = blocking in IMPLEMENTED
     return {
         "classification": "KNOWN_PUBLIC_CONTRACT" if known else "NEW_PUBLIC_CONTRACT",
         "families": found,
         "blocking_family": blocking,
+        "blocking_method": method,
         "basis": ("blocked inside an already implemented public contract"
                   if known else "blocked on a public API19 contract AGR has not implemented"),
     }
