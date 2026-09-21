@@ -211,11 +211,11 @@ assert r.get("launch_stage") == "resumed", r
 assert r.get("harness_retained_runtime") is True, r
 assert r.get("observation_ms") == 2000, r
 assert r.get("contract",{}).get("passed") is True, r
-assert r.get("after_snapshot",{}).get("post_resume_completed") is True, r
+assert r.get("after_snapshot",{}).get("post_resume_completed") == 1, r
 for key in ("window_attached","window_added","window_visible","idle_handler_scheduled","viewroot_handoff",
             "viewroot_created","viewroot_root_assigned","traversal_scheduled",
             "window_session_attached","view_parent_assigned","viewroot_attach_completed"):
-    assert r.get("after_snapshot",{}).get(key) is True, (key,r)
+    assert r.get("after_snapshot",{}).get(key) == 1, (key,r)
 assert r.get("after_snapshot",{}).get("method_trace"), r
 trace=r.get("after_snapshot",{}).get("framework_trace",[])
 for item in ("window_manager.add_view.enter","window_manager_global.add_view","viewroot.create",
@@ -229,7 +229,7 @@ assert [trace.index(x) for x in ("viewroot.traversal.scheduled","window_session.
                                 "viewroot.parent_assigned","viewroot.attach.complete")), r
 assert trace[-1] == "handoff.viewroot_traversal", r
 assert r.get("classification") == "viewroot_traversal_handoff", r
-assert r.get("after_snapshot",{}).get("pending_exception") is False, r
+assert not r.get("after_snapshot",{}).get("pending_exception"), r
 assert not r.get("after_snapshot",{}).get("error"), r
 PY
   phase "Framework ViewRoot attach evidence captured"

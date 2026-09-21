@@ -53,16 +53,24 @@
     }
   ],
   "earliest_evidenced_divergence": "Immediately downstream of the previous handoff, when API19 WindowManagerGlobal.addView constructs ViewRootImpl.",
-  "causal_status": "OBSERVED",
-  "evidence_level": "SOURCE_INFERRED",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
   "evidence": [
     {
       "type": "SOURCE",
       "artifact": "platform/frameworks/base android-4.4.4_r2 WindowManagerImpl.java, WindowManagerGlobal.java and ViewRootImpl.java pinned in upstream map"
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "ViewRoot focused Simulator run 35568649865 artifact framework-viewroot-attach.json: synthetic owner_graph=true, ordered attach trace; local contract parser PASS after correcting JSON 0/1 handling"
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "Unchanged Frozen Bubble focused Simulator run 35568649865 artifact framework-viewroot-attach.json: launch_result=0, real_owner_graph=true, handoff.viewroot_traversal, pending_exception=0, error empty"
     }
   ],
   "remaining_uncertainty": [
-    "The focused Simulator contract and unchanged Frozen Bubble path must establish the actual initial-attach ordering and ownership.",
+    "The focused workflow itself must pass after fixing its JSON numeric-bool assertion; full protected regressions and iphoneos remain unverified.",
     "performTraversals, relayout and Surface are downstream and unclaimed."
   ],
   "next_action": "Run source verification, synthetic ViewRoot contract, unchanged Frozen Bubble focused Simulator probe and protected regressions.",

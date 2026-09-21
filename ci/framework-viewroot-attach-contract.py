@@ -39,9 +39,9 @@ def main():
     assert synthetic_trace[-1] == ORDER[-1], synthetic_trace
     assert contract["passed"] is True, contract
     assert contract["owner_graph"] is True and result["real_owner_graph"] is True, result
-    assert all(contract.get(field) is True for field in FLAGS), contract
-    assert all(snapshot.get(field) is True for field in FLAGS), snapshot
-    assert all(snapshot.get(field) is True for field in
+    assert all(contract.get(field) == 1 for field in FLAGS), contract
+    assert all(snapshot.get(field) == 1 for field in FLAGS), snapshot
+    assert all(snapshot.get(field) == 1 for field in
                ("window_attached", "window_added", "window_visible", "idle_handler_scheduled")), snapshot
     assert result["sample"] == "frozen-bubble" and result["launch_result"] == 0, result
     assert result["classification"] == "viewroot_traversal_handoff", result

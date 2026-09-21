@@ -17,8 +17,8 @@ def main():
     contract=result.get("contract",{}); after=result.get("after_snapshot",{})
     cluster=("window_attached","window_added","window_visible","idle_handler_scheduled","viewroot_handoff","viewroot_created","viewroot_root_assigned","traversal_scheduled","window_session_attached","view_parent_assigned","viewroot_attach_completed")
     target_pass=bool(contract.get("passed") is True and result.get("launch_result")==0 and
-        result.get("launch_stage")=="resumed" and result.get("real_owner_graph") is True and contract.get("owner_graph") is True and after.get("post_resume_completed") is True and
-        all(after.get(key) is True for key in cluster) and
+        result.get("launch_stage")=="resumed" and result.get("real_owner_graph") is True and contract.get("owner_graph") is True and after.get("post_resume_completed")==1 and
+        all(after.get(key)==1 for key in cluster) and
         after.get("framework_trace",[])[-1:]==["handoff.viewroot_traversal"] and
         result.get("classification")=="viewroot_traversal_handoff" and
         not after.get("pending_exception") and not after.get("error"))
@@ -44,7 +44,7 @@ def main():
         "normalized_signature":"" if target_pass else "framework:viewroot_attach:closure_failed",
         "raw_fingerprint":hashlib.sha256(json.dumps(result,sort_keys=True).encode()).hexdigest(),
         "requirements":{"synthetic_contract":contract.get("passed") is True,
-          "real_apk_viewroot_attach":after.get("viewroot_attach_completed") is True,
+          "real_apk_viewroot_attach":after.get("viewroot_attach_completed")==1,
           "window_cluster":{key:after.get(key) for key in cluster},
           "next_boundary_recorded":result.get("classification")}},
       "coverage_delta":{"new_imports":[],"new_android_api":["WindowManagerImpl.addView","WindowManagerGlobal.addView","ViewRootImpl.setView","ViewRootImpl.requestLayout","ViewRootImpl.scheduleTraversals","IWindowSession.addToDisplay"],"new_jni":[],"new_lifecycle":["ViewRootImpl initial attach and first traversal scheduling"]},
