@@ -1,28 +1,29 @@
 {
   "schema_version": 1,
-  "request_id": 1,
-  "sample_set": "falsification-discovery",
-  "run_kind": "discovery",
-  "question": "On the pre-registered 10-game Discovery set, does the unchanged Runtime frontier stop inside shared API19 public contracts, or does it stop on requirements that can only be expressed per game?",
+  "request_id": 2,
+  "sample_set": "falsification-holdout",
+  "run_kind": "blind-holdout",
+  "question": "With the production Runtime unchanged since the Discovery measurement, do the five blind Holdout games stop inside the same shared public contracts Discovery already exposed, or do they require behavior that can only be expressed per game?",
   "current_uncertainty": [
-    "Static census shows a small, strongly reused core contract surface, but static references do not prove which contract each game actually reaches first.",
-    "It is unknown whether the frontier blockers cluster into a few shared families or scatter across unrelated per-game requirements."
+    "Discovery showed that eight of ten games stop inside already implemented public contracts, but Discovery samples could have been unrepresentative of their clusters.",
+    "Three Holdout clusters (Qt, SDL, SoupeAuCaillou) were never exercised dynamically, so it is unknown whether they introduce contract families outside the Discovery set."
   ],
   "expected_outcome_a": {
-    "result": "Frontier blockers concentrate in a small number of shared API19 public-contract families that repeat across unrelated execution clusters.",
+    "result": "Holdout games stop inside contract families Discovery already exposed, at a reuse ratio of at least 0.70, with no requirement expressible only through game identity.",
     "excludes": [
-      "the explanation that each game needs its own distinct compatibility behavior at the current frontier"
+      "the explanation that the Discovery convergence was an artifact of the Discovery sample choice"
     ]
   },
   "expected_outcome_b": {
-    "result": "Blockers are dispersed with little family reuse, or one or more games stop on something expressible only through game identity or a genuinely cross-process Android authority.",
+    "result": "Holdout games stop mostly on families absent from Discovery, or at least one needs game-specific state, identity or return values.",
     "excludes": [
-      "the explanation that the public compatibility layer is converging at the reachable frontier"
+      "the explanation that the public compatibility layer generalizes beyond the games used to find it"
     ]
   },
-  "why_cheaper_test_is_insufficient": "Static analysis already ran and cannot tell which referenced path a game executes first; API19 source analysis resolved boundary reducibility but not AGR's actual stopping point. Windows cannot build the iOS Simulator target, so the compiled Runtime frontier can only be observed on macOS.",
+  "why_cheaper_test_is_insufficient": "A blind holdout is only meaningful when executed against the compiled Runtime; static analysis cannot show which contract a game reaches first, and no production change has been made that a cheaper focused contract could re-verify.",
   "expensive_run_budget": 3,
-  "expensive_runs_used": 0,
+  "expensive_runs_used": 1,
   "prior_expensive_runs_without_information_gain": 0,
-  "notes": "Incrementing request_id on this phase branch triggers exactly one batch run. This file is the admission record for that run; it is experiment data, not a new governance system."
+  "production_runtime_frozen": true,
+  "notes": "No production Runtime change was made between Discovery and Holdout, so the holdout measures generalization of the existing public layer rather than of a fix round. Discovery evidence is run 35654415068."
 }
