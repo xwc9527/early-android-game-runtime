@@ -28,6 +28,10 @@ typedef struct {
 
 typedef void *(*agr_viewroot_pixel_alloc)(void *user, size_t bytes);
 typedef void (*agr_viewroot_pixel_free)(void *user, void *pixels);
+/* The host WindowSession endpoint may reject relayout before it changes any
+   window or Surface state. Zero accepts the request. */
+typedef int (*agr_viewroot_relayout_gate)(void *user, uint32_t width,
+                                          uint32_t height, int visibility);
 
 typedef struct {
     DxObject *root;
@@ -54,6 +58,8 @@ typedef struct {
     agr_viewroot_pixel_alloc pixel_alloc;
     agr_viewroot_pixel_free pixel_free;
     void *pixel_user;
+    agr_viewroot_relayout_gate relayout_gate;
+    void *relayout_user;
     int layout_requested;
     int pending_first_traversal;
     int session_result;

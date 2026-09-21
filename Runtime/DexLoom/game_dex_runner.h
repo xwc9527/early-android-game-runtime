@@ -115,6 +115,13 @@ int agr_dex_game_do_traversal(agr_dex_game *game, uint32_t display_width_pixels,
 int agr_dex_game_set_surface_allocator(agr_dex_game *game,
                                        void *(*allocate)(void *user, size_t bytes),
                                        void (*release)(void *user, void *pixels), void *user);
+int agr_dex_game_set_relayout_gate(agr_dex_game *game,
+                                   int (*gate)(void *user, uint32_t width,
+                                               uint32_t height, int visibility),
+                                   void *user);
+int agr_dex_game_root_surface(agr_dex_game *game, void **pixels,
+                              uint32_t *width, uint32_t *height,
+                              uint32_t *stride, uint32_t *generation);
 agr_activity_launch_stage agr_dex_game_launch_stage(const agr_dex_game *game);
 const char *agr_dex_game_launch_error(const agr_dex_game *game);
 int agr_dex_game_application_gc_contract(agr_dex_game *game);

@@ -1037,6 +1037,28 @@ int agr_dex_game_set_surface_allocator(agr_dex_game *game,
     return 0;
 }
 
+int agr_dex_game_set_relayout_gate(agr_dex_game *game,
+                                   int (*gate)(void *, uint32_t, uint32_t, int),
+                                   void *user) {
+    if (!game) return -1;
+    game->viewroot.relayout_gate = gate;
+    game->viewroot.relayout_user = user;
+    return 0;
+}
+
+int agr_dex_game_root_surface(agr_dex_game *game, void **pixels,
+                              uint32_t *width, uint32_t *height,
+                              uint32_t *stride, uint32_t *generation) {
+    if (!game || !pixels || !width || !height || !stride || !generation ||
+        !agr_viewroot_surface_valid(&game->viewroot)) return -1;
+    *pixels = game->viewroot.backing.pixels;
+    *width = game->viewroot.backing.width;
+    *height = game->viewroot.backing.height;
+    *stride = game->viewroot.backing.stride;
+    *generation = game->viewroot.backing.generation;
+    return 0;
+}
+
 int agr_dex_game_activity_gc_contract(agr_dex_game *game) {
     if (!game || !game->vm || !game->activity ||
         game->vm->activity_instance != game->activity) return -1;

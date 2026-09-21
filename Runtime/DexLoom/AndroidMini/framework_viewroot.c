@@ -15,8 +15,8 @@ static DxResult set(DxObject *object, const char *name, DxValue value) {
     return dx_vm_set_field(object, name, value);
 }
 
-/* requestLayout() makes one first traversal pending.  It deliberately does
- * not execute a traversal, create a Surface, or post a drawing callback. */
+/* requestLayout() queues a traversal; execution belongs to the host's
+ * Choreographer/Looper dispatch, never to setView itself. */
 static DxResult request_first_layout(agr_viewroot_attach_state *state,
                                      agr_viewroot_trace_fn trace, void *user) {
     if (!state || !state->root || !state->decor) return DX_ERR_INVALID_FORMAT;
@@ -180,6 +180,10 @@ static DxResult session_relayout(agr_viewroot_attach_state *state,
     if (width <= 0 || height <= 0 || (uint32_t)width > display.width_pixels ||
         (uint32_t)height > display.height_pixels)
         return DX_ERR_INVALID_FORMAT;
+    if (state->relayout_gate &&
+        state->relayout_gate(state->relayout_user, (uint32_t)width,
+                             (uint32_t)height, visible ? 0 : 4) != 0)
+        return DX_ERR_INVALID_FORMAT;
 
     if (visible && !agr_viewroot_surface_valid(state)) {
         if ((size_t)width > SIZE_MAX / 4u / (size_t)height)
@@ -188,6 +192,7 @@ static DxResult session_relayout(agr_viewroot_attach_state *state,
         agr_viewroot_pixel_alloc alloc = state->pixel_alloc ? state->pixel_alloc : default_pixel_alloc;
         void *pixels = alloc(state->pixel_user, bytes);
         if (!pixels) return DX_ERR_OUT_OF_MEMORY;
+        memset(pixels, 0, bytes);
         state->backing.pixels = pixels;
         state->backing.width = (uint32_t)width;
         state->backing.height = (uint32_t)height;

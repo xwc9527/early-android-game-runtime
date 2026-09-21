@@ -997,6 +997,21 @@ static NSDictionary *dexSnapshotDictionary(const agr_dex_runtime_snapshot *snaps
       @"error":[NSString stringWithUTF8String:snapshot->error] };
 }
 
+static void *rejectSurfaceAllocation(void *user, size_t bytes) {
+    (void)user; (void)bytes;
+    return NULL;
+}
+
+static void rejectSurfaceRelease(void *user, void *pixels) {
+    (void)user; (void)pixels;
+}
+
+static int rejectRelayout(void *user, uint32_t width, uint32_t height,
+                          int visibility) {
+    (void)user; (void)width; (void)height; (void)visibility;
+    return -1;
+}
+
 static NSString *runFrameworkRuntimeContinuationDiscovery(BOOL runTraversal,
                                                            uint32_t displayWidth,
                                                            uint32_t displayHeight) {
@@ -1015,6 +1030,21 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(BOOL runTraversal,
         ? agr_dex_game_do_traversal(contract,displayWidth,displayHeight) : -1;
     agr_dex_runtime_snapshot contractAfter={0};
     if (contract) agr_dex_game_runtime_snapshot(contract,&contractAfter);
+    void *firstPixels=NULL,*secondPixels=NULL;
+    uint32_t firstWidth=0,firstHeight=0,firstStride=0,firstGeneration=0;
+    uint32_t secondWidth=0,secondHeight=0,secondStride=0,secondGeneration=0;
+    int firstSurface=runTraversal && contract ? agr_dex_game_root_surface(contract,&firstPixels,
+        &firstWidth,&firstHeight,&firstStride,&firstGeneration) : -1;
+    int secondTraversal=runTraversal && contract && contractTraversal==0
+        ? agr_dex_game_do_traversal(contract,displayWidth,displayHeight) : -1;
+    agr_dex_runtime_snapshot contractSecond={0};
+    if (contract) agr_dex_game_runtime_snapshot(contract,&contractSecond);
+    int secondSurface=runTraversal && contract ? agr_dex_game_root_surface(contract,&secondPixels,
+        &secondWidth,&secondHeight,&secondStride,&secondGeneration) : -1;
+    BOOL surfacePersistent=runTraversal && firstSurface==0 && secondTraversal==0 &&
+        secondSurface==0 && firstPixels==secondPixels && firstGeneration==secondGeneration &&
+        firstWidth==secondWidth && firstHeight==secondHeight && firstStride==secondStride &&
+        contractSecond.traversal_count==2 && !contractSecond.traversal_scheduled;
     NSMutableArray *contractTrace=[NSMutableArray array];
     for (uint32_t i=0;i<contractSnapshot.framework_event_count;i++)
       [contractTrace addObject:[NSString stringWithUTF8String:contractSnapshot.framework_events[i]]];
@@ -1033,7 +1063,39 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(BOOL runTraversal,
         contractAfter.hierarchy_attached && contractAfter.traversal_count==1 &&
         contractAfter.measured_width>0 && contractAfter.measured_height>0 &&
         contractAfter.layout_complete && contractAfter.surface_valid &&
-        contractAfter.surface_generation==1 && contractAfter.traversal_scheduled;
+        contractAfter.surface_generation==1 && contractAfter.traversal_scheduled &&
+        surfacePersistent;
+    int invalidTraversal=-1,relayoutFailure=-1,allocationFailure=-1,retryAfterFailure=-1;
+    agr_dex_runtime_snapshot relayoutFailureSnapshot={0},allocationFailureSnapshot={0},retrySnapshot={0};
+    if (runTraversal && fixture) {
+      agr_dex_game *failureGame=agr_dex_game_create_for_launch(fixture.bytes,(uint32_t)fixture.length,
+          "Ltest/TestActivity;","Ltest/TestApplication;","test.activity.launch");
+      if (failureGame) {
+        invalidTraversal=agr_dex_game_do_traversal(failureGame,displayWidth,displayHeight);
+        if (agr_dex_game_start_activity(failureGame)==0 &&
+            agr_dex_game_set_relayout_gate(failureGame,rejectRelayout,NULL)==0) {
+          relayoutFailure=agr_dex_game_do_traversal(failureGame,displayWidth,displayHeight);
+          agr_dex_game_runtime_snapshot(failureGame,&relayoutFailureSnapshot);
+        }
+        if (agr_dex_game_set_relayout_gate(failureGame,NULL,NULL)==0 &&
+            agr_dex_game_set_surface_allocator(failureGame,rejectSurfaceAllocation,
+                                               rejectSurfaceRelease,NULL)==0) {
+          allocationFailure=agr_dex_game_do_traversal(failureGame,displayWidth,displayHeight);
+          agr_dex_game_runtime_snapshot(failureGame,&allocationFailureSnapshot);
+          if (agr_dex_game_set_surface_allocator(failureGame,NULL,NULL,NULL)==0) {
+            retryAfterFailure=agr_dex_game_do_traversal(failureGame,displayWidth,displayHeight);
+            agr_dex_game_runtime_snapshot(failureGame,&retrySnapshot);
+          }
+        }
+        agr_dex_game_destroy(failureGame);
+      }
+      contractPassed=contractPassed && invalidTraversal!=0 && relayoutFailure!=0 &&
+          !relayoutFailureSnapshot.surface_valid &&
+          relayoutFailureSnapshot.traversal_scheduled && allocationFailure!=0 &&
+          !allocationFailureSnapshot.surface_valid &&
+          allocationFailureSnapshot.traversal_scheduled && retryAfterFailure==0 &&
+          retrySnapshot.surface_valid && retrySnapshot.layout_complete;
+    }
     NSDictionary *contractResult=@{ @"passed":@(contractPassed), @"launch_result":@(contractLaunch),
       @"activity_marker":@(contractMarker),
       @"post_resume_completed":@(contract && agr_dex_game_post_resume_completed(contract)==1),
@@ -1050,6 +1112,16 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(BOOL runTraversal,
       @"viewroot_attach_completed":@(contractSnapshot.viewroot_attach_completed!=0),
       @"owner_graph":@(ownerGraph), @"framework_trace":contractTrace,
       @"traversal_result":@(contractTraversal),
+      @"second_traversal_result":@(secondTraversal),
+      @"surface_persistent":@(surfacePersistent),
+      @"second_traversal":dexSnapshotDictionary(&contractSecond),
+      @"invalid_traversal_result":@(invalidTraversal),
+      @"relayout_failure_result":@(relayoutFailure),
+      @"relayout_failure_snapshot":dexSnapshotDictionary(&relayoutFailureSnapshot),
+      @"surface_failure_result":@(allocationFailure),
+      @"surface_failure_snapshot":dexSnapshotDictionary(&allocationFailureSnapshot),
+      @"retry_result":@(retryAfterFailure),
+      @"retry_snapshot":dexSnapshotDictionary(&retrySnapshot),
       @"after_traversal":dexSnapshotDictionary(&contractAfter) };
     if (contract) agr_dex_game_destroy(contract);
     NSString *planPath=[[NSBundle mainBundle] pathForResource:@"batch-plan" ofType:@"json"];
