@@ -56,3 +56,25 @@ GitHub Actions run `35554563644` validated commit `8e717294670a8ab19f2d7ca62e13a
 | Workflow wall time | 7m39s | all required validation stages passed |
 
 This first validation demonstrates runner reuse and removal of the second Simulator build/boot/install path. It is not a warm-cache timing comparison: ANGLE and Rust were cold, and the sample cache had already been populated by an earlier attempt. The Rust workflow key also initially hashed an ignored, untracked `Cargo.lock`; the follow-up changes key it from the tracked `Cargo.toml`, Rust version, and target triple. A subsequent validation is required to measure the corrected cold-sample path and warm-cache path separately.
+
+## Second composed validation (corrected cold-sample and Rust-cache keys)
+
+GitHub Actions run `35555626085` validated commit `ad731b64ee3d1f55fb3ef7a508a92a8f43f9fce4`, tree `dd4a97533631f7a7bcc4753ac3bd08a0083f8b31`. Source contract, sample preparation, focused Framework probe, Runtime contracts, bounded smoke, real-APK regressions, iphoneos build, and exact-tree summary all passed. Closure evidence was skipped because this was a validation run. Workflow wall time was **7m26s**.
+
+| Stage | Seconds | Cache / execution evidence |
+|---|---:|---|
+| Sample preparation | 12 | corrected sample-cache key missed; locked APKs fetched, SHA-256 verified, and cache saved |
+| Simulator sample prep | 1 | cross-OS sample cache hit; no duplicate index fetch |
+| Dependency preparation | 6 | completed |
+| Compile/link | 192 | ANGLE hit; corrected Rust target key missed and cache saved |
+| Install | 15 | one install for the Simulator lane |
+| Focused probe | 6 | pass |
+| Runtime contracts | 55 | pass |
+| Bounded smoke | 16 | pass, reusing the installed Simulator app |
+| Real-APK regressions | 70 | pass, reusing the same Simulator |
+| iphoneos build | 40 | pass on separate macOS runner |
+| Workflow wall time | 7m26s | all required validation stages passed |
+
+The run's emitted `simulator_boot_total=199s` is **not** an isolated boot measurement: the previous timer began before sample/dependency/build work and ended when the already-running boot process was joined. It is excluded from boot comparisons. The boot script now emits request/ready markers so the next validation measures only that interval. This is an instrumentation correction; it does not change build, install, test, or Runtime behavior.
+
+Compared with the pre-change run, aggregate macOS execution fell from about **12m16s** (11m19s across two overlapping Simulator jobs plus 57s iphoneos) to about **7m20s** across the composed Simulator and device-build jobs on the first successful composed run. The second run remained about **7m26s wall time** because it exercised the corrected sample and Rust cache miss paths; the cold download itself took 12s and the miss did not duplicate Simulator setup. Wall time is not yet claimed as improved. The validated gain is reduced macOS runner consumption and removal of the duplicate Simulator build/boot/install path.

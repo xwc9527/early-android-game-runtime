@@ -145,7 +145,7 @@ jobs:
       rust_cache_hit: ${{ steps.rust-cache.outputs.cache-hit || 'false' }}
     env:
       RUN_KIND: ${{ github.event_name == 'push' && github.ref_name == 'phase/ci-execution-composition-1' && 'validation' || inputs.run_kind || 'discovery' }}
-      AGR_SIMULATOR_PROFILE: ${{ inputs.run_kind == 'discovery' && github.event_name != 'push' && 'focused-framework' || 'full' }}
+      AGR_SIMULATOR_PROFILE: ${{ ((github.event_name == 'push' && github.ref_name == 'phase/ci-execution-composition-1') || inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -259,7 +259,7 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-${{ inputs.run_kind == 'discovery' && github.event_name != 'push' && 'focused-framework' || 'full' }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-${{ ((github.event_name == 'push' && github.ref_name == 'phase/ci-execution-composition-1') || inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Save verified ANGLE package cache
         if: ${{ always() && steps.setup.outcome == 'success' && steps.angle-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
@@ -396,7 +396,7 @@ jobs:
         if: always()
         env:
           RUN_KIND: validation
-          AGR_SIMULATOR_PROFILE: ${{ github.event_name == 'push' && github.ref_name == 'phase/ci-execution-composition-1' && 'full' || (inputs.run_kind == 'discovery' && 'focused-framework' || 'full') }}
+          AGR_SIMULATOR_PROFILE: ${{ ((github.event_name == 'push' && github.ref_name == 'phase/ci-execution-composition-1') || inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}
           CACHE_SAMPLES_HIT: ${{ needs.simulator-validation.outputs.samples_cache_hit }}
           CACHE_SAMPLES_SEED_HIT: ${{ needs.sample-preparation.outputs.cache_hit }}
           CACHE_ANGLE_HIT: ${{ needs.simulator-validation.outputs.angle_cache_hit }}

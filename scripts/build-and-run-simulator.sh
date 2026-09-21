@@ -110,7 +110,9 @@ if [[ "$MODE" == "boot" || "$MODE" == "all" ]]; then
 DEVICE="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["udid"] for xs in d.values() for x in xs if x["name"]=="iPhone 16 Pro"))')"
 printf '%s\n' "$DEVICE" > "$ARTIFACTS/simulator-device.txt"
 phase "boot Simulator $DEVICE"
+phase "simulator boot requested $DEVICE"
 xcrun simctl boot "$DEVICE" 2>/dev/null || true; xcrun simctl bootstatus "$DEVICE" -b
+phase "simulator boot ready $DEVICE"
 elif [[ "$MODE" == "install" || "$MODE" == "run" ]]; then
   test -s "$ARTIFACTS/simulator-device.txt"
   DEVICE="$(cat "$ARTIFACTS/simulator-device.txt")"

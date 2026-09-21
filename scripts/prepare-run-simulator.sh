@@ -6,7 +6,6 @@ ARTIFACTS="$ROOT/build/artifacts"
 mkdir -p "$ARTIFACTS"
 : > "$ARTIFACTS/ci-stage-timings.jsonl"
 BOOT_LOG="$ARTIFACTS/simulator-boot.log"
-BOOT_STARTED="$(date -u +%s)"
 
 record() {
   local name="$1" start end status
@@ -39,9 +38,30 @@ record sample_preparation bash "$ROOT/scripts/build-and-run-simulator.sh" prepar
 record dependency_preparation bash "$ROOT/scripts/build-and-run-simulator.sh" deps
 record compile_link bash "$ROOT/scripts/build-and-run-simulator.sh" build
 record simulator_boot_wait wait "$BOOT_PID"
-BOOT_READY="$(date -u +%s)"
-printf '{"stage":"simulator_boot_total","job":"%s","profile":"%s","exit_code":0,"duration_seconds":%s,"started_epoch":%s,"finished_epoch":%s}\n' \
-  "${GITHUB_JOB:-local}" "$PROFILE" "$((BOOT_READY-BOOT_STARTED))" "$BOOT_STARTED" "$BOOT_READY" >> "$ARTIFACTS/ci-stage-timings.jsonl"
+python3 - "$BOOT_LOG" "$ARTIFACTS/ci-stage-timings.jsonl" "$PROFILE" "${GITHUB_JOB:-local}" <<'PY'
+import datetime, json, pathlib, sys
+log_path, timings_path, profile, job = sys.argv[1:]
+requested = ready = None
+for line in pathlib.Path(log_path).read_text(encoding="utf-8").splitlines():
+    fields = line.split(maxsplit=2)
+    if len(fields) != 3 or fields[0] != "AGR_SMOKE_PHASE":
+        continue
+    stamp = datetime.datetime.fromisoformat(fields[1].replace("Z", "+00:00"))
+    event = fields[2].split()
+    if event[:3] == ["simulator", "boot", "requested"]:
+        requested = stamp
+    elif event[:3] == ["simulator", "boot", "ready"]:
+        ready = stamp
+if requested is None or ready is None or ready < requested:
+    raise SystemExit(f"missing or invalid Simulator boot markers in {log_path}")
+duration = round((ready - requested).total_seconds())
+record = {"stage":"simulator_boot_total", "job":job, "profile":profile,
+          "exit_code":0, "duration_seconds":duration,
+          "started_epoch":int(requested.timestamp()), "finished_epoch":int(ready.timestamp())}
+with pathlib.Path(timings_path).open("a", encoding="utf-8") as out:
+    out.write(json.dumps(record) + "\n")
+print("AGR_CI_STAGE_RESULT " + json.dumps(record, sort_keys=True))
+PY
 BOOT_PID=""
 trap - EXIT
 record install bash "$ROOT/scripts/build-and-run-simulator.sh" install
