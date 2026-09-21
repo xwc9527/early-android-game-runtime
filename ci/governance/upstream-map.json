@@ -38,7 +38,7 @@
           "runNativeActivityApk / ANativeActivity_onCreate guest entry"
         ],
         "source_hashes": {
-          "App/main.m": "a69e6a7869f0018c14e3c44fd1ec2b33e644417ed0790ede5c448aea5a4ae4dd",
+          "App/main.m": "0821cc51d40a66d8c84fff0d8d3d66ba2eb57dc20109e7b7ae487f5cb7428465",
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b"
         }
       },
@@ -211,7 +211,7 @@
         ],
         "source_hashes": {
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
-          "App/main.m": "a69e6a7869f0018c14e3c44fd1ec2b33e644417ed0790ede5c448aea5a4ae4dd"
+          "App/main.m": "0821cc51d40a66d8c84fff0d8d3d66ba2eb57dc20109e7b7ae487f5cb7428465"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -327,7 +327,7 @@
         "source_hashes": {
           "Runtime/GuestRuntime/agr_jni_methods.c": "8bdc5b524175bb6066c696fa347162d43dc494d31a1b6a2b47914a6418f07d3d",
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
-          "Runtime/DexLoom/game_dex_runner.c": "d4612cd60343117c1b5f5336c2065d9452b3659ca9ccdc22ef3cf31b684955ff"
+          "Runtime/DexLoom/game_dex_runner.c": "cfd294c68bd7bbe88bbb8ca45a91809f02177ce6dc9ceab63fc63c134bc1968f"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -684,7 +684,7 @@
           "gc_mark_roots"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "d4612cd60343117c1b5f5336c2065d9452b3659ca9ccdc22ef3cf31b684955ff",
+          "Runtime/DexLoom/game_dex_runner.c": "cfd294c68bd7bbe88bbb8ca45a91809f02177ce6dc9ceab63fc63c134bc1968f",
           "Runtime/DexLoom/VM/dx_vm.c": "cfa35bbe1b40de76c8c399b16d53a03fcd199b010bfed3538068c8cc7877abc7"
         }
       },
@@ -770,7 +770,7 @@
           "poc_create"
         ],
         "source_hashes": {
-          "App/main.m": "a69e6a7869f0018c14e3c44fd1ec2b33e644417ed0790ede5c448aea5a4ae4dd",
+          "App/main.m": "0821cc51d40a66d8c84fff0d8d3d66ba2eb57dc20109e7b7ae487f5cb7428465",
           "Runtime/DexLoom/DEX/dx_dex.c": "94cc603e0b985213fddec8b4b3935e5074603fe31f85032963384794da1eb4f8",
           "Runtime/DexLoom/poc_host.c": "7844c264f4ab1533ac91d4f35af71c07a60cb4ef15c8d6bfab3db5c28f982de1"
         }
@@ -874,9 +874,9 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/APK/dx_manifest.c": "17d608e345e27ba2bcf564dd61e7918c79da4b243f32d811e59126996b27519e",
-          "Runtime/DexLoom/game_dex_runner.c": "d4612cd60343117c1b5f5336c2065d9452b3659ca9ccdc22ef3cf31b684955ff",
+          "Runtime/DexLoom/game_dex_runner.c": "cfd294c68bd7bbe88bbb8ca45a91809f02177ce6dc9ceab63fc63c134bc1968f",
           "Runtime/DexLoom/VM/dx_vm.c": "cfa35bbe1b40de76c8c399b16d53a03fcd199b010bfed3538068c8cc7877abc7",
-          "App/main.m": "a69e6a7869f0018c14e3c44fd1ec2b33e644417ed0790ede5c448aea5a4ae4dd"
+          "App/main.m": "0821cc51d40a66d8c84fff0d8d3d66ba2eb57dc20109e7b7ae487f5cb7428465"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -928,9 +928,27 @@
           "ViewRootImpl.scheduleTraversals"
         ],
         "source_hashes": {
-          "core/java/android/view/WindowManagerImpl.java": "UNVERIFIED",
-          "core/java/android/view/WindowManagerGlobal.java": "UNVERIFIED",
-          "core/java/android/view/ViewRootImpl.java": "UNVERIFIED"
+          "core/java/android/view/WindowManagerImpl.java": "c5357b9484a4cb83260e8b43b2afa9f0666b77d51037501ac52022f3db748d25",
+          "core/java/android/view/WindowManagerGlobal.java": "8cd84db82a24a719be19fdb1b227727e1673ae3168c70a3e5410408aae4b6298",
+          "core/java/android/view/ViewRootImpl.java": "d6c645e1a3d4d3d2c16a79d198692538164a5c8875d29d5b2522cdc28e5377e5"
+        },
+        "source_urls": {
+          "core/java/android/view/WindowManagerImpl.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/view/WindowManagerImpl.java?format=TEXT",
+          "core/java/android/view/WindowManagerGlobal.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/view/WindowManagerGlobal.java?format=TEXT",
+          "core/java/android/view/ViewRootImpl.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/view/ViewRootImpl.java?format=TEXT"
+        },
+        "symbols_by_path": {
+          "core/java/android/view/WindowManagerImpl.java": [
+            "public void addView"
+          ],
+          "core/java/android/view/WindowManagerGlobal.java": [
+            "public void addView"
+          ],
+          "core/java/android/view/ViewRootImpl.java": [
+            "public void setView",
+            "void requestLayout",
+            "void scheduleTraversals"
+          ]
         }
       },
       "agr": {
@@ -941,28 +959,32 @@
           "App/main.m"
         ],
         "symbols": [
-          "agr_viewroot_attach",
-          "viewroot.created",
-          "viewroot.traversal.scheduled",
+          "agr_viewroot_add_view",
+          "request_first_layout",
+          "session_add_to_display",
           "handoff.viewroot_traversal"
         ],
-        "source_hashes": {}
+        "source_hashes": {
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "674bc8f6297eccd2a9d553b4fd4287b653271ced6cd61a1c0b13675d909df6c3",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "64813444ad3487745eabf4474c23226134f716e589eee21e38ecaca84da79c2c",
+          "Runtime/DexLoom/game_dex_runner.c": "cfd294c68bd7bbe88bbb8ca45a91809f02177ce6dc9ceab63fc63c134bc1968f",
+          "App/main.m": "0821cc51d40a66d8c84fff0d8d3d66ba2eb57dc20109e7b7ae487f5cb7428465"
+        }
       },
-      "verified_at_commit": "PENDING",
-      "status": "UNVERIFIED",
+      "verified_at_commit": "32efd58",
+      "status": "VALID",
       "dependencies": [
-        "framework.activity.launch",
-        "looper.poll"
+        "framework.activity.launch"
       ],
       "observable_semantics": [
-        "ViewRoot is created after WindowManager.addView",
-        "decor root and parent are assigned",
-        "initial traversal is scheduled before the downstream traversal owner",
-        "window session attachment is represented without Binder/system_server"
+        "WindowManager.addView establishes ViewRoot, Decor and LayoutParams identity",
+        "ViewRoot schedules first traversal before IWindowSession.addToDisplay",
+        "successful session attach precedes Decor parent assignment"
       ],
       "internal_invariants": [
-        "attach state is process-local and idempotent per launch",
-        "surface drawing and performTraversals remain outside this phase"
+        "one ViewRoot and AttachInfo object own the Decor per addView",
+        "first traversal remains pending at the handoff",
+        "no relayout or Surface is created by this phase"
       ],
       "execution_placement": "HOST-DEX_HLE",
       "host_substitutions": [
