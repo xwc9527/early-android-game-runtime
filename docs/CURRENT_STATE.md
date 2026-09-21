@@ -31,6 +31,15 @@ The exact candidate passed focused contract, unchanged real-APK regression, Simu
 - Existing linker, pthread, EHABI, allocator, NativeActivity/Input and graphics contracts remain protected.
 - No per-game Runtime behavior is permitted; the harness may identify Frozen Bubble and assert its expected observable trace.
 
+## Architecture Falsification Gate
+
+The falsification experiment on `phase/architecture-falsification-1` returned `H1 = PASS`,
+`H2 = PASS`, `PROJECT = CONTINUE`; `D001` was not reopened. Evidence is
+`docs/ARCHITECTURE_FALSIFICATION_REPORT.md` and `build/artifacts/architecture-falsification.json`,
+from discovery run `35654415068` and blind holdout run `35656209596`. No production Runtime
+behavior was changed by the experiment. Its meaning is bounded by first-blocker censoring: it
+describes the compatibility frontier currently reached, not complete gameplay paths.
+
 ## Closure Contract
 
 Exact-commit closure and corrected post-merge validation are complete. ViewRoot attach is MERGED/STABLE for this contract. No Surface, relayout or rendering claim is made.

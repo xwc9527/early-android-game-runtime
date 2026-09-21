@@ -130,7 +130,8 @@ def main() -> None:
     parser.add_argument("--artifacts", default="build/artifacts")
     parser.add_argument("--commit", required=True)
     parser.add_argument("--tree", required=True)
-    parser.add_argument("--ci-runs", nargs="*", default=[])
+    parser.add_argument("--ci-runs", nargs="*", default=[],
+                        help="run_id:commit:tree:purpose entries for every expensive run")
     args = parser.parse_args()
     root = pathlib.Path(__file__).resolve().parents[1]
     base = root / args.artifacts
@@ -141,12 +142,31 @@ def main() -> None:
     prereg = load(base / "preregistered-samples.json")
     discovery = load(base / "frontier-classification-discovery.json")
     holdout = load(base / "frontier-classification-holdout.json")
+    sensitivity = load(base / "order-sensitivity.json")
     for name in (census, union, boundaries, prereg):
         if name is None:
             raise SystemExit("census, union, boundary map and pre-registration are all required")
 
     h1 = h1_verdict(boundaries, union)
     h2 = h2_verdict(discovery, holdout)
+    if h2["verdict"] == "PASS":
+        if sensitivity is None:
+            h2["verdict"] = "NOT_ESTABLISHED"
+            h2["basis"] = ("H2 conditions hold but no order-sensitivity evidence exists, so the "
+                           "required check that convergence is not an ordering artifact is missing.")
+        else:
+            fraction = sensitivity["ratio_distribution"]["fraction_meeting_threshold"]
+            h2["order_sensitivity"] = {
+                "registered_ratio": sensitivity["registered_ratio"],
+                "reversed_ratio": sensitivity["reversed_ratio"],
+                "fraction_of_permutations_meeting_threshold": fraction,
+                "permutations_evaluated": sensitivity["permutations_evaluated"],
+            }
+            if not (sensitivity["reversed_ratio"] is not None
+                    and sensitivity["reversed_ratio"] <= 0.5 and fraction >= 0.5):
+                h2["verdict"] = "FAIL"
+                h2["basis"] = ("H2_NOT_CONVERGING: the marginal threshold is met only under the "
+                               "registered order, which indicates an ordering artifact.")
     project = project_verdict(h1, h2)
 
     clusters = collections.Counter(s["cluster"] for s in union["samples"])
@@ -155,7 +175,10 @@ def main() -> None:
         "schema_version": 1,
         "tested_commit": args.commit,
         "tested_tree": args.tree,
-        "ci_runs": args.ci_runs,
+        "ci_runs": [
+            dict(zip(("run_id", "tested_commit", "tested_tree", "purpose"), entry.split(":")))
+            for entry in args.ci_runs
+        ],
         "granularity_fingerprint": union["granularity_fingerprint"],
         "census": {
             "sample_count": census["sample_count"],
@@ -188,6 +211,7 @@ def main() -> None:
             "phase_c": [s["id"] for s in prereg["phase_c"]["samples"]],
             "thresholds": prereg["thresholds"],
         },
+        "order_sensitivity": sensitivity,
         "dynamic": {
             "discovery": discovery["metrics"] if discovery else None,
             "discovery_rows": discovery["rows"] if discovery else None,

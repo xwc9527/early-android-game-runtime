@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "source": "build/artifacts/frontier-classification-discovery.json",
+  "registered_order": [
+    "crosswords",
+    "gloomy-dungeons-1",
+    "kungfoo-barracuda",
+    "minilens",
+    "minetest",
+    "flickit",
+    "andors-trail",
+    "pixel-dungeon",
+    "a2048",
+    "pysolfc"
+  ],
+  "registered_ratio": 0.11111111111111112,
+  "reversed_ratio": 0.4285714285714286,
+  "permutations_evaluated": 20000,
+  "exhaustive": false,
+  "ratio_distribution": {
+    "min": 0.0,
+    "median": 0.11111111111111112,
+    "mean": 0.2003,
+    "max": 1.0,
+    "fraction_meeting_threshold": 0.9552
+  },
+  "per_sample_family_counts": [
+    {
+      "id": "crosswords",
+      "cluster": "custom-jni-canvas",
+      "families": 0
+    },
+    {
+      "id": "gloomy-dungeons-1",
+      "cluster": "custom-jni-gl",
+      "families": 6
+    },
+    {
+      "id": "kungfoo-barracuda",
+      "cluster": "custom-nativeactivity",
+      "families": 6
+    },
+    {
+      "id": "minilens",
+      "cluster": "godot",
+      "families": 6
+    },
+    {
+      "id": "minetest",
+      "cluster": "irrlicht-nativeactivity",
+      "families": 5
+    },
+    {
+      "id": "flickit",
+      "cluster": "libgdx",
+      "families": 2
+    },
+    {
+      "id": "andors-trail",
+      "cluster": "pure-java-canvas",
+      "families": 3
+    },
+    {
+      "id": "pixel-dungeon",
+      "cluster": "pure-java-gl",
+      "families": 3
+    },
+    {
+      "id": "a2048",
+      "cluster": "pure-java-webview",
+      "families": 5
+    },
+    {
+      "id": "pysolfc",
+      "cluster": "python-sdl",
+      "families": 6
+    }
+  ],
+  "interpretation_rule": "If the threshold is met under the registered order, the reversed order and the large majority of permutations, the convergence is a property of the sample set rather than of the chosen order."
+}

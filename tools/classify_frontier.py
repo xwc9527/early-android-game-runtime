@@ -58,6 +58,23 @@ MANUAL_ATTRIBUTION: dict[str, dict] = {
                  "This is an AGR interpreter completeness defect, not an Android public contract "
                  "and not specific to this game; it is excluded from the public-contract counts.",
     },
+    "geometri-destroyer": {
+        "classification": "RUNTIME_INTERNAL_GAP",
+        "blocking_family": None,
+        "blocking_method": "Ljava/lang/Object;-><init>V during com.badlogic.gdx.utils.Array.<init>",
+        "basis": "Identical ClassCastException and identical stopping frame as flickit, in the same "
+                 "engine code path. Same AGR DEX type-system defect, not an Android public "
+                 "contract; excluded from the public-contract counts.",
+    },
+    "qt-minesweeper": {
+        "classification": "RUNTIME_INTERNAL_GAP",
+        "blocking_family": None,
+        "blocking_method": "Ljava/lang/Class;->getDeclaredFieldsL after Class.forName",
+        "basis": "The stop is in java.lang.Class reflection inside AGR's host DEX runtime, not in "
+                 "any android.* contract. It is a core library completeness gap shared by every "
+                 "app that reflects over its own classes; excluded from the public-contract "
+                 "counts.",
+    },
 }
 
 HARNESS_MARKERS = (

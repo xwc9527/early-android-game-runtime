@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "sample_set": "falsification-holdout",
+  "granularity_fingerprint": "62d94962023b26bb3cc18fa4ef772f63098a7680b1f89a5103f22efe1f9d6b59",
+  "order_source": "build/artifacts/preregistered-samples.json",
+  "rows": [
+    {
+      "index": 0,
+      "id": "qt-minesweeper",
+      "cluster": "qt",
+      "last_stage": "on_create_entered",
+      "activity_launch_crossed": 1,
+      "viewroot_attach_completed": 0,
+      "failure_signature": "missing_framework:Activity.onCreate failed: ",
+      "raw_detail": "Activity.onCreate failed: ",
+      "framework_trace_length": 5,
+      "elapsed_ms": 838,
+      "classification": "RUNTIME_INTERNAL_GAP",
+      "blocking_family": null,
+      "blocking_method": "Ljava/lang/Class;->getDeclaredFieldsL after Class.forName",
+      "basis": "The stop is in java.lang.Class reflection inside AGR's host DEX runtime, not in any android.* contract. It is a core library completeness gap shared by every app that reflects over its own classes; excluded from the public-contract counts.",
+      "families": [
+        "app.application_lifecycle",
+        "app.activity_lifecycle"
+      ]
+    },
+    {
+      "index": 1,
+      "id": "meritous",
+      "cluster": "sdl",
+      "last_stage": "resumed",
+      "activity_launch_crossed": 1,
+      "viewroot_attach_completed": 1,
+      "failure_signature": "success:activity_resumed",
+      "raw_detail": "",
+      "framework_trace_length": 27,
+      "elapsed_ms": 37,
+      "classification": "KNOWN_PUBLIC_CONTRACT",
+      "families": [
+        "app.application_lifecycle",
+        "app.activity_lifecycle",
+        "app.context",
+        "resources.asset_access",
+        "window.session",
+        "view.hierarchy"
+      ],
+      "blocking_family": null,
+      "blocking_method": null,
+      "basis": "sample reached activity_resumed on the unchanged Runtime"
+    },
+    {
+      "index": 2,
+      "id": "heriswap",
+      "cluster": "soupeaucaillou",
+      "last_stage": "on_create_entered",
+      "activity_launch_crossed": 1,
+      "viewroot_attach_completed": 0,
+      "failure_signature": "missing_framework:Activity.onCreate failed: ",
+      "raw_detail": "Activity.onCreate failed: ",
+      "framework_trace_length": 5,
+      "elapsed_ms": 49,
+      "classification": "KNOWN_PUBLIC_CONTRACT",
+      "families": [
+        "app.application_lifecycle",
+        "app.activity_lifecycle"
+      ],
+      "blocking_family": "app.activity_lifecycle",
+      "blocking_method": "Landroid/app/Activity;->onCreateVL",
+      "basis": "blocked inside an already implemented public contract"
+    },
+    {
+      "index": 3,
+      "id": "geometri-destroyer",
+      "cluster": "libgdx",
+      "last_stage": "context_attached",
+      "activity_launch_crossed": 0,
+      "viewroot_attach_completed": 0,
+      "failure_signature": "missing_framework:Activity constructor failed: ",
+      "raw_detail": "Activity constructor failed: ",
+      "framework_trace_length": 2,
+      "elapsed_ms": 37,
+      "classification": "RUNTIME_INTERNAL_GAP",
+      "blocking_family": null,
+      "blocking_method": "Ljava/lang/Object;-><init>V during com.badlogic.gdx.utils.Array.<init>",
+      "basis": "Identical ClassCastException and identical stopping frame as flickit, in the same engine code path. Same AGR DEX type-system defect, not an Android public contract; excluded from the public-contract counts.",
+      "families": [
+        "app.application_lifecycle",
+        "app.activity_lifecycle"
+      ]
+    },
+    {
+      "index": 4,
+      "id": "droidfish",
+      "cluster": "custom-jni-canvas",
+      "last_stage": "on_create_entered",
+      "activity_launch_crossed": 1,
+      "viewroot_attach_completed": 0,
+      "failure_signature": "missing_framework:Activity.onCreate failed: ",
+      "raw_detail": "Activity.onCreate failed: ",
+      "framework_trace_length": 5,
+      "elapsed_ms": 27,
+      "classification": "KNOWN_PUBLIC_CONTRACT",
+      "families": [
+        "app.context",
+        "app.activity_lifecycle"
+      ],
+      "blocking_family": "app.activity_lifecycle",
+      "blocking_method": "Landroid/app/Activity;->getWindowL",
+      "basis": "blocked inside an already implemented public contract"
+    }
+  ],
+  "curve": [
+    {
+      "index": 0,
+      "id": "qt-minesweeper",
+      "cluster": "qt",
+      "touched": 2,
+      "marginal_new_contracts": 2,
+      "cumulative_unique_contracts": 2,
+      "contract_reuse_ratio": 0.0,
+      "new_contracts": [
+        "app.activity_lifecycle",
+        "app.application_lifecycle"
+      ]
+    },
+    {
+      "index": 1,
+      "id": "meritous",
+      "cluster": "sdl",
+      "touched": 6,
+      "marginal_new_contracts": 4,
+      "cumulative_unique_contracts": 6,
+      "contract_reuse_ratio": 0.3333,
+      "new_contracts": [
+        "app.context",
+        "resources.asset_access",
+        "view.hierarchy",
+        "window.session"
+      ]
+    },
+    {
+      "index": 2,
+      "id": "heriswap",
+      "cluster": "soupeaucaillou",
+      "touched": 2,
+      "marginal_new_contracts": 0,
+      "cumulative_unique_contracts": 6,
+      "contract_reuse_ratio": 1.0,
+      "new_contracts": []
+    },
+    {
+      "index": 3,
+      "id": "geometri-destroyer",
+      "cluster": "libgdx",
+      "touched": 2,
+      "marginal_new_contracts": 0,
+      "cumulative_unique_contracts": 6,
+      "contract_reuse_ratio": 1.0,
+      "new_contracts": []
+    },
+    {
+      "index": 4,
+      "id": "droidfish",
+      "cluster": "custom-jni-canvas",
+      "touched": 2,
+      "marginal_new_contracts": 0,
+      "cumulative_unique_contracts": 6,
+      "contract_reuse_ratio": 1.0,
+      "new_contracts": []
+    }
+  ],
+  "metrics": {
+    "C_first": 3.0,
+    "C_last": 0.0,
+    "c_last_over_c_first": 0.0,
+    "threshold_marginal_pass": true,
+    "known_over_in_scope_ratio": 1.0,
+    "holdout_reuse_ratio": 1.0,
+    "classification_counts": {
+      "KNOWN_PUBLIC_CONTRACT": 3,
+      "RUNTIME_INTERNAL_GAP": 2
+    }
+  },
+  "unmapped_families_seen": [],
+  "limitations": [
+    "A single run exposes only the first blocker of each game, not every gap on its complete gameplay path.",
+    "These numbers describe the current compatibility frontier only."
+  ]
+}
