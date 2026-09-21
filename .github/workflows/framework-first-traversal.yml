@@ -8,13 +8,15 @@ on:
       - 'App/main.m'
       - 'scripts/build-and-run-simulator.sh'
       - 'ci/framework-first-traversal-contract.py'
+      - 'ci/build-framework-first-traversal-summary.py'
+      - 'ci/governance/**'
       - '.github/workflows/framework-first-traversal.yml'
   workflow_dispatch:
     inputs:
       run_kind:
         description: Evidence intent
         type: choice
-        options: [discovery, validation]
+        options: [discovery, validation, closure]
         default: discovery
 
 permissions:
@@ -36,11 +38,16 @@ jobs:
           cc -std=gnu11 -Wall -Wextra -fsyntax-only \
             -I Runtime/DexLoom/Include \
             Runtime/DexLoom/game_dex_runner.c
+      - name: Verify API19 source, semantic differential and governance
+        run: |
+          python3 ci/upstream-map.py --require-valid framework.viewroot.first_traversal --verify-upstream --verify-only framework.viewroot.first_traversal --output build/artifacts/first-traversal-upstream-map.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-first-traversal.json
+          python3 ci/validate-governance.py --mode discovery
 
   simulator-focused:
     needs: linux-source-contract
     runs-on: macos-15
-    timeout-minutes: 70
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -84,16 +91,40 @@ jobs:
             build/artifacts/simulator-boot.log
             build/artifacts/ci-stage-timings.jsonl
           if-no-files-found: warn
-      - name: Protected contracts and regressions
-        if: ${{ inputs.run_kind == 'validation' }}
-        timeout-minutes: 35
+      - name: Protected Runtime contracts
+        id: contracts
+        if: ${{ inputs.run_kind == 'validation' || inputs.run_kind == 'closure' }}
+        timeout-minutes: 12
+        continue-on-error: true
+        run: bash ci/run-contracts.sh
+      - name: Bounded Simulator Runtime smoke
+        id: smoke
+        if: ${{ inputs.run_kind == 'validation' || inputs.run_kind == 'closure' }}
+        timeout-minutes: 16
+        continue-on-error: true
+        run: python3 scripts/run-simulator-smoke-bounded.py --mode run --timeout-seconds 900
+      - name: Protected Runtime and real-game regressions
+        id: regressions
+        if: ${{ inputs.run_kind == 'validation' || inputs.run_kind == 'closure' }}
+        timeout-minutes: 18
+        continue-on-error: true
+        run: bash ci/run-regressions.sh
+      - name: Publish protected evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-first-traversal-protected
+          path: build/artifacts
+          if-no-files-found: warn
+      - name: Enforce protected stage outcomes
+        if: ${{ always() && (inputs.run_kind == 'validation' || inputs.run_kind == 'closure') }}
         run: |
-          bash ci/run-contracts.sh
-          python3 scripts/run-simulator-smoke-bounded.py --mode run --timeout-seconds 900
-          bash ci/run-regressions.sh
+          test '${{ steps.contracts.outcome }}' = success
+          test '${{ steps.smoke.outcome }}' = success
+          test '${{ steps.regressions.outcome }}' = success
 
   iphoneos:
-    if: ${{ inputs.run_kind == 'validation' }}
+    if: ${{ inputs.run_kind == 'validation' || inputs.run_kind == 'closure' }}
     needs: linux-source-contract
     runs-on: macos-15
     timeout-minutes: 30
@@ -109,3 +140,37 @@ jobs:
           key: agr-angle-iphoneos-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
       - name: Build arm64 iphoneos Runtime
         run: bash scripts/build-iphoneos.sh
+
+  closure-evidence:
+    if: ${{ always() && inputs.run_kind == 'closure' }}
+    needs: [linux-source-contract, simulator-focused, iphoneos]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download first-traversal focused evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: framework-first-traversal-focused
+          path: build/closure-input
+      - name: Build exact-commit closure evidence
+        if: ${{ needs.linux-source-contract.result == 'success' && needs.simulator-focused.result == 'success' && needs.iphoneos.result == 'success' }}
+        run: |
+          python3 ci/build-framework-first-traversal-summary.py --result build/closure-input/framework-first-traversal.json
+          python3 ci/validate-governance.py --mode closure --summary build/artifacts/framework-first-traversal-run-summary.json
+      - name: Publish closure summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-first-traversal-closure-summary
+          path: build/artifacts/framework-first-traversal-run-summary.json
+          if-no-files-found: warn
+      - name: Enforce required closure stages
+        if: always()
+        run: |
+          test '${{ needs.linux-source-contract.result }}' = success
+          test '${{ needs.simulator-focused.result }}' = success
+          test '${{ needs.iphoneos.result }}' = success
+          test -s build/artifacts/framework-first-traversal-run-summary.json
