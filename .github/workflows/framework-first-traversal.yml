@@ -48,6 +48,8 @@ jobs:
     needs: linux-source-contract
     runs-on: macos-15
     timeout-minutes: 90
+    env:
+      AGR_SIMULATOR_PROFILE: ${{ (inputs.run_kind == 'validation' || inputs.run_kind == 'closure') && 'full' || 'focused-framework' }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -56,7 +58,7 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-focused-framework-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-${{ (inputs.run_kind == 'validation' || inputs.run_kind == 'closure') && 'full' || 'focused-framework' }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Restore ANGLE Simulator slice
         uses: actions/cache/restore@v4
         with:
@@ -74,7 +76,7 @@ jobs:
           key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
       - name: Prepare samples, build, boot and install
         timeout-minutes: 30
-        run: bash scripts/prepare-run-simulator.sh focused-framework
+        run: bash scripts/prepare-run-simulator.sh "$AGR_SIMULATOR_PROFILE"
       - name: Execute synthetic and unchanged APK first-traversal contract
         timeout-minutes: 5
         env:
