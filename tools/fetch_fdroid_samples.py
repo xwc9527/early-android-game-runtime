@@ -16,11 +16,19 @@ INDEXES = (
     ("repo", "https://f-droid.org/repo/index-v1.json"),
     ("archive", "https://f-droid.org/archive/index-v1.json"),
 )
+# The Runtime migration baseline set. `full` stays pinned to it so that closure
+# and validation runs of the existing workflows keep their exact sample scope
+# while the architecture census uses a wider, separate profile.
+RUNTIME_BASELINE = {
+    "kungfoo-barracuda", "gloomy-dungeons-2", "pixel-dungeon",
+    "frozen-bubble", "vector-pinball",
+}
 PROFILES = {
     "focused-activity": {"pixel-dungeon", "frozen-bubble"},
     "focused-framework": {"frozen-bubble"},
-    "runtime-regression": None,
-    "full": None,
+    "runtime-regression": RUNTIME_BASELINE,
+    "full": RUNTIME_BASELINE,
+    "census": None,
 }
 
 
