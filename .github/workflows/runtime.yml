@@ -83,7 +83,7 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-full-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-full-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Restore ANGLE simulator package
         uses: actions/cache@v4
         with:
@@ -98,7 +98,7 @@ jobs:
             Runtime/ArmInterpreter/target
             ~/.cargo/registry
             ~/.cargo/git
-          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock') }}
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
       - name: Validate governance state
         run: python3 ci/validate-governance.py --mode working
       - name: Inspect Xcode and Simulator

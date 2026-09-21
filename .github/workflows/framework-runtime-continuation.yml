@@ -19,6 +19,7 @@ on:
       - 'ci/run-contracts.sh'
       - 'ci/run-regressions.sh'
       - 'ci/build-ci-execution-summary.py'
+      - 'docs/CI_EXECUTION_COMPOSITION_BASELINE.md'
       - '.github/workflows/framework-runtime-continuation.yml'
   workflow_dispatch:
     inputs:
@@ -80,7 +81,7 @@ jobs:
     timeout-minutes: 20
     outputs:
       ready: ${{ steps.prepare.outputs.ready }}
-      cache_hit: ${{ steps.samples-cache.outputs.cache-hit }}
+      cache_hit: ${{ steps.samples-cache.outputs.cache-hit || 'false' }}
     env:
       AGR_SIMULATOR_PROFILE: ${{ ((github.event_name == 'push' && github.ref_name == 'phase/ci-execution-composition-1') || inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}
     steps:
@@ -99,7 +100,7 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-${{ ((github.event_name == 'push' && github.ref_name == 'phase/ci-execution-composition-1') || inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-${{ ((github.event_name == 'push' && github.ref_name == 'phase/ci-execution-composition-1') || inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Prepare hash-verified fixed APK inputs
         id: prepare
         if: ${{ steps.sample-lock.outputs.present == 'true' }}
@@ -112,7 +113,7 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-${{ ((github.event_name == 'push' && github.ref_name == 'phase/ci-execution-composition-1') || inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-${{ ((github.event_name == 'push' && github.ref_name == 'phase/ci-execution-composition-1') || inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Package sample identity and timing evidence
         if: always()
         run: |
@@ -139,9 +140,9 @@ jobs:
       contracts: ${{ steps.contracts.outcome }}
       smoke: ${{ steps.smoke.outcome }}
       regressions: ${{ steps.regressions.outcome }}
-      samples_cache_hit: ${{ steps.samples-cache.outputs.cache-hit }}
-      angle_cache_hit: ${{ steps.angle-cache.outputs.cache-hit }}
-      rust_cache_hit: ${{ steps.rust-cache.outputs.cache-hit }}
+      samples_cache_hit: ${{ steps.samples-cache.outputs.cache-hit || 'false' }}
+      angle_cache_hit: ${{ steps.angle-cache.outputs.cache-hit || 'false' }}
+      rust_cache_hit: ${{ steps.rust-cache.outputs.cache-hit || 'false' }}
     env:
       RUN_KIND: ${{ github.event_name == 'push' && github.ref_name == 'phase/ci-execution-composition-1' && 'validation' || inputs.run_kind || 'discovery' }}
       AGR_SIMULATOR_PROFILE: ${{ inputs.run_kind == 'discovery' && github.event_name != 'push' && 'focused-framework' || 'full' }}
@@ -159,7 +160,7 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-${{ ((github.event_name == 'push' && github.ref_name == 'phase/ci-execution-composition-1') || inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-${{ ((github.event_name == 'push' && github.ref_name == 'phase/ci-execution-composition-1') || inputs.run_kind == 'closure' || inputs.run_kind == 'validation') && 'full' || 'focused-framework' }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Restore ANGLE simulator package
         id: angle-cache
         uses: actions/cache/restore@v4
@@ -176,7 +177,7 @@ jobs:
             Runtime/ArmInterpreter/target
             ~/.cargo/registry
             ~/.cargo/git
-          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock') }}
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
       - name: Prepare samples and app while Simulator boots
         id: setup
         timeout-minutes: 25
@@ -258,7 +259,7 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-${{ inputs.run_kind == 'discovery' && github.event_name != 'push' && 'focused-framework' || 'full' }}-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-${{ inputs.run_kind == 'discovery' && github.event_name != 'push' && 'focused-framework' || 'full' }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Save verified ANGLE package cache
         if: ${{ always() && steps.setup.outcome == 'success' && steps.angle-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
@@ -275,7 +276,7 @@ jobs:
             Runtime/ArmInterpreter/target
             ~/.cargo/registry
             ~/.cargo/git
-          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock') }}
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
       - name: Enforce Simulator validation stages
         if: always()
         run: |
@@ -294,9 +295,9 @@ jobs:
     timeout-minutes: 25
     outputs:
       build: ${{ steps.device_build.outcome }}
-      samples_cache_hit: ${{ steps.samples-cache.outputs.cache-hit }}
-      angle_cache_hit: ${{ steps.angle-cache.outputs.cache-hit }}
-      rust_cache_hit: ${{ steps.rust-cache.outputs.cache-hit }}
+      samples_cache_hit: ${{ steps.samples-cache.outputs.cache-hit || 'false' }}
+      angle_cache_hit: ${{ steps.angle-cache.outputs.cache-hit || 'false' }}
+      rust_cache_hit: ${{ steps.rust-cache.outputs.cache-hit || 'false' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -311,7 +312,7 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-full-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-full-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Restore device ANGLE package
         id: angle-cache
         uses: actions/cache/restore@v4
@@ -328,7 +329,7 @@ jobs:
             Runtime/ArmInterpreter/target
             ~/.cargo/registry
             ~/.cargo/git
-          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-iphoneos-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock') }}
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-iphoneos-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
       - name: Build arm64 iphoneos Runtime
         id: device_build
         run: bash scripts/run-ci-stage.sh iphoneos_build bash scripts/build-iphoneos.sh
@@ -338,7 +339,7 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-full-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-full-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Save device ANGLE package cache
         if: ${{ always() && steps.device_build.outcome == 'success' && steps.angle-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
@@ -355,7 +356,7 @@ jobs:
             Runtime/ArmInterpreter/target
             ~/.cargo/registry
             ~/.cargo/git
-          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-iphoneos-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock') }}
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-iphoneos-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
       - name: Publish iphoneos stage timings
         if: always()
         uses: actions/upload-artifact@v4

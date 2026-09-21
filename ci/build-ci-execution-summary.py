@@ -14,6 +14,17 @@ def git(*args: str) -> str:
     return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
 
 
+def cache_status(name: str) -> str:
+    value = os.environ.get(name)
+    if value is None or value == "not-run":
+        return "not-run"
+    if value.lower() == "true":
+        return "hit"
+    if value.lower() == "false" or value == "":
+        return "miss"
+    return value
+
+
 def main() -> None:
     setup_timings = []
     for timing_path in (
@@ -52,13 +63,13 @@ def main() -> None:
         "run_kind": os.environ.get("RUN_KIND", "discovery"),
         "sample_profile": os.environ.get("AGR_SIMULATOR_PROFILE", "full"),
         "cache": {
-            "samples_hit": os.environ.get("CACHE_SAMPLES_HIT", "not-run"),
-            "samples_seed_hit": os.environ.get("CACHE_SAMPLES_SEED_HIT", "not-run"),
-            "angle_hit": os.environ.get("CACHE_ANGLE_HIT", "not-run"),
-            "rust_hit": os.environ.get("CACHE_RUST_HIT", "not-run"),
-            "iphoneos_samples_hit": os.environ.get("CACHE_IPHONEOS_SAMPLES_HIT", "not-run"),
-            "iphoneos_angle_hit": os.environ.get("CACHE_IPHONEOS_ANGLE_HIT", "not-run"),
-            "iphoneos_rust_hit": os.environ.get("CACHE_IPHONEOS_RUST_HIT", "not-run"),
+            "samples_hit": cache_status("CACHE_SAMPLES_HIT"),
+            "samples_seed_hit": cache_status("CACHE_SAMPLES_SEED_HIT"),
+            "angle_hit": cache_status("CACHE_ANGLE_HIT"),
+            "rust_hit": cache_status("CACHE_RUST_HIT"),
+            "iphoneos_samples_hit": cache_status("CACHE_IPHONEOS_SAMPLES_HIT"),
+            "iphoneos_angle_hit": cache_status("CACHE_IPHONEOS_ANGLE_HIT"),
+            "iphoneos_rust_hit": cache_status("CACHE_IPHONEOS_RUST_HIT"),
         },
         "setup_stage_timings": setup_timings,
         "test_stage_outcomes": outcomes,

@@ -28,7 +28,7 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-focused-activity-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-focused-activity-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Fetch licensed reference samples
         run: python3 tools/fetch_fdroid_samples.py --profile focused-activity --output samples --resources build/dex-resources
       - name: Extract original classes.dex
@@ -86,7 +86,7 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-focused-activity-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-focused-activity-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Restore Simulator ANGLE package
         uses: actions/cache@v4
         with:
@@ -101,7 +101,7 @@ jobs:
             Runtime/ArmInterpreter/target
             ~/.cargo/registry
             ~/.cargo/git
-          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock') }}
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
       - name: Run focused real-APK DEX probe in Simulator
         env:
           DEX_PARSER_COMPATIBILITY: '1'

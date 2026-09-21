@@ -85,7 +85,7 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-focused-activity-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-focused-activity-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Restore Simulator ANGLE package
         uses: actions/cache@v4
         with:
@@ -100,7 +100,7 @@ jobs:
             Runtime/ArmInterpreter/target
             ~/.cargo/registry
             ~/.cargo/git
-          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock') }}
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
       - name: Run focused Activity launch compatibility probe
         id: focused_activity
         env:
@@ -133,7 +133,7 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-full-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-full-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Restore Runtime build cache
         uses: actions/cache@v4
         with:
@@ -148,7 +148,7 @@ jobs:
             Runtime/ArmInterpreter/target
             ~/.cargo/registry
             ~/.cargo/git
-          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock') }}
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
       - name: Run required Runtime contracts
         run: bash ci/run-contracts.sh
       - name: Establish bounded Simulator Runtime smoke prerequisite
@@ -180,7 +180,7 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-full-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-full-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Restore device ANGLE package
         uses: actions/cache@v4
         with:
@@ -195,7 +195,7 @@ jobs:
             Runtime/ArmInterpreter/target
             ~/.cargo/registry
             ~/.cargo/git
-          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-iphoneos-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock') }}
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-iphoneos-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
       - name: Build arm64 iphoneos Runtime
         run: bash scripts/build-iphoneos.sh
 
