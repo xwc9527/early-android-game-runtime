@@ -12,6 +12,7 @@ on:
       - 'tools/fetch_fdroid_samples.py'
       - 'tools/scan_apks.py'
       - 'Tests/Samples/fdroid.json'
+      - 'Tests/Samples/fdroid.lock.json'
       - 'App/main.m'
       - '.github/workflows/dex-parser.yml'
   workflow_dispatch:
@@ -22,13 +23,19 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+      - name: Restore focused Activity sample inputs
+        uses: actions/cache@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-focused-activity-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Fetch licensed reference samples
-        run: python3 tools/fetch_fdroid_samples.py --output build/dex-samples --resources build/dex-resources
+        run: python3 tools/fetch_fdroid_samples.py --profile focused-activity --output samples --resources build/dex-resources
       - name: Extract original classes.dex
         run: |
           python3 - <<'PY'
           import pathlib,zipfile
-          root=pathlib.Path('build/dex-samples')
+          root=pathlib.Path('samples')
           for name in ('pixel-dungeon','frozen-bubble'):
               with zipfile.ZipFile(root/f'{name}.apk') as apk:
                   (root/f'{name}.dex').write_bytes(apk.read('classes.dex'))
@@ -70,21 +77,35 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
-      - name: Restore Simulator build cache
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - id: rust-version
+        run: echo "key=$(rustc --version | shasum -a 256 | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - name: Restore focused Activity sample inputs
+        uses: actions/cache@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-focused-activity-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Restore Simulator ANGLE package
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/angle-v2.1.28252
+            build/angle-xcframeworks-v2.1.28252.zip
+          key: agr-angle-ios-simulator-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Restore Simulator Rust artifacts and registry
         uses: actions/cache@v4
         with:
           path: |
             Runtime/ArmInterpreter/target
-            build/angle-v2.1.28252
-            build/angle-xcframeworks-v2.1.28252.zip
-          key: agr-dex-simulator-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-and-run-simulator.sh', 'Tests/Samples/fdroid.json') }}
-          restore-keys: agr-dex-simulator-${{ runner.os }}-
-      - name: Install stable Rust
-        uses: dtolnay/rust-toolchain@stable
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock') }}
       - name: Run focused real-APK DEX probe in Simulator
         env:
           DEX_PARSER_COMPATIBILITY: '1'
-        run: bash scripts/build-and-run-simulator.sh
+        run: bash scripts/build-and-run-simulator.sh all focused-activity
       - name: Publish focused Simulator evidence
         if: always()
         uses: actions/upload-artifact@v4

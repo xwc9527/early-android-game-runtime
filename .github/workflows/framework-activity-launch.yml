@@ -11,6 +11,7 @@ on:
       - 'tools/fetch_fdroid_samples.py'
       - 'tools/scan_apks.py'
       - 'Tests/Samples/fdroid.json'
+      - 'Tests/Samples/fdroid.lock.json'
       - 'ci/governance/**'
       - 'ci/build-framework-activity-summary.py'
       - 'docs/**'
@@ -75,22 +76,36 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Restore Simulator build cache
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - id: rust-version
+        run: echo "key=$(rustc --version | shasum -a 256 | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - name: Restore focused Activity sample inputs
+        uses: actions/cache@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-focused-activity-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Restore Simulator ANGLE package
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/angle-v2.1.28252
+            build/angle-xcframeworks-v2.1.28252.zip
+          key: agr-angle-ios-simulator-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Restore Simulator Rust artifacts and registry
         uses: actions/cache@v4
         with:
           path: |
             Runtime/ArmInterpreter/target
-            build/angle-v2.1.28252
-            build/angle-xcframeworks-v2.1.28252.zip
-          key: agr-framework-activity-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-and-run-simulator.sh', 'Tests/Samples/fdroid.json') }}
-          restore-keys: agr-framework-activity-${{ runner.os }}-
-      - name: Install stable Rust
-        uses: dtolnay/rust-toolchain@stable
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock') }}
       - name: Run focused Activity launch compatibility probe
         id: focused_activity
         env:
           ACTIVITY_LAUNCH_COMPATIBILITY: '1'
-        run: bash scripts/build-and-run-simulator.sh
+        run: bash scripts/build-and-run-simulator.sh all focused-activity
       - name: Publish focused Simulator evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -109,17 +124,31 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - id: rust-version
+        run: echo "key=$(rustc --version | shasum -a 256 | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - name: Restore full Runtime sample inputs
+        uses: actions/cache@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-full-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Restore Runtime build cache
         uses: actions/cache@v4
         with:
           path: |
-            .tools
-            Vendor/ANGLE-Package
+            build/angle-v2.1.28252
+            build/angle-xcframeworks-v2.1.28252.zip
+          key: agr-angle-ios-simulator-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Restore Runtime Rust artifacts and registry
+        uses: actions/cache@v4
+        with:
+          path: |
             Runtime/ArmInterpreter/target
-          key: agr-framework-activity-runtime-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-and-run-simulator.sh', 'Tests/Samples/fdroid.json') }}
-          restore-keys: agr-framework-activity-runtime-${{ runner.os }}-
-      - name: Install stable Rust
-        uses: dtolnay/rust-toolchain@stable
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock') }}
       - name: Run required Runtime contracts
         run: bash ci/run-contracts.sh
       - name: Establish bounded Simulator Runtime smoke prerequisite
@@ -142,17 +171,31 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Restore device build cache
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - id: rust-version
+        run: echo "key=$(rustc --version | shasum -a 256 | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - name: Restore full sample inputs
+        uses: actions/cache@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-full-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Restore device ANGLE package
         uses: actions/cache@v4
         with:
           path: |
-            .tools
-            Vendor/ANGLE-Package
+            build/iphoneos/angle-v2.1.28252
+            build/iphoneos/angle-xcframeworks-v2.1.28252.zip
+          key: agr-angle-iphoneos-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Restore device ARM interpreter and Rust registry
+        uses: actions/cache@v4
+        with:
+          path: |
             Runtime/ArmInterpreter/target
-          key: agr-framework-activity-device-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-iphoneos.sh') }}
-          restore-keys: agr-framework-activity-device-${{ runner.os }}-
-      - name: Install stable Rust
-        uses: dtolnay/rust-toolchain@stable
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-iphoneos-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock') }}
       - name: Build arm64 iphoneos Runtime
         run: bash scripts/build-iphoneos.sh
 

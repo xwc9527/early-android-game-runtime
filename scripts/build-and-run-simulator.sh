@@ -1,31 +1,56 @@
 #!/bin/bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; BUILD="$ROOT/build"; APP="$BUILD/AGRSimulator.app"
+MODE="${1:-all}"
+PROFILE="${2:-${AGR_SIMULATOR_PROFILE:-full}}"
 phase() { printf 'AGR_SMOKE_PHASE %s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"; }
-SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"; TARGET="arm64-apple-ios15.0-simulator"
-mkdir -p "$BUILD/obj" "$APP"
-phase "fetch samples"
-python3 "$ROOT/tools/fetch_fdroid_samples.py"
-python3 "$ROOT/tools/scan_apks.py" --shard-index "${SHARD_INDEX:-0}" --shard-count "${SHARD_COUNT:-1}"
-python3 "$ROOT/Tests/DexLoom/make_activity_launch_fixture.py" "$ROOT/App/Resources/activity-launch-fixture.dex"
+ARTIFACTS="$BUILD/artifacts"
+mkdir -p "$ARTIFACTS"
+
+if [[ "$MODE" == "prepare" || "$MODE" == "all" ]]; then
+  phase "prepare sample profile $PROFILE"
+  python3 "$ROOT/tools/fetch_fdroid_samples.py" --profile "$PROFILE"
+  python3 "$ROOT/tools/scan_apks.py" --shard-index "${SHARD_INDEX:-0}" --shard-count "${SHARD_COUNT:-1}"
+  python3 "$ROOT/Tests/DexLoom/make_activity_launch_fixture.py" "$ROOT/App/Resources/activity-launch-fixture.dex"
+fi
+[[ "$MODE" == "prepare" ]] && exit 0
+
+if [[ "$MODE" == "deps" || "$MODE" == "all" ]]; then
+  SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+  TARGET="arm64-apple-ios15.0-simulator"
+  mkdir -p "$BUILD/obj" "$APP"
 ANGLE_VERSION="v2.1.28252"
 ANGLE_SHA256="59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be"
 ANGLE_ARCHIVE="$BUILD/angle-xcframeworks-$ANGLE_VERSION.zip"
 ANGLE_ROOT="$BUILD/angle-$ANGLE_VERSION"
-if [[ ! -d "$ANGLE_ROOT/dist/EGL.xcframework" ]]; then
+ANGLE_CACHED_SHA=""
+if [[ -s "$ANGLE_ARCHIVE" ]]; then ANGLE_CACHED_SHA="$(shasum -a 256 "$ANGLE_ARCHIVE" | awk '{print $1}')"; fi
+if [[ "$ANGLE_CACHED_SHA" != "$ANGLE_SHA256" || ! -d "$ANGLE_ROOT/dist/EGL.xcframework" || ! -d "$ANGLE_ROOT/dist/GLESv2.xcframework" ]]; then
+  rm -f "$ANGLE_ARCHIVE"; rm -rf "$ANGLE_ROOT"
   curl -L --fail --retry 3 -o "$ANGLE_ARCHIVE" \
     "https://github.com/EdgeFirstAI/angle-package/releases/download/$ANGLE_VERSION/angle-xcframeworks-$ANGLE_VERSION.zip"
   echo "$ANGLE_SHA256  $ANGLE_ARCHIVE" | shasum -a 256 -c -
   rm -rf "$ANGLE_ROOT"; mkdir -p "$ANGLE_ROOT"; unzip -q "$ANGLE_ARCHIVE" -d "$ANGLE_ROOT"
 fi
-ANGLE_DIST="$ANGLE_ROOT/dist"
-ANGLE_EGL="$ANGLE_DIST/EGL.xcframework/ios-arm64-simulator/libEGL.framework"
-ANGLE_GLES="$ANGLE_DIST/GLESv2.xcframework/ios-arm64-simulator/libGLESv2.framework"
-ANGLE_FRAMEWORKS="$BUILD/angle-frameworks"
-rm -rf "$ANGLE_FRAMEWORKS"; mkdir -p "$ANGLE_FRAMEWORKS"
-ditto "$ANGLE_EGL" "$ANGLE_FRAMEWORKS/libEGL.framework"
-ditto "$ANGLE_GLES" "$ANGLE_FRAMEWORKS/libGLESv2.framework"
 rustup target add aarch64-apple-ios-sim
+fi
+[[ "$MODE" == "deps" ]] && exit 0
+
+if [[ "$MODE" == "build" || "$MODE" == "all" ]]; then
+  SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+  TARGET="arm64-apple-ios15.0-simulator"
+  ANGLE_ROOT="$BUILD/angle-v2.1.28252"
+  test -d "$ANGLE_ROOT/dist/EGL.xcframework"
+  rustup target list --installed | grep -qx aarch64-apple-ios-sim
+  rm -rf "$APP"
+  mkdir -p "$APP"
+  ANGLE_DIST="$ANGLE_ROOT/dist"
+  ANGLE_EGL="$ANGLE_DIST/EGL.xcframework/ios-arm64-simulator/libEGL.framework"
+  ANGLE_GLES="$ANGLE_DIST/GLESv2.xcframework/ios-arm64-simulator/libGLESv2.framework"
+  ANGLE_FRAMEWORKS="$BUILD/angle-frameworks"
+  rm -rf "$ANGLE_FRAMEWORKS"; mkdir -p "$ANGLE_FRAMEWORKS"
+  ditto "$ANGLE_EGL" "$ANGLE_FRAMEWORKS/libEGL.framework"
+  ditto "$ANGLE_GLES" "$ANGLE_FRAMEWORKS/libGLESv2.framework"
 phase "compile Runtime and host"
 cargo build --manifest-path "$ROOT/Runtime/ArmInterpreter/Cargo.toml" --target aarch64-apple-ios-sim --release
 COMMON=(-target "$TARGET" -isysroot "$SDK" -mios-simulator-version-min=15.0 -O2)
@@ -78,12 +103,30 @@ cp "$ROOT/Tests/Trajectories/kungfoo-barracuda.json" "$APP/"
 mkdir -p "$APP/Frameworks"; ditto "$ANGLE_FRAMEWORKS/libEGL.framework" "$APP/Frameworks/libEGL.framework"; ditto "$ANGLE_FRAMEWORKS/libGLESv2.framework" "$APP/Frameworks/libGLESv2.framework"
 codesign --force --sign - "$APP/Frameworks/libEGL.framework"; codesign --force --sign - "$APP/Frameworks/libGLESv2.framework"; codesign --force --sign - "$APP"
 phase "Runtime app linked and signed"
+fi
+[[ "$MODE" == "build" ]] && exit 0
+
+if [[ "$MODE" == "boot" || "$MODE" == "all" ]]; then
 DEVICE="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["udid"] for xs in d.values() for x in xs if x["name"]=="iPhone 16 Pro"))')"
-mkdir -p "$BUILD/artifacts"; printf '%s\n' "$DEVICE" > "$BUILD/artifacts/simulator-device.txt"
+printf '%s\n' "$DEVICE" > "$ARTIFACTS/simulator-device.txt"
 phase "boot Simulator $DEVICE"
 xcrun simctl boot "$DEVICE" 2>/dev/null || true; xcrun simctl bootstatus "$DEVICE" -b
-phase "install Runtime app"
+elif [[ "$MODE" == "install" || "$MODE" == "run" ]]; then
+  test -s "$ARTIFACTS/simulator-device.txt"
+  DEVICE="$(cat "$ARTIFACTS/simulator-device.txt")"
+fi
+[[ "$MODE" == "boot" ]] && exit 0
+
+if [[ "$MODE" == "install" || "$MODE" == "all" ]]; then
+  phase "install Runtime app"
 xcrun simctl install "$DEVICE" "$APP"
+fi
+[[ "$MODE" == "install" ]] && exit 0
+
+if [[ "$MODE" != "run" && "$MODE" != "all" ]]; then
+  echo "unknown Simulator stage: $MODE" >&2
+  exit 2
+fi
 if [[ "${DEX_PARSER_COMPATIBILITY:-0}" == "1" ]]; then
   ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
   DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"

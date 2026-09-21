@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "origin": "F-Droid repo/archive index-v1.json",
+  "samples": [
+    {
+      "id": "kungfoo-barracuda",
+      "package": "com.onetwofivegames.kungfoobarracuda",
+      "license": "GPL-3.0-only",
+      "source": "https://github.com/poseidn/KungFoo",
+      "profile": "kungfoo",
+      "version_code": 3,
+      "version_name": "1.2",
+      "apk_name": "com.onetwofivegames.kungfoobarracuda_3.apk",
+      "repository": "archive",
+      "sha256": "097ade628ad0837e312da4ca48afe0906eb99c3b992d497c7da33e2b2267eb22"
+    },
+    {
+      "id": "gloomy-dungeons-2",
+      "package": "org.zamedev.gloomydungeons2.opensource",
+      "license": "MIT",
+      "source": "https://github.com/restorer/gloomy-dungeons-2",
+      "profile": "gloomy",
+      "version_code": 1602221800,
+      "version_name": "2016.02.22.1800",
+      "apk_name": "org.zamedev.gloomydungeons2.opensource_1602221800.apk",
+      "repository": "archive",
+      "sha256": "40a67842345b879fc4b4be90159787f04664d9530f6a3e676c13fa412ad98733"
+    },
+    {
+      "id": "pixel-dungeon",
+      "package": "com.watabou.pixeldungeon",
+      "license": "GPL-3.0-only",
+      "source": "https://github.com/watabou/pixel-dungeon",
+      "profile": "generic",
+      "version_code": 59,
+      "version_name": "1.7.1c",
+      "apk_name": "com.watabou.pixeldungeon_59.apk",
+      "repository": "archive",
+      "sha256": "c33f4bdc9117f265a2fae7d5182a77462dd0ac7e2c1c1e96e41f70a8eb4635d2"
+    },
+    {
+      "id": "frozen-bubble",
+      "package": "org.jfedor.frozenbubble",
+      "license": "GPL-2.0-or-later",
+      "source": "https://github.com/videogameboy76/frozenbubbleandroid",
+      "profile": "generic",
+      "version_code": 8,
+      "version_name": "1.7",
+      "apk_name": "org.jfedor.frozenbubble_8.apk",
+      "repository": "archive",
+      "sha256": "57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569"
+    },
+    {
+      "id": "vector-pinball",
+      "package": "com.dozingcatsoftware.bouncy",
+      "license": "GPL-3.0-only",
+      "source": "https://github.com/dozingcat/Vector-Pinball",
+      "profile": "generic",
+      "version_code": 4,
+      "version_name": "1.1",
+      "apk_name": "com.dozingcatsoftware.bouncy_4.apk",
+      "repository": "archive",
+      "sha256": "627371d260d22ef33523561e3fa892cb45784cf83804ec0a02c73f5478a0d698"
+    }
+  ]
+}

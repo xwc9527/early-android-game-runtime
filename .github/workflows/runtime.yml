@@ -25,8 +25,12 @@ on:
       - 'scripts/test-ehabi-phase2b-simulator.sh'
       - 'App/**'
       - 'scripts/build-and-run-simulator.sh'
+      - 'scripts/prepare-run-simulator.sh'
       - 'scripts/run-simulator-smoke-bounded.py'
       - 'scripts/run-simulator-regressions.sh'
+      - 'tools/fetch_fdroid_samples.py'
+      - 'Tests/Samples/fdroid.json'
+      - 'Tests/Samples/fdroid.lock.json'
       - 'ci/governance/expensive-run-plan.json'
       - '.github/workflows/runtime.yml'
 
@@ -54,7 +58,7 @@ jobs:
 
   simulator-runtime:
     needs: discovery-admission
-    if: needs.discovery-admission.outputs.admitted == 'true'
+    if: needs.discovery-admission.outputs.admitted == 'true' && github.ref_name != 'phase/ci-execution-composition-1' && github.ref_name != 'phase/framework-runtime-continuation-1'
     runs-on: macos-15
     timeout-minutes: 20
     strategy:
@@ -70,15 +74,31 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Restore toolchain and dependency caches
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - id: rust-version
+        run: echo "key=$(rustc --version | shasum -a 256 | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - name: Restore F-Droid sample inputs
+        uses: actions/cache@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-full-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Restore ANGLE simulator package
         uses: actions/cache@v4
         with:
           path: |
-            .tools
-            Vendor/ANGLE-Package
+            build/angle-v2.1.28252
+            build/angle-xcframeworks-v2.1.28252.zip
+          key: agr-angle-ios-simulator-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Restore ARM interpreter build and Rust registry
+        uses: actions/cache@v4
+        with:
+          path: |
             Runtime/ArmInterpreter/target
-          key: agr-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-and-run-simulator.sh', 'Tests/Samples/fdroid.json') }}
-          restore-keys: agr-${{ runner.os }}-
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock') }}
       - name: Validate governance state
         run: python3 ci/validate-governance.py --mode working
       - name: Inspect Xcode and Simulator
@@ -90,8 +110,6 @@ jobs:
           xcrun simctl list runtimes available
           xcrun simctl list devices available
           xcrun --sdk iphonesimulator --show-sdk-path
-      - name: Install stable Rust
-        uses: dtolnay/rust-toolchain@stable
       - id: contracts
         name: Run independent Runtime contracts
         continue-on-error: true

@@ -89,11 +89,13 @@ def relay(stream, path, destination):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--timeout-seconds", type=int, default=900)
+    parser.add_argument("--mode", choices=("all", "run"), default="all",
+                        help="run from a fresh environment (all) or reuse the built/installed Simulator (run)")
     args = parser.parse_args()
     deadline = max(1, min(args.timeout_seconds, 900))
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, ZERO_INPUT_AB="1")
-    child = subprocess.Popen(["bash", "scripts/build-and-run-simulator.sh"], cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1, start_new_session=True)
+    child = subprocess.Popen(["bash", "scripts/build-and-run-simulator.sh", args.mode], cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1, start_new_session=True)
     threads = [
         threading.Thread(target=relay, args=(child.stdout, ARTIFACTS / "smoke-stdout.log", sys.stdout), daemon=True),
         threading.Thread(target=relay, args=(child.stderr, ARTIFACTS / "smoke-stderr.log", sys.stderr), daemon=True),

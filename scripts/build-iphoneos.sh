@@ -9,7 +9,10 @@ ANGLE_VERSION="v2.1.28252"
 ANGLE_SHA256="59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be"
 ANGLE_ARCHIVE="$BUILD/angle-xcframeworks-$ANGLE_VERSION.zip"
 ANGLE_ROOT="$BUILD/angle-$ANGLE_VERSION"
-if [[ ! -d "$ANGLE_ROOT/dist/EGL.xcframework" ]]; then
+ANGLE_CACHED_SHA=""
+if [[ -s "$ANGLE_ARCHIVE" ]]; then ANGLE_CACHED_SHA="$(shasum -a 256 "$ANGLE_ARCHIVE" | awk '{print $1}')"; fi
+if [[ "$ANGLE_CACHED_SHA" != "$ANGLE_SHA256" || ! -d "$ANGLE_ROOT/dist/EGL.xcframework" || ! -d "$ANGLE_ROOT/dist/GLESv2.xcframework" ]]; then
+  rm -f "$ANGLE_ARCHIVE"; rm -rf "$ANGLE_ROOT"
   curl -L --fail --retry 3 -o "$ANGLE_ARCHIVE" \
     "https://github.com/EdgeFirstAI/angle-package/releases/download/$ANGLE_VERSION/angle-xcframeworks-$ANGLE_VERSION.zip"
   echo "$ANGLE_SHA256  $ANGLE_ARCHIVE" | shasum -a 256 -c -

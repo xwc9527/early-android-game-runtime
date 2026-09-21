@@ -3,9 +3,11 @@ name: AGR device build
 on:
   workflow_dispatch:
   push:
-    branches: [main, playable-vertical-slice-1, 'feature/**', 'phase/**']
+    branches: [main]
     paths:
       - 'scripts/build-iphoneos.sh'
+      - 'tools/fetch_fdroid_samples.py'
+      - 'Tests/Samples/fdroid.lock.json'
       - 'scripts/test-ehabi-unwind.sh'
       - 'scripts/test-ehabi-phase2-simulator.sh'
       - 'scripts/test-ehabi-phase2b-simulator.sh'
@@ -30,23 +32,37 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Restore toolchain and dependency caches
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - id: rust-version
+        run: echo "key=$(rustc --version | shasum -a 256 | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - name: Restore sample input cache
+        uses: actions/cache@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-full-v1-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Restore ANGLE device package
         uses: actions/cache@v4
         with:
           path: |
-            .tools
-            Vendor/ANGLE-Package
+            build/iphoneos/angle-v2.1.28252
+            build/iphoneos/angle-xcframeworks-v2.1.28252.zip
+          key: agr-angle-iphoneos-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Restore ARM interpreter build and Rust registry
+        uses: actions/cache@v4
+        with:
+          path: |
             Runtime/ArmInterpreter/target
-          key: agr-device-${{ runner.os }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock', 'scripts/build-iphoneos.sh') }}
-          restore-keys: agr-device-${{ runner.os }}-
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-iphoneos-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.lock') }}
       - name: Validate governance state
         run: python3 ci/validate-governance.py --mode working
       - name: Inspect device SDK
         run: |
           xcodebuild -version
           xcrun --sdk iphoneos --show-sdk-path
-      - name: Install stable Rust
-        uses: dtolnay/rust-toolchain@stable
       - name: API19 mmap and AOSP linker segment contracts
         run: |
           set -o pipefail
