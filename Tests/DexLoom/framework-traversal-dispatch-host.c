@@ -179,6 +179,52 @@ int main(int argc, char **argv) {
                "the same frame consumer retries after the host gate clears");
     }
     if (failed) agr_dex_game_destroy(failed);
+
+    agr_dex_game *content = open_fixture(dex, dex_size);
+    agr_dex_runtime_snapshot content_before = {0}, content_after = {0}, content_idle = {0};
+    int content_set = -1;
+    if (content && agr_dex_game_set_host_display(content, width, height) == 0 &&
+        agr_dex_game_start_activity(content) == 0) {
+        agr_dex_game_runtime_snapshot(content, &content_before);
+        content_set = agr_dex_game_set_content_view(content);
+        agr_dex_game_runtime_snapshot(content, &content_after);
+    }
+    expect(content_set == 0 && !content_before.content_view_installed &&
+           content_after.content_view_installed &&
+           content_after.content_layout_width == -1 &&
+           content_after.content_layout_height == -1 &&
+           content_after.traversal_count == 0 && content_after.traversal_scheduled &&
+           content_after.draw_count == 0 && content_after.viewroot_root_assigned &&
+           trace_has(&content_after, "window.set_content_view") &&
+           !trace_has(&content_after, "viewroot.traversal.consumed"),
+           "setContentView installs the child and does not execute the scheduled traversal");
+    int content_frame = content ? agr_dex_game_choreographer_frame(content) : -1;
+    if (content) agr_dex_game_runtime_snapshot(content, &content_idle);
+    expect(content_frame == 0 && content_idle.traversal_count == 1 &&
+           content_idle.content_view_installed && content_idle.draw_count == 0,
+           "the already scheduled frame still consumes once after setContentView");
+    if (content) agr_dex_game_destroy(content);
+
+    agr_dex_game *late = open_fixture(dex, dex_size);
+    int late_set = -1, late_frame = -1;
+    agr_dex_runtime_snapshot late_done = {0}, late_posted = {0}, late_ran = {0};
+    if (late && agr_dex_game_set_host_display(late, width, height) == 0 &&
+        agr_dex_game_start_activity(late) == 0 &&
+        agr_dex_game_choreographer_frame(late) == 0 &&
+        agr_dex_game_choreographer_frame(late) == 0) {
+        agr_dex_game_runtime_snapshot(late, &late_done);
+        late_set = agr_dex_game_set_content_view(late);
+        agr_dex_game_runtime_snapshot(late, &late_posted);
+        late_frame = agr_dex_game_choreographer_frame(late);
+        agr_dex_game_runtime_snapshot(late, &late_ran);
+    }
+    expect(late_set == 0 && late_done.traversal_count == 2 && !late_done.traversal_scheduled &&
+           late_posted.traversal_count == 2 && late_posted.traversal_scheduled &&
+           late_posted.draw_count == 1 && late_posted.content_view_installed &&
+           late_frame == 0 && late_ran.traversal_count == 3 && !late_ran.traversal_scheduled &&
+           late_ran.draw_count == 2 && late_ran.surface_generation == 1,
+           "a later setContentView posts one more traversal and the next frame draws");
+    if (late) agr_dex_game_destroy(late);
     free(dex);
 
     if (g_failures) {

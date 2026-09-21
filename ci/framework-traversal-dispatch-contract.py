@@ -59,6 +59,9 @@ def check_discovery(result):
     before = result["resume_snapshot"]
     require(before["traversal_count"] == 0 and flag(before["traversal_scheduled"]), before)
     require(before["draw_count"] == 0 and clear(before["surface_valid"]), before)
+    require(flag(before.get("content_view_installed")), before)
+    require(before.get("content_layout_width") == -1, before)
+    require(before.get("content_layout_height") == -1, before)
     frames = result["frames"]
     require(len(frames) >= 2, frames)
     first, second = frames[0], frames[1]

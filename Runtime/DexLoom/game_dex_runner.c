@@ -88,6 +88,10 @@ static DxResult view_set_visibility(DxVM *vm, DxFrame *frame,
 
 static DxResult window_manager_add_view(DxVM *vm, DxFrame *frame,
                                         DxValue *args, uint32_t count);
+static DxResult activity_set_content_view(DxVM *vm, DxFrame *frame,
+                                          DxValue *args, uint32_t count);
+static DxResult window_set_content_view(DxVM *vm, DxFrame *frame,
+                                        DxValue *args, uint32_t count);
 
 static DxResult activity_on_post_resume(DxVM *vm, DxFrame *frame,
                                         DxValue *args, uint32_t count) {
@@ -306,6 +310,9 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(activity, "getApplication", "L", DX_ACC_PUBLIC, activity_get_application, 0);
     add_method(activity, "getWindow", "L", DX_ACC_PUBLIC, activity_get_window, 0);
     add_method(activity, "getWindowManager", "L", DX_ACC_PUBLIC, activity_get_window_manager, 0);
+    add_method(activity, "setContentView", "VL", DX_ACC_PUBLIC, activity_set_content_view, 0);
+    add_method(activity, "setContentView", "VLL", DX_ACC_PUBLIC, activity_set_content_view, 0);
+    add_method(activity, "onContentChanged", "V", DX_ACC_PUBLIC, noop, 0);
     add_method(native_activity, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
     add_method(native_activity, "onCreate", "VL", DX_ACC_PUBLIC, noop, 0);
     add_method(context, "getAssets", "L", DX_ACC_PUBLIC, context_get_assets, 0);
@@ -317,11 +324,13 @@ static DxResult register_game_framework(DxVM *vm) {
     DxClass *view = reg_class(vm, "Landroid/view/View;", obj);
     const char *view_names[] = { "_visibility", "_layoutParams", "_parent", "_attachInfo",
                                  "_attachedToWindow", "_measuredWidth", "_measuredHeight",
-                                 "_left", "_top", "_right", "_bottom" };
+                                 "_left", "_top", "_right", "_bottom", "_content",
+                                 "_layoutWidth", "_layoutHeight" };
     const char *view_types[] = { "I", "Landroid/view/WindowManager$LayoutParams;",
                                  "Landroid/view/ViewRootImpl;", "Landroid/view/View$AttachInfo;",
-                                 "Z", "I", "I", "I", "I", "I", "I" };
-    own_fields(view, 11, view_names, view_types);
+                                 "Z", "I", "I", "I", "I", "I", "I", "Landroid/view/View;",
+                                 "I", "I" };
+    own_fields(view, 14, view_names, view_types);
     add_method(view, "setVisibility", "VI", DX_ACC_PUBLIC, view_set_visibility, 0);
     DxClass *layout_params = reg_class(vm, "Landroid/view/WindowManager$LayoutParams;", obj);
     const char *layout_names[] = { "_type", "_softInputMode", "_width", "_height" };
@@ -333,6 +342,8 @@ static DxResult register_game_framework(DxVM *vm) {
     own_fields(window, 2, window_names, window_types);
     add_method(window, "getDecorView", "L", DX_ACC_PUBLIC, window_get_decor_view, 0);
     add_method(window, "getAttributes", "L", DX_ACC_PUBLIC, window_get_attributes, 0);
+    add_method(window, "setContentView", "VL", DX_ACC_PUBLIC, window_set_content_view, 0);
+    add_method(window, "setContentView", "VLL", DX_ACC_PUBLIC, window_set_content_view, 0);
     DxClass *window_manager = reg_class(vm, "Landroid/view/WindowManager;", obj);
     const char *manager_names[] = { "_lastView", "_lastLayoutParams", "_viewRoot" };
     const char *manager_types[] = { "Landroid/view/View;", "Landroid/view/WindowManager$LayoutParams;",
@@ -423,6 +434,9 @@ struct agr_dex_game {
     DxObject *intent;
     DxObject *window;
     DxObject *decor;
+    DxObject *content_view;
+    int32_t content_width;
+    int32_t content_height;
     DxObject *window_manager;
     DxObject *window_attributes;
     agr_activity_launch_stage launch_stage;
@@ -454,6 +468,79 @@ static void framework_event(agr_dex_game *game, const char *event) {
 
 static void viewroot_event(void *user, const char *event) {
     framework_event((agr_dex_game *)user, event);
+}
+
+/* PhoneWindow.setContentView(View, LayoutParams) installs one content child
+   on the existing decor. It does not replace the ViewRoot decor. A window
+   that is not yet added does not schedule; an attached window only posts
+   scheduleTraversals. ActionBar is not created. */
+static DxResult install_content_view(agr_dex_game *game, DxObject *view,
+                                     int32_t width, int32_t height) {
+    if (!game || !game->decor || !game->activity || !view || view == game->decor)
+        return DX_ERR_INVALID_FORMAT;
+    if (game->content_view && game->content_view != view)
+        dx_vm_set_field(game->content_view, "_parent", DX_NULL_VALUE);
+    if (dx_vm_set_field(game->decor, "_content", DX_OBJ_VALUE(view)) != DX_OK)
+        return DX_ERR_INVALID_FORMAT;
+    dx_vm_set_field(view, "_layoutWidth", DX_INT_VALUE(width));
+    dx_vm_set_field(view, "_layoutHeight", DX_INT_VALUE(height));
+    dx_vm_set_field(view, "_parent", DX_OBJ_VALUE(game->decor));
+    game->content_view = view;
+    game->content_width = width;
+    game->content_height = height;
+    framework_event(game, "window.set_content_view");
+    if (game->viewroot.attach_complete &&
+        agr_viewroot_request_layout(&game->viewroot, viewroot_event, game) != DX_OK)
+        return DX_ERR_INVALID_FORMAT;
+    DxMethod *changed = dx_vm_find_method(game->activity->klass, "onContentChanged", "V");
+    if (changed) {
+        DxValue args[1] = {DX_OBJ_VALUE(game->activity)};
+        if (dx_vm_execute_method(game->vm, changed, args, 1, NULL) != DX_OK)
+            return DX_ERR_INVALID_FORMAT;
+    }
+    return DX_OK;
+}
+
+static DxResult content_params(DxValue *args, uint32_t count, DxObject **view,
+                               int32_t *width, int32_t *height) {
+    if (count < 2 || args[1].tag != DX_VAL_OBJ || !args[1].obj) return DX_ERR_NULL_PTR;
+    *view = args[1].obj;
+    *width = -1;
+    *height = -1;
+    if (count >= 3 && args[2].tag == DX_VAL_OBJ && args[2].obj) {
+        DxValue w = DX_NULL_VALUE, h = DX_NULL_VALUE;
+        if (dx_vm_get_field(args[2].obj, "_width", &w) == DX_OK && w.tag == DX_VAL_INT) *width = w.i;
+        if (dx_vm_get_field(args[2].obj, "_height", &h) == DX_OK && h.tag == DX_VAL_INT) *height = h.i;
+    }
+    return DX_OK;
+}
+
+static DxResult window_set_content_view(DxVM *vm, DxFrame *frame,
+                                        DxValue *args, uint32_t count) {
+    (void)frame;
+    agr_dex_game *game = vm ? (agr_dex_game *)vm->framework_user : NULL;
+    DxObject *view = NULL;
+    int32_t width = -1, height = -1;
+    if (content_params(args, count, &view, &width, &height) != DX_OK) return DX_ERR_NULL_PTR;
+    if (!game || args[0].tag != DX_VAL_OBJ || args[0].obj != game->window)
+        return DX_ERR_INVALID_FORMAT;
+    return install_content_view(game, view, width, height);
+}
+
+static DxResult activity_set_content_view(DxVM *vm, DxFrame *frame,
+                                          DxValue *args, uint32_t count) {
+    (void)frame;
+    agr_dex_game *game = vm ? (agr_dex_game *)vm->framework_user : NULL;
+    if (!game || count < 2 || args[0].tag != DX_VAL_OBJ || args[0].obj != game->activity)
+        return DX_ERR_INVALID_FORMAT;
+    DxClass *window = dx_vm_find_class(vm, "Landroid/view/Window;");
+    DxMethod *method = dx_vm_find_method(window, "setContentView", count >= 3 ? "VLL" : "VL");
+    if (!method) return DX_ERR_INVALID_FORMAT;
+    DxValue forwarded[3];
+    forwarded[0] = DX_OBJ_VALUE(game->window);
+    forwarded[1] = args[1];
+    if (count >= 3) forwarded[2] = args[2];
+    return dx_vm_execute_method(vm, method, forwarded, count >= 3 ? 3u : 2u, NULL);
 }
 
 static DxResult window_manager_add_view(DxVM *vm, DxFrame *frame,
@@ -932,6 +1019,9 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
     snapshot->surface_valid=agr_viewroot_surface_valid(&game->viewroot);
     snapshot->surface_generation=game->viewroot.backing.generation;
     snapshot->draw_count=game->viewroot.draw_count;
+    snapshot->content_view_installed=game->content_view!=NULL;
+    snapshot->content_layout_width=game->content_view ? game->content_width : 0;
+    snapshot->content_layout_height=game->content_view ? game->content_height : 0;
     snprintf(snapshot->last_method,sizeof(snapshot->last_method),"%s",vm->diagnostic_last_method);
     snprintf(snapshot->error,sizeof(snapshot->error),"%s",vm->error_msg);
     uint32_t method_count=vm->diagnostic_method_event_count;
@@ -1036,6 +1126,17 @@ int agr_dex_game_set_host_display(agr_dex_game *game, uint32_t width, uint32_t h
     game->host_display_width = width;
     game->host_display_height = height;
     return 0;
+}
+
+int agr_dex_game_set_content_view(agr_dex_game *game) {
+    if (!game || !game->vm || !game->activity) return -1;
+    DxClass *view_class = dx_vm_find_class(game->vm, "Landroid/view/View;");
+    DxObject *view = view_class ? dx_vm_alloc_object(game->vm, view_class) : NULL;
+    DxClass *activity = dx_vm_find_class(game->vm, "Landroid/app/Activity;");
+    DxMethod *method = activity ? dx_vm_find_method(activity, "setContentView", "VL") : NULL;
+    if (!view || !method) return -1;
+    DxValue args[2] = {DX_OBJ_VALUE(game->activity), DX_OBJ_VALUE(view)};
+    return dx_vm_execute_method(game->vm, method, args, 2, NULL) == DX_OK ? 0 : -1;
 }
 
 int agr_dex_game_choreographer_frame(agr_dex_game *game) {

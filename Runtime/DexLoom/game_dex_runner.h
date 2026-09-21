@@ -73,6 +73,9 @@ typedef struct {
     int surface_valid;
     uint32_t surface_generation;
     uint32_t draw_count;
+    int content_view_installed;
+    int content_layout_width;
+    int content_layout_height;
     char last_method[160];
     char exception_class[160];
     char error[256];
@@ -119,6 +122,10 @@ int agr_dex_game_set_host_display(agr_dex_game *game, uint32_t display_width_pix
 /* One host vsync. Returns 0 when a posted traversal ran, 1 when none was
    due, and -1 on error. Never runs the reschedule in the same call. */
 int agr_dex_game_choreographer_frame(agr_dex_game *game);
+/* Activity.setContentView(View) for a newly allocated content View.
+   MATCH_PARENT params. Schedules a traversal only when the decor is already
+   attached, and does not execute it. */
+int agr_dex_game_set_content_view(agr_dex_game *game);
 int agr_dex_game_set_surface_allocator(agr_dex_game *game,
                                        void *(*allocate)(void *user, size_t bytes),
                                        void (*release)(void *user, void *pixels), void *user);

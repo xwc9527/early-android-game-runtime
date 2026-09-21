@@ -34,6 +34,12 @@ static DxResult request_first_layout(agr_viewroot_attach_state *state,
     return DX_OK;
 }
 
+DxResult agr_viewroot_request_layout(agr_viewroot_attach_state *state,
+                                    agr_viewroot_trace_fn trace, void *user) {
+    if (!state || !state->attach_complete) return DX_ERR_INVALID_FORMAT;
+    return request_first_layout(state, trace, user);
+}
+
 /* In-process API19 IWindowSession.addToDisplay boundary for a normal app
  * window.  A session owns the attached window identity and initial input/
  * inset state; duplicate attachment or an invalid app type is rejected. */

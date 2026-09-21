@@ -72,10 +72,10 @@
     }
   ],
   "remaining_uncertainty": [
-    "performDraw of the host Decor is not a first frame.",
-    "FrozenBubble.onCreate returned without Activity.setContentView(View). AGR registers setContentView(I) only, so the View overload is skipped and GameView/SurfaceView is never installed."
+    "performDraw of the host Decor is not a first frame and does not create a SurfaceView surface.",
+    "Host contract installs one MATCH_PARENT content child and does not execute a scheduled traversal. Frozen Bubble onCreate confirmation is the next Simulator question."
   ],
-  "next_action": "Implement the public Activity.setContentView(View) contract. Do not treat performDraw of the empty Decor as a first frame.",
+  "next_action": "Run one focused Simulator discovery asking whether unchanged Frozen Bubble installs that content view and still reaches viewroot_draw_entered.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "UIKit CADisplayLink is the vsync endpoint in place of DisplayEventReceiver. One host frame runs at most one posted traversal callback. There is no Looper sync barrier and the frame function is not re-entered."

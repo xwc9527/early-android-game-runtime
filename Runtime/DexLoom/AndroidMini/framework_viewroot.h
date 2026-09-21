@@ -74,6 +74,11 @@ typedef struct {
 /* API19 ViewRoot attach ownership. scheduleTraversals does not execute.
    The host frame consumes one posted CALLBACK_TRAVERSAL. Drawing of a
    newly acquired Surface waits for the next frame. */
+/* scheduleTraversals after the window is already attached. Idempotent when
+   a traversal is already posted. Does not execute doTraversal. */
+DxResult agr_viewroot_request_layout(agr_viewroot_attach_state *state,
+                                    agr_viewroot_trace_fn trace, void *user);
+
 DxResult agr_viewroot_add_view(DxVM *vm, agr_viewroot_attach_state *state,
                                DxObject *manager, DxObject *decor,
                                DxObject *layout_params, DxObject *window,

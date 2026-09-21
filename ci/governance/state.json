@@ -30,10 +30,10 @@
     "causal_status": "REAL_GAME_CONFIRMED",
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "Activity.setContentView(View) on the normal path",
-    "primary_blocker": "Activity.setContentView(View) is unregistered, so Frozen Bubble never installs GameView",
+    "next_validation": "one focused Simulator discovery of Frozen Bubble setContentView(View)",
+    "primary_blocker": "real APK has not yet confirmed the content child is installed during onCreate",
     "first_broken_boundary": "Activity.setContentView(Landroid/view/View;)V",
-    "first_broken_boundary_evidence": "discovery run 35666933096 method trace ends in FrozenBubble.onCreate without setContentView; performDraw still runs on the host Decor"
+    "first_broken_boundary_evidence": "discovery run 35666933096 skipped the View overload; the host contract now installs one content child without executing a traversal"
   },
   "ci_budget": {
     "valid_closure_runs": 1,

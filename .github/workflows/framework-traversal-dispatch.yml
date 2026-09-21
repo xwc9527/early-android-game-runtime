@@ -59,7 +59,7 @@ jobs:
           python3 ci/framework-traversal-dispatch-contract.py /tmp/traversal-dispatch-host.json
       - name: Verify API19 source, semantic differential and governance
         run: |
-          python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --verify-upstream --verify-only framework.viewroot.traversal_dispatch --output build/artifacts/traversal-dispatch-upstream-map.json
+          python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --require-valid framework.window.set_content_view --verify-upstream --verify-only framework.viewroot.traversal_dispatch --verify-only framework.window.set_content_view --output build/artifacts/traversal-dispatch-upstream-map.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-traversal-dispatch.json
           python3 ci/validate-governance.py --mode discovery
           python3 ci/test-closure-attempt-ledger.py
@@ -67,7 +67,7 @@ jobs:
 
   simulator-focused:
     needs: linux-source-contract
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     runs-on: macos-15
     timeout-minutes: 90
     env:

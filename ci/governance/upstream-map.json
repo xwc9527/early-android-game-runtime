@@ -1196,11 +1196,101 @@
       ],
       "known_deviations": [
         "performDraw records View.draw of the host Decor and does not claim a first frame",
-        "Activity.setContentView(View) is unregistered; setContentView(I) does not install Frozen Bubble GameView"
+        "setContentView(View) is a separate window contract and does not draw"
       ],
       "contracts": [
         "framework.traversal_dispatch.host",
         "frozen-bubble.traversal_dispatch"
+      ]
+    },
+    {
+      "id": "framework.window.set_content_view",
+      "subsystem": "Activity and PhoneWindow setContentView(View)",
+      "android_api": "API19 Activity.setContentView(View) and PhoneWindow content installation",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "core/java/android/app/Activity.java",
+          "policy/src/com/android/internal/policy/impl/PhoneWindow.java"
+        ],
+        "symbols": [
+          "Activity.setContentView",
+          "PhoneWindow.setContentView",
+          "Window.Callback.onContentChanged"
+        ],
+        "source_hashes": {
+          "core/java/android/app/Activity.java": "03874ea13f230ff2b92bc6d99522011f63a3076e9101655aa0249addc590cc4b",
+          "policy/src/com/android/internal/policy/impl/PhoneWindow.java": "72e77092b444c068108763a7bc5a059b0097a620e2249d70274e9443af0851cf"
+        },
+        "source_urls": {
+          "core/java/android/app/Activity.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/app/Activity.java",
+          "policy/src/com/android/internal/policy/impl/PhoneWindow.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/policy/src/com/android/internal/policy/impl/PhoneWindow.java"
+        },
+        "symbols_by_path": {
+          "core/java/android/app/Activity.java": [
+            "public void setContentView(View view)",
+            "public void setContentView(View view, ViewGroup.LayoutParams params)",
+            "public void onContentChanged()"
+          ],
+          "policy/src/com/android/internal/policy/impl/PhoneWindow.java": [
+            "public void setContentView(View view)",
+            "public void setContentView(View view, ViewGroup.LayoutParams params)",
+            "cb.onContentChanged()"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/DexLoom/game_dex_runner.h",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h"
+        ],
+        "symbols": [
+          "activity_set_content_view",
+          "window_set_content_view",
+          "install_content_view",
+          "agr_viewroot_request_layout",
+          "window.set_content_view"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/game_dex_runner.c": "e7672b1a6f701c168ac0d3b348eacf71407cd8e53752365a6ccdcc319c8c8dcb",
+          "Runtime/DexLoom/game_dex_runner.h": "6b56ddc59557e2e9597a6468824c95404b4cf2ddd1dd68ad4adea84516d8f006",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8c1ef966d065b8fed3878b72fccea2ef3c798db092c3ec53b8aa194c79f1dea7",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "d85a419bad58d7fcaa514bbee036ed40e37b9190a6919fb7af6232cef53b0939"
+        }
+      },
+      "verified_at_commit": "8c2bf842bd06bf59fb4692a1fb76e2c420516f0f",
+      "status": "VALID",
+      "dependencies": [
+        "framework.viewroot.attach"
+      ],
+      "observable_semantics": [
+        "Activity.setContentView(View) delegates to Window.setContentView",
+        "the existing decor gains one content child with MATCH_PARENT layout params",
+        "the ViewRoot decor identity does not change",
+        "a window that is not yet added does not schedule a traversal",
+        "an already attached window posts scheduleTraversals and does not execute it",
+        "onContentChanged runs after the child is installed"
+      ],
+      "internal_invariants": [
+        "a null view is rejected",
+        "the decor is not installed as its own content child",
+        "a posted traversal remains the host frame's job"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "the decor's single content child stands in for DecorView's content parent",
+        "no ActionBar is created"
+      ],
+      "known_deviations": [
+        "SurfaceView.surfaceCreated is not part of this contract",
+        "child classes that do not inherit the host View fields still install by decor reference"
+      ],
+      "contracts": [
+        "framework.traversal_dispatch.host"
       ]
     }
   ]

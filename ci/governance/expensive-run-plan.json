@@ -1,23 +1,22 @@
 {
   "schema_version": 1,
-  "enabled": false,
-  "question": "Resolved by discovery run 35666933096: unchanged Frozen Bubble with CADisplayLink and no harness do_traversal reached viewroot_draw_entered, traversal_count 2, surface_generation 1, draw_count 1.",
+  "enabled": true,
+  "question": "Does unchanged Frozen Bubble onCreate now install a MATCH_PARENT content view before the first host frame, while the same CADisplayLink path still consumes traversal 1 and traversal 2 without a harness do_traversal?",
   "current_uncertainty": [
-    "No discovery uncertainty remains for host-frame consumption of the scheduled traversal."
+    "The Linux host contract installs a synthetic content view and does not execute a scheduled traversal. It does not prove FrozenBubble.onCreate reaches Activity.setContentView(View) or that GameView construction still lets launch resume."
   ],
   "expected_outcome_a": {
-    "result": "classification viewroot_draw_entered, host_vsync_count at least 2, traversal_count 2, persistent surface_generation 1, draw_count at least 1, harness_called_do_traversal false",
+    "result": "classification viewroot_draw_entered, content_view_installed true with layout -1,-1 at resume, traversal_count 2, surface_generation 1, draw_count at least 1, harness_called_do_traversal false",
     "excludes": [
-      "the claim that a tester must call agr_dex_game_do_traversal for the real APK to leave traversal_scheduled"
+      "the claim that setContentView(View) is still skipped on the normal Frozen Bubble path"
     ]
   },
   "expected_outcome_b": {
-    "result": "launch or the first host frame stops at a smaller boundary, or CADisplayLink produces no vsync before the bounded wait",
+    "result": "launch fails inside onCreate, or resume has no content view, or the two-frame Surface chain regresses",
     "excludes": [
-      "the claim that wiring CADisplayLink to agr_dex_game_choreographer_frame is already sufficient for this APK"
+      "the claim that registering setContentView(View) is sufficient for this APK to keep the draw-entry chain"
     ]
   },
-  "why_cheaper_test_is_insufficient": "The Linux host contract cannot execute UIKit CADisplayLink or the unchanged Frozen Bubble APK process.",
-  "prior_expensive_runs_without_information_gain": 0,
-  "resolved_by_run": "35666933096"
+  "why_cheaper_test_is_insufficient": "The Linux fixture Activity does not construct Frozen Bubble GameView or execute that APK's onCreate.",
+  "prior_expensive_runs_without_information_gain": 0
 }
