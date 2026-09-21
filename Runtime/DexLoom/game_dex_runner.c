@@ -4,6 +4,7 @@
 #include "dx_apk.h"
 #include "dx_manifest.h"
 #include "game_dex_runner.h"
+#include "AndroidMini/framework_viewroot.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -414,6 +415,7 @@ struct agr_dex_game {
     int window_visible;
     int idle_handler_scheduled;
     int viewroot_handoff;
+    agr_viewroot_attach_state viewroot;
     uint32_t framework_event_count;
     char framework_events[AGR_DEX_FRAMEWORK_TRACE_CAPACITY][96];
 };
@@ -820,8 +822,23 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     framework_event(game,"activity.make_visible");
     game->idle_handler_scheduled=1;
     framework_event(game,"looper.idle_handler.scheduled");
+    /* API19 ViewRootImpl.setView ownership.  This is the terminal boundary
+       for this phase; traversal/surface work belongs to the next owner. */
+    /* API19's session is represented by the process-owned WindowManager
+       endpoint in this host boundary; no Binder/system_server is introduced. */
+    DxObject *window_session = game->window_manager;
+    if (agr_viewroot_attach(&game->viewroot, game->decor,
+                                               game->window_manager,
+                                               game->window_attributes,
+                                               window_session) != 0)
+        goto window_cluster_failed;
     game->viewroot_handoff=1;
-    framework_event(game,"handoff.viewroot_surface");
+    framework_event(game,"viewroot.created");
+    framework_event(game,"viewroot.root.assigned");
+    framework_event(game,"viewroot.traversal.scheduled");
+    framework_event(game,"viewroot.window_session.attached");
+    framework_event(game,"viewroot.parent.assigned");
+    framework_event(game,"handoff.viewroot_traversal");
     game->launch_stage=AGR_ACTIVITY_LAUNCH_RESUMED;
     return 0;
 
@@ -851,6 +868,12 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
     snapshot->window_visible=game->window_visible;
     snapshot->idle_handler_scheduled=game->idle_handler_scheduled;
     snapshot->viewroot_handoff=game->viewroot_handoff;
+    snapshot->viewroot_created=game->viewroot.created;
+    snapshot->viewroot_root_assigned=game->viewroot.root_assigned;
+    snapshot->traversal_scheduled=game->viewroot.traversal_scheduled;
+    snapshot->window_session_attached=game->viewroot.window_session_attached;
+    snapshot->view_parent_assigned=game->viewroot.parent_assigned;
+    snapshot->viewroot_attach_completed=game->viewroot.attach_completed;
     snprintf(snapshot->last_method,sizeof(snapshot->last_method),"%s",vm->diagnostic_last_method);
     snprintf(snapshot->error,sizeof(snapshot->error),"%s",vm->error_msg);
     uint32_t method_count=vm->diagnostic_method_event_count;

@@ -907,6 +907,73 @@
         "Pixel Dungeon Activity launch probe",
         "Frozen Bubble Activity launch probe"
       ]
+    },
+    {
+      "id": "framework.viewroot.attach",
+      "subsystem": "Framework ViewRoot attach",
+      "android_api": "API19 ViewRootImpl.setView attach boundary",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "core/java/android/view/WindowManagerImpl.java",
+          "core/java/android/view/WindowManagerGlobal.java",
+          "core/java/android/view/ViewRootImpl.java"
+        ],
+        "symbols": [
+          "WindowManagerImpl.addView",
+          "WindowManagerGlobal.addView",
+          "ViewRootImpl.setView",
+          "ViewRootImpl.requestLayout",
+          "ViewRootImpl.scheduleTraversals"
+        ],
+        "source_hashes": {
+          "core/java/android/view/WindowManagerImpl.java": "UNVERIFIED",
+          "core/java/android/view/WindowManagerGlobal.java": "UNVERIFIED",
+          "core/java/android/view/ViewRootImpl.java": "UNVERIFIED"
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h",
+          "Runtime/DexLoom/game_dex_runner.c",
+          "App/main.m"
+        ],
+        "symbols": [
+          "agr_viewroot_attach",
+          "viewroot.created",
+          "viewroot.traversal.scheduled",
+          "handoff.viewroot_traversal"
+        ],
+        "source_hashes": {}
+      },
+      "verified_at_commit": "PENDING",
+      "status": "UNVERIFIED",
+      "dependencies": [
+        "framework.activity.launch",
+        "looper.poll"
+      ],
+      "observable_semantics": [
+        "ViewRoot is created after WindowManager.addView",
+        "decor root and parent are assigned",
+        "initial traversal is scheduled before the downstream traversal owner",
+        "window session attachment is represented without Binder/system_server"
+      ],
+      "internal_invariants": [
+        "attach state is process-local and idempotent per launch",
+        "surface drawing and performTraversals remain outside this phase"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "in-process WindowSession endpoint replaces system_server Binder boundary"
+      ],
+      "known_deviations": [
+        "full performTraversals, relayout and Surface are downstream"
+      ],
+      "contracts": [
+        "framework.viewroot.attach"
+      ]
     }
   ]
 }

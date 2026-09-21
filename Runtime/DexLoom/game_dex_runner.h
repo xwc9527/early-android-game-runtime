@@ -53,6 +53,12 @@ typedef struct {
     int window_visible;
     int idle_handler_scheduled;
     int viewroot_handoff;
+    int viewroot_created;
+    int viewroot_root_assigned;
+    int traversal_scheduled;
+    int window_session_attached;
+    int view_parent_assigned;
+    int viewroot_attach_completed;
     char last_method[160];
     char exception_class[160];
     char error[256];

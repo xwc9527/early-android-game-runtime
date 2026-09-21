@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "classification": "ANDROID_SEMANTIC_BUG",
+  "subsystem": "ViewRoot attach",
+  "upstream": {
+    "map_entry": "framework.viewroot.attach",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": false,
+    "call_path": [
+      "WindowManagerImpl.addView",
+      "WindowManagerGlobal.addView",
+      "new ViewRootImpl",
+      "ViewRootImpl.setView",
+      "requestLayout",
+      "scheduleTraversals",
+      "IWindowSession.addToDisplay"
+    ]
+  },
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+      "Runtime/DexLoom/game_dex_runner.c",
+      "App/main.m"
+    ],
+    "terminal": "handoff.viewroot_traversal"
+  },
+  "required_semantics": [
+    "ViewRoot creation",
+    "root assignment",
+    "initial traversal scheduling",
+    "window session attachment",
+    "parent assignment",
+    "attach completion"
+  ],
+  "differences": [
+    {
+      "id": "D1",
+      "description": "AGR replaces the system_server/Binder session with an in-process opaque endpoint while preserving API19 attach ordering.",
+      "relevance": "Only the downstream traversal/surface owner remains outside this phase."
+    }
+  ],
+  "causal_status": "IMPLEMENTED",
+  "evidence_level": "SYNTHETIC_CONTRACT_PENDING",
+  "next_action": "Run focused synthetic contract, unchanged real APK, regressions, and device build."
+}

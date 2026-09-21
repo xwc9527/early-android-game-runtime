@@ -6,39 +6,39 @@
     "last_known_good": "a5c5958af1a65763808fc2a4de669c4e76694876"
   },
   "active": {
-    "target": "Android Framework Continuation Phase 1",
-    "branch": "main",
-    "lifecycle": "MERGED",
-    "observed_discontinuity": "Focused Simulator run 35528665347 retained the unchanged Frozen Bubble VM for 2000 ms: performResumeActivity returned, no exception occurred, and no method or Framework event followed.",
-    "android_subsystem": "ActivityThread handleResumeActivity window/decor visibility cluster through ViewRoot/Surface handoff",
+    "target": "Android Framework ViewRoot Attach Phase 1",
+    "branch": "phase/framework-viewroot-attach-1",
+    "lifecycle": "IMPLEMENTED",
+    "observed_discontinuity": "API19 ViewRoot attach cluster was previously represented only by a surface handoff marker.",
+    "android_subsystem": "WindowManagerImpl/WindowManagerGlobal/ViewRootImpl attach through initial traversal scheduling",
     "upstream_path": [
-      "platform/frameworks/base@android-4.4.4_r2:core/java/android/app/ActivityThread.java:handleResumeActivity"
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/WindowManagerImpl.java:addView",
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/ViewRootImpl.java:setView"
     ],
     "agr_path": [
-      "App/main.m:runFrameworkRuntimeContinuationDiscovery",
-      "Runtime/DexLoom/game_dex_runner.c:agr_dex_game_start_activity",
-      "Runtime/DexLoom/VM/dx_interpreter.c:dx_vm_execute_method"
+      "Runtime/DexLoom/AndroidMini/framework_viewroot.c:agr_viewroot_attach",
+      "Runtime/DexLoom/game_dex_runner.c:agr_dex_game_start_activity"
     ],
     "active_explanations": [
-      "API19 handleResumeActivity continues from performResumeActivity into Window/decor acquisition",
-      "WindowManager.addView and Activity.makeVisible belong to one continuous ActivityThread-owned state transition",
-      "ViewRoot/Surface begins the next independent ownership boundary"
+      "ViewRoot creation and root/parent assignment are observable before downstream traversal",
+      "initial traversal scheduling is recorded but not executed in this phase",
+      "Binder/system_server is replaced by in-process opaque WindowSession"
     ],
-    "earliest_evidenced_divergence": "After coordinator.performResume.return, API19 handleResumeActivity obtains the Activity Window and DecorView; AGR returned with no further method, instruction, or Framework event.",
+    "earliest_evidenced_divergence": "After WindowManager.addView, before a formal ViewRoot attach state existed.",
     "semantic_class": "PUBLIC_OBSERVABLE",
-    "causal_status": "REAL_GAME_CONFIRMED",
-    "evidence_level": "REAL_GAME_CONFIRMED",
+    "causal_status": "IMPLEMENTED",
+    "evidence_level": "SYNTHETIC_PENDING",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "select the next subsystem after the ViewRoot/Surface ownership handoff",
+    "next_validation": "focused ViewRoot attach contract and unchanged Frozen Bubble regression",
     "primary_blocker": "none",
     "first_broken_boundary": "none",
-    "first_broken_boundary_evidence": "closure 35530434859 VALID_PASS; post-merge 35530860389 PASS"
+    "first_broken_boundary_evidence": "phase implementation pending focused contract"
   },
   "ci_budget": {
-    "valid_closure_runs": 1,
+    "valid_closure_runs": 0,
     "infrastructure_failures_consume_budget": false,
-    "closure_runs_used": 1,
-    "last_closure_attempt": "35530434859 VALID_PASS",
+    "closure_runs_used": 0,
+    "last_closure_attempt": null,
     "automatic_reruns_available": 1,
     "discovery_policy": "information_gain",
     "consecutive_expensive_runs_without_information_gain": 0
