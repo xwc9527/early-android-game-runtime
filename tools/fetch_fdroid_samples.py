@@ -23,12 +23,22 @@ RUNTIME_BASELINE = {
     "kungfoo-barracuda", "gloomy-dungeons-2", "pixel-dungeon",
     "frozen-bubble", "vector-pinball",
 }
+# Frozen in build/artifacts/preregistered-samples.json before any dynamic run.
+FALSIFICATION_DISCOVERY = {
+    "crosswords", "gloomy-dungeons-1", "kungfoo-barracuda", "minilens", "minetest",
+    "flickit", "andors-trail", "pixel-dungeon", "a2048", "pysolfc",
+}
+FALSIFICATION_HOLDOUT = {
+    "qt-minesweeper", "meritous", "heriswap", "geometri-destroyer", "droidfish",
+}
 PROFILES = {
     "focused-activity": {"pixel-dungeon", "frozen-bubble"},
     "focused-framework": {"frozen-bubble"},
     "runtime-regression": RUNTIME_BASELINE,
     "full": RUNTIME_BASELINE,
     "census": None,
+    "falsification-discovery": FALSIFICATION_DISCOVERY,
+    "falsification-holdout": FALSIFICATION_HOLDOUT,
 }
 
 
