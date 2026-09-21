@@ -54,7 +54,7 @@ jobs:
           fi
       - name: Verify pinned API19 ViewRoot attach source
         run: |
-          python3 ci/upstream-map.py --require-valid framework.viewroot.attach --verify-upstream
+          python3 ci/upstream-map.py --require-valid framework.viewroot.attach --verify-upstream --verify-only framework.viewroot.attach
           python3 ci/validate-governance.py --mode discovery
       - name: Build post-resume lifecycle contract fixture
         run: |

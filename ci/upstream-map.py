@@ -37,7 +37,7 @@ def hash_path(path, tracked):
     return digest.hexdigest()
 
 
-def evaluate(document, verify_upstream=False):
+def evaluate(document, verify_upstream=False, verify_only=None):
     errors, entries = [], {}
     baseline = document.get("android_baseline")
     tracked = tracked_files()
@@ -72,7 +72,7 @@ def evaluate(document, verify_upstream=False):
             if not value or value == "UNVERIFIED":
                 if effective == "VALID": effective = "UNVERIFIED"
                 reasons.append(f"upstream source not hash-verified: {path}")
-            elif verify_upstream:
+            elif verify_upstream and (verify_only is None or entry_id in verify_only):
                 url = upstream.get("source_urls", {}).get(path)
                 if not url:
                     effective = "UNVERIFIED" if effective != "INVALID" else effective
@@ -132,11 +132,14 @@ def main():
     parser.add_argument("--map", default=str(MAP_PATH))
     parser.add_argument("--strict", action="store_true", help="fail when any entry is not effectively VALID")
     parser.add_argument("--verify-upstream", action="store_true", help="download pinned source and verify hash/symbols")
+    parser.add_argument("--verify-only", action="append", default=[],
+                        help="limit live source downloads to these map entries while still checking all pinned local hashes")
     parser.add_argument("--require-valid", action="append", default=[], help="entry id that must be effectively VALID")
     parser.add_argument("--output")
     args = parser.parse_args()
     document = json.loads(pathlib.Path(args.map).read_text(encoding="utf-8"))
-    errors, entries = evaluate(document, args.verify_upstream)
+    errors, entries = evaluate(document, args.verify_upstream,
+                               set(args.verify_only) if args.verify_only else None)
     for entry_id in args.require_valid:
         result = entries.get(entry_id)
         if not result or result["effective_status"] != "VALID":
