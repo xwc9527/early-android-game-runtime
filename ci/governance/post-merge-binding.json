@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "target": "Android Framework ViewRoot Attach Phase 1",
+  "closure_run_id": "35595440089",
+  "closure_artifact": "framework-viewroot-closure-summary",
+  "closure_entry": "framework-viewroot-run-summary.json",
+  "focused_artifact": "framework-viewroot-attach-discovery",
+  "focused_entry": "framework-viewroot-attach.json",
+  "closure_tested_commit": "a6256ba4e4f0d8124bc5a2348039b882f2c91dc8",
+  "closure_tested_tree": "9d0dedc1b6bcd92ad40a595b386ce798d5da3025",
+  "merged_commit": "a6256ba4e4f0d8124bc5a2348039b882f2c91dc8",
+  "merged_tree": "9d0dedc1b6bcd92ad40a595b386ce798d5da3025",
+  "invalid_post_merge_run": {
+    "run_id": "35596315143",
+    "classification": "INVALID",
+    "defect_class": "ARTIFACT_DEFECT",
+    "reason": "historical PVS1 closure 35486652372 was selected and smoke ran at 09d6953 instead of merged ViewRoot main a6256ba"
+  }
+}

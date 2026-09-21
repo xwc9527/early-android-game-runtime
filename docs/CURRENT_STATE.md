@@ -4,9 +4,9 @@ Updated: 2026-09-21
 
 Baseline and last known good: `main @ 975eed33963118dae1986797125b8c5ac136c834`.
 
-Active branch: `phase/framework-viewroot-attach-1`.
+Active branch: `phase/framework-viewroot-attach-1` (closure-tested candidate merged by fast-forward).
 
-Lifecycle: `IMPLEMENTED`.
+Lifecycle: `CLOSED` at `a6256ba4e4f0d8124bc5a2348039b882f2c91dc8` / tree `9d0dedc1b6bcd92ad40a595b386ce798d5da3025`. Post-merge validation remains pending.
 
 ## Active Target
 
@@ -22,7 +22,7 @@ Classification: `ANDROID_SEMANTIC_BUG`. Semantic class: `PUBLIC_OBSERVABLE`. Cau
 
 `agr_viewroot_attach` is the formal API19 host-side ViewRoot owner. It owns a ViewRoot and AttachInfo object, Decor/parent relation, a pending first traversal and an in-process WindowSession attachment before emitting `handoff.viewroot_traversal`. The source map and semantic diff are recorded for `WindowManagerImpl.addView`, `WindowManagerGlobal.addView`, and `ViewRootImpl.setView/requestLayout/scheduleTraversals`.
 
-This candidate is implemented but not closed. Focused contract, unchanged real-APK regression, Simulator, iphoneos and closure evidence are still required.
+The exact candidate passed focused contract, unchanged real-APK regression, Simulator, iphoneos and closure run `35595440089` as `VALID_PASS`. It is not yet MERGED/STABLE in governance because post-merge run `35596315143` selected unrelated historical PVS1 evidence and is INVALID. The merge itself has the exact closure-tested tree.
 
 ## Protected Boundaries
 
@@ -33,4 +33,4 @@ This candidate is implemented but not closed. Focused contract, unchanged real-A
 
 ## Closure Contract
 
-The candidate remains IMPLEMENTED / UNVERIFIED. Source verification, focused Simulator synthetic and unchanged Frozen Bubble results, protected regressions and iphoneos build are required before exact-commit closure. No Surface, relayout or rendering claim is made.
+Exact-commit closure is complete. A corrected cheap post-merge gate must bind ViewRoot closure run `35595440089` to the merged tree before MERGED/STABLE promotion. No Surface, relayout or rendering claim is made.

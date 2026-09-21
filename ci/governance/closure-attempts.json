@@ -7,8 +7,8 @@
     "second_run_after_valid_fail_requires_approval": true
   },
   "budget": {
-    "valid_attempts_used": 0,
-    "valid_attempts_remaining": 1
+    "valid_attempts_used": 1,
+    "valid_attempts_remaining": 0
   },
   "attempts": [
     {
@@ -117,7 +117,19 @@
       "defect_class": "ARTIFACT_DEFECT",
       "reason": "closure artifact target attribution defect: all execution stages completed, but the generated summary named the historical Continuation target instead of the active ViewRoot target",
       "consumes_budget": false,
-      "automatic_rerun": "AVAILABLE_AFTER_FIX"
+      "automatic_rerun": "USED_BY_35595440089"
+    },
+    {
+      "target": "Android Framework ViewRoot Attach Phase 1",
+      "target_evidence": "run 35595440089 summary names the active ViewRoot target and exactly matches the approved commit and tree",
+      "run_id": "35595440089",
+      "tested_commit": "a6256ba4e4f0d8124bc5a2348039b882f2c91dc8",
+      "tested_tree": "9d0dedc1b6bcd92ad40a595b386ce798d5da3025",
+      "classification": "VALID_PASS",
+      "reason": "source, focused Simulator, Runtime contracts and regressions, iphoneos and exact-target closure evidence all passed",
+      "consumes_budget": true,
+      "automatic_rerun_of": "35592070195",
+      "approval_reference": "explicit user approval for corrected ViewRoot closure at commit a6256ba4e4f0d8124bc5a2348039b882f2c91dc8 tree 9d0dedc1b6bcd92ad40a595b386ce798d5da3025"
     }
   ],
   "active_target": "Android Framework ViewRoot Attach Phase 1"

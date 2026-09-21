@@ -8,7 +8,7 @@
   "active": {
     "target": "Android Framework ViewRoot Attach Phase 1",
     "branch": "phase/framework-viewroot-attach-1",
-    "lifecycle": "IMPLEMENTED",
+    "lifecycle": "CLOSED",
     "observed_discontinuity": "API19 ViewRoot attach cluster was previously represented only by a surface handoff marker.",
     "android_subsystem": "WindowManagerImpl/WindowManagerGlobal/ViewRootImpl attach through initial traversal scheduling",
     "upstream_path": [
@@ -35,11 +35,11 @@
     "first_broken_boundary_evidence": "Android 4.4.4_r2 source and prior closed boundary; current implementation still requires focused Simulator verification"
   },
   "ci_budget": {
-    "valid_closure_runs": 0,
+    "valid_closure_runs": 1,
     "infrastructure_failures_consume_budget": false,
-    "closure_runs_used": 0,
-    "last_closure_attempt": null,
-    "automatic_reruns_available": 1,
+    "closure_runs_used": 1,
+    "last_closure_attempt": "35595440089 VALID_PASS",
+    "automatic_reruns_available": 0,
     "discovery_policy": "information_gain",
     "consecutive_expensive_runs_without_information_gain": 0
   }

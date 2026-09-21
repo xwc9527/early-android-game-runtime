@@ -15,61 +15,41 @@ permissions:
 jobs:
   post-merge:
     runs-on: macos-15
-    timeout-minutes: 18
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install stable Rust
-        uses: dtolnay/rust-toolchain@stable
-      - id: rust-version
-        run: echo "key=$(rustc --version | shasum -a 256 | cut -c1-16)" >> "$GITHUB_OUTPUT"
-      - name: Restore full regression sample cache
-        uses: actions/cache@v4
-        with:
-          path: samples/*.apk
-          enableCrossOsArchive: true
-          key: agr-samples-full-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
-      - name: Restore Simulator ANGLE package
-        uses: actions/cache@v4
-        with:
-          path: |
-            build/angle-v2.1.28252
-            build/angle-xcframeworks-v2.1.28252.zip
-          key: agr-angle-ios-simulator-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
-      - name: Restore Simulator Rust artifacts and registry
-        uses: actions/cache@v4
-        with:
-          path: |
-            Runtime/ArmInterpreter/target
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
+      - name: Closure selection contract
+        run: python3 ci/test-post-merge-evidence.py
       - name: Verify merged tree against closure evidence
+        id: identity
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           python3 ci/fetch-closure-evidence.py
           python3 ci/verify-merge.py build/artifacts/closure-run-summary.json --merged
-      - name: Check out the exact closure-tested merge point
+      - name: Validate current governance
+        id: governance
         run: |
-          tested_commit=$(python3 -c 'import json; print(json.load(open("build/artifacts/closure-run-summary.json"))["closure"]["tested_commit"])')
-          git checkout --detach "$tested_commit"
-      - name: Compile governance tools
-        run: python3 -m py_compile ci/*.py
+          python3 -m py_compile ci/*.py
+          python3 ci/test-closure-attempt-ledger.py
+          python3 ci/validate-governance.py --mode discovery
       - name: Critical static and JNI contract
         id: critical
         run: bash scripts/test-jni-methods.sh
-      - name: Active target smoke
+      - name: Active ViewRoot contract smoke
         id: smoke
-        run: python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds 900
+        run: python3 ci/framework-viewroot-attach-contract.py build/artifacts/framework-viewroot-attach.json
       - name: Post-merge summary
         if: always()
         run: |
-          python3 ci/build-summary.py --platform ios-simulator --run-kind post-merge \
-            --build-status '${{ steps.smoke.outcome }}' \
-            --contracts-status '${{ steps.critical.outcome }}' --regressions-status skipped \
-            --result build/artifacts/runtime-smoke.json
+          python3 ci/build-post-merge-summary.py \
+            --identity-status '${{ steps.identity.outcome }}' \
+            --governance-status '${{ steps.governance.outcome }}' \
+            --contracts-status '${{ steps.critical.outcome }}' \
+            --smoke-status '${{ steps.smoke.outcome }}'
       - name: Upload post-merge evidence
         if: always()
         uses: actions/upload-artifact@v4
