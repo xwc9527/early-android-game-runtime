@@ -6,6 +6,18 @@
       "target": "DEX Parser Compatibility Phase 1",
       "reason": "App/main.m contains the generic APK smoke harness whose DEX-stage classifier is the evidenced primary blocker; the change does not alter NativeActivity/Input production semantics.",
       "evidence": "focused runs 35489492142 and 35489607971 prove parser success and isolate the post-parse PoC binding misclassification"
+    },
+    {
+      "module": "NativeActivityInput",
+      "target": "Android Framework ViewRoot Attach Phase 1",
+      "reason": "The ViewRoot attach phase extends the existing Activity/Window handoff boundary and updates shared snapshot reporting; no NativeActivity/Input production semantics are changed.",
+      "evidence": "source map framework.viewroot.attach and focused attach contract isolate the change to post-WindowManager.addView ownership."
+    },
+    {
+      "module": "DEXRuntimeLifecycle",
+      "target": "Android Framework ViewRoot Attach Phase 1",
+      "reason": "The ViewRoot attach state is emitted by the existing DEX Activity launch coordinator and extends its lifecycle snapshot; the prior lifecycle contract remains unchanged.",
+      "evidence": "framework-viewroot-attach semantic diff and agr_viewroot_attach owner."
     }
   ]
 }
