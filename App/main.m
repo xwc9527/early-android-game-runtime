@@ -991,6 +991,7 @@ static NSDictionary *dexSnapshotDictionary(const agr_dex_runtime_snapshot *snaps
       @"layout_complete":snapshot->layout_complete ? @YES : @NO,
       @"surface_valid":snapshot->surface_valid ? @YES : @NO,
       @"surface_generation":@(snapshot->surface_generation),
+      @"draw_count":@(snapshot->draw_count),
       @"last_method":[NSString stringWithUTF8String:snapshot->last_method],
       @"method_trace":methods, @"framework_trace":framework,
       @"exception_class":[NSString stringWithUTF8String:snapshot->exception_class],
@@ -1172,6 +1173,158 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(BOOL runTraversal,
     if (package) agr_apk_package_close(package);
     NSData *json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted error:nil];
     return [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
+}
+
+static agr_dex_game *gDispatchGame = NULL;
+static agr_apk_package *gDispatchPackage = NULL;
+static NSDictionary *gDispatchContract = nil;
+static NSDictionary *gDispatchBefore = nil;
+static NSMutableArray *gDispatchFrames = nil;
+static uint32_t gDispatchVsync = 0;
+static uint32_t gDispatchWidth = 0;
+static uint32_t gDispatchHeight = 0;
+static int gDispatchStart = -1;
+static BOOL gDispatchFinished = NO;
+static BOOL gDispatchOwnerGraph = NO;
+static CADisplayLink *gDispatchLink = nil;
+
+static NSDictionary *syntheticTraversalDispatchContract(uint32_t width, uint32_t height) {
+    NSString *fixturePath=[[NSBundle mainBundle] pathForResource:@"activity-launch-fixture" ofType:@"dex"];
+    NSData *fixture=fixturePath ? [NSData dataWithContentsOfFile:fixturePath] : nil;
+    agr_dex_game *game=fixture ? agr_dex_game_create_for_launch(fixture.bytes,(uint32_t)fixture.length,
+        "Ltest/TestActivity;","Ltest/TestApplication;","test.activity.launch") : NULL;
+    if (game) agr_dex_game_enable_diagnostics(game,1);
+    int display=game ? agr_dex_game_set_host_display(game,width,height) : -1;
+    int start=game ? agr_dex_game_start_activity(game) : -1;
+    agr_dex_runtime_snapshot started={0},frame1={0},frame2={0},frame3={0};
+    if (game) agr_dex_game_runtime_snapshot(game,&started);
+    int first=game && start==0 ? agr_dex_game_choreographer_frame(game) : -1;
+    if (game) agr_dex_game_runtime_snapshot(game,&frame1);
+    void *pixels1=NULL,*pixels2=NULL;
+    uint32_t w1=0,h1=0,s1=0,g1=0,w2=0,h2=0,s2=0,g2=0;
+    int surface1=game ? agr_dex_game_root_surface(game,&pixels1,&w1,&h1,&s1,&g1) : -1;
+    int second=first==0 ? agr_dex_game_choreographer_frame(game) : -1;
+    if (game) agr_dex_game_runtime_snapshot(game,&frame2);
+    int surface2=game ? agr_dex_game_root_surface(game,&pixels2,&w2,&h2,&s2,&g2) : -1;
+    int idle=second==0 ? agr_dex_game_choreographer_frame(game) : -1;
+    if (game) agr_dex_game_runtime_snapshot(game,&frame3);
+    BOOL sameBacking=surface1==0 && surface2==0 && pixels1==pixels2 && g1==g2 && w1==w2 && h1==h2;
+    BOOL passed=display==0 && start==0 && started.traversal_count==0 && started.traversal_scheduled &&
+        started.draw_count==0 && first==0 && frame1.traversal_count==1 && frame1.traversal_scheduled &&
+        frame1.surface_valid && frame1.draw_count==0 && second==0 && frame2.traversal_count==2 &&
+        !frame2.traversal_scheduled && frame2.surface_generation==1 && frame2.draw_count==1 &&
+        sameBacking && idle==1 && frame3.traversal_count==2 && frame3.draw_count==1;
+    if (game) agr_dex_game_destroy(game);
+
+    agr_dex_game *closed=fixture ? agr_dex_game_create_for_launch(fixture.bytes,(uint32_t)fixture.length,
+        "Ltest/TestActivity;","Ltest/TestApplication;","test.activity.launch") : NULL;
+    if (closed) agr_dex_game_enable_diagnostics(closed,1);
+    int closedStart=closed ? agr_dex_game_start_activity(closed) : -1;
+    int explicit1=closedStart==0 ? agr_dex_game_do_traversal(closed,width,height) : -1;
+    agr_dex_runtime_snapshot closed1={0},closed2={0};
+    if (closed) agr_dex_game_runtime_snapshot(closed,&closed1);
+    int explicit2=explicit1==0 ? agr_dex_game_do_traversal(closed,width,height) : -1;
+    if (closed) agr_dex_game_runtime_snapshot(closed,&closed2);
+    BOOL closedTrace=closed1.framework_event_count>0 &&
+        strcmp(closed1.framework_events[closed1.framework_event_count-1],"handoff.viewroot_surface_ready")==0;
+    BOOL closedPassed=explicit1==0 && closed1.traversal_count==1 && closed1.draw_count==0 && closedTrace &&
+        explicit2==0 && closed2.traversal_count==2 && !closed2.traversal_scheduled &&
+        closed2.surface_generation==1 && closed2.draw_count==1;
+    if (closed) agr_dex_game_destroy(closed);
+
+    agr_dex_game *failed=fixture ? agr_dex_game_create_for_launch(fixture.bytes,(uint32_t)fixture.length,
+        "Ltest/TestActivity;","Ltest/TestApplication;","test.activity.launch") : NULL;
+    int failure=-1,retry=-1;
+    agr_dex_runtime_snapshot failedSnap={0},retrySnap={0};
+    if (failed && agr_dex_game_set_host_display(failed,width,height)==0 &&
+        agr_dex_game_start_activity(failed)==0 &&
+        agr_dex_game_set_relayout_gate(failed,rejectRelayout,NULL)==0) {
+        failure=agr_dex_game_choreographer_frame(failed);
+        agr_dex_game_runtime_snapshot(failed,&failedSnap);
+        if (agr_dex_game_set_relayout_gate(failed,NULL,NULL)==0) {
+            retry=agr_dex_game_choreographer_frame(failed);
+            agr_dex_game_runtime_snapshot(failed,&retrySnap);
+        }
+    }
+    if (failed) agr_dex_game_destroy(failed);
+    BOOL failurePassed=failure!=0 && failedSnap.traversal_scheduled && !failedSnap.surface_valid &&
+        failedSnap.draw_count==0 && retry==0 && retrySnap.surface_valid && retrySnap.draw_count==0 &&
+        retrySnap.traversal_count==1;
+    return @{ @"passed":@(passed && closedPassed && failurePassed),
+      @"consumer":@"synthetic-host-pump",
+      @"after_start":dexSnapshotDictionary(&started),
+      @"frame1":dexSnapshotDictionary(&frame1),
+      @"frame2":dexSnapshotDictionary(&frame2),
+      @"frame3":dexSnapshotDictionary(&frame3),
+      @"same_backing":@(sameBacking),
+      @"closed_explicit_passed":@(closedPassed),
+      @"closed_first":dexSnapshotDictionary(&closed1),
+      @"closed_second":dexSnapshotDictionary(&closed2),
+      @"relayout_failure_result":@(failure),
+      @"retry_result":@(retry) };
+}
+
+static void finishTraversalDispatchReport(void) {
+    if (gDispatchFinished) return;
+    gDispatchFinished=YES;
+    if (gDispatchLink) { [gDispatchLink invalidate]; gDispatchLink=nil; }
+    agr_dex_runtime_snapshot after={0};
+    if (gDispatchGame) agr_dex_game_runtime_snapshot(gDispatchGame,&after);
+    NSDictionary *afterDict=gDispatchGame ? dexSnapshotDictionary(&after) : @{};
+    NSDictionary *before=gDispatchBefore ?: @{};
+    BOOL scheduledAtStart=[before[@"traversal_scheduled"] boolValue] &&
+        [before[@"traversal_count"] intValue]==0 && [before[@"draw_count"] intValue]==0;
+    BOOL chain=gDispatchStart==0 && gDispatchVsync>=2 && scheduledAtStart &&
+        after.traversal_count==2 && after.surface_valid && after.draw_count>=1 &&
+        !after.traversal_scheduled && after.surface_generation==1 && gDispatchOwnerGraph;
+    NSString *classification=chain ? @"viewroot_draw_entered" :
+        (gDispatchGame && gDispatchStart==0 ? @"traversal_dispatch_failed" : @"launch_failed");
+    NSDictionary *report=@{ @"schema":@"agr.framework-traversal-dispatch.discovery.v1",
+      @"sample":@"frozen-bubble", @"consumer":@"uikit-cadisplaylink",
+      @"harness_called_do_traversal":@NO, @"host_vsync_count":@(gDispatchVsync),
+      @"display_width":@(gDispatchWidth), @"display_height":@(gDispatchHeight),
+      @"launch_result":@(gDispatchStart),
+      @"launch_stage":launchStageName(gDispatchGame ? agr_dex_game_launch_stage(gDispatchGame) : AGR_ACTIVITY_LAUNCH_NONE),
+      @"real_owner_graph":@(gDispatchOwnerGraph),
+      @"resume_snapshot":before, @"frames":gDispatchFrames ?: @[],
+      @"after_snapshot":afterDict, @"contract":gDispatchContract ?: @{},
+      @"classification":classification };
+    NSData *json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted error:nil];
+    NSString *text=[[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
+    NSString *path=[NSHomeDirectory() stringByAppendingPathComponent:
+        @"Documents/framework-traversal-dispatch.json"];
+    [text writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    NSLog(@"AGR_RESULT_BEGIN%@AGR_RESULT_END", text);
+    if (gDispatchGame) agr_dex_game_destroy(gDispatchGame);
+    gDispatchGame=NULL;
+    if (gDispatchPackage) agr_apk_package_close(gDispatchPackage);
+    gDispatchPackage=NULL;
+}
+
+static void armTraversalDispatchApk(uint32_t width, uint32_t height) {
+    gDispatchWidth=width; gDispatchHeight=height;
+    gDispatchContract=syntheticTraversalDispatchContract(width,height);
+    gDispatchFrames=[NSMutableArray array];
+    NSString *planPath=[[NSBundle mainBundle] pathForResource:@"batch-plan" ofType:@"json"];
+    NSData *planData=planPath ? [NSData dataWithContentsOfFile:planPath] : nil;
+    NSDictionary *plan=planData ? [NSJSONSerialization JSONObjectWithData:planData options:0 error:nil] : nil;
+    NSDictionary *sample=nil;
+    for (NSDictionary *candidate in plan[@"samples"] ?: @[])
+        if ([candidate[@"id"] isEqualToString:@"frozen-bubble"]) { sample=candidate; break; }
+    NSString *resource=sample[@"resource"];
+    NSString *path=resource ? [[NSBundle mainBundle] pathForResource:resource.stringByDeletingPathExtension
+                                                              ofType:resource.pathExtension] : nil;
+    gDispatchPackage=path ? agr_apk_package_open(path.UTF8String) : NULL;
+    gDispatchGame=gDispatchPackage ? agr_dex_game_create_from_apk(gDispatchPackage) : NULL;
+    if (gDispatchGame) agr_dex_game_enable_diagnostics(gDispatchGame,1);
+    if (gDispatchGame) agr_dex_game_set_host_display(gDispatchGame,width,height);
+    gDispatchStart=gDispatchGame ? agr_dex_game_start_activity(gDispatchGame) : -1;
+    gDispatchOwnerGraph=gDispatchGame && agr_dex_game_viewroot_contract(gDispatchGame)==1;
+    agr_dex_runtime_snapshot before={0};
+    if (gDispatchGame) agr_dex_game_runtime_snapshot(gDispatchGame,&before);
+    gDispatchBefore=gDispatchGame ? dexSnapshotDictionary(&before) : @{};
+    if (gDispatchStart!=0 || !gDispatchLink) finishTraversalDispatchReport();
+    else gDispatchLink.paused=NO;
 }
 
 static NSString *runTests(void) {
@@ -1472,13 +1625,20 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     BOOL activityLaunchCompatibility=[arguments containsObject:@"--activity-launch-compatibility"];
     BOOL frameworkRuntimeContinuation=[arguments containsObject:@"--framework-viewroot-attach-discovery"];
     BOOL firstTraversalDiscovery=[arguments containsObject:@"--framework-first-traversal-discovery"];
+    BOOL traversalDispatch=[arguments containsObject:@"--framework-traversal-dispatch-discovery"];
 #if AGR_DEVICE_INTERACTIVE
     interactive=YES;
 #endif
     UIViewController *controller = interactive ? [AGRDebugController new] : [UIViewController new]; controller.view.backgroundColor = UIColor.blackColor;
     self.window.rootViewController = controller; [self.window makeKeyAndVisible];
     CGSize displayPixels=UIScreen.mainScreen.nativeBounds.size;
-    if(!interactive){
+    if(!interactive && traversalDispatch){
+      gDispatchLink=[CADisplayLink displayLinkWithTarget:self selector:@selector(hostTraversalVsync:)];
+      [gDispatchLink addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
+      gDispatchLink.paused=YES;
+      uint32_t width=(uint32_t)displayPixels.width, height=(uint32_t)displayPixels.height;
+      dispatch_async(dispatch_get_main_queue(),^{ @autoreleasepool { armTraversalDispatchApk(width,height); } });
+    } else if(!interactive){
       /* Returning from didFinishLaunching promptly is required even for the
        * headless regression host.  Running the complete APK trajectory here
        * blocks UIKit's launch handshake long enough for the Simulator launch
@@ -1501,6 +1661,17 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
       }});
     }
     return YES;
+}
+- (void)hostTraversalVsync:(CADisplayLink *)link {
+    (void)link;
+    if (!gDispatchGame || gDispatchFinished) return;
+    gDispatchVsync++;
+    int result=agr_dex_game_choreographer_frame(gDispatchGame);
+    agr_dex_runtime_snapshot snapshot={0};
+    agr_dex_game_runtime_snapshot(gDispatchGame,&snapshot);
+    if (gDispatchFrames) [gDispatchFrames addObject:dexSnapshotDictionary(&snapshot)];
+    if (result<0 || snapshot.traversal_count>=2 || gDispatchVsync>=4)
+        finishTraversalDispatchReport();
 }
 @end
 int main(int argc, char **argv) {

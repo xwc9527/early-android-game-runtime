@@ -1,24 +1,22 @@
 {
   "schema_version": 1,
-  "enabled": false,
-  "question": "Resolved by discovery run 35514480599: resetting budgets at each top-level invocation removes the cumulative loadImage watchdog failure while the complete Runtime regression passes.",
+  "enabled": true,
+  "question": "Does one unchanged Frozen Bubble launch, with CADisplayLink calling agr_dex_game_choreographer_frame and no harness do_traversal, go from traversal_scheduled count 0 through two host frames to a persistent Surface and viewroot.perform_draw?",
   "current_uncertainty": [
-    "No discovery uncertainty remains for the cumulative DEX watchdog failure."
+    "The Linux host pump proves the callback contract on a synthetic Activity. It does not prove UIKit CADisplayLink fires on a headless Simulator or that the real APK start path reaches the same two-frame chain."
   ],
   "expected_outcome_a": {
-    "result": "Repeated real loadImage callbacks no longer report DX_ERR_BUDGET_EXHAUSTED, the PVS regression produces its bounded result, and Activity-focused evidence remains unchanged.",
+    "result": "classification viewroot_draw_entered, host_vsync_count at least 2, traversal_count 2, persistent surface_generation 1, draw_count at least 1, harness_called_do_traversal false",
     "excludes": [
-      "the process-lifetime watchdog timestamp as a remaining blocker",
-      "Activity launch or InputQueue regression caused by the narrow reset"
+      "the claim that a tester must call agr_dex_game_do_traversal for the real APK to leave traversal_scheduled"
     ]
   },
   "expected_outcome_b": {
-    "result": "The same watchdog failure remains or execution reaches a different first causal blocker with bounded forensic evidence.",
+    "result": "launch or the first host frame stops at a smaller boundary, or CADisplayLink produces no vsync before the bounded wait",
     "excludes": [
-      "the hypothesis that the identified timestamp carry-over fully explains the stable regression failure"
+      "the claim that wiring CADisplayLink to agr_dex_game_choreographer_frame is already sufficient for this APK"
     ]
   },
-  "why_cheaper_test_is_insufficient": "Windows cannot build the iOS host target, and source inspection cannot reproduce the real nested DEX calls, elapsed time, texture callback sequence, or compiled Simulator scheduling that triggered the watchdog.",
-  "prior_expensive_runs_without_information_gain": 0,
-  "resolved_by_run": "35514480599"
+  "why_cheaper_test_is_insufficient": "The Linux host contract cannot execute UIKit CADisplayLink or the unchanged Frozen Bubble APK process.",
+  "prior_expensive_runs_without_information_gain": 0
 }

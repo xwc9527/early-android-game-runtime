@@ -33,7 +33,7 @@ typedef struct {
     char method[160];
 } agr_dex_method_event;
 #define AGR_DEX_METHOD_TRACE_CAPACITY 64
-#define AGR_DEX_FRAMEWORK_TRACE_CAPACITY 32
+#define AGR_DEX_FRAMEWORK_TRACE_CAPACITY 96
 typedef struct {
     agr_dex_arg_kind kind;
     union { int32_t i; float f; const char *string; uint32_t object; } value;
@@ -72,6 +72,7 @@ typedef struct {
     int layout_complete;
     int surface_valid;
     uint32_t surface_generation;
+    uint32_t draw_count;
     char last_method[160];
     char exception_class[160];
     char error[256];
@@ -112,6 +113,12 @@ int agr_dex_game_post_resume_completed(const agr_dex_game *game);
 int agr_dex_game_viewroot_contract(agr_dex_game *game);
 int agr_dex_game_do_traversal(agr_dex_game *game, uint32_t display_width_pixels,
                               uint32_t display_height_pixels);
+/* Host display fact supplied by UIKit. It does not run a traversal. */
+int agr_dex_game_set_host_display(agr_dex_game *game, uint32_t display_width_pixels,
+                                  uint32_t display_height_pixels);
+/* One host vsync. Returns 0 when a posted traversal ran, 1 when none was
+   due, and -1 on error. Never runs the reschedule in the same call. */
+int agr_dex_game_choreographer_frame(agr_dex_game *game);
 int agr_dex_game_set_surface_allocator(agr_dex_game *game,
                                        void *(*allocate)(void *user, size_t bytes),
                                        void (*release)(void *user, void *pixels), void *user);

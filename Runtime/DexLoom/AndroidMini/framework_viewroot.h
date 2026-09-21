@@ -45,6 +45,7 @@ typedef struct {
     agr_viewroot_surface_backing backing;
     agr_viewroot_traversal_phase traversal_phase;
     uint32_t traversal_count;
+    uint32_t draw_count;
     int hierarchy_attached;
     int measured_width;
     int measured_height;
@@ -70,8 +71,9 @@ typedef struct {
     int attach_complete;
 } agr_viewroot_attach_state;
 
-/* API19 ViewRoot attach ownership.  Traversal execution and surface drawing
-   deliberately remain outside this phase. */
+/* API19 ViewRoot attach ownership. scheduleTraversals does not execute.
+   The host frame consumes one posted CALLBACK_TRAVERSAL. Drawing of a
+   newly acquired Surface waits for the next frame. */
 DxResult agr_viewroot_add_view(DxVM *vm, agr_viewroot_attach_state *state,
                                DxObject *manager, DxObject *decor,
                                DxObject *layout_params, DxObject *window,
@@ -80,6 +82,11 @@ DxResult agr_viewroot_add_view(DxVM *vm, agr_viewroot_attach_state *state,
 DxResult agr_viewroot_do_traversal(DxVM *vm, agr_viewroot_attach_state *state,
                                    agr_viewroot_display display,
                                    agr_viewroot_trace_fn trace, void *trace_user);
+/* One UIKit/host vsync. Extracts at most one due traversal callback.
+   A reschedule inside that callback waits for a later frame. */
+DxResult agr_viewroot_choreographer_frame(DxVM *vm, agr_viewroot_attach_state *state,
+                                           agr_viewroot_display display,
+                                           agr_viewroot_trace_fn trace, void *trace_user);
 void agr_viewroot_release(agr_viewroot_attach_state *state);
 int agr_viewroot_surface_valid(const agr_viewroot_attach_state *state);
 

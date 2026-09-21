@@ -684,7 +684,7 @@
           "gc_mark_roots"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "889f838e955464f187ddb85ab1c6786f519fb9191fa4f2a7eaa831fd121e8b70",
+          "Runtime/DexLoom/game_dex_runner.c": "37d52ccf46dfb16c41246aa7aad3337ce6e9e9b96ea8fd7de55a87ab9fdc26fd",
           "Runtime/DexLoom/VM/dx_vm.c": "cfa35bbe1b40de76c8c399b16d53a03fcd199b010bfed3538068c8cc7877abc7"
         }
       },
@@ -770,7 +770,7 @@
           "poc_create"
         ],
         "source_hashes": {
-          "App/main.m": "97e5b0ca83160c25068e76477efea42c978780a4995c8f30e94a57c4c0c83d07",
+          "App/main.m": "737f6ef1f0bc278a8c2ff705befc14bd254789089fefb292cfd229c0299f8ae4",
           "Runtime/DexLoom/DEX/dx_dex.c": "94cc603e0b985213fddec8b4b3935e5074603fe31f85032963384794da1eb4f8",
           "Runtime/DexLoom/poc_host.c": "7844c264f4ab1533ac91d4f35af71c07a60cb4ef15c8d6bfab3db5c28f982de1"
         }
@@ -874,9 +874,9 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/APK/dx_manifest.c": "17d608e345e27ba2bcf564dd61e7918c79da4b243f32d811e59126996b27519e",
-          "Runtime/DexLoom/game_dex_runner.c": "889f838e955464f187ddb85ab1c6786f519fb9191fa4f2a7eaa831fd121e8b70",
+          "Runtime/DexLoom/game_dex_runner.c": "37d52ccf46dfb16c41246aa7aad3337ce6e9e9b96ea8fd7de55a87ab9fdc26fd",
           "Runtime/DexLoom/VM/dx_vm.c": "cfa35bbe1b40de76c8c399b16d53a03fcd199b010bfed3538068c8cc7877abc7",
-          "App/main.m": "97e5b0ca83160c25068e76477efea42c978780a4995c8f30e94a57c4c0c83d07"
+          "App/main.m": "737f6ef1f0bc278a8c2ff705befc14bd254789089fefb292cfd229c0299f8ae4"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -966,10 +966,10 @@
           "handoff.viewroot_traversal"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "b31a4d66c3fd1b4ca755524cbd4156c51de56a40eb1de78fb074d84ea4208195",
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "57626034f3c1162554b66a9d4a0b97ff09b78be624b03e62f67b2c7ee8015f3f",
-          "Runtime/DexLoom/game_dex_runner.c": "889f838e955464f187ddb85ab1c6786f519fb9191fa4f2a7eaa831fd121e8b70",
-          "App/main.m": "97e5b0ca83160c25068e76477efea42c978780a4995c8f30e94a57c4c0c83d07"
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "cb5f17c7c7829e783839f790ca042875ac69a99876accc1d517b2fb26ec10b51",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "38b79a254406b416b28e0fc126af119698d0f5dbebf2a9926b808dcc8d6e5afd",
+          "Runtime/DexLoom/game_dex_runner.c": "37d52ccf46dfb16c41246aa7aad3337ce6e9e9b96ea8fd7de55a87ab9fdc26fd",
+          "App/main.m": "737f6ef1f0bc278a8c2ff705befc14bd254789089fefb292cfd229c0299f8ae4"
         }
       },
       "verified_at_commit": "32efd58",
@@ -1076,10 +1076,10 @@
           "handoff.viewroot_surface_ready"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "b31a4d66c3fd1b4ca755524cbd4156c51de56a40eb1de78fb074d84ea4208195",
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "57626034f3c1162554b66a9d4a0b97ff09b78be624b03e62f67b2c7ee8015f3f",
-          "Runtime/DexLoom/game_dex_runner.c": "889f838e955464f187ddb85ab1c6786f519fb9191fa4f2a7eaa831fd121e8b70",
-          "App/main.m": "97e5b0ca83160c25068e76477efea42c978780a4995c8f30e94a57c4c0c83d07"
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "cb5f17c7c7829e783839f790ca042875ac69a99876accc1d517b2fb26ec10b51",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "38b79a254406b416b28e0fc126af119698d0f5dbebf2a9926b808dcc8d6e5afd",
+          "Runtime/DexLoom/game_dex_runner.c": "37d52ccf46dfb16c41246aa7aad3337ce6e9e9b96ea8fd7de55a87ab9fdc26fd",
+          "App/main.m": "737f6ef1f0bc278a8c2ff705befc14bd254789089fefb292cfd229c0299f8ae4"
         }
       },
       "verified_at_commit": "d9939736aa787aa717013932a777d0fda3fea55a",
@@ -1103,11 +1103,104 @@
         "UIKit reports display dimensions; in-process WindowSession replaces Binder/system_server"
       ],
       "known_deviations": [
-        "ViewGroup child propagation is not yet exercised by the current simple Decor; draw/Canvas/GLSurfaceView are downstream"
+        "ViewGroup child propagation is not yet exercised by the current simple Decor; the closed first pass still ends at handoff.viewroot_surface_ready. A later traversal may enter performDraw. Canvas and SurfaceView remain downstream of this contract"
       ],
       "contracts": [
         "framework.first_traversal.synthetic",
         "frozen-bubble.first_traversal"
+      ]
+    },
+    {
+      "id": "framework.viewroot.traversal_dispatch",
+      "subsystem": "Runtime traversal dispatch and root draw consumer",
+      "android_api": "API19 Choreographer CALLBACK_TRAVERSAL and ViewRootImpl.performDraw",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "core/java/android/view/ViewRootImpl.java",
+          "core/java/android/view/Choreographer.java"
+        ],
+        "symbols": [
+          "ViewRootImpl.scheduleTraversals",
+          "ViewRootImpl.doTraversal",
+          "ViewRootImpl.performDraw",
+          "Choreographer.doFrame",
+          "Choreographer.doCallbacks"
+        ],
+        "source_hashes": {
+          "core/java/android/view/ViewRootImpl.java": "340519423463b22b9afe192052e809936ba2523dda4abcb40cda7659c5ab779d",
+          "core/java/android/view/Choreographer.java": "3736ccd09034763a3292fd262416539450627b650dd47af4907061aa7a90b641"
+        },
+        "source_urls": {
+          "core/java/android/view/ViewRootImpl.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/ViewRootImpl.java",
+          "core/java/android/view/Choreographer.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/Choreographer.java"
+        },
+        "symbols_by_path": {
+          "core/java/android/view/ViewRootImpl.java": [
+            "void scheduleTraversals()",
+            "void doTraversal()",
+            "private void performDraw()"
+          ],
+          "core/java/android/view/Choreographer.java": [
+            "public void postCallback(int callbackType, Runnable action, Object token)",
+            "void doFrame(long frameTimeNanos, int frame)",
+            "void doCallbacks(int callbackType, long frameTimeNanos)",
+            "public CallbackRecord extractDueCallbacksLocked(long now)"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h",
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/DexLoom/game_dex_runner.h",
+          "App/main.m"
+        ],
+        "symbols": [
+          "agr_viewroot_choreographer_frame",
+          "agr_dex_game_choreographer_frame",
+          "agr_dex_game_set_host_display",
+          "viewroot.perform_draw"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "cb5f17c7c7829e783839f790ca042875ac69a99876accc1d517b2fb26ec10b51",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "38b79a254406b416b28e0fc126af119698d0f5dbebf2a9926b808dcc8d6e5afd",
+          "Runtime/DexLoom/game_dex_runner.c": "37d52ccf46dfb16c41246aa7aad3337ce6e9e9b96ea8fd7de55a87ab9fdc26fd",
+          "Runtime/DexLoom/game_dex_runner.h": "1b22db4e6ee1f5e33ed2b77cc2ae5d83350b248a612ec23c1664a65dddcd2037",
+          "App/main.m": "737f6ef1f0bc278a8c2ff705befc14bd254789089fefb292cfd229c0299f8ae4"
+        }
+      },
+      "verified_at_commit": "6e47ce9ab6da32483f049731ac04f2a8356a4b67",
+      "status": "VALID",
+      "dependencies": [
+        "framework.viewroot.first_traversal"
+      ],
+      "observable_semantics": [
+        "Activity resume schedules a traversal and does not execute it",
+        "one host frame consumes at most one posted traversal callback",
+        "a newly valid Surface reschedules and that same frame does not draw",
+        "the next host frame consumes the reschedule, keeps the Surface backing, and enters performDraw"
+      ],
+      "internal_invariants": [
+        "schedule and execute remain distinct calls",
+        "the closed first explicit traversal still ends at handoff.viewroot_surface_ready with draw_count 0",
+        "relayout rejection leaves the callback scheduled and the Surface invalid"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "UIKit CADisplayLink is the vsync endpoint in place of DisplayEventReceiver",
+        "no Looper sync barrier; the host frame function is not re-entered"
+      ],
+      "known_deviations": [
+        "performDraw records View.draw of the host Decor and does not claim a first frame",
+        "Activity.setContentView and SurfaceView surfaceCreated remain the next public boundary"
+      ],
+      "contracts": [
+        "framework.traversal_dispatch.host",
+        "frozen-bubble.traversal_dispatch"
       ]
     }
   ]

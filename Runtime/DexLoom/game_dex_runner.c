@@ -438,6 +438,9 @@ struct agr_dex_game {
     int idle_handler_scheduled;
     int viewroot_handoff;
     agr_viewroot_attach_state viewroot;
+    uint32_t host_display_width;
+    uint32_t host_display_height;
+    int choreographer_in_frame;
     uint32_t framework_event_count;
     char framework_events[AGR_DEX_FRAMEWORK_TRACE_CAPACITY][96];
 };
@@ -928,6 +931,7 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
     snapshot->layout_complete=game->viewroot.layout_complete;
     snapshot->surface_valid=agr_viewroot_surface_valid(&game->viewroot);
     snapshot->surface_generation=game->viewroot.backing.generation;
+    snapshot->draw_count=game->viewroot.draw_count;
     snprintf(snapshot->last_method,sizeof(snapshot->last_method),"%s",vm->diagnostic_last_method);
     snprintf(snapshot->error,sizeof(snapshot->error),"%s",vm->error_msg);
     uint32_t method_count=vm->diagnostic_method_event_count;
@@ -1025,6 +1029,31 @@ int agr_dex_game_do_traversal(agr_dex_game *game, uint32_t width, uint32_t heigh
         return -1;
     }
     return 0;
+}
+
+int agr_dex_game_set_host_display(agr_dex_game *game, uint32_t width, uint32_t height) {
+    if (!game || !width || !height || width > INT32_MAX || height > INT32_MAX) return -1;
+    game->host_display_width = width;
+    game->host_display_height = height;
+    return 0;
+}
+
+int agr_dex_game_choreographer_frame(agr_dex_game *game) {
+    if (!game || !game->vm || game->choreographer_in_frame) return -1;
+    int scheduled = game->viewroot.pending_first_traversal &&
+        game->viewroot.traversal_phase == AGR_TRAVERSAL_SCHEDULED;
+    if (scheduled && (!game->host_display_width || !game->host_display_height)) return -1;
+    game->choreographer_in_frame = 1;
+    agr_viewroot_display display = { game->host_display_width, game->host_display_height };
+    DxResult result = agr_viewroot_choreographer_frame(game->vm, &game->viewroot,
+                                                       display, viewroot_event, game);
+    game->choreographer_in_frame = 0;
+    if (result != DX_OK) {
+        snprintf(game->launch_error, sizeof(game->launch_error),
+                 "host traversal frame failed: %d", (int)result);
+        return -1;
+    }
+    return scheduled ? 0 : 1;
 }
 
 int agr_dex_game_set_surface_allocator(agr_dex_game *game,

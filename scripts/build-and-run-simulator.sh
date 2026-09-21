@@ -254,6 +254,25 @@ if [[ "${FRAMEWORK_FIRST_TRAVERSAL_DISCOVERY:-0}" == "1" ]]; then
   phase "Framework first traversal evidence captured"
   exit 0
 fi
+if [[ "${FRAMEWORK_TRAVERSAL_DISPATCH_DISCOVERY:-0}" == "1" ]]; then
+  ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
+  DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
+  RESULT_PATH="$DATA/Documents/framework-traversal-dispatch.json"
+  rm -f "$RESULT_PATH"
+  phase "launch normal-path traversal dispatch probe"
+  xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --framework-traversal-dispatch-discovery
+  for _ in $(seq 1 90); do [[ -s "$RESULT_PATH" ]] && break; sleep 1; done
+  xcrun simctl spawn "$DEVICE" log show --last 3m --style compact \
+    --predicate 'process == "AGRSimulator"' > "$ARTIFACTS/framework-traversal-dispatch.log" 2>&1 || true
+  if [[ ! -s "$RESULT_PATH" ]]; then
+    echo "Framework traversal dispatch result was not produced within 90 seconds" >&2
+    exit 124
+  fi
+  cp "$RESULT_PATH" "$ARTIFACTS/framework-traversal-dispatch.json"
+  python3 ci/framework-traversal-dispatch-contract.py "$RESULT_PATH"
+  phase "Framework traversal dispatch evidence captured"
+  exit 0
+fi
 if [[ "${ZERO_INPUT_AB:-0}" == "1" ]]; then
   ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
   DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"

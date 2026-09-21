@@ -1,0 +1,78 @@
+{
+  "schema_version": 2,
+  "classification": "ANDROID_SEMANTIC_BUG",
+  "subsystem": "API19 Choreographer CALLBACK_TRAVERSAL and ViewRootImpl.performDraw entry",
+  "observed_discontinuity": "Normal Activity start returned at handoff.viewroot_traversal with traversal_count 0 and surface_valid false. A focused harness had to call agr_dex_game_do_traversal.",
+  "upstream": {
+    "map_entry": "framework.viewroot.traversal_dispatch",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "core/java/android/view/ViewRootImpl.java",
+      "core/java/android/view/Choreographer.java"
+    ],
+    "call_path": [
+      "ViewRootImpl.scheduleTraversals",
+      "Choreographer.postCallback",
+      "Choreographer.doFrame",
+      "Choreographer.doCallbacks",
+      "Choreographer.extractDueCallbacksLocked",
+      "ViewRootImpl.doTraversal",
+      "ViewRootImpl.performTraversals",
+      "ViewRootImpl.performDraw"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "scheduleTraversals posts CALLBACK_TRAVERSAL and does not execute doTraversal.",
+    "One Choreographer frame extracts due callbacks before running them, so a traversal posted during the frame waits for the next frame.",
+    "The first traversal that acquires a Surface schedules another traversal and does not draw.",
+    "The next frame consumes that reschedule, keeps the same Surface, and enters performDraw."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+      "Runtime/DexLoom/AndroidMini/framework_viewroot.h",
+      "Runtime/DexLoom/game_dex_runner.c",
+      "Runtime/DexLoom/game_dex_runner.h",
+      "App/main.m"
+    ],
+    "call_path": [
+      "agr_dex_game_set_host_display",
+      "agr_dex_game_start_activity",
+      "agr_dex_game_choreographer_frame",
+      "agr_viewroot_choreographer_frame",
+      "agr_viewroot_do_traversal",
+      "viewroot.perform_draw"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "AGR start_activity returned with pending_first_traversal set and no public frame consumer. API19's next Choreographer.doFrame runs TraversalRunnable.",
+      "relevance": "An unchanged APK stayed at traversal_scheduled with traversal_count 0 unless a harness called do_traversal."
+    }
+  ],
+  "earliest_evidenced_divergence": "Immediately after handoff.viewroot_traversal on the normal start path: API19's posted CALLBACK_TRAVERSAL is consumed by the next Choreographer.doFrame, while AGR returned with traversal_count 0.",
+  "causal_status": "CONTRACT_CONFIRMED",
+  "evidence_level": "CONTRACT_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "Pinned android-4.4.4_r2 ViewRootImpl.java and Choreographer.java hashes in framework.viewroot.traversal_dispatch"
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Linux host contract agr.framework-traversal-dispatch.host.v1: frame 1 consumes and reschedules with draw_count 0; frame 2 enters performDraw with the same Surface generation; an explicit first do_traversal still ends at handoff.viewroot_surface_ready"
+    }
+  ],
+  "remaining_uncertainty": [
+    "UIKit CADisplayLink on a headless Simulator has not yet consumed a real APK traversal.",
+    "After the second traversal, Activity.setContentView and SurfaceView.surfaceCreated are the next public boundary. performDraw of the host Decor is not a first frame."
+  ],
+  "next_action": "Run one focused Simulator discovery of unchanged Frozen Bubble with no harness do_traversal.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "UIKit CADisplayLink is the vsync endpoint in place of DisplayEventReceiver. One host frame runs at most one posted traversal callback. There is no Looper sync barrier and the frame function is not re-entered."
+}

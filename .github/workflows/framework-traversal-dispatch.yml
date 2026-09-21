@@ -1,0 +1,207 @@
+name: Framework traversal dispatch discovery
+
+on:
+  push:
+    branches: ['cursor/runtime-traversal-dispatch-1-0353']
+    paths:
+      - 'Runtime/DexLoom/**'
+      - 'App/main.m'
+      - 'Tests/DexLoom/framework-traversal-dispatch-host.c'
+      - 'scripts/build-and-run-simulator.sh'
+      - 'ci/framework-traversal-dispatch-contract.py'
+      - 'ci/build-framework-traversal-dispatch-summary.py'
+      - 'ci/governance/**'
+      - '.github/workflows/framework-traversal-dispatch.yml'
+  workflow_dispatch:
+    inputs:
+      run_kind:
+        description: Evidence intent
+        type: choice
+        options: [discovery, validation, closure]
+        default: discovery
+
+permissions:
+  contents: read
+
+jobs:
+  linux-source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install GLES headers
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libgles2-mesa-dev zlib1g-dev
+      - name: Compile and run the host traversal-dispatch contract
+        run: |
+          set -euo pipefail
+          python3 Tests/DexLoom/make_activity_launch_fixture.py /tmp/activity-launch-fixture.dex
+          mkdir -p /tmp/agr-dispatch-obj
+          DEX=Runtime/DexLoom
+          COMMON=(-std=gnu11 -O1 -I "$DEX/Include" -I "$DEX" -I Vendor/ANGLE-Headers -DGL_GLES_PROTOTYPES=1)
+          for source in \
+            "$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" \
+            "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" \
+            "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" \
+            "$DEX/APK/dx_apk.c" "$DEX/APK/dx_manifest.c" "$DEX/poc_host.c"
+          do
+            cc "${COMMON[@]}" -w -c "$source" -o "/tmp/agr-dispatch-obj/$(basename "${source%.c}").o"
+          done
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -c "$DEX/AndroidMini/framework_viewroot.c" \
+            -o /tmp/agr-dispatch-obj/framework_viewroot.o
+          cc "${COMMON[@]}" -Wall -Wextra -c "$DEX/game_dex_runner.c" \
+            -o /tmp/agr-dispatch-obj/game_dex_runner.o
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/framework-traversal-dispatch-host.c \
+            -o /tmp/agr-dispatch-obj/framework-traversal-dispatch-host.o
+          cc /tmp/agr-dispatch-obj/*.o -lz -lm -o /tmp/agr-dispatch-host
+          /tmp/agr-dispatch-host /tmp/activity-launch-fixture.dex /tmp/traversal-dispatch-host.json
+          python3 ci/framework-traversal-dispatch-contract.py /tmp/traversal-dispatch-host.json
+      - name: Verify API19 source, semantic differential and governance
+        run: |
+          python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --verify-upstream --verify-only framework.viewroot.traversal_dispatch --output build/artifacts/traversal-dispatch-upstream-map.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-traversal-dispatch.json
+          python3 ci/validate-governance.py --mode discovery
+          python3 ci/validate-expensive-run.py ci/governance/expensive-run-plan.json
+          python3 ci/test-closure-attempt-ledger.py
+          python3 ci/test-post-merge-evidence.py
+
+  simulator-focused:
+    needs: linux-source-contract
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      AGR_SIMULATOR_PROFILE: ${{ (inputs.run_kind == 'validation' || inputs.run_kind == 'closure') && 'full' || 'focused-framework' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Restore pinned APK inputs
+        uses: actions/cache/restore@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-${{ (inputs.run_kind == 'validation' || inputs.run_kind == 'closure') && 'full' || 'focused-framework' }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Restore ANGLE Simulator slice
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            build/angle-v2.1.28252
+            build/angle-xcframeworks-v2.1.28252.zip
+          key: agr-angle-ios-simulator-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Restore Rust interpreter build
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            Runtime/ArmInterpreter/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
+      - name: Prepare samples, build, boot and install
+        timeout-minutes: 30
+        run: bash scripts/prepare-run-simulator.sh "$AGR_SIMULATOR_PROFILE"
+      - name: Execute normal-path traversal dispatch
+        timeout-minutes: 5
+        env:
+          FRAMEWORK_TRAVERSAL_DISPATCH_DISCOVERY: '1'
+        run: bash scripts/build-and-run-simulator.sh run
+      - name: Execute protected explicit first-traversal probe
+        timeout-minutes: 5
+        env:
+          FRAMEWORK_FIRST_TRAVERSAL_DISCOVERY: '1'
+        run: bash scripts/build-and-run-simulator.sh run
+      - name: Publish focused evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-traversal-dispatch-focused
+          path: |
+            build/artifacts/framework-traversal-dispatch.json
+            build/artifacts/framework-traversal-dispatch.log
+            build/artifacts/framework-first-traversal.json
+            build/artifacts/framework-first-traversal.log
+            build/artifacts/simulator-boot.log
+            build/artifacts/ci-stage-timings.jsonl
+          if-no-files-found: warn
+      - name: Protected Runtime contracts
+        id: contracts
+        if: ${{ inputs.run_kind == 'validation' || inputs.run_kind == 'closure' }}
+        timeout-minutes: 12
+        continue-on-error: true
+        run: bash ci/run-contracts.sh
+      - name: Bounded Simulator Runtime smoke
+        id: smoke
+        if: ${{ inputs.run_kind == 'validation' || inputs.run_kind == 'closure' }}
+        timeout-minutes: 16
+        continue-on-error: true
+        run: python3 scripts/run-simulator-smoke-bounded.py --mode run --timeout-seconds 900
+      - name: Protected Runtime and real-game regressions
+        id: regressions
+        if: ${{ inputs.run_kind == 'validation' || inputs.run_kind == 'closure' }}
+        timeout-minutes: 18
+        continue-on-error: true
+        run: bash ci/run-regressions.sh
+      - name: Publish protected evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-traversal-dispatch-protected
+          path: build/artifacts
+          if-no-files-found: warn
+      - name: Enforce protected stage outcomes
+        if: ${{ always() && (inputs.run_kind == 'validation' || inputs.run_kind == 'closure') }}
+        run: |
+          test '${{ steps.contracts.outcome }}' = success
+          test '${{ steps.smoke.outcome }}' = success
+          test '${{ steps.regressions.outcome }}' = success
+
+  iphoneos:
+    if: ${{ inputs.run_kind == 'validation' || inputs.run_kind == 'closure' }}
+    needs: linux-source-contract
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Restore ANGLE device slice
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            build/iphoneos/angle-v2.1.28252
+            build/iphoneos/angle-xcframeworks-v2.1.28252.zip
+          key: agr-angle-iphoneos-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Build arm64 iphoneos Runtime
+        run: bash scripts/build-iphoneos.sh
+
+  closure-evidence:
+    if: ${{ always() && inputs.run_kind == 'closure' }}
+    needs: [linux-source-contract, simulator-focused, iphoneos]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download traversal-dispatch focused evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: framework-traversal-dispatch-focused
+          path: build/closure-input
+      - name: Build exact-commit closure evidence
+        if: ${{ needs.linux-source-contract.result == 'success' && needs.simulator-focused.result == 'success' && needs.iphoneos.result == 'success' }}
+        run: |
+          python3 ci/build-framework-traversal-dispatch-summary.py --result build/closure-input/framework-traversal-dispatch.json
+          python3 ci/validate-governance.py --mode closure --summary build/artifacts/framework-traversal-dispatch-run-summary.json
+      - name: Publish closure summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-traversal-dispatch-closure-summary
+          path: build/artifacts/framework-traversal-dispatch-run-summary.json
+          if-no-files-found: warn
+      - name: Enforce required closure stages
+        if: always()
+        run: |
+          test '${{ needs.linux-source-contract.result }}' = success
+          test '${{ needs.simulator-focused.result }}' = success
+          test '${{ needs.iphoneos.result }}' = success
+          test -s build/artifacts/framework-traversal-dispatch-run-summary.json

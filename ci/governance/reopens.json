@@ -6,6 +6,18 @@
       "target": "DEX Parser Compatibility Phase 1",
       "reason": "App/main.m contains the generic APK smoke harness whose DEX-stage classifier is the evidenced primary blocker; the change does not alter NativeActivity/Input production semantics.",
       "evidence": "focused runs 35489492142 and 35489607971 prove parser success and isolate the post-parse PoC binding misclassification"
+    },
+    {
+      "module": "DEXRuntimeLifecycle",
+      "target": "Android Framework Runtime Traversal Dispatch / Surface Draw Consumer Phase 1",
+      "reason": "Downstream host-vsync integration. agr_dex_game_start_activity still returns with the traversal scheduled and not executed. do_traversal ordering, measure, relayout, layout, Surface identity and the first-Surface reschedule are unchanged.",
+      "evidence": "API19 ViewRootImpl.scheduleTraversals posts CALLBACK_TRAVERSAL without calling doTraversal, and Choreographer.doCallbacks extracts due callbacks before running them. The Linux host contract keeps the closed explicit first pass at handoff.viewroot_surface_ready with draw_count 0."
+    },
+    {
+      "module": "NativeActivityInput",
+      "target": "Android Framework Runtime Traversal Dispatch / Surface Draw Consumer Phase 1",
+      "reason": "App/main.m is the UIKit endpoint. CADisplayLink calls agr_dex_game_choreographer_frame. The focused first-traversal harness still calls agr_dex_game_do_traversal. NativeActivity input semantics are unchanged.",
+      "evidence": "The dispatch discovery path does not call agr_dex_game_do_traversal or agr_guest_start_dex_activity auto-attach. The closed first-traversal probe remains a separate launch."
     }
   ]
 }

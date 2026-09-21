@@ -1,6 +1,14 @@
 # AGR Current State
 
-Updated: 2026-09-22
+Updated: 2026-09-21
+
+Active target: Android Framework Runtime Traversal Dispatch / Surface Draw Consumer Phase 1. Lifecycle: `IMPLEMENTED`. Integration base: `main @ 6e47ce9ab6da32483f049731ac04f2a8356a4b67`. Formal Runtime baseline and last known good remain `3e3db84a53ad0957e9217f804b6f718a942b9a11` / tree `1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa`.
+
+Normal Activity start still returns at `handoff.viewroot_traversal` with the traversal scheduled and `traversal_count` 0. API19 `ViewRootImpl.scheduleTraversals` posts `Choreographer.CALLBACK_TRAVERSAL` and does not call `doTraversal`. `doCallbacks` extracts due callbacks before running them, so a Surface-acquisition reschedule waits for the next frame. AGR's public consumer is one host frame: `agr_dex_game_choreographer_frame` calls `agr_viewroot_choreographer_frame` once. The first frame may acquire the Surface and reschedule; the second frame keeps that Surface and enters `performDraw`. `start_activity` does not call `do_traversal`. The closed explicit first traversal still ends at `handoff.viewroot_surface_ready` with `draw_count` 0.
+
+The Linux host contract confirms that chain on a synthetic Activity. The unchanged Frozen Bubble APK has not yet been observed on UIKit `CADisplayLink`. `performDraw` of the host Decor is not a first frame. The next public boundary after a successful second traversal is `Activity.setContentView` / `SurfaceView.surfaceCreated`.
+
+## Merged First Traversal baseline
 
 Formal baseline and last known good: `main @ 3e3db84a53ad0957e9217f804b6f718a942b9a11` / tree `1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa`. First Traversal is `MERGED`. Closure run `35634763769` is `VALID_PASS`: linux-source-contract, focused Simulator, protected Runtime contracts, bounded Simulator smoke, protected Runtime and real-game regressions, and the arm64 iphoneos build all passed. Post-merge run `35662355600` passed on governance-only follow-up `79d47bc6578a36c7af6a10d5b5ec03122fdbd1da`.
 

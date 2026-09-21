@@ -17,6 +17,7 @@ Each machine entry records pinned source paths/hashes, AGR paths/hashes, depende
 | EHABI | API19 Bionic exidx + NDK r10e libgcc | guest GCC runtime + `Runtime/Ehabi` backtrace support | GUEST-ARM / narrow HOST-HLE | exidx ownership and propagation |
 | allocator | API19 Bionic dlmalloc | `Runtime/Bionic/agr_bionic_allocator.cpp`, `agr_api19_dlmalloc_source.inc` | HOST-NATIVE source port | guest chunk layout and malloc-family semantics |
 | ViewRoot first traversal and root Surface | `ViewRootImpl.java`, `View.java`, `ViewGroup.java`, `IWindowSession.aidl`, `Surface.java` | `framework_viewroot.c`, `game_dex_runner.c` | HOST-DEX_HLE | attachment, measurement, relayout, frame, Surface lifetime and first-Surface reschedule |
+| Runtime traversal dispatch and root draw consumer | `ViewRootImpl.scheduleTraversals/doTraversal/performDraw`, `Choreographer.doFrame/doCallbacks` | `framework_viewroot.c`, `game_dex_runner.c`, `App/main.m` | HOST-DEX_HLE + UIKit vsync | one host frame consumes one posted traversal; the first Surface frame does not draw |
 
 Each new public path adds or updates one machine-readable entry. A problem report references the map entry, then supplies a compact `semantic-diff.json`; it does not duplicate the upstream map in prose.
 

@@ -6,40 +6,41 @@
     "last_known_good": "3e3db84a53ad0957e9217f804b6f718a942b9a11"
   },
   "active": {
-    "target": "Android Framework First Traversal / Relayout / Surface Acquisition Phase 1",
-    "branch": "main",
-    "lifecycle": "MERGED",
-    "observed_discontinuity": "The closed ViewRoot attach contract ends with a scheduled traversal but has no executed measure, relayout, layout or root Surface.",
-    "android_subsystem": "ViewRootImpl first performTraversals, IWindowSession.relayout and root Surface acquisition",
+    "target": "Android Framework Runtime Traversal Dispatch / Surface Draw Consumer Phase 1",
+    "branch": "cursor/runtime-traversal-dispatch-1-0353",
+    "lifecycle": "IMPLEMENTED",
+    "observed_discontinuity": "Normal Activity start returns at handoff.viewroot_traversal with traversal_count 0. API19 has already posted CALLBACK_TRAVERSAL for the next Choreographer frame.",
+    "android_subsystem": "Choreographer CALLBACK_TRAVERSAL consumption and ViewRootImpl.performDraw entry",
     "upstream_path": [
-      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/ViewRootImpl.java:performTraversals",
-      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/IWindowSession.aidl:relayout"
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/ViewRootImpl.java:scheduleTraversals",
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/Choreographer.java:doFrame",
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/ViewRootImpl.java:performDraw"
     ],
     "agr_path": [
-      "Runtime/DexLoom/AndroidMini/framework_viewroot.c:agr_viewroot_do_traversal",
-      "Runtime/DexLoom/game_dex_runner.c:agr_dex_game_do_traversal"
+      "Runtime/DexLoom/game_dex_runner.c:agr_dex_game_choreographer_frame",
+      "Runtime/DexLoom/AndroidMini/framework_viewroot.c:agr_viewroot_choreographer_frame"
     ],
     "active_explanations": [
-      "AOSP first traversal consumes the pending callback and publishes attached-to-window state",
-      "measure and relayout establish frame and a persistent root Surface before layout completes",
-      "a newly acquired Surface causes another traversal before drawing"
+      "API19 scheduleTraversals posts CALLBACK_TRAVERSAL and does not call doTraversal",
+      "Choreographer.doCallbacks extracts due callbacks before running them, so a reschedule inside the frame waits for the next frame",
+      "the first Surface traversal schedules again and does not draw; the next frame enters performDraw"
     ],
-    "earliest_evidenced_divergence": "Immediately after the scheduled traversal handoff: API19 executes performTraversals while prior AGR stopped at the marker.",
+    "earliest_evidenced_divergence": "Immediately after handoff.viewroot_traversal on the normal start path: API19's posted CALLBACK_TRAVERSAL is consumed by the next Choreographer.doFrame, while AGR returned with traversal_count 0.",
     "semantic_class": "PUBLIC_OBSERVABLE",
     "causal_status": "CONTRACT_CONFIRMED",
-    "evidence_level": "REAL_GAME_CONFIRMED",
+    "evidence_level": "CONTRACT_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "none for this contract",
-    "primary_blocker": "none",
-    "first_broken_boundary": "none",
-    "first_broken_boundary_evidence": "closure evidence"
+    "next_validation": "one focused Simulator discovery of unchanged Frozen Bubble with no harness do_traversal",
+    "primary_blocker": "normal Runtime start does not consume a scheduled traversal",
+    "first_broken_boundary": "host-frame consumption of CALLBACK_TRAVERSAL",
+    "first_broken_boundary_evidence": "Linux host contract agr.framework-traversal-dispatch.host.v1"
   },
   "ci_budget": {
     "valid_closure_runs": 1,
     "infrastructure_failures_consume_budget": false,
-    "closure_runs_used": 1,
-    "last_closure_attempt": "35634763769 VALID_PASS",
-    "automatic_reruns_available": 0,
+    "closure_runs_used": 0,
+    "last_closure_attempt": "none for current target",
+    "automatic_reruns_available": 1,
     "discovery_policy": "information_gain",
     "consecutive_expensive_runs_without_information_gain": 0
   }
