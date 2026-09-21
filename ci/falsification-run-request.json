@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "request_id": 1,
+  "sample_set": "falsification-discovery",
+  "run_kind": "discovery",
+  "question": "On the pre-registered 10-game Discovery set, does the unchanged Runtime frontier stop inside shared API19 public contracts, or does it stop on requirements that can only be expressed per game?",
+  "current_uncertainty": [
+    "Static census shows a small, strongly reused core contract surface, but static references do not prove which contract each game actually reaches first.",
+    "It is unknown whether the frontier blockers cluster into a few shared families or scatter across unrelated per-game requirements."
+  ],
+  "expected_outcome_a": {
+    "result": "Frontier blockers concentrate in a small number of shared API19 public-contract families that repeat across unrelated execution clusters.",
+    "excludes": [
+      "the explanation that each game needs its own distinct compatibility behavior at the current frontier"
+    ]
+  },
+  "expected_outcome_b": {
+    "result": "Blockers are dispersed with little family reuse, or one or more games stop on something expressible only through game identity or a genuinely cross-process Android authority.",
+    "excludes": [
+      "the explanation that the public compatibility layer is converging at the reachable frontier"
+    ]
+  },
+  "why_cheaper_test_is_insufficient": "Static analysis already ran and cannot tell which referenced path a game executes first; API19 source analysis resolved boundary reducibility but not AGR's actual stopping point. Windows cannot build the iOS Simulator target, so the compiled Runtime frontier can only be observed on macOS.",
+  "expensive_run_budget": 3,
+  "expensive_runs_used": 0,
+  "prior_expensive_runs_without_information_gain": 0,
+  "notes": "Incrementing request_id on this phase branch triggers exactly one batch run. This file is the admission record for that run; it is experiment data, not a new governance system."
+}

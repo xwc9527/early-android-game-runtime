@@ -6,6 +6,10 @@ name: Architecture falsification
 # for ordinary compatibility development.
 
 on:
+  push:
+    branches: ['phase/architecture-falsification-1']
+    # Only an explicit change to the run request starts an expensive batch run.
+    paths: ['ci/falsification-run-request.json']
   workflow_dispatch:
     inputs:
       sample_profile:
@@ -15,7 +19,23 @@ on:
         default: falsification-discovery
 
 jobs:
+  admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      profile: ${{ steps.plan.outputs.profile }}
+    env:
+      DISPATCH_PROFILE: ${{ inputs.sample_profile }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: plan
+        name: Resolve the pre-registered sample set and record run admission
+        run: |
+          python3 ci/falsification-admission.py >> "$GITHUB_OUTPUT"
+          cat ci/falsification-run-request.json
+
   sample-preparation:
+    needs: [admission]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
@@ -28,11 +48,11 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-${{ inputs.sample_profile }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-${{ needs.admission.outputs.profile }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Prepare hash-verified fixed APK inputs
         id: prepare
         run: |
-          bash scripts/run-ci-stage.sh sample_preparation python3 tools/fetch_fdroid_samples.py --profile "${{ inputs.sample_profile }}" --inputs-only
+          bash scripts/run-ci-stage.sh sample_preparation python3 tools/fetch_fdroid_samples.py --profile "${{ needs.admission.outputs.profile }}" --inputs-only
           echo "ready=true" >> "$GITHUB_OUTPUT"
       - name: Save verified sample input cache
         if: ${{ always() && steps.prepare.outcome == 'success' && steps.samples-cache.outputs.cache-hit != 'true' }}
@@ -40,15 +60,15 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-${{ inputs.sample_profile }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-${{ needs.admission.outputs.profile }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
 
   frontier-probe:
-    needs: [sample-preparation]
+    needs: [admission, sample-preparation]
     if: ${{ needs.sample-preparation.outputs.ready == 'true' }}
     runs-on: macos-15
     timeout-minutes: 90
     env:
-      AGR_SIMULATOR_PROFILE: ${{ inputs.sample_profile }}
+      AGR_SIMULATOR_PROFILE: ${{ needs.admission.outputs.profile }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,7 +82,7 @@ jobs:
         with:
           path: samples/*.apk
           enableCrossOsArchive: true
-          key: agr-samples-${{ inputs.sample_profile }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+          key: agr-samples-${{ needs.admission.outputs.profile }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Restore ANGLE simulator package
         uses: actions/cache/restore@v4
         with:
@@ -80,7 +100,7 @@ jobs:
           key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ steps.rust-version.outputs.key }}-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
       - name: Prepare samples and app while Simulator boots
         id: setup
-        timeout-minutes: 35
+        timeout-minutes: 40
         run: bash scripts/prepare-run-simulator.sh "$AGR_SIMULATOR_PROFILE"
       - name: Probe the compatibility frontier of every pre-registered sample
         id: frontier
@@ -97,13 +117,13 @@ jobs:
         run: |
           python3 tools/classify_frontier.py \
             --results build/artifacts/architecture-falsification-discovery.json \
-            --set "${{ inputs.sample_profile }}" \
+            --set "${{ needs.admission.outputs.profile }}" \
             --output build/artifacts/frontier-classification.json
       - name: Publish frontier evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: architecture-falsification-${{ inputs.sample_profile }}
+          name: architecture-falsification-${{ needs.admission.outputs.profile }}
           path: |
             build/artifacts/architecture-falsification-discovery.json
             build/artifacts/architecture-falsification-discovery.log
