@@ -82,7 +82,8 @@ def evaluate(document, verify_upstream=False):
                         # Content integrity is pinned by SHA-256 below. This also works on
                         # Windows hosts whose Python trust store lacks the corporate TLS root.
                         context = ssl._create_unverified_context()
-                        source = base64.b64decode(urllib.request.urlopen(url, timeout=30, context=context).read())
+                        response = urllib.request.urlopen(url, timeout=30, context=context).read()
+                        source = response if upstream.get("source_encoding") == "raw" else base64.b64decode(response)
                         if hashlib.sha256(source).hexdigest() != value:
                             effective = "STALE" if effective != "INVALID" else effective
                             reasons.append(f"upstream source hash changed: {path}")

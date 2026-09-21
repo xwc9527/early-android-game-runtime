@@ -102,8 +102,16 @@ def test_g_current_repository_records_match():
     item = current[0]
     require(item["target"] == "Android Framework Continuation Phase 1", "G: wrong current closure target")
     require(item["classification"] == "VALID_PASS" and item["consumes_budget"], "G: current closure classification mismatch")
-    require(item["tested_commit"] == closure["closure_tested_commit"] and item["tested_tree"] == closure["closure_tested_tree"],
-            "G: current closure commit/tree mismatch")
+    # The historical Activity/Window closure stays in the ledger when the
+    # active target changes.  Only compare it with closure.json while that
+    # target is still the current formal closure.
+    require(item["tested_commit"] == "a5c5958af1a65763808fc2a4de669c4e76694876" and
+            item["tested_tree"] == "ee8c0889437e79dacf9e8ed068a7d569100189de",
+            "G: historical Activity/Window closure identity changed")
+    if closure["target"] == item["target"]:
+        require(item["tested_commit"] == closure["closure_tested_commit"] and
+                item["tested_tree"] == closure["closure_tested_tree"],
+                "G: current closure commit/tree mismatch")
     schema = json.loads((ROOT / "artifacts/schema/closure-attempts.schema.json").read_text(encoding="utf-8"))
     require(schema["properties"]["schema_version"]["const"] == 2, "G: schema version is not v2")
     require("active_target" in schema["required"], "G: schema does not require active_target")

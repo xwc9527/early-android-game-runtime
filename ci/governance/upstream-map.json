@@ -933,9 +933,9 @@
           "core/java/android/view/ViewRootImpl.java": "340519423463b22b9afe192052e809936ba2523dda4abcb40cda7659c5ab779d"
         },
         "source_urls": {
-          "core/java/android/view/WindowManagerImpl.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/view/WindowManagerImpl.java?format=TEXT",
-          "core/java/android/view/WindowManagerGlobal.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/view/WindowManagerGlobal.java?format=TEXT",
-          "core/java/android/view/ViewRootImpl.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/view/ViewRootImpl.java?format=TEXT"
+          "core/java/android/view/WindowManagerImpl.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/WindowManagerImpl.java",
+          "core/java/android/view/WindowManagerGlobal.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/WindowManagerGlobal.java",
+          "core/java/android/view/ViewRootImpl.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/ViewRootImpl.java"
         },
         "symbols_by_path": {
           "core/java/android/view/WindowManagerImpl.java": [
@@ -949,7 +949,8 @@
             "void requestLayout",
             "void scheduleTraversals"
           ]
-        }
+        },
+        "source_encoding": "raw"
       },
       "agr": {
         "paths": [
