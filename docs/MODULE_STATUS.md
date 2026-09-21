@@ -14,6 +14,7 @@ Status controls modification permission, not total completeness. `stable` means 
 | Simulator regression harness | stable | `09d6953e` | bounded smoke and evidence gate | proven harness contract defect affecting active evidence |
 | DEX Runtime Activity lifecycle | stable | `a5c5958` | Activity/Window source, contract and real-APK gate | proven regression before or within the ViewRoot/Surface handoff |
 | Framework ViewRoot attach | stable | `a6256ba4` (post-merge `35598935478`) | focused ViewRoot attach contract and real-APK gate | proven attach-order, parent, traversal-schedule, or session-ownership regression |
+| Framework first traversal / root Surface | active, implemented/unverified | — | focused first-traversal synthetic and unchanged Frozen Bubble contract; protected regressions and iphoneos pending | closure contract or real APK Surface-ready path fails |
 | DEX/Dalvik completeness | experimental | — | focused DEX/JNI contracts | future declared migration target |
 | Framework HLE | experimental | — | focused public API contracts | gameplay proves a public missing behavior |
 | Audio/OpenSL ES | experimental | — | — | declared gameplay target requires audio |

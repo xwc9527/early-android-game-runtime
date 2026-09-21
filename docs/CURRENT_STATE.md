@@ -1,14 +1,18 @@
 # AGR Current State
 
-Updated: 2026-09-21
+Updated: 2026-09-22
 
-Runtime baseline and last known good: `main @ a6256ba4e4f0d8124bc5a2348039b882f2c91dc8`. The governance-only follow-up `beff6b2232c5473bc09fc2145abefda30c117b91` passed post-merge gate `35598935478`.
+Current formal main baseline and last known good: `5a6962d2c84b06425e8c489e855d71529f50ba3b`. Active branch: `phase/framework-first-traversal-surface-1`. Active target: Android Framework First Traversal / Relayout / Surface Acquisition Phase 1. Lifecycle: `IMPLEMENTED / UNVERIFIED`; no closure or merge claim applies to this branch.
 
-Active branch: `main`; next phase branches from this formal main.
+The prior `handoff.viewroot_traversal` is now consumed by a host-side API19 ViewRoot first traversal. Focused Simulator run `35631242737` executed a synthetic Activity and the unchanged Frozen Bubble APK through attachment, root measurement, WindowSession relayout, persistent Surface acquisition and layout. The synthetic contract also observed first-Surface rescheduling, the second traversal retaining the same backing identity, relayout rejection, Surface allocation failure and retry. The current terminal is `handoff.viewroot_surface_ready`; draw/Canvas/GLSurfaceView and gameplay remain outside this phase. Protected regressions and iphoneos have not yet been verified for this candidate.
 
-Lifecycle: `MERGED/STABLE`. ViewRoot closure-tested commit `a6256ba4e4f0d8124bc5a2348039b882f2c91dc8` / tree `9d0dedc1b6bcd92ad40a595b386ce798d5da3025`; exact-target post-merge run `35598935478` passed on governance-only follow-up `beff6b2232c5473bc09fc2145abefda30c117b91`.
+The authoritative source path is pinned `android-4.4.4_r2` `ViewRootImpl.doTraversal/performTraversals`, `View.measure/layout`, `IWindowSession.relayout`, and `Surface` validity. UIKit supplies display dimensions; the in-process WindowSession HLE owns Android frame/Surface policy. The source map and semantic differential for this phase are under `ci/governance`.
 
-## Active Target
+## Previous closed ViewRoot attach baseline
+
+Prior ViewRoot attach lifecycle: `MERGED/STABLE`. Its closure-tested commit `a6256ba4e4f0d8124bc5a2348039b882f2c91dc8` / tree `9d0dedc1b6bcd92ad40a595b386ce798d5da3025` passed exact-target post-merge run `35598935478`.
+
+## Previous target
 
 Migrate the Android 4.4.4 ViewRoot attach cluster after WindowManager.addView: ViewRoot creation, root/parent assignment, initial traversal scheduling, WindowSession attachment, and attach completion. The phase ends at `handoff.viewroot_traversal`; performTraversals, relayout, Surface and drawing remain downstream.
 

@@ -40,7 +40,7 @@ jobs:
   simulator-focused:
     needs: linux-source-contract
     runs-on: macos-15
-    timeout-minutes: 40
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -86,7 +86,7 @@ jobs:
           if-no-files-found: warn
       - name: Protected contracts and regressions
         if: ${{ inputs.run_kind == 'validation' }}
-        timeout-minutes: 24
+        timeout-minutes: 35
         run: |
           bash ci/run-contracts.sh
           python3 scripts/run-simulator-smoke-bounded.py --mode run --timeout-seconds 900

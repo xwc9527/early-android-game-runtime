@@ -6,6 +6,18 @@
       "target": "DEX Parser Compatibility Phase 1",
       "reason": "App/main.m contains the generic APK smoke harness whose DEX-stage classifier is the evidenced primary blocker; the change does not alter NativeActivity/Input production semantics.",
       "evidence": "focused runs 35489492142 and 35489607971 prove parser success and isolate the post-parse PoC binding misclassification"
+    },
+    {
+      "module": "NativeActivityInput",
+      "target": "Android Framework First Traversal / Relayout / Surface Acquisition Phase 1",
+      "reason": "App/main.m owns the focused Simulator host harness; this change dispatches the already-scheduled Framework traversal and records its result without altering NativeActivity/Input production behavior.",
+      "evidence": "API19 ViewRootImpl.doTraversal/performTraversals and focused Simulator run 35631242737 for the unchanged Frozen Bubble APK"
+    },
+    {
+      "module": "DEXRuntimeLifecycle",
+      "target": "Android Framework First Traversal / Relayout / Surface Acquisition Phase 1",
+      "reason": "The DEX runner owns the process-shared Framework ViewRoot state and must expose traversal dispatch and persistent Surface access at this ownership boundary; Activity lifecycle and JNI binding remain unchanged.",
+      "evidence": "closed ViewRoot attach terminal handoff.viewroot_traversal and API19 ViewRootImpl first performTraversals path; focused Simulator run 35631242737"
     }
   ]
 }
