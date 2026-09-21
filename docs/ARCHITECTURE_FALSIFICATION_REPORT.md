@@ -307,8 +307,7 @@ Verified against the live remote before any compensation run:
 
 An earlier governance check on the binding commit, run `35662355588`, failed while fetching
 `dalvik/vm/alloc/MarkSweep.cpp` (`HTTPError`) and is not a closure defect. The promotion commit
-retried that check as run `35662648091` and it passed. The compensation measurement is the one
-remaining expensive run. It is not another First Traversal closure.
+retried that check as run `35662648091` and it passed.
 
 ### Prepared so the compensation run is a single action
 
@@ -327,16 +326,61 @@ locally without any macOS run:
   comparison and the frozen-threshold H2 restatement, and refuses to emit a verdict while the
   precondition is unmet.
 
-Those gates are now met. `ci/falsification-run-request.json` request `3` sets
-`sample_set: "falsification-compensation"`. That change is the single expensive run.
+Those gates were met before the run. `ci/falsification-run-request.json` request `3` set
+`sample_set: "falsification-compensation"` and started the single expensive run.
 
-### What this section does and does not claim
+### Measured result — run `35662803136`
 
-It does not revalidate H2 on a deeper frontier, and it does not weaken the original result. The
-original verdicts stand as measured on `5a6962d2`, with the first-blocker censoring limit already
-stated above. Whether the convergence survives the deeper First Traversal frontier is still an
-open question, and this task deliberately left the expensive run unspent rather than answer it
-with the wrong Runtime.
+All 15 frozen samples completed in one Simulator session on the Runtime that contains First
+Traversal. Production `Runtime/` matches formal `main`. The granularity fingerprint is unchanged
+(`62d94962023b26bb3cc18fa4ef772f63098a7680b1f89a5103f22efe1f9d6b59`).
+
+Every sample kept the same `last_stage`, blocking family, blocking method, and executed contract
+families as baseline `5a6962d2`. No family was gained or lost. No sample reached Surface,
+SurfaceView, GLSurfaceView, draw, or a completed layout. Six resumed samples
+(`kungfoo-barracuda`, `minilens`, `minetest`, `a2048`, `pysolfc`, `meritous`) record
+`traversal_phase = 1` with `traversal_count = 0`, measured size `0`, `layout_complete = false`,
+and `surface_valid = false`. The scheduled traversal is not consumed before the `start_activity`
+snapshot, so the first blocker is the same one measured on `5a6962d2`.
+
+Discovery curve, frozen order, marginal new contracts:
+
+| Sample | marginal new | cumulative unique | reuse |
+|---|---:|---:|---:|
+| crosswords | 0 | 0 | — |
+| gloomy-dungeons-1 | 6 | 6 | 0 |
+| kungfoo-barracuda | 3 | 9 | 0.50 |
+| minilens | 0 | 9 | 1 |
+| minetest | 0 | 9 | 1 |
+| flickit | 0 | 9 | 1 |
+| andors-trail | 0 | 9 | 1 |
+| pixel-dungeon | 0 | 9 | 1 |
+| a2048 | 0 | 9 | 1 |
+| pysolfc | 1 | 10 | 0.8333 |
+
+`C_first = (0+6+3+0+0)/5 = 1.8`. `C_last = (0+0+0+0+1)/5 = 0.2`.
+`C_last / C_first = 0.111`. The frozen threshold is `C_last <= 0.50 * C_first` (`0.2 <= 0.9`).
+
+Holdout total = 5. Public-contract denominator = 3 (`meritous`, `heriswap`, `droidfish`).
+Reuse = 3/3. `qt-minesweeper` and `geometri-destroyer` are `RUNTIME_INTERNAL_GAP` and are
+outside that denominator. `NEW_PUBLIC_CONTRACT = 0` on Holdout. `GAME_SPECIFIC = 0` on
+Discovery and Holdout. `IRREDUCIBLE_SYSTEM_DEPENDENCY = 0`.
+
+Order sensitivity on this classification, seed `20260922`, 20000 permutations: registered
+ratio `0.111`, reversed `0.429`, `95.52%` of permutations meet `<= 0.50`.
+
+### Compensation verdict
+
+`H1 = PASS`. No new gameplay-critical irreducible system dependency appeared, so the previous
+H1 result is inherited.
+
+`H2 = PASS`. `C_last <= 0.50 * C_first`, holdout reuse is `3/3`, and `GAME_SPECIFIC = 0`.
+
+`PROJECT = CONTINUE`.
+
+The original falsification `PASS` still holds on the formal Runtime that includes First
+Traversal. It holds at the same stopping points. This run does not show those samples entering
+the Surface or draw path.
 
 ## Final answer
 

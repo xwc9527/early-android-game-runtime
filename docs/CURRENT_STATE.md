@@ -49,8 +49,10 @@ describes the compatibility frontier currently reached, not complete gameplay pa
 First Traversal is `MERGED` on formal `main`. Closure run `35634763769` is `VALID_PASS` for
 commit `3e3db84a53ad0957e9217f804b6f718a942b9a11` / tree
 `1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa`. Post-merge run `35662355600` passed. The governance
-baseline commit is that tested commit. The single compensation run uses
-`sample_set: falsification-compensation` against this Runtime, with production behavior frozen.
+baseline commit is that tested commit. Compensation run `35662803136` remeasured the frozen 15
+APKs on that Runtime: `H1 = PASS`, `H2 = PASS` (`C_first 1.8`, `C_last 0.2`, holdout reuse
+`3/3`), `GAME_SPECIFIC = 0`, `PROJECT = CONTINUE`. Last stage, blocker, and executed families
+were unchanged; no sample completed a root Surface.
 
 ## Closure Contract
 
