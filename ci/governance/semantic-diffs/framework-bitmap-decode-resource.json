@@ -55,15 +55,15 @@
     },
     {
       "type": "RUNTIME",
-      "artifact": "Local host probe of unchanged org.jfedor.frozenbubble 1.7 after the LLIL method: 40 BitmapFactory.decodeResource calls return OK. PNG, JPEG, and GIF resource ids resolve through resources.arsc to res/drawable entries. Two choreographer frames still report created_count 1, changed_count 1, and a content Surface distinct from the root. scaleFrom still throws Ljava/lang/NullPointerException. GameView's invoke of setRunning enters GameThread.cleanUp, which writes a non-object into mBackground at pc 330 after the constructor stored the BmpWrap. Thread.start does not run. This is not a first frame."
+      "artifact": "Local host probe of unchanged org.jfedor.frozenbubble 1.7 after the LLIL method: 40 BitmapFactory.decodeResource calls return OK. PNG, JPEG, and GIF resource ids resolve through resources.arsc to res/drawable entries. Two choreographer frames still report created_count 1, changed_count 1, and a content Surface distinct from the root. scaleFrom still threw NullPointerException on that probe because GameThread.cleanUp had stored a non-object into mBackground at pc 330 after the constructor stored the BmpWrap. The invoke that entered cleanUp was GameView.<init> pc 35 method_idx 252, resolved as Thread.start with vtable_idx 0. setRunning at pc 30 was already GameThread.setRunning. This is not a first frame."
     }
   ],
   "remaining_uncertainty": [
     "Density scaling is not applied. Frozen Bubble sets Options.inScaled false through unresolved reflection, and the returned size is the encoded image size.",
     "createScaledBitmap and lockCanvas were not reached.",
-    "The setRunning to cleanUp dispatch is a pre-existing invoke target and is not changed here."
+    "Virtual dispatch of Thread.start is a separate differential. This Bitmap contract does not own it."
   ],
-  "next_action": "Do not start another Simulator for the answered surfaceCreated question. The next public stop is GameThread.cleanUp clearing mBackground before scaleFrom. Do not implement lockCanvas.",
+  "next_action": "Do not extend decodeResource. The cleanUp entry is the virtual-dispatch defect, and the post-fix stop is synchronous Thread.start. Do not implement lockCanvas or createScaledBitmap here.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "The Bitmap stores the resource path and the encoded width and height. It does not allocate a pixel buffer and it is not the ViewRoot Surface. Nine-patch PNG content size subtracts the one-pixel border when an npTc chunk is present."

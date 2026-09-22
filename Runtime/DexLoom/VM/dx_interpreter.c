@@ -385,6 +385,8 @@ static DxResult handle_invoke(DxVM *vm, DxFrame *frame, const uint16_t *code,
         if (recv_val.tag == DX_VAL_OBJ && recv_val.obj) {
             DxObject *receiver = recv_val.obj;
             if (receiver->klass) {
+                DxMethod *resolved = target;
+                DxMethod *slot = NULL;
                 // Try inline cache first (keyed by caller method + PC)
                 DxMethod *ic_result = NULL;
                 DxInlineCache *ic = frame->method ? dx_vm_ic_get(frame->method, pc) : NULL;
@@ -394,11 +396,13 @@ static DxResult handle_invoke(DxVM *vm, DxFrame *frame, const uint16_t *code,
 
                 if (ic_result) {
                     // IC hit — use cached method directly, skip vtable walk
+                    slot = ic_result;
                     target = ic_result;
                 } else {
                     // IC miss — do the full vtable lookup
                     if ((uint32_t)target->vtable_idx < receiver->klass->vtable_size) {
                         DxMethod *vtable_target = receiver->klass->vtable[target->vtable_idx];
+                        slot = vtable_target;
                         if (vtable_target) target = vtable_target;
                     }
                     // Insert into inline cache for next time
@@ -406,6 +410,8 @@ static DxResult handle_invoke(DxVM *vm, DxFrame *frame, const uint16_t *code,
                         dx_vm_ic_insert(ic, receiver->klass, target);
                     }
                 }
+                dx_vm_trace_virtual_invoke(frame, pc, opcode, method_idx, resolved,
+                                           receiver->klass, slot ? slot : target);
             }
         }
     }
@@ -694,6 +700,8 @@ static DxResult handle_invoke_range(DxVM *vm, DxFrame *frame, const uint16_t *co
         if (recv_val.tag == DX_VAL_OBJ && recv_val.obj) {
             DxObject *receiver = recv_val.obj;
             if (receiver->klass) {
+                DxMethod *resolved = target;
+                DxMethod *slot = NULL;
                 // Try inline cache first
                 DxMethod *ic_result = NULL;
                 DxInlineCache *ic = frame->method ? dx_vm_ic_get(frame->method, pc) : NULL;
@@ -703,11 +711,13 @@ static DxResult handle_invoke_range(DxVM *vm, DxFrame *frame, const uint16_t *co
 
                 if (ic_result) {
                     // IC hit — skip vtable walk
+                    slot = ic_result;
                     target = ic_result;
                 } else {
                     // IC miss — full vtable lookup
                     if ((uint32_t)target->vtable_idx < receiver->klass->vtable_size) {
                         DxMethod *vt = receiver->klass->vtable[target->vtable_idx];
+                        slot = vt;
                         if (vt) target = vt;
                     }
                     // Update inline cache
@@ -715,6 +725,8 @@ static DxResult handle_invoke_range(DxVM *vm, DxFrame *frame, const uint16_t *co
                         dx_vm_ic_insert(ic, receiver->klass, target);
                     }
                 }
+                dx_vm_trace_virtual_invoke(frame, pc, opcode, method_idx, resolved,
+                                           receiver->klass, slot ? slot : target);
             }
         }
     }

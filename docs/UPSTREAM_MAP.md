@@ -21,6 +21,8 @@ Each machine entry records pinned source paths/hashes, AGR paths/hashes, depende
 | Window setContentView | `Activity.setContentView(int/View)`, `PhoneWindow.setContentView` | `game_dex_runner.c` | HOST-DEX_HLE | inflate a layout or install one content child; an attached window only schedules |
 | SurfaceView child Surface | `SurfaceView.updateWindow`, `SurfaceHolder.Callback` | `game_dex_runner.c`, `framework_viewroot.c` | HOST-DEX_HLE | a visible positive frame creates a distinct child Surface and delivers surfaceCreated then surfaceChanged once |
 | BitmapFactory.decodeResource | `BitmapFactory.decodeResource`, `Bitmap.getWidth`, `Bitmap.getHeight` | `game_dex_runner.c` | HOST-DEX_HLE | a resource id returns a Bitmap whose width and height are the encoded image size |
+| DEX virtual dispatch | `dalvik vm/oo/Class.cpp` `createVtable` | `dx_vm.c` `dx_class_build_vtable`, `dx_interpreter.c` invoke-virtual | HOST-DEX | superclass slots keep their index; an override replaces that slot; a new virtual method is appended |
+| java.lang.Thread.start | `libcore Thread.start` → `VMThread.create` | `dx_vm.c` `native_thread_start` | HOST-DEX | start currently runs `run` on the caller; a Java Thread context must not alias a guest pthread |
 
 Each new public path adds or updates one machine-readable entry. A problem report references the map entry, then supplies a compact `semantic-diff.json`; it does not duplicate the upstream map in prose.
 

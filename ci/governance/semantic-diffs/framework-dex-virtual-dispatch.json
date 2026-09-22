@@ -1,0 +1,70 @@
+{
+  "schema_version": 2,
+  "classification": "AGR_INTERNAL_BUG",
+  "subsystem": "DEX virtual dispatch / framework superclass vtable inheritance",
+  "observed_discontinuity": "Frozen Bubble GameView.<init> invoke-virtual of Thread.start executed GameThread.cleanUp. The receiver slot for Thread.start was cleanUp, so the constructor cleared bitmap fields and never entered java.lang.Thread.start.",
+  "upstream": {
+    "map_entry": "dalvik.vm.vtable",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "vm/oo/Class.cpp"
+    ],
+    "call_path": [
+      "createVtable",
+      "dvmCompareMethodNamesAndProtos",
+      "methodIndex"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "Superclass virtual slots keep their index in the subclass.",
+    "An override with the same name and shorty replaces the inherited slot.",
+    "A new virtual method is appended after the inherited slots.",
+    "Framework-created classes and guest DEX classes use that same index."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/VM/dx_vm.c",
+      "Runtime/DexLoom/VM/dx_interpreter.c"
+    ],
+    "call_path": [
+      "add_native_method",
+      "dx_class_build_vtable",
+      "handle_invoke"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "Before the repair, java.lang.Object and java.lang.Thread had vtable_size 0. Thread.start.vtable_idx was the local virtual index 0. GameThread copied no superclass slots, so GameThread.vtable[0] was cleanUp and GameThread.vtable[11] was setRunning.",
+      "relevance": "GameView.<init> pc 35 invoke-virtual method_idx 252 resolved Thread.start and executed cleanUp. cleanUp nulls mBackground. scaleFrom then threw NullPointerException. java.lang.Thread.start did not run."
+    }
+  ],
+  "earliest_evidenced_divergence": "API19 createVtable copies the superclass vtable and sets methodIndex to that slot, or appends a non-override after it. AGR left the framework vtable empty and stored the local virtual index in vtable_idx.",
+  "causal_status": "CONTRACT_CONFIRMED",
+  "evidence_level": "CONTRACT_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "android-4.4.4_r2 dalvik vm/oo/Class.cpp createVtable copies clazz->super->vtable, replaces a slot when dvmCompareMethodNamesAndProtos matches, and otherwise appends. Frozen Bubble source robinst/frozen-bubble-android GameView.java at aafe55cb5e3bdce770d87b07564ee5bb7ff11080: GameThread.setRunning assigns mRun, GameView(Context, AttributeSet) calls setRunning(true) then start, and cleanUp is the bitmap recycle path. DEX class_def GameView$GameThread virtual[0] is cleanUp and virtual[11] is setRunning. GameView.<init> VLL pc 30 is invoke-virtual method_idx 247 GameThread.setRunning(Z); pc 35 is invoke-virtual method_idx 252 GameThread.start()V, which resolve walks to java.lang.Thread.start."
+    },
+    {
+      "type": "RUNTIME",
+      "artifact": "Pre-fix class load of /tmp/frozen.dex: Object.vtable_size 0, Thread.vtable_size 0, Thread.start.vtable_idx 0, GameThread.super java.lang.Thread, GameThread.vtable_size 16, GameThread.vtable[0] cleanUp, GameThread.vtable[11] setRunning. Post-fix load: Object.vtable_size 10, Thread.vtable_size 17, Thread.start.vtable_idx 10, cleanUp.vtable_idx 17, setRunning.vtable_idx 28, GameThread.vtable[10] is java.lang.Thread.start. Post-fix probe VDISPATCH: caller GameView.<init> pc 30 op 0x6e method_idx 247 slot GameThread.setRunning; pc 35 op 0x6e method_idx 252 resolved java.lang.Thread.start vtable_idx 10 slot java.lang.Thread.start. cleanUp is not on that path."
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Linux vtable inheritance contract: ObjChild invoke of Object.toString and Object.hashCode stays on Object; ObjChild.c returns 5; ObjOver.hashCode returns 324478056; ObjOver.c returns 6; Base.b returns 2; Kid.a returns 1; Kid.b returns 8; Kid.c returns 3; Worker vtable[Thread.start] is java.lang.Thread.start and probeStart returns 11 from Worker.run, not 20 from Worker.cleanUp."
+    }
+  ],
+  "remaining_uncertainty": [
+    "HLE virtual sets are the methods AGR registered. They are not the full libcore vtables, so absolute slot numbers are not Dalvik's methodIndex values.",
+    "The VDISPATCH lines are capped and do not participate in dispatch."
+  ],
+  "next_action": "Do not add a Thread.start or GameThread special case. Synchronous Thread.start is the separate differential framework-thread-start.json.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "dx_class_build_vtable copies the superclass table, replaces a same-name same-shorty slot, and appends other virtual methods. Interface methods keep vtable_idx -1 and stay on the itable path."
+}

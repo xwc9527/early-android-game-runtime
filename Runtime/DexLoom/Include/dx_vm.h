@@ -443,6 +443,10 @@ const char *dx_vm_get_string_value(DxObject *str_obj);
 // Method resolution
 DxMethod *dx_vm_resolve_method(DxVM *vm, uint32_t dex_method_idx);
 DxMethod *dx_vm_find_method(DxClass *cls, const char *name, const char *shorty);
+/* Passive discovery record. It does not select the callee. */
+void dx_vm_trace_virtual_invoke(DxFrame *frame, uint32_t pc, uint8_t opcode,
+                                uint32_t method_idx, DxMethod *resolved,
+                                DxClass *receiver, DxMethod *slot);
 DxMethod *dx_vm_find_interface_method(DxVM *vm, DxClass *cls, const char *name, const char *shorty);
 
 // Frame pool

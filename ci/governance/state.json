@@ -30,10 +30,10 @@
     "causal_status": "REAL_GAME_CONFIRMED",
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "Local host probe of BitmapFactory.decodeResource on unchanged Frozen Bubble. Do not rerun Simulator discovery 35683118511.",
-    "primary_blocker": "Discovery 35683118511 confirmed surfaceCreated 1, surfaceChanged 1, and a distinct content Surface, then stopped in GameThread.scaleFrom. decodeResource now returns the APK image. scaleFrom still throws NullPointerException because setRunning entered cleanUp, which clears mBackground. This is not a first frame.",
-    "first_broken_boundary": "GameThread.cleanUp clears mBackground before scaleFrom reads the decoded bitmap",
-    "first_broken_boundary_evidence": "Simulator discovery 35683118511: frame 2 created_count 1, changed_count 1, content identity distinct from the root Surface, last_method scaleFrom, exception Ljava/lang/NullPointerException. Local probe after decodeResource: 40 decodeResource calls return OK. GameView invoke of setRunning enters cleanUp, which stores a non-object into mBackground. scaleFrom then throws NullPointerException on that field. Thread.start does not run."
+    "next_validation": "Virtual dispatch is repaired locally. Do not rerun Simulator discovery 35683118511. The next boundary is Java Thread execution ownership, not another SurfaceView run.",
+    "primary_blocker": "Virtual dispatch now selects GameThread.setRunning and java.lang.Thread.start. Thread.start then runs GameThread.run on the caller until the shared 500000-instruction budget is exhausted, so onCreate does not return and surface callbacks do not run. This is not a first frame.",
+    "first_broken_boundary": "java.lang.Thread.start executes run on the calling DEX thread",
+    "first_broken_boundary_evidence": "Pre-fix load: Thread.vtable_size 0, Thread.start.vtable_idx 0, GameThread.vtable[0] is cleanUp, GameThread.vtable[11] is setRunning. Post-fix VDISPATCH: GameView.<init> pc 30 method_idx 247 slot setRunning; pc 35 method_idx 252 slot java.lang.Thread.start. The probe then exhausts the instruction budget in GameThread.run during that start call. start_activity returns -1 and created_count stays 0."
   },
   "ci_budget": {
     "valid_closure_runs": 1,

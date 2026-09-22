@@ -685,7 +685,7 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/game_dex_runner.c": "e6de1a6c3ceb437900445d0ff17518b981bd2401c60b02068552ab6aca2ff501",
-          "Runtime/DexLoom/VM/dx_vm.c": "d2c201bdaa479e7ed5eaad208c627b857fe14a8662e7f18b97c6a612a8fbb736"
+          "Runtime/DexLoom/VM/dx_vm.c": "b67f8eabb56b01249a619852be53742ae2e46c32f5d547054103a4a58a164d5f"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -875,7 +875,7 @@
         "source_hashes": {
           "Runtime/DexLoom/APK/dx_manifest.c": "17d608e345e27ba2bcf564dd61e7918c79da4b243f32d811e59126996b27519e",
           "Runtime/DexLoom/game_dex_runner.c": "e6de1a6c3ceb437900445d0ff17518b981bd2401c60b02068552ab6aca2ff501",
-          "Runtime/DexLoom/VM/dx_vm.c": "d2c201bdaa479e7ed5eaad208c627b857fe14a8662e7f18b97c6a612a8fbb736",
+          "Runtime/DexLoom/VM/dx_vm.c": "b67f8eabb56b01249a619852be53742ae2e46c32f5d547054103a4a58a164d5f",
           "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
       },
@@ -1269,8 +1269,8 @@
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
           "Runtime/DexLoom/APK/dx_resources.c": "d1ccd60b46850517bb9905db8505f81222d8658b4af9b675547208f1eb07a0e2",
-          "Runtime/DexLoom/VM/dx_vm.c": "d2c201bdaa479e7ed5eaad208c627b857fe14a8662e7f18b97c6a612a8fbb736",
-          "Runtime/DexLoom/VM/dx_interpreter.c": "e7fadd26fe905eab38d0b22436d77fc769f4eb1ef207b71c68a699ab620bdd91"
+          "Runtime/DexLoom/VM/dx_vm.c": "b67f8eabb56b01249a619852be53742ae2e46c32f5d547054103a4a58a164d5f",
+          "Runtime/DexLoom/VM/dx_interpreter.c": "64f9ca002e3a6e33f9b4a176c58a51a6110611b0b543a1ca9e2915df37278750"
         }
       },
       "verified_at_commit": "8c2bf842bd06bf59fb4692a1fb76e2c420516f0f",
@@ -1500,6 +1500,143 @@
       "contracts": [
         "frozen-bubble.bitmap_decode_resource"
       ]
+    },
+    {
+      "id": "dalvik.vm.vtable",
+      "subsystem": "Dalvik virtual dispatch",
+      "android_api": "API19 invoke-virtual vtable slot identity",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/dalvik",
+        "paths": [
+          "vm/oo/Class.cpp"
+        ],
+        "symbols": [
+          "createVtable",
+          "methodIndex"
+        ],
+        "source_hashes": {
+          "vm/oo/Class.cpp": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5"
+        },
+        "source_urls": {
+          "vm/oo/Class.cpp": "https://raw.githubusercontent.com/android/platform_dalvik/android-4.4.4_r2/vm/oo/Class.cpp"
+        },
+        "symbols_by_path": {
+          "vm/oo/Class.cpp": [
+            "static bool createVtable(ClassObject* clazz)",
+            "memcpy(clazz->vtable, clazz->super->vtable,",
+            "localMeth->methodIndex = (u2) si;",
+            "/* not an override, add to end */"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/VM/dx_vm.c",
+          "Runtime/DexLoom/VM/dx_interpreter.c"
+        ],
+        "symbols": [
+          "dx_class_build_vtable",
+          "handle_invoke",
+          "dx_vm_trace_virtual_invoke"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/VM/dx_vm.c": "b67f8eabb56b01249a619852be53742ae2e46c32f5d547054103a4a58a164d5f",
+          "Runtime/DexLoom/VM/dx_interpreter.c": "64f9ca002e3a6e33f9b4a176c58a51a6110611b0b543a1ca9e2915df37278750"
+        }
+      },
+      "verified_at_commit": "be6fba4b750240b5c8e2dba23c5c3adaced94a6c",
+      "status": "VALID",
+      "dependencies": [],
+      "observable_semantics": [
+        "invoke-virtual selects the method at the resolved method's vtable index in the receiver class",
+        "a superclass virtual slot keeps the same index in every subclass",
+        "an override with the same name and shorty replaces that inherited slot",
+        "a new virtual method is appended after the inherited slots"
+      ],
+      "internal_invariants": [
+        "framework HLE classes and guest DEX classes use one flattened slot index",
+        "interface methods are not class-vtable slots",
+        "the VDISPATCH trace does not select the callee"
+      ],
+      "execution_placement": "HOST-DEX",
+      "host_substitutions": [
+        "AGR builds the flattened table in dx_class_build_vtable instead of dvmLinearAlloc"
+      ],
+      "known_deviations": [
+        "the HLE virtual set is the methods AGR registered, not the full libcore method list",
+        "override access and final-method checks are not enforced"
+      ],
+      "contracts": [
+        "dex.vtable_inheritance"
+      ]
+    },
+    {
+      "id": "dalvik.thread.start",
+      "subsystem": "java.lang.Thread.start",
+      "android_api": "API19 Thread.start execution ownership",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/libcore",
+        "paths": [
+          "libdvm/src/main/java/java/lang/Thread.java"
+        ],
+        "symbols": [
+          "Thread.start",
+          "VMThread.create"
+        ],
+        "source_hashes": {
+          "libdvm/src/main/java/java/lang/Thread.java": "56e6392397459d4f7beab86ae5a6d481f77f7f4223aa15c918b724074fc87090"
+        },
+        "source_urls": {
+          "libdvm/src/main/java/java/lang/Thread.java": "https://android.googlesource.com/platform/libcore/+/android-4.4.4_r2/libdvm/src/main/java/java/lang/Thread.java?format=TEXT"
+        },
+        "symbols_by_path": {
+          "libdvm/src/main/java/java/lang/Thread.java": [
+            "public synchronized void start()",
+            "VMThread.create(this, stackSize);",
+            "public void run()"
+          ]
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/VM/dx_vm.c"
+        ],
+        "symbols": [
+          "native_thread_start"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/VM/dx_vm.c": "b67f8eabb56b01249a619852be53742ae2e46c32f5d547054103a4a58a164d5f"
+        }
+      },
+      "verified_at_commit": "be6fba4b750240b5c8e2dba23c5c3adaced94a6c",
+      "status": "VALID",
+      "dependencies": [
+        "dalvik.vm.vtable"
+      ],
+      "observable_semantics": [
+        "Thread.start returns to the caller after the receiver's run has been started on another thread",
+        "run proceeds independently of the caller",
+        "the caller of start is not inside run"
+      ],
+      "internal_invariants": [
+        "one guest pthread remains one Darwin pthread",
+        "a Java Thread execution context is not a guest pthread",
+        "DxVM.current_frame is not shared by two executing Java threads"
+      ],
+      "execution_placement": "HOST-DEX",
+      "host_substitutions": [
+        "native_thread_start calls dx_vm_execute_method on run and returns when run returns"
+      ],
+      "known_deviations": [
+        "start is synchronous",
+        "isAlive always returns false",
+        "join is a no-op",
+        "the shared instruction budget and watchdog belong to the caller"
+      ],
+      "contracts": []
     }
   ]
 }

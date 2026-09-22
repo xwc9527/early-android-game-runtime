@@ -235,7 +235,10 @@ static void add_native_method(DxClass *cls, const char *name, const char *shorty
     new_methods[idx].access_flags = access_flags;
     new_methods[idx].native_fn = fn;
     new_methods[idx].is_native = true;
-    new_methods[idx].vtable_idx = is_direct ? -1 : (int32_t)idx;
+    /* The flattened slot is assigned by dx_class_build_vtable. A local
+       index here is not a vtable index: Object virtual 0 and Thread.start
+       would name the same slot. */
+    new_methods[idx].vtable_idx = -1;
 
     if (is_direct) {
         cls->direct_methods = new_methods;
@@ -243,6 +246,97 @@ static void add_native_method(DxClass *cls, const char *name, const char *shorty
         cls->virtual_methods = new_methods;
     }
     *count = new_count;
+}
+
+/* One slot contract for framework HLE classes and guest DEX classes:
+   inherited slots keep their index, an override (same name and shorty)
+   replaces that slot, and a new virtual method is appended. Interface
+   methods stay off this table; invoke-interface uses the itable. */
+static int vtable_incomplete(const DxClass *cls) {
+    uint32_t super_size = (cls->super_class) ? cls->super_class->vtable_size : 0;
+    if (cls->vtable_size < super_size) return 1;
+    if (cls->virtual_method_count > 0 && cls->vtable == NULL) return 1;
+    for (uint32_t i = 0; i < cls->virtual_method_count; i++) {
+        if (cls->virtual_methods[i].vtable_idx < 0) return 1;
+    }
+    return 0;
+}
+
+static void dx_class_build_vtable(DxClass *cls) {
+    if (!cls) return;
+    if (cls->super_class) dx_class_build_vtable(cls->super_class);
+
+    if (cls->access_flags & DX_ACC_INTERFACE) {
+        int dirty = cls->vtable != NULL || cls->vtable_size != 0;
+        for (uint32_t i = 0; i < cls->virtual_method_count; i++) {
+            if (cls->virtual_methods[i].vtable_idx != -1) dirty = 1;
+        }
+        if (!dirty) return;
+        for (uint32_t i = 0; i < cls->virtual_method_count; i++)
+            cls->virtual_methods[i].vtable_idx = -1;
+        dx_free(cls->vtable);
+        cls->vtable = NULL;
+        cls->vtable_size = 0;
+        return;
+    }
+
+    if (!vtable_incomplete(cls)) return;
+
+    uint32_t super_size = cls->super_class ? cls->super_class->vtable_size : 0;
+    uint32_t n = cls->virtual_method_count;
+    int32_t *assigned = NULL;
+    if (n > 0) {
+        assigned = (int32_t *)dx_malloc(sizeof(int32_t) * n);
+        if (!assigned) return;
+    }
+    uint32_t append = 0;
+    for (uint32_t m = 0; m < n; m++) {
+        DxMethod *method = &cls->virtual_methods[m];
+        assigned[m] = -1;
+        if (!method->name || !method->shorty || super_size == 0 ||
+            !cls->super_class || !cls->super_class->vtable) {
+            append++;
+            continue;
+        }
+        for (uint32_t v = 0; v < super_size; v++) {
+            DxMethod *super_method = cls->super_class->vtable[v];
+            if (!super_method || !super_method->name || !super_method->shorty) continue;
+            if (strcmp(super_method->name, method->name) == 0 &&
+                strcmp(super_method->shorty, method->shorty) == 0) {
+                assigned[m] = (int32_t)v;
+                break;
+            }
+        }
+        if (assigned[m] < 0) append++;
+    }
+
+    uint32_t size = super_size + append;
+    DxMethod **vt = NULL;
+    if (size > 0) {
+        vt = (DxMethod **)dx_malloc(sizeof(DxMethod *) * size);
+        if (!vt) {
+            dx_free(assigned);
+            return;
+        }
+        for (uint32_t v = 0; v < super_size; v++)
+            vt[v] = cls->super_class->vtable[v];
+    }
+    uint32_t next = super_size;
+    for (uint32_t m = 0; m < n; m++) {
+        DxMethod *method = &cls->virtual_methods[m];
+        if (assigned[m] >= 0) {
+            vt[assigned[m]] = method;
+            method->vtable_idx = assigned[m];
+        } else {
+            vt[next] = method;
+            method->vtable_idx = (int32_t)next;
+            next++;
+        }
+    }
+    dx_free(cls->vtable);
+    cls->vtable = vt;
+    cls->vtable_size = size;
+    dx_free(assigned);
 }
 
 // --- java.lang.Object native methods ---
@@ -2976,12 +3070,13 @@ static DxResult native_proxy_newproxyinstance(DxVM *vm, DxFrame *frame, DxValue 
                 new_methods[idx].access_flags = DX_ACC_PUBLIC;
                 new_methods[idx].native_fn = native_proxy_dispatch;
                 new_methods[idx].is_native = true;
-                new_methods[idx].vtable_idx = (int32_t)idx;
+                new_methods[idx].vtable_idx = -1;
                 proxy_cls->virtual_methods = new_methods;
                 proxy_cls->virtual_method_count = idx + 1;
             }
         }
     }
+    dx_class_build_vtable(proxy_cls);
 
     // Register in VM
     if (vm->class_count < DX_MAX_CLASSES) {
@@ -3992,6 +4087,9 @@ DxResult dx_register_java_lang(DxVM *vm) {
     create_class(vm, "Lkotlin/jvm/functions/Function0;", obj_cls, true)->status = DX_CLASS_INITIALIZED;
     create_class(vm, "Lkotlin/jvm/functions/Function1;", obj_cls, true)->status = DX_CLASS_INITIALIZED;
 
+    for (uint32_t i = 0; i < vm->class_count; i++)
+        dx_class_build_vtable(vm->classes[i]);
+
     DX_INFO(TAG, "Registered java.lang + kotlin runtime classes");
     return DX_OK;
 }
@@ -4409,7 +4507,7 @@ DxResult dx_vm_load_class(DxVM *vm, const char *descriptor, DxClass **out) {
                     method->declaring_class = cls;
                     method->access_flags = cd->virtual_methods[m].access_flags;
                     method->dex_method_idx = midx;
-                    method->vtable_idx = (int32_t)m;
+                    method->vtable_idx = -1;
 
                     if (cd->virtual_methods[m].code_off != 0) {
                         DxResult cr = dx_dex_parse_code_item(vm->dex,
@@ -4422,52 +4520,7 @@ DxResult dx_vm_load_class(DxVM *vm, const char *descriptor, DxClass **out) {
                 }
             }
 
-            // Build vtable: inherit super vtable, apply overrides, append new methods
-            uint32_t super_vtable_size = super ? super->vtable_size : 0;
-            cls->vtable_size = super_vtable_size + cls->virtual_method_count;
-            if (cls->vtable_size > 0) {
-                cls->vtable = (DxMethod **)dx_malloc(sizeof(DxMethod *) * cls->vtable_size);
-                // Copy super vtable
-                for (uint32_t v = 0; v < super_vtable_size; v++) {
-                    cls->vtable[v] = super->vtable[v];
-                }
-                // Check for overrides, then append
-                for (uint32_t m = 0; m < cls->virtual_method_count; m++) {
-                    DxMethod *method = &cls->virtual_methods[m];
-                    bool overridden = false;
-                    for (uint32_t v = 0; v < super_vtable_size; v++) {
-                        if (cls->vtable[v] &&
-                            strcmp(cls->vtable[v]->name, method->name) == 0) {
-                            // Name matches — verify shorty (signature) also matches before overriding
-                            if (cls->vtable[v]->shorty && method->shorty &&
-                                strcmp(cls->vtable[v]->shorty, method->shorty) == 0) {
-                                cls->vtable[v] = method;
-                                method->vtable_idx = (int32_t)v;
-                                overridden = true;
-                                break;
-                            } else {
-                                // Name matches but signature differs — not a valid override.
-                                // Log warning for potential DEX inconsistency or method overload
-                                // that should not replace the vtable slot.
-                                DX_WARN(TAG, "vtable[%u] signature mismatch during override: "
-                                        "%s.%s (shorty=%s) vs %s.%s (shorty=%s)",
-                                        v,
-                                        cls->vtable[v]->declaring_class ?
-                                            cls->vtable[v]->declaring_class->descriptor : "?",
-                                        cls->vtable[v]->name,
-                                        cls->vtable[v]->shorty ? cls->vtable[v]->shorty : "null",
-                                        cls->descriptor ? cls->descriptor : "?",
-                                        method->name,
-                                        method->shorty ? method->shorty : "null");
-                            }
-                        }
-                    }
-                    if (!overridden) {
-                        method->vtable_idx = (int32_t)(super_vtable_size + m);
-                        cls->vtable[super_vtable_size + m] = method;
-                    }
-                }
-            }
+            dx_class_build_vtable(cls);
 
             // Build itable: for each implemented interface, map interface methods to class methods
             if (cls->interface_count > 0) {
@@ -5451,6 +5504,52 @@ DxMethod *dx_vm_find_method(DxClass *cls, const char *name, const char *shorty) 
     return NULL;
 }
 
+void dx_vm_trace_virtual_invoke(DxFrame *frame, uint32_t pc, uint8_t opcode,
+                                uint32_t method_idx, DxMethod *resolved,
+                                DxClass *receiver, DxMethod *slot) {
+    const char *rname = (resolved && resolved->name) ? resolved->name : NULL;
+    const char *sname = (slot && slot->name) ? slot->name : NULL;
+    if (!rname) return;
+    int named = strcmp(rname, "start") == 0 || strcmp(rname, "setRunning") == 0 ||
+                strcmp(rname, "cleanUp") == 0 ||
+                (sname && (strcmp(sname, "start") == 0 || strcmp(sname, "setRunning") == 0 ||
+                           strcmp(sname, "cleanUp") == 0));
+    int mismatch = sname && strcmp(rname, sname) != 0;
+    if (!named && !mismatch) return;
+    static uint32_t named_lines;
+    static uint32_t mismatch_lines;
+    if (named) {
+        if (named_lines >= 32) return;
+        named_lines++;
+    } else {
+        if (mismatch_lines >= 16) return;
+        mismatch_lines++;
+    }
+    const char *caller_cls = "?";
+    const char *caller_name = "?";
+    if (frame && frame->method) {
+        if (frame->method->declaring_class && frame->method->declaring_class->descriptor)
+            caller_cls = frame->method->declaring_class->descriptor;
+        if (frame->method->name) caller_name = frame->method->name;
+    }
+    fprintf(stderr,
+            "VDISPATCH caller=%s.%s pc=%u op=0x%02x method_idx=%u "
+            "resolved=%s.%s shorty=%s vtable_idx=%d "
+            "receiver=%s vtable_size=%u slot=%s.%s shorty=%s\n",
+            caller_cls, caller_name, pc, opcode, method_idx,
+            (resolved->declaring_class && resolved->declaring_class->descriptor)
+                ? resolved->declaring_class->descriptor : "?",
+            rname,
+            resolved->shorty ? resolved->shorty : "?",
+            resolved->vtable_idx,
+            (receiver && receiver->descriptor) ? receiver->descriptor : "?",
+            receiver ? receiver->vtable_size : 0,
+            (slot && slot->declaring_class && slot->declaring_class->descriptor)
+                ? slot->declaring_class->descriptor : "?",
+            sname ? sname : "?",
+            (slot && slot->shorty) ? slot->shorty : "?");
+}
+
 // Search implemented interfaces for a default (non-abstract) method.
 // Handles diamond inheritance by preferring sub-interfaces over parent interfaces.
 DxMethod *dx_vm_find_interface_method(DxVM *vm, DxClass *cls, const char *name, const char *shorty) {
@@ -5961,7 +6060,7 @@ DxResult dx_vm_invoke_custom(DxVM *vm, DxFrame *frame, uint32_t call_site_idx,
         lambda_cls->virtual_methods[0].access_flags = DX_ACC_PUBLIC;
         lambda_cls->virtual_methods[0].native_fn = native_lambda_dispatch;
         lambda_cls->virtual_methods[0].is_native = true;
-        lambda_cls->virtual_methods[0].vtable_idx = 0;
+        lambda_cls->virtual_methods[0].vtable_idx = -1;
 
         // Get shorty from erased proto
         if (cs->proto_idx < dex->proto_count) {
@@ -5971,6 +6070,7 @@ DxResult dx_vm_invoke_custom(DxVM *vm, DxFrame *frame, uint32_t call_site_idx,
 
         lambda_cls->virtual_method_count = 1;
     }
+    dx_class_build_vtable(lambda_cls);
 
     // Register in VM
     if (vm->class_count < DX_MAX_CLASSES) {
