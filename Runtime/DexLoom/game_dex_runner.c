@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 #include <pthread.h>
 #include <GLES2/gl2.h>
 
@@ -371,6 +372,11 @@ static DxResult bitmap_decode_byte_array(DxVM *vm, DxFrame *frame, DxValue *args
 static DxResult bitmap_recycle(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
 static DxResult bitmap_create_scaled(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
 static DxResult canvas_draw_bitmap(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
+static DxResult canvas_save(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
+static DxResult canvas_clip_rect(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
+static DxResult canvas_restore(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
+static void publish_region_op_replace(DxVM *vm, DxClass *obj);
+static struct agr_content_surface *content_slot_for_canvas(agr_dex_game *game, DxObject *canvas);
 
 static DxResult bitmap_get_dimension(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
     const char *field = "_width";
@@ -527,6 +533,10 @@ static DxResult register_game_framework(DxVM *vm) {
     const char *canvas_types[] = { "I", "I", "I", "I", "I", "I" };
     own_fields(canvas, 6, canvas_names, canvas_types);
     add_method(canvas, "drawBitmap", "VLFFL", DX_ACC_PUBLIC, canvas_draw_bitmap, 0);
+    add_method(canvas, "save", "II", DX_ACC_PUBLIC, canvas_save, 0);
+    add_method(canvas, "clipRect", "ZFFFFL", DX_ACC_PUBLIC, canvas_clip_rect, 0);
+    add_method(canvas, "restore", "V", DX_ACC_PUBLIC, canvas_restore, 0);
+    publish_region_op_replace(vm, obj);
     DxClass *rect = reg_class(vm, "Landroid/graphics/Rect;", obj);
     const char *rect_names[] = { "left", "top", "right", "bottom" };
     const char *rect_types[] = { "I", "I", "I", "I" };
@@ -643,6 +653,19 @@ enum { AGR_CONTENT_SURFACE_CAP = 4, AGR_SURFACE_CALLBACK_CAP = 8,
        AGR_PIXEL_FORMAT_RGB_565 = 4, AGR_CONTENT_BYTES_PER_PIXEL = 4,
        AGR_GUEST_BITMAP_CAP = 128 };
 
+/* API19 Canvas.save flags. CLIP_SAVE_FLAG copies the clip. Other bits are
+   recorded and do not invent a Matrix or a layer. */
+#define AGR_CANVAS_MATRIX_SAVE_FLAG 0x01
+#define AGR_CANVAS_CLIP_SAVE_FLAG 0x02
+#define AGR_CANVAS_SAVE_CAP 16
+#define AGR_REGION_OP_REPLACE 5
+
+struct agr_canvas_save {
+    int32_t flags;
+    int owns_clip;
+    int clip_left, clip_top, clip_right, clip_bottom;
+};
+
 struct agr_content_surface {
     DxObject *view;
     DxObject *holder;
@@ -669,6 +692,11 @@ struct agr_content_surface {
     uint32_t lock_owner_exec;
     uint32_t locked_generation;
     int clip_left, clip_top, clip_right, clip_bottom;
+    /* API19 Canvas save stack for this lock. Index 0 is the first save above
+       the base clip installed by lockCanvas. save_count is getSaveCount and
+       starts at 1. The next lockCanvas replaces this stack. */
+    struct agr_canvas_save save_stack[AGR_CANVAS_SAVE_CAP];
+    int save_count;
     uint32_t lock_count;
     uint32_t unlock_count;
     uint32_t post_count;
@@ -749,6 +777,8 @@ struct agr_dex_game {
     int choreographer_in_frame;
     uint32_t framework_event_count;
     char framework_events[AGR_DEX_FRAMEWORK_TRACE_CAPACITY][96];
+    agr_canvas_trace canvas_trace[AGR_CANVAS_TRACE_CAP];
+    uint32_t canvas_trace_count;
 };
 
 static void framework_event(agr_dex_game *game, const char *event) {
@@ -1487,9 +1517,302 @@ static struct agr_content_surface *content_slot_for_canvas(agr_dex_game *game, D
 
 static uint64_t content_buffer_hash(const void *pixels, size_t bytes);
 
+/* API19 SkFloatBits_toIntRound. Non-AA clipRect uses SkRect::round, which is
+   this conversion on each edge. Halfway cases follow the Skia bit routine,
+   not a separately invented rule. */
+static int32_t canvas_round_coord(float x) {
+    union { float f; int32_t i; } bits;
+    int32_t packed;
+    int exp, value, sign;
+    bits.f = x;
+    packed = bits.i;
+    if ((packed << 1) == 0) return 0;
+    exp = (int)(((uint32_t)packed << 1) >> 24) - (127 + 23);
+    value = (packed & ~0xFF000000) | (1 << 23);
+    sign = packed >> 31;
+    if (exp >= 0) {
+        if (exp > 7) value = 0x7FFFFFFF;
+        else value <<= exp;
+        return sign == -1 ? -value : value;
+    }
+    value = sign == -1 ? -value : value;
+    exp = -exp;
+    if (exp > 25) exp = 25;
+    return (value + (1 << (exp - 1))) >> exp;
+}
+
+static void canvas_trace_begin(agr_dex_game *game, DxVM *vm, DxFrame *frame,
+                               const char *kind, agr_canvas_trace *event) {
+    const char *caller = "?";
+    memset(event, 0, sizeof(*event));
+    if (!game || !vm || !vm->telemetry.telemetry_enabled) return;
+    if (game->canvas_trace_count >= AGR_CANVAS_TRACE_CAP) return;
+    event->exec_id = dx_vm_current_exec(vm) ? dx_vm_current_exec(vm)->id : 0;
+    if (vm->invoke_site_valid) {
+        event->pc = vm->invoke_site_pc;
+        event->opcode = vm->invoke_site_opcode;
+        event->method_idx = vm->invoke_site_method_idx;
+    }
+    if (frame && frame->caller && frame->caller->method && frame->caller->method->name)
+        caller = frame->caller->method->name;
+    if (frame && frame->caller && frame->caller->method &&
+        frame->caller->method->declaring_class &&
+        frame->caller->method->declaring_class->descriptor) {
+        snprintf(event->caller, sizeof(event->caller), "%s.%s",
+                 frame->caller->method->declaring_class->descriptor, caller);
+    } else {
+        snprintf(event->caller, sizeof(event->caller), "%s", caller);
+    }
+    snprintf(event->kind, sizeof(event->kind), "%s", kind);
+}
+
+static void canvas_trace_commit(agr_dex_game *game, DxVM *vm, const agr_canvas_trace *event) {
+    if (!game || !vm || !vm->telemetry.telemetry_enabled) return;
+    if (game->canvas_trace_count >= AGR_CANVAS_TRACE_CAP) return;
+    game->canvas_trace[game->canvas_trace_count++] = *event;
+}
+
+static struct agr_content_surface *canvas_live_slot(agr_dex_game *game, DxObject *canvas) {
+    struct agr_content_surface *slot = content_slot_for_canvas(game, canvas);
+    if (!slot || !slot->canvas_locked || !slot->pixels) return NULL;
+    if (slot->locked_generation != slot->generation) return NULL;
+    return slot;
+}
+
+static void canvas_copy_clip(const struct agr_content_surface *slot, int out[4]) {
+    out[0] = slot->clip_left;
+    out[1] = slot->clip_top;
+    out[2] = slot->clip_right;
+    out[3] = slot->clip_bottom;
+}
+
+static DxResult canvas_throw(DxVM *vm, const char *descriptor, const char *message) {
+    dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(vm, descriptor, message);
+    return DX_ERR_EXCEPTION;
+}
+
+/* API19 Canvas.save(int) returns getSaveCount() before the push. The base
+   lock starts at 1. CLIP_SAVE_FLAG stores the clip; a save without that bit
+   shares the clip with the previous level, so restore does not roll it back. */
+static DxResult canvas_save(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    struct agr_content_surface *slot;
+    struct agr_canvas_save *saved;
+    agr_canvas_trace event;
+    int32_t flags;
+    if (!frame || count < 2 || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return DX_ERR_NULL_PTR;
+    flags = args[1].tag == DX_VAL_INT ? args[1].i : 0;
+    canvas_trace_begin(game, vm, frame, "save", &event);
+    event.save_flags = flags;
+    slot = canvas_live_slot(game, args[0].obj);
+    if (!slot || slot->save_count < 1) {
+        frame->result = DX_INT_VALUE(0);
+        frame->has_result = true;
+        event.save_returned = 0;
+        canvas_trace_commit(game, vm, &event);
+        return DX_OK;
+    }
+    canvas_copy_clip(slot, event.clip_before);
+    if (slot->save_count > AGR_CANVAS_SAVE_CAP) {
+        canvas_trace_commit(game, vm, &event);
+        return canvas_throw(vm, "Ljava/lang/IllegalStateException;", "Canvas save stack is full");
+    }
+    saved = &slot->save_stack[slot->save_count - 1];
+    memset(saved, 0, sizeof(*saved));
+    saved->flags = flags;
+    saved->owns_clip = (flags & AGR_CANVAS_CLIP_SAVE_FLAG) != 0;
+    saved->clip_left = slot->clip_left;
+    saved->clip_top = slot->clip_top;
+    saved->clip_right = slot->clip_right;
+    saved->clip_bottom = slot->clip_bottom;
+    event.save_returned = slot->save_count;
+    slot->save_count++;
+    event.save_count_after = slot->save_count;
+    canvas_copy_clip(slot, event.clip_after);
+    frame->result = DX_INT_VALUE(event.save_returned);
+    frame->has_result = true;
+    canvas_trace_commit(game, vm, &event);
+    return DX_OK;
+}
+
+/* REPLACE sets the current clip to the rounded rectangle intersected with the
+   device. The boolean is whether that resulting clip is non-empty. Other
+   Region.Op values are not implemented. A null Op is a NullPointerException,
+   matching op.nativeInt on API19. */
+static DxResult canvas_clip_rect(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    struct agr_content_surface *slot;
+    agr_canvas_trace event;
+    DxObject *op;
+    DxValue native_int = DX_NULL_VALUE;
+    float left, top, right, bottom;
+    int rounded_l, rounded_t, rounded_r, rounded_b;
+    int result = 0;
+    if (!frame || count < 6 || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return DX_ERR_NULL_PTR;
+    left = args[1].tag == DX_VAL_FLOAT ? args[1].f : (float)args[1].i;
+    top = args[2].tag == DX_VAL_FLOAT ? args[2].f : (float)args[2].i;
+    right = args[3].tag == DX_VAL_FLOAT ? args[3].f : (float)args[3].i;
+    bottom = args[4].tag == DX_VAL_FLOAT ? args[4].f : (float)args[4].i;
+    op = args[5].tag == DX_VAL_OBJ ? args[5].obj : NULL;
+    canvas_trace_begin(game, vm, frame, "clipRect", &event);
+    event.left = left;
+    event.top = top;
+    event.right = right;
+    event.bottom = bottom;
+    event.op_identity = (uint64_t)(uintptr_t)op;
+    event.op_null = op ? 0 : 1;
+    if (op && op->klass && op->klass->descriptor)
+        snprintf(event.op_class, sizeof(event.op_class), "%s", op->klass->descriptor);
+    if (!op) {
+        canvas_trace_commit(game, vm, &event);
+        return canvas_throw(vm, "Ljava/lang/NullPointerException;", "Region.Op is null");
+    }
+    if (dx_vm_get_field(op, "nativeInt", &native_int) == DX_OK && native_int.tag == DX_VAL_INT)
+        event.op_native = native_int.i;
+    else
+        event.op_native = -1;
+    slot = canvas_live_slot(game, args[0].obj);
+    if (slot) canvas_copy_clip(slot, event.clip_before);
+    if (event.op_native != AGR_REGION_OP_REPLACE) {
+        canvas_trace_commit(game, vm, &event);
+        return canvas_throw(vm, "Ljava/lang/UnsupportedOperationException;",
+                            "Canvas.clipRect Region.Op other than REPLACE is not implemented");
+    }
+    if (!slot) {
+        frame->result = DX_INT_VALUE(0);
+        frame->has_result = true;
+        canvas_trace_commit(game, vm, &event);
+        return DX_OK;
+    }
+    rounded_l = canvas_round_coord(left);
+    rounded_t = canvas_round_coord(top);
+    rounded_r = canvas_round_coord(right);
+    rounded_b = canvas_round_coord(bottom);
+    if (rounded_l >= rounded_r || rounded_t >= rounded_b) {
+        slot->clip_left = slot->clip_top = slot->clip_right = slot->clip_bottom = 0;
+    } else {
+        if (rounded_l < 0) rounded_l = 0;
+        if (rounded_t < 0) rounded_t = 0;
+        if (rounded_r > slot->width) rounded_r = slot->width;
+        if (rounded_b > slot->height) rounded_b = slot->height;
+        if (rounded_l >= rounded_r || rounded_t >= rounded_b) {
+            slot->clip_left = slot->clip_top = slot->clip_right = slot->clip_bottom = 0;
+        } else {
+            slot->clip_left = rounded_l;
+            slot->clip_top = rounded_t;
+            slot->clip_right = rounded_r;
+            slot->clip_bottom = rounded_b;
+            result = 1;
+        }
+    }
+    event.bool_result = result;
+    event.save_count_after = slot->save_count;
+    canvas_copy_clip(slot, event.clip_after);
+    frame->result = DX_INT_VALUE(result);
+    frame->has_result = true;
+    canvas_trace_commit(game, vm, &event);
+    return DX_OK;
+}
+
+static DxResult canvas_restore(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    struct agr_content_surface *slot;
+    struct agr_canvas_save *saved;
+    agr_canvas_trace event;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return DX_ERR_NULL_PTR;
+    canvas_trace_begin(game, vm, frame, "restore", &event);
+    slot = canvas_live_slot(game, args[0].obj);
+    if (!slot) return DX_OK;
+    canvas_copy_clip(slot, event.clip_before);
+    event.save_count_after = slot->save_count;
+    if (slot->save_count <= 1) {
+        canvas_trace_commit(game, vm, &event);
+        return canvas_throw(vm, "Ljava/lang/IllegalStateException;", "Underflow in restore");
+    }
+    slot->save_count--;
+    saved = &slot->save_stack[slot->save_count - 1];
+    event.save_flags = saved->flags;
+    if (saved->owns_clip) {
+        slot->clip_left = saved->clip_left;
+        slot->clip_top = saved->clip_top;
+        slot->clip_right = saved->clip_right;
+        slot->clip_bottom = saved->clip_bottom;
+    }
+    event.save_count_after = slot->save_count;
+    canvas_copy_clip(slot, event.clip_after);
+    canvas_trace_commit(game, vm, &event);
+    return DX_OK;
+}
+
+static void publish_region_op_replace(DxVM *vm, DxClass *obj) {
+    DxClass *enum_cls = dx_vm_find_class(vm, "Ljava/lang/Enum;");
+    DxClass *op_cls;
+    DxObject *replace;
+    const char *names[] = { "nativeInt", "name", "ordinal" };
+    const char *types[] = { "I", "Ljava/lang/String;", "I" };
+    uint32_t own = 3;
+    reg_class(vm, "Landroid/graphics/Region;", obj);
+    op_cls = reg_class(vm, "Landroid/graphics/Region$Op;", enum_cls ? enum_cls : obj);
+    if (!op_cls) return;
+    own_fields(op_cls, own, names, types);
+    op_cls->access_flags = DX_ACC_PUBLIC | DX_ACC_FINAL | DX_ACC_ENUM;
+    replace = dx_vm_alloc_object(vm, op_cls);
+    if (!replace) return;
+    dx_vm_set_field(replace, "nativeInt", DX_INT_VALUE(AGR_REGION_OP_REPLACE));
+    dx_vm_set_field(replace, "ordinal", DX_INT_VALUE(AGR_REGION_OP_REPLACE));
+    dx_vm_set_field(replace, "name", DX_OBJ_VALUE(dx_vm_create_string(vm, "REPLACE")));
+    op_cls->field_defs = dx_realloc(op_cls->field_defs, sizeof(*op_cls->field_defs) * (own + 1));
+    if (!op_cls->field_defs) return;
+    memset(&op_cls->field_defs[own], 0, sizeof(op_cls->field_defs[own]));
+    op_cls->field_defs[own].name = "REPLACE";
+    op_cls->field_defs[own].type = "Landroid/graphics/Region$Op;";
+    op_cls->field_defs[own].flags = DX_ACC_PUBLIC | DX_ACC_STATIC | DX_ACC_FINAL | DX_ACC_ENUM;
+    op_cls->static_fields = dx_malloc(sizeof(DxValue));
+    if (!op_cls->static_fields) return;
+    op_cls->static_fields[0] = DX_OBJ_VALUE(replace);
+    op_cls->static_field_count = 1;
+}
+
+static void content_blit_bounds(int src_w, int src_h, float left, float top,
+                                int clip_l, int clip_t, int clip_r, int clip_b,
+                                int dst_w, int dst_h,
+                                int *x0, int *y0, int *x1, int *y1) {
+    int dst_x0, dst_y0, draw_x, draw_y, draw_w, draw_h;
+    *x0 = *y0 = *x1 = *y1 = 0;
+    if (clip_l < 0) clip_l = 0;
+    if (clip_t < 0) clip_t = 0;
+    if (clip_r > dst_w) clip_r = dst_w;
+    if (clip_b > dst_h) clip_b = dst_h;
+    if (clip_r <= clip_l || clip_b <= clip_t || src_w <= 0 || src_h <= 0) return;
+    dst_x0 = (int)floorf(left);
+    dst_y0 = (int)floorf(top);
+    draw_x = dst_x0;
+    draw_y = dst_y0;
+    draw_w = src_w;
+    draw_h = src_h;
+    if (draw_x < clip_l) {
+        draw_w -= clip_l - draw_x;
+        draw_x = clip_l;
+    }
+    if (draw_y < clip_t) {
+        draw_h -= clip_t - draw_y;
+        draw_y = clip_t;
+    }
+    if (draw_x + draw_w > clip_r) draw_w = clip_r - draw_x;
+    if (draw_y + draw_h > clip_b) draw_h = clip_b - draw_y;
+    if (draw_w <= 0 || draw_h <= 0) return;
+    *x0 = draw_x;
+    *y0 = draw_y;
+    *x1 = draw_x + draw_w;
+    *y1 = draw_y + draw_h;
+}
+
 /* API19 Canvas.drawBitmap(Bitmap, float, float, Paint). Frozen Bubble passes a
    null Paint. Destination is the locked SurfaceView content Surface backing
-   (host RGBA8888 / SkPMColor layout). */
+   (host RGBA8888 / SkPMColor layout). The clip is the current Canvas clip. */
 static DxResult canvas_draw_bitmap(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
     agr_dex_game *game = game_from_vm(vm);
     struct agr_content_surface *slot;
@@ -1549,6 +1872,26 @@ static DxResult canvas_draw_bitmap(DxVM *vm, DxFrame *frame, DxValue *args, uint
                             slot->clip_top,
                             slot->clip_right,
                             slot->clip_bottom);
+    if (vm->telemetry.telemetry_enabled && slot->save_count > 1) {
+        agr_canvas_trace event;
+        canvas_trace_begin(game, vm, frame, "drawBitmap", &event);
+        event.left = left;
+        event.top = top;
+        event.save_count_after = slot->save_count;
+        canvas_copy_clip(slot, event.clip_before);
+        canvas_copy_clip(slot, event.clip_after);
+        event.wrote = wrote < 0 ? 0 : wrote;
+        event.has_write = 1;
+        content_blit_bounds((int)agr_bitmap_width(bitmap_slot->host),
+                            (int)agr_bitmap_height(bitmap_slot->host),
+                            left, top,
+                            slot->clip_left, slot->clip_top,
+                            slot->clip_right, slot->clip_bottom,
+                            slot->width, slot->height,
+                            &event.write_left, &event.write_top,
+                            &event.write_right, &event.write_bottom);
+        canvas_trace_commit(game, vm, &event);
+    }
     if (wrote < 0) return DX_OK;
     after = content_buffer_hash(slot->pixels, bytes);
     slot->draw_bitmap_count++;
@@ -2102,6 +2445,8 @@ static DxResult surface_holder_lock_canvas(DxVM *vm, DxFrame *frame, DxValue *ar
     slot->clip_top = top;
     slot->clip_right = right;
     slot->clip_bottom = bottom;
+    memset(slot->save_stack, 0, sizeof(slot->save_stack));
+    slot->save_count = 1;
     slot->canvas_locked = 1;
     slot->lock_owner_exec = exec->id;
     slot->lock_owner_host = exec->has_host_thread ? (uint64_t)(uintptr_t)exec->host_thread : 0;
@@ -2150,6 +2495,8 @@ static DxResult surface_holder_unlock_canvas(DxVM *vm, DxFrame *frame, DxValue *
     }
     if (slot->locked_generation != slot->generation || !slot->pixels) {
         slot->canvas_locked = 0;
+        memset(slot->save_stack, 0, sizeof(slot->save_stack));
+        slot->save_count = 1;
         dx_vm_set_field(canvas, "_locked", DX_INT_VALUE(0));
         pthread_cond_broadcast(&slot->cv);
         content_surface_unlock(slot);
@@ -2163,6 +2510,12 @@ static DxResult surface_holder_unlock_canvas(DxVM *vm, DxFrame *frame, DxValue *
     slot->unlock_count++;
     slot->last_post_generation = slot->generation;
     slot->canvas_locked = 0;
+    memset(slot->save_stack, 0, sizeof(slot->save_stack));
+    slot->save_count = 1;
+    slot->clip_left = 0;
+    slot->clip_top = 0;
+    slot->clip_right = slot->width;
+    slot->clip_bottom = slot->height;
     dx_vm_set_field(canvas, "_locked", DX_INT_VALUE(0));
     pthread_cond_broadcast(&slot->cv);
     content_surface_unlock(slot);
@@ -2475,6 +2828,48 @@ void agr_dex_game_enable_diagnostics(agr_dex_game *game, int enabled) {
 
 struct DxVM *agr_dex_game_vm(const agr_dex_game *game) {
     return game ? game->vm : NULL;
+}
+
+void *agr_dex_game_content_holder(const agr_dex_game *game) {
+    if (!game || game->content_surface_count == 0) return NULL;
+    return game->content_surfaces[0].holder;
+}
+
+int agr_dex_game_content_clip(const agr_dex_game *game, int *left, int *top,
+                              int *right, int *bottom, int *save_count) {
+    const struct agr_content_surface *slot;
+    if (!game || game->content_surface_count == 0) return -1;
+    slot = &game->content_surfaces[0];
+    if (left) *left = slot->clip_left;
+    if (top) *top = slot->clip_top;
+    if (right) *right = slot->clip_right;
+    if (bottom) *bottom = slot->clip_bottom;
+    if (save_count) *save_count = slot->save_count;
+    return 0;
+}
+
+int agr_dex_game_content_pixel(const agr_dex_game *game, int x, int y, uint32_t *pixel) {
+    const struct agr_content_surface *slot;
+    const uint8_t *bytes;
+    size_t offset;
+    if (!game || !pixel || game->content_surface_count == 0) return -1;
+    slot = &game->content_surfaces[0];
+    if (!slot->pixels || x < 0 || y < 0 || x >= slot->width || y >= slot->height) return -1;
+    bytes = slot->pixels;
+    offset = (size_t)y * (size_t)slot->row_bytes + (size_t)x * 4u;
+    memcpy(pixel, bytes + offset, 4);
+    return 0;
+}
+
+uint32_t agr_dex_game_canvas_trace_count(const agr_dex_game *game) {
+    return game ? game->canvas_trace_count : 0;
+}
+
+int agr_dex_game_copy_canvas_trace(const agr_dex_game *game, uint32_t index,
+                                   agr_canvas_trace *out) {
+    if (!game || !out || index >= game->canvas_trace_count) return -1;
+    *out = game->canvas_trace[index];
+    return 0;
 }
 
 int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snapshot *snapshot) {

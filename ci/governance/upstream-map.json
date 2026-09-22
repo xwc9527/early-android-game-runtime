@@ -327,7 +327,7 @@
         "source_hashes": {
           "Runtime/GuestRuntime/agr_jni_methods.c": "8bdc5b524175bb6066c696fa347162d43dc494d31a1b6a2b47914a6418f07d3d",
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
-          "Runtime/DexLoom/game_dex_runner.c": "4ad1dc06739fc0e9bbc1fd31596d980e3b27a960455d22edfd8358fae1afb6e0"
+          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -684,8 +684,8 @@
           "gc_mark_roots"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "4ad1dc06739fc0e9bbc1fd31596d980e3b27a960455d22edfd8358fae1afb6e0",
-          "Runtime/DexLoom/VM/dx_vm.c": "d6b9c97344166bdf0ff516def862c34f0fa9b44b3c0472182df20939640360d2"
+          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
+          "Runtime/DexLoom/VM/dx_vm.c": "8a135ca78a7d5c404ecb7baa5096b2ca97a38a50c1e61025ef9e6f4e16c15716"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -874,8 +874,8 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/APK/dx_manifest.c": "17d608e345e27ba2bcf564dd61e7918c79da4b243f32d811e59126996b27519e",
-          "Runtime/DexLoom/game_dex_runner.c": "4ad1dc06739fc0e9bbc1fd31596d980e3b27a960455d22edfd8358fae1afb6e0",
-          "Runtime/DexLoom/VM/dx_vm.c": "d6b9c97344166bdf0ff516def862c34f0fa9b44b3c0472182df20939640360d2",
+          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
+          "Runtime/DexLoom/VM/dx_vm.c": "8a135ca78a7d5c404ecb7baa5096b2ca97a38a50c1e61025ef9e6f4e16c15716",
           "App/main.m": "5f3e106cfbe32c7c591b92a556e3e13f57435463bbe429507d3440509c93d74b"
         }
       },
@@ -968,7 +968,7 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "4ad1dc06739fc0e9bbc1fd31596d980e3b27a960455d22edfd8358fae1afb6e0",
+          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
           "App/main.m": "5f3e106cfbe32c7c591b92a556e3e13f57435463bbe429507d3440509c93d74b"
         }
       },
@@ -1078,7 +1078,7 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "4ad1dc06739fc0e9bbc1fd31596d980e3b27a960455d22edfd8358fae1afb6e0",
+          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
           "App/main.m": "5f3e106cfbe32c7c591b92a556e3e13f57435463bbe429507d3440509c93d74b"
         }
       },
@@ -1168,8 +1168,8 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "4ad1dc06739fc0e9bbc1fd31596d980e3b27a960455d22edfd8358fae1afb6e0",
-          "Runtime/DexLoom/game_dex_runner.h": "c47f9f54783c16a79ecc190b401e236e511730a2073b8a4f457028899a6abbc0",
+          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
+          "Runtime/DexLoom/game_dex_runner.h": "0bbbf6207632f8c115d717566fd72c0762972078c66c3d60aba1267c49078a75",
           "App/main.m": "5f3e106cfbe32c7c591b92a556e3e13f57435463bbe429507d3440509c93d74b"
         }
       },
@@ -1264,13 +1264,13 @@
           "window.set_content_view"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "4ad1dc06739fc0e9bbc1fd31596d980e3b27a960455d22edfd8358fae1afb6e0",
-          "Runtime/DexLoom/game_dex_runner.h": "c47f9f54783c16a79ecc190b401e236e511730a2073b8a4f457028899a6abbc0",
+          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
+          "Runtime/DexLoom/game_dex_runner.h": "0bbbf6207632f8c115d717566fd72c0762972078c66c3d60aba1267c49078a75",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
           "Runtime/DexLoom/APK/dx_resources.c": "d1ccd60b46850517bb9905db8505f81222d8658b4af9b675547208f1eb07a0e2",
-          "Runtime/DexLoom/VM/dx_vm.c": "d6b9c97344166bdf0ff516def862c34f0fa9b44b3c0472182df20939640360d2",
-          "Runtime/DexLoom/VM/dx_interpreter.c": "c000252ee3bd2c8cd16a5aec612e78f5e6f8a03df71ede98df62f92273a0f780"
+          "Runtime/DexLoom/VM/dx_vm.c": "8a135ca78a7d5c404ecb7baa5096b2ca97a38a50c1e61025ef9e6f4e16c15716",
+          "Runtime/DexLoom/VM/dx_interpreter.c": "536f8ed0afc13bb4c15896928117eed781ada4a6a6876c3c2bda7f5399ca856a"
         }
       },
       "verified_at_commit": "8c2bf842bd06bf59fb4692a1fb76e2c420516f0f",
@@ -1380,8 +1380,8 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "4ad1dc06739fc0e9bbc1fd31596d980e3b27a960455d22edfd8358fae1afb6e0",
-          "Runtime/DexLoom/game_dex_runner.h": "c47f9f54783c16a79ecc190b401e236e511730a2073b8a4f457028899a6abbc0",
+          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
+          "Runtime/DexLoom/game_dex_runner.h": "0bbbf6207632f8c115d717566fd72c0762972078c66c3d60aba1267c49078a75",
           "App/main.m": "5f3e106cfbe32c7c591b92a556e3e13f57435463bbe429507d3440509c93d74b"
         }
       },
@@ -1488,8 +1488,8 @@
           "surface_holder.canvas_posted"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "4ad1dc06739fc0e9bbc1fd31596d980e3b27a960455d22edfd8358fae1afb6e0",
-          "Runtime/DexLoom/game_dex_runner.h": "c47f9f54783c16a79ecc190b401e236e511730a2073b8a4f457028899a6abbc0"
+          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
+          "Runtime/DexLoom/game_dex_runner.h": "0bbbf6207632f8c115d717566fd72c0762972078c66c3d60aba1267c49078a75"
         }
       },
       "verified_at_commit": "d3f4f3df8c50bcfd1448c16aac46da0b729e7a4d",
@@ -1588,7 +1588,7 @@
           "bitmap_recycle"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "4ad1dc06739fc0e9bbc1fd31596d980e3b27a960455d22edfd8358fae1afb6e0",
+          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
           "Runtime/Bitmap/agr_bitmap.cpp": "43ab7c39bf2a0773bf4e3fe7da2672189e9d2f2d8ae3189b86d2b1dc72b8993a",
           "Runtime/Bitmap/agr_bitmap.h": "1762dac4ba053ef9bde49dd972d081d1edf86cf22b9ffcf4ed505737a6d80ade",
           "Runtime/Bitmap/host/SkImageDecoder_libjpeg_host.cpp": "355144e0333a2fbb65e5a30667d43d4578c1b115466443f6c79085aee82be0ad",
@@ -1693,8 +1693,8 @@
           "bitmap_recycle"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "4ad1dc06739fc0e9bbc1fd31596d980e3b27a960455d22edfd8358fae1afb6e0",
-          "Runtime/DexLoom/game_dex_runner.h": "c47f9f54783c16a79ecc190b401e236e511730a2073b8a4f457028899a6abbc0",
+          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
+          "Runtime/DexLoom/game_dex_runner.h": "0bbbf6207632f8c115d717566fd72c0762972078c66c3d60aba1267c49078a75",
           "Runtime/Bitmap/agr_bitmap.cpp": "43ab7c39bf2a0773bf4e3fe7da2672189e9d2f2d8ae3189b86d2b1dc72b8993a",
           "Runtime/Bitmap/agr_bitmap.h": "1762dac4ba053ef9bde49dd972d081d1edf86cf22b9ffcf4ed505737a6d80ade",
           "Runtime/Bitmap/host_skia_config.h": "17e0c2e73003e49c748bd4a700307006b1be61c9ff4f33f9962406127579ae9c",
@@ -1730,7 +1730,7 @@
       ],
       "known_deviations": [
         "non-null Paint attributes are not applied",
-        "createScaledBitmap, save/restore, clipRect, and drawRGB are not this contract",
+        "createScaledBitmap is framework.graphics.bitmap_create_scaled. save, clipRect, and restore are framework.graphics.canvas_state_clip. drawRGB and non-null Paint attributes are not this contract",
         "UIKit/Metal presentation is not this contract"
       ],
       "contracts": [
@@ -1779,8 +1779,8 @@
           "dx_vm_trace_virtual_invoke"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/VM/dx_vm.c": "d6b9c97344166bdf0ff516def862c34f0fa9b44b3c0472182df20939640360d2",
-          "Runtime/DexLoom/VM/dx_interpreter.c": "c000252ee3bd2c8cd16a5aec612e78f5e6f8a03df71ede98df62f92273a0f780"
+          "Runtime/DexLoom/VM/dx_vm.c": "8a135ca78a7d5c404ecb7baa5096b2ca97a38a50c1e61025ef9e6f4e16c15716",
+          "Runtime/DexLoom/VM/dx_interpreter.c": "536f8ed0afc13bb4c15896928117eed781ada4a6a6876c3c2bda7f5399ca856a"
         }
       },
       "verified_at_commit": "be6fba4b750240b5c8e2dba23c5c3adaced94a6c",
@@ -1849,9 +1849,9 @@
           "dx_vm_execute_method"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/VM/dx_vm.c": "d6b9c97344166bdf0ff516def862c34f0fa9b44b3c0472182df20939640360d2",
+          "Runtime/DexLoom/VM/dx_vm.c": "8a135ca78a7d5c404ecb7baa5096b2ca97a38a50c1e61025ef9e6f4e16c15716",
           "Runtime/DexLoom/VM/dx_exec.c": "a12da4a0001422cfab0ae3759f1a46ae4e168046d4e395fa9e8ff7f4a84de409",
-          "Runtime/DexLoom/VM/dx_interpreter.c": "c000252ee3bd2c8cd16a5aec612e78f5e6f8a03df71ede98df62f92273a0f780"
+          "Runtime/DexLoom/VM/dx_interpreter.c": "536f8ed0afc13bb4c15896928117eed781ada4a6a6876c3c2bda7f5399ca856a"
         }
       },
       "verified_at_commit": "be6fba4b750240b5c8e2dba23c5c3adaced94a6c",
@@ -1931,7 +1931,7 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/VM/dx_exec.c": "a12da4a0001422cfab0ae3759f1a46ae4e168046d4e395fa9e8ff7f4a84de409",
-          "Runtime/DexLoom/VM/dx_interpreter.c": "c000252ee3bd2c8cd16a5aec612e78f5e6f8a03df71ede98df62f92273a0f780"
+          "Runtime/DexLoom/VM/dx_interpreter.c": "536f8ed0afc13bb4c15896928117eed781ada4a6a6876c3c2bda7f5399ca856a"
         }
       },
       "verified_at_commit": "980689028ca682a8f2b6419a66fb564fb5afae42",
@@ -1996,7 +1996,7 @@
           "agr_bitmap_scale"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "4ad1dc06739fc0e9bbc1fd31596d980e3b27a960455d22edfd8358fae1afb6e0",
+          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
           "Runtime/Bitmap/agr_bitmap.cpp": "43ab7c39bf2a0773bf4e3fe7da2672189e9d2f2d8ae3189b86d2b1dc72b8993a",
           "Runtime/Bitmap/agr_bitmap.h": "1762dac4ba053ef9bde49dd972d081d1edf86cf22b9ffcf4ed505737a6d80ade"
         }
@@ -2070,7 +2070,7 @@
           "native_character_fordigit"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/VM/dx_vm.c": "d6b9c97344166bdf0ff516def862c34f0fa9b44b3c0472182df20939640360d2"
+          "Runtime/DexLoom/VM/dx_vm.c": "8a135ca78a7d5c404ecb7baa5096b2ca97a38a50c1e61025ef9e6f4e16c15716"
         }
       },
       "verified_at_commit": "4f229c5b91653f6ca0f1d95bc23de40a29e0998a",
@@ -2096,6 +2096,111 @@
       "contracts": [
         "dex.character_fordigit"
       ]
-    }
+    },
+  {
+    "id": "framework.graphics.canvas_state_clip",
+    "subsystem": "Canvas save, clipRect REPLACE, and restore",
+    "android_api": "API19 Canvas.save(int), clipRect(float,float,float,float,Region.Op), restore",
+    "upstream": {
+      "revision": "Android 4.4.4_r2",
+      "repository": "platform/frameworks/base",
+      "paths": [
+        "graphics/java/android/graphics/Canvas.java",
+        "core/jni/android/graphics/Canvas.cpp",
+        "graphics/java/android/graphics/Region.java"
+      ],
+      "symbols": [
+        "Canvas.save",
+        "Canvas.clipRect",
+        "Canvas.restore",
+        "Region.Op.REPLACE"
+      ],
+      "source_hashes": {
+        "graphics/java/android/graphics/Canvas.java": "a933fccbec67fb0eaff9d527974c0ba16f652453aed8d991aa14429623b4514c",
+        "core/jni/android/graphics/Canvas.cpp": "3f9f621a284282fcfa8cb018181a0a4bc30781beb80607d9d4e842ecb2abb2e2",
+        "graphics/java/android/graphics/Region.java": "3a6b1e879823f392147a03bf8992d8269fd139cfb5d37739609806b0d95c4a3e"
+      },
+      "source_urls": {
+        "graphics/java/android/graphics/Canvas.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/graphics/java/android/graphics/Canvas.java",
+        "core/jni/android/graphics/Canvas.cpp": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/jni/android/graphics/Canvas.cpp",
+        "graphics/java/android/graphics/Region.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/graphics/java/android/graphics/Region.java"
+      },
+      "symbols_by_path": {
+        "graphics/java/android/graphics/Canvas.java": [
+          "public static final int CLIP_SAVE_FLAG = 0x02;",
+          "public native int save(int saveFlags);",
+          "public boolean clipRect(float left, float top, float right, float bottom, Region.Op op)",
+          "public native void restore();"
+        ],
+        "core/jni/android/graphics/Canvas.cpp": [
+          "return canvas->clipRect(rect, (SkRegion::Op)op);",
+          "if (canvas->getSaveCount() <= 1)"
+        ],
+        "graphics/java/android/graphics/Region.java": [
+          "REPLACE(5);",
+          "public final int nativeInt;"
+        ]
+      },
+      "source_encoding": "raw"
+    },
+    "agr": {
+      "paths": [
+        "Runtime/DexLoom/game_dex_runner.c",
+        "Runtime/DexLoom/game_dex_runner.h",
+        "Runtime/DexLoom/VM/dx_interpreter.c"
+      ],
+      "symbols": [
+        "canvas_save",
+        "canvas_clip_rect",
+        "canvas_restore",
+        "publish_region_op_replace",
+        "find_static_field_idx"
+      ],
+      "source_hashes": {
+        "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
+        "Runtime/DexLoom/game_dex_runner.h": "0bbbf6207632f8c115d717566fd72c0762972078c66c3d60aba1267c49078a75",
+        "Runtime/DexLoom/VM/dx_interpreter.c": "536f8ed0afc13bb4c15896928117eed781ada4a6a6876c3c2bda7f5399ca856a"
+      }
+    },
+    "verified_at_commit": "abf76c36c25d43a6002a07c3fc428074b8edffaa",
+    "status": "VALID",
+    "dependencies": [
+      "framework.view.surface_holder_canvas",
+      "framework.graphics.canvas_bitmap"
+    ],
+    "observable_semantics": [
+      "save(int) returns the save count before the push",
+      "CLIP_SAVE_FLAG copies the current clip into the new stack level",
+      "a save without CLIP_SAVE_FLAG shares the clip, so restore does not roll it back",
+      "clipRect REPLACE sets the current clip to the rounded rectangle constrained to the device",
+      "clipRect returns true only when the resulting clip is non-empty",
+      "a null Region.Op throws NullPointerException and does not modify the clip",
+      "restore pops the previous state and restores a clip saved with CLIP_SAVE_FLAG",
+      "drawBitmap consumes the current clip",
+      "the next lockCanvas starts from the full surface and an empty save stack"
+    ],
+    "internal_invariants": [
+      "the clip stack is bound to the locked content Surface and its generation",
+      "a generation mismatch does not read or write the previous backing",
+      "the stack depth above the base lock is bounded at 16",
+      "Region.Op.REPLACE is the framework static Landroid/graphics/Region$Op;.REPLACE with nativeInt 5"
+    ],
+    "execution_placement": "HOST-DEX_HLE",
+    "host_substitutions": [
+      "the clip stack is stored on the content Surface and passed to agr_bitmap_draw",
+      "float edges use SkFloatToIntRound, matching SkRect::round",
+      "REPLACE intersects the rounded rectangle with the device so an off-device rect is empty"
+    ],
+    "known_deviations": [
+      "there is no Matrix stack",
+      "save without arguments, saveLayer, saveLayerAlpha, and restoreToCount are not registered",
+      "Region.Op values other than REPLACE throw UnsupportedOperationException and do not modify the clip",
+      "a non-empty rectangle that lies entirely outside the device returns false; API19 Skia can retain that region and return true",
+      "UIKit/Metal presentation is not this contract"
+    ],
+    "contracts": [
+      "framework.canvas_state_clip.host"
+    ]
+  }
   ]
 }

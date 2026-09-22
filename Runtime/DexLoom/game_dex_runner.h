@@ -187,6 +187,38 @@ const char *agr_dex_game_launch_error(const agr_dex_game *game);
 int agr_dex_game_application_gc_contract(agr_dex_game *game);
 int agr_dex_game_static_int(agr_dex_game *game, const char *class_descriptor,
                             const char *field_name, int32_t *value);
+/* Locked content Surface observations for the Canvas state contract.
+   These do not draw and do not call guest code. */
+void *agr_dex_game_content_holder(const agr_dex_game *game);
+int agr_dex_game_content_clip(const agr_dex_game *game, int *left, int *top,
+                              int *right, int *bottom, int *save_count);
+int agr_dex_game_content_pixel(const agr_dex_game *game, int x, int y, uint32_t *pixel);
+#define AGR_CANVAS_TRACE_CAP 96
+typedef struct {
+    uint32_t exec_id;
+    uint32_t pc;
+    uint32_t method_idx;
+    uint8_t opcode;
+    char kind[16];
+    char caller[96];
+    int32_t save_flags;
+    int32_t save_returned;
+    int32_t save_count_after;
+    int clip_before[4];
+    int clip_after[4];
+    float left, top, right, bottom;
+    int32_t op_native;
+    int op_null;
+    uint64_t op_identity;
+    char op_class[96];
+    int bool_result;
+    int wrote;
+    int write_left, write_top, write_right, write_bottom;
+    int has_write;
+} agr_canvas_trace;
+uint32_t agr_dex_game_canvas_trace_count(const agr_dex_game *game);
+int agr_dex_game_copy_canvas_trace(const agr_dex_game *game, uint32_t index,
+                                   agr_canvas_trace *out);
 void agr_dex_game_set_native_callback(agr_dex_game *game,
                                       agr_dex_native_callback callback, void *user);
 void agr_dex_game_set_load_library_callback(agr_dex_game *game,

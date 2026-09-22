@@ -205,8 +205,8 @@ typedef struct DxInvokeWitness {
     uint8_t argc;
     uint8_t ret_tag;
     uint8_t has_ret;
-    int32_t arg_i[4];
-    uint8_t arg_tag[4];
+    int32_t arg_i[8];
+    uint8_t arg_tag[8];
     int32_t ret_i;
     char caller[96];
     char target_class[96];
@@ -459,6 +459,11 @@ struct DxVM {
     DxInvokeWitness witness_unresolved_after[6];
     uint32_t witness_unresolved_after_count;
     int witness_want_continuation;
+    /* Invoke site of the native call currently running. Telemetry only. */
+    uint32_t invoke_site_pc;
+    uint8_t invoke_site_opcode;
+    uint32_t invoke_site_method_idx;
+    int invoke_site_valid;
 };
 
 // VM lifecycle

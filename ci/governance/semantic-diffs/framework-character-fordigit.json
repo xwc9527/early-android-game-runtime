@@ -57,10 +57,10 @@
   ],
   "remaining_uncertainty": [
     "MIN_RADIX and MAX_RADIX fields are not registered. This call site passes the radix as an immediate.",
-    "The earliest unresolved API after forDigit is Canvas.save. clipRect and restore follow in the same Sprite.drawImageClipped method. java.util.Vector.size is later and is not the earliest blocker.",
+    "The forDigit probe's next unresolved invoke was Canvas.save. That cluster is now framework.graphics.canvas_state_clip. The earliest unresolved API after the clip cluster is java.util.Vector.size.",
     "This confirmation does not change the Simulator content frame on discovery 35711118165."
   ],
-  "next_action": "Do not implement Canvas.save, clipRect, or restore in this phase. They are the next graphics boundary. Do not rerun the content-frame Simulator for forDigit.",
+  "next_action": "forDigit stays REAL_GAME_CONFIRMED. Canvas save, clipRect, and restore are framework.graphics.canvas_state_clip. Do not rerun the content-frame Simulator for forDigit.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "native_character_fordigit writes the char into the int result register. It does not allocate a Character object and does not change Canvas, Bitmap, or Thread."

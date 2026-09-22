@@ -5,6 +5,7 @@
 #include <GLES2/gl2.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 void glGenTextures(GLsizei n, GLuint *textures) {
@@ -32,16 +33,52 @@ static const char *opcode_name(uint8_t opcode) {
     }
 }
 
+static void print_arg(int index, int32_t bits, uint8_t tag) {
+    float value;
+    if (tag == DX_VAL_FLOAT) {
+        memcpy(&value, &bits, sizeof(value));
+        printf(" arg%d=float:%.9g/%u", index, value, tag);
+    } else if (tag == DX_VAL_OBJ) {
+        printf(" arg%d=obj:%d/%u", index, bits, tag);
+    } else {
+        printf(" arg%d=%d/%u", index, bits, tag);
+    }
+}
+
 static void print_witness(const char *label, const DxInvokeWitness *w) {
+    uint8_t i;
     printf("%s exec=%u caller=%s pc=%u opcode=0x%02x %s method_idx=%u "
-           "resolved=%u class=%s method=%s shorty=%s argc=%u "
-           "arg0=%d/%u arg1=%d/%u arg2=%d/%u arg3=%d/%u "
-           "has_ret=%u ret_tag=%u ret=%d\n",
+           "resolved=%u class=%s method=%s shorty=%s argc=%u",
            label, w->exec_id, w->caller, w->pc, w->opcode, opcode_name(w->opcode),
-           w->method_idx, w->resolved, w->target_class, w->target_name, w->shorty, w->argc,
-           w->arg_i[0], w->arg_tag[0], w->arg_i[1], w->arg_tag[1],
-           w->arg_i[2], w->arg_tag[2], w->arg_i[3], w->arg_tag[3],
-           w->has_ret, w->ret_tag, w->ret_i);
+           w->method_idx, w->resolved, w->target_class, w->target_name, w->shorty, w->argc);
+    for (i = 0; i < w->argc && i < 8; i++) print_arg(i, w->arg_i[i], w->arg_tag[i]);
+    printf(" has_ret=%u ret_tag=%u ret=%d\n", w->has_ret, w->ret_tag, w->ret_i);
+}
+
+static void print_canvas_trace(const agr_dex_game *game) {
+    uint32_t n = agr_dex_game_canvas_trace_count(game);
+    uint32_t i;
+    printf("canvas_trace_count=%u\n", n);
+    for (i = 0; i < n; i++) {
+        agr_canvas_trace event;
+        if (agr_dex_game_copy_canvas_trace(game, i, &event) != 0) continue;
+        printf("CANVAS kind=%s exec=%u caller=%s pc=%u opcode=0x%02x %s method_idx=%u "
+               "flag=%d returned=%d save_count=%d "
+               "clip_before=%d,%d,%d,%d clip_after=%d,%d,%d,%d "
+               "coords=%.9g,%.9g,%.9g,%.9g op=%d null=%d op_obj=%llu class=%s "
+               "bool=%d wrote=%d write=%d,%d,%d,%d has_write=%d\n",
+               event.kind, event.exec_id, event.caller, event.pc, event.opcode,
+               opcode_name(event.opcode), event.method_idx,
+               event.save_flags, event.save_returned, event.save_count_after,
+               event.clip_before[0], event.clip_before[1], event.clip_before[2], event.clip_before[3],
+               event.clip_after[0], event.clip_after[1], event.clip_after[2], event.clip_after[3],
+               event.left, event.top, event.right, event.bottom,
+               event.op_native, event.op_null,
+               (unsigned long long)event.op_identity, event.op_class,
+               event.bool_result, event.wrote,
+               event.write_left, event.write_top, event.write_right, event.write_bottom,
+               event.has_write);
+    }
 }
 
 static void print_witnesses(const agr_dex_game *game) {
@@ -133,6 +170,7 @@ int main(int argc, char **argv) {
     if (agr_dex_game_runtime_snapshot(game, &snapshot) == 0)
         print_snapshot("after_wait", &snapshot);
     print_witnesses(game);
+    print_canvas_trace(game);
     agr_dex_game_destroy(game);
     agr_apk_package_close(package);
     printf("frozen probe: destroyed\n");

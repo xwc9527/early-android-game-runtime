@@ -6943,7 +6943,7 @@ static void witness_fill(DxInvokeWitness *w, DxVM *vm, DxFrame *frame, uint32_t 
     w->pc = pc;
     w->opcode = opcode;
     w->method_idx = method_idx;
-    n = argc > 4 ? 4 : argc;
+    n = argc > 8 ? 8 : argc;
     w->argc = n;
     for (uint8_t i = 0; i < n; i++) {
         w->arg_tag[i] = args ? (uint8_t)args[i].tag : 0;

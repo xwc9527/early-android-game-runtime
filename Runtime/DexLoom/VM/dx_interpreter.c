@@ -374,8 +374,8 @@ static DxResult handle_invoke(DxVM *vm, DxFrame *frame, const uint16_t *code,
         DX_WARN(TAG, "Cannot resolve method %s.%s - skipping",
                 cls_name ? cls_name : "?", mth_name ? mth_name : "?");
         if (vm->telemetry.telemetry_enabled) {
-            DxValue missed[4];
-            uint8_t n = argc < 4 ? argc : 4;
+            DxValue missed[8];
+            uint8_t n = argc < 8 ? argc : 8;
             for (uint8_t i = 0; i < n; i++) missed[i] = frame->registers[arg_regs[i]];
             dx_vm_witness_unresolved(vm, frame, pc, opcode, method_idx, missed, n);
         }
@@ -633,6 +633,10 @@ static DxResult handle_invoke(DxVM *vm, DxFrame *frame, const uint16_t *code,
 
     DxValue call_result;
     memset(&call_result, 0, sizeof(call_result));
+    vm->invoke_site_pc = pc;
+    vm->invoke_site_opcode = opcode;
+    vm->invoke_site_method_idx = method_idx;
+    vm->invoke_site_valid = 1;
     DxResult res = dx_vm_execute_method(vm, target, call_args, argc, &call_result);
     if (vm->telemetry.telemetry_enabled)
         dx_vm_witness_resolved(vm, frame, pc, opcode, method_idx, target, call_args, argc, &call_result, 1);
@@ -697,8 +701,8 @@ static DxResult handle_invoke_range(DxVM *vm, DxFrame *frame, const uint16_t *co
         DX_WARN(TAG, "Cannot resolve method %s.%s (range) - skipping",
                 cls_name ? cls_name : "?", mth_name ? mth_name : "?");
         if (vm->telemetry.telemetry_enabled) {
-            DxValue missed[4];
-            uint8_t n = argc < 4 ? argc : 4;
+            DxValue missed[8];
+            uint8_t n = argc < 8 ? argc : 8;
             for (uint8_t i = 0; i < n; i++) {
                 uint16_t reg = (uint16_t)(first_reg + i);
                 missed[i] = reg < DX_MAX_REGISTERS ? frame->registers[reg] : DX_INT_VALUE(0);
@@ -941,6 +945,10 @@ static DxResult handle_invoke_range(DxVM *vm, DxFrame *frame, const uint16_t *co
 
     DxValue call_result;
     memset(&call_result, 0, sizeof(call_result));
+    vm->invoke_site_pc = pc;
+    vm->invoke_site_opcode = opcode;
+    vm->invoke_site_method_idx = method_idx;
+    vm->invoke_site_valid = 1;
     DxResult res = dx_vm_execute_method(vm, target, call_args, clamped_argc, &call_result);
     if (vm->telemetry.telemetry_enabled)
         dx_vm_witness_resolved(vm, frame, pc, opcode, method_idx, target, call_args, clamped_argc,
@@ -1004,6 +1012,20 @@ static int32_t find_static_field_idx(DxVM *vm, DxClass *cls, const char *fname) 
             for (uint32_t i = 0; i < cls->static_field_count; i++) {
                 if (cls->field_defs[i].name && strcmp(cls->field_defs[i].name, fname) == 0) {
                     return (int32_t)i;
+                }
+            }
+            /* Instance field_defs occupy the prefix. Static names follow them
+               when a framework class publishes both. */
+            uint32_t super_count = cls->super_class ? cls->super_class->instance_field_count : 0;
+            uint32_t own = cls->instance_field_count >= super_count
+                ? cls->instance_field_count - super_count : 0;
+            if (own > 0) {
+                for (uint32_t i = 0; i < cls->static_field_count; i++) {
+                    uint32_t def = own + i;
+                    if (cls->field_defs[def].name &&
+                        strcmp(cls->field_defs[def].name, fname) == 0) {
+                        return (int32_t)i;
+                    }
                 }
             }
         }
