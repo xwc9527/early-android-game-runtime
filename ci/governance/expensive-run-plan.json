@@ -3,7 +3,7 @@
   "enabled": true,
   "question": "At host display 1080x2340, does unchanged Frozen Bubble on the normal UIKit CADisplayLink path draw a Bitmap into the SurfaceView content Surface and post a changed buffer, or does it reproduce the physical lock/post path with draw_bitmap_count 0?",
   "current_uncertainty": [
-    "Linux at 1080x2340 with APK sha256 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569 draws and changes the buffer. The physical iPhone at the same size posted 119 times with draw_bitmap_count 0 and an unchanged hash. The Simulator UIKit path has not been run at this host display."
+    "Linux at 1080x2340 with APK sha256 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569 draws and changes the buffer. The physical iPhone at the same size posted 119 times with draw_bitmap_count 0 and an unchanged hash. Simulator run 35775149021 used UIScreen native bounds 1206x2622 because AGR_HOST_DISPLAY_WIDTH and AGR_HOST_DISPLAY_HEIGHT stayed in the runner shell. That native-bounds path drew: lock 1, draw_bitmap 4, pixel_change 3450366, post 1, hash changed, surfaceCreated 1, surfaceChanged 1, empty callback exception. The launch now forwards those variables with the SIMCTL_CHILD_ prefix so this run actually uses host display 1080x2340."
   ],
   "expected_outcome_a": {
     "result": "harness_called_do_traversal false, harness_called_render_api false, display 1080x2340, surfaceCreated 1, surfaceChanged 1, lock_count > 0, draw_bitmap_count > 0, pixel_change_count > 0, post_count > 0, and the posted buffer hash differs from the pre-draw hash",

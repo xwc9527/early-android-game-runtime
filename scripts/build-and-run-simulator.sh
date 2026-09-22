@@ -266,7 +266,15 @@ if [[ "${FRAMEWORK_TRAVERSAL_DISPATCH_DISCOVERY:-0}" == "1" ]]; then
   RESULT_PATH="$DATA/Documents/framework-traversal-dispatch.json"
   rm -f "$RESULT_PATH"
   phase "launch normal-path traversal dispatch probe"
-  xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --framework-traversal-dispatch-discovery
+  # simctl does not inherit the runner environment. SIMCTL_CHILD_ is the
+  # prefix that reaches getenv inside the Simulator process.
+  if [[ -n "${AGR_HOST_DISPLAY_WIDTH:-}" && -n "${AGR_HOST_DISPLAY_HEIGHT:-}" ]]; then
+    SIMCTL_CHILD_AGR_HOST_DISPLAY_WIDTH="$AGR_HOST_DISPLAY_WIDTH" \
+    SIMCTL_CHILD_AGR_HOST_DISPLAY_HEIGHT="$AGR_HOST_DISPLAY_HEIGHT" \
+      xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --framework-traversal-dispatch-discovery
+  else
+    xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --framework-traversal-dispatch-discovery
+  fi
   for _ in $(seq 1 90); do [[ -s "$RESULT_PATH" ]] && break; sleep 1; done
   xcrun simctl spawn "$DEVICE" log show --last 3m --style compact \
     --predicate 'process == "AGRSimulator"' > "$ARTIFACTS/framework-traversal-dispatch.log" 2>&1 || true
