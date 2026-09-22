@@ -1,15 +1,17 @@
 {
   "schema_version": 1,
-  "enabled": true,
+  "enabled": false,
+  "answered_run": "35683118511",
+  "answered_result": "Outcome A. Discovery 35683118511 on 68ed706, unchanged Frozen Bubble, UIKit CADisplayLink, harness_called_do_traversal false, classification viewroot_draw_entered. Frame 1 created_count 0. Frame 2 content_surface_valid, generation 1, 1206x2622, format 4, created_count 1, changed_count 1, identity distinct from the root Surface, surface_holder.surface_created before viewroot.perform_draw. last_method GameThread.scaleFrom, exception Ljava/lang/NullPointerException. Not a first frame.",
   "question": "After the public SurfaceView lifecycle is connected, does unchanged Frozen Bubble on the UIKit CADisplayLink path receive surfaceCreated and surfaceChanged without a harness do_traversal, and what is the next public stop?",
   "current_uncertainty": [
-    "The Linux host pump and a local Frozen Bubble probe already show callback registration during onCreate, no child Surface on frame 1, and one surfaceCreated plus one surfaceChanged on frame 2. The Simulator UIKit path has not confirmed those counts.",
-    "The local probe then stops in GameThread.scaleFrom with NullPointerException after BitmapFactory.decodeResource is unresolved. The Simulator report must show whether that is also the UIKit terminal."
+    "Answered by discovery 35683118511. A second run of this surfaceCreated question is excluded."
   ],
   "expected_outcome_a": {
     "result": "classification viewroot_draw_entered, harness_called_do_traversal false, traversal_count 2, frame 1 content_surface_created_count 0, frame 2 content_surface_valid with generation 1, created_count 1, changed_count 1, callback_count at least 1, content identity distinct from the root Surface, and surface_holder.surface_created before viewroot.perform_draw. The next public stop is GameThread.setSurfaceSize / BitmapFactory.decodeResource, not a first frame.",
     "excludes": [
-      "the claim that the normal UIKit path still has no SurfaceHolder callback after the child Surface owner is connected"
+      "the claim that the normal UIKit path still has no SurfaceHolder callback after the child Surface owner is connected",
+      "a second Simulator run of this same surfaceCreated question"
     ]
   },
   "expected_outcome_b": {
@@ -18,6 +20,6 @@
       "a second Simulator run of this same surfaceCreated question"
     ]
   },
-  "why_cheaper_test_is_insufficient": "The host contract and the local APK probe do not execute UIKit CADisplayLink. This question asks only whether that normal frame owner delivers the same callbacks and where the unchanged APK stops next.",
+  "why_cheaper_test_is_insufficient": "The host contract and the local APK probe do not execute UIKit CADisplayLink. Discovery 35683118511 answered that question. Do not admit the same run again.",
   "prior_expensive_runs_without_information_gain": 0
 }

@@ -57,8 +57,8 @@
     }
   ],
   "earliest_evidenced_divergence": "API19 SurfaceView.updateWindow creates a child Surface and dispatches surfaceCreated then surfaceChanged once the view has a positive frame and is visible; AGR reached host Decor performDraw with the inflated GameView child and no SurfaceHolder lifecycle.",
-  "causal_status": "CONTRACT_CONFIRMED",
-  "evidence_level": "CONTRACT_CONFIRMED",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
   "evidence": [
     {
       "type": "SOURCE",
@@ -71,15 +71,17 @@
     {
       "type": "RUNTIME",
       "artifact": "Local host execution of unchanged org.jfedor.frozenbubble 1.7: GameView id 0x7f060000 registers its callback during onCreate. Frame 1 has created_count 0. Frame 2 has content_surface_valid, generation 1, 320x480, format 4, callback_count 1, created_count 1, changed_count 1, and an identity distinct from the root Surface. Trace order is child_surface_created, surface_created, surface_changed, perform_draw. GameView.surfaceCreated calls GameThread.setSurfaceOK. GameView.surfaceChanged calls setSurfaceSize, which reaches resizeBitmaps and scaleFrom and throws Ljava/lang/NullPointerException. BitmapFactory.decodeResource is unresolved. invoke-virtual setRunning entered cleanUp and Thread.start did not run. This is not a first frame."
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "Simulator discovery 35683118511 commit 68ed706 unchanged Frozen Bubble, UIKit CADisplayLink, harness_called_do_traversal false, classification viewroot_draw_entered, display 1206x2622, host_vsync_count 2. Frame 1: traversal_count 1, draw_count 0, content_surface_created_count 0, callback_count 1, content identity distinct from the root Surface. Frame 2: traversal_count 2, draw_count 1, content_surface_valid, generation 1, 1206x2622, format 4, created_count 1, changed_count 1, same content identity, owner 2131099648. Trace order is child_surface_created, surface_created, surface_changed, viewroot.perform_draw. content_surface_exception is Ljava/lang/NullPointerException and last_method is GameThread.scaleFrom. This is not a first frame."
     }
   ],
   "remaining_uncertainty": [
-    "The UIKit CADisplayLink path has not yet confirmed the same callback counts.",
-    "setSurfaceSize fails in scaleFrom because BitmapFactory.decodeResource was skipped and the source Bitmap is null.",
-    "GameThread.setRunning was dispatched to cleanUp, so the render loop's lockCanvas path was not entered.",
-    "surfaceCreated and performDraw are not a first frame."
+    "surfaceCreated and performDraw are not a first frame.",
+    "GameThread.setRunning was dispatched to cleanUp, so the render loop's lockCanvas path was not entered."
   ],
-  "next_action": "One Simulator discovery on unchanged Frozen Bubble. Do not rerun it if it shows whether surfaceCreated and surfaceChanged were delivered and names the next public stop. Do not implement lockCanvas or BitmapFactory in this contract.",
+  "next_action": "Do not rerun discovery 35683118511. BitmapFactory.decodeResource is recorded in framework-bitmap-decode-resource.json. Do not implement lockCanvas in the SurfaceView contract.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "The child Surface is an in-process buffer owned by the SurfaceView holder. It is not the ViewRoot window Surface and it is not a SurfaceFlinger child window. IWindowSession.addToDisplayWithoutInputChannel is not a separate process. A callback exception is recorded and cleared so the host Decor performDraw still runs."

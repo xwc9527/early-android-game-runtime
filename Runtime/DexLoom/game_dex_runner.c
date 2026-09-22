@@ -246,6 +246,133 @@ static DxResult bitmap_decode(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t 
     return DX_OK;
 }
 
+/* Intrinsic pixel size of a PNG, GIF, or JPEG. A nine-patch PNG reports the
+   content size, which is the IHDR size minus the one-pixel border. */
+static int encoded_image_size(const uint8_t *data, uint32_t size, int *width, int *height) {
+    if (!data || !width || !height) return 0;
+    *width = 0;
+    *height = 0;
+    if (size >= 24 && data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E &&
+        data[3] == 0x47 && memcmp(data + 12, "IHDR", 4) == 0) {
+        uint32_t image_width = ((uint32_t)data[16] << 24) | ((uint32_t)data[17] << 16) |
+                               ((uint32_t)data[18] << 8) | data[19];
+        uint32_t image_height = ((uint32_t)data[20] << 24) | ((uint32_t)data[21] << 16) |
+                                ((uint32_t)data[22] << 8) | data[23];
+        int nine_patch = 0;
+        for (uint32_t i = 8; i + 12 < size; ) {
+            uint32_t chunk = ((uint32_t)data[i] << 24) | ((uint32_t)data[i + 1] << 16) |
+                             ((uint32_t)data[i + 2] << 8) | data[i + 3];
+            if (i + 12u + chunk < i || i + 12u + chunk > size) break;
+            if (memcmp(data + i + 4, "npTc", 4) == 0) nine_patch = 1;
+            if (memcmp(data + i + 4, "IEND", 4) == 0) break;
+            i += 12u + chunk;
+        }
+        if (nine_patch && image_width > 2 && image_height > 2) {
+            image_width -= 2;
+            image_height -= 2;
+        }
+        if (!image_width || !image_height || image_width > 32768 || image_height > 32768)
+            return 0;
+        *width = (int)image_width;
+        *height = (int)image_height;
+        return 1;
+    }
+    if (size >= 10 && data[0] == 'G' && data[1] == 'I' && data[2] == 'F' && data[3] == '8') {
+        uint32_t image_width = (uint32_t)data[6] | ((uint32_t)data[7] << 8);
+        uint32_t image_height = (uint32_t)data[8] | ((uint32_t)data[9] << 8);
+        if (!image_width || !image_height || image_width > 32768 || image_height > 32768)
+            return 0;
+        *width = (int)image_width;
+        *height = (int)image_height;
+        return 1;
+    }
+    if (size >= 4 && data[0] == 0xFF && data[1] == 0xD8) {
+        uint32_t i = 2;
+        while (i + 8 < size) {
+            if (data[i] != 0xFF) return 0;
+            while (i < size && data[i] == 0xFF) i++;
+            if (i >= size) return 0;
+            uint8_t marker = data[i++];
+            if (marker == 0xD9 || marker == 0xDA) return 0;
+            if (marker == 0x01 || (marker >= 0xD0 && marker <= 0xD7)) continue;
+            if (i + 1 >= size) return 0;
+            uint32_t segment = ((uint32_t)data[i] << 8) | data[i + 1];
+            if (segment < 2 || i + segment > size) return 0;
+            if (marker >= 0xC0 && marker <= 0xCF && marker != 0xC4 &&
+                marker != 0xC8 && marker != 0xCC) {
+                if (segment < 7) return 0;
+                uint32_t image_height = ((uint32_t)data[i + 3] << 8) | data[i + 4];
+                uint32_t image_width = ((uint32_t)data[i + 5] << 8) | data[i + 6];
+                if (!image_width || !image_height || image_width > 32768 || image_height > 32768)
+                    return 0;
+                *width = (int)image_width;
+                *height = (int)image_height;
+                return 1;
+            }
+            i += segment;
+        }
+    }
+    return 0;
+}
+
+static int options_value_set(DxValue *args, uint32_t count, const char *name) {
+    DxValue value = DX_NULL_VALUE;
+    if (count < 3 || args[2].tag != DX_VAL_OBJ || !args[2].obj) return 0;
+    if (dx_vm_get_field(args[2].obj, name, &value) != DX_OK) return 0;
+    if (value.tag == DX_VAL_INT) return value.i != 0;
+    return value.tag == DX_VAL_OBJ && value.obj != NULL;
+}
+
+static const DxResourceEntry *resource_file_entry(const DxResources *resources,
+                                                  const DxApkFile *apk, uint32_t id) {
+    if (!resources) return NULL;
+    for (int hop = 0; hop < 4; hop++) {
+        const DxResourceEntry *file = NULL;
+        const DxResourceEntry *reference = NULL;
+        for (uint32_t i = 0; i < resources->entry_count; i++) {
+            const DxResourceEntry *entry = &resources->entries[i];
+            if (entry->id != id) continue;
+            if (entry->value_type == DX_RES_TYPE_STRING && entry->str_val && entry->str_val[0]) {
+                const DxZipEntry *zip = NULL;
+                if (apk && dx_apk_find_entry(apk, entry->str_val, &zip) == DX_OK) return entry;
+                if (!file) file = entry;
+            } else if (entry->value_type == DX_RES_TYPE_REF && entry->ref_id && !reference) {
+                reference = entry;
+            }
+        }
+        if (file || !reference) return file;
+        id = reference->ref_id;
+    }
+    return NULL;
+}
+
+static DxResult bitmap_decode_failed(DxVM *vm, DxFrame *frame, int reuse_bitmap) {
+    if (reuse_bitmap) {
+        vm->pending_exception = dx_vm_create_exception(vm, "Ljava/lang/IllegalArgumentException;",
+            "Problem decoding into existing bitmap");
+        return DX_ERR_EXCEPTION;
+    }
+    frame->result = DX_NULL_VALUE;
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult bitmap_decode_resource(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
+
+static DxResult bitmap_get_dimension(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    const char *field = "_width";
+    DxValue value = DX_NULL_VALUE;
+    (void)vm;
+    if (frame->method && frame->method->name && !strcmp(frame->method->name, "getHeight"))
+        field = "_height";
+    if (count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj) return DX_ERR_NULL_PTR;
+    if (dx_vm_get_field(args[0].obj, field, &value) != DX_OK || value.tag != DX_VAL_INT)
+        return DX_ERR_INVALID_FORMAT;
+    frame->result = value;
+    frame->has_result = true;
+    return DX_OK;
+}
+
 static DxResult gles_gen_textures(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
     (void)vm; (void)frame;
     if (count < 3 || args[1].tag != DX_VAL_OBJ || !args[1].obj || !args[1].obj->is_array)
@@ -439,13 +566,20 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(resources, "getIdentifier", "ILLL", DX_ACC_PUBLIC, resources_get_identifier, 0);
 
     DxClass *options = reg_class(vm, "Landroid/graphics/BitmapFactory$Options;", obj);
-    one_field(options, "inScaled", "Z");
+    const char *option_names[] = { "inScaled", "inJustDecodeBounds", "inBitmap", "outWidth", "outHeight" };
+    const char *option_types[] = { "Z", "Z", "Landroid/graphics/Bitmap;", "I", "I" };
+    own_fields(options, 5, option_names, option_types);
     add_method(options, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
     DxClass *bitmap = reg_class(vm, "Landroid/graphics/Bitmap;", obj);
-    one_field(bitmap, "_assetPath", "Ljava/lang/String;");
+    const char *bitmap_names[] = { "_assetPath", "_width", "_height" };
+    const char *bitmap_types[] = { "Ljava/lang/String;", "I", "I" };
+    own_fields(bitmap, 3, bitmap_names, bitmap_types);
     add_method(bitmap, "recycle", "V", DX_ACC_PUBLIC, noop, 0);
+    add_method(bitmap, "getWidth", "I", DX_ACC_PUBLIC, bitmap_get_dimension, 0);
+    add_method(bitmap, "getHeight", "I", DX_ACC_PUBLIC, bitmap_get_dimension, 0);
     DxClass *factory = reg_class(vm, "Landroid/graphics/BitmapFactory;", obj);
     add_method(factory, "decodeStream", "LLLL", DX_ACC_PUBLIC | DX_ACC_STATIC, bitmap_decode, 1);
+    add_method(factory, "decodeResource", "LLIL", DX_ACC_PUBLIC | DX_ACC_STATIC, bitmap_decode_resource, 1);
 
     DxClass *gles = reg_class(vm, "Landroid/opengl/GLES20;", obj);
     add_method(gles, "glGenTextures", "VI[II", DX_ACC_PUBLIC | DX_ACC_STATIC, gles_gen_textures, 1);
@@ -528,6 +662,8 @@ struct agr_dex_game {
         uint32_t size;
     } *layouts;
     uint32_t layout_count;
+    const DxApkFile *resource_apk;
+    DxResources *resources;
     DxObject *window_manager;
     DxObject *window_attributes;
     agr_activity_launch_stage launch_stage;
@@ -1037,6 +1173,52 @@ const void *agr_apk_native_library_bytes(const agr_apk_package *p,uint32_t i,uin
 
 static agr_dex_game *game_from_vm(DxVM *vm) {
     return vm ? (agr_dex_game *)vm->framework_user : NULL;
+}
+
+/* API19 BitmapFactory.decodeResource(Resources, int, Options) opens the raw
+   resource and decodes it. Failure returns null. Failure with Options.inBitmap
+   set throws IllegalArgumentException. inJustDecodeBounds returns null after
+   writing outWidth and outHeight. Density scaling is not applied: Frozen
+   Bubble sets Options.inScaled false before these calls. */
+static DxResult bitmap_decode_resource(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    const DxResourceEntry *entry;
+    const DxZipEntry *zip = NULL;
+    uint8_t *bytes = NULL;
+    uint32_t size = 0;
+    int width = 0, height = 0;
+    int reuse_bitmap = options_value_set(args, count, "inBitmap");
+    DxClass *bitmap_class;
+    DxObject *bitmap;
+    if (count < 3 || args[1].tag != DX_VAL_INT)
+        return bitmap_decode_failed(vm, frame, reuse_bitmap);
+    entry = game ? resource_file_entry(game->resources, game->resource_apk,
+                                       (uint32_t)args[1].i) : NULL;
+    if (!entry || !entry->str_val || !game || !game->resource_apk ||
+        dx_apk_find_entry(game->resource_apk, entry->str_val, &zip) != DX_OK ||
+        dx_apk_extract_entry(game->resource_apk, zip, &bytes, &size) != DX_OK ||
+        !encoded_image_size(bytes, size, &width, &height)) {
+        dx_free(bytes);
+        return bitmap_decode_failed(vm, frame, reuse_bitmap);
+    }
+    dx_free(bytes);
+    if (options_value_set(args, count, "inJustDecodeBounds")) {
+        dx_vm_set_field(args[2].obj, "outWidth", DX_INT_VALUE(width));
+        dx_vm_set_field(args[2].obj, "outHeight", DX_INT_VALUE(height));
+        frame->result = DX_NULL_VALUE;
+        frame->has_result = true;
+        return DX_OK;
+    }
+    bitmap_class = dx_vm_find_class(vm, "Landroid/graphics/Bitmap;");
+    bitmap = bitmap_class ? dx_vm_alloc_object(vm, bitmap_class) : NULL;
+    if (!bitmap) return bitmap_decode_failed(vm, frame, reuse_bitmap);
+    dx_vm_set_field(bitmap, "_assetPath",
+                    DX_OBJ_VALUE(dx_vm_create_string(vm, entry->str_val)));
+    dx_vm_set_field(bitmap, "_width", DX_INT_VALUE(width));
+    dx_vm_set_field(bitmap, "_height", DX_INT_VALUE(height));
+    frame->result = DX_OBJ_VALUE(bitmap);
+    frame->has_result = true;
+    return DX_OK;
 }
 
 static int view_int(DxObject *object, const char *name, int fallback) {
@@ -1816,6 +1998,7 @@ void agr_dex_game_destroy(agr_dex_game *game) {
     if (g_activity==game->activity) g_activity=NULL;
     for (uint32_t i = 0; i < game->layout_count; i++) free(game->layouts[i].xml);
     free(game->layouts);
+    dx_resources_free(game->resources);
     release_content_surfaces(game);
     agr_viewroot_release(&game->viewroot);
     if (game->vm) dx_vm_destroy(game->vm);
@@ -1917,7 +2100,8 @@ static void load_apk_layouts(agr_dex_game *game, const agr_apk_package *package)
         agr_dex_game_provide_layout(game, resources->layout_entries[i].id, xml, xml_size);
         dx_free(xml);
     }
-    dx_resources_free(resources);
+    game->resource_apk = package->apk;
+    game->resources = resources;
 }
 
 int agr_dex_game_choreographer_frame(agr_dex_game *game) {

@@ -27,13 +27,13 @@
     ],
     "earliest_evidenced_divergence": "API19 SurfaceView.updateWindow creates a child Surface and dispatches surfaceCreated then surfaceChanged once the view has a positive frame and is visible; AGR reached host Decor performDraw with the inflated GameView child and no SurfaceHolder lifecycle.",
     "semantic_class": "PUBLIC_OBSERVABLE",
-    "causal_status": "CONTRACT_CONFIRMED",
-    "evidence_level": "CONTRACT_CONFIRMED",
+    "causal_status": "REAL_GAME_CONFIRMED",
+    "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "One Simulator discovery: unchanged Frozen Bubble on UIKit CADisplayLink receives surfaceCreated and surfaceChanged, then stops at the next public API",
-    "primary_blocker": "Local host probe delivered surfaceCreated and surfaceChanged. GameThread.setSurfaceSize then threw NullPointerException in scaleFrom because BitmapFactory.decodeResource is unresolved. This is not a first frame. Simulator confirmation is still required.",
-    "first_broken_boundary": "android.graphics.BitmapFactory.decodeResource inside GameThread.setSurfaceSize",
-    "first_broken_boundary_evidence": "Local unchanged Frozen Bubble probe: callback registered during onCreate; frame 1 created_count 0; frame 2 content surface generation 1, 320x480, format 4, identity distinct from the root Surface, created_count 1, changed_count 1, trace surface_created before perform_draw. surfaceChanged entered setSurfaceSize, resizeBitmaps, scaleFrom, then Ljava/lang/NullPointerException. invoke-virtual setRunning entered cleanUp and Thread.start did not run."
+    "next_validation": "Local host probe of BitmapFactory.decodeResource on unchanged Frozen Bubble. Do not rerun Simulator discovery 35683118511.",
+    "primary_blocker": "Discovery 35683118511 confirmed surfaceCreated 1, surfaceChanged 1, and a distinct content Surface, then stopped in GameThread.scaleFrom. decodeResource now returns the APK image. scaleFrom still throws NullPointerException because setRunning entered cleanUp, which clears mBackground. This is not a first frame.",
+    "first_broken_boundary": "GameThread.cleanUp clears mBackground before scaleFrom reads the decoded bitmap",
+    "first_broken_boundary_evidence": "Simulator discovery 35683118511: frame 2 created_count 1, changed_count 1, content identity distinct from the root Surface, last_method scaleFrom, exception Ljava/lang/NullPointerException. Local probe after decodeResource: 40 decodeResource calls return OK. GameView invoke of setRunning enters cleanUp, which stores a non-object into mBackground. scaleFrom then throws NullPointerException on that field. Thread.start does not run."
   },
   "ci_budget": {
     "valid_closure_runs": 1,

@@ -1,0 +1,70 @@
+{
+  "schema_version": 2,
+  "classification": "ANDROID_SEMANTIC_BUG",
+  "subsystem": "API19 BitmapFactory.decodeResource",
+  "observed_discontinuity": "Frozen Bubble GameThread.<init> calls BitmapFactory.decodeResource(Resources, int, Options). AGR skipped the unresolved method, so the source Bitmap stayed null and scaleFrom threw NullPointerException.",
+  "upstream": {
+    "map_entry": "framework.graphics.bitmap_decode_resource",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "graphics/java/android/graphics/BitmapFactory.java",
+      "graphics/java/android/graphics/Bitmap.java"
+    ],
+    "call_path": [
+      "BitmapFactory.decodeResource",
+      "Resources.openRawResource",
+      "Bitmap.getWidth",
+      "Bitmap.getHeight"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "decodeResource(Resources, int, Options) returns a Bitmap whose width and height are the encoded image size.",
+    "A missing or undecodable resource returns null.",
+    "Options.inBitmap set and a failed decode throws IllegalArgumentException.",
+    "Options.inJustDecodeBounds returns null and writes outWidth and outHeight.",
+    "Bitmap.getWidth and Bitmap.getHeight return those dimensions."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/game_dex_runner.c"
+    ],
+    "call_path": [
+      "bitmap_decode_resource",
+      "resource_file_entry",
+      "encoded_image_size",
+      "bitmap_get_dimension"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "API19 BitmapFactory.decodeResource opens the raw resource and returns a Bitmap. AGR previously had no LLIL method, so the invoke was skipped and the result was null.",
+      "relevance": "GameThread stored null source bitmaps, and scaleFrom threw NullPointerException."
+    }
+  ],
+  "earliest_evidenced_divergence": "API19 decodeResource(Resources, int, Options) returns the decoded Bitmap; AGR skipped Landroid/graphics/BitmapFactory;.decodeResource LLIL.",
+  "causal_status": "OBSERVED",
+  "evidence_level": "RUNTIME_OBSERVED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "Pinned android-4.4.4_r2 BitmapFactory.decodeResource and Bitmap.getWidth/getHeight in framework.graphics.bitmap_decode_resource"
+    },
+    {
+      "type": "RUNTIME",
+      "artifact": "Local host probe of unchanged org.jfedor.frozenbubble 1.7 after the LLIL method: 40 BitmapFactory.decodeResource calls return OK. PNG, JPEG, and GIF resource ids resolve through resources.arsc to res/drawable entries. Two choreographer frames still report created_count 1, changed_count 1, and a content Surface distinct from the root. scaleFrom still throws Ljava/lang/NullPointerException. GameView's invoke of setRunning enters GameThread.cleanUp, which writes a non-object into mBackground at pc 330 after the constructor stored the BmpWrap. Thread.start does not run. This is not a first frame."
+    }
+  ],
+  "remaining_uncertainty": [
+    "Density scaling is not applied. Frozen Bubble sets Options.inScaled false through unresolved reflection, and the returned size is the encoded image size.",
+    "createScaledBitmap and lockCanvas were not reached.",
+    "The setRunning to cleanUp dispatch is a pre-existing invoke target and is not changed here."
+  ],
+  "next_action": "Do not start another Simulator for the answered surfaceCreated question. The next public stop is GameThread.cleanUp clearing mBackground before scaleFrom. Do not implement lockCanvas.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "The Bitmap stores the resource path and the encoded width and height. It does not allocate a pixel buffer and it is not the ViewRoot Surface. Nine-patch PNG content size subtracts the one-pixel border when an npTc chunk is present."
+}

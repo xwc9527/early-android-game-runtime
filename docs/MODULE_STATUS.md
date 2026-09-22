@@ -15,7 +15,7 @@ Status controls modification permission, not total completeness. `stable` means 
 | DEX Runtime Activity lifecycle | stable | `a5c5958` | Activity/Window source, contract and real-APK gate | proven regression before or within the ViewRoot/Surface handoff |
 | Framework ViewRoot attach | stable | `a6256ba4` (post-merge `35598935478`) | focused ViewRoot attach contract and real-APK gate | proven attach-order, parent, traversal-schedule, or session-ownership regression |
 | Framework first traversal / root Surface | stable | `3e3db84a` (post-merge `35662355600`) | focused first-traversal contract, protected regressions, iphoneos build, closure `35634763769` | proven measure, relayout, layout, or persistent root-Surface regression |
-| Framework traversal dispatch / SurfaceView lifecycle | active | — | host SurfaceHolder contract; one Simulator discovery of surfaceCreated still required | a production change to measure, relayout, layout, or root Surface identity follows the first-traversal reopen rule |
+| Framework traversal dispatch / SurfaceView lifecycle | active | — | host SurfaceHolder contract; Simulator discovery `35683118511` confirmed surfaceCreated | a production change to measure, relayout, layout, or root Surface identity follows the first-traversal reopen rule |
 | DEX/Dalvik completeness | experimental | — | focused DEX/JNI contracts | future declared migration target |
 | Framework HLE | experimental | — | focused public API contracts | gameplay proves a public missing behavior |
 | Audio/OpenSL ES | experimental | — | — | declared gameplay target requires audio |
