@@ -48,9 +48,10 @@ static void print_arg(int index, int32_t bits, uint8_t tag) {
 static void print_witness(const char *label, const DxInvokeWitness *w) {
     uint8_t i;
     printf("%s exec=%u caller=%s pc=%u opcode=0x%02x %s method_idx=%u "
-           "resolved=%u class=%s method=%s shorty=%s argc=%u",
+           "resolved=%u class=%s method=%s shorty=%s argc=%u recv=%llu recv_class=%s",
            label, w->exec_id, w->caller, w->pc, w->opcode, opcode_name(w->opcode),
-           w->method_idx, w->resolved, w->target_class, w->target_name, w->shorty, w->argc);
+           w->method_idx, w->resolved, w->target_class, w->target_name, w->shorty, w->argc,
+           (unsigned long long)w->recv_obj, w->recv_class);
     for (i = 0; i < w->argc && i < 8; i++) print_arg(i, w->arg_i[i], w->arg_tag[i]);
     printf(" has_ret=%u ret_tag=%u ret=%d\n", w->has_ret, w->ret_tag, w->ret_i);
 }
@@ -78,6 +79,52 @@ static void print_canvas_trace(const agr_dex_game *game) {
                event.bool_result, event.wrote,
                event.write_left, event.write_top, event.write_right, event.write_bottom,
                event.has_write);
+    }
+}
+
+static void print_vector_trace(const agr_dex_game *game) {
+    DxVM *vm = agr_dex_game_vm(game);
+    uint32_t n = dx_vm_vector_tally_count(vm);
+    uint32_t i;
+    printf("vector_tally_count=%u dropped=%u trace=%u\n",
+           n, dx_vm_vector_trace_dropped(vm), dx_vm_vector_trace_count(vm));
+    for (i = 0; i < n; i++) {
+        DxVectorTally tally;
+        if (dx_vm_copy_vector_tally(vm, i, &tally) != 0) continue;
+        printf("VECTOR_TALLY method=%s shorty=%s count=%u resolved=%u\n",
+               tally.method, tally.shorty, tally.count, tally.resolved);
+    }
+    DxInvokeWitness follow;
+    n = dx_vm_vector_after_element_count(vm);
+    printf("vector_after_element_count=%u\n", n);
+    for (i = 0; i < n; i++) {
+        if (dx_vm_copy_vector_after_element(vm, i, &follow) != 0) continue;
+        print_witness("VECTOR_NEXT", &follow);
+    }
+    if (dx_vm_copy_vector_next_unresolved(vm, &follow) == 0)
+        print_witness("VECTOR_UNRESOLVED", &follow);
+    else
+        printf("VECTOR_UNRESOLVED none\n");
+    n = dx_vm_unresolved_seen_count(vm);
+    printf("unresolved_seen_count=%u\n", n);
+    for (i = 0; i < n; i++) {
+        if (dx_vm_copy_unresolved_seen(vm, i, &follow) != 0) continue;
+        print_witness("UNRESOLVED_SEEN", &follow);
+    }
+    n = dx_vm_vector_trace_count(vm);
+    for (i = 0; i < n; i++) {
+        DxVectorTrace event;
+        if (dx_vm_copy_vector_trace(vm, i, &event) != 0) continue;
+        printf("VECTOR exec=%u caller=%s pc=%u opcode=0x%02x %s method_idx=%u "
+               "resolved=%u method=%s shorty=%s argc=%u recv=%llu class=%s "
+               "arg_obj=%llu arg_int=%d arg2=%d has_ret=%u ret_tag=%u ret=%d "
+               "ret_obj=%llu ret_class=%s\n",
+               event.exec_id, event.caller, event.pc, event.opcode, opcode_name(event.opcode),
+               event.method_idx, event.resolved, event.method, event.shorty, event.argc,
+               (unsigned long long)event.receiver, event.recv_class,
+               (unsigned long long)event.arg_obj, event.arg_int, event.arg2_int,
+               event.has_ret, event.ret_tag, event.ret_i,
+               (unsigned long long)event.ret_obj, event.ret_class);
     }
 }
 
@@ -171,6 +218,7 @@ int main(int argc, char **argv) {
         print_snapshot("after_wait", &snapshot);
     print_witnesses(game);
     print_canvas_trace(game);
+    print_vector_trace(game);
     agr_dex_game_destroy(game);
     agr_apk_package_close(package);
     printf("frozen probe: destroyed\n");

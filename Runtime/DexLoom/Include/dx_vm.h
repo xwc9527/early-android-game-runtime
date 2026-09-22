@@ -208,11 +208,46 @@ typedef struct DxInvokeWitness {
     int32_t arg_i[8];
     uint8_t arg_tag[8];
     int32_t ret_i;
+    uint64_t recv_obj;
     char caller[96];
     char target_class[96];
     char target_name[48];
     char shorty[24];
+    char recv_class[80];
 } DxInvokeWitness;
+
+#define DX_VECTOR_TRACE_CAP 512
+#define DX_VECTOR_TALLY_CAP 24
+
+/* One Ljava/util/Vector; invoke. Telemetry only. */
+typedef struct DxVectorTrace {
+    uint32_t exec_id;
+    uint32_t pc;
+    uint32_t method_idx;
+    uint8_t opcode;
+    uint8_t resolved;
+    uint8_t argc;
+    uint8_t has_ret;
+    uint8_t ret_tag;
+    char caller[80];
+    char method[32];
+    char shorty[12];
+    char recv_class[80];
+    char ret_class[80];
+    uint64_t receiver;
+    uint64_t arg_obj;
+    int32_t arg_int;
+    int32_t arg2_int;
+    int32_t ret_i;
+    uint64_t ret_obj;
+} DxVectorTrace;
+
+typedef struct DxVectorTally {
+    char method[32];
+    char shorty[12];
+    uint32_t count;
+    uint8_t resolved;
+} DxVectorTally;
 
 typedef struct {
     uint64_t sequence;
@@ -464,6 +499,24 @@ struct DxVM {
     uint8_t invoke_site_opcode;
     uint32_t invoke_site_method_idx;
     int invoke_site_valid;
+
+    /* Opt-in Ljava/util/Vector; invoke trace. Does not change guest results. */
+    DxVectorTrace *vector_trace;
+    uint32_t vector_trace_count;
+    uint32_t vector_trace_dropped;
+    uint32_t vector_addelement_stored;
+    DxVectorTally vector_tally[DX_VECTOR_TALLY_CAP];
+    uint32_t vector_tally_count;
+    /* Next guest invoke after a Vector.elementAt that returned an object. */
+    DxInvokeWitness vector_after_element[8];
+    uint32_t vector_after_element_count;
+    int vector_after_element_armed;
+    int vector_seen_element_at;
+    DxInvokeWitness vector_next_unresolved;
+    int vector_next_unresolved_set;
+    /* First unresolved invokes in program order. Telemetry only. */
+    DxInvokeWitness unresolved_seen[16];
+    uint32_t unresolved_seen_count;
 };
 
 // VM lifecycle
@@ -636,5 +689,29 @@ int dx_vm_copy_witness_fordigit(const DxVM *vm, uint32_t index, DxInvokeWitness 
 int dx_vm_copy_witness_continuation(const DxVM *vm, DxInvokeWitness *out);
 uint32_t dx_vm_witness_unresolved_after_count(const DxVM *vm);
 int dx_vm_copy_witness_unresolved_after(const DxVM *vm, uint32_t index, DxInvokeWitness *out);
+void dx_vm_note_vector(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                       uint32_t method_idx, const char *name, const char *shorty,
+                       const DxValue *args, uint8_t argc, int resolved,
+                       const DxValue *result, int has_result);
+uint32_t dx_vm_vector_trace_count(const DxVM *vm);
+uint32_t dx_vm_vector_trace_dropped(const DxVM *vm);
+int dx_vm_copy_vector_trace(const DxVM *vm, uint32_t index, DxVectorTrace *out);
+uint32_t dx_vm_vector_tally_count(const DxVM *vm);
+int dx_vm_copy_vector_tally(const DxVM *vm, uint32_t index, DxVectorTally *out);
+void dx_vm_note_vector_follow(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                              uint32_t method_idx, const char *cls, const char *name,
+                              const char *shorty, const DxValue *args, uint8_t argc,
+                              int resolved, const DxValue *result, int has_result);
+uint32_t dx_vm_vector_after_element_count(const DxVM *vm);
+int dx_vm_copy_vector_after_element(const DxVM *vm, uint32_t index, DxInvokeWitness *out);
+int dx_vm_copy_vector_next_unresolved(const DxVM *vm, DxInvokeWitness *out);
+void dx_vm_note_post_vector_unresolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                                       uint32_t method_idx, const char *cls, const char *name,
+                                       const char *shorty, const DxValue *args, uint8_t argc);
+void dx_vm_note_unresolved_seen(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                                uint32_t method_idx, const char *cls, const char *name,
+                                const char *shorty, const DxValue *args, uint8_t argc);
+uint32_t dx_vm_unresolved_seen_count(const DxVM *vm);
+int dx_vm_copy_unresolved_seen(const DxVM *vm, uint32_t index, DxInvokeWitness *out);
 
 #endif // DX_VM_H

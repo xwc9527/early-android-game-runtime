@@ -376,7 +376,18 @@ static DxResult handle_invoke(DxVM *vm, DxFrame *frame, const uint16_t *code,
         if (vm->telemetry.telemetry_enabled) {
             DxValue missed[8];
             uint8_t n = argc < 8 ? argc : 8;
+            const char *shorty = dx_dex_get_method_shorty(cur, method_idx);
             for (uint8_t i = 0; i < n; i++) missed[i] = frame->registers[arg_regs[i]];
+            dx_vm_note_vector_follow(vm, frame, pc, opcode, method_idx, cls_name, mth_name,
+                                     shorty, missed, n, 0, NULL, 0);
+            dx_vm_note_post_vector_unresolved(vm, frame, pc, opcode, method_idx, cls_name,
+                                              mth_name, shorty, missed, n);
+            dx_vm_note_unresolved_seen(vm, frame, pc, opcode, method_idx, cls_name, mth_name,
+                                       shorty, missed, n);
+            if (cls_name && strcmp(cls_name, "Ljava/util/Vector;") == 0) {
+                dx_vm_note_vector(vm, frame, pc, opcode, method_idx, mth_name, shorty,
+                                  missed, n, 0, NULL, 0);
+            }
             dx_vm_witness_unresolved(vm, frame, pc, opcode, method_idx, missed, n);
         }
         frame->result = DX_NULL_VALUE;
@@ -637,6 +648,11 @@ static DxResult handle_invoke(DxVM *vm, DxFrame *frame, const uint16_t *code,
     vm->invoke_site_opcode = opcode;
     vm->invoke_site_method_idx = method_idx;
     vm->invoke_site_valid = 1;
+    if (vm->telemetry.telemetry_enabled)
+        dx_vm_note_vector_follow(vm, frame, pc, opcode, method_idx,
+                                 target->declaring_class && target->declaring_class->descriptor
+                                     ? target->declaring_class->descriptor : "?",
+                                 target->name, target->shorty, call_args, argc, 1, NULL, 0);
     DxResult res = dx_vm_execute_method(vm, target, call_args, argc, &call_result);
     if (vm->telemetry.telemetry_enabled)
         dx_vm_witness_resolved(vm, frame, pc, opcode, method_idx, target, call_args, argc, &call_result, 1);
@@ -700,6 +716,25 @@ static DxResult handle_invoke_range(DxVM *vm, DxFrame *frame, const uint16_t *co
         const char *mth_name = dx_dex_get_method_name(cur, method_idx);
         DX_WARN(TAG, "Cannot resolve method %s.%s (range) - skipping",
                 cls_name ? cls_name : "?", mth_name ? mth_name : "?");
+        if (vm->telemetry.telemetry_enabled) {
+            DxValue missed[8];
+            uint8_t n = argc < 8 ? argc : 8;
+            const char *shorty = dx_dex_get_method_shorty(cur, method_idx);
+            for (uint8_t i = 0; i < n; i++) {
+                uint16_t reg = (uint16_t)(first_reg + i);
+                missed[i] = reg < DX_MAX_REGISTERS ? frame->registers[reg] : DX_INT_VALUE(0);
+            }
+            dx_vm_note_vector_follow(vm, frame, pc, opcode, method_idx, cls_name, mth_name,
+                                     shorty, missed, n, 0, NULL, 0);
+            dx_vm_note_post_vector_unresolved(vm, frame, pc, opcode, method_idx, cls_name,
+                                              mth_name, shorty, missed, n);
+            dx_vm_note_unresolved_seen(vm, frame, pc, opcode, method_idx, cls_name, mth_name,
+                                       shorty, missed, n);
+            if (cls_name && strcmp(cls_name, "Ljava/util/Vector;") == 0) {
+                dx_vm_note_vector(vm, frame, pc, opcode, method_idx, mth_name, shorty,
+                                  missed, n, 0, NULL, 0);
+            }
+        }
         if (vm->telemetry.telemetry_enabled) {
             DxValue missed[8];
             uint8_t n = argc < 8 ? argc : 8;
@@ -949,6 +984,11 @@ static DxResult handle_invoke_range(DxVM *vm, DxFrame *frame, const uint16_t *co
     vm->invoke_site_opcode = opcode;
     vm->invoke_site_method_idx = method_idx;
     vm->invoke_site_valid = 1;
+    if (vm->telemetry.telemetry_enabled)
+        dx_vm_note_vector_follow(vm, frame, pc, opcode, method_idx,
+                                 target->declaring_class && target->declaring_class->descriptor
+                                     ? target->declaring_class->descriptor : "?",
+                                 target->name, target->shorty, call_args, clamped_argc, 1, NULL, 0);
     DxResult res = dx_vm_execute_method(vm, target, call_args, clamped_argc, &call_result);
     if (vm->telemetry.telemetry_enabled)
         dx_vm_witness_resolved(vm, frame, pc, opcode, method_idx, target, call_args, clamped_argc,

@@ -109,6 +109,7 @@ void dx_vm_destroy(DxVM *vm) {
         dx_vm_current_exec(vm)->frame_pool_count = 0;
     }
 
+    dx_free(vm->vector_trace);
     dx_exec_vm_fini(vm);
     dx_free(vm);
     DX_INFO(TAG, "VM destroyed");
@@ -1669,6 +1670,196 @@ static DxResult native_arraylist_toarray(DxVM *vm, DxFrame *frame, DxValue *args
     }
     frame->result = result ? DX_OBJ_VALUE(result) : DX_NULL_VALUE;
     frame->has_result = true;
+    return DX_OK;
+}
+
+// ============================================================
+// java.util.Vector (API19). Guest array field elementData is a GC root.
+// ============================================================
+
+static DxObject *vector_elements(DxObject *self) {
+    DxValue value;
+    if (dx_vm_get_field(self, "elementData", &value) == DX_OK &&
+        value.tag == DX_VAL_OBJ && value.obj && value.obj->is_array) {
+        return value.obj;
+    }
+    return NULL;
+}
+
+static int32_t vector_count(DxObject *self) {
+    DxValue value;
+    if (dx_vm_get_field(self, "elementCount", &value) == DX_OK && value.tag == DX_VAL_INT)
+        return value.i;
+    return 0;
+}
+
+static int32_t vector_increment(DxObject *self) {
+    DxValue value;
+    if (dx_vm_get_field(self, "capacityIncrement", &value) == DX_OK && value.tag == DX_VAL_INT)
+        return value.i;
+    return 0;
+}
+
+static void vector_set_count(DxObject *self, int32_t count) {
+    dx_vm_set_field(self, "elementCount", DX_INT_VALUE(count));
+}
+
+static DxResult vector_throw_bounds(DxVM *vm, int32_t index, int32_t size) {
+    char message[64];
+    snprintf(message, sizeof(message), "length=%d; index=%d", size, index);
+    dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+        vm, "Ljava/lang/ArrayIndexOutOfBoundsException;", message);
+    return DX_ERR_EXCEPTION;
+}
+
+static DxResult vector_lock(DxVM *vm, DxObject *self) {
+    if (!self) {
+        dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+            vm, "Ljava/lang/NullPointerException;", "Vector");
+        return DX_ERR_EXCEPTION;
+    }
+    return dx_vm_monitor_enter(vm, self);
+}
+
+/* API19 indexOf uses object.equals. Object.equals is reference identity. */
+static int vector_same(DxVM *vm, DxValue key, DxValue element) {
+    DxMethod *equals;
+    DxValue args[2];
+    DxValue result;
+    if (key.tag != DX_VAL_OBJ || element.tag != DX_VAL_OBJ) return 0;
+    if (key.obj == element.obj) return 1;
+    if (!key.obj || !element.obj || !key.obj->klass) return 0;
+    equals = dx_vm_find_method(key.obj->klass, "equals", "ZL");
+    if (!equals || equals->native_fn == native_object_equals) return 0;
+    args[0] = key;
+    args[1] = element;
+    result = DX_NULL_VALUE;
+    if (dx_vm_execute_method(vm, equals, args, 2, &result) != DX_OK) return 0;
+    return result.tag == DX_VAL_INT && result.i != 0;
+}
+
+static int vector_grow_by_one(DxVM *vm, DxObject *self) {
+    DxObject *data = vector_elements(self);
+    int32_t length = data ? (int32_t)data->array_length : 0;
+    int32_t adding = vector_increment(self);
+    int32_t count = vector_count(self);
+    DxObject *fresh;
+    int32_t i;
+    if (adding <= 0) adding = length == 0 ? 1 : length;
+    fresh = dx_vm_alloc_array(vm, (uint32_t)(length + adding));
+    if (!fresh) return 0;
+    if (data && data->array_elements && fresh->array_elements) {
+        for (i = 0; i < count && i < length; i++)
+            fresh->array_elements[i] = data->array_elements[i];
+    }
+    dx_vm_set_field(self, "elementData", DX_OBJ_VALUE(fresh));
+    return 1;
+}
+
+/* Vector() uses DEFAULT_SIZE 10 and capacityIncrement 0. Not synchronized. */
+static DxResult native_vector_init(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    DxObject *self;
+    DxObject *data;
+    (void)frame;
+    (void)arg_count;
+    self = args[0].obj;
+    if (!self) return DX_OK;
+    data = dx_vm_alloc_array(vm, 10);
+    if (!data) return DX_ERR_OUT_OF_MEMORY;
+    dx_vm_set_field(self, "elementData", DX_OBJ_VALUE(data));
+    vector_set_count(self, 0);
+    dx_vm_set_field(self, "capacityIncrement", DX_INT_VALUE(0));
+    return DX_OK;
+}
+
+static DxResult native_vector_size(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    DxObject *self = arg_count > 0 ? args[0].obj : NULL;
+    DxResult lock = vector_lock(vm, self);
+    (void)arg_count;
+    if (lock != DX_OK) return lock;
+    frame->result = DX_INT_VALUE(vector_count(self));
+    frame->has_result = true;
+    dx_vm_monitor_exit(vm, self);
+    return DX_OK;
+}
+
+static DxResult native_vector_add_element(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    DxObject *self = arg_count > 0 ? args[0].obj : NULL;
+    DxObject *data;
+    int32_t count;
+    DxResult lock = vector_lock(vm, self);
+    (void)frame;
+    if (lock != DX_OK) return lock;
+    count = vector_count(self);
+    data = vector_elements(self);
+    if (!data || count == (int32_t)data->array_length) {
+        if (!vector_grow_by_one(vm, self)) {
+            dx_vm_monitor_exit(vm, self);
+            return DX_ERR_OUT_OF_MEMORY;
+        }
+        data = vector_elements(self);
+    }
+    if (data && data->array_elements && count >= 0 && (uint32_t)count < data->array_length) {
+        data->array_elements[count] = arg_count > 1 ? args[1] : DX_NULL_VALUE;
+        vector_set_count(self, count + 1);
+    }
+    dx_vm_monitor_exit(vm, self);
+    return DX_OK;
+}
+
+static DxResult native_vector_element_at(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    DxObject *self = arg_count > 0 ? args[0].obj : NULL;
+    int32_t index = arg_count > 1 ? args[1].i : 0;
+    int32_t count;
+    DxObject *data;
+    DxResult lock = vector_lock(vm, self);
+    if (lock != DX_OK) return lock;
+    count = vector_count(self);
+    if (index < 0 || index >= count) {
+        dx_vm_monitor_exit(vm, self);
+        return vector_throw_bounds(vm, index, count);
+    }
+    data = vector_elements(self);
+    frame->result = (data && data->array_elements) ? data->array_elements[index] : DX_NULL_VALUE;
+    frame->has_result = true;
+    dx_vm_monitor_exit(vm, self);
+    return DX_OK;
+}
+
+static DxResult native_vector_remove_element(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    DxObject *self = arg_count > 0 ? args[0].obj : NULL;
+    DxValue key = arg_count > 1 ? args[1] : DX_NULL_VALUE;
+    DxObject *data;
+    int32_t count;
+    int32_t index = -1;
+    int32_t i;
+    DxResult lock = vector_lock(vm, self);
+    if (lock != DX_OK) return lock;
+    count = vector_count(self);
+    data = vector_elements(self);
+    if (data && data->array_elements) {
+        for (i = 0; i < count; i++) {
+            if (vector_same(vm, key, data->array_elements[i])) {
+                index = i;
+                break;
+            }
+        }
+    }
+    if (index < 0) {
+        frame->result = DX_INT_VALUE(0);
+        frame->has_result = true;
+        dx_vm_monitor_exit(vm, self);
+        return DX_OK;
+    }
+    if (data && data->array_elements) {
+        for (i = index; i < count - 1; i++)
+            data->array_elements[i] = data->array_elements[i + 1];
+        data->array_elements[count - 1] = DX_NULL_VALUE;
+    }
+    vector_set_count(self, count - 1);
+    frame->result = DX_INT_VALUE(1);
+    frame->has_result = true;
+    dx_vm_monitor_exit(vm, self);
     return DX_OK;
 }
 
@@ -3863,6 +4054,43 @@ DxResult dx_register_java_lang(DxVM *vm) {
         arraylist_cls->interfaces[2] = "Ljava/lang/Iterable;";
     }
     arraylist_cls->status = DX_CLASS_INITIALIZED;
+
+    /* API19 Vector is its own synchronized list. It does not share ArrayList methods. */
+    {
+        DxClass *vector_cls = create_class(vm, "Ljava/util/Vector;", obj_cls, true);
+        const char *names[] = { "elementData", "elementCount", "capacityIncrement" };
+        const char *types[] = { "[Ljava/lang/Object;", "I", "I" };
+        uint32_t f;
+        vector_cls->instance_field_count = 3;
+        vector_cls->field_defs = (typeof(vector_cls->field_defs))dx_malloc(sizeof(*vector_cls->field_defs) * 3);
+        if (vector_cls->field_defs) {
+            memset(vector_cls->field_defs, 0, sizeof(*vector_cls->field_defs) * 3);
+            for (f = 0; f < 3; f++) {
+                vector_cls->field_defs[f].name = names[f];
+                vector_cls->field_defs[f].type = types[f];
+                vector_cls->field_defs[f].flags = DX_ACC_PROTECTED;
+                vector_cls->field_defs[f].slot_index = f;
+            }
+        }
+        add_native_method(vector_cls, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR,
+                          native_vector_init, true);
+        add_native_method(vector_cls, "size", "I", DX_ACC_PUBLIC,
+                          native_vector_size, false);
+        add_native_method(vector_cls, "addElement", "VL", DX_ACC_PUBLIC,
+                          native_vector_add_element, false);
+        add_native_method(vector_cls, "elementAt", "LI", DX_ACC_PUBLIC,
+                          native_vector_element_at, false);
+        add_native_method(vector_cls, "removeElement", "ZL", DX_ACC_PUBLIC,
+                          native_vector_remove_element, false);
+        vector_cls->interface_count = 3;
+        vector_cls->interfaces = (const char **)dx_malloc(sizeof(const char *) * 3);
+        if (vector_cls->interfaces) {
+            vector_cls->interfaces[0] = "Ljava/util/List;";
+            vector_cls->interfaces[1] = "Ljava/util/Collection;";
+            vector_cls->interfaces[2] = "Ljava/lang/Iterable;";
+        }
+        vector_cls->status = DX_CLASS_INITIALIZED;
+    }
 
     // java.util.HashMap with actual storage
     DxClass *hashmap_cls = create_class(vm, "Ljava/util/HashMap;", obj_cls, true);
@@ -6949,6 +7177,11 @@ static void witness_fill(DxInvokeWitness *w, DxVM *vm, DxFrame *frame, uint32_t 
         w->arg_tag[i] = args ? (uint8_t)args[i].tag : 0;
         w->arg_i[i] = args ? args[i].i : 0;
     }
+    if (n > 0 && args && args[0].tag == DX_VAL_OBJ && args[0].obj) {
+        w->recv_obj = (uint64_t)(uintptr_t)args[0].obj;
+        if (args[0].obj->klass && args[0].obj->klass->descriptor)
+            snprintf(w->recv_class, sizeof(w->recv_class), "%s", args[0].obj->klass->descriptor);
+    }
     if (frame && frame->method) {
         if (frame->method->declaring_class && frame->method->declaring_class->descriptor)
             caller_cls = frame->method->declaring_class->descriptor;
@@ -6999,10 +7232,93 @@ void dx_vm_witness_unresolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opc
     }
 }
 
+void dx_vm_note_vector_follow(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                              uint32_t method_idx, const char *cls, const char *name,
+                              const char *shorty, const DxValue *args, uint8_t argc,
+                              int resolved, const DxValue *result, int has_result) {
+    DxInvokeWitness *slot;
+    if (!vm || !vm->telemetry.telemetry_enabled || !vm->vector_after_element_armed) return;
+    vm->vector_after_element_armed = 0;
+    if (vm->vector_after_element_count >= 8) return;
+    slot = &vm->vector_after_element[vm->vector_after_element_count++];
+    witness_fill(slot, vm, frame, pc, opcode, method_idx, args, argc);
+    slot->resolved = resolved ? 1 : 0;
+    snprintf(slot->target_class, sizeof(slot->target_class), "%s", cls ? cls : "?");
+    snprintf(slot->target_name, sizeof(slot->target_name), "%s", name ? name : "?");
+    snprintf(slot->shorty, sizeof(slot->shorty), "%s", shorty ? shorty : "?");
+    if (has_result && result) {
+        slot->has_ret = 1;
+        slot->ret_tag = (uint8_t)result->tag;
+        slot->ret_i = result->i;
+    }
+}
+
+uint32_t dx_vm_vector_after_element_count(const DxVM *vm) {
+    return vm ? vm->vector_after_element_count : 0;
+}
+
+int dx_vm_copy_vector_after_element(const DxVM *vm, uint32_t index, DxInvokeWitness *out) {
+    if (!vm || !out || index >= vm->vector_after_element_count) return -1;
+    *out = vm->vector_after_element[index];
+    return 0;
+}
+
+int dx_vm_copy_vector_next_unresolved(const DxVM *vm, DxInvokeWitness *out) {
+    if (!vm || !out || !vm->vector_next_unresolved_set) return -1;
+    *out = vm->vector_next_unresolved;
+    return 0;
+}
+
+/* First unresolved invoke after a Vector.elementAt that returned an object. */
+void dx_vm_note_post_vector_unresolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                                       uint32_t method_idx, const char *cls, const char *name,
+                                       const char *shorty, const DxValue *args, uint8_t argc) {
+    if (!vm || !vm->telemetry.telemetry_enabled || !vm->vector_seen_element_at) return;
+    if (vm->vector_next_unresolved_set) return;
+    witness_fill(&vm->vector_next_unresolved, vm, frame, pc, opcode, method_idx, args, argc);
+    vm->vector_next_unresolved.resolved = 0;
+    snprintf(vm->vector_next_unresolved.target_class, sizeof(vm->vector_next_unresolved.target_class),
+             "%s", cls ? cls : "?");
+    snprintf(vm->vector_next_unresolved.target_name, sizeof(vm->vector_next_unresolved.target_name),
+             "%s", name ? name : "?");
+    snprintf(vm->vector_next_unresolved.shorty, sizeof(vm->vector_next_unresolved.shorty),
+             "%s", shorty ? shorty : "?");
+    vm->vector_next_unresolved_set = 1;
+}
+
+void dx_vm_note_unresolved_seen(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                                uint32_t method_idx, const char *cls, const char *name,
+                                const char *shorty, const DxValue *args, uint8_t argc) {
+    DxInvokeWitness *slot;
+    if (!vm || !vm->telemetry.telemetry_enabled) return;
+    if (vm->unresolved_seen_count >= 16) return;
+    slot = &vm->unresolved_seen[vm->unresolved_seen_count++];
+    witness_fill(slot, vm, frame, pc, opcode, method_idx, args, argc);
+    slot->resolved = 0;
+    snprintf(slot->target_class, sizeof(slot->target_class), "%s", cls ? cls : "?");
+    snprintf(slot->target_name, sizeof(slot->target_name), "%s", name ? name : "?");
+    snprintf(slot->shorty, sizeof(slot->shorty), "%s", shorty ? shorty : "?");
+}
+
+uint32_t dx_vm_unresolved_seen_count(const DxVM *vm) {
+    return vm ? vm->unresolved_seen_count : 0;
+}
+
+int dx_vm_copy_unresolved_seen(const DxVM *vm, uint32_t index, DxInvokeWitness *out) {
+    if (!vm || !out || index >= vm->unresolved_seen_count) return -1;
+    *out = vm->unresolved_seen[index];
+    return 0;
+}
+
 void dx_vm_witness_resolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
                             uint32_t method_idx, DxMethod *target, const DxValue *args,
                             uint8_t argc, const DxValue *result, int has_result) {
     if (!vm || !vm->telemetry.telemetry_enabled || !target) return;
+    if (target->declaring_class && target->declaring_class->descriptor &&
+        strcmp(target->declaring_class->descriptor, "Ljava/util/Vector;") == 0) {
+        dx_vm_note_vector(vm, frame, pc, opcode, method_idx, target->name, target->shorty,
+                          args, argc, 1, result, has_result);
+    }
     if (witness_is_fordigit(target)) {
         DxInvokeWitness *slot;
         if (vm->witness_fordigit_count >= 8) return;
@@ -7064,5 +7380,120 @@ uint32_t dx_vm_witness_unresolved_after_count(const DxVM *vm) {
 int dx_vm_copy_witness_unresolved_after(const DxVM *vm, uint32_t index, DxInvokeWitness *out) {
     if (!vm || !out || index >= vm->witness_unresolved_after_count) return -1;
     *out = vm->witness_unresolved_after[index];
+    return 0;
+}
+
+static void vector_tally_add(DxVM *vm, const char *name, const char *shorty, int resolved) {
+    uint32_t i;
+    if (!name) name = "?";
+    if (!shorty) shorty = "?";
+    for (i = 0; i < vm->vector_tally_count; i++) {
+        if (strcmp(vm->vector_tally[i].method, name) == 0 &&
+            strcmp(vm->vector_tally[i].shorty, shorty) == 0) {
+            vm->vector_tally[i].count++;
+            if (resolved) vm->vector_tally[i].resolved = 1;
+            return;
+        }
+    }
+    if (vm->vector_tally_count >= DX_VECTOR_TALLY_CAP) return;
+    i = vm->vector_tally_count++;
+    snprintf(vm->vector_tally[i].method, sizeof(vm->vector_tally[i].method), "%s", name);
+    snprintf(vm->vector_tally[i].shorty, sizeof(vm->vector_tally[i].shorty), "%s", shorty);
+    vm->vector_tally[i].count = 1;
+    vm->vector_tally[i].resolved = resolved ? 1 : 0;
+}
+
+void dx_vm_note_vector(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                       uint32_t method_idx, const char *name, const char *shorty,
+                       const DxValue *args, uint8_t argc, int resolved,
+                       const DxValue *result, int has_result) {
+    DxVectorTrace *slot;
+    const char *caller_cls = "?";
+    const char *caller_name = "?";
+    if (!vm || !vm->telemetry.telemetry_enabled) return;
+    if (!name) name = "?";
+    if (!shorty) shorty = "?";
+    vector_tally_add(vm, name, shorty, resolved);
+    /* addElement can dominate the ring. Keep the early samples and every other method. */
+    if (strcmp(name, "addElement") == 0 && vm->vector_addelement_stored >= 48) {
+        vm->vector_trace_dropped++;
+        return;
+    }
+    if (vm->vector_trace_count >= DX_VECTOR_TRACE_CAP) {
+        vm->vector_trace_dropped++;
+        return;
+    }
+    if (!vm->vector_trace) {
+        vm->vector_trace = (DxVectorTrace *)dx_malloc(sizeof(DxVectorTrace) * DX_VECTOR_TRACE_CAP);
+        if (!vm->vector_trace) return;
+        memset(vm->vector_trace, 0, sizeof(DxVectorTrace) * DX_VECTOR_TRACE_CAP);
+    }
+    slot = &vm->vector_trace[vm->vector_trace_count++];
+    memset(slot, 0, sizeof(*slot));
+    slot->exec_id = dx_vm_current_exec(vm) ? dx_vm_current_exec(vm)->id : 0;
+    slot->pc = pc;
+    slot->opcode = opcode;
+    slot->method_idx = method_idx;
+    slot->resolved = resolved ? 1 : 0;
+    slot->argc = argc;
+    snprintf(slot->method, sizeof(slot->method), "%s", name);
+    snprintf(slot->shorty, sizeof(slot->shorty), "%s", shorty);
+    if (frame && frame->method) {
+        if (frame->method->declaring_class && frame->method->declaring_class->descriptor)
+            caller_cls = frame->method->declaring_class->descriptor;
+        if (frame->method->name) caller_name = frame->method->name;
+    }
+    snprintf(slot->caller, sizeof(slot->caller), "%s.%s", caller_cls, caller_name);
+    if (argc > 0 && args && args[0].tag == DX_VAL_OBJ && args[0].obj) {
+        slot->receiver = (uint64_t)(uintptr_t)args[0].obj;
+        if (args[0].obj->klass && args[0].obj->klass->descriptor)
+            snprintf(slot->recv_class, sizeof(slot->recv_class), "%s", args[0].obj->klass->descriptor);
+    }
+    if (argc > 1 && args) {
+        if (args[1].tag == DX_VAL_OBJ)
+            slot->arg_obj = (uint64_t)(uintptr_t)args[1].obj;
+        else
+            slot->arg_int = args[1].i;
+    }
+    if (argc > 2 && args) slot->arg2_int = args[2].i;
+    if (has_result && result) {
+        slot->has_ret = 1;
+        slot->ret_tag = (uint8_t)result->tag;
+        slot->ret_i = result->i;
+        if (result->tag == DX_VAL_OBJ && result->obj) {
+            slot->ret_obj = (uint64_t)(uintptr_t)result->obj;
+            if (result->obj->klass && result->obj->klass->descriptor)
+                snprintf(slot->ret_class, sizeof(slot->ret_class), "%s", result->obj->klass->descriptor);
+        }
+    }
+    if (strcmp(name, "addElement") == 0) vm->vector_addelement_stored++;
+    if (resolved && strcmp(name, "elementAt") == 0 && has_result && result &&
+        result->tag == DX_VAL_OBJ && result->obj) {
+        vm->vector_after_element_armed = 1;
+        vm->vector_seen_element_at = 1;
+    }
+}
+
+uint32_t dx_vm_vector_trace_count(const DxVM *vm) {
+    return vm ? vm->vector_trace_count : 0;
+}
+
+uint32_t dx_vm_vector_trace_dropped(const DxVM *vm) {
+    return vm ? vm->vector_trace_dropped : 0;
+}
+
+int dx_vm_copy_vector_trace(const DxVM *vm, uint32_t index, DxVectorTrace *out) {
+    if (!vm || !out || !vm->vector_trace || index >= vm->vector_trace_count) return -1;
+    *out = vm->vector_trace[index];
+    return 0;
+}
+
+uint32_t dx_vm_vector_tally_count(const DxVM *vm) {
+    return vm ? vm->vector_tally_count : 0;
+}
+
+int dx_vm_copy_vector_tally(const DxVM *vm, uint32_t index, DxVectorTally *out) {
+    if (!vm || !out || index >= vm->vector_tally_count) return -1;
+    *out = vm->vector_tally[index];
     return 0;
 }

@@ -73,9 +73,9 @@
     "Region.Op values other than REPLACE throw UnsupportedOperationException and do not modify the clip. DIFFERENCE, INTERSECT, UNION, XOR, and REVERSE_DIFFERENCE are not implemented.",
     "There is no Matrix stack. save() without arguments, saveLayer, saveLayerAlpha, and restoreToCount are not registered.",
     "The save stack above the base lock is bounded at 16 levels.",
-    "The next earliest unresolved public API is java.util.Vector.size. It is not part of this contract."
+    "java.util.Vector core is a separate contract. This clip contract does not change Vector, Matrix, saveLayer, or presentation."
   ],
-  "next_action": "Do not implement java.util.Vector.size in this phase. Do not add Matrix, other Region.Op values, saveLayer, or presentation. Do not rerun the content-frame Simulator.",
+  "next_action": "Canvas save, clipRect, and restore stay REAL_GAME_CONFIRMED. java.util.Vector core is separate. Do not add Matrix, other Region.Op values, saveLayer, or presentation. Do not rerun the content-frame Simulator.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "The clip stack lives on the locked content Surface and is passed to the existing agr_bitmap_draw. There is no second framebuffer and no SkCanvas. Each lockCanvas resets the stack and the base clip. A generation mismatch does not operate on the old backing."

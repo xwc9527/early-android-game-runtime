@@ -685,7 +685,7 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
-          "Runtime/DexLoom/VM/dx_vm.c": "8a135ca78a7d5c404ecb7baa5096b2ca97a38a50c1e61025ef9e6f4e16c15716"
+          "Runtime/DexLoom/VM/dx_vm.c": "58d0f23c98899e3442a5b5b3218d8c051d2e6f1b5a19f19fda877f4afb4ea8b3"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -875,7 +875,7 @@
         "source_hashes": {
           "Runtime/DexLoom/APK/dx_manifest.c": "17d608e345e27ba2bcf564dd61e7918c79da4b243f32d811e59126996b27519e",
           "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
-          "Runtime/DexLoom/VM/dx_vm.c": "8a135ca78a7d5c404ecb7baa5096b2ca97a38a50c1e61025ef9e6f4e16c15716",
+          "Runtime/DexLoom/VM/dx_vm.c": "58d0f23c98899e3442a5b5b3218d8c051d2e6f1b5a19f19fda877f4afb4ea8b3",
           "App/main.m": "5f3e106cfbe32c7c591b92a556e3e13f57435463bbe429507d3440509c93d74b"
         }
       },
@@ -1269,8 +1269,8 @@
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
           "Runtime/DexLoom/APK/dx_resources.c": "d1ccd60b46850517bb9905db8505f81222d8658b4af9b675547208f1eb07a0e2",
-          "Runtime/DexLoom/VM/dx_vm.c": "8a135ca78a7d5c404ecb7baa5096b2ca97a38a50c1e61025ef9e6f4e16c15716",
-          "Runtime/DexLoom/VM/dx_interpreter.c": "536f8ed0afc13bb4c15896928117eed781ada4a6a6876c3c2bda7f5399ca856a"
+          "Runtime/DexLoom/VM/dx_vm.c": "58d0f23c98899e3442a5b5b3218d8c051d2e6f1b5a19f19fda877f4afb4ea8b3",
+          "Runtime/DexLoom/VM/dx_interpreter.c": "ef6a05b56d86d58a79caf9d65a0d638c30fdc3b537579ca8d78ddc9f061fcb73"
         }
       },
       "verified_at_commit": "8c2bf842bd06bf59fb4692a1fb76e2c420516f0f",
@@ -1779,8 +1779,8 @@
           "dx_vm_trace_virtual_invoke"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/VM/dx_vm.c": "8a135ca78a7d5c404ecb7baa5096b2ca97a38a50c1e61025ef9e6f4e16c15716",
-          "Runtime/DexLoom/VM/dx_interpreter.c": "536f8ed0afc13bb4c15896928117eed781ada4a6a6876c3c2bda7f5399ca856a"
+          "Runtime/DexLoom/VM/dx_vm.c": "58d0f23c98899e3442a5b5b3218d8c051d2e6f1b5a19f19fda877f4afb4ea8b3",
+          "Runtime/DexLoom/VM/dx_interpreter.c": "ef6a05b56d86d58a79caf9d65a0d638c30fdc3b537579ca8d78ddc9f061fcb73"
         }
       },
       "verified_at_commit": "be6fba4b750240b5c8e2dba23c5c3adaced94a6c",
@@ -1849,9 +1849,9 @@
           "dx_vm_execute_method"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/VM/dx_vm.c": "8a135ca78a7d5c404ecb7baa5096b2ca97a38a50c1e61025ef9e6f4e16c15716",
+          "Runtime/DexLoom/VM/dx_vm.c": "58d0f23c98899e3442a5b5b3218d8c051d2e6f1b5a19f19fda877f4afb4ea8b3",
           "Runtime/DexLoom/VM/dx_exec.c": "a12da4a0001422cfab0ae3759f1a46ae4e168046d4e395fa9e8ff7f4a84de409",
-          "Runtime/DexLoom/VM/dx_interpreter.c": "536f8ed0afc13bb4c15896928117eed781ada4a6a6876c3c2bda7f5399ca856a"
+          "Runtime/DexLoom/VM/dx_interpreter.c": "ef6a05b56d86d58a79caf9d65a0d638c30fdc3b537579ca8d78ddc9f061fcb73"
         }
       },
       "verified_at_commit": "be6fba4b750240b5c8e2dba23c5c3adaced94a6c",
@@ -1931,7 +1931,7 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/VM/dx_exec.c": "a12da4a0001422cfab0ae3759f1a46ae4e168046d4e395fa9e8ff7f4a84de409",
-          "Runtime/DexLoom/VM/dx_interpreter.c": "536f8ed0afc13bb4c15896928117eed781ada4a6a6876c3c2bda7f5399ca856a"
+          "Runtime/DexLoom/VM/dx_interpreter.c": "ef6a05b56d86d58a79caf9d65a0d638c30fdc3b537579ca8d78ddc9f061fcb73"
         }
       },
       "verified_at_commit": "980689028ca682a8f2b6419a66fb564fb5afae42",
@@ -2070,7 +2070,7 @@
           "native_character_fordigit"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/VM/dx_vm.c": "8a135ca78a7d5c404ecb7baa5096b2ca97a38a50c1e61025ef9e6f4e16c15716"
+          "Runtime/DexLoom/VM/dx_vm.c": "58d0f23c98899e3442a5b5b3218d8c051d2e6f1b5a19f19fda877f4afb4ea8b3"
         }
       },
       "verified_at_commit": "4f229c5b91653f6ca0f1d95bc23de40a29e0998a",
@@ -2159,7 +2159,7 @@
       "source_hashes": {
         "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
         "Runtime/DexLoom/game_dex_runner.h": "0bbbf6207632f8c115d717566fd72c0762972078c66c3d60aba1267c49078a75",
-        "Runtime/DexLoom/VM/dx_interpreter.c": "536f8ed0afc13bb4c15896928117eed781ada4a6a6876c3c2bda7f5399ca856a"
+        "Runtime/DexLoom/VM/dx_interpreter.c": "ef6a05b56d86d58a79caf9d65a0d638c30fdc3b537579ca8d78ddc9f061fcb73"
       }
     },
     "verified_at_commit": "abf76c36c25d43a6002a07c3fc428074b8edffaa",
@@ -2200,6 +2200,89 @@
     ],
     "contracts": [
       "framework.canvas_state_clip.host"
+    ]
+  },
+  {
+    "id": "java.util.vector.core",
+    "subsystem": "java.util.Vector core",
+    "android_api": "API19 Vector(), addElement, removeElement, size, elementAt",
+    "upstream": {
+      "revision": "Android 4.4.4_r2",
+      "repository": "platform/libcore",
+      "paths": [
+        "luni/src/main/java/java/util/Vector.java"
+      ],
+      "symbols": [
+        "Vector.Vector",
+        "Vector.addElement",
+        "Vector.removeElement",
+        "Vector.size",
+        "Vector.elementAt"
+      ],
+      "source_hashes": {
+        "luni/src/main/java/java/util/Vector.java": "ac5c467e1db5b76f2e3fb86d156c40b664df79e10965fbe809daa2b89d533e05"
+      },
+      "source_urls": {
+        "luni/src/main/java/java/util/Vector.java": "https://android.googlesource.com/platform/libcore/+/android-4.4.4_r2/luni/src/main/java/java/util/Vector.java?format=TEXT"
+      },
+      "symbols_by_path": {
+        "luni/src/main/java/java/util/Vector.java": [
+          "private static final int DEFAULT_SIZE = 10;",
+          "public Vector()",
+          "public synchronized void addElement(E object)",
+          "public synchronized boolean removeElement(Object object)",
+          "public synchronized int size()",
+          "public synchronized E elementAt(int location)"
+        ]
+      }
+    },
+    "agr": {
+      "paths": [
+        "Runtime/DexLoom/VM/dx_vm.c",
+        "Runtime/DexLoom/VM/dx_interpreter.c"
+      ],
+      "symbols": [
+        "native_vector_init",
+        "native_vector_add_element",
+        "native_vector_remove_element",
+        "native_vector_size",
+        "native_vector_element_at"
+      ],
+      "source_hashes": {
+        "Runtime/DexLoom/VM/dx_vm.c": "58d0f23c98899e3442a5b5b3218d8c051d2e6f1b5a19f19fda877f4afb4ea8b3",
+        "Runtime/DexLoom/VM/dx_interpreter.c": "ef6a05b56d86d58a79caf9d65a0d638c30fdc3b537579ca8d78ddc9f061fcb73"
+      }
+    },
+    "verified_at_commit": "98920a9ce23e9115c385e13d712751a062071210",
+    "status": "VALID",
+    "dependencies": [],
+    "observable_semantics": [
+      "Vector() starts empty with elementData length 10 and capacityIncrement 0",
+      "size returns the current element count",
+      "addElement appends the same guest object",
+      "elementAt returns that stored object",
+      "an index outside 0 inclusive through size exclusive throws ArrayIndexOutOfBoundsException",
+      "removeElement removes the first equals match, shifts the tail, and returns true, or returns false when the object is absent"
+    ],
+    "internal_invariants": [
+      "elementData is a guest object array reachable from the Vector field",
+      "size, addElement, elementAt, and removeElement enter the Vector monitor",
+      "Vector() does not enter the monitor",
+      "growth with capacityIncrement 0 doubles the array"
+    ],
+    "execution_placement": "HOST-DEX",
+    "host_substitutions": [
+      "native Vector methods update one guest elementData array",
+      "synchronization uses dx_vm_monitor_enter and dx_vm_monitor_exit"
+    ],
+    "known_deviations": [
+      "Enumeration, iterator, insertElementAt, setElementAt, removeElementAt, and the other Vector methods are not registered",
+      "a negative elementAt index throws ArrayIndexOutOfBoundsException with the helper length and index message",
+      "equals uses reference identity unless the key class defines an equals method other than Object.equals",
+      "modCount is not stored"
+    ],
+    "contracts": [
+      "dex.vector_core"
     ]
   }
   ]

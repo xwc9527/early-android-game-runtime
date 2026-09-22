@@ -30,10 +30,10 @@
     "causal_status": "REAL_GAME_CONFIRMED",
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "Do not implement java.util.Vector.size in this phase. Do not rerun the content-frame Simulator.",
-    "primary_blocker": "After Canvas.restore returns, GameScreen.paint pc 3 invoke-virtual method_idx 116 calls unresolved java.util.Vector.size shorty I.",
-    "first_broken_boundary": "java.util.Vector.size on the guest paint path after Canvas.restore",
-    "first_broken_boundary_evidence": "Local unchanged Frozen Bubble org.jfedor.frozenbubble_8 sha256 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569, Linux 320x480. Sprite.drawImageClipped exec 1: save pc 1 opcode 0x6e method_idx 36 flag 2 returned 1 save_count 2; clipRect pc 47 opcode 0x74 method_idx 30 coords 25,433,35,455 Region.Op.REPLACE nativeInt 5 result true clip 25,433,35,455; drawBitmap pc 69 method_idx 31 wrote 220 inside that clip; restore pc 72 method_idx 33 clip returned to 0,0,320,480. Earliest unresolved after that cluster: GameScreen.paint pc 3 opcode 0x6e method_idx 116 Vector.size shorty I."
+    "next_validation": "Do not implement Activity.requestWindowFeature in this phase. Do not rerun the content-frame Simulator.",
+    "primary_blocker": "FrozenBubble.onCreate pc 8 opcode 0x6e method_idx 185 calls unresolved requestWindowFeature shorty ZI argument 1 on execution context 0.",
+    "first_broken_boundary": "Activity requestWindowFeature during FrozenBubble.onCreate, before the game thread",
+    "first_broken_boundary_evidence": "Local unchanged Frozen Bubble org.jfedor.frozenbubble_8 sha256 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569, Linux 320x480. Vector core is resolved: GameScreen.paint size returns 1 and elementAt(0) returns the PenguinSprite added by addSprite, then PenguinSprite.paint runs. No unresolved invoke follows elementAt. The earliest unresolved invoke still present is FrozenBubble.onCreate pc 8 opcode 0x6e method_idx 185 requestWindowFeature shorty ZI argument 1, execution context 0."
   },
   "ci_budget": {
     "valid_closure_runs": 1,

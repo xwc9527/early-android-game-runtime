@@ -57,7 +57,7 @@
   ],
   "remaining_uncertainty": [
     "MIN_RADIX and MAX_RADIX fields are not registered. This call site passes the radix as an immediate.",
-    "The forDigit probe's next unresolved invoke was Canvas.save. That cluster is now framework.graphics.canvas_state_clip. The earliest unresolved API after the clip cluster is java.util.Vector.size.",
+    "The forDigit probe's next unresolved invoke was Canvas.save. That cluster is framework.graphics.canvas_state_clip. java.util.Vector core is a separate contract.",
     "This confirmation does not change the Simulator content frame on discovery 35711118165."
   ],
   "next_action": "forDigit stays REAL_GAME_CONFIRMED. Canvas save, clipRect, and restore are framework.graphics.canvas_state_clip. Do not rerun the content-frame Simulator for forDigit.",
