@@ -78,12 +78,12 @@
   ],
   "remaining_uncertainty": [
     "The Frozen Bubble probe is a local Linux host run. It is not Simulator discovery and not a device run.",
-    "Character.forDigit is unresolved and level-number drawing is incomplete. First content frame is real but visual completeness is partial.",
+    "Character.forDigit is now a separate host contract. Level-number drawing was not re-probed. Visual completeness stays partial.",
     "Semi-transparent PNG samples from Skia may store unpremultiplied-looking blue with a premultiplied alpha type tag. Opaque JPEG paths force opaque SRC copy.",
-    "Simulator discovery 35707262789 drew nothing because createScaledBitmap was unresolved at 1206x2622. That call is framework.graphics.bitmap_create_scaled. Canvas.save/restore and non-null Paint attributes are not implemented.",
+    "Discovery 35711118165 confirmed the UIKit content frame after createScaledBitmap. Canvas.save/restore and non-null Paint attributes are not implemented.",
     "UIKit/Metal presentation of the posted content buffer is not this contract."
   ],
-  "next_action": "The Linux null-Paint blit contract stands. The Simulator content-frame miss is Bitmap.createScaledBitmap, not Character.forDigit. Do not claim Simulator confirmation until lock, drawBitmap, pixel change, post, and a changed hash are observed on the UIKit path.",
+  "next_action": "The Linux null-Paint blit contract stands. Discovery 35711118165 confirms the UIKit content frame. Character.forDigit is java.lang.character.for_digit. Do not claim visual completeness.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "DEX Bitmap objects map to host agr_bitmap instances by object identity. Pixels are KitKat SkImageDecoder output in SkPMColor RGBA byte order. Index8 GIF frames expand to ARGB_8888 without linking SkCanvas. JPEG fill_below_level writes white rows without SkCanvas. agr_bitmap_draw performs clipped SRC_OVER onto the locked content Surface backing. The host surface mutex is not held across the blit beyond the existing canvas_locked ownership."

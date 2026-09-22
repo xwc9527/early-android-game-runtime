@@ -64,11 +64,11 @@
     }
   ],
   "remaining_uncertainty": [
-    "The Simulator content frame after this method exists is not yet measured. Character.forDigit stays blocked until lock, drawBitmap, pixel_change, post, and a changed hash are all observed.",
+    "Discovery 35711118165 on 4f229c5 measured the Simulator content frame after createScaledBitmap: lock 1, draw_bitmap 2, pixel_change 3450366, post 1, hash_before 12442867522110196069, hash_after 3039551882826320397, bitmap res/drawable/background.jpg 3496x2622. FIRST_CONTENT_FRAME is SIMULATOR_CONFIRMED. Visual completeness stays partial.",
     "Requested dimensions are used directly. API19 Math.round of the mapped rectangle can differ by one pixel.",
     "The Linux 320x480 probe never calls createScaledBitmap because mDisplayScale is 1."
   ],
-  "next_action": "Rerun the same focused Simulator question. Do not implement Character.forDigit unless that run shows a changed posted buffer.",
+  "next_action": "The Simulator content frame is confirmed on discovery 35711118165. Character.forDigit is a separate libcore contract. Do not rerun this same content-frame question.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "agr_bitmap_scale samples the existing ARGB_8888 buffer. It does not construct Matrix, Canvas, or Paint and does not change Canvas.drawBitmap, lockCanvas, or SurfaceView ownership."

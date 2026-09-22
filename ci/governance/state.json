@@ -30,10 +30,10 @@
     "causal_status": "REAL_GAME_CONFIRMED",
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "Rerun the same focused Simulator question after Bitmap.createScaledBitmap. Do not implement Character.forDigit, drawRGB, Paint, or presentation until that run reports lock > 0, drawBitmap > 0, pixel_change > 0, post > 0, and a changed buffer hash on the normal UIKit path.",
-    "primary_blocker": "Discovery 35710347602 drew background.jpg into the locked content Surface and kept the empty pre-draw hash, but the report was taken before unlockCanvasAndPost, so post_count was 0.",
-    "first_broken_boundary": "the focused report closes during the first content lock, before post",
-    "first_broken_boundary_evidence": "Discovery 35710347602 commit f7a43a4, unchanged Frozen Bubble, UIKit CADisplayLink, harness flags false, display 1206x2622. after_snapshot: created 1, changed 1, lock 1, unlock 0, post 0, draw_bitmap_count 1, pixel_change_count 3162132, hash_before 12442867522110196069, hash_after 0, canvas_locked 1, bitmap res/drawable/background.jpg 3496x2622. Framework trace ends at canvas.draw_bitmap with no canvas_posted."
+    "next_validation": "Character.forDigit host contract on the game VM. Do not start another content-frame Simulator run for that method. Do not claim visual completeness or presentation.",
+    "primary_blocker": "No content-frame blocker remains. Discovery 35711118165 confirmed drawBitmap, pixel mutation, and post. Character.forDigit is implemented. The next guest call after forDigit was not re-probed.",
+    "first_broken_boundary": "none for the confirmed first content frame",
+    "first_broken_boundary_evidence": "Discovery 35711118165 commit 4f229c5b91653f6ca0f1d95bc23de40a29e0998a, unchanged Frozen Bubble, UIKit CADisplayLink, display 1206x2622. harness_called_do_traversal false, harness_called_render_api false, surfaceCreated 1, surfaceChanged 1, lock_count 1, draw_bitmap_count 2, pixel_change_count 3450366, post_count 1, hash_before 12442867522110196069, hash_after 3039551882826320397, bitmap res/drawable/background.jpg 3496x2622. FIRST_CONTENT_FRAME is SIMULATOR_CONFIRMED."
   },
   "ci_budget": {
     "valid_closure_runs": 1,

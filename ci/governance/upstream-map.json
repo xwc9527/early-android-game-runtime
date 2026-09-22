@@ -685,7 +685,7 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/game_dex_runner.c": "85d7cc45c581313800a4e6f4393f6cc7cb1d5d59771265ecbcce530d1656aa89",
-          "Runtime/DexLoom/VM/dx_vm.c": "ae1b4042f3a3be171f2d2dd2a667b287699ed3e11459adaa0542a25f5a0d5871"
+          "Runtime/DexLoom/VM/dx_vm.c": "15569356f5d336995d48e9a002e7bcb4f656597cb1e819950e4f2cd1b2a49354"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -875,7 +875,7 @@
         "source_hashes": {
           "Runtime/DexLoom/APK/dx_manifest.c": "17d608e345e27ba2bcf564dd61e7918c79da4b243f32d811e59126996b27519e",
           "Runtime/DexLoom/game_dex_runner.c": "85d7cc45c581313800a4e6f4393f6cc7cb1d5d59771265ecbcce530d1656aa89",
-          "Runtime/DexLoom/VM/dx_vm.c": "ae1b4042f3a3be171f2d2dd2a667b287699ed3e11459adaa0542a25f5a0d5871",
+          "Runtime/DexLoom/VM/dx_vm.c": "15569356f5d336995d48e9a002e7bcb4f656597cb1e819950e4f2cd1b2a49354",
           "App/main.m": "5f3e106cfbe32c7c591b92a556e3e13f57435463bbe429507d3440509c93d74b"
         }
       },
@@ -1269,7 +1269,7 @@
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
           "Runtime/DexLoom/APK/dx_resources.c": "d1ccd60b46850517bb9905db8505f81222d8658b4af9b675547208f1eb07a0e2",
-          "Runtime/DexLoom/VM/dx_vm.c": "ae1b4042f3a3be171f2d2dd2a667b287699ed3e11459adaa0542a25f5a0d5871",
+          "Runtime/DexLoom/VM/dx_vm.c": "15569356f5d336995d48e9a002e7bcb4f656597cb1e819950e4f2cd1b2a49354",
           "Runtime/DexLoom/VM/dx_interpreter.c": "16935eff3262b50bd564a419b825ab7e060bd08b7f93c62e00d87a2ffd0b057e"
         }
       },
@@ -1779,7 +1779,7 @@
           "dx_vm_trace_virtual_invoke"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/VM/dx_vm.c": "ae1b4042f3a3be171f2d2dd2a667b287699ed3e11459adaa0542a25f5a0d5871",
+          "Runtime/DexLoom/VM/dx_vm.c": "15569356f5d336995d48e9a002e7bcb4f656597cb1e819950e4f2cd1b2a49354",
           "Runtime/DexLoom/VM/dx_interpreter.c": "16935eff3262b50bd564a419b825ab7e060bd08b7f93c62e00d87a2ffd0b057e"
         }
       },
@@ -1849,7 +1849,7 @@
           "dx_vm_execute_method"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/VM/dx_vm.c": "ae1b4042f3a3be171f2d2dd2a667b287699ed3e11459adaa0542a25f5a0d5871",
+          "Runtime/DexLoom/VM/dx_vm.c": "15569356f5d336995d48e9a002e7bcb4f656597cb1e819950e4f2cd1b2a49354",
           "Runtime/DexLoom/VM/dx_exec.c": "a12da4a0001422cfab0ae3759f1a46ae4e168046d4e395fa9e8ff7f4a84de409",
           "Runtime/DexLoom/VM/dx_interpreter.c": "16935eff3262b50bd564a419b825ab7e060bd08b7f93c62e00d87a2ffd0b057e"
         }
@@ -2033,6 +2033,68 @@
       ],
       "contracts": [
         "frozen-bubble.bitmap_decode_resource"
+      ]
+    },
+    {
+      "id": "java.lang.character.for_digit",
+      "subsystem": "java.lang.Character.forDigit",
+      "android_api": "API19 Character.forDigit(int, int)",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/libcore",
+        "paths": [
+          "luni/src/main/java/java/lang/Character.java"
+        ],
+        "symbols": [
+          "Character.forDigit"
+        ],
+        "source_hashes": {
+          "luni/src/main/java/java/lang/Character.java": "d33c2c814071f304f8a6f5331614489d9f337f296be5d027d2812baacd15ab38"
+        },
+        "source_urls": {
+          "luni/src/main/java/java/lang/Character.java": "https://android.googlesource.com/platform/libcore/+/android-4.4.4_r2/luni/src/main/java/java/lang/Character.java?format=TEXT"
+        },
+        "symbols_by_path": {
+          "luni/src/main/java/java/lang/Character.java": [
+            "public static final int MIN_RADIX = 2;",
+            "public static final int MAX_RADIX = 36;",
+            "public static char forDigit(int digit, int radix)"
+          ]
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/VM/dx_vm.c"
+        ],
+        "symbols": [
+          "native_character_fordigit"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/VM/dx_vm.c": "15569356f5d336995d48e9a002e7bcb4f656597cb1e819950e4f2cd1b2a49354"
+        }
+      },
+      "verified_at_commit": "4f229c5b91653f6ca0f1d95bc23de40a29e0998a",
+      "status": "VALID",
+      "dependencies": [],
+      "observable_semantics": [
+        "forDigit returns 0 when radix is below 2 or above 36",
+        "forDigit returns 0 when digit is negative or digit is not smaller than radix",
+        "a digit below 10 returns the character '0' plus that digit",
+        "a digit of 10 or more returns the character 'a' plus digit minus 10"
+      ],
+      "internal_invariants": [
+        "the return is a Dalvik char stored in an int register",
+        "the method is static and does not allocate a Character object"
+      ],
+      "execution_placement": "HOST-DEX",
+      "host_substitutions": [
+        "native_character_fordigit evaluates the API19 range checks directly"
+      ],
+      "known_deviations": [
+        "other Character methods and the MIN_RADIX and MAX_RADIX fields are not registered"
+      ],
+      "contracts": [
+        "dex.character_fordigit"
       ]
     }
   ]

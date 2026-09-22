@@ -26,6 +26,7 @@ Each machine entry records pinned source paths/hashes, AGR paths/hashes, depende
 | Bitmap.createScaledBitmap | `Bitmap.createScaledBitmap` | `game_dex_runner.c` `bitmap_create_scaled`, `agr_bitmap_scale` | HOST-DEX_HLE | positive destination size returns a new Bitmap with nearest or bilinear pixels; equal size returns the source |
 | DEX virtual dispatch | `dalvik vm/oo/Class.cpp` `createVtable` | `dx_vm.c` `dx_class_build_vtable`, `dx_interpreter.c` invoke-virtual | HOST-DEX | superclass slots keep their index; an override replaces that slot; a new virtual method is appended |
 | java.lang.Thread.start | `libcore Thread.start` → `VMThread.create` | `dx_exec.c` `native_thread_start` | HOST-DEX | start returns after a joinable host worker begins `run`; a Java Thread context must not alias a guest pthread |
+| java.lang.Character.forDigit | `libcore Character.forDigit` | `dx_vm.c` `native_character_fordigit` | HOST-DEX | radix 2..36 and digit in range return a decimal or lowercase digit character; otherwise 0 |
 | Java monitor-enter / monitor-exit | Dalvik `vm/Sync.cpp` `dvmLockObject` / `dvmUnlockObject` | `dx_exec.c` `dx_vm_monitor_enter` / `dx_vm_monitor_exit` | HOST-DEX | mutual exclusion and same-context reentry; `Object.wait` / `notify` are not implemented |
 
 Each new public path adds or updates one machine-readable entry. A problem report references the map entry, then supplies a compact `semantic-diff.json`; it does not duplicate the upstream map in prose.

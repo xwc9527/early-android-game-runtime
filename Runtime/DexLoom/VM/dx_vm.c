@@ -3232,6 +3232,25 @@ static DxResult native_field_getname(DxVM *vm, DxFrame *frame, DxValue *args, ui
 
 // --- Register java.lang classes ---
 
+/* API19 Character.forDigit: radix in [MIN_RADIX, MAX_RADIX] and
+   0 <= digit < radix returns '0'+digit or 'a'-10+digit. Otherwise 0.
+   Dalvik stores the char in an int register. */
+static DxResult native_character_fordigit(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    int32_t digit;
+    int32_t radix;
+    int32_t ch = 0;
+    (void)vm;
+    if (!frame) return DX_ERR_NULL_PTR;
+    digit = (arg_count >= 1 && args) ? args[0].i : 0;
+    radix = (arg_count >= 2 && args) ? args[1].i : 0;
+    if (radix >= 2 && radix <= 36 && digit >= 0 && digit < radix) {
+        ch = digit < 10 ? digit + '0' : digit + 'a' - 10;
+    }
+    frame->result = DX_INT_VALUE(ch);
+    frame->has_result = true;
+    return DX_OK;
+}
+
 DxResult dx_register_java_lang(DxVM *vm) {
     // java.lang.Object
     DxClass *obj_cls = create_class(vm, "Ljava/lang/Object;", NULL, true);
@@ -3666,7 +3685,10 @@ DxResult dx_register_java_lang(DxVM *vm) {
     create_class(vm, "Ljava/lang/Short;", number_cls, true)->status = DX_CLASS_INITIALIZED;
 
     // java.lang.Character
-    create_class(vm, "Ljava/lang/Character;", obj_cls, true)->status = DX_CLASS_INITIALIZED;
+    DxClass *char_cls = create_class(vm, "Ljava/lang/Character;", obj_cls, true);
+    add_native_method(char_cls, "forDigit", "CII", DX_ACC_PUBLIC | DX_ACC_STATIC,
+                      native_character_fordigit, true);
+    char_cls->status = DX_CLASS_INITIALIZED;
 
     // java.lang.Void
     create_class(vm, "Ljava/lang/Void;", obj_cls, true)->status = DX_CLASS_INITIALIZED;
