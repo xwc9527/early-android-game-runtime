@@ -69,7 +69,7 @@ jobs:
             -o /tmp/agr-dispatch-obj/game_dex_runner.o
           cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/framework-traversal-dispatch-host.c \
             -o /tmp/agr-dispatch-obj/framework-traversal-dispatch-host.o
-          g++ -pthread /tmp/agr-dispatch-obj/*.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/agr-dispatch-host
+          g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/*.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/agr-dispatch-host
           /tmp/agr-dispatch-host /tmp/activity-launch-fixture.dex /tmp/traversal-dispatch-host.json /tmp/surface-callback-fixture.dex /tmp/surface-layouts
           python3 ci/framework-traversal-dispatch-contract.py /tmp/traversal-dispatch-host.json
           python3 Tests/DexLoom/make_vtable_inheritance_fixture.py /tmp/vtable-inheritance.dex
@@ -93,7 +93,7 @@ jobs:
           python3 Tests/DexLoom/make_surface_canvas_fixture.py /tmp/surface-canvas.dex /tmp/surface-canvas-layouts
           cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/surface-canvas-host.c \
             -o /tmp/surface-canvas-host.o
-          g++ -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+          g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
             /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
             /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
             /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
