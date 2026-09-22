@@ -77,14 +77,17 @@
     {
       "type": "RUNTIME",
       "artifact": "Local host execution of org.jfedor.frozenbubble 1.7 after setContentView(int) inflation: content_child_count 1, layout -1,-1, start still ends at handoff.viewroot_traversal."
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "Simulator discovery 35670955623 commit 9508063 unchanged Frozen Bubble: resume content_view_installed, content_child_count 1, child id 0x7f060000, layout -1,-1, traversal_scheduled with traversal_count 0; two CADisplayLink frames reach viewroot_draw_entered, traversal_count 2, surface_generation 1, draw_count 1, harness_called_do_traversal false. The same run's explicit first traversal still ends at handoff.viewroot_surface_ready with draw_count 0."
     }
   ],
   "remaining_uncertainty": [
     "performDraw of the host Decor is not a first frame and does not create a SurfaceView surface.",
-    "Discovery 35668200026 reached viewroot_draw_entered with no content child because setContentView(int) bound to the View overload.",
-    "A local host execution of the same APK now installs one MATCH_PARENT child and leaves the traversal scheduled. Simulator confirmation is still open."
+    "The inflated content child is a SurfaceView subclass. surfaceCreated and SurfaceHolder.Callback are not implemented."
   ],
-  "next_action": "Run one focused Simulator discovery asking whether unchanged Frozen Bubble resume has content_child_count at least 1 with layout -1,-1 and still reaches viewroot_draw_entered without a harness do_traversal.",
+  "next_action": "Do not rerun the answered content-child Simulator question. The next public contract is SurfaceView surface lifecycle for that content child.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "UIKit CADisplayLink is the vsync endpoint in place of DisplayEventReceiver. One host frame runs at most one posted traversal callback. There is no Looper sync barrier and the frame function is not re-entered."

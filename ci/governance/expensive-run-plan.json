@@ -1,22 +1,22 @@
 {
   "schema_version": 1,
-  "enabled": true,
-  "question": "Does unchanged Frozen Bubble onCreate, which calls setContentView(int) for res/layout/main.xml, now install a MATCH_PARENT content parent with at least one child before the first host frame, while the same CADisplayLink path still consumes traversal 1 and traversal 2 without a harness do_traversal?",
+  "enabled": false,
+  "question": "Answered by discovery run 35670955623 on 9508063: unchanged Frozen Bubble onCreate installs a MATCH_PARENT content parent with one child, and the same CADisplayLink path consumes traversal 1 and traversal 2 without a harness do_traversal.",
   "current_uncertainty": [
-    "A local host execution of the APK installs the inflated child and still ends start at handoff.viewroot_traversal. That execution is not the Simulator UIKit CADisplayLink path."
+    "The answered question is closed. The remaining public gap is SurfaceView surfaceCreated / SurfaceHolder.Callback, which this plan does not ask."
   ],
   "expected_outcome_a": {
-    "result": "classification viewroot_draw_entered, resume content_view_installed true, content_child_count at least 1, layout -1,-1, traversal_count 2, surface_generation 1, draw_count at least 1, harness_called_do_traversal false",
+    "result": "classification viewroot_draw_entered, resume content_view_installed true, content_child_count 1, child id 0x7f060000, layout -1,-1, traversal_count 2, surface_generation 1, draw_count 1, harness_called_do_traversal false",
     "excludes": [
       "the claim that setContentView(int) inflation still fails to install a content child on the normal Frozen Bubble path"
     ]
   },
   "expected_outcome_b": {
-    "result": "resume has no content child, launch fails inside onCreate, or the two-frame Surface chain regresses",
+    "result": "not observed on run 35670955623",
     "excludes": [
-      "the claim that the Linux layout contract is sufficient for this APK on the Simulator normal path"
+      "a second run of this same content-child question"
     ]
   },
-  "why_cheaper_test_is_insufficient": "The Linux fixture does not execute FrozenBubble.onCreate. The local APK probe does not use UIKit CADisplayLink.",
+  "why_cheaper_test_is_insufficient": "Already answered on the Simulator UIKit path. Another run of this question has no information gain.",
   "prior_expensive_runs_without_information_gain": 0
 }

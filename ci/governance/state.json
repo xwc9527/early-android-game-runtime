@@ -30,10 +30,10 @@
     "causal_status": "REAL_GAME_CONFIRMED",
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "one focused Simulator discovery of Frozen Bubble setContentView(int) content-child installation",
-    "primary_blocker": "Simulator normal path has not yet confirmed the inflated content child at resume",
-    "first_broken_boundary": "Activity.setContentView(I)V",
-    "first_broken_boundary_evidence": "discovery run 35668200026 invoked setContentView but installed no child because the int overload bound to setContentView(View, LayoutParams). A local host execution of the same APK now installs one MATCH_PARENT child and still ends start at handoff.viewroot_traversal."
+    "next_validation": "SurfaceView surfaceCreated / SurfaceHolder.Callback for the inflated content child",
+    "primary_blocker": "performDraw entered the host Decor only; the SurfaceView content child has no surface callback",
+    "first_broken_boundary": "android.view.SurfaceView surface lifecycle",
+    "first_broken_boundary_evidence": "discovery run 35670955623 resume content_child_count 1 id 0x7f060000 layout -1,-1, then viewroot_draw_entered with traversal_count 2, surface_generation 1, draw_count 1, harness_called_do_traversal false. The draw is the host Decor, not a SurfaceView frame."
   },
   "ci_budget": {
     "valid_closure_runs": 1,

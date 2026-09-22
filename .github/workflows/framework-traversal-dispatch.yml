@@ -67,7 +67,7 @@ jobs:
 
   simulator-focused:
     needs: linux-source-contract
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-15
     timeout-minutes: 90
     env:
