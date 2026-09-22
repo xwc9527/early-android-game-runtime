@@ -44,7 +44,7 @@ jobs:
             "$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" \
             "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" \
             "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" \
-            "$DEX/APK/dx_apk.c" "$DEX/APK/dx_manifest.c" "$DEX/poc_host.c"
+            "$DEX/APK/dx_apk.c" "$DEX/APK/dx_manifest.c" "$DEX/APK/dx_resources.c" "$DEX/poc_host.c"
           do
             cc "${COMMON[@]}" -w -c "$source" -o "/tmp/agr-dispatch-obj/$(basename "${source%.c}").o"
           done
