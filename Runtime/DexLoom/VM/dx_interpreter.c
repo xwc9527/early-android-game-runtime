@@ -634,8 +634,8 @@ static DxResult handle_invoke(DxVM *vm, DxFrame *frame, const uint16_t *code,
     frame->has_result = true;
 
     // Exception unwinding: callee threw and didn't catch — try our catch handlers
-    if (res == DX_ERR_EXCEPTION && vm->pending_exception) {
-        DxObject *exc = vm->pending_exception;
+    if (res == DX_ERR_EXCEPTION && dx_vm_current_exec(vm)->pending_exception) {
+        DxObject *exc = dx_vm_current_exec(vm)->pending_exception;
         const char *exc_class = exc->klass ? exc->klass->descriptor : "unknown";
         DxMethod *caller_method = frame->method;
         if (caller_method && caller_method->code.tries_size > 0) {
@@ -647,7 +647,7 @@ static DxResult handle_invoke(DxVM *vm, DxFrame *frame, const uint16_t *code,
                         exc_class,
                         caller_method->declaring_class ? caller_method->declaring_class->descriptor : "?",
                         caller_method->name, handler_addr);
-                vm->pending_exception = NULL;
+                dx_vm_current_exec(vm)->pending_exception = NULL;
                 frame->pc = handler_addr;
                 return DX_OK; // caller must jump to handler_addr
             }
@@ -930,8 +930,8 @@ static DxResult handle_invoke_range(DxVM *vm, DxFrame *frame, const uint16_t *co
     frame->has_result = true;
 
     // Exception unwinding: callee threw and didn't catch — try our catch handlers
-    if (res == DX_ERR_EXCEPTION && vm->pending_exception) {
-        DxObject *exc = vm->pending_exception;
+    if (res == DX_ERR_EXCEPTION && dx_vm_current_exec(vm)->pending_exception) {
+        DxObject *exc = dx_vm_current_exec(vm)->pending_exception;
         const char *exc_class = exc->klass ? exc->klass->descriptor : "unknown";
         DxMethod *caller_method = frame->method;
         if (caller_method && caller_method->code.tries_size > 0) {
@@ -943,7 +943,7 @@ static DxResult handle_invoke_range(DxVM *vm, DxFrame *frame, const uint16_t *co
                         exc_class,
                         caller_method->declaring_class ? caller_method->declaring_class->descriptor : "?",
                         caller_method->name, handler_addr);
-                vm->pending_exception = NULL;
+                dx_vm_current_exec(vm)->pending_exception = NULL;
                 frame->pc = handler_addr;
                 return DX_OK;
             }
@@ -966,10 +966,10 @@ static DxResult handle_invoke_range(DxVM *vm, DxFrame *frame, const uint16_t *co
 
 // Get the DEX file for the currently executing method
 static DxDexFile *get_current_dex(DxVM *vm) {
-    if (vm->current_frame && vm->current_frame->method &&
-        vm->current_frame->method->declaring_class &&
-        vm->current_frame->method->declaring_class->dex_file) {
-        return vm->current_frame->method->declaring_class->dex_file;
+    if (dx_vm_current_exec(vm)->current_frame && dx_vm_current_exec(vm)->current_frame->method &&
+        dx_vm_current_exec(vm)->current_frame->method->declaring_class &&
+        dx_vm_current_exec(vm)->current_frame->method->declaring_class->dex_file) {
+        return dx_vm_current_exec(vm)->current_frame->method->declaring_class->dex_file;
     }
     return vm->dex;
 }
@@ -1057,19 +1057,25 @@ static DxResult handle_sput(DxVM *vm, DxFrame *frame, uint8_t src, uint16_t fiel
     return DX_OK;
 }
 
+static void release_entered_exec(DxExecutionContext **slot) {
+    if (slot) dx_exec_leave(*slot);
+}
+
 DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                                uint32_t arg_count, DxValue *result) {
     if (!vm || !method) return DX_ERR_NULL_PTR;
+    DxExecutionContext *entered __attribute__((cleanup(release_entered_exec))) = dx_vm_current_exec(vm);
+    dx_exec_enter(entered);
 
     /* Instruction and wall-clock budgets belong to one top-level DEX
      * invocation.  Nested calls share that budget, but a later independent
      * JNI -> DEX callback must start a new one.  Keeping the first timestamp
      * for the lifetime of the VM made repeated short loadImage calls fail once
      * the process had merely existed for watchdog_timeout_ms. */
-    if (vm->stack_depth == 0) {
-        vm->insn_count = 0;
-        vm->watchdog_triggered = false;
-        vm->watchdog_start_time = vm->watchdog_timeout_ms > 0
+    if (dx_vm_current_exec(vm)->stack_depth == 0) {
+        dx_vm_current_exec(vm)->insn_count = 0;
+        dx_vm_current_exec(vm)->watchdog_triggered = false;
+        dx_vm_current_exec(vm)->watchdog_start_time = vm->watchdog_timeout_ms > 0
             ? dx_current_time_ms() : 0;
     }
 
@@ -1092,25 +1098,25 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
         if (passes_filter) {
             _trace_method_active = true;
             DX_INFO("Trace", "%*sENTER %s->%s (depth=%d, args=%u)",
-                    vm->debug.trace_depth * 2, "", _trace_cls, _trace_mth,
-                    vm->debug.trace_depth, arg_count);
-            vm->debug.trace_depth++;
+                    dx_vm_current_exec(vm)->trace_depth * 2, "", _trace_cls, _trace_mth,
+                    dx_vm_current_exec(vm)->trace_depth, arg_count);
+            dx_vm_current_exec(vm)->trace_depth++;
         }
     }
 
     // Check call depth BEFORE allocating stack frame to prevent stack overflow
-    if (vm->stack_depth >= DX_MAX_STACK_DEPTH) {
+    if (dx_vm_current_exec(vm)->stack_depth >= DX_MAX_STACK_DEPTH) {
         DX_ERROR(TAG, "Stack overflow at %s.%s (depth %u)",
                  method->declaring_class ? method->declaring_class->descriptor : "?",
-                 method->name, vm->stack_depth);
-        if (_trace_method_active) vm->debug.trace_depth--;
+                 method->name, dx_vm_current_exec(vm)->stack_depth);
+        if (_trace_method_active) dx_vm_current_exec(vm)->trace_depth--;
         return DX_ERR_STACK_OVERFLOW;
     }
 
     // Detect infinite recursion: same method pointer appearing too many times
     {
         uint32_t recur_count = 0;
-        DxFrame *f = vm->current_frame;
+        DxFrame *f = dx_vm_current_exec(vm)->current_frame;
         while (f && recur_count <= 8) {
             if (f->method == method) recur_count++;
             f = f->caller;
@@ -1131,26 +1137,26 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
     // Telemetry: count method invocations
     if (vm->telemetry.telemetry_enabled) {
         vm->telemetry.total_methods_invoked++;
-        snprintf(vm->diagnostic_last_method, sizeof(vm->diagnostic_last_method),
+        snprintf(dx_vm_current_exec(vm)->diagnostic_last_method, sizeof(dx_vm_current_exec(vm)->diagnostic_last_method),
                  "%s->%s%s",
                  method->declaring_class && method->declaring_class->descriptor
                      ? method->declaring_class->descriptor : "?",
                  method->name ? method->name : "?",
                  method->shorty ? method->shorty : "");
-        uint64_t sequence = vm->diagnostic_method_sequence++;
+        uint64_t sequence = dx_vm_current_exec(vm)->diagnostic_method_sequence++;
         uint32_t slot = (uint32_t)(sequence % DX_DIAGNOSTIC_METHOD_EVENTS);
-        DxDiagnosticMethodEvent *event = &vm->diagnostic_method_events[slot];
+        DxDiagnosticMethodEvent *event = &dx_vm_current_exec(vm)->diagnostic_method_events[slot];
         memset(event, 0, sizeof(*event));
         event->sequence = sequence;
-        event->depth = vm->stack_depth;
+        event->depth = dx_vm_current_exec(vm)->stack_depth;
         event->is_native = method->is_native ? 1 : 0;
         snprintf(event->method, sizeof(event->method), "%s->%s%s",
                  method->declaring_class && method->declaring_class->descriptor
                      ? method->declaring_class->descriptor : "?",
                  method->name ? method->name : "?",
                  method->shorty ? method->shorty : "");
-        if (vm->diagnostic_method_event_count < DX_DIAGNOSTIC_METHOD_EVENTS)
-            vm->diagnostic_method_event_count++;
+        if (dx_vm_current_exec(vm)->diagnostic_method_event_count < DX_DIAGNOSTIC_METHOD_EVENTS)
+            dx_vm_current_exec(vm)->diagnostic_method_event_count++;
     }
 
     // Handle native methods
@@ -1164,22 +1170,22 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
         DxFrame *frame = dx_vm_alloc_frame(vm);
         if (!frame) return DX_ERR_OUT_OF_MEMORY;
         frame->method = method;
-        frame->caller = vm->current_frame;
+        frame->caller = dx_vm_current_exec(vm)->current_frame;
 
         for (uint32_t i = 0; i < arg_count && i < DX_MAX_REGISTERS; i++) {
             frame->registers[i] = args[i];
         }
 
-        vm->current_frame = frame;
-        vm->stack_depth++;
+        dx_vm_current_exec(vm)->current_frame = frame;
+        dx_vm_current_exec(vm)->stack_depth++;
 
         DxResult res = method->native_fn
             ? method->native_fn(vm, frame, args, arg_count)
             : vm->unbound_native_fn(vm, frame, method, args, arg_count,
                                     vm->unbound_native_user);
 
-        vm->stack_depth--;
-        vm->current_frame = frame->caller;
+        dx_vm_current_exec(vm)->stack_depth--;
+        dx_vm_current_exec(vm)->current_frame = frame->caller;
 
         if (result && frame->has_result) {
             *result = frame->result;
@@ -1189,9 +1195,9 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                  method->declaring_class->descriptor, method->name,
                  dx_result_string(res));
         if (_trace_method_active) {
-            vm->debug.trace_depth--;
+            dx_vm_current_exec(vm)->trace_depth--;
             DX_INFO("Trace", "%*sEXIT  %s->%s (native, result=%s)",
-                    vm->debug.trace_depth * 2, "", _trace_cls, _trace_mth,
+                    dx_vm_current_exec(vm)->trace_depth * 2, "", _trace_cls, _trace_mth,
                     dx_result_string(res));
         }
         dx_vm_free_frame(vm, frame);
@@ -1204,9 +1210,9 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                  method->declaring_class ? method->declaring_class->descriptor : "?",
                  method->name);
         if (_trace_method_active) {
-            vm->debug.trace_depth--;
+            dx_vm_current_exec(vm)->trace_depth--;
             DX_INFO("Trace", "%*sEXIT  %s->%s (no code)",
-                    vm->debug.trace_depth * 2, "", _trace_cls, _trace_mth);
+                    dx_vm_current_exec(vm)->trace_depth * 2, "", _trace_cls, _trace_mth);
         }
         if (result) *result = DX_NULL_VALUE;
         return DX_OK;
@@ -1218,7 +1224,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
         DX_ERROR(TAG, "Method %s.%s has_code=true but insns is NULL or insns_size=0",
                  method->declaring_class ? method->declaring_class->descriptor : "?",
                  method->name ? method->name : "?");
-        if (_trace_method_active) vm->debug.trace_depth--;
+        if (_trace_method_active) dx_vm_current_exec(vm)->trace_depth--;
         return DX_ERR_VERIFICATION_FAILED;
     }
 
@@ -1226,7 +1232,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
     if (!frame) return DX_ERR_OUT_OF_MEMORY;
 
     frame->method = method;
-    frame->caller = vm->current_frame;
+    frame->caller = dx_vm_current_exec(vm)->current_frame;
 
     // Place arguments in the last N registers (Dalvik convention)
     uint16_t regs = method->code.registers_size;
@@ -1241,8 +1247,8 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
         frame->registers[first_arg_reg + i] = args[i];
     }
 
-    vm->current_frame = frame;
-    vm->stack_depth++;
+    dx_vm_current_exec(vm)->current_frame = frame;
+    dx_vm_current_exec(vm)->stack_depth++;
 
     const uint16_t *code = method->code.insns;
     uint32_t code_size = method->code.insns_size;
@@ -1271,7 +1277,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                      (uint32_t)(idx), (uint32_t)regs, pc, \
                      method->declaring_class ? method->declaring_class->descriptor : "?", \
                      method->name ? method->name : "?", opcode); \
-            snprintf(vm->error_msg, sizeof(vm->error_msg), \
+            snprintf(dx_vm_current_exec(vm)->error_msg, sizeof(dx_vm_current_exec(vm)->error_msg), \
                      "Register v%u out of bounds (max v%u) at pc=%u in %s.%s", \
                      (uint32_t)(idx), (uint32_t)(regs - 1), pc, \
                      method->declaring_class ? method->declaring_class->descriptor : "?", \
@@ -1556,9 +1562,17 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
 
     while (pc < code_size) {
         next_instruction: (void)0;
-        // Enforce global instruction limit to prevent runaway execution
-        vm->insn_count++;
-        vm->insn_total++;
+        {
+            DxResult polled = dx_vm_exec_poll(vm);
+            if (polled != DX_OK) {
+                exec_result = polled;
+                if (result) *result = DX_NULL_VALUE;
+                goto done;
+            }
+        }
+        // Per-context instruction budget. Nested calls share that context's budget.
+        dx_vm_current_exec(vm)->insn_count++;
+        __atomic_fetch_add(&vm->insn_total, 1, __ATOMIC_RELAXED);
 
         // Record instruction in trace ring buffer
         insn_trace[insn_trace_idx % INSN_TRACE_SIZE].pc = pc;
@@ -1571,12 +1585,12 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
         }
 
         // Cancellation: check every 10000 instructions (set from UI thread)
-        if (vm->cancel_requested && (vm->insn_count % 10000) == 0) {
+        if (vm->cancel_requested && (dx_vm_current_exec(vm)->insn_count % 10000) == 0) {
             const char *cls_desc = method->declaring_class ? method->declaring_class->descriptor : "?";
             const char *mth_name = method->name ? method->name : "?";
             DX_INFO(TAG, "Execution cancelled by user in %s.%s at pc=%u after %llu instructions",
-                    cls_desc, mth_name, pc, vm->insn_count);
-            snprintf(vm->error_msg, sizeof(vm->error_msg),
+                    cls_desc, mth_name, pc, dx_vm_current_exec(vm)->insn_count);
+            snprintf(dx_vm_current_exec(vm)->error_msg, sizeof(dx_vm_current_exec(vm)->error_msg),
                      "Execution cancelled by user in %s.%s at pc=%u",
                      cls_desc, mth_name, pc);
             exec_result = DX_ERR_CANCELLED;
@@ -1585,15 +1599,15 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
         }
 
         // Watchdog: check wall-clock timeout every 10000 instructions
-        if (vm->watchdog_timeout_ms > 0 && (vm->insn_count % 10000) == 0) {
+        if (vm->watchdog_timeout_ms > 0 && (dx_vm_current_exec(vm)->insn_count % 10000) == 0) {
             uint64_t now_ms = dx_current_time_ms();
-            if (now_ms - vm->watchdog_start_time > vm->watchdog_timeout_ms) {
-                vm->watchdog_triggered = true;
+            if (now_ms - dx_vm_current_exec(vm)->watchdog_start_time > vm->watchdog_timeout_ms) {
+                dx_vm_current_exec(vm)->watchdog_triggered = true;
                 const char *cls_desc = method->declaring_class ? method->declaring_class->descriptor : "?";
                 const char *mth_name = method->name ? method->name : "?";
                 DX_ERROR(TAG, "Watchdog timeout (%ums) in %s.%s at pc=%u after %llu instructions",
-                         vm->watchdog_timeout_ms, cls_desc, mth_name, pc, vm->insn_count);
-                snprintf(vm->error_msg, sizeof(vm->error_msg),
+                         vm->watchdog_timeout_ms, cls_desc, mth_name, pc, dx_vm_current_exec(vm)->insn_count);
+                snprintf(dx_vm_current_exec(vm)->error_msg, sizeof(dx_vm_current_exec(vm)->error_msg),
                          "Watchdog timeout (%ums) in %s.%s at pc=%u",
                          vm->watchdog_timeout_ms, cls_desc, mth_name, pc);
                 exec_result = DX_ERR_BUDGET_EXHAUSTED;
@@ -1602,7 +1616,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
             }
         }
 
-        if (vm->insn_limit > 0 && vm->insn_count > vm->insn_limit) {
+        if (dx_vm_current_exec(vm)->insn_limit > 0 && dx_vm_current_exec(vm)->insn_count > dx_vm_current_exec(vm)->insn_limit) {
             const char *cls_desc = method->declaring_class ? method->declaring_class->descriptor : "?";
             const char *mth_name = method->name ? method->name : "?";
 
@@ -1621,12 +1635,12 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
             }
 
             DX_WARN(TAG, "Instruction budget exhausted (%llu) in %s.%s at pc=%u - probable infinite loop",
-                     vm->insn_limit, cls_desc, mth_name, pc);
+                     dx_vm_current_exec(vm)->insn_limit, cls_desc, mth_name, pc);
             DX_WARN(TAG, "%s", trace_buf);
 
-            snprintf(vm->error_msg, sizeof(vm->error_msg),
+            snprintf(dx_vm_current_exec(vm)->error_msg, sizeof(dx_vm_current_exec(vm)->error_msg),
                      "Instruction budget exhausted (%llu insns) in %s.%s at pc=%u — probable infinite loop",
-                     vm->insn_limit, cls_desc, mth_name, pc);
+                     dx_vm_current_exec(vm)->insn_limit, cls_desc, mth_name, pc);
 
             exec_result = DX_ERR_BUDGET_EXHAUSTED;
             if (result) *result = DX_NULL_VALUE;
@@ -1941,7 +1955,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                     uint8_t eqz_reg = (next_inst >> 8) & 0xFF;
                     if (eqz_reg == dst) {
                         // Fused: skip re-dispatch, do the branch inline
-                        vm->insn_count++;
+                        dx_vm_current_exec(vm)->insn_count++;
                         vm->insn_total++;
                         if (vm->profiling_enabled) {
                             vm->opcode_histogram[0x38]++;
@@ -2090,36 +2104,52 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
         }
 
 #if USE_COMPUTED_GOTO
-        op_0x1D: // monitor-enter (11x) - no threading model, with spin detection
+        op_0x1D: // monitor-enter (11x)
 #else
-        case 0x1D: // monitor-enter (11x) - no threading model, with spin detection
+        case 0x1D: // monitor-enter (11x)
 #endif
         {
-            // Detect potential deadlock: same monitor-enter PC hit repeatedly
-            static uint32_t monitor_last_pc = UINT32_MAX;
-            static uint32_t monitor_spin_count = 0;
-            if (pc == monitor_last_pc) {
-                monitor_spin_count++;
-                if (monitor_spin_count > 10000) {
-                    DX_WARN(TAG, "Potential deadlock: monitor-enter at PC %u hit %u times without progress",
-                            pc, monitor_spin_count);
-                    monitor_spin_count = 0; // reset so we don't spam
+            uint8_t reg = (uint8_t)(inst >> 8);
+            DxObject *mon_obj = (pinned_regs[reg].tag == DX_VAL_OBJ) ? pinned_regs[reg].obj : NULL;
+            DxResult monitor_result = dx_vm_monitor_enter(vm, mon_obj);
+            if (monitor_result != DX_OK) {
+                if (monitor_result == DX_ERR_EXCEPTION && method->code.tries_size > 0 &&
+                    dx_vm_current_exec(vm)->pending_exception) {
+                    uint32_t handler = find_catch_handler(vm, frame, code, code_size,
+                                                          method->code.tries_size, pc,
+                                                          dx_vm_current_exec(vm)->pending_exception);
+                    if (handler != UINT32_MAX) { pc = handler; DISPATCH_NEXT; }
                 }
-            } else {
-                monitor_last_pc = pc;
-                monitor_spin_count = 1;
+                exec_result = monitor_result;
+                goto done;
             }
             pc += 1;
             DISPATCH_NEXT;
         }
 
 #if USE_COMPUTED_GOTO
-        op_0x1E: // monitor-exit (11x) - no threading model
+        op_0x1E: // monitor-exit (11x)
 #else
-        case 0x1E: // monitor-exit (11x) - no threading model
+        case 0x1E: // monitor-exit (11x)
 #endif
+        {
+            uint8_t reg = (uint8_t)(inst >> 8);
+            DxObject *mon_obj = (pinned_regs[reg].tag == DX_VAL_OBJ) ? pinned_regs[reg].obj : NULL;
+            DxResult monitor_result = dx_vm_monitor_exit(vm, mon_obj);
+            if (monitor_result != DX_OK) {
+                if (monitor_result == DX_ERR_EXCEPTION && method->code.tries_size > 0 &&
+                    dx_vm_current_exec(vm)->pending_exception) {
+                    uint32_t handler = find_catch_handler(vm, frame, code, code_size,
+                                                          method->code.tries_size, pc,
+                                                          dx_vm_current_exec(vm)->pending_exception);
+                    if (handler != UINT32_MAX) { pc = handler; DISPATCH_NEXT; }
+                }
+                exec_result = monitor_result;
+                goto done;
+            }
             pc += 1;
             DISPATCH_NEXT;
+        }
 
 #if USE_COMPUTED_GOTO
         op_0x1F: { // check-cast vAA, type@BBBB (21c)
@@ -2162,7 +2192,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                     }
                     // No handler - propagate
                     if (exc) {
-                        vm->pending_exception = exc;
+                        dx_vm_current_exec(vm)->pending_exception = exc;
                         exec_result = DX_ERR_EXCEPTION;
                         goto done;
                     }
@@ -2415,7 +2445,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
 
             // No handler found - propagate up to caller via exception unwinding
             DX_INFO(TAG, "throw %s (no handler, propagating to caller)", exc_class);
-            vm->pending_exception = exc;
+            dx_vm_current_exec(vm)->pending_exception = exc;
             exec_result = DX_ERR_EXCEPTION;
             goto done;
         }
@@ -2687,7 +2717,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                                                            method->code.tries_size, pc, exc);
                     if (handler != UINT32_MAX) { pc = handler; goto next_instruction; }
                 }
-                if (exc) { vm->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
+                if (exc) { dx_vm_current_exec(vm)->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
                 pinned_regs[dst] = (opcode == 0x46) ? DX_NULL_VALUE : DX_INT_VALUE(0);
             } else if (arr->is_array && index >= 0 && (uint32_t)index < arr->array_length) {
                 pinned_regs[dst] = arr->array_elements[index];
@@ -2702,7 +2732,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                                                            method->code.tries_size, pc, exc);
                     if (handler != UINT32_MAX) { pc = handler; goto next_instruction; }
                 }
-                if (exc) { vm->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
+                if (exc) { dx_vm_current_exec(vm)->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
                 pinned_regs[dst] = (opcode == 0x46) ? DX_NULL_VALUE : DX_INT_VALUE(0);
             } else {
                 pinned_regs[dst] = (opcode == 0x46) ? DX_NULL_VALUE : DX_INT_VALUE(0);
@@ -2740,7 +2770,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                                                            method->code.tries_size, pc, exc);
                     if (handler != UINT32_MAX) { pc = handler; goto next_instruction; }
                 }
-                if (exc) { vm->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
+                if (exc) { dx_vm_current_exec(vm)->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
             } else if (arr->is_array && index >= 0 && (uint32_t)index < arr->array_length) {
                 arr->array_elements[index] = pinned_regs[src];
             } else if (arr->is_array) {
@@ -2753,7 +2783,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                                                            method->code.tries_size, pc, exc);
                     if (handler != UINT32_MAX) { pc = handler; goto next_instruction; }
                 }
-                if (exc) { vm->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
+                if (exc) { dx_vm_current_exec(vm)->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
             }
             pc += 2;
             DISPATCH_NEXT;
@@ -2794,7 +2824,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                 }
                 if (exc && null_access_count <= 1) {
                     // First null access with no local handler — propagate
-                    vm->pending_exception = exc;
+                    dx_vm_current_exec(vm)->pending_exception = exc;
                     exec_result = DX_ERR_EXCEPTION;
                     goto done;
                 }
@@ -2843,7 +2873,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                     uint8_t ret_reg = (next_inst >> 8) & 0xFF;
                     if (ret_reg == dst) {
                         // Fused: skip re-dispatch, do the return inline
-                        vm->insn_count++;
+                        dx_vm_current_exec(vm)->insn_count++;
                         vm->insn_total++;
                         if (vm->profiling_enabled) {
                             vm->opcode_histogram[0x11]++;
@@ -3335,7 +3365,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                                                                    method->code.tries_size, pc, exc);
                             if (handler != UINT32_MAX) { pc = handler; goto next_instruction; }
                         }
-                        if (exc) { vm->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
+                        if (exc) { dx_vm_current_exec(vm)->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
                         DX_WARN(TAG, "ArithmeticException: divide by zero"); goto done;
                     }
                     // Java: INT_MIN / -1 = INT_MIN (wraps)
@@ -3348,7 +3378,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                                                                    method->code.tries_size, pc, exc);
                             if (handler != UINT32_MAX) { pc = handler; goto next_instruction; }
                         }
-                        if (exc) { vm->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
+                        if (exc) { dx_vm_current_exec(vm)->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
                         DX_WARN(TAG, "ArithmeticException: divide by zero"); goto done;
                     }
                     // Java: INT_MIN % -1 = 0
@@ -3374,7 +3404,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                                                                    method->code.tries_size, pc, exc);
                             if (handler != UINT32_MAX) { pc = handler; goto next_instruction; }
                         }
-                        if (exc) { vm->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
+                        if (exc) { dx_vm_current_exec(vm)->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
                         goto done;
                     }
                     // LLONG_MIN / -1 = LLONG_MIN in Java
@@ -3389,7 +3419,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                                                                    method->code.tries_size, pc, exc);
                             if (handler != UINT32_MAX) { pc = handler; goto next_instruction; }
                         }
-                        if (exc) { vm->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
+                        if (exc) { dx_vm_current_exec(vm)->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
                         goto done;
                     }
                     pinned_regs[dst].tag = DX_VAL_LONG;
@@ -3519,7 +3549,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                                                                    method->code.tries_size, pc, exc);
                             if (handler != UINT32_MAX) { pc = handler; goto next_instruction; }
                         }
-                        if (exc) { vm->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
+                        if (exc) { dx_vm_current_exec(vm)->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
                         DX_WARN(TAG, "ArithmeticException: divide by zero"); goto done;
                     }
                     r = (va == INT32_MIN && vb == -1) ? INT32_MIN : va / vb; break;
@@ -3531,7 +3561,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                                                                    method->code.tries_size, pc, exc);
                             if (handler != UINT32_MAX) { pc = handler; goto next_instruction; }
                         }
-                        if (exc) { vm->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
+                        if (exc) { dx_vm_current_exec(vm)->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
                         DX_WARN(TAG, "ArithmeticException: divide by zero"); goto done;
                     }
                     r = (va == INT32_MIN && vb == -1) ? 0 : va % vb; break;
@@ -3556,7 +3586,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                                                                    method->code.tries_size, pc, exc);
                             if (handler != UINT32_MAX) { pc = handler; goto next_instruction; }
                         }
-                        if (exc) { vm->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
+                        if (exc) { dx_vm_current_exec(vm)->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
                         goto done;
                     }
                     pinned_regs[a].tag = DX_VAL_LONG;
@@ -3570,7 +3600,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                                                                    method->code.tries_size, pc, exc);
                             if (handler != UINT32_MAX) { pc = handler; goto next_instruction; }
                         }
-                        if (exc) { vm->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
+                        if (exc) { dx_vm_current_exec(vm)->pending_exception = exc; exec_result = DX_ERR_EXCEPTION; goto done; }
                         goto done;
                     }
                     pinned_regs[a].tag = DX_VAL_LONG;
@@ -3945,7 +3975,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
             const char *mth_name = method->name ? method->name : "?";
             DX_WARN(TAG, "Unsupported opcode 0x%02x (%s) at pc=%u in %s.%s - skipping",
                      opcode, op_name, pc, cls_desc, mth_name);
-            snprintf(vm->error_msg, sizeof(vm->error_msg),
+            snprintf(dx_vm_current_exec(vm)->error_msg, sizeof(dx_vm_current_exec(vm)->error_msg),
                      "Unsupported feature: opcode 0x%02x (%s) at pc=%u in %s.%s",
                      opcode, op_name, pc, cls_desc, mth_name);
             // Skip by instruction width instead of failing
@@ -3970,17 +4000,17 @@ done:
     // an exception was created + goto done without going through find_catch_handler
     // (e.g. some runtime errors), or where find_catch_handler matched a typed
     // handler but there's also a finally on an outer try block.
-    if (exec_result == DX_ERR_EXCEPTION && vm->pending_exception &&
+    if (exec_result == DX_ERR_EXCEPTION && dx_vm_current_exec(vm)->pending_exception &&
         method->code.tries_size > 0) {
         uint32_t finally_addr = find_catch_handler(vm, frame, code, code_size,
                                                     method->code.tries_size, pc,
-                                                    vm->pending_exception);
+                                                    dx_vm_current_exec(vm)->pending_exception);
         if (finally_addr != UINT32_MAX) {
             DX_DEBUG(TAG, "Exception finally handler at %u in %s.%s (exit path)",
                      finally_addr,
                      method->declaring_class ? method->declaring_class->descriptor : "?",
                      method->name);
-            vm->pending_exception = NULL;
+            dx_vm_current_exec(vm)->pending_exception = NULL;
             exec_result = DX_OK;
             pc = finally_addr;
             goto next_instruction;
@@ -4038,14 +4068,14 @@ done:
 
     // Debug tracing: method exit
     if (_trace_method_active) {
-        vm->debug.trace_depth--;
+        dx_vm_current_exec(vm)->trace_depth--;
         DX_INFO("Trace", "%*sEXIT  %s->%s (result=%s)",
-                vm->debug.trace_depth * 2, "", _trace_cls, _trace_mth,
+                dx_vm_current_exec(vm)->trace_depth * 2, "", _trace_cls, _trace_mth,
                 dx_result_string(exec_result));
     }
 
-    vm->stack_depth--;
-    vm->current_frame = frame->caller;
+    dx_vm_current_exec(vm)->stack_depth--;
+    dx_vm_current_exec(vm)->current_frame = frame->caller;
 
     if (frame->has_result && result) {
         *result = frame->result;

@@ -29,7 +29,7 @@ def build() -> bytes:
         "Lsynth/Kid;", "Lsynth/Markers;", "Lsynth/ObjChild;", "Lsynth/ObjOver;",
         "Lsynth/Probe;", "Lsynth/Worker;", "Ljava/lang/Object;", "Ljava/lang/Thread;",
         "Markers.java", "ObjChild.java", "ObjOver.java", "Probe.java", "V",
-        "Worker.java", "a", "b", "c", "cleanUp", "hashCode", "hit", "probeBaseB",
+        "Worker.java", "a", "b", "c", "cleanUp", "hashCode", "hit", "join", "probeBaseB",
         "probeC", "probeHash", "probeKidA", "probeKidB", "probeKidC", "probeOverC",
         "probeOverHash", "probeOverToString", "probeStart", "probeToString", "run",
         "start", "toString",
@@ -60,6 +60,7 @@ def build() -> bytes:
         method("Ljava/lang/Object;", protos[0], "<init>"),
         method("Ljava/lang/Object;", protos[2], "toString"),
         method("Ljava/lang/Object;", protos[1], "hashCode"),
+        method("Ljava/lang/Thread;", protos[0], "join"),
         method("Ljava/lang/Thread;", protos[0], "start"),
         method("Lsynth/ObjChild;", protos[0], "<init>"),
         method("Lsynth/ObjChild;", protos[1], "c"),
@@ -213,7 +214,9 @@ def build() -> bytes:
     probe_result(method("Lsynth/Probe;", protos[6], "probeKidB"), "Lsynth/Base;", protos[1], "b")
     probe_result(method("Lsynth/Probe;", protos[6], "probeKidC"), "Lsynth/Kid;", protos[1], "c")
     add_code(method("Lsynth/Probe;", protos[7], "probeStart"), 2, 1, 1,
-             invoke(0x6E, "Ljava/lang/Thread;", protos[0], "start", [1]) + sget(0, hit) + ret_int(0))
+             invoke(0x6E, "Ljava/lang/Thread;", protos[0], "start", [1]) +
+             invoke(0x6E, "Ljava/lang/Thread;", protos[0], "join", [1]) +
+             sget(0, hit) + ret_int(0))
 
     class_data_offsets = {}
 

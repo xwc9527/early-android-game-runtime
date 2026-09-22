@@ -34,10 +34,11 @@ DxVM *dx_vm_create(DxContext *ctx) {
     if (!vm) return NULL;
     memset(vm, 0, sizeof(DxVM));
     vm->ctx = ctx;
-    vm->insn_limit = DX_MAX_INSTRUCTIONS;
+    dx_exec_vm_init(vm);
+    dx_vm_current_exec(vm)->insn_limit = DX_MAX_INSTRUCTIONS;
     vm->watchdog_timeout_ms = 10000;  // 10 seconds default
-    vm->watchdog_start_time = 0;
-    vm->watchdog_triggered = false;
+    dx_vm_current_exec(vm)->watchdog_start_time = 0;
+    dx_vm_current_exec(vm)->watchdog_triggered = false;
     vm->young_gen_count = 0;
     vm->young_gen_threshold = 256;
     vm->gc_cycle_count = 0;
@@ -47,6 +48,7 @@ DxVM *dx_vm_create(DxContext *ctx) {
 
 void dx_vm_destroy(DxVM *vm) {
     if (!vm) return;
+    dx_exec_vm_shutdown(vm);
 
     // Clear intern table (values alias string object fields, freed with heap)
     vm->interned_count = 0;
@@ -99,11 +101,15 @@ void dx_vm_destroy(DxVM *vm) {
         dx_free(vm->class_def_cache[d]);
     }
 
-    // Free pooled frames
-    for (uint32_t i = 0; i < vm->frame_pool_count; i++) {
-        dx_free(vm->frame_pool[i]);
+    // Free the caller context's pooled frames. Worker pools were released at shutdown.
+    if (dx_vm_current_exec(vm)) {
+        for (uint32_t i = 0; i < dx_vm_current_exec(vm)->frame_pool_count; i++) {
+            dx_free(dx_vm_current_exec(vm)->frame_pool[i]);
+        }
+        dx_vm_current_exec(vm)->frame_pool_count = 0;
     }
 
+    dx_exec_vm_fini(vm);
     dx_free(vm);
     DX_INFO(TAG, "VM destroyed");
 }
@@ -113,8 +119,8 @@ void dx_vm_destroy(DxVM *vm) {
 // --------------------------------------------------------------------------
 
 DxFrame *dx_vm_alloc_frame(DxVM *vm) {
-    if (vm->frame_pool_count > 0) {
-        DxFrame *f = vm->frame_pool[--vm->frame_pool_count];
+    if (dx_vm_current_exec(vm)->frame_pool_count > 0) {
+        DxFrame *f = dx_vm_current_exec(vm)->frame_pool[--dx_vm_current_exec(vm)->frame_pool_count];
         memset(f, 0, sizeof(DxFrame));
         return f;
     }
@@ -123,8 +129,8 @@ DxFrame *dx_vm_alloc_frame(DxVM *vm) {
 
 void dx_vm_free_frame(DxVM *vm, DxFrame *frame) {
     if (!frame) return;
-    if (vm->frame_pool_count < DX_FRAME_POOL_SIZE) {
-        vm->frame_pool[vm->frame_pool_count++] = frame;
+    if (dx_vm_current_exec(vm)->frame_pool_count < DX_FRAME_POOL_SIZE) {
+        dx_vm_current_exec(vm)->frame_pool[dx_vm_current_exec(vm)->frame_pool_count++] = frame;
     } else {
         dx_free(frame);
     }
@@ -2258,39 +2264,7 @@ static DxResult native_class_getsimplename(DxVM *vm, DxFrame *frame, DxValue *ar
     return DX_OK;
 }
 
-// --- Thread.start() -> synchronous run() ---
-
-static DxResult native_thread_start(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
-    (void)frame; (void)arg_count;
-    // Get `this` (the Thread object) from args[0]
-    DxObject *self = args[0].obj;
-    if (!self || !self->klass) {
-        DX_TRACE(TAG, "Thread.start: null thread object");
-        return DX_OK;
-    }
-
-    // Find run() on the actual class (may be overridden in a subclass)
-    DxMethod *run_method = dx_vm_find_method(self->klass, "run", "V");
-    if (!run_method) {
-        DX_TRACE(TAG, "Thread.start: no run() method found on %s", self->klass->descriptor);
-        return DX_OK;
-    }
-
-    DX_INFO(TAG, "Thread.start: running %s.run() synchronously", self->klass->descriptor);
-    DxValue run_args[1];
-    run_args[0] = args[0];  // pass `this`
-    dx_vm_execute_method(vm, run_method, run_args, 1, NULL);
-    return DX_OK;
-}
-
-static DxResult native_thread_isalive(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
-    (void)vm; (void)args; (void)arg_count;
-    // Single-threaded: thread is never alive after start() returns synchronously
-    frame->result.tag = DX_VAL_INT;
-    frame->result.i = 0;  // false
-    frame->has_result = true;
-    return DX_OK;
-}
+// Thread.start, join, sleep, isAlive, and currentThread live in dx_exec.c.
 
 // --- Array.clone() ---
 
@@ -2739,10 +2713,10 @@ static DxResult native_constructor_newinstance(DxVM *vm, DxFrame *frame, DxValue
     }
 
     DxValue result = {0};
-    vm->insn_count = 0;
+    dx_vm_current_exec(vm)->insn_count = 0;
     DxResult res = dx_vm_execute_method(vm, init_method, call_args, call_count, &result);
-    if (res != DX_OK && vm->pending_exception) {
-        vm->pending_exception = NULL;
+    if (res != DX_OK && dx_vm_current_exec(vm)->pending_exception) {
+        dx_vm_current_exec(vm)->pending_exception = NULL;
     }
 
     frame->result = DX_OBJ_VALUE(obj);
@@ -2996,13 +2970,13 @@ static DxResult native_proxy_dispatch(DxVM *vm, DxFrame *frame, DxValue *args, u
     invoke_args[3] = args_arr ? DX_OBJ_VALUE(args_arr) : DX_NULL_VALUE;      // args
 
     DxValue result = {0};
-    vm->insn_count = 0;
+    dx_vm_current_exec(vm)->insn_count = 0;
     DxResult res = dx_vm_execute_method(vm, invoke_method, invoke_args, 4, &result);
     if (res == DX_OK) {
         frame->result = result;
     } else {
         frame->result = DX_NULL_VALUE;
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
     frame->has_result = true;
     return DX_OK;
@@ -3728,22 +3702,30 @@ DxResult dx_register_java_lang(DxVM *vm) {
     // java.lang.Thread
     DxClass *thread_cls = create_class(vm, "Ljava/lang/Thread;", obj_cls, true);
     add_native_method(thread_cls, "start", "V", DX_ACC_PUBLIC,
-                      native_thread_start, false);  // synchronous run()
+                      native_thread_start, false);
     add_native_method(thread_cls, "join", "V", DX_ACC_PUBLIC,
-                      native_object_init, false);  // no-op (already finished)
+                      native_thread_join, false);
     add_native_method(thread_cls, "join", "VJ", DX_ACC_PUBLIC,
-                      native_object_init, false);  // no-op with timeout
+                      native_thread_join, false);
     add_native_method(thread_cls, "isAlive", "Z", DX_ACC_PUBLIC,
-                      native_thread_isalive, false);  // always false
+                      native_thread_isalive, false);
+    add_native_method(thread_cls, "sleep", "VJ", DX_ACC_PUBLIC | DX_ACC_STATIC,
+                      native_thread_sleep, true);
+    add_native_method(thread_cls, "sleep", "VJI", DX_ACC_PUBLIC | DX_ACC_STATIC,
+                      native_thread_sleep, true);
     add_native_method(thread_cls, "setDaemon", "VZ", DX_ACC_PUBLIC,
                       native_object_init, false);  // no-op
     add_native_method(thread_cls, "currentThread", "L", DX_ACC_PUBLIC | DX_ACC_STATIC,
-                      native_object_init, true);  // returns null, absorbed
+                      native_thread_current, true);
+    add_native_method(thread_cls, "run", "V", DX_ACC_PUBLIC,
+                      native_object_init, false);
     add_native_method(thread_cls, "getId", "J", DX_ACC_PUBLIC,
                       native_system_currenttimemillis, false);  // returns 0L
     add_native_method(thread_cls, "getName", "L", DX_ACC_PUBLIC,
                       native_object_init, false);
     thread_cls->status = DX_CLASS_INITIALIZED;
+    create_class(vm, "Ljava/lang/IllegalThreadStateException;", iae_cls, true)->status = DX_CLASS_INITIALIZED;
+    create_class(vm, "Ljava/lang/IllegalMonitorStateException;", rte_cls, true)->status = DX_CLASS_INITIALIZED;
 
     // java.io.PrintStream (for System.out.println)
     DxClass *ps_cls = create_class(vm, "Ljava/io/PrintStream;", obj_cls, true);
@@ -4096,14 +4078,19 @@ DxResult dx_register_java_lang(DxVM *vm) {
 
 DxClass *dx_vm_find_class(DxVM *vm, const char *descriptor) {
     if (!vm || !descriptor) return NULL;
+    dx_vm_shared_lock(vm);
+    DxClass *found = NULL;
     uint32_t idx = class_hash_fn(descriptor);
     for (uint32_t i = 0; i < DX_CLASS_HASH_SIZE; i++) {
         uint32_t slot = (idx + i) & (DX_CLASS_HASH_SIZE - 1);
-        if (!vm->class_hash[slot].descriptor) return NULL;
-        if (strcmp(vm->class_hash[slot].descriptor, descriptor) == 0)
-            return vm->class_hash[slot].cls;
+        if (!vm->class_hash[slot].descriptor) break;
+        if (strcmp(vm->class_hash[slot].descriptor, descriptor) == 0) {
+            found = vm->class_hash[slot].cls;
+            break;
+        }
     }
-    return NULL;
+    dx_vm_shared_unlock(vm);
+    return found;
 }
 
 // ─── Class unloading (for hot-reload or memory pressure) ───
@@ -4250,7 +4237,17 @@ const DxAnnotationEntry *dx_method_get_annotation(DxMethod *method, const char *
     return NULL;
 }
 
+static DxResult dx_vm_load_class_locked(DxVM *vm, const char *descriptor, DxClass **out);
+
 DxResult dx_vm_load_class(DxVM *vm, const char *descriptor, DxClass **out) {
+    if (!vm) return DX_ERR_NULL_PTR;
+    dx_vm_shared_lock(vm);
+    DxResult result = dx_vm_load_class_locked(vm, descriptor, out);
+    dx_vm_shared_unlock(vm);
+    return result;
+}
+
+static DxResult dx_vm_load_class_locked(DxVM *vm, const char *descriptor, DxClass **out) {
     if (!vm || !descriptor) return DX_ERR_NULL_PTR;
 
     // Check if already loaded
@@ -4767,25 +4764,31 @@ static void gc_push_roots(DxVM *vm) {
     gc_mark_stack_push(vm, vm->activity_context);
     gc_mark_stack_push(vm, vm->launch_intent);
 
-    // Root 2: all registers in the current frame chain
-    DxFrame *frame = vm->current_frame;
-    while (frame) {
-        if (frame->method && frame->method->has_code) {
-            uint32_t reg_count = frame->method->code.registers_size;
-            if (reg_count > DX_MAX_REGISTERS) reg_count = DX_MAX_REGISTERS;
-            for (uint32_t r = 0; r < reg_count; r++) {
-                if (frame->registers[r].tag == DX_VAL_OBJ && frame->registers[r].obj) {
-                    gc_mark_stack_push(vm, frame->registers[r].obj);
+    // Root 2: registers, exceptions, and Java thread objects of every execution context
+    for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+        DxExecutionContext *exec = vm->execs[exec_index];
+        if (!exec) continue;
+        gc_mark_stack_push(vm, exec->java_thread);
+        gc_mark_stack_push(vm, exec->pending_exception);
+        DxFrame *frame = exec->current_frame;
+        while (frame) {
+            if (frame->method && frame->method->has_code) {
+                uint32_t reg_count = frame->method->code.registers_size;
+                if (reg_count > DX_MAX_REGISTERS) reg_count = DX_MAX_REGISTERS;
+                for (uint32_t r = 0; r < reg_count; r++) {
+                    if (frame->registers[r].tag == DX_VAL_OBJ && frame->registers[r].obj) {
+                        gc_mark_stack_push(vm, frame->registers[r].obj);
+                    }
                 }
             }
+            if (frame->result.tag == DX_VAL_OBJ && frame->result.obj) {
+                gc_mark_stack_push(vm, frame->result.obj);
+            }
+            if (frame->exception) {
+                gc_mark_stack_push(vm, frame->exception);
+            }
+            frame = frame->caller;
         }
-        if (frame->result.tag == DX_VAL_OBJ && frame->result.obj) {
-            gc_mark_stack_push(vm, frame->result.obj);
-        }
-        if (frame->exception) {
-            gc_mark_stack_push(vm, frame->exception);
-        }
-        frame = frame->caller;
     }
 
     // Root 3: static fields of all loaded classes
@@ -4881,7 +4884,12 @@ static void gc_incremental_step(DxVM *vm, int max_objects) {
 
             // Post-sweep dangling pointer scrub for incremental GC
             // Scrub frame registers
-            DxFrame *sf = vm->current_frame;
+            for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+            DxExecutionContext *scrub_exec = vm->execs[exec_index];
+            if (!scrub_exec) continue;
+            if (scrub_exec->pending_exception && !scrub_exec->pending_exception->gc_mark)
+                scrub_exec->pending_exception = NULL;
+            DxFrame *sf = scrub_exec->current_frame;
             while (sf) {
                 if (sf->method && sf->method->has_code) {
                     uint32_t rc = sf->method->code.registers_size;
@@ -4904,6 +4912,7 @@ static void gc_incremental_step(DxVM *vm, int max_objects) {
                 }
                 sf = sf->caller;
             }
+            }
             // Scrub static fields
             for (uint32_t ci = 0; ci < vm->class_count; ci++) {
                 DxClass *cls = vm->classes[ci];
@@ -4920,8 +4929,10 @@ static void gc_incremental_step(DxVM *vm, int max_objects) {
             if (vm->activity_instance && !vm->activity_instance->gc_mark) {
                 vm->activity_instance = NULL;
             }
-            if (vm->pending_exception && !vm->pending_exception->gc_mark) {
-                vm->pending_exception = NULL;
+            for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+                DxExecutionContext *pend = vm->execs[exec_index];
+                if (pend && pend->pending_exception && !pend->pending_exception->gc_mark)
+                    pend->pending_exception = NULL;
             }
 
             vm->gc_phase = DX_GC_IDLE;
@@ -4971,7 +4982,19 @@ static void gc_mark_ui_tree(DxUINode *node) {
     }
 }
 
+static DxResult dx_vm_gc_locked(DxVM *vm);
+
 DxResult dx_vm_gc(DxVM *vm) {
+    if (!vm) return DX_ERR_NULL_PTR;
+    dx_exec_gc_begin(vm);
+    dx_vm_shared_lock(vm);
+    DxResult result = dx_vm_gc_locked(vm);
+    dx_vm_shared_unlock(vm);
+    dx_exec_gc_end(vm);
+    return result;
+}
+
+static DxResult dx_vm_gc_locked(DxVM *vm) {
     if (!vm) return DX_ERR_NULL_PTR;
 
     uint64_t gc_start_ns = 0;
@@ -4996,26 +5019,31 @@ DxResult dx_vm_gc(DxVM *vm) {
     gc_mark_object(vm->activity_context);
     gc_mark_object(vm->launch_intent);
 
-    // Root 2: all registers in the current frame chain
-    DxFrame *frame = vm->current_frame;
-    while (frame) {
-        if (frame->method && frame->method->has_code) {
-            uint32_t reg_count = frame->method->code.registers_size;
-            if (reg_count > DX_MAX_REGISTERS) reg_count = DX_MAX_REGISTERS;
-            for (uint32_t r = 0; r < reg_count; r++) {
-                if (frame->registers[r].tag == DX_VAL_OBJ && frame->registers[r].obj) {
-                    gc_mark_object(frame->registers[r].obj);
+    // Root 2: registers, exceptions, and Java thread objects of every execution context
+    for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+        DxExecutionContext *exec = vm->execs[exec_index];
+        if (!exec) continue;
+        gc_mark_object(exec->java_thread);
+        gc_mark_object(exec->pending_exception);
+        DxFrame *frame = exec->current_frame;
+        while (frame) {
+            if (frame->method && frame->method->has_code) {
+                uint32_t reg_count = frame->method->code.registers_size;
+                if (reg_count > DX_MAX_REGISTERS) reg_count = DX_MAX_REGISTERS;
+                for (uint32_t r = 0; r < reg_count; r++) {
+                    if (frame->registers[r].tag == DX_VAL_OBJ && frame->registers[r].obj) {
+                        gc_mark_object(frame->registers[r].obj);
+                    }
                 }
             }
+            if (frame->result.tag == DX_VAL_OBJ && frame->result.obj) {
+                gc_mark_object(frame->result.obj);
+            }
+            if (frame->exception) {
+                gc_mark_object(frame->exception);
+            }
+            frame = frame->caller;
         }
-        // Also mark the result and exception
-        if (frame->result.tag == DX_VAL_OBJ && frame->result.obj) {
-            gc_mark_object(frame->result.obj);
-        }
-        if (frame->exception) {
-            gc_mark_object(frame->exception);
-        }
-        frame = frame->caller;
     }
 
     // Root 3: static fields of all loaded classes
@@ -5076,8 +5104,11 @@ DxResult dx_vm_gc(DxVM *vm) {
     // and the UI tree still point to surviving (marked) heap objects.
     // This guards against corruption if a reference was missed during marking.
 
-    // Scrub frame registers in the active call chain
-    DxFrame *scrub_frame = vm->current_frame;
+    // Scrub frame registers in every execution context
+    for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+    DxExecutionContext *scrub_exec = vm->execs[exec_index];
+    if (!scrub_exec) continue;
+    DxFrame *scrub_frame = scrub_exec->current_frame;
     while (scrub_frame) {
         if (scrub_frame->method && scrub_frame->method->has_code) {
             uint32_t reg_count = scrub_frame->method->code.registers_size;
@@ -5107,6 +5138,7 @@ DxResult dx_vm_gc(DxVM *vm) {
         }
         scrub_frame = scrub_frame->caller;
     }
+    }
 
     // Scrub static fields of all loaded classes
     for (uint32_t c = 0; c < vm->class_count; c++) {
@@ -5133,10 +5165,12 @@ DxResult dx_vm_gc(DxVM *vm) {
     if (vm->activity_context && !vm->activity_context->gc_mark) vm->activity_context = NULL;
     if (vm->launch_intent && !vm->launch_intent->gc_mark) vm->launch_intent = NULL;
 
-    // Scrub pending exception
-    if (vm->pending_exception && !vm->pending_exception->gc_mark) {
-        DX_WARN(TAG, "GC: nulling dangling pending_exception");
-        vm->pending_exception = NULL;
+    for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+        DxExecutionContext *pend = vm->execs[exec_index];
+        if (pend && pend->pending_exception && !pend->pending_exception->gc_mark) {
+            DX_WARN(TAG, "GC: nulling dangling pending_exception");
+            pend->pending_exception = NULL;
+        }
     }
 
     // Reset young generation count: all survivors in a major GC become old
@@ -5162,7 +5196,17 @@ DxResult dx_vm_gc(DxVM *vm) {
     return DX_OK;
 }
 
+static DxObject *dx_vm_alloc_object_locked(DxVM *vm, DxClass *cls);
+
 DxObject *dx_vm_alloc_object(DxVM *vm, DxClass *cls) {
+    if (!vm || !cls) return NULL;
+    dx_vm_shared_lock(vm);
+    DxObject *obj = dx_vm_alloc_object_locked(vm, cls);
+    dx_vm_shared_unlock(vm);
+    return obj;
+}
+
+static DxObject *dx_vm_alloc_object_locked(DxVM *vm, DxClass *cls) {
     if (!vm || !cls) return NULL;
 
     // Trigger minor GC when young generation exceeds threshold
@@ -5177,11 +5221,11 @@ DxObject *dx_vm_alloc_object(DxVM *vm, DxClass *cls) {
 
     if (vm->heap_count >= DX_MAX_HEAP_OBJECTS) {
         DX_ERROR(TAG, "Heap full (%u objects) even after GC — OutOfMemoryError", DX_MAX_HEAP_OBJECTS);
-        snprintf(vm->error_msg, sizeof(vm->error_msg),
+        snprintf(dx_vm_current_exec(vm)->error_msg, sizeof(dx_vm_current_exec(vm)->error_msg),
                  "OutOfMemoryError: heap exhausted (%u/%u objects) allocating %s",
                  vm->heap_count, DX_MAX_HEAP_OBJECTS, cls->descriptor);
         // Set pending exception so the interpreter can unwind properly
-        if (!vm->pending_exception) {
+        if (!dx_vm_current_exec(vm)->pending_exception) {
             // Avoid recursive alloc: only create exception if we have headroom
             // (the exception itself would need a heap slot, so skip if truly full)
             DX_ERROR(TAG, "Cannot allocate OutOfMemoryError object (heap full)");
@@ -5195,7 +5239,7 @@ DxObject *dx_vm_alloc_object(DxVM *vm, DxClass *cls) {
 
     DxObject *obj = (DxObject *)dx_malloc(sizeof(DxObject));
     if (!obj) {
-        snprintf(vm->error_msg, sizeof(vm->error_msg),
+        snprintf(dx_vm_current_exec(vm)->error_msg, sizeof(dx_vm_current_exec(vm)->error_msg),
                  "OutOfMemoryError: malloc failed allocating %s", cls->descriptor);
         return NULL;
     }
@@ -5210,6 +5254,7 @@ DxObject *dx_vm_alloc_object(DxVM *vm, DxClass *cls) {
     obj->is_array = false;
     obj->array_length = 0;
     obj->array_elements = NULL;
+    obj->monitor = NULL;
 
     if (cls->instance_field_count > 0) {
         obj->fields = (DxValue *)dx_malloc(sizeof(DxValue) * cls->instance_field_count);
@@ -5235,7 +5280,17 @@ DxObject *dx_vm_alloc_object(DxVM *vm, DxClass *cls) {
     return obj;
 }
 
+static DxObject *dx_vm_alloc_array_locked(DxVM *vm, uint32_t length);
+
 DxObject *dx_vm_alloc_array(DxVM *vm, uint32_t length) {
+    if (!vm) return NULL;
+    dx_vm_shared_lock(vm);
+    DxObject *obj = dx_vm_alloc_array_locked(vm, length);
+    dx_vm_shared_unlock(vm);
+    return obj;
+}
+
+static DxObject *dx_vm_alloc_array_locked(DxVM *vm, uint32_t length) {
     if (!vm) return NULL;
 
     // Trigger minor GC when young generation exceeds threshold
@@ -5251,7 +5306,7 @@ DxObject *dx_vm_alloc_array(DxVM *vm, uint32_t length) {
     if (vm->heap_count >= DX_MAX_HEAP_OBJECTS) {
         DX_ERROR(TAG, "Heap full (%u objects) even after GC — OutOfMemoryError (array[%u])",
                  DX_MAX_HEAP_OBJECTS, length);
-        snprintf(vm->error_msg, sizeof(vm->error_msg),
+        snprintf(dx_vm_current_exec(vm)->error_msg, sizeof(dx_vm_current_exec(vm)->error_msg),
                  "OutOfMemoryError: heap exhausted (%u/%u objects) allocating array[%u]",
                  vm->heap_count, DX_MAX_HEAP_OBJECTS, length);
         return NULL;
@@ -5259,7 +5314,7 @@ DxObject *dx_vm_alloc_array(DxVM *vm, uint32_t length) {
 
     DxObject *obj = (DxObject *)dx_malloc(sizeof(DxObject));
     if (!obj) {
-        snprintf(vm->error_msg, sizeof(vm->error_msg),
+        snprintf(dx_vm_current_exec(vm)->error_msg, sizeof(dx_vm_current_exec(vm)->error_msg),
                  "OutOfMemoryError: malloc failed allocating array[%u]", length);
         return NULL;
     }
@@ -5273,6 +5328,8 @@ DxObject *dx_vm_alloc_array(DxVM *vm, uint32_t length) {
     obj->fields = NULL;
     obj->is_array = true;
     obj->array_length = length;
+    obj->monitor = NULL;
+    obj->string_data = NULL;
 
     if (length > 0) {
         obj->array_elements = (DxValue *)dx_malloc(sizeof(DxValue) * length);
@@ -5377,7 +5434,17 @@ DxResult dx_vm_get_field(DxObject *obj, const char *name, DxValue *out) {
     return DX_OK;
 }
 
+static DxObject *dx_vm_create_string_locked(DxVM *vm, const char *utf8);
+
 DxObject *dx_vm_create_string(DxVM *vm, const char *utf8) {
+    if (!vm || !utf8) return NULL;
+    dx_vm_shared_lock(vm);
+    DxObject *obj = dx_vm_create_string_locked(vm, utf8);
+    dx_vm_shared_unlock(vm);
+    return obj;
+}
+
+static DxObject *dx_vm_create_string_locked(DxVM *vm, const char *utf8) {
     if (!vm || !utf8) return NULL;
 
     // Check intern table first - return existing object for duplicate strings
@@ -5428,10 +5495,10 @@ DxMethod *dx_vm_resolve_method(DxVM *vm, uint32_t dex_method_idx) {
 
     // Use the current frame's class DEX file if available, else primary
     DxDexFile *dex = vm->dex;
-    if (vm->current_frame && vm->current_frame->method &&
-        vm->current_frame->method->declaring_class &&
-        vm->current_frame->method->declaring_class->dex_file) {
-        dex = vm->current_frame->method->declaring_class->dex_file;
+    if (dx_vm_current_exec(vm)->current_frame && dx_vm_current_exec(vm)->current_frame->method &&
+        dx_vm_current_exec(vm)->current_frame->method->declaring_class &&
+        dx_vm_current_exec(vm)->current_frame->method->declaring_class->dex_file) {
+        dex = dx_vm_current_exec(vm)->current_frame->method->declaring_class->dex_file;
     }
     if (!dex) return NULL;
     if (dex_method_idx >= dex->method_count) return NULL;
@@ -5830,11 +5897,11 @@ char *dx_vm_get_last_error_detail(DxVM *vm) {
     }
 
     // Pending exception info
-    if (vm->pending_exception && vm->pending_exception->klass) {
-        const char *exc_desc = vm->pending_exception->klass->descriptor;
+    if (dx_vm_current_exec(vm)->pending_exception && dx_vm_current_exec(vm)->pending_exception->klass) {
+        const char *exc_desc = dx_vm_current_exec(vm)->pending_exception->klass->descriptor;
         DxValue msg_val;
         const char *msg = "";
-        if (dx_vm_get_field(vm->pending_exception, "detailMessage", &msg_val) == DX_OK &&
+        if (dx_vm_get_field(dx_vm_current_exec(vm)->pending_exception, "detailMessage", &msg_val) == DX_OK &&
             msg_val.tag == DX_VAL_OBJ && msg_val.obj) {
             msg = dx_vm_get_string_value(msg_val.obj);
             if (!msg) msg = "";
@@ -6135,10 +6202,10 @@ DxResult dx_vm_invoke_method_handle(DxVM *vm, DxObject *handle_obj, DxValue *arg
         dex = (DxDexFile *)(uintptr_t)handle_obj->fields[2].l;
     }
     if (!dex) {
-        if (vm->current_frame && vm->current_frame->method &&
-            vm->current_frame->method->declaring_class &&
-            vm->current_frame->method->declaring_class->dex_file) {
-            dex = vm->current_frame->method->declaring_class->dex_file;
+        if (dx_vm_current_exec(vm)->current_frame && dx_vm_current_exec(vm)->current_frame->method &&
+            dx_vm_current_exec(vm)->current_frame->method->declaring_class &&
+            dx_vm_current_exec(vm)->current_frame->method->declaring_class->dex_file) {
+            dex = dx_vm_current_exec(vm)->current_frame->method->declaring_class->dex_file;
         }
         if (!dex) dex = vm->dex;
     }
@@ -6328,7 +6395,19 @@ static void gc_scan_old_to_young(DxVM *vm) {
     }
 }
 
+static DxResult dx_vm_gc_minor_locked(DxVM *vm);
+
 DxResult dx_vm_gc_minor(DxVM *vm) {
+    if (!vm) return DX_ERR_NULL_PTR;
+    dx_exec_gc_begin(vm);
+    dx_vm_shared_lock(vm);
+    DxResult result = dx_vm_gc_minor_locked(vm);
+    dx_vm_shared_unlock(vm);
+    dx_exec_gc_end(vm);
+    return result;
+}
+
+static DxResult dx_vm_gc_minor_locked(DxVM *vm) {
     if (!vm) return DX_ERR_NULL_PTR;
 
     uint64_t gc_start_ns = 0;
@@ -6363,8 +6442,13 @@ DxResult dx_vm_gc_minor(DxVM *vm) {
     if (vm->activity_context) gc_mark_object_young(vm->activity_context);
     if (vm->launch_intent) gc_mark_object_young(vm->launch_intent);
 
-    // Root 2: frame registers
-    DxFrame *frame = vm->current_frame;
+    // Root 2: frame registers of every execution context
+    for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+    DxExecutionContext *young_exec = vm->execs[exec_index];
+    if (!young_exec) continue;
+    if (young_exec->java_thread) gc_mark_object_young(young_exec->java_thread);
+    if (young_exec->pending_exception) gc_mark_object_young(young_exec->pending_exception);
+    DxFrame *frame = young_exec->current_frame;
     while (frame) {
         if (frame->method && frame->method->has_code) {
             uint32_t reg_count = frame->method->code.registers_size;
@@ -6380,6 +6464,7 @@ DxResult dx_vm_gc_minor(DxVM *vm) {
         }
         if (frame->exception) gc_mark_object_young(frame->exception);
         frame = frame->caller;
+    }
     }
 
     // Root 3: static fields
@@ -6438,7 +6523,13 @@ DxResult dx_vm_gc_minor(DxVM *vm) {
     vm->heap_count = write;
 
     // Post-sweep dangling pointer scrub for frame registers
-    DxFrame *sf = vm->current_frame;
+    for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+    DxExecutionContext *scrub_exec = vm->execs[exec_index];
+    if (!scrub_exec) continue;
+    if (scrub_exec->pending_exception && scrub_exec->pending_exception->generation == 0 &&
+        !scrub_exec->pending_exception->gc_mark)
+        scrub_exec->pending_exception = NULL;
+    DxFrame *sf = scrub_exec->current_frame;
     while (sf) {
         if (sf->method && sf->method->has_code) {
             uint32_t reg_count = sf->method->code.registers_size;
@@ -6460,6 +6551,7 @@ DxResult dx_vm_gc_minor(DxVM *vm) {
             sf->exception = NULL;
         }
         sf = sf->caller;
+    }
     }
 
     DX_INFO(TAG, "Minor GC completed: %u -> %u objects (%u freed, %u promoted)",
@@ -6554,11 +6646,15 @@ void dx_vm_set_trace_filter(DxVM *vm, const char *method_filter) {
 // Uses a simple open-addressing hash table keyed by PC offset.
 DxInlineCache *dx_vm_ic_get(DxMethod *method, uint32_t pc) {
     if (!method) return NULL;
+    dx_vm_shared_lock_current();
 
     // Lazily allocate the IC table on first use
     if (!method->ic_table) {
         method->ic_table = (DxICTable *)dx_malloc(sizeof(DxICTable));
-        if (!method->ic_table) return NULL;
+        if (!method->ic_table) {
+            dx_vm_shared_unlock_current();
+            return NULL;
+        }
         memset(method->ic_table, 0, sizeof(DxICTable));
     }
 
@@ -6571,42 +6667,51 @@ DxInlineCache *dx_vm_ic_get(DxMethod *method, uint32_t pc) {
     for (uint32_t i = 0; i < DX_IC_TABLE_SIZE; i++) {
         uint32_t slot = (idx + i) % DX_IC_TABLE_SIZE;
         if (table->slots[slot].pc == key) {
-            return &table->slots[slot].ic;
+            DxInlineCache *found = &table->slots[slot].ic;
+            dx_vm_shared_unlock_current();
+            return found;
         }
         if (table->slots[slot].pc == 0) {
             // Empty slot — claim it for this PC
             table->slots[slot].pc = key;
-            return &table->slots[slot].ic;
+            DxInlineCache *found = &table->slots[slot].ic;
+            dx_vm_shared_unlock_current();
+            return found;
         }
     }
 
     // Table full (shouldn't happen with 32 slots for typical methods)
+    dx_vm_shared_unlock_current();
     return NULL;
 }
 
 // Look up a cached method for the given receiver class. Returns NULL on miss.
 DxMethod *dx_vm_ic_lookup(DxInlineCache *ic, DxClass *receiver_class) {
     if (!ic || !receiver_class) return NULL;
-
+    dx_vm_shared_lock_current();
+    DxMethod *found = NULL;
     for (uint8_t i = 0; i < ic->count; i++) {
         if (ic->entries[i].receiver_class == receiver_class) {
             ic->hits++;
-            return ic->entries[i].resolved_method;
+            found = ic->entries[i].resolved_method;
+            break;
         }
     }
-
-    ic->misses++;
-    return NULL;
+    if (!found) ic->misses++;
+    dx_vm_shared_unlock_current();
+    return found;
 }
 
 // Insert a resolved method into the inline cache for a receiver class.
 void dx_vm_ic_insert(DxInlineCache *ic, DxClass *receiver_class, DxMethod *resolved) {
     if (!ic || !receiver_class || !resolved) return;
+    dx_vm_shared_lock_current();
 
     // Check if already present (avoid duplicates)
     for (uint8_t i = 0; i < ic->count; i++) {
         if (ic->entries[i].receiver_class == receiver_class) {
             ic->entries[i].resolved_method = resolved;
+            dx_vm_shared_unlock_current();
             return;
         }
     }
@@ -6624,6 +6729,7 @@ void dx_vm_ic_insert(DxInlineCache *ic, DxClass *receiver_class, DxMethod *resol
         ic->entries[DX_IC_SIZE - 1].receiver_class = receiver_class;
         ic->entries[DX_IC_SIZE - 1].resolved_method = resolved;
     }
+    dx_vm_shared_unlock_current();
 }
 
 // Log aggregate inline cache statistics across all loaded methods.

@@ -348,7 +348,7 @@ static const DxResourceEntry *resource_file_entry(const DxResources *resources,
 
 static DxResult bitmap_decode_failed(DxVM *vm, DxFrame *frame, int reuse_bitmap) {
     if (reuse_bitmap) {
-        vm->pending_exception = dx_vm_create_exception(vm, "Ljava/lang/IllegalArgumentException;",
+        dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(vm, "Ljava/lang/IllegalArgumentException;",
             "Problem decoding into existing bitmap");
         return DX_ERR_EXCEPTION;
     }
@@ -1259,11 +1259,11 @@ static struct agr_content_surface *content_slot_new(agr_dex_game *game, DxObject
 }
 
 static void content_surface_note_exception(agr_dex_game *game, DxVM *vm) {
-    if (!game || !vm || !vm->pending_exception || !vm->pending_exception->klass ||
-        !vm->pending_exception->klass->descriptor) return;
+    if (!game || !vm || !dx_vm_current_exec(vm)->pending_exception || !dx_vm_current_exec(vm)->pending_exception->klass ||
+        !dx_vm_current_exec(vm)->pending_exception->klass->descriptor) return;
     snprintf(game->content_surface_exception, sizeof(game->content_surface_exception),
-             "%s", vm->pending_exception->klass->descriptor);
-    vm->pending_exception = NULL;
+             "%s", dx_vm_current_exec(vm)->pending_exception->klass->descriptor);
+    dx_vm_current_exec(vm)->pending_exception = NULL;
 }
 
 static int invoke_surface_callback(DxVM *vm, DxObject *callback, const char *name,
@@ -1275,7 +1275,7 @@ static int invoke_surface_callback(DxVM *vm, DxObject *callback, const char *nam
     if (!method) return 0;
     result = dx_vm_execute_method(vm, method, args, argc, NULL);
     {
-        int threw = vm->pending_exception != NULL;
+        int threw = dx_vm_current_exec(vm)->pending_exception != NULL;
         content_surface_note_exception(game_from_vm(vm), vm);
         if (result != DX_OK && result != DX_ERR_EXCEPTION) return 0;
         return threw ? -1 : 1;
@@ -1724,7 +1724,7 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     framework_event(game,"launch.application.context_attached");
     DxMethod *app_create=dx_vm_find_method(game->application_class,"onCreate","V");
     if (app_create && dx_vm_execute_method(vm,app_create,app_args,1,NULL)!=DX_OK) {
-        snprintf(game->launch_error,sizeof(game->launch_error),"Application.onCreate failed: %s",vm->error_msg);
+        snprintf(game->launch_error,sizeof(game->launch_error),"Application.onCreate failed: %s",dx_vm_current_exec(vm)->error_msg);
         return -1;
     }
 
@@ -1732,7 +1732,7 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     DxMethod *init=dx_vm_find_method(cls,"<init>","V");
     DxValue init_args[1]={DX_OBJ_VALUE(game->activity)};
     if (!init || dx_vm_execute_method(vm,init,init_args,1,NULL)!=DX_OK) {
-        snprintf(game->launch_error,sizeof(game->launch_error),"Activity constructor failed: %s",vm->error_msg);
+        snprintf(game->launch_error,sizeof(game->launch_error),"Activity constructor failed: %s",dx_vm_current_exec(vm)->error_msg);
         return -1;
     }
     dx_vm_set_field(game->activity,"_baseContext",DX_OBJ_VALUE(game->activity_context));
@@ -1766,7 +1766,7 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     game->launch_stage=AGR_ACTIVITY_LAUNCH_ON_CREATE_ENTERED;
     framework_event(game,"lifecycle.onCreate.enter");
     if (dx_vm_execute_method(vm,on_create,create_args,2,NULL)!=DX_OK) {
-        snprintf(game->launch_error,sizeof(game->launch_error),"Activity.onCreate failed: %s",vm->error_msg);
+        snprintf(game->launch_error,sizeof(game->launch_error),"Activity.onCreate failed: %s",dx_vm_current_exec(vm)->error_msg);
         return -1;
     }
     game->launch_stage=AGR_ACTIVITY_LAUNCH_ON_CREATE_RETURNED;
@@ -1780,7 +1780,7 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     framework_event(game,"lifecycle.onResume.return");
     DxMethod *on_post_resume=dx_vm_find_method(cls,"onPostResume","V");
     if (!on_post_resume || dx_vm_execute_method(vm,on_post_resume,init_args,1,NULL)!=DX_OK) {
-        snprintf(game->launch_error,sizeof(game->launch_error),"Activity.onPostResume failed: %s",vm->error_msg);
+        snprintf(game->launch_error,sizeof(game->launch_error),"Activity.onPostResume failed: %s",dx_vm_current_exec(vm)->error_msg);
         return -1;
     }
     game->post_resume_completed=1;
@@ -1846,7 +1846,7 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
 
 window_cluster_failed:
     snprintf(game->launch_error,sizeof(game->launch_error),
-             "ActivityThread window visibility cluster failed: %s",vm->error_msg);
+             "ActivityThread window visibility cluster failed: %s",dx_vm_current_exec(vm)->error_msg);
     return -1;
 }
 
@@ -1857,13 +1857,13 @@ void agr_dex_game_enable_diagnostics(agr_dex_game *game, int enabled) {
 
 int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snapshot *snapshot) {
     if (!game || !game->vm || !snapshot) return -1;
-    const DxVM *vm=game->vm;
+    DxVM *vm=game->vm;
     memset(snapshot,0,sizeof(*snapshot));
     snapshot->methods_invoked=vm->telemetry.total_methods_invoked;
     snapshot->instructions_executed=vm->insn_total;
-    snapshot->stack_depth=vm->stack_depth;
+    snapshot->stack_depth=dx_vm_current_exec(vm)->stack_depth;
     snapshot->vm_running=vm->running ? 1 : 0;
-    snapshot->pending_exception=vm->pending_exception ? 1 : 0;
+    snapshot->pending_exception=dx_vm_current_exec(vm)->pending_exception ? 1 : 0;
     snapshot->post_resume_completed=game->post_resume_completed;
     snapshot->window_attached=game->window_attached;
     snapshot->window_added=game->window_added;
@@ -1916,15 +1916,15 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
         snprintf(snapshot->content_surface_exception, sizeof(snapshot->content_surface_exception),
                  "%s", game->content_surface_exception);
     }
-    snprintf(snapshot->last_method,sizeof(snapshot->last_method),"%s",vm->diagnostic_last_method);
-    snprintf(snapshot->error,sizeof(snapshot->error),"%s",vm->error_msg);
-    uint32_t method_count=vm->diagnostic_method_event_count;
-    uint64_t method_start=vm->diagnostic_method_sequence > method_count
-        ? vm->diagnostic_method_sequence - method_count : 0;
+    snprintf(snapshot->last_method,sizeof(snapshot->last_method),"%s",dx_vm_current_exec(vm)->diagnostic_last_method);
+    snprintf(snapshot->error,sizeof(snapshot->error),"%s",dx_vm_current_exec(vm)->error_msg);
+    uint32_t method_count=dx_vm_current_exec(vm)->diagnostic_method_event_count;
+    uint64_t method_start=dx_vm_current_exec(vm)->diagnostic_method_sequence > method_count
+        ? dx_vm_current_exec(vm)->diagnostic_method_sequence - method_count : 0;
     snapshot->method_event_count=method_count;
     for (uint32_t i=0;i<method_count;i++) {
         const DxDiagnosticMethodEvent *source=
-            &vm->diagnostic_method_events[(method_start+i)%DX_DIAGNOSTIC_METHOD_EVENTS];
+            &dx_vm_current_exec(vm)->diagnostic_method_events[(method_start+i)%DX_DIAGNOSTIC_METHOD_EVENTS];
         snapshot->method_events[i].sequence=source->sequence;
         snapshot->method_events[i].depth=source->depth;
         snapshot->method_events[i].is_native=source->is_native ? 1 : 0;
@@ -1939,10 +1939,10 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
     for (uint32_t i=0;i<framework_count;i++)
         snprintf(snapshot->framework_events[i],sizeof(snapshot->framework_events[i]),"%s",
                  game->framework_events[(framework_start+i)%AGR_DEX_FRAMEWORK_TRACE_CAPACITY]);
-    if (vm->pending_exception && vm->pending_exception->klass &&
-        vm->pending_exception->klass->descriptor)
+    if (dx_vm_current_exec(vm)->pending_exception && dx_vm_current_exec(vm)->pending_exception->klass &&
+        dx_vm_current_exec(vm)->pending_exception->klass->descriptor)
         snprintf(snapshot->exception_class,sizeof(snapshot->exception_class),"%s",
-                 vm->pending_exception->klass->descriptor);
+                 dx_vm_current_exec(vm)->pending_exception->klass->descriptor);
     return 0;
 }
 

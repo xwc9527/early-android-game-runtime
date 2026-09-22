@@ -130,7 +130,7 @@ static jobject JNICALL jni_ToReflectedField(JNIEnv *env, jclass cls,
 static jint JNICALL jni_Throw(JNIEnv *env, jthrowable obj) {
     (void)env;
     if (g_vm) {
-        g_vm->pending_exception = (DxObject *)obj;
+        dx_vm_current_exec(g_vm)->pending_exception = (DxObject *)obj;
     }
     return 0;
 }
@@ -142,7 +142,7 @@ static jint JNICALL jni_ThrowNew(JNIEnv *env, jclass clazz, const char *msg) {
     if (g_vm) {
         DxObject *ex = dx_vm_create_exception(g_vm, descriptor, msg);
         if (ex) {
-            g_vm->pending_exception = ex;
+            dx_vm_current_exec(g_vm)->pending_exception = ex;
         }
     }
     DX_WARN(TAG, "ThrowNew: %s: %s",
@@ -152,16 +152,16 @@ static jint JNICALL jni_ThrowNew(JNIEnv *env, jclass clazz, const char *msg) {
 
 static jthrowable JNICALL jni_ExceptionOccurred(JNIEnv *env) {
     (void)env;
-    if (g_vm && g_vm->pending_exception) {
-        return (jthrowable)g_vm->pending_exception;
+    if (g_vm && dx_vm_current_exec(g_vm)->pending_exception) {
+        return (jthrowable)dx_vm_current_exec(g_vm)->pending_exception;
     }
     return NULL;
 }
 
 static void JNICALL jni_ExceptionDescribe(JNIEnv *env) {
     (void)env;
-    if (g_vm && g_vm->pending_exception) {
-        DxObject *ex = g_vm->pending_exception;
+    if (g_vm && dx_vm_current_exec(g_vm)->pending_exception) {
+        DxObject *ex = dx_vm_current_exec(g_vm)->pending_exception;
         DX_WARN(TAG, "Pending exception: %s",
                  ex->klass ? ex->klass->descriptor : "?");
     }
@@ -170,7 +170,7 @@ static void JNICALL jni_ExceptionDescribe(JNIEnv *env) {
 static void JNICALL jni_ExceptionClear(JNIEnv *env) {
     (void)env;
     if (g_vm) {
-        g_vm->pending_exception = NULL;
+        dx_vm_current_exec(g_vm)->pending_exception = NULL;
     }
 }
 
@@ -233,7 +233,7 @@ static jobject JNICALL jni_NewObject(JNIEnv *env, jclass clazz, jmethodID method
     if (obj && methodID) {
         DxMethod *init = (DxMethod *)methodID;
         DxValue args[1] = { {.tag = DX_VAL_OBJ, .obj = obj} };
-        g_vm->insn_count = 0;
+        dx_vm_current_exec(g_vm)->insn_count = 0;
         dx_vm_execute_method(g_vm, init, args, 1, NULL);
     }
     return dx_jni_wrap_object(obj);
@@ -292,7 +292,7 @@ static jobject JNICALL jni_CallObjectMethod(JNIEnv *env, jobject obj, jmethodID 
     if (!m || !g_vm) return NULL;
     DxValue args[1] = { {.tag = DX_VAL_OBJ, .obj = dobj} };
     DxValue result = {0};
-    g_vm->insn_count = 0;
+    dx_vm_current_exec(g_vm)->insn_count = 0;
     dx_vm_execute_method(g_vm, m, args, 1, &result);
     if (result.tag == DX_VAL_OBJ) return dx_jni_wrap_object(result.obj);
     return NULL;
@@ -315,7 +315,7 @@ static DxValue jni_dispatch_method(jobject obj, jmethodID mid) {
     DxObject *dobj = dx_jni_unwrap_object(obj);
     if (!m || !g_vm) return result;
     DxValue args[1] = { {.tag = DX_VAL_OBJ, .obj = dobj} };
-    g_vm->insn_count = 0;
+    dx_vm_current_exec(g_vm)->insn_count = 0;
     dx_vm_execute_method(g_vm, m, args, 1, &result);
     return result;
 }
@@ -433,7 +433,7 @@ static void JNICALL jni_CallVoidMethod(JNIEnv *env, jobject obj, jmethodID metho
     DxObject *dobj = dx_jni_unwrap_object(obj);
     if (!m || !g_vm) return;
     DxValue args[1] = { {.tag = DX_VAL_OBJ, .obj = dobj} };
-    g_vm->insn_count = 0;
+    dx_vm_current_exec(g_vm)->insn_count = 0;
     dx_vm_execute_method(g_vm, m, args, 1, NULL);
 }
 static void JNICALL jni_CallVoidMethodV(JNIEnv *env, jobject obj, jmethodID mid, va_list a) {
@@ -1034,7 +1034,7 @@ static void JNICALL jni_DeleteWeakGlobalRef(JNIEnv *env, jweak ref) {
 
 static jboolean JNICALL jni_ExceptionCheck(JNIEnv *env) {
     (void)env;
-    return (g_vm && g_vm->pending_exception) ? JNI_TRUE : JNI_FALSE;
+    return (g_vm && dx_vm_current_exec(g_vm)->pending_exception) ? JNI_TRUE : JNI_FALSE;
 }
 
 static jobject JNICALL jni_NewDirectByteBuffer(JNIEnv *env, void *address, jlong capacity) {

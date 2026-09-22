@@ -3,6 +3,7 @@
 
 #include "dx_types.h"
 #include "dx_dex.h"
+#include <pthread.h>
 
 // Release vs Debug build configuration
 #ifdef NDEBUG
@@ -156,6 +157,8 @@ struct DxObject {
 
     // For View objects: link to UI node
     DxUINode  *ui_node;
+    /* Lazily created Java monitor. Owned by the VM, not by guest code. */
+    void      *monitor;
 
     // String storage (owned; freed with object)
     char      *string_data;     // UTF-8 C string for java.lang.String / StringBuilder buf
@@ -198,6 +201,52 @@ typedef struct {
     uint8_t is_native;
     char method[DX_DIAGNOSTIC_METHOD_TEXT];
 } DxDiagnosticMethodEvent;
+
+#define DX_FRAME_POOL_SIZE 64
+#define DX_MAX_EXEC_CONTEXTS 8
+
+typedef enum {
+    DX_JAVA_THREAD_NEW = 0,
+    DX_JAVA_THREAD_STARTING = 1,
+    DX_JAVA_THREAD_RUNNING = 2,
+    DX_JAVA_THREAD_TERMINATED = 3
+} DxJavaThreadState;
+
+/* One HOST-DEX execution context. This is not a guest pthread. */
+typedef struct DxExecutionContext {
+    uint32_t id;
+    struct DxVM *vm;
+    pthread_t host_thread;
+    int has_host_thread;
+    int joinable;
+    DxObject *java_thread;
+    DxJavaThreadState state;
+    volatile int stop_requested;
+    volatile int at_safepoint;
+    volatile int waiting_for_vm_lock;
+    int in_vm;
+    int vm_lock_depth;
+    pthread_mutex_t life_mu;
+    pthread_cond_t done_cv;
+
+    DxFrame *current_frame;
+    uint32_t stack_depth;
+    DxObject *pending_exception;
+    uint64_t insn_count;
+    uint64_t insn_limit;
+    uint64_t watchdog_start_time;
+    int watchdog_triggered;
+    char error_msg[256];
+    int trace_depth;
+
+    char diagnostic_last_method[DX_DIAGNOSTIC_METHOD_TEXT];
+    DxDiagnosticMethodEvent diagnostic_method_events[DX_DIAGNOSTIC_METHOD_EVENTS];
+    uint64_t diagnostic_method_sequence;
+    uint32_t diagnostic_method_event_count;
+
+    DxFrame *frame_pool[DX_FRAME_POOL_SIZE];
+    uint32_t frame_pool_count;
+} DxExecutionContext;
 
 // VM state
 #define DX_MAX_DEX_FILES 8
@@ -243,18 +292,17 @@ struct DxVM {
     DxObject  *heap[DX_MAX_HEAP_OBJECTS];
     uint32_t   heap_count;
 
-    // Call stack
-    DxFrame   *current_frame;
-    uint32_t   stack_depth;
-    /* Passive, bounded execution evidence. Populated only while telemetry is
-       enabled; it never participates in dispatch or exception semantics. */
-    char       diagnostic_last_method[DX_DIAGNOSTIC_METHOD_TEXT];
-    /* Passive ring of actual guest/framework method entries.  This is
-       discovery evidence only: bounded storage, no guest calls, no waits and
-       no participation in dispatch. */
-    DxDiagnosticMethodEvent diagnostic_method_events[DX_DIAGNOSTIC_METHOD_EVENTS];
-    uint64_t   diagnostic_method_sequence;
-    uint32_t   diagnostic_method_event_count;
+    /* Process-global shared-state lock. Never held across a Java thread's run. */
+    pthread_mutex_t shared_mu;
+    int shared_ready;
+    pthread_mutex_t safepoint_mu;
+    pthread_cond_t safepoint_cv;
+    volatile int safepoint_requested;
+    int safepoint_depth;
+    DxExecutionContext *root_exec;
+    DxExecutionContext *execs[DX_MAX_EXEC_CONTEXTS];
+    uint32_t exec_count;
+    uint32_t next_exec_id;
 
     // Framework classes (pre-registered)
     DxClass   *class_object;        // java/lang/Object
@@ -309,26 +357,12 @@ struct DxVM {
     struct { char *value; DxObject *obj; } interned_strings[DX_MAX_INTERNED_STRINGS];
     uint32_t   interned_count;
 
-    // Execution state
+    // Execution state. Instruction count, frames, and exceptions live on
+    // DxExecutionContext. insn_total is process-wide statistics.
     bool       running;
     DxResult   last_error;
-    char       error_msg[256];
-    uint64_t   insn_count;      // Instructions executed in current top-level call
-    uint64_t   insn_total;      // Lifetime total instructions (for stats)
-    uint64_t   insn_limit;      // Max instructions per top-level call (0 = unlimited)
-
-    // Frame pool for interpreter performance
-    #define DX_FRAME_POOL_SIZE 64
-    DxFrame  *frame_pool[DX_FRAME_POOL_SIZE];
-    uint32_t  frame_pool_count;
-
-    // Pending exception for cross-method unwinding
-    DxObject  *pending_exception;
-
-    // Watchdog: detect stuck interpreter (wall-clock timeout)
-    uint64_t watchdog_start_time;   // mach_absolute_time() when top-level execute began
-    uint32_t watchdog_timeout_ms;   // 0 = disabled, default 10000 (10 s)
-    bool     watchdog_triggered;
+    uint64_t   insn_total;
+    uint32_t   watchdog_timeout_ms;   // policy copied into each top-level call
 
     // Cancellation: set from another thread to stop execution gracefully
     volatile bool cancel_requested; // checked every 10000 instructions alongside watchdog
@@ -452,6 +486,44 @@ DxMethod *dx_vm_find_interface_method(DxVM *vm, DxClass *cls, const char *name, 
 // Frame pool
 DxFrame *dx_vm_alloc_frame(DxVM *vm);
 void     dx_vm_free_frame(DxVM *vm, DxFrame *frame);
+
+/* Active DEX execution context for this host thread. */
+DxExecutionContext *dx_vm_current_exec(DxVM *vm);
+void dx_vm_shared_lock(DxVM *vm);
+void dx_vm_shared_unlock(DxVM *vm);
+void dx_vm_shared_lock_current(void);
+void dx_vm_shared_unlock_current(void);
+void dx_exec_vm_init(DxVM *vm);
+void dx_exec_vm_shutdown(DxVM *vm);
+void dx_exec_vm_fini(DxVM *vm);
+DxResult dx_vm_monitor_enter(DxVM *vm, DxObject *obj);
+DxResult dx_vm_monitor_exit(DxVM *vm, DxObject *obj);
+DxResult dx_vm_exec_poll(DxVM *vm);
+void dx_exec_enter(DxExecutionContext *exec);
+void dx_exec_leave(DxExecutionContext *exec);
+void dx_exec_gc_begin(DxVM *vm);
+void dx_exec_gc_end(DxVM *vm);
+
+typedef struct DxExecSnapshot {
+    uint32_t id;
+    uint32_t stack_depth;
+    uint64_t insn_count;
+    uint64_t insn_limit;
+    int32_t state;
+    int alive;
+    int has_exception;
+    unsigned long host_thread;
+    char method[128];
+} DxExecSnapshot;
+
+uint32_t dx_vm_exec_snapshot_count(DxVM *vm);
+int dx_vm_copy_exec_snapshot(DxVM *vm, uint32_t index, DxExecSnapshot *out);
+
+DxResult native_thread_start(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count);
+DxResult native_thread_join(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count);
+DxResult native_thread_isalive(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count);
+DxResult native_thread_current(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count);
+DxResult native_thread_sleep(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count);
 
 // Bytecode verification (called automatically before first execution)
 DxResult dx_verify_method(DxDexFile *dex, DxMethod *method);

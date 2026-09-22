@@ -2,7 +2,7 @@
   "schema_version": 2,
   "classification": "AGR_INTERNAL_BUG",
   "subsystem": "java.lang.Thread.start execution semantics",
-  "observed_discontinuity": "After virtual dispatch selects java.lang.Thread.start, Frozen Bubble GameView.<init> does not return. start runs GameThread.run on the calling thread, and the shared instruction budget is exhausted inside that loop.",
+  "observed_discontinuity": "After virtual dispatch selects java.lang.Thread.start, Frozen Bubble GameView.<init> did not return. start ran GameThread.run on the calling thread, and the shared instruction budget was exhausted inside that loop.",
   "upstream": {
     "map_entry": "dalvik.thread.start",
     "map_status": "VALID",
@@ -22,45 +22,61 @@
     "start returns to its caller after the receiver thread has been started.",
     "run makes progress independently of that caller.",
     "A continuous run loop does not consume the caller's instruction budget.",
-    "Surface callbacks on the Activity thread are not inside the render loop.",
-    "isAlive and join observe that started thread.",
-    "Two Java threads do not share one current frame."
+    "An exception on the worker does not become the caller's pending exception.",
+    "isAlive is true while the receiver is starting or running, and false when it is new or terminated.",
+    "join waits until a running receiver terminates.",
+    "sleep pauses only the current Java execution context.",
+    "A second start throws IllegalThreadStateException.",
+    "monitor-enter excludes another execution context and allows same-context reentry."
   ],
   "agr": {
     "files": [
-      "Runtime/DexLoom/VM/dx_vm.c"
+      "Runtime/DexLoom/VM/dx_exec.c",
+      "Runtime/DexLoom/VM/dx_vm.c",
+      "Runtime/DexLoom/VM/dx_interpreter.c"
     ],
     "call_path": [
       "native_thread_start",
-      "dx_vm_execute_method"
+      "java_worker_main",
+      "dx_vm_execute_method",
+      "dx_vm_monitor_enter"
     ]
   },
   "differences": [
     {
       "id": "D1",
-      "description": "API19 Thread.start calls VMThread.create. AGR native_thread_start calls dx_vm_execute_method on run and returns only when run returns. isAlive always returns false and join is a no-op.",
-      "relevance": "GameThread.run is while (mRun). The constructor calls setRunning(true) then start. The caller stays in run until the shared 500000-instruction budget is exhausted, so onCreate never finishes and surface callbacks do not run."
+      "description": "Before this repair, native_thread_start called dx_vm_execute_method on run and returned only when run returned. isAlive always returned false, join was a no-op, and the instruction budget and current frame belonged to the caller.",
+      "relevance": "GameThread.run is while (mRun). The constructor calls setRunning(true) then start. The caller stayed in run until the shared 500000-instruction budget was exhausted, so onCreate never finished and surface callbacks did not run."
     }
   ],
-  "earliest_evidenced_divergence": "API19 Thread.start calls VMThread.create so the receiver runs on its own thread. AGR native_thread_start executes run on the caller.",
-  "causal_status": "OBSERVED",
-  "evidence_level": "RUNTIME_OBSERVED",
+  "earliest_evidenced_divergence": "API19 Thread.start calls VMThread.create so the receiver runs on its own thread and start returns. The previous AGR native_thread_start executed run on the caller.",
+  "causal_status": "CONTRACT_CONFIRMED",
+  "evidence_level": "CONTRACT_CONFIRMED",
   "evidence": [
     {
       "type": "SOURCE",
-      "artifact": "android-4.4.4_r2 libcore Thread.start is public synchronized void start and calls VMThread.create(this, stackSize). The method comment says the receiver runs on the receiver thread, not the thread that called start. GameThread.run in robinst/frozen-bubble-android GameView.java loops while (mRun) and calls lockCanvas only when surfaceOK is true."
+      "artifact": "android-4.4.4_r2 libcore Thread.start is public synchronized void start and calls VMThread.create(this, stackSize). The method comment says the receiver runs on the receiver thread, not the thread that called start. isAlive is true once the VMThread exists. join waits for that thread. sleep suspends the current thread. A second start throws IllegalThreadStateException. Dalvik vm/Sync.cpp dvmLockObject and dvmUnlockObject own monitor mutual exclusion. GameThread.run in robinst/frozen-bubble-android GameView.java loops while (mRun), calls Thread.sleep(delay), and calls lockCanvas only when surfaceOK is true. setSurfaceOK and the game loop synchronize on mSurfaceHolder."
     },
     {
       "type": "RUNTIME",
-      "artifact": "Post-fix local probe of unchanged Frozen Bubble: VDISPATCH GameView.<init> pc 35 selects java.lang.Thread.start, then the log is Thread.start: running GameView$GameThread.run synchronously. The interpreter then reports instruction budget exhausted (500000) in GameThread.surfaceOK at pc 2, in GameThread.run at pc 30, in GameView.<init> at pc 38, and in FrozenBubble.onCreate at pc 42. start_activity returns -1. traversal_count, draw_count, and content_surface_created_count stay 0. This is not a first frame."
+      "artifact": "Local unchanged Frozen Bubble probe after the repair: VDISPATCH GameView.<init> pc 30 selects GameThread.setRunning and pc 35 selects java.lang.Thread.start at vtable_idx 10. JTHREAD start caller_exec=0 caller_host=139742014459264 worker_exec=1 worker_host=139742013159104 java=0x55ee4dd45510 state=STARTING. run_enter state=RUNNING method=Lorg/jfedor/frozenbubble/GameView$GameThread;. start_activity=0 launch_stage=9. After three host frames, surfaceCreated=1 surfaceChanged=1 content=94481996262320 root=94481996454336 draw=1 stack=0 exception empty. After 300ms the same counts hold. The worker skips Landroid/view/SurfaceHolder;.lockCanvas 7 times. Destroy joins the worker: run_exit_error rc=21 exception=- insns=208. The last UI diagnostic method is GameThread.scaleFrom with an empty exception. This probe is not a Simulator run and is not a first frame."
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Linux thread start contract PASS. probeAsync records beforeStart=1, afterStart=1 while runEntered=1 and runExited=0. Caller frame probeAsync depth 1 exec 0 host 140098722835840. Worker frame run depth 1 exec 1 host 140098713650880. Boom divide-by-zero leaves the caller pending_exception unchanged and the worker snapshot has the exception. Burner 150000 iterations: worker_insns=600004, caller_delta=0, caller_limit=500000. Sleeper Thread.sleep(150) returns from start in the caller before slept becomes 1; join then sees slept=1. Locker holds the monitor, Waiter acquired stays 0 until Locker exits, then Waiter acquires. Same-context double enter/exit sets recurseOk=1. A second start throws Ljava/lang/IllegalThreadStateException;. The protected vtable contract still PASS, including Thread.start on a guest subclass returning 11 from Worker.run. Object.vtable_size=10 Thread.vtable_size=18 Thread.start.vtable_idx=10 Worker.cleanUp.vtable_idx=18."
     }
   ],
   "remaining_uncertainty": [
-    "No independent Java Thread execution context exists yet, so isAlive and join were not remeasured against a live second context.",
-    "sleep inside run is unresolved and was not reached before the budget stop."
+    "The Frozen Bubble probe is a local Linux host run. It is not Simulator discovery and not a device run.",
+    "Object.wait, notify, and notifyAll are not implemented. This probe did not call them.",
+    "Each top-level execution context uses the process watchdog of 10000 ms. That watchdog was not the stop.",
+    "load_class can hold the shared VM lock across class initialization. A clinit that waits on a monitor owned by a thread which needs that lock can deadlock. It was not observed; Frozen Bubble class init during onCreate happens before the worker runs.",
+    "System.currentTimeMillis still returns 0, so the GameThread delay stays FRAME_DELAY 40. That was not changed.",
+    "pthread_create failure sets TERMINATED and throws OutOfMemoryError. That path was not forced.",
+    "The next public stop is unresolved SurfaceHolder.lockCanvas. It is outside this contract."
   ],
-  "next_action": "Do not implement a full scheduler in the dispatch repair. The next boundary is one guest Java Thread to one DEX execution context. Do not place that context on a guest pthread. Do not run a Simulator for this stop: onCreate dies before Surface callbacks. Do not implement lockCanvas or createScaledBitmap.",
+  "next_action": "Do not implement lockCanvas, Canvas, or Bitmap pixel decode from this differential. Do not run a Simulator: the local probe already shows start returns, run progresses, onCreate finishes, and the Surface callbacks still run. The next public API is SurfaceHolder.lockCanvas.",
   "needs_experiment": false,
   "experimental": false,
-  "host_adaptation": "DxVM.current_frame, stack_depth, pending_exception, insn_count, and the watchdog timestamp are VM-global and belong to the caller of dx_vm_execute_method. Register frames are per DxFrame but selected through the global current_frame. Inline caches live on DxMethod and are not safe for concurrent insert. The heap, class table, GC marks, interned strings, activity_instance, and framework_user are process-global. One guest pthread remains one Darwin pthread for GUEST-ARM native threads. A Java Thread is a host DEX execution context and must not alias that pthread table. This differential does not add that context."
+  "host_adaptation": "DxVM keeps process-global heap, class table, statics, interned strings, GC, framework and activity roots, and a recursive shared lock. DxExecutionContext keeps current_frame, stack_depth, pending_exception, insn_count, insn_limit, the watchdog timestamp, thread-local diagnostics, and the frame pool. The current context is thread-local. Thread.start creates a joinable Darwin pthread and returns. The shared lock is not held across run. GC takes a safepoint before that lock and marks every context. Inline-cache updates take the shared lock. A Java Thread is not entered in the guest pthread table. Monitors are per object, owned by an execution context, and recursive. Shutdown sets stop_requested and joins workers before the heap is freed."
 }

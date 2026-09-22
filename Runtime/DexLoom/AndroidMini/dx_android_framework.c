@@ -2498,45 +2498,45 @@ static DxResult start_activity_internal(DxVM *vm, DxObject *caller, DxObject *in
         DxMethod *on_pause = dx_vm_find_method(prev_activity->klass, "onPause", "V");
         if (on_pause) {
             DX_INFO(TAG, "%s: calling onPause() on previous activity", fn_name);
-            vm->insn_count = 0;
-            vm->pending_exception = NULL;
+            dx_vm_current_exec(vm)->insn_count = 0;
+            dx_vm_current_exec(vm)->pending_exception = NULL;
             DxValue pause_args[1] = { DX_OBJ_VALUE(prev_activity) };
             dx_vm_execute_method(vm, on_pause, pause_args, 1, NULL);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
         }
 
         // Call onStop() on the previous activity (it stays alive on the stack)
         DxMethod *on_stop = dx_vm_find_method(prev_activity->klass, "onStop", "V");
         if (on_stop) {
             DX_INFO(TAG, "%s: calling onStop() on previous activity", fn_name);
-            vm->insn_count = 0;
-            vm->pending_exception = NULL;
+            dx_vm_current_exec(vm)->insn_count = 0;
+            dx_vm_current_exec(vm)->pending_exception = NULL;
             DxValue stop_args[1] = { DX_OBJ_VALUE(prev_activity) };
             dx_vm_execute_method(vm, on_stop, stop_args, 1, NULL);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
         }
     } else if (prev_activity && prev_activity->klass) {
         // Stack full -- fall back to destroying the previous activity
         DxMethod *on_pause = dx_vm_find_method(prev_activity->klass, "onPause", "V");
         if (on_pause) {
-            vm->insn_count = 0; vm->pending_exception = NULL;
+            dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
             DxValue a[1] = { DX_OBJ_VALUE(prev_activity) };
             dx_vm_execute_method(vm, on_pause, a, 1, NULL);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
         }
         DxMethod *on_stop = dx_vm_find_method(prev_activity->klass, "onStop", "V");
         if (on_stop) {
-            vm->insn_count = 0; vm->pending_exception = NULL;
+            dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
             DxValue a[1] = { DX_OBJ_VALUE(prev_activity) };
             dx_vm_execute_method(vm, on_stop, a, 1, NULL);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
         }
         DxMethod *on_destroy = dx_vm_find_method(prev_activity->klass, "onDestroy", "V");
         if (on_destroy) {
-            vm->insn_count = 0; vm->pending_exception = NULL;
+            dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
             DxValue a[1] = { DX_OBJ_VALUE(prev_activity) };
             dx_vm_execute_method(vm, on_destroy, a, 1, NULL);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
         }
     }
 
@@ -2550,15 +2550,15 @@ static DxResult start_activity_internal(DxVM *vm, DxObject *caller, DxObject *in
     // Call <init> on the new activity
     DxMethod *init = dx_vm_find_method(target_cls, "<init>", NULL);
     if (init) {
-        vm->insn_count = 0;
-        vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0;
+        dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue init_args[1] = { DX_OBJ_VALUE(new_activity) };
         res = dx_vm_execute_method(vm, init, init_args, 1, NULL);
         if (res == DX_ERR_EXCEPTION) {
-            const char *exc_desc = vm->pending_exception && vm->pending_exception->klass
-                ? vm->pending_exception->klass->descriptor : "unknown";
+            const char *exc_desc = dx_vm_current_exec(vm)->pending_exception && dx_vm_current_exec(vm)->pending_exception->klass
+                ? dx_vm_current_exec(vm)->pending_exception->klass->descriptor : "unknown";
             DX_INFO(TAG, "%s: %s.<init> threw %s (absorbed)", fn_name, target_desc, exc_desc);
-            vm->pending_exception = NULL;
+            dx_vm_current_exec(vm)->pending_exception = NULL;
         } else if (res == DX_ERR_STACK_OVERFLOW || res == DX_ERR_INTERNAL) {
             DX_INFO(TAG, "%s: %s.<init> failed fatally", fn_name, target_desc);
             vm->activity_instance = prev_activity;
@@ -2570,15 +2570,15 @@ static DxResult start_activity_internal(DxVM *vm, DxObject *caller, DxObject *in
     // Call onCreate(null) on the new activity
     DxMethod *on_create = dx_vm_find_method(target_cls, "onCreate", NULL);
     if (on_create) {
-        vm->insn_count = 0;
-        vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0;
+        dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue oc_args[2] = { DX_OBJ_VALUE(new_activity), DX_NULL_VALUE };
         res = dx_vm_execute_method(vm, on_create, oc_args, 2, NULL);
         if (res == DX_ERR_EXCEPTION) {
-            const char *exc_desc = vm->pending_exception && vm->pending_exception->klass
-                ? vm->pending_exception->klass->descriptor : "unknown";
+            const char *exc_desc = dx_vm_current_exec(vm)->pending_exception && dx_vm_current_exec(vm)->pending_exception->klass
+                ? dx_vm_current_exec(vm)->pending_exception->klass->descriptor : "unknown";
             DX_INFO(TAG, "%s: %s.onCreate threw %s (absorbed)", fn_name, target_desc, exc_desc);
-            vm->pending_exception = NULL;
+            dx_vm_current_exec(vm)->pending_exception = NULL;
         } else if (res == DX_ERR_STACK_OVERFLOW || res == DX_ERR_INTERNAL) {
             DX_INFO(TAG, "%s: %s.onCreate failed fatally", fn_name, target_desc);
         } else if (res == DX_OK) {
@@ -2590,32 +2590,32 @@ static DxResult start_activity_internal(DxVM *vm, DxObject *caller, DxObject *in
     DxMethod *on_start = dx_vm_find_method(target_cls, "onStart", "V");
     if (on_start) {
         DX_INFO(TAG, "%s: calling onStart() on %s", fn_name, target_desc);
-        vm->insn_count = 0;
-        vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0;
+        dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue start_args[1] = { DX_OBJ_VALUE(new_activity) };
         dx_vm_execute_method(vm, on_start, start_args, 1, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
 
     // --- Lifecycle: onResume() ---
     DxMethod *on_resume = dx_vm_find_method(target_cls, "onResume", "V");
     if (on_resume) {
         DX_INFO(TAG, "%s: calling onResume() on %s", fn_name, target_desc);
-        vm->insn_count = 0;
-        vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0;
+        dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue resume_args[1] = { DX_OBJ_VALUE(new_activity) };
         dx_vm_execute_method(vm, on_resume, resume_args, 1, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
 
     // --- Lifecycle: onPostResume() ---
     DxMethod *on_post_resume = dx_vm_find_method(target_cls, "onPostResume", "V");
     if (on_post_resume) {
-        vm->insn_count = 0;
-        vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0;
+        dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue pr_args[1] = { DX_OBJ_VALUE(new_activity) };
         dx_vm_execute_method(vm, on_post_resume, pr_args, 1, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
 
     DX_INFO(TAG, "%s: %s launched (lifecycle: onCreate -> onStart -> onResume)", fn_name, target_desc);
@@ -2682,24 +2682,24 @@ static DxResult native_activity_finish(DxVM *vm, DxFrame *frame, DxValue *args, 
     if (finishing->klass) {
         DxMethod *on_pause = dx_vm_find_method(finishing->klass, "onPause", "V");
         if (on_pause) {
-            vm->insn_count = 0; vm->pending_exception = NULL;
+            dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
             DxValue a[1] = { DX_OBJ_VALUE(finishing) };
             dx_vm_execute_method(vm, on_pause, a, 1, NULL);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
         }
         DxMethod *on_stop = dx_vm_find_method(finishing->klass, "onStop", "V");
         if (on_stop) {
-            vm->insn_count = 0; vm->pending_exception = NULL;
+            dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
             DxValue a[1] = { DX_OBJ_VALUE(finishing) };
             dx_vm_execute_method(vm, on_stop, a, 1, NULL);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
         }
         DxMethod *on_destroy = dx_vm_find_method(finishing->klass, "onDestroy", "V");
         if (on_destroy) {
-            vm->insn_count = 0; vm->pending_exception = NULL;
+            dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
             DxValue a[1] = { DX_OBJ_VALUE(finishing) };
             dx_vm_execute_method(vm, on_destroy, a, 1, NULL);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
         }
     }
 
@@ -2725,8 +2725,8 @@ static DxResult native_activity_finish(DxVM *vm, DxFrame *frame, DxValue *args, 
                 if (on_result) {
                     DX_INFO(TAG, "finish: delivering onActivityResult(requestCode=%d, resultCode=%d) to %s",
                             req_code, result_code, prev->klass->descriptor);
-                    vm->insn_count = 0;
-                    vm->pending_exception = NULL;
+                    dx_vm_current_exec(vm)->insn_count = 0;
+                    dx_vm_current_exec(vm)->pending_exception = NULL;
                     DxValue ra[4] = {
                         DX_OBJ_VALUE(prev),
                         DX_INT_VALUE(req_code),
@@ -2734,31 +2734,31 @@ static DxResult native_activity_finish(DxVM *vm, DxFrame *frame, DxValue *args, 
                         result_data ? DX_OBJ_VALUE(result_data) : DX_NULL_VALUE
                     };
                     dx_vm_execute_method(vm, on_result, ra, 4, NULL);
-                    if (vm->pending_exception) vm->pending_exception = NULL;
+                    if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
                 }
             }
 
             // Resume the previous activity: onRestart -> onStart -> onResume
             DxMethod *on_restart = dx_vm_find_method(prev->klass, "onRestart", "V");
             if (on_restart) {
-                vm->insn_count = 0; vm->pending_exception = NULL;
+                dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
                 DxValue a[1] = { DX_OBJ_VALUE(prev) };
                 dx_vm_execute_method(vm, on_restart, a, 1, NULL);
-                if (vm->pending_exception) vm->pending_exception = NULL;
+                if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
             }
             DxMethod *on_start = dx_vm_find_method(prev->klass, "onStart", "V");
             if (on_start) {
-                vm->insn_count = 0; vm->pending_exception = NULL;
+                dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
                 DxValue a[1] = { DX_OBJ_VALUE(prev) };
                 dx_vm_execute_method(vm, on_start, a, 1, NULL);
-                if (vm->pending_exception) vm->pending_exception = NULL;
+                if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
             }
             DxMethod *on_resume = dx_vm_find_method(prev->klass, "onResume", "V");
             if (on_resume) {
-                vm->insn_count = 0; vm->pending_exception = NULL;
+                dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
                 DxValue a[1] = { DX_OBJ_VALUE(prev) };
                 dx_vm_execute_method(vm, on_resume, a, 1, NULL);
-                if (vm->pending_exception) vm->pending_exception = NULL;
+                if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
             }
 
             DX_INFO(TAG, "finish: resumed %s (onRestart -> onStart -> onResume)", prev->klass->descriptor);
@@ -2822,15 +2822,15 @@ static DxObject *call_on_save_instance_state(DxVM *vm, DxObject *activity) {
     if (!bundle) return NULL;
 
     DX_INFO(TAG, "Calling onSaveInstanceState on %s", activity->klass->descriptor);
-    vm->insn_count = 0;
-    vm->pending_exception = NULL;
+    dx_vm_current_exec(vm)->insn_count = 0;
+    dx_vm_current_exec(vm)->pending_exception = NULL;
     DxValue save_args[2] = { DX_OBJ_VALUE(activity), DX_OBJ_VALUE(bundle) };
     DxResult res = dx_vm_execute_method(vm, save, save_args, 2, NULL);
     if (res == DX_ERR_EXCEPTION) {
         DX_WARN(TAG, "onSaveInstanceState threw %s (absorbed)",
-                vm->pending_exception && vm->pending_exception->klass
-                ? vm->pending_exception->klass->descriptor : "unknown");
-        vm->pending_exception = NULL;
+                dx_vm_current_exec(vm)->pending_exception && dx_vm_current_exec(vm)->pending_exception->klass
+                ? dx_vm_current_exec(vm)->pending_exception->klass->descriptor : "unknown");
+        dx_vm_current_exec(vm)->pending_exception = NULL;
     }
     return bundle;
 }
@@ -2845,15 +2845,15 @@ static void call_on_restore_instance_state(DxVM *vm, DxObject *activity, DxObjec
     if (!restore) return;
 
     DX_INFO(TAG, "Calling onRestoreInstanceState on %s", activity->klass->descriptor);
-    vm->insn_count = 0;
-    vm->pending_exception = NULL;
+    dx_vm_current_exec(vm)->insn_count = 0;
+    dx_vm_current_exec(vm)->pending_exception = NULL;
     DxValue args[2] = { DX_OBJ_VALUE(activity), DX_OBJ_VALUE(bundle) };
     DxResult res = dx_vm_execute_method(vm, restore, args, 2, NULL);
     if (res == DX_ERR_EXCEPTION) {
         DX_WARN(TAG, "onRestoreInstanceState threw %s (absorbed)",
-                vm->pending_exception && vm->pending_exception->klass
-                ? vm->pending_exception->klass->descriptor : "unknown");
-        vm->pending_exception = NULL;
+                dx_vm_current_exec(vm)->pending_exception && dx_vm_current_exec(vm)->pending_exception->klass
+                ? dx_vm_current_exec(vm)->pending_exception->klass->descriptor : "unknown");
+        dx_vm_current_exec(vm)->pending_exception = NULL;
     }
 }
 
@@ -2875,24 +2875,24 @@ static DxResult native_activity_recreate(DxVM *vm, DxFrame *frame, DxValue *args
     // 2. Lifecycle teardown: onPause -> onStop -> onDestroy
     DxMethod *on_pause = dx_vm_find_method(cls, "onPause", "V");
     if (on_pause) {
-        vm->insn_count = 0; vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue a[1] = { DX_OBJ_VALUE(activity) };
         dx_vm_execute_method(vm, on_pause, a, 1, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
     DxMethod *on_stop = dx_vm_find_method(cls, "onStop", "V");
     if (on_stop) {
-        vm->insn_count = 0; vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue a[1] = { DX_OBJ_VALUE(activity) };
         dx_vm_execute_method(vm, on_stop, a, 1, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
     DxMethod *on_destroy = dx_vm_find_method(cls, "onDestroy", "V");
     if (on_destroy) {
-        vm->insn_count = 0; vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue a[1] = { DX_OBJ_VALUE(activity) };
         dx_vm_execute_method(vm, on_destroy, a, 1, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
 
     // 3. Create new instance
@@ -2903,10 +2903,10 @@ static DxResult native_activity_recreate(DxVM *vm, DxFrame *frame, DxValue *args
     // 4. Call <init>
     DxMethod *init = dx_vm_find_method(cls, "<init>", NULL);
     if (init) {
-        vm->insn_count = 0; vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue init_args[1] = { DX_OBJ_VALUE(new_activity) };
         DxResult res = dx_vm_execute_method(vm, init, init_args, 1, NULL);
-        if (res == DX_ERR_EXCEPTION) { vm->pending_exception = NULL; }
+        if (res == DX_ERR_EXCEPTION) { dx_vm_current_exec(vm)->pending_exception = NULL; }
         else if (res == DX_ERR_STACK_OVERFLOW || res == DX_ERR_INTERNAL) {
             return DX_OK;
         }
@@ -2915,13 +2915,13 @@ static DxResult native_activity_recreate(DxVM *vm, DxFrame *frame, DxValue *args
     // 5. onCreate(savedBundle)
     DxMethod *on_create = dx_vm_find_method(cls, "onCreate", NULL);
     if (on_create) {
-        vm->insn_count = 0; vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue oc_args[2] = {
             DX_OBJ_VALUE(new_activity),
             saved_bundle ? DX_OBJ_VALUE(saved_bundle) : DX_NULL_VALUE
         };
         DxResult res = dx_vm_execute_method(vm, on_create, oc_args, 2, NULL);
-        if (res == DX_ERR_EXCEPTION) { vm->pending_exception = NULL; }
+        if (res == DX_ERR_EXCEPTION) { dx_vm_current_exec(vm)->pending_exception = NULL; }
     }
 
     // 6. onRestoreInstanceState(savedBundle)
@@ -2932,17 +2932,17 @@ static DxResult native_activity_recreate(DxVM *vm, DxFrame *frame, DxValue *args
     // 7. onStart -> onResume
     DxMethod *on_start = dx_vm_find_method(cls, "onStart", "V");
     if (on_start) {
-        vm->insn_count = 0; vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue a[1] = { DX_OBJ_VALUE(new_activity) };
         dx_vm_execute_method(vm, on_start, a, 1, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
     DxMethod *on_resume = dx_vm_find_method(cls, "onResume", "V");
     if (on_resume) {
-        vm->insn_count = 0; vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0; dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue a[1] = { DX_OBJ_VALUE(new_activity) };
         dx_vm_execute_method(vm, on_resume, a, 1, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
 
     DX_INFO(TAG, "recreate: %s recreated (lifecycle: onSaveInstanceState -> onDestroy -> onCreate -> onRestoreInstanceState -> onStart -> onResume)", desc);
@@ -3076,7 +3076,7 @@ static DxResult native_run_runnable_return_self(DxVM *vm, DxFrame *frame, DxValu
         if (run_method) {
             DxValue run_args[1] = { DX_OBJ_VALUE(runnable) };
             dx_vm_execute_method(vm, run_method, run_args, 1, NULL);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
         }
     }
     frame->result = DX_OBJ_VALUE(args[0].obj);
@@ -4466,9 +4466,9 @@ static DxResult native_livedata_set_value(DxVM *vm, DxFrame *frame, DxValue *arg
         DxMethod *on_changed = dx_vm_find_method(observer->klass, "onChanged", NULL);
         if (on_changed) {
             DxValue obs_args[2] = { DX_OBJ_VALUE(observer), new_val };
-            vm->insn_count = 0;
+            dx_vm_current_exec(vm)->insn_count = 0;
             dx_vm_execute_method(vm, on_changed, obs_args, 2, NULL);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
         }
     }
     return DX_OK;
@@ -4500,9 +4500,9 @@ static DxResult native_viewmodelprovider_get(DxVM *vm, DxFrame *frame, DxValue *
         DxMethod *init = dx_vm_find_method(cls, "<init>", "V");
         if (init) {
             DxValue init_args[1] = { DX_OBJ_VALUE(obj) };
-            vm->insn_count = 0;
+            dx_vm_current_exec(vm)->insn_count = 0;
             dx_vm_execute_method(vm, init, init_args, 1, NULL);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
         }
     }
     frame->result = obj ? DX_OBJ_VALUE(obj) : DX_NULL_VALUE;
@@ -4555,7 +4555,7 @@ static DxResult native_activity_run_on_ui_thread(DxVM *vm, DxFrame *frame, DxVal
         DX_DEBUG("Activity", "runOnUiThread() executing Runnable.run() synchronously");
         DxValue run_args[1] = { DX_OBJ_VALUE(runnable) };
         dx_vm_execute_method(vm, run_method, run_args, 1, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL; // absorb
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL; // absorb
     }
     return DX_OK;
 }
@@ -5468,7 +5468,7 @@ static DxResult native_objects_requireNonNull(DxVM *vm, DxFrame *frame, DxValue 
     if (npe) {
         DxObject *exc = dx_vm_alloc_object(vm, npe);
         if (exc) {
-            vm->pending_exception = exc;
+            dx_vm_current_exec(vm)->pending_exception = exc;
             return DX_ERR_EXCEPTION;
         }
     }
@@ -5929,7 +5929,7 @@ static DxResult native_executor_submit(DxVM *vm, DxFrame *frame, DxValue *args, 
             DxValue run_args[1] = { DX_OBJ_VALUE(runnable) };
             DxValue result_val = DX_NULL_VALUE;
             dx_vm_execute_method(vm, method, run_args, 1, &result_val);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
             if (call_method) call_result = result_val; // store Callable result
         }
     }
@@ -6016,7 +6016,7 @@ static DxResult native_cf_then_apply(DxVM *vm, DxFrame *frame, DxValue *args, ui
         if (apply) {
             DxValue apply_args[2] = { DX_OBJ_VALUE(func), current_val };
             dx_vm_execute_method(vm, apply, apply_args, 2, &new_val);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
         }
     }
 
@@ -6049,7 +6049,7 @@ static DxResult native_cf_then_accept(DxVM *vm, DxFrame *frame, DxValue *args, u
         if (accept) {
             DxValue accept_args[2] = { DX_OBJ_VALUE(consumer), current_val };
             dx_vm_execute_method(vm, accept, accept_args, 2, NULL);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
         }
     }
 
@@ -6076,7 +6076,7 @@ static DxResult native_cf_then_run(DxVM *vm, DxFrame *frame, DxValue *args, uint
         if (run) {
             DxValue run_args[1] = { DX_OBJ_VALUE(runnable) };
             dx_vm_execute_method(vm, run, run_args, 1, NULL);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
         }
     }
 
@@ -6154,7 +6154,7 @@ static DxResult native_kotlin_lazy(DxVM *vm, DxFrame *frame, DxValue *args, uint
             DxValue invoke_args[1] = { DX_OBJ_VALUE(func) };
             DxValue result = DX_NULL_VALUE;
             dx_vm_execute_method(vm, invoke, invoke_args, 1, &result);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
             frame->result = result;
             frame->has_result = true;
             return DX_OK;
@@ -6181,7 +6181,7 @@ static DxResult native_coroutine_launch(DxVM *vm, DxFrame *frame, DxValue *args,
                 DxValue invoke_args[2] = { DX_OBJ_VALUE(args[i].obj), DX_NULL_VALUE };
                 DxValue result = DX_NULL_VALUE;
                 dx_vm_execute_method(vm, invoke, invoke_args, 2, &result);
-                if (vm->pending_exception) vm->pending_exception = NULL;
+                if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
                 break;
             }
         }
@@ -6207,7 +6207,7 @@ static DxResult native_coroutine_async(DxVM *vm, DxFrame *frame, DxValue *args, 
             if (invoke) {
                 DxValue invoke_args[2] = { DX_OBJ_VALUE(args[i].obj), DX_NULL_VALUE };
                 dx_vm_execute_method(vm, invoke, invoke_args, 2, &lambda_result);
-                if (vm->pending_exception) vm->pending_exception = NULL;
+                if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
                 break;
             }
         }
@@ -6347,7 +6347,7 @@ static DxResult native_thread_start(DxVM *vm, DxFrame *frame, DxValue *args, uin
                     runnable->klass ? runnable->klass->descriptor : "?");
             DxValue run_args[1] = { DX_OBJ_VALUE(runnable) };
             dx_vm_execute_method(vm, run_method, run_args, 1, NULL);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
             return DX_OK;
         }
     }
@@ -6359,7 +6359,7 @@ static DxResult native_thread_start(DxVM *vm, DxFrame *frame, DxValue *args, uin
                 thread_obj->klass ? thread_obj->klass->descriptor : "?");
         DxValue run_args[1] = { DX_OBJ_VALUE(thread_obj) };
         dx_vm_execute_method(vm, run_method, run_args, 1, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
     return DX_OK;
 }
@@ -6472,7 +6472,7 @@ static DxResult native_handler_post(DxVM *vm, DxFrame *frame, DxValue *args, uin
         DX_DEBUG("Handler", "post() executing Runnable.run() synchronously");
         DxValue run_args[1] = { DX_OBJ_VALUE(runnable) };
         dx_vm_execute_method(vm, run_method, run_args, 1, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL; // absorb
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL; // absorb
     } else {
         DX_DEBUG("Handler", "post() - no run() method on %s",
                 runnable->klass ? runnable->klass->descriptor : "?");
@@ -6497,7 +6497,7 @@ static DxResult native_handler_post_delayed(DxVM *vm, DxFrame *frame, DxValue *a
         DX_DEBUG("Handler", "postDelayed() executing Runnable.run() synchronously (delay ignored)");
         DxValue run_args[1] = { DX_OBJ_VALUE(runnable) };
         dx_vm_execute_method(vm, run_method, run_args, 1, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
 
     frame->result = DX_INT_VALUE(1);
@@ -6520,7 +6520,7 @@ static DxResult native_view_post(DxVM *vm, DxFrame *frame, DxValue *args, uint32
         DX_DEBUG("View", "post() executing Runnable.run() synchronously");
         DxValue run_args[1] = { DX_OBJ_VALUE(runnable) };
         dx_vm_execute_method(vm, run_method, run_args, 1, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
 
     frame->result = DX_INT_VALUE(1);
@@ -6958,8 +6958,8 @@ static DxResult native_activity_request_permissions(DxVM *vm, DxFrame *frame, Dx
     if (callback) {
         DX_INFO(TAG, "requestPermissions: delivering onRequestPermissionsResult(requestCode=%d, count=%u)",
                 request_code, perm_count);
-        vm->insn_count = 0;
-        vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0;
+        dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue cb_args[4] = {
             DX_OBJ_VALUE(activity),
             DX_INT_VALUE(request_code),
@@ -6967,7 +6967,7 @@ static DxResult native_activity_request_permissions(DxVM *vm, DxFrame *frame, Dx
             grant_arr ? DX_OBJ_VALUE(grant_arr) : DX_NULL_VALUE
         };
         dx_vm_execute_method(vm, callback, cb_args, 4, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
     return DX_OK;
 }
@@ -9168,30 +9168,30 @@ static DxResult native_context_start_service(DxVM *vm, DxFrame *frame, DxValue *
     // Call <init>
     DxMethod *init_m = dx_vm_find_method(target_cls, "<init>", "V");
     if (init_m) {
-        vm->insn_count = 0;
-        vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0;
+        dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue init_args[1] = { DX_OBJ_VALUE(service) };
         dx_vm_execute_method(vm, init_m, init_args, 1, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
 
     // Call onCreate()
     DxMethod *on_create = dx_vm_find_method(target_cls, "onCreate", "V");
     if (on_create) {
         DX_INFO(TAG, "startService: calling onCreate() on %s", target_desc);
-        vm->insn_count = 0;
-        vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0;
+        dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue create_args[1] = { DX_OBJ_VALUE(service) };
         dx_vm_execute_method(vm, on_create, create_args, 1, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
 
     // Call onStartCommand(Intent, flags=0, startId=1)
     DxMethod *on_start_cmd = dx_vm_find_method(target_cls, "onStartCommand", "ILII");
     if (on_start_cmd) {
         DX_INFO(TAG, "startService: calling onStartCommand() on %s", target_desc);
-        vm->insn_count = 0;
-        vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0;
+        dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue cmd_args[4] = {
             DX_OBJ_VALUE(service),
             args[1],           // the Intent
@@ -9199,7 +9199,7 @@ static DxResult native_context_start_service(DxVM *vm, DxFrame *frame, DxValue *
             DX_INT_VALUE(1)    // startId
         };
         dx_vm_execute_method(vm, on_start_cmd, cmd_args, 4, NULL);
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
 
     // Return a ComponentName (null is acceptable for stubs)
@@ -19627,7 +19627,7 @@ static DxResult native_class_new_instance(DxVM *vm, DxFrame *frame, DxValue *arg
         if (init) {
             DxValue init_args[1] = { DX_OBJ_VALUE(obj) };
             dx_vm_execute_method(vm, init, init_args, 1, NULL);
-            if (vm->pending_exception) vm->pending_exception = NULL;
+            if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
         }
     }
     frame->result = obj ? DX_OBJ_VALUE(obj) : DX_NULL_VALUE;
@@ -19748,13 +19748,13 @@ static DxResult native_method_invoke(DxVM *vm, DxFrame *frame, DxValue *args, ui
     }
 
     DxValue result = {0};
-    vm->insn_count = 0;
+    dx_vm_current_exec(vm)->insn_count = 0;
     DxResult res = dx_vm_execute_method(vm, method, call_args, call_count, &result);
     if (res == DX_OK) {
         frame->result = result;
     } else {
         frame->result = DX_NULL_VALUE;
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
     frame->has_result = true;
     return DX_OK;

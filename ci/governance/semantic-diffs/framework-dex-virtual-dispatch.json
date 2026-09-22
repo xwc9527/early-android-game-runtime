@@ -63,7 +63,7 @@
     "HLE virtual sets are the methods AGR registered. They are not the full libcore vtables, so absolute slot numbers are not Dalvik's methodIndex values.",
     "The VDISPATCH lines are capped and do not participate in dispatch."
   ],
-  "next_action": "Do not add a Thread.start or GameThread special case. Synchronous Thread.start is the separate differential framework-thread-start.json.",
+  "next_action": "Do not add a Thread.start or GameThread special case. Thread execution ownership is the separate differential framework-thread-start.json.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "dx_class_build_vtable copies the superclass table, replaces a same-name same-shorty slot, and appends other virtual methods. Interface methods keep vtable_idx -1 and stay on the itable path."

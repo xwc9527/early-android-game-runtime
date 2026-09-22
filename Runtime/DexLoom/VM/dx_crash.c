@@ -24,19 +24,19 @@ static void crash_signal_handler(int sig) {
 
     // Capture diagnostic info if VM is available
     if (s_crash_vm) {
-        snprintf(s_crash_vm->error_msg, sizeof(s_crash_vm->error_msg),
+        snprintf(s_crash_dx_vm_current_exec(vm)->error_msg, sizeof(s_crash_dx_vm_current_exec(vm)->error_msg),
                  "Signal %d (%s) caught during bytecode execution",
                  sig, sig == SIGSEGV ? "SIGSEGV" : sig == SIGBUS ? "SIGBUS" : "unknown");
 
         // Mark diagnostic error
         s_crash_vm->diag.has_error = true;
-        if (s_crash_vm->current_frame && s_crash_vm->current_frame->method) {
-            DxMethod *m = s_crash_vm->current_frame->method;
+        if (s_crash_dx_vm_current_exec(vm)->current_frame && s_crash_dx_vm_current_exec(vm)->current_frame->method) {
+            DxMethod *m = s_crash_dx_vm_current_exec(vm)->current_frame->method;
             snprintf(s_crash_vm->diag.method_name, sizeof(s_crash_vm->diag.method_name),
                      "%s.%s",
                      m->declaring_class ? m->declaring_class->descriptor : "?",
                      m->name ? m->name : "?");
-            s_crash_vm->diag.pc = s_crash_vm->current_frame->pc;
+            s_crash_vm->diag.pc = s_crash_dx_vm_current_exec(vm)->current_frame->pc;
         }
     }
 
