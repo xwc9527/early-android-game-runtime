@@ -151,6 +151,93 @@ const char* agr_bitmap_decoder_name(void) {
     return "KitKat SkImageDecoder PNG/JPEG/GIF";
 }
 
+static int scale_clamp_index(float sample, int limit) {
+    int index = (int)floorf(sample + 0.5f);
+    if (index < 0) return 0;
+    if (index >= limit) return limit - 1;
+    return index;
+}
+
+static void scale_load(const uint8_t* base, size_t row_bytes, int x, int y, float* out) {
+    const uint8_t* pixel = base + (size_t)y * row_bytes + (size_t)x * 4;
+    out[0] = pixel[0];
+    out[1] = pixel[1];
+    out[2] = pixel[2];
+    out[3] = pixel[3];
+}
+
+static void scale_store(uint8_t* pixel, const float* sample) {
+    for (int channel = 0; channel < 4; ++channel) {
+        float value = sample[channel];
+        if (value < 0.f) value = 0.f;
+        if (value > 255.f) value = 255.f;
+        pixel[channel] = (uint8_t)(value + 0.5f);
+    }
+}
+
+agr_bitmap* agr_bitmap_scale(const agr_bitmap* src, int dst_w, int dst_h, int filter) {
+    if (!src || dst_w <= 0 || dst_h <= 0) return NULL;
+    if (src->bitmap.config() != SkBitmap::kARGB_8888_Config || !src->bitmap.getPixels())
+        return NULL;
+    const int src_w = src->bitmap.width();
+    const int src_h = src->bitmap.height();
+    const size_t src_rb = src->bitmap.rowBytes();
+    if (src_w <= 0 || src_h <= 0 || src_rb < (size_t)src_w * 4) return NULL;
+
+    agr_bitmap* result = new agr_bitmap;
+    result->bitmap.setConfig(SkBitmap::kARGB_8888_Config, dst_w, dst_h);
+    result->bitmap.setAlphaType(src->bitmap.alphaType());
+    if (!result->bitmap.allocPixels()) {
+        delete result;
+        return NULL;
+    }
+
+    const uint8_t* src_base = static_cast<const uint8_t*>(src->bitmap.getPixels());
+    uint8_t* dst_base = static_cast<uint8_t*>(result->bitmap.getPixels());
+    const size_t dst_rb = result->bitmap.rowBytes();
+    for (int y = 0; y < dst_h; ++y) {
+        const float src_y = ((float)y + 0.5f) * (float)src_h / (float)dst_h - 0.5f;
+        uint8_t* dst_row = dst_base + (size_t)y * dst_rb;
+        for (int x = 0; x < dst_w; ++x) {
+            const float src_x = ((float)x + 0.5f) * (float)src_w / (float)dst_w - 0.5f;
+            uint8_t* dst_pixel = dst_row + (size_t)x * 4;
+            if (!filter) {
+                float sample[4];
+                scale_load(src_base, src_rb,
+                           scale_clamp_index(src_x, src_w),
+                           scale_clamp_index(src_y, src_h),
+                           sample);
+                scale_store(dst_pixel, sample);
+                continue;
+            }
+            float sx = src_x;
+            float sy = src_y;
+            if (sx < 0.f) sx = 0.f;
+            if (sy < 0.f) sy = 0.f;
+            if (sx > (float)(src_w - 1)) sx = (float)(src_w - 1);
+            if (sy > (float)(src_h - 1)) sy = (float)(src_h - 1);
+            const int x0 = (int)floorf(sx);
+            const int y0 = (int)floorf(sy);
+            const int x1 = x0 + 1 < src_w ? x0 + 1 : src_w - 1;
+            const int y1 = y0 + 1 < src_h ? y0 + 1 : src_h - 1;
+            const float tx = sx - (float)x0;
+            const float ty = sy - (float)y0;
+            float c00[4], c10[4], c01[4], c11[4], mixed[4];
+            scale_load(src_base, src_rb, x0, y0, c00);
+            scale_load(src_base, src_rb, x1, y0, c10);
+            scale_load(src_base, src_rb, x0, y1, c01);
+            scale_load(src_base, src_rb, x1, y1, c11);
+            for (int channel = 0; channel < 4; ++channel) {
+                const float top = c00[channel] * (1.f - tx) + c10[channel] * tx;
+                const float bottom = c01[channel] * (1.f - tx) + c11[channel] * tx;
+                mixed[channel] = top * (1.f - ty) + bottom * ty;
+            }
+            scale_store(dst_pixel, mixed);
+        }
+    }
+    return result;
+}
+
 int agr_bitmap_draw(const agr_bitmap* src,
                     void* dst_pixels,
                     int dst_w,

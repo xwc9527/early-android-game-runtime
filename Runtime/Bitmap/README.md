@@ -27,6 +27,7 @@ avoid linking full `SkCanvas` and adapt giflib5 close signatures.
 `agr_bitmap_draw` blits source pixels onto a raw destination buffer with
 floor(left/top), destination clipping, and SRC_OVER. It is the thin host helper
 behind DEX `Canvas.drawBitmap(Bitmap,float,float,Paint)` with null Paint.
-Bitmap scaling, reuse, nine-patch handling, Java density transforms, non-null
-Paint attributes, and a full Android Canvas remain outside this module until a
-real call path requires them.
+`agr_bitmap_scale` is the pixel result of `Bitmap.createScaledBitmap`: nearest
+or bilinear sampling into a new ARGB_8888 buffer of the requested size.
+Reuse, nine-patch handling, Java density transforms, non-null Paint
+attributes, and a full Android Canvas remain outside this module.

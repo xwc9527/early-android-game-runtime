@@ -81,6 +81,31 @@ int main(int argc, char **argv) {
     expect(wrote > 0, "partial left clip still writes");
     expect(pixel_at(dst, dst_rb, 0, 0) == 0xff00ff00, "clipped green at (0,0)");
 
+    expect(agr_bitmap_scale(NULL, 4, 2, 0) == NULL, "scale rejects a null source");
+    expect(agr_bitmap_scale(src, 0, 2, 1) == NULL, "scale rejects a non-positive width");
+    agr_bitmap *nearest = agr_bitmap_scale(src, 4, 2, 0);
+    expect(nearest != NULL, "nearest scale allocates");
+    expect(nearest && agr_bitmap_width(nearest) == 4 && agr_bitmap_height(nearest) == 2,
+           "nearest scale uses the requested size");
+    expect(agr_bitmap_width(src) == 2 && agr_bitmap_height(src) == 2, "scale leaves the source size");
+    if (nearest) {
+        const uint8_t *np = (const uint8_t *)agr_bitmap_pixels(nearest);
+        size_t nrb = agr_bitmap_row_bytes(nearest);
+        expect(pixel_at(np, nrb, 0, 0) == 0xff0000ff, "nearest left pixel stays red");
+        expect(pixel_at(np, nrb, 1, 0) == 0xff0000ff, "nearest second pixel stays red");
+        expect(pixel_at(np, nrb, 2, 0) == 0xff00ff00, "nearest third pixel stays green");
+        expect(pixel_at(np, nrb, 3, 0) == 0xff00ff00, "nearest fourth pixel stays green");
+    }
+    agr_bitmap *filtered = agr_bitmap_scale(src, 4, 2, 1);
+    expect(filtered != NULL && agr_bitmap_width(filtered) == 4, "bilinear scale allocates");
+    if (filtered) {
+        const uint8_t *fp = (const uint8_t *)agr_bitmap_pixels(filtered);
+        size_t frb = agr_bitmap_row_bytes(filtered);
+        expect(pixel_at(fp, frb, 0, 0) == 0xff0000ff, "bilinear edge stays source red");
+        expect(fp[3] == 0xff, "bilinear keeps opaque alpha");
+    }
+    agr_bitmap_destroy(nearest);
+    agr_bitmap_destroy(filtered);
     agr_bitmap_destroy(src);
 
     bytes = read_file(jpg_path, &size);

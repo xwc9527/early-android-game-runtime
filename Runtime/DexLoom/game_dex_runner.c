@@ -369,6 +369,7 @@ static DxResult bitmap_decode_failed(DxVM *vm, DxFrame *frame, int reuse_bitmap)
 static DxResult bitmap_decode_resource(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
 static DxResult bitmap_decode_byte_array(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
 static DxResult bitmap_recycle(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
+static DxResult bitmap_create_scaled(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
 static DxResult canvas_draw_bitmap(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
 
 static DxResult bitmap_get_dimension(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
@@ -597,6 +598,8 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(bitmap, "recycle", "V", DX_ACC_PUBLIC, bitmap_recycle, 0);
     add_method(bitmap, "getWidth", "I", DX_ACC_PUBLIC, bitmap_get_dimension, 0);
     add_method(bitmap, "getHeight", "I", DX_ACC_PUBLIC, bitmap_get_dimension, 0);
+    add_method(bitmap, "createScaledBitmap", "LLIIZ", DX_ACC_PUBLIC | DX_ACC_STATIC,
+               bitmap_create_scaled, 1);
     DxClass *factory = reg_class(vm, "Landroid/graphics/BitmapFactory;", obj);
     add_method(factory, "decodeStream", "LLLL", DX_ACC_PUBLIC | DX_ACC_STATIC, bitmap_decode, 1);
     add_method(factory, "decodeResource", "LLIL", DX_ACC_PUBLIC | DX_ACC_STATIC, bitmap_decode_resource, 1);
@@ -1343,6 +1346,74 @@ static DxResult bitmap_recycle(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t
         slot->recycled = 1;
     }
     dx_vm_set_field(args[0].obj, "_recycled", DX_INT_VALUE(1));
+    return DX_OK;
+}
+
+/* API19 Bitmap.createScaledBitmap(Bitmap, int, int, boolean).
+   Same requested dimensions return the source object. Any other positive
+   size returns a new Bitmap whose pixels are the scaled source. A null
+   source throws NullPointerException. Non-positive dimensions throw
+   IllegalArgumentException. A recycled source throws IllegalStateException.
+   This does not allocate a Matrix, Canvas, or Paint. */
+static DxResult bitmap_create_scaled(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    struct agr_guest_bitmap *slot;
+    DxObject *source;
+    DxClass *bitmap_class;
+    DxObject *bitmap;
+    agr_bitmap *scaled;
+    DxValue path = DX_NULL_VALUE;
+    int dst_w, dst_h, filter, src_w, src_h;
+    if (count < 4 || args[0].tag != DX_VAL_OBJ || !args[0].obj) {
+        dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+            vm, "Ljava/lang/NullPointerException;", "bitmap");
+        return DX_ERR_EXCEPTION;
+    }
+    source = args[0].obj;
+    dst_w = args[1].tag == DX_VAL_INT ? args[1].i : 0;
+    dst_h = args[2].tag == DX_VAL_INT ? args[2].i : 0;
+    filter = args[3].tag == DX_VAL_INT && args[3].i != 0;
+    if (dst_w <= 0) {
+        dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+            vm, "Ljava/lang/IllegalArgumentException;", "width must be > 0");
+        return DX_ERR_EXCEPTION;
+    }
+    if (dst_h <= 0) {
+        dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+            vm, "Ljava/lang/IllegalArgumentException;", "height must be > 0");
+        return DX_ERR_EXCEPTION;
+    }
+    slot = guest_bitmap_slot(game, source);
+    if (!slot || slot->recycled || !slot->host || !agr_bitmap_pixels(slot->host)) {
+        dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+            vm, "Ljava/lang/IllegalStateException;",
+            "Can't call getWidth() on a recycled bitmap");
+        return DX_ERR_EXCEPTION;
+    }
+    src_w = (int)agr_bitmap_width(slot->host);
+    src_h = (int)agr_bitmap_height(slot->host);
+    if (src_w == dst_w && src_h == dst_h) {
+        frame->result = DX_OBJ_VALUE(source);
+        frame->has_result = true;
+        return DX_OK;
+    }
+    scaled = agr_bitmap_scale(slot->host, dst_w, dst_h, filter);
+    if (!scaled) return DX_ERR_OUT_OF_MEMORY;
+    bitmap_class = dx_vm_find_class(vm, "Landroid/graphics/Bitmap;");
+    bitmap = bitmap_class ? dx_vm_alloc_object(vm, bitmap_class) : NULL;
+    if (!bitmap || !guest_bitmap_attach(game, bitmap, scaled)) {
+        if (!bitmap) agr_bitmap_destroy(scaled);
+        frame->result = DX_NULL_VALUE;
+        frame->has_result = true;
+        return DX_OK;
+    }
+    if (dx_vm_get_field(source, "_assetPath", &path) == DX_OK)
+        dx_vm_set_field(bitmap, "_assetPath", path);
+    dx_vm_set_field(bitmap, "_width", DX_INT_VALUE((int)agr_bitmap_width(scaled)));
+    dx_vm_set_field(bitmap, "_height", DX_INT_VALUE((int)agr_bitmap_height(scaled)));
+    dx_vm_set_field(bitmap, "_recycled", DX_INT_VALUE(0));
+    frame->result = DX_OBJ_VALUE(bitmap);
+    frame->has_result = true;
     return DX_OK;
 }
 

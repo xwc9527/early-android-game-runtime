@@ -56,6 +56,18 @@ AGR_BITMAP_API const char* agr_bitmap_decoder_name(void);
  * Returns the number of destination pixels written, or -1 on error.
  * Completely off-screen sources return 0.
  */
+/*
+ * API19 Bitmap.createScaledBitmap pixel result.
+ * dst_w and dst_h are the requested dimensions and must be > 0.
+ * filter selects bilinear sampling; otherwise sampling is nearest.
+ * The returned bitmap is a new ARGB_8888 buffer in the same byte order
+ * and alpha type as src. Same-size identity is the caller's decision.
+ */
+AGR_BITMAP_API agr_bitmap* agr_bitmap_scale(const agr_bitmap* src,
+                                            int dst_w,
+                                            int dst_h,
+                                            int filter);
+
 AGR_BITMAP_API int agr_bitmap_draw(const agr_bitmap* src,
                                    void* dst_pixels,
                                    int dst_w,

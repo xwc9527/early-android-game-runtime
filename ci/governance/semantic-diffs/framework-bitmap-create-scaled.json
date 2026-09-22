@@ -1,0 +1,75 @@
+{
+  "schema_version": 2,
+  "classification": "ANDROID_SEMANTIC_BUG",
+  "subsystem": "Bitmap.createScaledBitmap",
+  "observed_discontinuity": "Focused Simulator discovery 35707262789 locked and posted the Frozen Bubble content Surface three times with draw_bitmap_count 0 and an unchanged buffer hash. The UIKit display is 1206x2622, so GameThread.scaleFrom calls Bitmap.createScaledBitmap. AGR skipped that unresolved method and returned null.",
+  "upstream": {
+    "map_entry": "framework.graphics.bitmap_create_scaled",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "graphics/java/android/graphics/Bitmap.java"
+    ],
+    "call_path": [
+      "Bitmap.createScaledBitmap",
+      "Bitmap.createBitmap(Bitmap,int,int,int,int,Matrix,boolean)",
+      "Canvas.drawBitmap(Bitmap,Rect,RectF,Paint)"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "A positive dstWidth and dstHeight return a Bitmap of that size.",
+    "Equal dimensions return the source Bitmap.",
+    "filter true uses bilinear sampling and filter false uses nearest sampling.",
+    "The source pixels are not mutated.",
+    "A null source throws NullPointerException.",
+    "A non-positive dimension throws IllegalArgumentException.",
+    "A recycled source throws IllegalStateException.",
+    "getWidth and getHeight report the scaled dimensions."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/game_dex_runner.c",
+      "Runtime/Bitmap/agr_bitmap.cpp",
+      "Runtime/Bitmap/agr_bitmap.h"
+    ],
+    "call_path": [
+      "bitmap_create_scaled",
+      "agr_bitmap_scale"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "Bitmap.createScaledBitmap was unresolved, so the interpreter stored null in BmpWrap.bmp.",
+      "relevance": "DEX scaleFrom pc 57 is invoke-static method_idx 24 shorty LLIIZ with filter const/4 1. Sprite.drawImage then passes that Bitmap to Canvas.drawBitmap. A null Bitmap returns before draw_bitmap_count increments, so lock and post still advance and the buffer hash stays equal."
+    }
+  ],
+  "earliest_evidenced_divergence": "On the 1206x2622 UIKit path, GameThread.scaleFrom calls Bitmap.createScaledBitmap and API19 returns a scaled Bitmap. AGR returned null, so the following Canvas.drawBitmap had no pixels.",
+  "causal_status": "CONTRACT_CONFIRMED",
+  "evidence_level": "CONTRACT_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "android-4.4.4_r2 Bitmap.createScaledBitmap builds a scale matrix and calls createBitmap. Non-positive dimensions throw IllegalArgumentException width/height must be > 0. A full-size identity transform of an immutable source returns the source. Otherwise Canvas.drawBitmap samples the source with Paint.setFilterBitmap(filter)."
+    },
+    {
+      "type": "RUNTIME",
+      "artifact": "Simulator discovery 35707262789 commit 53607c1. harness_called_do_traversal false, harness_called_render_api false, launch_result 0, display 1206x2622, host_vsync_count 2. after_snapshot lock_count 3, unlock_count 3, post_count 3, draw_bitmap_count 0, pixel_change_count 0, hash_before equals hash_after, bitmap path empty, exception empty, last_method Landroid/graphics/Bitmap;->getHeightI. Framework trace has canvas_locked and canvas_posted and no canvas.draw_bitmap. This run is not a content frame."
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Linux agr-bitmap-draw contract PASS after agr_bitmap_scale: null and non-positive inputs fail, nearest 2x2 to 4x2 keeps red then green blocks, bilinear edge stays opaque red, source dimensions stay 2x2, JPEG and GIF decode still pass."
+    }
+  ],
+  "remaining_uncertainty": [
+    "The Simulator content frame after this method exists is not yet measured. Character.forDigit stays blocked until lock, drawBitmap, pixel_change, post, and a changed hash are all observed.",
+    "Requested dimensions are used directly. API19 Math.round of the mapped rectangle can differ by one pixel.",
+    "The Linux 320x480 probe never calls createScaledBitmap because mDisplayScale is 1."
+  ],
+  "next_action": "Rerun the same focused Simulator question. Do not implement Character.forDigit unless that run shows a changed posted buffer.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "agr_bitmap_scale samples the existing ARGB_8888 buffer. It does not construct Matrix, Canvas, or Paint and does not change Canvas.drawBitmap, lockCanvas, or SurfaceView ownership."
+}
