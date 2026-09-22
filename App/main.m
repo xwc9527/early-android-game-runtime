@@ -1854,8 +1854,8 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
       [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrMemoryWarning:) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
       [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrThermal:) name:NSProcessInfoThermalStateDidChangeNotification object:nil];
       [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrPower:) name:NSProcessInfoPowerStateDidChangeNotification object:nil];
-      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrProtectedAvailable:) name:UIApplicationProtectedDataDidBecomeAvailableNotification object:nil];
-      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrProtectedUnavailable:) name:UIApplicationProtectedDataWillBecomeUnavailableNotification object:nil];
+      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrProtectedAvailable:) name:UIApplicationProtectedDataDidBecomeAvailable object:nil];
+      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrProtectedUnavailable:) name:UIApplicationProtectedDataWillBecomeUnavailable object:nil];
       gPhysicalLink=[CADisplayLink displayLinkWithTarget:self selector:@selector(hostPhysicalVsync:)];
       [gPhysicalLink addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
       gPhysicalLink.paused=YES;
@@ -2054,6 +2054,8 @@ static NSDictionary *captureEnvironment(int physical, int displayOverride, uint3
     else if (thermalState == NSProcessInfoThermalStateSerious) thermal = @"SERIOUS";
     else if (thermalState == NSProcessInfoThermalStateCritical) thermal = @"CRITICAL";
     UIDevice.currentDevice.batteryMonitoringEnabled = YES;
+    uint64_t workingSet = 0;
+    if (gpu && @available(iOS 16.0, *)) workingSet = gpu.recommendedMaxWorkingSetSize;
     return @{
         @"schema": @"agr.physical-environment.v1",
         @"target_type": physical ? @"physical_device" : @"simulator",
@@ -2097,7 +2099,7 @@ static NSDictionary *captureEnvironment(int physical, int displayOverride, uint3
             @"metal_available": @(gpu != nil),
             @"device_name": gpu.name ?: @"",
             @"registry_id": @(gpu ? gpu.registryID : 0),
-            @"recommended_max_working_set": @(gpu ? gpu.recommendedMaxWorkingSetSize : 0)
+            @"recommended_max_working_set": @(workingSet)
         },
         @"process": @{
             @"pid": @(getpid()),
