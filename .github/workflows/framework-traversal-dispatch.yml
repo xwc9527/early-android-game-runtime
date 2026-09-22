@@ -7,6 +7,7 @@ on:
       - 'Runtime/DexLoom/**'
       - 'App/main.m'
       - 'Tests/DexLoom/framework-traversal-dispatch-host.c'
+      - 'Tests/DexLoom/make_surface_callback_fixture.py'
       - 'scripts/build-and-run-simulator.sh'
       - 'ci/framework-traversal-dispatch-contract.py'
       - 'ci/build-framework-traversal-dispatch-summary.py'
@@ -37,6 +38,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 Tests/DexLoom/make_activity_launch_fixture.py /tmp/activity-launch-fixture.dex
+          python3 Tests/DexLoom/make_surface_callback_fixture.py /tmp/surface-callback-fixture.dex /tmp/surface-layouts
           mkdir -p /tmp/agr-dispatch-obj
           DEX=Runtime/DexLoom
           COMMON=(-std=gnu11 -O1 -I "$DEX/Include" -I "$DEX" -I Vendor/ANGLE-Headers -DGL_GLES_PROTOTYPES=1)
@@ -55,12 +57,13 @@ jobs:
           cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/framework-traversal-dispatch-host.c \
             -o /tmp/agr-dispatch-obj/framework-traversal-dispatch-host.o
           cc /tmp/agr-dispatch-obj/*.o -lz -lm -o /tmp/agr-dispatch-host
-          /tmp/agr-dispatch-host /tmp/activity-launch-fixture.dex /tmp/traversal-dispatch-host.json
+          /tmp/agr-dispatch-host /tmp/activity-launch-fixture.dex /tmp/traversal-dispatch-host.json /tmp/surface-callback-fixture.dex /tmp/surface-layouts
           python3 ci/framework-traversal-dispatch-contract.py /tmp/traversal-dispatch-host.json
       - name: Verify API19 source, semantic differential and governance
         run: |
-          python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --require-valid framework.window.set_content_view --verify-upstream --verify-only framework.viewroot.traversal_dispatch --verify-only framework.window.set_content_view --output build/artifacts/traversal-dispatch-upstream-map.json
+          python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --require-valid framework.window.set_content_view --require-valid framework.view.surface_view --verify-upstream --verify-only framework.viewroot.traversal_dispatch --verify-only framework.window.set_content_view --verify-only framework.view.surface_view --output build/artifacts/traversal-dispatch-upstream-map.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-traversal-dispatch.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-surface-view.json
           python3 ci/validate-governance.py --mode discovery
           python3 ci/test-closure-attempt-ledger.py
           python3 ci/test-post-merge-evidence.py

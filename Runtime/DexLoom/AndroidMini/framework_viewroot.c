@@ -298,7 +298,9 @@ DxResult agr_viewroot_do_traversal(DxVM *vm, agr_viewroot_attach_state *state,
         emit(trace, user, "viewroot.traversal.rescheduled");
     } else if (agr_viewroot_surface_valid(state)) {
         /* performTraversals calls performDraw only when this pass did not
-           acquire the Surface. The host Decor has no Canvas display list. */
+           acquire the Surface. OnPreDraw runs first; that is where API19
+           SurfaceView sets mHaveFrame and calls updateWindow. */
+        if (state->pre_draw) state->pre_draw(vm, state, state->pre_draw_user);
         emit(trace, user, "viewroot.perform_draw");
         emit(trace, user, "view.draw");
         state->draw_count++;

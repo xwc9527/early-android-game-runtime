@@ -1,22 +1,23 @@
 {
   "schema_version": 1,
-  "enabled": false,
-  "question": "Answered by discovery run 35670955623 on 9508063: unchanged Frozen Bubble onCreate installs a MATCH_PARENT content parent with one child, and the same CADisplayLink path consumes traversal 1 and traversal 2 without a harness do_traversal.",
+  "enabled": true,
+  "question": "After the public SurfaceView lifecycle is connected, does unchanged Frozen Bubble on the UIKit CADisplayLink path receive surfaceCreated and surfaceChanged without a harness do_traversal, and what is the next public stop?",
   "current_uncertainty": [
-    "The answered question is closed. The remaining public gap is SurfaceView surfaceCreated / SurfaceHolder.Callback, which this plan does not ask."
+    "The Linux host pump and a local Frozen Bubble probe already show callback registration during onCreate, no child Surface on frame 1, and one surfaceCreated plus one surfaceChanged on frame 2. The Simulator UIKit path has not confirmed those counts.",
+    "The local probe then stops in GameThread.scaleFrom with NullPointerException after BitmapFactory.decodeResource is unresolved. The Simulator report must show whether that is also the UIKit terminal."
   ],
   "expected_outcome_a": {
-    "result": "classification viewroot_draw_entered, resume content_view_installed true, content_child_count 1, child id 0x7f060000, layout -1,-1, traversal_count 2, surface_generation 1, draw_count 1, harness_called_do_traversal false",
+    "result": "classification viewroot_draw_entered, harness_called_do_traversal false, traversal_count 2, frame 1 content_surface_created_count 0, frame 2 content_surface_valid with generation 1, created_count 1, changed_count 1, callback_count at least 1, content identity distinct from the root Surface, and surface_holder.surface_created before viewroot.perform_draw. The next public stop is GameThread.setSurfaceSize / BitmapFactory.decodeResource, not a first frame.",
     "excludes": [
-      "the claim that setContentView(int) inflation still fails to install a content child on the normal Frozen Bubble path"
+      "the claim that the normal UIKit path still has no SurfaceHolder callback after the child Surface owner is connected"
     ]
   },
   "expected_outcome_b": {
-    "result": "not observed on run 35670955623",
+    "result": "the two host frames do not deliver surfaceCreated, or the content Surface is the root Surface, or a harness do_traversal was required",
     "excludes": [
-      "a second run of this same content-child question"
+      "a second Simulator run of this same surfaceCreated question"
     ]
   },
-  "why_cheaper_test_is_insufficient": "Already answered on the Simulator UIKit path. Another run of this question has no information gain.",
+  "why_cheaper_test_is_insufficient": "The host contract and the local APK probe do not execute UIKit CADisplayLink. This question asks only whether that normal frame owner delivers the same callbacks and where the unchanged APK stops next.",
   "prior_expensive_runs_without_information_gain": 0
 }

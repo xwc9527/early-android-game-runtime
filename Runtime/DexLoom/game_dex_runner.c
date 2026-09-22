@@ -99,6 +99,20 @@ static DxResult window_set_content_view(DxVM *vm, DxFrame *frame,
                                         DxValue *args, uint32_t count);
 static DxResult window_set_content_layout(DxVM *vm, DxFrame *frame,
                                           DxValue *args, uint32_t count);
+static DxResult surface_view_init(DxVM *vm, DxFrame *frame,
+                                  DxValue *args, uint32_t count);
+static DxResult surface_view_get_holder(DxVM *vm, DxFrame *frame,
+                                        DxValue *args, uint32_t count);
+static DxResult surface_holder_add_callback(DxVM *vm, DxFrame *frame,
+                                            DxValue *args, uint32_t count);
+static DxResult surface_holder_remove_callback(DxVM *vm, DxFrame *frame,
+                                               DxValue *args, uint32_t count);
+static DxResult surface_holder_get_surface(DxVM *vm, DxFrame *frame,
+                                           DxValue *args, uint32_t count);
+static DxResult surface_holder_get_surface_frame(DxVM *vm, DxFrame *frame,
+                                                 DxValue *args, uint32_t count);
+static DxResult view_request_layout(DxVM *vm, DxFrame *frame,
+                                    DxValue *args, uint32_t count);
 
 static DxResult activity_on_post_resume(DxVM *vm, DxFrame *frame,
                                         DxValue *args, uint32_t count) {
@@ -351,11 +365,27 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(frame_layout, "<init>", "VL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
     add_method(frame_layout, "<init>", "VLL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
     DxClass *surface_view = reg_class(vm, "Landroid/view/SurfaceView;", view);
-    own_fields(surface_view, 0, NULL, NULL);
-    add_method(surface_view, "<init>", "VL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
-    add_method(surface_view, "<init>", "VLL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
+    const char *surface_view_names[] = { "_holder" };
+    const char *surface_view_types[] = { "Landroid/view/SurfaceHolder;" };
+    own_fields(surface_view, 1, surface_view_names, surface_view_types);
+    add_method(surface_view, "<init>", "VL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, surface_view_init, 1);
+    add_method(surface_view, "<init>", "VLL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, surface_view_init, 1);
+    add_method(surface_view, "getHolder", "L", DX_ACC_PUBLIC, surface_view_get_holder, 0);
+    DxClass *holder = reg_class(vm, "Landroid/view/SurfaceHolder;", obj);
+    const char *holder_names[] = { "_surface" };
+    const char *holder_types[] = { "Landroid/view/Surface;" };
+    own_fields(holder, 1, holder_names, holder_types);
+    add_method(holder, "addCallback", "VL", DX_ACC_PUBLIC, surface_holder_add_callback, 0);
+    add_method(holder, "removeCallback", "VL", DX_ACC_PUBLIC, surface_holder_remove_callback, 0);
+    add_method(holder, "getSurface", "L", DX_ACC_PUBLIC, surface_holder_get_surface, 0);
+    add_method(holder, "getSurfaceFrame", "L", DX_ACC_PUBLIC, surface_holder_get_surface_frame, 0);
+    DxClass *rect = reg_class(vm, "Landroid/graphics/Rect;", obj);
+    const char *rect_names[] = { "left", "top", "right", "bottom" };
+    const char *rect_types[] = { "I", "I", "I", "I" };
+    own_fields(rect, 4, rect_names, rect_types);
     reg_class(vm, "Landroid/util/AttributeSet;", obj);
     add_method(view, "setVisibility", "VI", DX_ACC_PUBLIC, view_set_visibility, 0);
+    add_method(view, "requestLayout", "V", DX_ACC_PUBLIC, view_request_layout, 0);
     DxClass *layout_params = reg_class(vm, "Landroid/view/WindowManager$LayoutParams;", obj);
     const char *layout_names[] = { "_type", "_softInputMode", "_width", "_height" };
     const char *layout_types[] = { "I", "I", "I", "I" };
@@ -446,6 +476,28 @@ static int read_file(const char *path, uint8_t **data, uint32_t *size) {
     fclose(file); *size = (uint32_t)length; return 1;
 }
 
+/* API19 SurfaceView child surface. Distinct from the ViewRoot window Surface.
+   PixelFormat.RGB_565 is 4, the SurfaceView default. */
+enum { AGR_CONTENT_SURFACE_CAP = 4, AGR_SURFACE_CALLBACK_CAP = 8,
+       AGR_PIXEL_FORMAT_RGB_565 = 4 };
+
+struct agr_content_surface {
+    DxObject *view;
+    DxObject *holder;
+    DxObject *surface;
+    DxObject *callbacks[AGR_SURFACE_CALLBACK_CAP];
+    uint32_t callback_count;
+    int created;
+    int valid;
+    int width;
+    int height;
+    int format;
+    uint32_t generation;
+    uint32_t created_count;
+    uint32_t changed_count;
+    void *pixels;
+};
+
 struct agr_dex_game {
     uint8_t *bytes;
     DxDexFile *dex;
@@ -464,6 +516,12 @@ struct agr_dex_game {
     int32_t content_height;
     int content_child_count;
     int32_t content_first_child_id;
+    struct agr_content_surface content_surfaces[AGR_CONTENT_SURFACE_CAP];
+    uint32_t content_surface_count;
+    void *(*content_surface_alloc)(void *, size_t);
+    void (*content_surface_free)(void *, void *);
+    void *content_surface_alloc_user;
+    char content_surface_exception[160];
     struct {
         uint32_t id;
         uint8_t *xml;
@@ -977,6 +1035,349 @@ uint32_t agr_apk_native_library_count(const agr_apk_package *p){return p?p->libr
 const char *agr_apk_native_library_name(const agr_apk_package *p,uint32_t i){return p&&i<p->library_count?p->libraries[i].name:NULL;}
 const void *agr_apk_native_library_bytes(const agr_apk_package *p,uint32_t i,uint32_t *size){if(size)*size=p&&i<p->library_count?p->libraries[i].size:0;return p&&i<p->library_count?p->libraries[i].bytes:NULL;}
 
+static agr_dex_game *game_from_vm(DxVM *vm) {
+    return vm ? (agr_dex_game *)vm->framework_user : NULL;
+}
+
+static int view_int(DxObject *object, const char *name, int fallback) {
+    DxValue value = DX_NULL_VALUE;
+    return object && dx_vm_get_field(object, name, &value) == DX_OK &&
+        value.tag == DX_VAL_INT ? value.i : fallback;
+}
+
+static int class_is_surface_view(DxClass *cls) {
+    for (; cls; cls = cls->super_class)
+        if (cls->descriptor && !strcmp(cls->descriptor, "Landroid/view/SurfaceView;"))
+            return 1;
+    return 0;
+}
+
+static struct agr_content_surface *content_slot_for_view(agr_dex_game *game, DxObject *view) {
+    if (!game || !view) return NULL;
+    for (uint32_t i = 0; i < game->content_surface_count; i++)
+        if (game->content_surfaces[i].view == view) return &game->content_surfaces[i];
+    return NULL;
+}
+
+static struct agr_content_surface *content_slot_for_holder(agr_dex_game *game, DxObject *holder) {
+    if (!game || !holder) return NULL;
+    for (uint32_t i = 0; i < game->content_surface_count; i++)
+        if (game->content_surfaces[i].holder == holder) return &game->content_surfaces[i];
+    return NULL;
+}
+
+static struct agr_content_surface *content_slot_new(agr_dex_game *game, DxObject *view) {
+    struct agr_content_surface *slot = content_slot_for_view(game, view);
+    if (slot || !game || !view || game->content_surface_count >= AGR_CONTENT_SURFACE_CAP)
+        return slot;
+    slot = &game->content_surfaces[game->content_surface_count++];
+    memset(slot, 0, sizeof(*slot));
+    slot->view = view;
+    return slot;
+}
+
+static void content_surface_note_exception(agr_dex_game *game, DxVM *vm) {
+    if (!game || !vm || !vm->pending_exception || !vm->pending_exception->klass ||
+        !vm->pending_exception->klass->descriptor) return;
+    snprintf(game->content_surface_exception, sizeof(game->content_surface_exception),
+             "%s", vm->pending_exception->klass->descriptor);
+    vm->pending_exception = NULL;
+}
+
+static int invoke_surface_callback(DxVM *vm, DxObject *callback, const char *name,
+                                   const char *shorty, DxValue *args, uint32_t argc) {
+    DxMethod *method;
+    DxResult result;
+    if (!vm || !callback || !callback->klass) return 0;
+    method = dx_vm_find_method(callback->klass, name, shorty);
+    if (!method) return 0;
+    result = dx_vm_execute_method(vm, method, args, argc, NULL);
+    {
+        int threw = vm->pending_exception != NULL;
+        content_surface_note_exception(game_from_vm(vm), vm);
+        if (result != DX_OK && result != DX_ERR_EXCEPTION) return 0;
+        return threw ? -1 : 1;
+    }
+}
+
+static void *content_pixels_alloc(agr_dex_game *game, size_t bytes) {
+    if (game && game->content_surface_alloc) return game->content_surface_alloc(
+        game->content_surface_alloc_user, bytes);
+    return calloc(1, bytes);
+}
+
+static void content_pixels_free(agr_dex_game *game, void *pixels) {
+    if (!pixels) return;
+    if (game && game->content_surface_free)
+        game->content_surface_free(game->content_surface_alloc_user, pixels);
+    else free(pixels);
+}
+
+static void release_content_surfaces(agr_dex_game *game) {
+    if (!game) return;
+    for (uint32_t i = 0; i < game->content_surface_count; i++) {
+        content_pixels_free(game, game->content_surfaces[i].pixels);
+        game->content_surfaces[i].pixels = NULL;
+    }
+}
+
+/* Layout size follows View.getDefaultSize for MATCH_PARENT and WRAP_CONTENT.
+   updateWindow creates the child surface only after a positive frame and only
+   while the window and the view are VISIBLE. surfaceCreated runs once;
+   surfaceChanged follows on that creation and on a later size change. */
+static void update_surface_view(DxVM *vm, agr_dex_game *game, DxObject *view,
+                                int window_visible) {
+    struct agr_content_surface *slot;
+    int width, height, visible, same;
+    if (!class_is_surface_view(view->klass)) return;
+    slot = content_slot_for_view(game, view);
+    if (!slot) return;
+    width = view_int(view, "_measuredWidth", 0);
+    height = view_int(view, "_measuredHeight", 0);
+    visible = window_visible && view_int(view, "_visibility", 0) == 0;
+    if (!visible || width <= 0 || height <= 0) return;
+    same = slot->created && slot->valid && slot->width == width && slot->height == height &&
+        slot->format == AGR_PIXEL_FORMAT_RGB_565;
+    if (same) return;
+    if (!slot->created) {
+        size_t bytes;
+        void *pixels;
+        if ((size_t)width > SIZE_MAX / 4u / (size_t)height) {
+            framework_event(game, "surface_view.allocation_failed");
+            return;
+        }
+        bytes = (size_t)width * (size_t)height * 4u;
+        pixels = content_pixels_alloc(game, bytes);
+        if (!pixels) {
+            framework_event(game, "surface_view.allocation_failed");
+            return;
+        }
+        memset(pixels, 0, bytes);
+        slot->pixels = pixels;
+        slot->generation++;
+        slot->width = width;
+        slot->height = height;
+        slot->format = AGR_PIXEL_FORMAT_RGB_565;
+        slot->valid = 1;
+        slot->created = 1;
+        dx_vm_set_field(slot->surface, "_valid", DX_INT_VALUE(1));
+        dx_vm_set_field(slot->surface, "_generation", DX_INT_VALUE((int32_t)slot->generation));
+        dx_vm_set_field(slot->surface, "_width", DX_INT_VALUE(width));
+        dx_vm_set_field(slot->surface, "_height", DX_INT_VALUE(height));
+        framework_event(game, "surface_view.child_surface_created");
+        {
+            DxObject *callbacks[AGR_SURFACE_CALLBACK_CAP];
+            uint32_t count = slot->callback_count;
+            if (count > AGR_SURFACE_CALLBACK_CAP) count = AGR_SURFACE_CALLBACK_CAP;
+            memcpy(callbacks, slot->callbacks, sizeof(DxObject *) * count);
+            for (uint32_t i = 0; i < count; i++) {
+                DxValue args[5];
+                int created;
+                args[0] = DX_OBJ_VALUE(callbacks[i]);
+                args[1] = DX_OBJ_VALUE(slot->holder);
+                created = invoke_surface_callback(vm, callbacks[i], "surfaceCreated", "VL", args, 2);
+                if (created) slot->created_count++;
+                if (created < 0) continue;
+                args[2] = DX_INT_VALUE(slot->format);
+                args[3] = DX_INT_VALUE(width);
+                args[4] = DX_INT_VALUE(height);
+                if (invoke_surface_callback(vm, callbacks[i], "surfaceChanged", "VLIII", args, 5))
+                    slot->changed_count++;
+            }
+        }
+        if (slot->created_count) framework_event(game, "surface_holder.surface_created");
+        if (slot->changed_count) framework_event(game, "surface_holder.surface_changed");
+        return;
+    }
+    slot->width = width;
+    slot->height = height;
+    dx_vm_set_field(slot->surface, "_width", DX_INT_VALUE(width));
+    dx_vm_set_field(slot->surface, "_height", DX_INT_VALUE(height));
+    {
+        DxObject *callbacks[AGR_SURFACE_CALLBACK_CAP];
+        uint32_t count = slot->callback_count;
+        uint32_t before = slot->changed_count;
+        if (count > AGR_SURFACE_CALLBACK_CAP) count = AGR_SURFACE_CALLBACK_CAP;
+        memcpy(callbacks, slot->callbacks, sizeof(DxObject *) * count);
+        for (uint32_t i = 0; i < count; i++) {
+            DxValue args[5];
+            args[0] = DX_OBJ_VALUE(callbacks[i]);
+            args[1] = DX_OBJ_VALUE(slot->holder);
+            args[2] = DX_INT_VALUE(slot->format);
+            args[3] = DX_INT_VALUE(width);
+            args[4] = DX_INT_VALUE(height);
+            if (invoke_surface_callback(vm, callbacks[i], "surfaceChanged", "VLIII", args, 5))
+                slot->changed_count++;
+        }
+        if (slot->changed_count != before) framework_event(game, "surface_holder.surface_changed");
+    }
+}
+
+static int layout_dimension(int spec, int parent) {
+    if (spec == -1 || spec == -2) return parent > 0 ? parent : 0;
+    return spec > 0 ? spec : 0;
+}
+
+static void layout_content_tree(DxVM *vm, agr_dex_game *game, DxObject *view,
+                                int parent_w, int parent_h, int window_visible) {
+    int width, height;
+    DxValue child = DX_NULL_VALUE;
+    if (!view) return;
+    width = layout_dimension(view_int(view, "_layoutWidth", -1), parent_w);
+    height = layout_dimension(view_int(view, "_layoutHeight", -1), parent_h);
+    dx_vm_set_field(view, "_measuredWidth", DX_INT_VALUE(width));
+    dx_vm_set_field(view, "_measuredHeight", DX_INT_VALUE(height));
+    dx_vm_set_field(view, "_left", DX_INT_VALUE(0));
+    dx_vm_set_field(view, "_top", DX_INT_VALUE(0));
+    dx_vm_set_field(view, "_right", DX_INT_VALUE(width));
+    dx_vm_set_field(view, "_bottom", DX_INT_VALUE(height));
+    update_surface_view(vm, game, view, window_visible);
+    if (dx_vm_get_field(view, "_child", &child) == DX_OK && child.tag == DX_VAL_OBJ)
+        for (DxObject *cursor = child.obj; cursor; ) {
+            DxValue next = DX_NULL_VALUE;
+            layout_content_tree(vm, game, cursor, width, height, window_visible);
+            if (dx_vm_get_field(cursor, "_next", &next) != DX_OK || next.tag != DX_VAL_OBJ) break;
+            cursor = next.obj;
+        }
+}
+
+static struct agr_content_surface *first_content_surface(const agr_dex_game *game, DxObject *view) {
+    struct agr_content_surface *slot;
+    DxValue child = DX_NULL_VALUE;
+    if (!game || !view) return NULL;
+    for (uint32_t i = 0; i < game->content_surface_count; i++)
+        if (game->content_surfaces[i].view == view) return (struct agr_content_surface *)&game->content_surfaces[i];
+    if (dx_vm_get_field(view, "_child", &child) != DX_OK || child.tag != DX_VAL_OBJ) return NULL;
+    for (DxObject *cursor = child.obj; cursor; ) {
+        DxValue next = DX_NULL_VALUE;
+        slot = first_content_surface(game, cursor);
+        if (slot) return slot;
+        if (dx_vm_get_field(cursor, "_next", &next) != DX_OK || next.tag != DX_VAL_OBJ) break;
+        cursor = next.obj;
+    }
+    return NULL;
+}
+
+static void content_surface_pre_draw(DxVM *vm, agr_viewroot_attach_state *state, void *user) {
+    agr_dex_game *game = user;
+    int window_visible;
+    if (!vm || !game || !state) return;
+    window_visible = view_int(state->decor, "_visibility", 0) == 0;
+    layout_content_tree(vm, game, game->content_view, state->measured_width,
+                        state->measured_height, window_visible);
+}
+
+static DxResult surface_view_init(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    DxClass *holder_cls, *surface_cls;
+    DxObject *holder, *surface;
+    struct agr_content_surface *slot;
+    (void)frame;
+    if (count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj) return DX_ERR_INVALID_FORMAT;
+    if (!game) return DX_OK;
+    slot = content_slot_new(game, args[0].obj);
+    if (!slot) return DX_ERR_OUT_OF_MEMORY;
+    if (slot->holder) return DX_OK;
+    holder_cls = dx_vm_find_class(vm, "Landroid/view/SurfaceHolder;");
+    surface_cls = dx_vm_find_class(vm, "Landroid/view/Surface;");
+    holder = holder_cls ? dx_vm_alloc_object(vm, holder_cls) : NULL;
+    surface = surface_cls ? dx_vm_alloc_object(vm, surface_cls) : NULL;
+    if (!holder || !surface) return DX_ERR_OUT_OF_MEMORY;
+    dx_vm_set_field(surface, "_valid", DX_INT_VALUE(0));
+    dx_vm_set_field(surface, "_generation", DX_INT_VALUE(0));
+    dx_vm_set_field(surface, "_width", DX_INT_VALUE(0));
+    dx_vm_set_field(surface, "_height", DX_INT_VALUE(0));
+    dx_vm_set_field(holder, "_surface", DX_OBJ_VALUE(surface));
+    dx_vm_set_field(args[0].obj, "_holder", DX_OBJ_VALUE(holder));
+    slot->holder = holder;
+    slot->surface = surface;
+    return DX_OK;
+}
+
+static DxResult surface_view_get_holder(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    DxValue holder = DX_NULL_VALUE;
+    (void)vm;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj) return DX_ERR_INVALID_FORMAT;
+    dx_vm_get_field(args[0].obj, "_holder", &holder);
+    frame->result = holder.tag == DX_VAL_OBJ ? holder : DX_NULL_VALUE;
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult surface_holder_add_callback(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    struct agr_content_surface *slot;
+    (void)frame;
+    if (count < 2 || args[0].tag != DX_VAL_OBJ || !args[0].obj ||
+        args[1].tag != DX_VAL_OBJ || !args[1].obj) return DX_ERR_INVALID_FORMAT;
+    slot = content_slot_for_holder(game, args[0].obj);
+    if (!slot) return DX_ERR_INVALID_FORMAT;
+    for (uint32_t i = 0; i < slot->callback_count; i++)
+        if (slot->callbacks[i] == args[1].obj) return DX_OK;
+    if (slot->callback_count >= AGR_SURFACE_CALLBACK_CAP) return DX_ERR_OUT_OF_MEMORY;
+    slot->callbacks[slot->callback_count++] = args[1].obj;
+    framework_event(game, "surface_holder.callback_added");
+    return DX_OK;
+}
+
+static DxResult surface_holder_remove_callback(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    struct agr_content_surface *slot;
+    (void)frame;
+    if (count < 2 || args[0].tag != DX_VAL_OBJ || !args[0].obj) return DX_ERR_INVALID_FORMAT;
+    slot = content_slot_for_holder(game, args[0].obj);
+    if (!slot || args[1].tag != DX_VAL_OBJ) return DX_OK;
+    for (uint32_t i = 0; i < slot->callback_count; i++) {
+        if (slot->callbacks[i] != args[1].obj) continue;
+        slot->callbacks[i] = slot->callbacks[slot->callback_count - 1];
+        slot->callbacks[slot->callback_count - 1] = NULL;
+        slot->callback_count--;
+        framework_event(game, "surface_holder.callback_removed");
+        return DX_OK;
+    }
+    return DX_OK;
+}
+
+static DxResult surface_holder_get_surface(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    struct agr_content_surface *slot;
+    (void)vm;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj) return DX_ERR_INVALID_FORMAT;
+    slot = content_slot_for_holder(game, args[0].obj);
+    frame->result = slot && slot->surface ? DX_OBJ_VALUE(slot->surface) : DX_NULL_VALUE;
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult surface_holder_get_surface_frame(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    struct agr_content_surface *slot;
+    DxClass *rect_cls;
+    DxObject *rect;
+    int width = 0, height = 0;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj) return DX_ERR_INVALID_FORMAT;
+    slot = content_slot_for_holder(game, args[0].obj);
+    if (slot && slot->created) { width = slot->width; height = slot->height; }
+    rect_cls = dx_vm_find_class(vm, "Landroid/graphics/Rect;");
+    rect = rect_cls ? dx_vm_alloc_object(vm, rect_cls) : NULL;
+    if (!rect) return DX_ERR_OUT_OF_MEMORY;
+    dx_vm_set_field(rect, "left", DX_INT_VALUE(0));
+    dx_vm_set_field(rect, "top", DX_INT_VALUE(0));
+    dx_vm_set_field(rect, "right", DX_INT_VALUE(width));
+    dx_vm_set_field(rect, "bottom", DX_INT_VALUE(height));
+    frame->result = DX_OBJ_VALUE(rect);
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult view_request_layout(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    (void)frame; (void)args; (void)count;
+    if (game && game->viewroot.attach_complete)
+        agr_viewroot_request_layout(&game->viewroot, viewroot_event, game);
+    return DX_OK;
+}
+
 static agr_dex_game *create_game(const uint8_t *bytes, uint32_t size,
                                  const char *activity_descriptor,
                                  const char *application_descriptor,
@@ -995,6 +1396,8 @@ static agr_dex_game *create_game(const uint8_t *bytes, uint32_t size,
         register_game_framework(game->vm)!=DX_OK)
         goto fail;
     game->vm->framework_user=game;
+    game->viewroot.pre_draw = content_surface_pre_draw;
+    game->viewroot.pre_draw_user = game;
     if (dx_vm_load_class(game->vm,activity_descriptor,&cls)!=DX_OK || !cls) {
         snprintf(game->launch_error,sizeof(game->launch_error),
                  "activity class resolution failed: %s",activity_descriptor);
@@ -1313,6 +1716,24 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
     snapshot->content_layout_height=game->content_view ? game->content_height : 0;
     snapshot->content_child_count=game->content_view ? game->content_child_count : 0;
     snapshot->content_first_child_id=game->content_view ? game->content_first_child_id : 0;
+    {
+        struct agr_content_surface *slot = first_content_surface(game, game->content_view);
+        snapshot->root_surface_identity=(uint64_t)(uintptr_t)game->viewroot.surface;
+        if (slot) {
+            snapshot->content_surface_valid=slot->valid;
+            snapshot->content_surface_generation=slot->generation;
+            snapshot->content_surface_width=slot->width;
+            snapshot->content_surface_height=slot->height;
+            snapshot->content_surface_format=slot->format;
+            snapshot->content_surface_callback_count=slot->callback_count;
+            snapshot->content_surface_created_count=slot->created_count;
+            snapshot->content_surface_changed_count=slot->changed_count;
+            snapshot->content_surface_identity=(uint64_t)(uintptr_t)slot->surface;
+            snapshot->content_surface_owner_id=view_int(slot->view, "_id", 0);
+        }
+        snprintf(snapshot->content_surface_exception, sizeof(snapshot->content_surface_exception),
+                 "%s", game->content_surface_exception);
+    }
     snprintf(snapshot->last_method,sizeof(snapshot->last_method),"%s",vm->diagnostic_last_method);
     snprintf(snapshot->error,sizeof(snapshot->error),"%s",vm->error_msg);
     uint32_t method_count=vm->diagnostic_method_event_count;
@@ -1395,6 +1816,7 @@ void agr_dex_game_destroy(agr_dex_game *game) {
     if (g_activity==game->activity) g_activity=NULL;
     for (uint32_t i = 0; i < game->layout_count; i++) free(game->layouts[i].xml);
     free(game->layouts);
+    release_content_surfaces(game);
     agr_viewroot_release(&game->viewroot);
     if (game->vm) dx_vm_destroy(game->vm);
     if (game->dex) dx_dex_free(game->dex);
@@ -1523,6 +1945,18 @@ int agr_dex_game_set_surface_allocator(agr_dex_game *game,
     game->viewroot.pixel_alloc = allocate;
     game->viewroot.pixel_free = release;
     game->viewroot.pixel_user = user;
+    return 0;
+}
+
+int agr_dex_game_set_content_surface_allocator(agr_dex_game *game,
+                                              void *(*allocate)(void *, size_t),
+                                              void (*release)(void *, void *), void *user) {
+    if (!game || !!allocate != !!release) return -1;
+    for (uint32_t i = 0; i < game->content_surface_count; i++)
+        if (game->content_surfaces[i].pixels) return -1;
+    game->content_surface_alloc = allocate;
+    game->content_surface_free = release;
+    game->content_surface_alloc_user = user;
     return 0;
 }
 

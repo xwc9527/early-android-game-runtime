@@ -9,31 +9,31 @@
     "target": "Android Framework Runtime Traversal Dispatch / Surface Draw Consumer Phase 1",
     "branch": "cursor/runtime-traversal-dispatch-1-0353",
     "lifecycle": "IMPLEMENTED",
-    "observed_discontinuity": "Normal Activity start returns at handoff.viewroot_traversal with traversal_count 0. API19 has already posted CALLBACK_TRAVERSAL for the next Choreographer frame.",
-    "android_subsystem": "Choreographer CALLBACK_TRAVERSAL consumption and ViewRootImpl.performDraw entry",
+    "observed_discontinuity": "API19 SurfaceView.updateWindow creates a distinct child Surface and dispatches surfaceCreated then surfaceChanged once the view has a positive frame and is visible. AGR reached host Decor performDraw with the inflated GameView and no SurfaceHolder lifecycle.",
+    "android_subsystem": "API19 SurfaceView child Surface and SurfaceHolder.Callback",
     "upstream_path": [
-      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/ViewRootImpl.java:scheduleTraversals",
-      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/Choreographer.java:doFrame",
-      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/ViewRootImpl.java:performDraw"
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/SurfaceView.java:updateWindow",
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/SurfaceHolder.java:Callback.surfaceCreated",
+      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/SurfaceHolder.java:Callback.surfaceChanged"
     ],
     "agr_path": [
-      "Runtime/DexLoom/game_dex_runner.c:agr_dex_game_choreographer_frame",
-      "Runtime/DexLoom/AndroidMini/framework_viewroot.c:agr_viewroot_choreographer_frame"
+      "Runtime/DexLoom/AndroidMini/framework_viewroot.c:pre_draw",
+      "Runtime/DexLoom/game_dex_runner.c:content_surface_pre_draw"
     ],
     "active_explanations": [
-      "API19 scheduleTraversals posts CALLBACK_TRAVERSAL and does not call doTraversal",
-      "Choreographer.doCallbacks extracts due callbacks before running them, so a reschedule inside the frame waits for the next frame",
-      "the first Surface traversal schedules again and does not draw; the next frame enters performDraw"
+      "API19 creates the child Surface only after mHaveFrame and visibility, on the pre-draw path, and the child Surface is not the ViewRoot window Surface",
+      "Frozen Bubble GameView registers itself as SurfaceHolder.Callback in its constructor and implements surfaceCreated and surfaceChanged in guest Java",
+      "the draw-pass pre_draw hook creates one distinct content Surface and delivers those callbacks once"
     ],
-    "earliest_evidenced_divergence": "Immediately after handoff.viewroot_traversal on the normal start path: API19's posted CALLBACK_TRAVERSAL is consumed by the next Choreographer.doFrame, while AGR returned with traversal_count 0.",
+    "earliest_evidenced_divergence": "API19 SurfaceView.updateWindow creates a child Surface and dispatches surfaceCreated then surfaceChanged once the view has a positive frame and is visible; AGR reached host Decor performDraw with the inflated GameView child and no SurfaceHolder lifecycle.",
     "semantic_class": "PUBLIC_OBSERVABLE",
-    "causal_status": "REAL_GAME_CONFIRMED",
-    "evidence_level": "REAL_GAME_CONFIRMED",
+    "causal_status": "CONTRACT_CONFIRMED",
+    "evidence_level": "CONTRACT_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "SurfaceView surfaceCreated / SurfaceHolder.Callback for the inflated content child",
-    "primary_blocker": "performDraw entered the host Decor only; the SurfaceView content child has no surface callback",
-    "first_broken_boundary": "android.view.SurfaceView surface lifecycle",
-    "first_broken_boundary_evidence": "discovery run 35670955623 resume content_child_count 1 id 0x7f060000 layout -1,-1, then viewroot_draw_entered with traversal_count 2, surface_generation 1, draw_count 1, harness_called_do_traversal false. The draw is the host Decor, not a SurfaceView frame."
+    "next_validation": "One Simulator discovery: unchanged Frozen Bubble on UIKit CADisplayLink receives surfaceCreated and surfaceChanged, then stops at the next public API",
+    "primary_blocker": "Local host probe delivered surfaceCreated and surfaceChanged. GameThread.setSurfaceSize then threw NullPointerException in scaleFrom because BitmapFactory.decodeResource is unresolved. This is not a first frame. Simulator confirmation is still required.",
+    "first_broken_boundary": "android.graphics.BitmapFactory.decodeResource inside GameThread.setSurfaceSize",
+    "first_broken_boundary_evidence": "Local unchanged Frozen Bubble probe: callback registered during onCreate; frame 1 created_count 0; frame 2 content surface generation 1, 320x480, format 4, identity distinct from the root Surface, created_count 1, changed_count 1, trace surface_created before perform_draw. surfaceChanged entered setSurfaceSize, resizeBitmaps, scaleFrom, then Ljava/lang/NullPointerException. invoke-virtual setRunning entered cleanUp and Thread.start did not run."
   },
   "ci_budget": {
     "valid_closure_runs": 1,

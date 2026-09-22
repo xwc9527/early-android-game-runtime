@@ -57,6 +57,17 @@ static const char *trace_last(const agr_dex_runtime_snapshot *snapshot) {
     return snapshot->framework_events[snapshot->framework_event_count - 1];
 }
 
+static void *fail_content_alloc(void *user, size_t bytes) {
+    (void)user;
+    (void)bytes;
+    return NULL;
+}
+
+static void fail_content_free(void *user, void *pixels) {
+    (void)user;
+    (void)pixels;
+}
+
 static uint8_t *read_file(const char *path, uint32_t *size) {
     FILE *file = fopen(path, "rb");
     if (!file) return NULL;
@@ -82,9 +93,24 @@ static agr_dex_game *open_fixture(const uint8_t *dex, uint32_t size) {
     return game;
 }
 
+static int pump_surface(agr_dex_game *game, const uint8_t *xml, uint32_t xml_size,
+                        uint32_t layout_id, agr_dex_runtime_snapshot *frame1,
+                        agr_dex_runtime_snapshot *frame2) {
+    if (!game || agr_dex_game_start_activity(game) != 0) return -1;
+    if (agr_dex_game_provide_layout(game, layout_id, xml, xml_size) != 0) return -1;
+    if (agr_dex_game_set_content_layout(game, layout_id) != 0) return -1;
+    if (agr_dex_game_choreographer_frame(game) != 0) return -1;
+    agr_dex_game_runtime_snapshot(game, frame1);
+    if (agr_dex_game_choreographer_frame(game) != 0) return -1;
+    agr_dex_game_runtime_snapshot(game, frame2);
+    return 0;
+}
+
 int main(int argc, char **argv) {
     const char *dex_path = argc > 1 ? argv[1] : NULL;
     const char *output = argc > 2 ? argv[2] : NULL;
+    const char *surface_dex_path = argc > 3 ? argv[3] : NULL;
+    const char *layout_dir = argc > 4 ? argv[4] : NULL;
     uint32_t dex_size = 0;
     uint8_t *dex = dex_path ? read_file(dex_path, &dex_size) : NULL;
     expect(dex != NULL, "fixture dex");
@@ -250,6 +276,151 @@ int main(int argc, char **argv) {
            !trace_has(&layout_after, "viewroot.traversal.consumed"),
            "setContentView(int) inflates one MATCH_PARENT child and does not consume the traversal");
     if (layout) agr_dex_game_destroy(layout);
+
+    uint32_t surface_dex_size = 0;
+    uint8_t *surface_dex = surface_dex_path ? read_file(surface_dex_path, &surface_dex_size) : NULL;
+    char layout_path[512];
+    uint32_t callback_xml_size = 0, hidden_xml_size = 0, zero_xml_size = 0, removed_xml_size = 0;
+    uint8_t *callback_xml = NULL, *hidden_xml = NULL, *zero_xml = NULL, *removed_xml = NULL;
+    agr_dex_runtime_snapshot callback1 = {0}, callback2 = {0}, callback3 = {0};
+    agr_dex_runtime_snapshot hidden2 = {0}, zero2 = {0}, removed2 = {0}, failed2 = {0};
+    int32_t callback_created = -1, callback_changed = -1, callback_format = -1;
+    int32_t callback_width = -1, callback_height = -1;
+    int callback_pump = -1, hidden_pump = -1, zero_pump = -1, removed_pump = -1, failed_pump = -1;
+    int callback_frame3 = -1;
+    expect(surface_dex != NULL && layout_dir != NULL, "surface fixture");
+    if (surface_dex && layout_dir) {
+        snprintf(layout_path, sizeof(layout_path), "%s/callback.xml", layout_dir);
+        callback_xml = read_file(layout_path, &callback_xml_size);
+        snprintf(layout_path, sizeof(layout_path), "%s/hidden.xml", layout_dir);
+        hidden_xml = read_file(layout_path, &hidden_xml_size);
+        snprintf(layout_path, sizeof(layout_path), "%s/zero.xml", layout_dir);
+        zero_xml = read_file(layout_path, &zero_xml_size);
+        snprintf(layout_path, sizeof(layout_path), "%s/removed.xml", layout_dir);
+        removed_xml = read_file(layout_path, &removed_xml_size);
+    }
+    expect(callback_xml && hidden_xml && zero_xml && removed_xml, "surface layouts");
+
+    agr_dex_game *surface_game = surface_dex ? agr_dex_game_create_for_launch(surface_dex, surface_dex_size,
+        "Ltest/SurfaceActivity;", "Ltest/SurfaceApplication;", "test.surface") : NULL;
+    if (surface_game) {
+        agr_dex_game_enable_diagnostics(surface_game, 1);
+        agr_dex_game_set_host_display(surface_game, width, height);
+    }
+    callback_pump = surface_game && callback_xml ? pump_surface(surface_game, callback_xml, callback_xml_size,
+                                                                0x7f030010, &callback1, &callback2) : -1;
+    callback_frame3 = callback_pump == 0 ? agr_dex_game_choreographer_frame(surface_game) : -1;
+    if (surface_game && callback_frame3 == 0) agr_dex_game_runtime_snapshot(surface_game, &callback3);
+    if (surface_game) {
+        agr_dex_game_static_int(surface_game, "Ltest/CallbackView;", "created", &callback_created);
+        agr_dex_game_static_int(surface_game, "Ltest/CallbackView;", "changed", &callback_changed);
+        agr_dex_game_static_int(surface_game, "Ltest/CallbackView;", "format", &callback_format);
+        agr_dex_game_static_int(surface_game, "Ltest/CallbackView;", "width", &callback_width);
+        agr_dex_game_static_int(surface_game, "Ltest/CallbackView;", "height", &callback_height);
+    }
+    expect(callback_pump == 0 && callback1.content_surface_created_count == 0 &&
+           callback1.traversal_count == 1 && callback1.draw_count == 0 &&
+           !trace_has(&callback1, "surface_view.child_surface_created"),
+           "the first host frame does not create the child surface");
+    expect(callback2.content_surface_valid && callback2.content_surface_created_count == 1 &&
+           callback2.content_surface_changed_count == 1 &&
+           callback2.content_surface_callback_count == 1 &&
+           callback2.content_surface_generation == 1 &&
+           callback2.content_surface_width == (int)width &&
+           callback2.content_surface_height == (int)height &&
+           callback2.content_surface_format == 4 &&
+           callback2.content_surface_owner_id == 0x7f060010 &&
+           callback2.content_surface_identity != 0 &&
+           callback2.content_surface_identity != callback2.root_surface_identity &&
+           callback_created == 1 && callback_changed == 1 && callback_format == 4 &&
+           callback_width == (int32_t)width && callback_height == (int32_t)height &&
+           callback2.traversal_count == 2 && callback2.draw_count == 1 &&
+           callback2.surface_generation == 1,
+           "draw traversal creates one child surface and delivers surfaceCreated then surfaceChanged");
+    expect(trace_index(&callback2, "surface_view.child_surface_created") >= 0 &&
+           trace_index(&callback2, "surface_view.child_surface_created") <
+               trace_index(&callback2, "surface_holder.surface_created") &&
+           trace_index(&callback2, "surface_holder.surface_created") <
+               trace_index(&callback2, "surface_holder.surface_changed") &&
+           trace_index(&callback2, "surface_holder.surface_changed") <
+               trace_index(&callback2, "viewroot.perform_draw"),
+           "holder callbacks precede performDraw");
+    expect(callback_frame3 == 0 && callback3.traversal_count == 3 && callback3.draw_count == 2 &&
+           callback3.content_surface_created_count == 1 &&
+           callback3.content_surface_changed_count == 1 &&
+           callback3.content_surface_generation == 1 &&
+           callback3.content_surface_identity == callback2.content_surface_identity &&
+           !callback3.traversal_scheduled,
+           "a later traversal does not repeat surfaceCreated");
+    if (surface_game) agr_dex_game_destroy(surface_game);
+
+    agr_dex_game *hidden = surface_dex ? agr_dex_game_create_for_launch(surface_dex, surface_dex_size,
+        "Ltest/SurfaceActivity;", "Ltest/SurfaceApplication;", "test.surface") : NULL;
+    if (hidden) {
+        agr_dex_game_enable_diagnostics(hidden, 1);
+        agr_dex_game_set_host_display(hidden, width, height);
+        hidden_pump = hidden_xml ? pump_surface(hidden, hidden_xml, hidden_xml_size,
+                                                0x7f030011, &callback1, &hidden2) : -1;
+    }
+    expect(hidden_pump == 0 && hidden2.content_surface_callback_count == 1 &&
+           !hidden2.content_surface_valid && hidden2.content_surface_created_count == 0 &&
+           hidden2.content_surface_changed_count == 0 && hidden2.draw_count == 1,
+           "an invisible SurfaceView keeps its callback and does not create a surface");
+    if (hidden) agr_dex_game_destroy(hidden);
+
+    agr_dex_game *zero = surface_dex ? agr_dex_game_create_for_launch(surface_dex, surface_dex_size,
+        "Ltest/SurfaceActivity;", "Ltest/SurfaceApplication;", "test.surface") : NULL;
+    if (zero) {
+        agr_dex_game_enable_diagnostics(zero, 1);
+        agr_dex_game_set_host_display(zero, width, height);
+        zero_pump = zero_xml ? pump_surface(zero, zero_xml, zero_xml_size,
+                                            0x7f030012, &callback1, &zero2) : -1;
+    }
+    expect(zero_pump == 0 && zero2.content_surface_callback_count == 1 &&
+           !zero2.content_surface_valid && zero2.content_surface_created_count == 0 &&
+           zero2.draw_count == 1,
+           "a zero-size SurfaceView does not create a surface");
+    if (zero) agr_dex_game_destroy(zero);
+
+    agr_dex_game *removed = surface_dex ? agr_dex_game_create_for_launch(surface_dex, surface_dex_size,
+        "Ltest/SurfaceActivity;", "Ltest/SurfaceApplication;", "test.surface") : NULL;
+    if (removed) {
+        agr_dex_game_enable_diagnostics(removed, 1);
+        agr_dex_game_set_host_display(removed, width, height);
+        removed_pump = removed_xml ? pump_surface(removed, removed_xml, removed_xml_size,
+                                                  0x7f030013, &callback1, &removed2) : -1;
+    }
+    expect(removed_pump == 0 && removed2.content_surface_callback_count == 0 &&
+           removed2.content_surface_valid && removed2.content_surface_created_count == 0 &&
+           removed2.content_surface_changed_count == 0 &&
+           removed2.content_surface_generation == 1 &&
+           removed2.content_surface_identity != 0 &&
+           removed2.content_surface_identity != removed2.root_surface_identity,
+           "removing the callback still creates the child surface without a callback");
+    if (removed) agr_dex_game_destroy(removed);
+
+    agr_dex_game *alloc_fail = surface_dex ? agr_dex_game_create_for_launch(surface_dex, surface_dex_size,
+        "Ltest/SurfaceActivity;", "Ltest/SurfaceApplication;", "test.surface") : NULL;
+    if (alloc_fail) {
+        agr_dex_game_enable_diagnostics(alloc_fail, 1);
+        agr_dex_game_set_host_display(alloc_fail, width, height);
+        expect(agr_dex_game_set_content_surface_allocator(alloc_fail, fail_content_alloc,
+                                                         fail_content_free, NULL) == 0,
+               "content surface allocator");
+        failed_pump = callback_xml ? pump_surface(alloc_fail, callback_xml, callback_xml_size,
+                                                  0x7f030010, &callback1, &failed2) : -1;
+    }
+    expect(failed_pump == 0 && !failed2.content_surface_valid &&
+           failed2.content_surface_created_count == 0 && failed2.surface_valid &&
+           failed2.draw_count == 1 && trace_has(&failed2, "surface_view.allocation_failed"),
+           "child surface allocation failure does not invent a callback or replace the root surface");
+    if (alloc_fail) agr_dex_game_destroy(alloc_fail);
+
+    free(callback_xml);
+    free(hidden_xml);
+    free(zero_xml);
+    free(removed_xml);
+    free(surface_dex);
     free(dex);
 
     if (g_failures) {
@@ -278,11 +449,33 @@ int main(int argc, char **argv) {
             "  \"layout_install\": {\"content_view_installed\": true, \"content_child_count\": %d,\n"
             "    \"content_first_child_id\": %d, \"content_layout_width\": %d,\n"
             "    \"content_layout_height\": %d, \"traversal_count\": %u, \"traversal_scheduled\": true,\n"
-            "    \"draw_count\": %u}\n"
+            "    \"draw_count\": %u},\n"
+            "  \"surface_callback\": {\"created_count\": %u, \"changed_count\": %u,\n"
+            "    \"callback_count\": %u, \"generation\": %u, \"width\": %d, \"height\": %d,\n"
+            "    \"format\": %d, \"valid\": true, \"owner_id\": %d,\n"
+            "    \"identity_differs_from_root\": true, \"repeat_created_count\": %u,\n"
+            "    \"static_created\": %d, \"static_changed\": %d, \"static_format\": %d,\n"
+            "    \"static_width\": %d, \"static_height\": %d},\n"
+            "  \"surface_hidden\": {\"valid\": false, \"created_count\": %u, \"callback_count\": %u},\n"
+            "  \"surface_zero\": {\"valid\": false, \"created_count\": %u, \"callback_count\": %u},\n"
+            "  \"surface_removed\": {\"valid\": true, \"created_count\": %u, \"callback_count\": %u,\n"
+            "    \"generation\": %u},\n"
+            "  \"surface_alloc_failed\": {\"valid\": false, \"created_count\": %u, \"root_valid\": true}\n"
             "}\n", width, height,
             layout_after.content_child_count, layout_after.content_first_child_id,
             layout_after.content_layout_width, layout_after.content_layout_height,
-            layout_after.traversal_count, layout_after.draw_count);
+            layout_after.traversal_count, layout_after.draw_count,
+            callback2.content_surface_created_count, callback2.content_surface_changed_count,
+            callback2.content_surface_callback_count, callback2.content_surface_generation,
+            callback2.content_surface_width, callback2.content_surface_height,
+            callback2.content_surface_format, callback2.content_surface_owner_id,
+            callback3.content_surface_created_count, callback_created, callback_changed,
+            callback_format, callback_width, callback_height,
+            hidden2.content_surface_created_count, hidden2.content_surface_callback_count,
+            zero2.content_surface_created_count, zero2.content_surface_callback_count,
+            removed2.content_surface_created_count, removed2.content_surface_callback_count,
+            removed2.content_surface_generation,
+            failed2.content_surface_created_count);
         fclose(out);
     }
     printf("traversal dispatch host contract: PASS\n");

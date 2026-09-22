@@ -38,7 +38,7 @@
           "runNativeActivityApk / ANativeActivity_onCreate guest entry"
         ],
         "source_hashes": {
-          "App/main.m": "5ba7e4c2f34cfcf5b3a09e80ebd45d9058c5b14633b5ce93569a2df9dd04715a",
+          "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff",
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b"
         }
       },
@@ -211,7 +211,7 @@
         ],
         "source_hashes": {
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
-          "App/main.m": "5ba7e4c2f34cfcf5b3a09e80ebd45d9058c5b14633b5ce93569a2df9dd04715a"
+          "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -327,7 +327,7 @@
         "source_hashes": {
           "Runtime/GuestRuntime/agr_jni_methods.c": "8bdc5b524175bb6066c696fa347162d43dc494d31a1b6a2b47914a6418f07d3d",
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
-          "Runtime/DexLoom/game_dex_runner.c": "81f4819ff8d1a929c1f955ec2e9eefcc720c8fdc0aa40fdfeff063f06255eadd"
+          "Runtime/DexLoom/game_dex_runner.c": "42b5d481c883241b8709e372db8f24fe26febbedfa7d33f67db91c2e13ff4860"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -684,7 +684,7 @@
           "gc_mark_roots"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "81f4819ff8d1a929c1f955ec2e9eefcc720c8fdc0aa40fdfeff063f06255eadd",
+          "Runtime/DexLoom/game_dex_runner.c": "42b5d481c883241b8709e372db8f24fe26febbedfa7d33f67db91c2e13ff4860",
           "Runtime/DexLoom/VM/dx_vm.c": "d2c201bdaa479e7ed5eaad208c627b857fe14a8662e7f18b97c6a612a8fbb736"
         }
       },
@@ -770,7 +770,7 @@
           "poc_create"
         ],
         "source_hashes": {
-          "App/main.m": "5ba7e4c2f34cfcf5b3a09e80ebd45d9058c5b14633b5ce93569a2df9dd04715a",
+          "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff",
           "Runtime/DexLoom/DEX/dx_dex.c": "94cc603e0b985213fddec8b4b3935e5074603fe31f85032963384794da1eb4f8",
           "Runtime/DexLoom/poc_host.c": "7844c264f4ab1533ac91d4f35af71c07a60cb4ef15c8d6bfab3db5c28f982de1"
         }
@@ -874,9 +874,9 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/APK/dx_manifest.c": "17d608e345e27ba2bcf564dd61e7918c79da4b243f32d811e59126996b27519e",
-          "Runtime/DexLoom/game_dex_runner.c": "81f4819ff8d1a929c1f955ec2e9eefcc720c8fdc0aa40fdfeff063f06255eadd",
+          "Runtime/DexLoom/game_dex_runner.c": "42b5d481c883241b8709e372db8f24fe26febbedfa7d33f67db91c2e13ff4860",
           "Runtime/DexLoom/VM/dx_vm.c": "d2c201bdaa479e7ed5eaad208c627b857fe14a8662e7f18b97c6a612a8fbb736",
-          "App/main.m": "5ba7e4c2f34cfcf5b3a09e80ebd45d9058c5b14633b5ce93569a2df9dd04715a"
+          "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -966,10 +966,10 @@
           "handoff.viewroot_traversal"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8c1ef966d065b8fed3878b72fccea2ef3c798db092c3ec53b8aa194c79f1dea7",
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "d85a419bad58d7fcaa514bbee036ed40e37b9190a6919fb7af6232cef53b0939",
-          "Runtime/DexLoom/game_dex_runner.c": "81f4819ff8d1a929c1f955ec2e9eefcc720c8fdc0aa40fdfeff063f06255eadd",
-          "App/main.m": "5ba7e4c2f34cfcf5b3a09e80ebd45d9058c5b14633b5ce93569a2df9dd04715a"
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
+          "Runtime/DexLoom/game_dex_runner.c": "42b5d481c883241b8709e372db8f24fe26febbedfa7d33f67db91c2e13ff4860",
+          "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
       },
       "verified_at_commit": "32efd58",
@@ -1076,10 +1076,10 @@
           "handoff.viewroot_surface_ready"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8c1ef966d065b8fed3878b72fccea2ef3c798db092c3ec53b8aa194c79f1dea7",
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "d85a419bad58d7fcaa514bbee036ed40e37b9190a6919fb7af6232cef53b0939",
-          "Runtime/DexLoom/game_dex_runner.c": "81f4819ff8d1a929c1f955ec2e9eefcc720c8fdc0aa40fdfeff063f06255eadd",
-          "App/main.m": "5ba7e4c2f34cfcf5b3a09e80ebd45d9058c5b14633b5ce93569a2df9dd04715a"
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
+          "Runtime/DexLoom/game_dex_runner.c": "42b5d481c883241b8709e372db8f24fe26febbedfa7d33f67db91c2e13ff4860",
+          "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
       },
       "verified_at_commit": "d9939736aa787aa717013932a777d0fda3fea55a",
@@ -1166,11 +1166,11 @@
           "viewroot.perform_draw"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8c1ef966d065b8fed3878b72fccea2ef3c798db092c3ec53b8aa194c79f1dea7",
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "d85a419bad58d7fcaa514bbee036ed40e37b9190a6919fb7af6232cef53b0939",
-          "Runtime/DexLoom/game_dex_runner.c": "81f4819ff8d1a929c1f955ec2e9eefcc720c8fdc0aa40fdfeff063f06255eadd",
-          "Runtime/DexLoom/game_dex_runner.h": "489f1efbf7bd96273593c6819601e2804180277f01dd9f99f632157ac277a572",
-          "App/main.m": "5ba7e4c2f34cfcf5b3a09e80ebd45d9058c5b14633b5ce93569a2df9dd04715a"
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
+          "Runtime/DexLoom/game_dex_runner.c": "42b5d481c883241b8709e372db8f24fe26febbedfa7d33f67db91c2e13ff4860",
+          "Runtime/DexLoom/game_dex_runner.h": "02ba9391b92c703e12b003824554908f4951af3233560038033be65d08466a5d",
+          "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
       },
       "verified_at_commit": "6e47ce9ab6da32483f049731ac04f2a8356a4b67",
@@ -1264,10 +1264,10 @@
           "window.set_content_view"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "81f4819ff8d1a929c1f955ec2e9eefcc720c8fdc0aa40fdfeff063f06255eadd",
-          "Runtime/DexLoom/game_dex_runner.h": "489f1efbf7bd96273593c6819601e2804180277f01dd9f99f632157ac277a572",
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8c1ef966d065b8fed3878b72fccea2ef3c798db092c3ec53b8aa194c79f1dea7",
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "d85a419bad58d7fcaa514bbee036ed40e37b9190a6919fb7af6232cef53b0939",
+          "Runtime/DexLoom/game_dex_runner.c": "42b5d481c883241b8709e372db8f24fe26febbedfa7d33f67db91c2e13ff4860",
+          "Runtime/DexLoom/game_dex_runner.h": "02ba9391b92c703e12b003824554908f4951af3233560038033be65d08466a5d",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
           "Runtime/DexLoom/APK/dx_resources.c": "d1ccd60b46850517bb9905db8505f81222d8658b4af9b675547208f1eb07a0e2",
           "Runtime/DexLoom/VM/dx_vm.c": "d2c201bdaa479e7ed5eaad208c627b857fe14a8662e7f18b97c6a612a8fbb736",
           "Runtime/DexLoom/VM/dx_interpreter.c": "e7fadd26fe905eab38d0b22436d77fc769f4eb1ef207b71c68a699ab620bdd91"
@@ -1302,12 +1302,123 @@
         "const-class boxes the DEX type, and Array.newInstance uses that type as the component"
       ],
       "known_deviations": [
-        "SurfaceView.surfaceCreated is not part of this contract",
+        "SurfaceView child-surface lifecycle belongs to framework.view.surface_view",
         "a view constructor that throws does not install a placeholder",
         "Array.newInstance dimensions above 16 are truncated"
       ],
       "contracts": [
         "framework.traversal_dispatch.host"
+      ]
+    },
+    {
+      "id": "framework.view.surface_view",
+      "subsystem": "SurfaceView child Surface and SurfaceHolder callbacks",
+      "android_api": "API19 SurfaceView.updateWindow and SurfaceHolder.Callback",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "core/java/android/view/SurfaceView.java",
+          "core/java/android/view/SurfaceHolder.java",
+          "graphics/java/android/graphics/PixelFormat.java"
+        ],
+        "symbols": [
+          "SurfaceView.getHolder",
+          "SurfaceView.updateWindow",
+          "SurfaceHolder.addCallback",
+          "SurfaceHolder.Callback.surfaceCreated",
+          "SurfaceHolder.Callback.surfaceChanged"
+        ],
+        "source_hashes": {
+          "core/java/android/view/SurfaceView.java": "9a012731b9681aa825b73624c0822f2e528451b0e6eb1427c9361953c0e88940",
+          "core/java/android/view/SurfaceHolder.java": "26809a5e2913c0ab8e956f6578904d8c7703722e9466aa0f0fb38b1c7b6c0516",
+          "graphics/java/android/graphics/PixelFormat.java": "c88054e6eae43fd1be69d2fc288477682896a5e46c8e960ffc0b8a9f071766c0"
+        },
+        "source_urls": {
+          "core/java/android/view/SurfaceView.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/SurfaceView.java",
+          "core/java/android/view/SurfaceHolder.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/SurfaceHolder.java",
+          "graphics/java/android/graphics/PixelFormat.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/graphics/java/android/graphics/PixelFormat.java"
+        },
+        "symbols_by_path": {
+          "core/java/android/view/SurfaceView.java": [
+            "public SurfaceHolder getHolder()",
+            "private void updateWindow(boolean force, boolean redrawNeeded)",
+            "mHaveFrame = getWidth() > 0 && getHeight() > 0",
+            "c.surfaceCreated(mSurfaceHolder)",
+            "c.surfaceChanged(mSurfaceHolder, mFormat, myWidth, myHeight)"
+          ],
+          "core/java/android/view/SurfaceHolder.java": [
+            "public void addCallback(Callback callback);",
+            "public void removeCallback(Callback callback);",
+            "public Surface getSurface();",
+            "public Rect getSurfaceFrame();",
+            "public void surfaceCreated(SurfaceHolder holder);",
+            "public void surfaceChanged(SurfaceHolder holder, int format, int width,"
+          ],
+          "graphics/java/android/graphics/PixelFormat.java": [
+            "public static final int RGB_565     = 4;"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h",
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/DexLoom/game_dex_runner.h",
+          "App/main.m"
+        ],
+        "symbols": [
+          "content_surface_pre_draw",
+          "surface_holder.callback_added",
+          "surface_view.child_surface_created",
+          "surface_holder.surface_created",
+          "surface_holder.surface_changed",
+          "surface_view.allocation_failed"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
+          "Runtime/DexLoom/game_dex_runner.c": "42b5d481c883241b8709e372db8f24fe26febbedfa7d33f67db91c2e13ff4860",
+          "Runtime/DexLoom/game_dex_runner.h": "02ba9391b92c703e12b003824554908f4951af3233560038033be65d08466a5d",
+          "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
+        }
+      },
+      "verified_at_commit": "2b0b6e8cd7e1fd8856d13fd78c812a68b34cf9d5",
+      "status": "VALID",
+      "dependencies": [
+        "framework.viewroot.traversal_dispatch",
+        "framework.window.set_content_view"
+      ],
+      "observable_semantics": [
+        "getHolder returns a holder whose Surface is not the ViewRoot window Surface",
+        "addCallback stores the callback and does not fire surfaceCreated",
+        "a visible view with a positive frame creates one child Surface on the draw traversal",
+        "surfaceCreated runs once and surfaceChanged follows with the view size and RGB_565",
+        "the same size and format do not repeat either callback",
+        "a hidden view or a non-positive frame does not create a Surface",
+        "allocation failure leaves the holder invalid and the root Surface valid"
+      ],
+      "internal_invariants": [
+        "the child Surface generation increases only when a new buffer is created",
+        "callback registration happens on the guest constructor path",
+        "the first Surface traversal still reschedules without performDraw",
+        "a null pre_draw hook leaves the closed root-surface traversal unchanged"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "the child Surface is an in-process buffer owned by the SurfaceView holder",
+        "IWindowSession.addToDisplayWithoutInputChannel is not a separate process"
+      ],
+      "known_deviations": [
+        "a callback exception is recorded and does not abort host Decor performDraw",
+        "surfaceDestroyed, recreation, and pause/resume surface recreation are not this contract",
+        "lockCanvas and BitmapFactory.decodeResource are downstream of the callback"
+      ],
+      "contracts": [
+        "framework.traversal_dispatch.host",
+        "frozen-bubble.traversal_dispatch"
       ]
     }
   ]

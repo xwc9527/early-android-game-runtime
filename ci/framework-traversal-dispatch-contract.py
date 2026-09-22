@@ -47,6 +47,27 @@ def check_host(result):
     require(layout["content_layout_width"] == -1 and layout["content_layout_height"] == -1, layout)
     require(layout["traversal_count"] == 0 and layout["traversal_scheduled"] is True, layout)
     require(layout["draw_count"] == 0, layout)
+    surface = result["surface_callback"]
+    require(surface["created_count"] == 1 and surface["changed_count"] == 1, surface)
+    require(surface["callback_count"] == 1 and surface["generation"] == 1, surface)
+    require(surface["width"] == result["display"][0] and surface["height"] == result["display"][1], surface)
+    require(surface["format"] == 4 and surface["valid"] is True, surface)
+    require(surface["owner_id"] == 0x7F060010, surface)
+    require(surface["identity_differs_from_root"] is True, surface)
+    require(surface["repeat_created_count"] == 1, surface)
+    require(surface["static_created"] == 1 and surface["static_changed"] == 1, surface)
+    require(surface["static_format"] == 4, surface)
+    require(surface["static_width"] == result["display"][0], surface)
+    require(surface["static_height"] == result["display"][1], surface)
+    hidden = result["surface_hidden"]
+    require(hidden["valid"] is False and hidden["created_count"] == 0 and hidden["callback_count"] == 1, hidden)
+    zero = result["surface_zero"]
+    require(zero["valid"] is False and zero["created_count"] == 0 and zero["callback_count"] == 1, zero)
+    removed = result["surface_removed"]
+    require(removed["valid"] is True and removed["created_count"] == 0 and removed["callback_count"] == 0, removed)
+    require(removed["generation"] == 1, removed)
+    failed = result["surface_alloc_failed"]
+    require(failed["valid"] is False and failed["created_count"] == 0 and failed["root_valid"] is True, failed)
 
 
 def ordered(trace, events):
@@ -74,11 +95,22 @@ def check_discovery(result):
     require(len(frames) >= 2, frames)
     first, second = frames[0], frames[1]
     require(first["traversal_count"] == 1 and first["draw_count"] == 0, first)
+    require(first.get("content_surface_created_count", 0) == 0, first)
     require(flag(first["surface_valid"]) and flag(first["traversal_scheduled"]), first)
     require(first["surface_generation"] == 1, first)
     require(second["traversal_count"] == 2 and second["draw_count"] >= 1, second)
     require(clear(second["traversal_scheduled"]) and second["surface_generation"] == 1, second)
     require(flag(second["surface_valid"]), second)
+    require(flag(second.get("content_surface_valid")), second)
+    require(second.get("content_surface_created_count") == 1, second)
+    require(second.get("content_surface_changed_count") == 1, second)
+    require(second.get("content_surface_generation") == 1, second)
+    require(second.get("content_surface_callback_count", 0) >= 1, second)
+    require(second.get("content_surface_identity") not in (0, None), second)
+    require(second.get("content_surface_identity") != second.get("root_surface_identity"), second)
+    require("surface_holder.surface_created" in second["framework_trace"], second["framework_trace"])
+    require(second["framework_trace"].index("surface_holder.surface_created") <
+            second["framework_trace"].index("viewroot.perform_draw"), second["framework_trace"])
     after = result["after_snapshot"]
     require(after["traversal_count"] == 2 and after["draw_count"] >= 1, after)
     require(flag(after["surface_valid"]) and clear(after["traversal_scheduled"]), after)

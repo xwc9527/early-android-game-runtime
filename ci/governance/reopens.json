@@ -10,13 +10,13 @@
     {
       "module": "DEXRuntimeLifecycle",
       "target": "Android Framework Runtime Traversal Dispatch / Surface Draw Consumer Phase 1",
-      "reason": "Downstream host-vsync integration and Activity.setContentView(int) layout installation. agr_dex_game_start_activity still returns with the traversal scheduled and not executed. do_traversal ordering, measure, relayout, layout, Surface identity and the first-Surface reschedule are unchanged. const-class and Array.newInstance now preserve the requested array class so check-cast of a multidimensional array succeeds.",
+      "reason": "Downstream host-vsync integration, Activity.setContentView(int) layout installation, and SurfaceView/SurfaceHolder child-surface callbacks. agr_dex_game_start_activity still returns with the traversal scheduled and not executed. do_traversal ordering, measure, relayout, layout, root Surface identity, and the first-Surface reschedule are unchanged. The child Surface is created only on the draw-pass pre_draw hook. const-class and Array.newInstance now preserve the requested array class so check-cast of a multidimensional array succeeds.",
       "evidence": "API19 ViewRootImpl.scheduleTraversals posts CALLBACK_TRAVERSAL without calling doTraversal, and Choreographer.doCallbacks extracts due callbacks before running them. The Linux host contract keeps the closed explicit first pass at handoff.viewroot_surface_ready with draw_count 0, and setContentView(int) installs one child without consuming the scheduled traversal. Discovery 35668200026 showed the int invoke bound to the View overload."
     },
     {
       "module": "NativeActivityInput",
       "target": "Android Framework Runtime Traversal Dispatch / Surface Draw Consumer Phase 1",
-      "reason": "App/main.m is the UIKit endpoint. CADisplayLink calls agr_dex_game_choreographer_frame. The focused first-traversal harness still calls agr_dex_game_do_traversal. NativeActivity input semantics are unchanged.",
+      "reason": "App/main.m snapshot fields report the SurfaceView content Surface. CADisplayLink still calls agr_dex_game_choreographer_frame. The focused first-traversal harness still calls agr_dex_game_do_traversal. NativeActivity input semantics are unchanged.",
       "evidence": "The dispatch discovery path does not call agr_dex_game_do_traversal or agr_guest_start_dex_activity auto-attach. The closed first-traversal probe remains a separate launch."
     }
   ]

@@ -32,8 +32,13 @@ typedef void (*agr_viewroot_pixel_free)(void *user, void *pixels);
    window or Surface state. Zero accepts the request. */
 typedef int (*agr_viewroot_relayout_gate)(void *user, uint32_t width,
                                           uint32_t height, int visibility);
+/* ViewTreeObserver.OnPreDraw, before performDraw. NULL keeps the closed
+   root-surface traversal unchanged. */
+typedef struct agr_viewroot_attach_state agr_viewroot_attach_state;
+typedef void (*agr_viewroot_pre_draw_fn)(DxVM *vm, agr_viewroot_attach_state *state,
+                                         void *user);
 
-typedef struct {
+typedef struct agr_viewroot_attach_state {
     DxObject *root;
     DxObject *decor;
     DxObject *layout_params;
@@ -61,6 +66,8 @@ typedef struct {
     void *pixel_user;
     agr_viewroot_relayout_gate relayout_gate;
     void *relayout_user;
+    agr_viewroot_pre_draw_fn pre_draw;
+    void *pre_draw_user;
     int layout_requested;
     int pending_first_traversal;
     int session_result;

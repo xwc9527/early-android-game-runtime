@@ -19,6 +19,7 @@ Each machine entry records pinned source paths/hashes, AGR paths/hashes, depende
 | ViewRoot first traversal and root Surface | `ViewRootImpl.java`, `View.java`, `ViewGroup.java`, `IWindowSession.aidl`, `Surface.java` | `framework_viewroot.c`, `game_dex_runner.c` | HOST-DEX_HLE | attachment, measurement, relayout, frame, Surface lifetime and first-Surface reschedule |
 | Runtime traversal dispatch and root draw consumer | `ViewRootImpl.scheduleTraversals/doTraversal/performDraw`, `Choreographer.doFrame/doCallbacks` | `framework_viewroot.c`, `game_dex_runner.c`, `App/main.m` | HOST-DEX_HLE + UIKit vsync | one host frame consumes one posted traversal; the first Surface frame does not draw |
 | Window setContentView | `Activity.setContentView(int/View)`, `PhoneWindow.setContentView` | `game_dex_runner.c` | HOST-DEX_HLE | inflate a layout or install one content child; an attached window only schedules |
+| SurfaceView child Surface | `SurfaceView.updateWindow`, `SurfaceHolder.Callback` | `game_dex_runner.c`, `framework_viewroot.c` | HOST-DEX_HLE | a visible positive frame creates a distinct child Surface and delivers surfaceCreated then surfaceChanged once |
 
 Each new public path adds or updates one machine-readable entry. A problem report references the map entry, then supplies a compact `semantic-diff.json`; it does not duplicate the upstream map in prose.
 

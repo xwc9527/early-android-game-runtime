@@ -84,10 +84,10 @@
     }
   ],
   "remaining_uncertainty": [
-    "performDraw of the host Decor is not a first frame and does not create a SurfaceView surface.",
-    "The inflated content child is a SurfaceView subclass. surfaceCreated and SurfaceHolder.Callback are not implemented."
+    "performDraw of the host Decor is not a first frame.",
+    "The SurfaceView child-surface contract is recorded separately in framework-surface-view.json."
   ],
-  "next_action": "Do not rerun the answered content-child Simulator question. The next public contract is SurfaceView surface lifecycle for that content child.",
+  "next_action": "Do not rerun the answered content-child Simulator question. SurfaceView lifecycle is the next recorded contract.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "UIKit CADisplayLink is the vsync endpoint in place of DisplayEventReceiver. One host frame runs at most one posted traversal callback. There is no Looper sync barrier and the frame function is not re-entered."

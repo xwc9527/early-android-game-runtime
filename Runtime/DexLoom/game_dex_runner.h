@@ -78,6 +78,18 @@ typedef struct {
     int content_layout_height;
     int content_child_count;
     int content_first_child_id;
+    int content_surface_valid;
+    uint32_t content_surface_generation;
+    int content_surface_width;
+    int content_surface_height;
+    int content_surface_format;
+    uint32_t content_surface_callback_count;
+    uint32_t content_surface_created_count;
+    uint32_t content_surface_changed_count;
+    uint64_t content_surface_identity;
+    uint64_t root_surface_identity;
+    int32_t content_surface_owner_id;
+    char content_surface_exception[160];
     char last_method[160];
     char exception_class[160];
     char error[256];
@@ -137,6 +149,11 @@ int agr_dex_game_set_content_layout(agr_dex_game *game, uint32_t layout_id);
 int agr_dex_game_set_surface_allocator(agr_dex_game *game,
                                        void *(*allocate)(void *user, size_t bytes),
                                        void (*release)(void *user, void *pixels), void *user);
+/* Child SurfaceView buffer only. The root WindowSession allocator is unchanged. */
+int agr_dex_game_set_content_surface_allocator(agr_dex_game *game,
+                                              void *(*allocate)(void *user, size_t bytes),
+                                              void (*release)(void *user, void *pixels),
+                                              void *user);
 int agr_dex_game_set_relayout_gate(agr_dex_game *game,
                                    int (*gate)(void *user, uint32_t width,
                                                uint32_t height, int visibility),
