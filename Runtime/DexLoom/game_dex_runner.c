@@ -674,6 +674,7 @@ struct agr_content_surface {
     uint64_t hash_after_post;
     uint32_t pixel_change_count;
     uint32_t draw_bitmap_count;
+    uint64_t lock_owner_host;
     int64_t last_lock_fail_ms;
 };
 
@@ -705,6 +706,13 @@ struct agr_dex_game {
     uint32_t content_surface_count;
     struct agr_guest_bitmap bitmaps[AGR_GUEST_BITMAP_CAP];
     uint32_t bitmap_count;
+    int first_bitmap_noted;
+    uint64_t first_bitmap_guest;
+    uint64_t first_bitmap_host;
+    int first_bitmap_width;
+    int first_bitmap_height;
+    char first_bitmap_path[160];
+    char first_bitmap_encoding[16];
     void *(*content_surface_alloc)(void *, size_t);
     void (*content_surface_free)(void *, void *);
     void *content_surface_alloc_user;
@@ -1442,6 +1450,22 @@ static DxResult canvas_draw_bitmap(DxVM *vm, DxFrame *frame, DxValue *args, uint
     }
     bytes = (size_t)slot->width * (size_t)slot->height * (size_t)AGR_CONTENT_BYTES_PER_PIXEL;
     before = content_buffer_hash(slot->pixels, bytes);
+    if (!game->first_bitmap_noted) {
+        DxValue path = DX_NULL_VALUE;
+        const char *text = NULL;
+        const char *dot = NULL;
+        game->first_bitmap_noted = 1;
+        game->first_bitmap_guest = (uint64_t)(uintptr_t)bitmap;
+        game->first_bitmap_host = (uint64_t)(uintptr_t)bitmap_slot->host;
+        game->first_bitmap_width = (int)agr_bitmap_width(bitmap_slot->host);
+        game->first_bitmap_height = (int)agr_bitmap_height(bitmap_slot->host);
+        if (dx_vm_get_field(bitmap, "_assetPath", &path) == DX_OK && path.tag == DX_VAL_OBJ)
+            text = dx_vm_get_string_value(path.obj);
+        snprintf(game->first_bitmap_path, sizeof(game->first_bitmap_path), "%s", text ? text : "");
+        dot = text ? strrchr(text, '.') : NULL;
+        snprintf(game->first_bitmap_encoding, sizeof(game->first_bitmap_encoding), "%s",
+                 dot ? dot + 1 : "");
+    }
     wrote = agr_bitmap_draw(bitmap_slot->host,
                             slot->pixels,
                             slot->width,
@@ -2005,6 +2029,7 @@ static DxResult surface_holder_lock_canvas(DxVM *vm, DxFrame *frame, DxValue *ar
     slot->clip_bottom = bottom;
     slot->canvas_locked = 1;
     slot->lock_owner_exec = exec->id;
+    slot->lock_owner_host = exec->has_host_thread ? (uint64_t)(uintptr_t)exec->host_thread : 0;
     slot->locked_generation = slot->generation;
     slot->lock_count++;
     slot->hash_before_lock = content_buffer_hash(slot->pixels,
@@ -2438,8 +2463,17 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
             snapshot->canvas_buffer_hash_after=slot->hash_after_post;
             snapshot->canvas_pixel_change_count=slot->pixel_change_count;
             snapshot->canvas_draw_bitmap_count=slot->draw_bitmap_count;
+            snapshot->canvas_identity=(uint64_t)(uintptr_t)slot->canvas;
+            snapshot->canvas_lock_owner_host=slot->lock_owner_host;
             content_surface_unlock(slot);
         }
+        snapshot->bitmap_guest_identity=game->first_bitmap_guest;
+        snapshot->bitmap_host_identity=game->first_bitmap_host;
+        snapshot->bitmap_width=game->first_bitmap_width;
+        snapshot->bitmap_height=game->first_bitmap_height;
+        snprintf(snapshot->bitmap_path, sizeof(snapshot->bitmap_path), "%s", game->first_bitmap_path);
+        snprintf(snapshot->bitmap_encoding, sizeof(snapshot->bitmap_encoding), "%s",
+                 game->first_bitmap_encoding);
         snprintf(snapshot->content_surface_exception, sizeof(snapshot->content_surface_exception),
                  "%s", game->content_surface_exception);
     }

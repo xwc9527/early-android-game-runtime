@@ -1,25 +1,23 @@
 {
   "schema_version": 1,
-  "enabled": false,
-  "answered_run": "35683118511",
-  "answered_result": "Outcome A. Discovery 35683118511 on 68ed706, unchanged Frozen Bubble, UIKit CADisplayLink, harness_called_do_traversal false, classification viewroot_draw_entered. Frame 1 created_count 0. Frame 2 content_surface_valid, generation 1, 1206x2622, format 4, created_count 1, changed_count 1, identity distinct from the root Surface, surface_holder.surface_created before viewroot.perform_draw. last_method GameThread.scaleFrom, exception Ljava/lang/NullPointerException. Not a first frame.",
-  "question": "After the public SurfaceView lifecycle is connected, does unchanged Frozen Bubble on the UIKit CADisplayLink path receive surfaceCreated and surfaceChanged without a harness do_traversal, and what is the next public stop?",
+  "enabled": true,
+  "question": "Does unchanged Frozen Bubble on the normal UIKit CADisplayLink path lock the SurfaceView content Surface, draw a decoded Bitmap into it, and post a changed buffer without a harness render call?",
   "current_uncertainty": [
-    "Answered by discovery 35683118511. A second run of this surfaceCreated question is excluded."
+    "Linux local probe already shows lock, drawBitmap, pixel mutation, and post. The Simulator build and CADisplayLink timing have not observed that content buffer."
   ],
   "expected_outcome_a": {
-    "result": "classification viewroot_draw_entered, harness_called_do_traversal false, traversal_count 2, frame 1 content_surface_created_count 0, frame 2 content_surface_valid with generation 1, created_count 1, changed_count 1, callback_count at least 1, content identity distinct from the root Surface, and surface_holder.surface_created before viewroot.perform_draw. The next public stop is GameThread.setSurfaceSize / BitmapFactory.decodeResource, not a first frame.",
+    "result": "harness_called_do_traversal false, harness_called_render_api false, surfaceCreated 1, surfaceChanged 1, content Surface distinct from the root, lock_count > 0, draw_bitmap_count > 0, post_count > 0, pixel_change_count > 0, and the posted buffer hash differs from the pre-draw hash",
     "excludes": [
-      "the claim that the normal UIKit path still has no SurfaceHolder callback after the child Surface owner is connected",
-      "a second Simulator run of this same surfaceCreated question"
+      "the claim that the Linux content frame is host-only and does not occur under UIKit CADisplayLink"
     ]
   },
   "expected_outcome_b": {
-    "result": "the two host frames do not deliver surfaceCreated, or the content Surface is the root Surface, or a harness do_traversal was required",
+    "result": "the UIKit path reaches the content Surface but lock, drawBitmap, or the posted hash does not show a pixel change",
     "excludes": [
-      "a second Simulator run of this same surfaceCreated question"
+      "treating the Linux probe as Simulator confirmation",
+      "continuing to Character.forDigit before the content-frame divergence is fixed"
     ]
   },
-  "why_cheaper_test_is_insufficient": "The host contract and the local APK probe do not execute UIKit CADisplayLink. Discovery 35683118511 answered that question. Do not admit the same run again.",
+  "why_cheaper_test_is_insufficient": "The Linux host contract and the local APK probe do not execute UIKit CADisplayLink, the iOS Simulator Skia/JPEG link, or the display-link observation window. Source inspection cannot show whether that host path posts a changed content buffer.",
   "prior_expensive_runs_without_information_gain": 0
 }

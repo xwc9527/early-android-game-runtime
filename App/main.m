@@ -1008,6 +1008,26 @@ static NSDictionary *dexSnapshotDictionary(const agr_dex_runtime_snapshot *snaps
       @"content_surface_identity":@(snapshot->content_surface_identity),
       @"root_surface_identity":@(snapshot->root_surface_identity),
       @"content_surface_owner_id":@(snapshot->content_surface_owner_id),
+      @"canvas_lock_count":@(snapshot->canvas_lock_count),
+      @"canvas_unlock_count":@(snapshot->canvas_unlock_count),
+      @"canvas_post_count":@(snapshot->canvas_post_count),
+      @"canvas_locked":@(snapshot->canvas_locked!=0),
+      @"canvas_lock_owner_exec":@(snapshot->canvas_lock_owner_exec),
+      @"canvas_lock_owner_host":@(snapshot->canvas_lock_owner_host),
+      @"canvas_locked_generation":@(snapshot->canvas_locked_generation),
+      @"canvas_last_post_generation":@(snapshot->canvas_last_post_generation),
+      @"canvas_row_bytes":@(snapshot->canvas_row_bytes),
+      @"canvas_buffer_hash_before":@(snapshot->canvas_buffer_hash_before),
+      @"canvas_buffer_hash_after":@(snapshot->canvas_buffer_hash_after),
+      @"canvas_pixel_change_count":@(snapshot->canvas_pixel_change_count),
+      @"canvas_draw_bitmap_count":@(snapshot->canvas_draw_bitmap_count),
+      @"canvas_identity":@(snapshot->canvas_identity),
+      @"bitmap_guest_identity":@(snapshot->bitmap_guest_identity),
+      @"bitmap_host_identity":@(snapshot->bitmap_host_identity),
+      @"bitmap_width":@(snapshot->bitmap_width),
+      @"bitmap_height":@(snapshot->bitmap_height),
+      @"bitmap_path":[NSString stringWithUTF8String:snapshot->bitmap_path],
+      @"bitmap_encoding":[NSString stringWithUTF8String:snapshot->bitmap_encoding],
       @"content_surface_exception":[NSString stringWithUTF8String:snapshot->content_surface_exception],
       @"last_method":[NSString stringWithUTF8String:snapshot->last_method],
       @"method_trace":methods, @"framework_trace":framework,
@@ -1202,6 +1222,7 @@ static uint32_t gDispatchWidth = 0;
 static uint32_t gDispatchHeight = 0;
 static int gDispatchStart = -1;
 static BOOL gDispatchFinished = NO;
+static BOOL gDispatchContentHold = NO;
 static BOOL gDispatchOwnerGraph = NO;
 static CADisplayLink *gDispatchLink = nil;
 
@@ -1298,7 +1319,8 @@ static void finishTraversalDispatchReport(void) {
         (gDispatchGame && gDispatchStart==0 ? @"traversal_dispatch_failed" : @"launch_failed");
     NSDictionary *report=@{ @"schema":@"agr.framework-traversal-dispatch.discovery.v1",
       @"sample":@"frozen-bubble", @"consumer":@"uikit-cadisplaylink",
-      @"harness_called_do_traversal":@NO, @"host_vsync_count":@(gDispatchVsync),
+      @"harness_called_do_traversal":@NO, @"harness_called_render_api":@NO,
+      @"host_vsync_count":@(gDispatchVsync),
       @"display_width":@(gDispatchWidth), @"display_height":@(gDispatchHeight),
       @"launch_result":@(gDispatchStart),
       @"launch_stage":launchStageName(gDispatchGame ? agr_dex_game_launch_stage(gDispatchGame) : AGR_ACTIVITY_LAUNCH_NONE),
@@ -1681,14 +1703,24 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
 }
 - (void)hostTraversalVsync:(CADisplayLink *)link {
     (void)link;
-    if (!gDispatchGame || gDispatchFinished) return;
+    if (!gDispatchGame || gDispatchFinished || gDispatchContentHold) return;
     gDispatchVsync++;
     int result=agr_dex_game_choreographer_frame(gDispatchGame);
     agr_dex_runtime_snapshot snapshot={0};
     agr_dex_game_runtime_snapshot(gDispatchGame,&snapshot);
     if (gDispatchFrames) [gDispatchFrames addObject:dexSnapshotDictionary(&snapshot)];
-    if (result<0 || snapshot.traversal_count>=2 || gDispatchVsync>=4)
+    if (result<0 || gDispatchVsync>=4) {
         finishTraversalDispatchReport();
+        return;
+    }
+    /* The second host frame creates the child Surface and starts GameThread.
+       Do not pump another traversal. Wait so the worker can lock, drawBitmap,
+       and post before the snapshot is read. */
+    if (snapshot.traversal_count>=2) {
+        gDispatchContentHold=YES;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.6*NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{ finishTraversalDispatchReport(); });
+    }
 }
 @end
 int main(int argc, char **argv) {

@@ -33,7 +33,7 @@ typedef struct {
     char method[160];
 } agr_dex_method_event;
 #define AGR_DEX_METHOD_TRACE_CAPACITY 64
-#define AGR_DEX_FRAMEWORK_TRACE_CAPACITY 96
+#define AGR_DEX_FRAMEWORK_TRACE_CAPACITY 256
 typedef struct {
     agr_dex_arg_kind kind;
     union { int32_t i; float f; const char *string; uint32_t object; } value;
@@ -101,6 +101,14 @@ typedef struct {
     uint64_t canvas_buffer_hash_after;
     uint32_t canvas_pixel_change_count;
     uint32_t canvas_draw_bitmap_count;
+    uint64_t canvas_identity;
+    uint64_t canvas_lock_owner_host;
+    uint64_t bitmap_guest_identity;
+    uint64_t bitmap_host_identity;
+    int bitmap_width;
+    int bitmap_height;
+    char bitmap_path[160];
+    char bitmap_encoding[16];
     char content_surface_exception[160];
     char last_method[160];
     char exception_class[160];
