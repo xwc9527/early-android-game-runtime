@@ -113,8 +113,45 @@ fi
 [[ "$MODE" == "build" ]] && exit 0
 
 if [[ "$MODE" == "boot" || "$MODE" == "all" ]]; then
-DEVICE="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["udid"] for xs in d.values() for x in xs if x["name"]=="iPhone 16 Pro"))')"
-printf '%s\n' "$DEVICE" > "$ARTIFACTS/simulator-device.txt"
+mkdir -p "$ARTIFACTS"
+if ! python3 "$ROOT/ci/select-simulator-runtime.py" "$ARTIFACTS/ci-environment.json" > "$ARTIFACTS/simulator-device.txt"; then
+  echo "SIMULATOR_RUNTIME_UNAVAILABLE" >&2
+  exit 3
+fi
+if grep -q '^SIMULATOR_RUNTIME_UNAVAILABLE' "$ARTIFACTS/ci-environment.json" 2>/dev/null; then
+  echo "SIMULATOR_RUNTIME_UNAVAILABLE" >&2
+  exit 3
+fi
+if grep -q '^CREATE$' "$ARTIFACTS/simulator-device.txt"; then
+  RUNTIME_ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["simulator_runtime_actual"])' "$ARTIFACTS/ci-environment.json")"
+  DEVICE="$(xcrun simctl create 'iPhone 16 Pro' com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro "$RUNTIME_ID")"
+  python3 -c 'import json,sys; p=sys.argv[1]; d=json.load(open(p)); d["udid"]=sys.argv[2]; d["create_device"]=False; json.dump(d, open(p,"w"), indent=2)' "$ARTIFACTS/ci-environment.json" "$DEVICE"
+  printf '%s\n' "$DEVICE" > "$ARTIFACTS/simulator-device.txt"
+fi
+DEVICE="$(tr -d '[:space:]' < "$ARTIFACTS/simulator-device.txt")"
+test -n "$DEVICE"
+{
+  python3 - "$ARTIFACTS/ci-environment.json" <<'PY'
+import json, os, subprocess, sys
+path = sys.argv[1]
+data = json.load(open(path))
+def out(*args):
+    try:
+        return subprocess.check_output(args, text=True).strip()
+    except Exception:
+        return ""
+xcode = out("xcodebuild", "-version")
+lines = xcode.splitlines()
+data["runner_os"] = os.uname().sysname
+data["runner_arch"] = os.uname().machine
+data["xcode_version"] = lines[0] if lines else ""
+data["xcode_build"] = lines[1] if len(lines) > 1 else ""
+data["sdk_name"] = "iphonesimulator"
+data["sdk_version"] = out("xcrun", "--sdk", "iphonesimulator", "--show-sdk-version")
+json.dump(data, open(path, "w"), indent=2)
+print()
+PY
+} || true
 phase "boot Simulator $DEVICE"
 phase "simulator boot requested $DEVICE"
 xcrun simctl boot "$DEVICE" 2>/dev/null || true; xcrun simctl bootstatus "$DEVICE" -b
@@ -283,7 +320,19 @@ if [[ "${FRAMEWORK_TRAVERSAL_DISPATCH_DISCOVERY:-0}" == "1" ]]; then
     exit 124
   fi
   cp "$RESULT_PATH" "$ARTIFACTS/framework-traversal-dispatch.json"
-  python3 ci/framework-traversal-dispatch-contract.py "$RESULT_PATH"
+  python3 - "$ARTIFACTS/framework-traversal-dispatch.json" "$ARTIFACTS/ci-environment.json" <<'PY'
+import json, sys
+report_path, ci_path = sys.argv[1], sys.argv[2]
+report = json.load(open(report_path))
+try:
+    ci = json.load(open(ci_path))
+except FileNotFoundError:
+    ci = {}
+report["ci_environment"] = ci
+json.dump(report, open(report_path, "w"), indent=2)
+print()
+PY
+  python3 ci/framework-traversal-dispatch-contract.py "$ARTIFACTS/framework-traversal-dispatch.json"
   phase "Framework traversal dispatch evidence captured"
   exit 0
 fi

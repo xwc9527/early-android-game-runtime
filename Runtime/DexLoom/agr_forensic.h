@@ -8,8 +8,8 @@ extern "C" {
 /* Physical-device forensic channel. Guest code is never called from here.
    Phase ids are stable for agr-physical-crash.bin. */
 
-#define AGR_PHYSICAL_TRACE_SCHEMA "agr.physical-trace.v1"
-#define AGR_PHYSICAL_RUN_SCHEMA "agr.physical-run.v1"
+#define AGR_PHYSICAL_TRACE_SCHEMA "agr.physical-trace.v2"
+#define AGR_PHYSICAL_RUN_SCHEMA "agr.physical-run.v2"
 #define AGR_PHYSICAL_CRASH_MAGIC "AGRCRSH1"
 #define AGR_PHYSICAL_CRASH_VERSION 1u
 
@@ -88,7 +88,35 @@ enum {
     AGR_PHYS_PHASE_BITMAP_SCALE_END = 62,
     AGR_PHYS_PHASE_BITMAP_SCALE_FAIL = 63,
     AGR_PHYS_PHASE_GUEST_METHOD_ENTER = 64,
-    AGR_PHYS_PHASE_GUEST_METHOD_EXIT = 65
+    AGR_PHYS_PHASE_GUEST_METHOD_EXIT = 65,
+    AGR_PHYS_PHASE_EVIDENCE_RESET_BEGIN = 66,
+    AGR_PHYS_PHASE_EVIDENCE_RESET_OK = 67,
+    AGR_PHYS_PHASE_RUN_ID_CREATED = 68,
+    AGR_PHYS_PHASE_RUN_FILE_WRITTEN = 69,
+    AGR_PHYS_PHASE_TRACE_OPENED = 70,
+    AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_BEGIN = 71,
+    AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_OK = 72,
+    AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_PARTIAL = 73,
+    AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_FAIL = 74,
+    AGR_PHYS_PHASE_EVIDENCE_CHANNEL_FAILED = 75,
+    AGR_PHYS_PHASE_APP_DID_FINISH_LAUNCHING = 76,
+    AGR_PHYS_PHASE_APP_DID_BECOME_ACTIVE = 77,
+    AGR_PHYS_PHASE_APP_WILL_RESIGN_ACTIVE = 78,
+    AGR_PHYS_PHASE_APP_DID_ENTER_BACKGROUND = 79,
+    AGR_PHYS_PHASE_APP_WILL_ENTER_FOREGROUND = 80,
+    AGR_PHYS_PHASE_APP_WILL_TERMINATE = 81,
+    AGR_PHYS_PHASE_SCENE_DID_BECOME_ACTIVE = 82,
+    AGR_PHYS_PHASE_SCENE_WILL_RESIGN_ACTIVE = 83,
+    AGR_PHYS_PHASE_ENVIRONMENT_CHANGED = 84,
+    AGR_PHYS_PHASE_CADISPLAYLINK_FRAME = 85,
+    AGR_PHYS_PHASE_GUEST_EXEC_SNAPSHOT = 86,
+    AGR_PHYS_PHASE_DIAGNOSTIC_FIELD_WITNESS = 87,
+    AGR_PHYS_PHASE_OBSERVATION_WINDOW = 88,
+    AGR_PHYS_PHASE_MEMORY_WARNING = 89,
+    AGR_PHYS_PHASE_THERMAL_CHANGED = 90,
+    AGR_PHYS_PHASE_LOW_POWER_CHANGED = 91,
+    AGR_PHYS_PHASE_PROTECTED_DATA_CHANGED = 92,
+    AGR_PHYS_PHASE_BINARY_FINGERPRINT = 93
 };
 
 /* thread_state: 0 none, 1 STARTING, 2 RUNNING, 3 WAITING, 4 TERMINATED */
@@ -115,7 +143,7 @@ typedef struct agr_forensic_sample {
     int has_counters;
     char class_name[96];
     char method_name[64];
-    char detail[96];
+    char detail[256];
     int critical;
 } agr_forensic_sample;
 
@@ -135,6 +163,7 @@ typedef struct agr_physical_trace_config {
 
 typedef struct agr_physical_trace_status {
     char run_id[40];
+    char process_launch_id[40];
     uint64_t last_seq;
     uint32_t event_count;
     char last_event[64];
@@ -173,6 +202,15 @@ uint32_t agr_physical_trace_sync_count(void);
 int agr_physical_trace_finish(const char *termination_reason, agr_physical_trace_status *out);
 void agr_physical_trace_note_writer_error(const char *detail);
 void agr_physical_trace_copy_status(agr_physical_trace_status *out);
+/* Stores one JSON object. Both run.json and runtime.json embed it.
+   A null or empty value records environment as null. */
+int agr_physical_trace_set_environment_json(const char *json);
+void agr_physical_trace_set_lifecycle(const char *state, int foreground, int active);
+void agr_physical_trace_set_apk_sha_actual(const char *sha256);
+void agr_physical_trace_set_observation(uint64_t start_monotonic, uint64_t deadline,
+                                        uint64_t end_monotonic, uint32_t frames,
+                                        const char *stop_reason);
+void agr_physical_trace_add_binary(const char *role, const char *uuid, const char *sha256);
 void agr_physical_trace_shutdown(void);
 const char *agr_physical_phase_name(uint32_t phase);
 

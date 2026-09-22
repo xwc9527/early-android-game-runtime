@@ -498,6 +498,85 @@ static void test_crash(const char *script) {
     }
 }
 
+static void test_current_root_and_environment(const char *script) {
+    const char *dir = "/tmp/agr-phys-root";
+    const char *abrupt = "/tmp/agr-phys-abrupt";
+    const char *mixed = "/tmp/agr-phys-mixed";
+    agr_physical_trace_config config;
+    agr_physical_trace_status first;
+    agr_physical_trace_status second;
+    char summary[256];
+    char body[16384];
+    FILE *fp;
+    size_t n;
+    const char *env =
+        "{\"schema\":\"agr.physical-environment.v1\",\"target_type\":\"physical_device\","
+        "\"os\":{\"system_version\":\"18.6\"},\"hardware\":{\"hw_machine\":\"iPhone14,6\"},"
+        "\"display\":{\"logical_width\":390,\"native_width\":1170,\"runtime_host_width\":1170,"
+        "\"runtime_host_height\":2532,\"maximum_fps\":60}}";
+    mkdir(dir, 0755);
+    quiet_watchdog();
+    config = config_for(dir);
+    expect(agr_physical_trace_begin(&config) == 0, "root first begin");
+    agr_physical_trace_copy_status(&first);
+    agr_physical_trace_shutdown();
+    expect(agr_physical_trace_begin(&config) == 0, "root second begin");
+    agr_physical_trace_copy_status(&second);
+    expect(strcmp(first.run_id, second.run_id) != 0, "consecutive run ids differ");
+    expect(strcmp(first.process_launch_id, second.process_launch_id) != 0, "consecutive launch ids differ");
+    expect(agr_physical_trace_set_environment_json(env) == 0, "environment stored");
+    agr_physical_trace_add_binary("executable", "00112233-4455-6677-8899-AABBCCDDEEFF",
+                                  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
+    agr_physical_trace_add_binary("libEGL", "11112233-4455-6677-8899-AABBCCDDEEFF",
+                                  "1123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
+    agr_physical_trace_add_binary("libGLESv2", "22112233-4455-6677-8899-AABBCCDDEEFF",
+                                  "2123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
+    agr_physical_trace_set_observation(10, 20, 15, 4, "OBSERVATION_DEADLINE");
+    agr_physical_trace_set_lifecycle("ACTIVE", 1, 1);
+    agr_physical_trace_shutdown();
+    fp = fopen("/tmp/agr-phys-root/agr-physical-run.json", "r");
+    expect(fp != NULL, "run file");
+    n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
+    if (fp) fclose(fp);
+    body[n] = 0;
+    expect(strstr(body, second.run_id) != NULL, "current run id");
+    expect(strstr(body, "\"process_launch_id\"") != NULL, "launch id field");
+    expect(strstr(body, "iPhone14,6") != NULL, "hw.machine");
+    expect(strstr(body, "\"system_version\":\"18.6\"") != NULL, "system version");
+    expect(strstr(body, "libGLESv2") != NULL, "framework fingerprint");
+    expect(strstr(body, "\"stop_reason\": \"OBSERVATION_DEADLINE\"") != NULL, "stop reason");
+    expect(strstr(body, "\"file_size_is_not_identity\": true") != NULL, "identity rule");
+    expect(access("/tmp/agr-phys-root/agr-physical-runtime.json", F_OK) != 0, "runtime absent until finalize");
+
+    mkdir(abrupt, 0755);
+    fp = fopen("/tmp/agr-phys-abrupt/agr-physical-run.json", "w");
+    fputs("{\"run_id\":\"KEEPME\",\"state\":\"RUNNING\",\"commit\":\"abc123\",\"tree\":\"def456\"}\n", fp);
+    fclose(fp);
+    config = config_for(abrupt);
+    expect(agr_physical_trace_begin(&config) == 0, "abrupt begin");
+    agr_physical_trace_shutdown();
+    fp = fopen("/tmp/agr-phys-abrupt/previous/KEEPME/agr-physical-run.json", "r");
+    expect(fp != NULL, "abrupt archive");
+    n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
+    if (fp) fclose(fp);
+    body[n] = 0;
+    expect(strstr(body, "ABRUPT_TERMINATION") != NULL, "abrupt reclass");
+
+    mkdir(mixed, 0755);
+    fp = fopen("/tmp/agr-phys-mixed/agr-physical-run.json", "w");
+    fputs("{\"schema\":\"agr.physical-run.v2\",\"run_id\":\"RUN-A\",\"process_launch_id\":\"L1\","
+          "\"commit\":\"abc123\",\"tree\":\"def456\",\"state\":\"FINALIZED\"}\n", fp);
+    fclose(fp);
+    fp = fopen("/tmp/agr-phys-mixed/agr-physical-trace.ndjson", "w");
+    fputs("{\"schema\":\"agr.physical-trace.v2\",\"run_id\":\"RUN-B\",\"process_launch_id\":\"L1\","
+          "\"seq\":100,\"commit\":\"abc123\",\"tree\":\"def456\",\"event\":\"TRACE_READY\",\"phase\":\"TRACE_READY\"}\n",
+          fp);
+    fclose(fp);
+    snprintf(summary, sizeof(summary), "%s/summary.json", mixed);
+    expect(run_parser(script, mixed, summary) == 0, "mixed parser");
+    expect(strcmp(classification_of(summary), "STALE_OR_MIXED_EVIDENCE") == 0, "stale class");
+}
+
 int main(int argc, char **argv) {
     const char *script = argc > 1 ? argv[1] : "ci/physical-runtime-evidence.py";
     test_sequence_and_identity(script);
@@ -510,6 +589,7 @@ int main(int argc, char **argv) {
     test_posted_without_draw(script);
     test_canvas_and_pass(script);
     test_crash(script);
+    test_current_root_and_environment(script);
     if (g_failures) {
         fprintf(stderr, "physical trace host failures %d\n", g_failures);
         return 1;

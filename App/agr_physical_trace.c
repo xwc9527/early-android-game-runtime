@@ -15,7 +15,7 @@
 #define RUN_NAME "agr-physical-run.json"
 #define FINAL_NAME "agr-physical-runtime.json"
 #define CRASH_NAME "agr-physical-crash.bin"
-#define LINE_CAP 1200
+#define LINE_CAP 4096
 #define DISK_CAP (2u * 1024u * 1024u)
 #define SEQ_ORIGIN 100ull
 
@@ -64,6 +64,28 @@ static uint32_t g_sync_count = 0;
 static int g_finished = 0;
 static char g_dir[512];
 static char g_run_id[40];
+static char g_launch_id[40];
+static char g_state[64];
+static char g_env_json[12288];
+static int g_env_set = 0;
+static char g_life[32];
+static int g_foreground = 0;
+static int g_app_active = 0;
+static char g_apk_actual[80];
+static char g_boundary[80];
+static char g_last_error[96];
+static uint64_t g_obs_start = 0;
+static uint64_t g_obs_deadline = 0;
+static uint64_t g_obs_end = 0;
+static uint32_t g_obs_frames = 0;
+static char g_obs_reason[64];
+#define BIN_CAP 4
+static struct {
+    char role[24];
+    char uuid[48];
+    char sha[80];
+} g_bin[BIN_CAP];
+static int g_bin_count = 0;
 static char g_branch[128];
 static char g_commit[80];
 static char g_tree[80];
@@ -173,6 +195,34 @@ const char *agr_physical_phase_name(uint32_t phase) {
     case AGR_PHYS_PHASE_BITMAP_SCALE_FAIL: return "BITMAP_SCALE_FAIL";
     case AGR_PHYS_PHASE_GUEST_METHOD_ENTER: return "GUEST_METHOD_ENTER";
     case AGR_PHYS_PHASE_GUEST_METHOD_EXIT: return "GUEST_METHOD_EXIT";
+    case AGR_PHYS_PHASE_EVIDENCE_RESET_BEGIN: return "EVIDENCE_RESET_BEGIN";
+    case AGR_PHYS_PHASE_EVIDENCE_RESET_OK: return "EVIDENCE_RESET_OK";
+    case AGR_PHYS_PHASE_RUN_ID_CREATED: return "RUN_ID_CREATED";
+    case AGR_PHYS_PHASE_RUN_FILE_WRITTEN: return "RUN_FILE_WRITTEN";
+    case AGR_PHYS_PHASE_TRACE_OPENED: return "TRACE_OPENED";
+    case AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_BEGIN: return "ENVIRONMENT_CAPTURE_BEGIN";
+    case AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_OK: return "ENVIRONMENT_CAPTURE_OK";
+    case AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_PARTIAL: return "ENVIRONMENT_CAPTURE_PARTIAL";
+    case AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_FAIL: return "ENVIRONMENT_CAPTURE_FAIL";
+    case AGR_PHYS_PHASE_EVIDENCE_CHANNEL_FAILED: return "EVIDENCE_CHANNEL_FAILED";
+    case AGR_PHYS_PHASE_APP_DID_FINISH_LAUNCHING: return "APP_DID_FINISH_LAUNCHING";
+    case AGR_PHYS_PHASE_APP_DID_BECOME_ACTIVE: return "APP_DID_BECOME_ACTIVE";
+    case AGR_PHYS_PHASE_APP_WILL_RESIGN_ACTIVE: return "APP_WILL_RESIGN_ACTIVE";
+    case AGR_PHYS_PHASE_APP_DID_ENTER_BACKGROUND: return "APP_DID_ENTER_BACKGROUND";
+    case AGR_PHYS_PHASE_APP_WILL_ENTER_FOREGROUND: return "APP_WILL_ENTER_FOREGROUND";
+    case AGR_PHYS_PHASE_APP_WILL_TERMINATE: return "APP_WILL_TERMINATE";
+    case AGR_PHYS_PHASE_SCENE_DID_BECOME_ACTIVE: return "SCENE_DID_BECOME_ACTIVE";
+    case AGR_PHYS_PHASE_SCENE_WILL_RESIGN_ACTIVE: return "SCENE_WILL_RESIGN_ACTIVE";
+    case AGR_PHYS_PHASE_ENVIRONMENT_CHANGED: return "ENVIRONMENT_CHANGED";
+    case AGR_PHYS_PHASE_CADISPLAYLINK_FRAME: return "CADISPLAYLINK_FRAME";
+    case AGR_PHYS_PHASE_GUEST_EXEC_SNAPSHOT: return "GUEST_EXEC_SNAPSHOT";
+    case AGR_PHYS_PHASE_DIAGNOSTIC_FIELD_WITNESS: return "DIAGNOSTIC_FIELD_WITNESS";
+    case AGR_PHYS_PHASE_OBSERVATION_WINDOW: return "OBSERVATION_WINDOW";
+    case AGR_PHYS_PHASE_MEMORY_WARNING: return "MEMORY_WARNING";
+    case AGR_PHYS_PHASE_THERMAL_CHANGED: return "THERMAL_CHANGED";
+    case AGR_PHYS_PHASE_LOW_POWER_CHANGED: return "LOW_POWER_CHANGED";
+    case AGR_PHYS_PHASE_PROTECTED_DATA_CHANGED: return "PROTECTED_DATA_CHANGED";
+    case AGR_PHYS_PHASE_BINARY_FINGERPRINT: return "BINARY_FINGERPRINT";
     default: return "NONE";
     }
 }
@@ -190,35 +240,112 @@ static void path_join(char *out, size_t cap, const char *name) {
     snprintf(out, cap, "%s/%s", g_dir, name);
 }
 
+static void format_binaries(char *out, size_t cap) {
+    size_t used = 0;
+    int i;
+    int n;
+    if (cap == 0) return;
+    n = snprintf(out, cap, "[");
+    if (n < 0 || (size_t)n >= cap) {
+        out[0] = 0;
+        return;
+    }
+    used = (size_t)n;
+    for (i = 0; i < g_bin_count; i++) {
+        n = snprintf(out + used, cap - used,
+                     "%s{\"role\":\"%s\",\"uuid\":\"%s\",\"sha256\":\"%s\"}",
+                     i ? "," : "", g_bin[i].role, g_bin[i].uuid, g_bin[i].sha);
+        if (n < 0 || (size_t)n >= cap - used) {
+            out[0] = 0;
+            return;
+        }
+        used += (size_t)n;
+    }
+    snprintf(out + used, cap - used, "]");
+}
+
 static void write_run_file(const char *state) {
     char path[640];
-    char body[1400];
+    char binaries[2048];
+    char *body;
     int fd;
     int n;
+    const char *env;
+    if (state && state[0]) copy_text(g_state, sizeof(g_state), state);
     path_join(path, sizeof(path), RUN_NAME);
-    n = snprintf(body, sizeof(body),
+    format_binaries(binaries, sizeof(binaries));
+    if (!binaries[0]) snprintf(binaries, sizeof(binaries), "[]");
+    env = g_env_set && g_env_json[0] == '{' ? g_env_json : "null";
+    body = (char *)malloc(65536);
+    if (!body) return;
+    n = snprintf(body, 65536,
                  "{\n"
                  "  \"schema\": \"%s\",\n"
                  "  \"run_id\": \"%s\",\n"
+                 "  \"process_launch_id\": \"%s\",\n"
+                 "  \"launch_kind\": \"NEW_PROCESS\",\n"
                  "  \"branch\": \"%s\",\n"
                  "  \"commit\": \"%s\",\n"
                  "  \"tree\": \"%s\",\n"
                  "  \"device_platform\": \"%s\",\n"
                  "  \"architecture\": \"%s\",\n"
                  "  \"apk_sha256_expected\": \"%s\",\n"
+                 "  \"apk_sha256_actual\": \"%s\",\n"
                  "  \"state\": \"%s\",\n"
-                 "  \"trace_file\": \"%s\",\n"
-                 "  \"final_report_file\": \"%s\",\n"
-                 "  \"crash_file\": \"%s\"\n"
-                 "}\n",
-                 AGR_PHYSICAL_RUN_SCHEMA, g_run_id, g_branch, g_commit, g_tree,
-                 g_platform, g_arch, g_apk_sha, state ? state : "RUNNING",
-                 TRACE_NAME, FINAL_NAME, CRASH_NAME);
-    if (n < 0 || (size_t)n >= sizeof(body)) return;
-    fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0644);
-    if (fd < 0) return;
-    if (write(fd, body, (size_t)n) == n) fsync(fd);
-    close(fd);
+                 "  \"lifecycle_state\": \"%s\",\n"
+                 "  \"foreground\": %s,\n"
+                 "  \"active\": %s,\n"
+                 "  \"last_seq\": %llu,\n"
+                 "  \"last_phase\": \"%s\",\n"
+                 "  \"last_exec\": %u,\n"
+                 "  \"last_confirmed_boundary\": \"%s\",\n"
+                 "  \"last_error\": \"%s\",\n"
+                 "  \"observation_start_monotonic\": %llu,\n"
+                 "  \"observation_deadline\": %llu,\n"
+                 "  \"observation_end\": %llu,\n"
+                 "  \"frames_observed\": %u,\n"
+                 "  \"stop_reason\": \"%s\",\n"
+                 "  \"binaries\": %s,\n"
+                 "  \"environment\": ",
+                 AGR_PHYSICAL_RUN_SCHEMA, g_run_id, g_launch_id, g_branch, g_commit, g_tree,
+                 g_platform, g_arch, g_apk_sha, g_apk_actual,
+                 g_state[0] ? g_state : "RUNNING",
+                 g_life[0] ? g_life : "UNKNOWN",
+                 g_foreground ? "true" : "false",
+                 g_app_active ? "true" : "false",
+                 (unsigned long long)(g_seq >= SEQ_ORIGIN ? g_seq : 0),
+                 g_last_event, g_has_game ? g_game_exec : 0,
+                 g_boundary, g_last_error,
+                 (unsigned long long)g_obs_start, (unsigned long long)g_obs_deadline,
+                 (unsigned long long)g_obs_end, g_obs_frames, g_obs_reason,
+                 binaries);
+    if (n > 0 && (size_t)n < 65536) {
+        int tail;
+        size_t env_len = strlen(env);
+        if ((size_t)n + env_len + 128 < 65536) {
+            memcpy(body + n, env, env_len);
+            tail = snprintf(body + n + env_len, 65536 - (size_t)n - env_len,
+                            ",\n"
+                            "  \"file_size_is_not_identity\": true,\n"
+                            "  \"trace_file\": \"%s\",\n"
+                            "  \"final_report_file\": \"%s\",\n"
+                            "  \"crash_file\": \"%s\"\n"
+                            "}\n",
+                            TRACE_NAME, FINAL_NAME, CRASH_NAME);
+            if (tail > 0) n = n + (int)env_len + tail;
+            else n = -1;
+        } else {
+            n = -1;
+        }
+    }
+    if (n > 0 && (size_t)n < 65536) {
+        fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+        if (fd >= 0) {
+            if (write(fd, body, (size_t)n) == n) fsync(fd);
+            close(fd);
+        }
+    }
+    free(body);
 }
 
 static void update_crash_image(uint64_t seq, const agr_forensic_sample *sample) {
@@ -282,6 +409,22 @@ static int phase_always_sync(uint32_t phase) {
     case AGR_PHYS_PHASE_WATCHDOG_STALL:
     case AGR_PHYS_PHASE_FINALIZE_BEGIN:
     case AGR_PHYS_PHASE_FINALIZE_END:
+    case AGR_PHYS_PHASE_EVIDENCE_RESET_BEGIN:
+    case AGR_PHYS_PHASE_EVIDENCE_RESET_OK:
+    case AGR_PHYS_PHASE_RUN_ID_CREATED:
+    case AGR_PHYS_PHASE_RUN_FILE_WRITTEN:
+    case AGR_PHYS_PHASE_TRACE_OPENED:
+    case AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_OK:
+    case AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_PARTIAL:
+    case AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_FAIL:
+    case AGR_PHYS_PHASE_EVIDENCE_CHANNEL_FAILED:
+    case AGR_PHYS_PHASE_MEMORY_WARNING:
+    case AGR_PHYS_PHASE_THERMAL_CHANGED:
+    case AGR_PHYS_PHASE_LOW_POWER_CHANGED:
+    case AGR_PHYS_PHASE_PROTECTED_DATA_CHANGED:
+    case AGR_PHYS_PHASE_BINARY_FINGERPRINT:
+    case AGR_PHYS_PHASE_OBSERVATION_WINDOW:
+    case AGR_PHYS_PHASE_ENVIRONMENT_CHANGED:
         return 1;
     default:
         return 0;
@@ -306,6 +449,7 @@ static int phase_never_sync(uint32_t phase) {
     case AGR_PHYS_PHASE_BITMAP_SCALE_END:
     case AGR_PHYS_PHASE_GUEST_METHOD_ENTER:
     case AGR_PHYS_PHASE_GUEST_METHOD_EXIT:
+    case AGR_PHYS_PHASE_CADISPLAYLINK_FRAME:
         return 1;
     default:
         return 0;
@@ -322,6 +466,8 @@ static int phase_first_sync(uint32_t phase) {
     case AGR_PHYS_PHASE_DRAW_BITMAP_END:
     case AGR_PHYS_PHASE_CANVAS_POST_END:
     case AGR_PHYS_PHASE_PENGUIN_SPRITE_PAINT_WITNESS:
+    case AGR_PHYS_PHASE_GUEST_EXEC_SNAPSHOT:
+    case AGR_PHYS_PHASE_DIAGNOSTIC_FIELD_WITNESS:
         return 1;
     default:
         return 0;
@@ -359,7 +505,7 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
     sync = want_fsync(sample);
     if (sample->has_exec) {
         n = snprintf(line, sizeof(line),
-                     "{\"schema\":\"%s\",\"run_id\":\"%s\",\"seq\":%llu,\"monotonic_ns\":%llu,"
+                     "{\"schema\":\"%s\",\"run_id\":\"%s\",\"process_launch_id\":\"%s\",\"seq\":%llu,\"monotonic_ns\":%llu,"
                      "\"event\":\"%s\",\"phase\":\"%s\",\"commit\":\"%s\",\"tree\":\"%s\","
                      "\"exec_id\":%u,\"host_thread_id\":%llu,\"thread_state\":%u,"
                      "\"class\":\"%s\",\"method\":\"%s\",\"detail\":\"%s\","
@@ -369,7 +515,7 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
                      "\"draw_bitmap_count\":%u,\"pixel_change_count\":%u,"
                      "\"counter_before\":%u,\"counter_after\":%u,\"has_counters\":%s,"
                      "\"created_count\":%u,\"changed_count\":%u}\n",
-                     AGR_PHYSICAL_TRACE_SCHEMA, g_run_id,
+                     AGR_PHYSICAL_TRACE_SCHEMA, g_run_id, g_launch_id,
                      (unsigned long long)seq, (unsigned long long)now,
                      name, name, g_commit, g_tree, sample->exec_id,
                      (unsigned long long)sample->host_thread, sample->thread_state,
@@ -385,7 +531,7 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
                      sample->created_count, sample->changed_count);
     } else {
         n = snprintf(line, sizeof(line),
-                     "{\"schema\":\"%s\",\"run_id\":\"%s\",\"seq\":%llu,\"monotonic_ns\":%llu,"
+                     "{\"schema\":\"%s\",\"run_id\":\"%s\",\"process_launch_id\":\"%s\",\"seq\":%llu,\"monotonic_ns\":%llu,"
                      "\"event\":\"%s\",\"phase\":\"%s\",\"commit\":\"%s\",\"tree\":\"%s\","
                      "\"exec_id\":null,\"host_thread_id\":%llu,\"thread_state\":%u,"
                      "\"class\":\"%s\",\"method\":\"%s\",\"detail\":\"%s\","
@@ -395,7 +541,7 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
                      "\"draw_bitmap_count\":%u,\"pixel_change_count\":%u,"
                      "\"counter_before\":%u,\"counter_after\":%u,\"has_counters\":%s,"
                      "\"created_count\":%u,\"changed_count\":%u}\n",
-                     AGR_PHYSICAL_TRACE_SCHEMA, g_run_id,
+                     AGR_PHYSICAL_TRACE_SCHEMA, g_run_id, g_launch_id,
                      (unsigned long long)seq, (unsigned long long)now,
                      name, name, g_commit, g_tree,
                      (unsigned long long)sample->host_thread, sample->thread_state,
@@ -420,6 +566,27 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
     g_event_count++;
     update_crash_image(seq, sample);
     remember_exec(sample);
+    if (sample->phase == AGR_PHYS_PHASE_APK_OPEN_OK ||
+        sample->phase == AGR_PHYS_PHASE_ACTIVITY_START_OK ||
+        sample->phase == AGR_PHYS_PHASE_SURFACE_CREATED ||
+        sample->phase == AGR_PHYS_PHASE_SURFACE_CHANGED ||
+        sample->phase == AGR_PHYS_PHASE_SURFACE_CALLBACK_OK ||
+        sample->phase == AGR_PHYS_PHASE_THREAD_RUN_ENTER ||
+        sample->phase == AGR_PHYS_PHASE_CANVAS_LOCK_ACQUIRED ||
+        sample->phase == AGR_PHYS_PHASE_DRAW_BITMAP_END ||
+        sample->phase == AGR_PHYS_PHASE_CANVAS_POST_END ||
+        sample->phase == AGR_PHYS_PHASE_GUEST_METHOD_ENTER) {
+        copy_text(g_boundary, sizeof(g_boundary), name);
+    }
+    if (sample->detail[0] &&
+        (sample->phase == AGR_PHYS_PHASE_RUNTIME_ERROR ||
+         sample->phase == AGR_PHYS_PHASE_WATCHDOG_STALL ||
+         sample->phase == AGR_PHYS_PHASE_EVIDENCE_CHANNEL_FAILED ||
+         sample->phase == AGR_PHYS_PHASE_SURFACE_CALLBACK_THROW ||
+         sample->phase == AGR_PHYS_PHASE_BITMAP_SCALE_FAIL ||
+         sample->phase == AGR_PHYS_PHASE_APK_OPEN_FAIL ||
+         sample->phase == AGR_PHYS_PHASE_APK_SHA_FAIL))
+        copy_text(g_last_error, sizeof(g_last_error), sample->detail);
     if (!phase_is_watchdog(sample->phase)) {
         uint64_t gap = g_last_progress_ns ? now - g_last_progress_ns : 0;
         if (gap > g_max_gap_ns) g_max_gap_ns = gap;
@@ -441,6 +608,7 @@ static void fill_status(agr_physical_trace_status *out) {
     if (!out) return;
     memset(out, 0, sizeof(*out));
     copy_text(out->run_id, sizeof(out->run_id), g_run_id);
+    copy_text(out->process_launch_id, sizeof(out->process_launch_id), g_launch_id);
     out->last_seq = g_seq >= SEQ_ORIGIN ? g_seq : 0;
     out->event_count = g_event_count;
     copy_text(out->last_event, sizeof(out->last_event), g_last_event);
@@ -648,6 +816,149 @@ static int read_run_id(const char *path, char *out, size_t cap) {
     return out[0] ? 0 : -1;
 }
 
+static int file_contains(const char *path, const char *needle) {
+    FILE *fp;
+    char buf[4096];
+    size_t nlen;
+    size_t keep = 0;
+    if (!path || !needle || !needle[0]) return 0;
+    fp = fopen(path, "r");
+    if (!fp) return 0;
+    nlen = strlen(needle);
+    while (keep < sizeof(buf)) {
+        size_t n = fread(buf + keep, 1, sizeof(buf) - 1 - keep, fp);
+        if (n == 0) break;
+        keep += n;
+        buf[keep] = 0;
+        if (strstr(buf, needle)) {
+            fclose(fp);
+            return 1;
+        }
+        if (keep > nlen) {
+            memmove(buf, buf + keep - nlen, nlen);
+            keep = nlen;
+        }
+    }
+    fclose(fp);
+    return 0;
+}
+
+static int crash_marker_valid(const char *path) {
+    FILE *fp;
+    struct crash_image image;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    if (fread(&image, 1, sizeof(image), fp) != sizeof(image)) {
+        fclose(fp);
+        return 0;
+    }
+    fclose(fp);
+    return memcmp(image.magic, AGR_PHYSICAL_CRASH_MAGIC, 8) == 0 && image.signal_number != 0;
+}
+
+static int state_in_progress(const char *state) {
+    static const char *names[] = {
+        "RUNNING", "PROCESS_STARTED", "EVIDENCE_READY", "ENVIRONMENT_CAPTURED",
+        "APK_LOCATING", "APK_OPENED", "ACTIVITY_STARTING", "ACTIVITY_RESUMED",
+        "SURFACE_READY", "GAME_THREAD_RUNNING", "DRAW_OBSERVING", "CONTENT_PRODUCED"
+    };
+    size_t i;
+    if (!state || !state[0]) return 0;
+    for (i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
+        if (strcmp(state, names[i]) == 0) return 1;
+    }
+    return 0;
+}
+
+static void reclassify_previous_run(const char *run_path, const char *trace_path, const char *crash_path) {
+    FILE *fp;
+    char *buf;
+    char *key;
+    char *q1;
+    char *q2;
+    char state[64];
+    const char *next;
+    long n;
+    size_t old_len;
+    size_t new_len;
+    if (!run_path) return;
+    fp = fopen(run_path, "rb");
+    if (!fp) return;
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return;
+    }
+    n = ftell(fp);
+    if (n < 0 || n > 65536) {
+        fclose(fp);
+        return;
+    }
+    rewind(fp);
+    buf = (char *)malloc((size_t)n + 1);
+    if (!buf) {
+        fclose(fp);
+        return;
+    }
+    if (fread(buf, 1, (size_t)n, fp) != (size_t)n) {
+        free(buf);
+        fclose(fp);
+        return;
+    }
+    fclose(fp);
+    buf[n] = 0;
+    key = strstr(buf, "\"state\"");
+    if (!key) {
+        free(buf);
+        return;
+    }
+    q1 = strchr(key, ':');
+    if (!q1) {
+        free(buf);
+        return;
+    }
+    q1 = strchr(q1, '"');
+    if (!q1) {
+        free(buf);
+        return;
+    }
+    q2 = strchr(q1 + 1, '"');
+    if (!q2 || (size_t)(q2 - q1) >= sizeof(state)) {
+        free(buf);
+        return;
+    }
+    memcpy(state, q1 + 1, (size_t)(q2 - q1 - 1));
+    state[q2 - q1 - 1] = 0;
+    if (!state_in_progress(state)) {
+        free(buf);
+        return;
+    }
+    if (crash_marker_valid(crash_path)) next = "NATIVE_SIGNAL_CRASH";
+    else if (file_contains(trace_path, "WATCHDOG_STALL")) next = "WATCHDOG_STALL";
+    else next = "ABRUPT_TERMINATION";
+    old_len = (size_t)(q2 - q1 - 1);
+    new_len = strlen(next);
+    {
+        char *rewritten = (char *)malloc((size_t)n + new_len + 1);
+        size_t head = (size_t)(q1 + 1 - buf);
+        if (!rewritten) {
+            free(buf);
+            return;
+        }
+        memcpy(rewritten, buf, head);
+        memcpy(rewritten + head, next, new_len);
+        memcpy(rewritten + head + new_len, q2, (size_t)n - (size_t)(q2 - buf));
+        rewritten[head + new_len + (size_t)n - (size_t)(q2 - buf)] = 0;
+        fp = fopen(run_path, "wb");
+        if (fp) {
+            fwrite(rewritten, 1, head + new_len + (size_t)n - (size_t)(q2 - buf), fp);
+            fclose(fp);
+        }
+        free(rewritten);
+    }
+    free(buf);
+    (void)old_len;
+}
+
 static void archive_previous(void) {
     char prev[640];
     char run_path[640];
@@ -665,6 +976,13 @@ static void archive_previous(void) {
     if (mkdir(dest, 0755) != 0)
         snprintf(dest, sizeof(dest), "%s/%s-%llu", prev, id, (unsigned long long)mono_ns());
     mkdir(dest, 0755);
+    {
+        char trace_path[640];
+        char crash_path[640];
+        snprintf(trace_path, sizeof(trace_path), "%s/%s", g_dir, TRACE_NAME);
+        snprintf(crash_path, sizeof(crash_path), "%s/%s", g_dir, CRASH_NAME);
+        reclassify_previous_run(run_path, trace_path, crash_path);
+    }
     for (i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
         char from[640];
         char to[800];
@@ -679,6 +997,8 @@ static void make_run_id(void) {
     uint64_t b = ((uint64_t)getpid() << 32) ^ (uint64_t)time(NULL);
     snprintf(g_run_id, sizeof(g_run_id), "%016llx%016llx",
              (unsigned long long)a, (unsigned long long)b);
+    snprintf(g_launch_id, sizeof(g_launch_id), "p%u-%016llx",
+             (unsigned)getpid(), (unsigned long long)(a ^ 0xA6A6A6A6A6A6A6A6ull));
 }
 
 void agr_physical_trace_set_watchdog_for_test(uint32_t poll_ms, uint32_t gap2_ms,
@@ -724,6 +1044,8 @@ int agr_physical_trace_begin(const agr_physical_trace_config *config) {
     copy_text(g_apk_sha, sizeof(g_apk_sha), config->apk_sha256_expected ? config->apk_sha256_expected : "");
     mkdir(g_dir, 0755);
     archive_previous();
+    path_join(path, sizeof(path), FINAL_NAME);
+    unlink(path);
     make_run_id();
     g_seq = SEQ_ORIGIN - 1ull;
     g_runtime_seq = 0;
@@ -745,11 +1067,25 @@ int agr_physical_trace_begin(const agr_physical_trace_config *config) {
     g_has_game = 0;
     g_last_event[0] = 0;
     g_reason[0] = 0;
+    g_env_set = 0;
+    g_env_json[0] = 0;
+    g_life[0] = 0;
+    g_foreground = 0;
+    g_app_active = 0;
+    g_apk_actual[0] = 0;
+    g_boundary[0] = 0;
+    g_last_error[0] = 0;
+    g_obs_start = 0;
+    g_obs_deadline = 0;
+    g_obs_end = 0;
+    g_obs_frames = 0;
+    g_obs_reason[0] = 0;
+    g_bin_count = 0;
     memset(&g_crash, 0, sizeof(g_crash));
     memcpy(g_crash.magic, AGR_PHYSICAL_CRASH_MAGIC, 8);
     g_crash.version = AGR_PHYSICAL_CRASH_VERSION;
     g_crash_seq = 0;
-    write_run_file("RUNNING");
+    write_run_file("PROCESS_STARTED");
     path_join(path, sizeof(path), TRACE_NAME);
     g_trace_fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0644);
     path_join(path, sizeof(path), CRASH_NAME);
@@ -761,13 +1097,23 @@ int agr_physical_trace_begin(const agr_physical_trace_config *config) {
     }
     g_active = 1;
     memset(&launch, 0, sizeof(launch));
-    launch.phase = AGR_PHYS_PHASE_APP_LAUNCH_BEGIN;
     launch.critical = 1;
     launch.host_thread = (uint64_t)pthread_self();
+    launch.phase = AGR_PHYS_PHASE_EVIDENCE_RESET_BEGIN;
+    note_unlocked(&launch);
+    launch.phase = AGR_PHYS_PHASE_EVIDENCE_RESET_OK;
+    note_unlocked(&launch);
+    launch.phase = AGR_PHYS_PHASE_RUN_ID_CREATED;
+    note_unlocked(&launch);
+    launch.phase = AGR_PHYS_PHASE_RUN_FILE_WRITTEN;
+    note_unlocked(&launch);
+    launch.phase = AGR_PHYS_PHASE_TRACE_OPENED;
+    note_unlocked(&launch);
+    launch.phase = AGR_PHYS_PHASE_APP_LAUNCH_BEGIN;
     note_unlocked(&launch);
     launch.phase = AGR_PHYS_PHASE_TRACE_READY;
-    launch.critical = 1;
     note_unlocked(&launch);
+    write_run_file("EVIDENCE_READY");
     pthread_mutex_unlock(&g_mu);
     install_signals();
     if (pthread_create(&g_watchdog, NULL, watchdog_main, NULL) == 0)
@@ -834,6 +1180,75 @@ int agr_physical_trace_finish(const char *termination_reason, agr_physical_trace
     return 0;
 }
 
+int agr_physical_trace_set_environment_json(const char *json) {
+    size_t n;
+    int rc = 0;
+    pthread_mutex_lock(&g_mu);
+    if (!json || json[0] != '{') {
+        g_env_set = 0;
+        g_env_json[0] = 0;
+        rc = -1;
+    } else {
+        n = strlen(json);
+        if (n + 1 >= sizeof(g_env_json)) {
+            rc = -1;
+        } else {
+            memcpy(g_env_json, json, n + 1);
+            g_env_set = 1;
+        }
+    }
+    if (g_active) write_run_file(g_state[0] ? g_state : "ENVIRONMENT_CAPTURED");
+    pthread_mutex_unlock(&g_mu);
+    return rc;
+}
+
+void agr_physical_trace_set_lifecycle(const char *state, int foreground, int active) {
+    pthread_mutex_lock(&g_mu);
+    copy_text(g_life, sizeof(g_life), state ? state : "UNKNOWN");
+    g_foreground = foreground ? 1 : 0;
+    g_app_active = active ? 1 : 0;
+    if (g_active) write_run_file(g_state[0] ? g_state : "EVIDENCE_READY");
+    pthread_mutex_unlock(&g_mu);
+}
+
+void agr_physical_trace_set_apk_sha_actual(const char *sha256) {
+    pthread_mutex_lock(&g_mu);
+    copy_text(g_apk_actual, sizeof(g_apk_actual), sha256 ? sha256 : "");
+    if (g_active) write_run_file(g_state[0] ? g_state : "APK_OPENED");
+    pthread_mutex_unlock(&g_mu);
+}
+
+void agr_physical_trace_set_observation(uint64_t start_monotonic, uint64_t deadline,
+                                        uint64_t end_monotonic, uint32_t frames,
+                                        const char *stop_reason) {
+    pthread_mutex_lock(&g_mu);
+    g_obs_start = start_monotonic;
+    g_obs_deadline = deadline;
+    g_obs_end = end_monotonic;
+    g_obs_frames = frames;
+    copy_text(g_obs_reason, sizeof(g_obs_reason), stop_reason ? stop_reason : "");
+    if (g_active) write_run_file(g_state[0] ? g_state : "DRAW_OBSERVING");
+    pthread_mutex_unlock(&g_mu);
+}
+
+void agr_physical_trace_add_binary(const char *role, const char *uuid, const char *sha256) {
+    int i;
+    pthread_mutex_lock(&g_mu);
+    for (i = 0; i < g_bin_count; i++) {
+        if (strcmp(g_bin[i].role, role ? role : "") == 0) break;
+    }
+    if (i >= BIN_CAP) {
+        pthread_mutex_unlock(&g_mu);
+        return;
+    }
+    if (i == g_bin_count) g_bin_count++;
+    copy_text(g_bin[i].role, sizeof(g_bin[i].role), role ? role : "");
+    copy_text(g_bin[i].uuid, sizeof(g_bin[i].uuid), uuid ? uuid : "");
+    copy_text(g_bin[i].sha, sizeof(g_bin[i].sha), sha256 ? sha256 : "");
+    if (g_active) write_run_file(g_state[0] ? g_state : "EVIDENCE_READY");
+    pthread_mutex_unlock(&g_mu);
+}
+
 void agr_physical_trace_note_writer_error(const char *detail) {
     agr_forensic_sample sample;
     pthread_mutex_lock(&g_mu);
@@ -849,8 +1264,10 @@ void agr_physical_trace_note_writer_error(const char *detail) {
     g_finished = 0;
     note_unlocked(&sample);
     g_finished = 1;
-    copy_text(g_reason, sizeof(g_reason), "EVIDENCE_WRITER_ERROR");
-    write_run_file("EVIDENCE_WRITER_ERROR");
+    sample.phase = AGR_PHYS_PHASE_EVIDENCE_CHANNEL_FAILED;
+    note_unlocked(&sample);
+    copy_text(g_reason, sizeof(g_reason), "EVIDENCE_CHANNEL_FAILED");
+    write_run_file("EVIDENCE_CHANNEL_FAILED");
     pthread_mutex_unlock(&g_mu);
 }
 

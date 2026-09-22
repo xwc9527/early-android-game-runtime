@@ -32,6 +32,8 @@ static uint32_t forensic_thread_state(DxExecutionContext *exec) {
     return 0;
 }
 
+static void monitor_owner_snapshot(DxExecutionContext *exec, int *owner, uint32_t *recursion);
+
 static void forensic_thread(uint32_t phase, DxExecutionContext *exec) {
     agr_forensic_sample sample;
     if (!agr_forensic_publish || !exec) return;
@@ -43,6 +45,80 @@ static void forensic_thread(uint32_t phase, DxExecutionContext *exec) {
     sample.thread_state = forensic_thread_state(exec);
     sample.host_thread = exec->has_host_thread ? (uint64_t)(uintptr_t)exec->host_thread : (uint64_t)pthread_self();
     agr_forensic_publish(&sample);
+}
+
+static void forensic_exec_snapshot(DxExecutionContext *exec, const char *when) {
+    agr_forensic_sample sample;
+    const char *cls = "";
+    const char *method = "";
+    const char *pending = "";
+    const char *thread_cls = "";
+    uint32_t pc = 0;
+    int monitor_owner = 0;
+    uint32_t recursion = 0;
+    DxValue field;
+    if (!agr_forensic_publish || !exec) return;
+    if (exec->current_frame && exec->current_frame->method) {
+        pc = exec->current_frame->pc;
+        if (exec->current_frame->method->name)
+            method = exec->current_frame->method->name;
+        if (exec->current_frame->method->declaring_class &&
+            exec->current_frame->method->declaring_class->descriptor)
+            cls = exec->current_frame->method->declaring_class->descriptor;
+    }
+    if (exec->pending_exception && exec->pending_exception->klass &&
+        exec->pending_exception->klass->descriptor)
+        pending = exec->pending_exception->klass->descriptor;
+    monitor_owner_snapshot(exec, &monitor_owner, &recursion);
+    memset(&sample, 0, sizeof(sample));
+    sample.phase = AGR_PHYS_PHASE_GUEST_EXEC_SNAPSHOT;
+    sample.has_exec = 1;
+    sample.exec_id = exec->id;
+    sample.thread_state = forensic_thread_state(exec);
+    sample.host_thread = exec->has_host_thread ? (uint64_t)(uintptr_t)exec->host_thread : (uint64_t)pthread_self();
+    snprintf(sample.class_name, sizeof(sample.class_name), "%s", cls);
+    snprintf(sample.method_name, sizeof(sample.method_name), "%s", method);
+    snprintf(sample.detail, sizeof(sample.detail),
+             "when=%s pc=%u pending=%s wait_vm=%d safepoint=%d monitor_owner=%d recursion=%u",
+             when ? when : "-", pc, pending[0] ? pending : "-",
+             exec->waiting_for_vm_lock ? 1 : 0, exec->at_safepoint ? 1 : 0,
+             monitor_owner, recursion);
+    agr_forensic_publish(&sample);
+    if (!exec->java_thread || !exec->java_thread->klass || !exec->java_thread->klass->descriptor)
+        return;
+    thread_cls = exec->java_thread->klass->descriptor;
+    if (!strstr(thread_cls, "GameThread")) return;
+    memset(&field, 0, sizeof(field));
+    if (dx_vm_get_field(exec->java_thread, "mRun", &field) == DX_OK) {
+        memset(&sample, 0, sizeof(sample));
+        sample.phase = AGR_PHYS_PHASE_DIAGNOSTIC_FIELD_WITNESS;
+        sample.has_exec = 1;
+        sample.exec_id = exec->id;
+        sample.host_thread = exec->has_host_thread ? (uint64_t)(uintptr_t)exec->host_thread : (uint64_t)pthread_self();
+        snprintf(sample.class_name, sizeof(sample.class_name), "%s", thread_cls);
+        snprintf(sample.method_name, sizeof(sample.method_name), "mRun");
+        snprintf(sample.detail, sizeof(sample.detail), "when=%s mRun=%d",
+                 when ? when : "-", field.tag == DX_VAL_INT ? field.i : -1);
+        agr_forensic_publish(&sample);
+    }
+    memset(&field, 0, sizeof(field));
+    if (dx_vm_get_field(exec->java_thread, "mImagesReady", &field) == DX_OK) {
+        memset(&sample, 0, sizeof(sample));
+        sample.phase = AGR_PHYS_PHASE_DIAGNOSTIC_FIELD_WITNESS;
+        sample.has_exec = 1;
+        sample.exec_id = exec->id;
+        sample.host_thread = exec->has_host_thread ? (uint64_t)(uintptr_t)exec->host_thread : (uint64_t)pthread_self();
+        snprintf(sample.class_name, sizeof(sample.class_name), "%s", thread_cls);
+        snprintf(sample.method_name, sizeof(sample.method_name), "mImagesReady");
+        snprintf(sample.detail, sizeof(sample.detail), "when=%s mImagesReady=%d",
+                 when ? when : "-", field.tag == DX_VAL_INT ? field.i : -1);
+        agr_forensic_publish(&sample);
+    }
+}
+
+void dx_vm_forensic_exec_snapshot(DxVM *vm, const char *when) {
+    if (!vm) return;
+    forensic_exec_snapshot(dx_vm_current_exec(vm), when);
 }
 
 static const char *thread_state_name(DxJavaThreadState state) {
@@ -266,6 +342,10 @@ static void *java_worker_main(void *arg) {
     exec->has_host_thread = 1;
     set_state(exec, DX_JAVA_THREAD_RUNNING);
     forensic_thread(AGR_PHYS_PHASE_THREAD_RUN_ENTER, exec);
+    forensic_exec_snapshot(exec, "THREAD_RUN_ENTER");
+    if (exec->java_thread && exec->java_thread->klass && exec->java_thread->klass->descriptor &&
+        strstr(exec->java_thread->klass->descriptor, "GameThread"))
+        dx_vm_set_draw_witness(exec->vm, 256);
     DxObject *self = exec->java_thread;
     const char *method_name = "run";
     DxMethod *run = NULL;
@@ -467,6 +547,16 @@ typedef struct DxMonitor {
     DxExecutionContext *owner;
     uint32_t recursion;
 } DxMonitor;
+
+static void monitor_owner_snapshot(DxExecutionContext *exec, int *owner, uint32_t *recursion) {
+    DxMonitor *monitor;
+    if (owner) *owner = 0;
+    if (recursion) *recursion = 0;
+    if (!exec || !exec->java_thread || !exec->java_thread->monitor) return;
+    monitor = (DxMonitor *)exec->java_thread->monitor;
+    if (owner) *owner = monitor->owner == exec;
+    if (recursion) *recursion = monitor->recursion;
+}
 
 static DxMonitor *monitor_of(DxVM *vm, DxObject *obj) {
     if (!obj) return NULL;

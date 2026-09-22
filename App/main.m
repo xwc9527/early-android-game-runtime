@@ -1,7 +1,16 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
+#import <Metal/Metal.h>
 #import <CommonCrypto/CommonDigest.h>
 #import <TargetConditionals.h>
+#include <mach-o/fat.h>
+#include <mach-o/loader.h>
+#include <libkern/OSByteOrder.h>
+#include <sys/sysctl.h>
+#include <sys/proc.h>
+#include <sys/utsname.h>
+#include <time.h>
+#include <unistd.h>
 #if __has_include("agr_build_identity.h")
 #include "agr_build_identity.h"
 #endif
@@ -1261,6 +1270,16 @@ static int gPhysicalSawVectorElement = 0;
 static int gPhysicalSawPaint = 0;
 static char gPhysicalLastStage[32];
 static void armPhysicalRuntime(uint32_t width, uint32_t height);
+static NSDictionary *captureEnvironment(int physical, int displayOverride, uint32_t hostW, uint32_t hostH);
+static void publishEnvironment(int physical, int displayOverride, uint32_t hostW, uint32_t hostH);
+static NSDictionary *displayLinkRecord(CADisplayLink *link, double *previous);
+static uint64_t hostMonoNs(void);
+static NSDictionary *gLatestEnvironment;
+static NSMutableArray *gDisplayLinkFrames;
+static double gLinkPrevious = 0;
+static uint64_t gObsStart = 0;
+static uint64_t gObsDeadline = 0;
+static NSString *gObsStop = @"";
 
 static int physicalContentLockBusy(void *user) {
     return agr_dex_game_diagnostic_content_lock_busy((const agr_dex_game *)user);
@@ -1425,6 +1444,7 @@ static NSDictionary *syntheticTraversalDispatchContract(uint32_t width, uint32_t
 static void finishTraversalDispatchReport(void) {
     if (gDispatchFinished) return;
     gDispatchFinished=YES;
+    publishEnvironment(0, getenv("AGR_HOST_DISPLAY_WIDTH") && getenv("AGR_HOST_DISPLAY_HEIGHT"), gDispatchWidth, gDispatchHeight);
     if (gDispatchLink) { [gDispatchLink invalidate]; gDispatchLink=nil; }
     agr_dex_runtime_snapshot after={0};
     if (gDispatchGame) agr_dex_game_runtime_snapshot(gDispatchGame,&after);
@@ -1437,11 +1457,22 @@ static void finishTraversalDispatchReport(void) {
         !after.traversal_scheduled && after.surface_generation==1 && gDispatchOwnerGraph;
     NSString *classification=chain ? @"viewroot_draw_entered" :
         (gDispatchGame && gDispatchStart==0 ? @"traversal_dispatch_failed" : @"launch_failed");
+    NSString *dispatchStop=gDispatchStart!=0 ? @"RUNTIME_ERROR" :
+        (after.canvas_draw_bitmap_count>0 && after.canvas_pixel_change_count>0 && after.canvas_post_count>0 ? @"CONTENT_PRODUCED" :
+         (gDispatchContentPolls>=40 ? @"OBSERVATION_DEADLINE" :
+          (gDispatchVsync>=4 ? @"FRAME_BUDGET" : @"OBSERVATION_DEADLINE")));
     NSDictionary *report=@{ @"schema":@"agr.framework-traversal-dispatch.discovery.v1",
       @"sample":@"frozen-bubble", @"consumer":@"uikit-cadisplaylink",
       @"harness_called_do_traversal":@NO, @"harness_called_render_api":@NO,
       @"host_vsync_count":@(gDispatchVsync),
       @"display_width":@(gDispatchWidth), @"display_height":@(gDispatchHeight),
+      @"environment": gLatestEnvironment ?: @{},
+      @"display_link_frames": gDisplayLinkFrames ?: @[],
+      @"observation_start_monotonic": @(gObsStart),
+      @"observation_deadline": @(gObsDeadline),
+      @"observation_end": @(hostMonoNs()),
+      @"frames_observed": @(gDispatchVsync),
+      @"stop_reason": dispatchStop,
       @"launch_result":@(gDispatchStart),
       @"launch_stage":launchStageName(gDispatchGame ? agr_dex_game_launch_stage(gDispatchGame) : AGR_ACTIVITY_LAUNCH_NONE),
       @"real_owner_graph":@(gDispatchOwnerGraph),
@@ -1477,6 +1508,11 @@ static void armTraversalDispatchApk(uint32_t width, uint32_t height) {
     gDispatchGame=gDispatchPackage ? agr_dex_game_create_from_apk(gDispatchPackage) : NULL;
     if (gDispatchGame) agr_dex_game_enable_diagnostics(gDispatchGame,1);
     if (gDispatchGame) agr_dex_game_set_host_display(gDispatchGame,width,height);
+    if (gDispatchGame) dx_vm_set_draw_witness(agr_dex_game_vm(gDispatchGame), 128);
+    gDisplayLinkFrames=[NSMutableArray array];
+    gObsStart=hostMonoNs();
+    gObsDeadline=gObsStart + 8000000000ull;
+    publishEnvironment(0, getenv("AGR_HOST_DISPLAY_WIDTH") && getenv("AGR_HOST_DISPLAY_HEIGHT"), width, height);
     gDispatchStart=gDispatchGame ? agr_dex_game_start_activity(gDispatchGame) : -1;
     gDispatchOwnerGraph=gDispatchGame && agr_dex_game_viewroot_contract(gDispatchGame)==1;
     agr_dex_runtime_snapshot before={0};
@@ -1812,6 +1848,14 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
 #endif
       traceConfig.apk_sha256_expected="57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569";
       gPhysicalTraceReady=agr_physical_trace_begin(&traceConfig)==0;
+      physicalNote(AGR_PHYS_PHASE_APP_DID_FINISH_LAUNCHING, 1, 0, 0, "NEW_PROCESS");
+      publishEnvironment(1, 0, (uint32_t)displayPixels.width, (uint32_t)displayPixels.height);
+      agr_physical_trace_set_lifecycle("LAUNCHING", 1, 0);
+      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrMemoryWarning:) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
+      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrThermal:) name:NSProcessInfoThermalStateDidChangeNotification object:nil];
+      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrPower:) name:NSProcessInfoPowerStateDidChangeNotification object:nil];
+      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrProtectedAvailable:) name:UIApplicationProtectedDataDidBecomeAvailableNotification object:nil];
+      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrProtectedUnavailable:) name:UIApplicationProtectedDataWillBecomeUnavailableNotification object:nil];
       gPhysicalLink=[CADisplayLink displayLinkWithTarget:self selector:@selector(hostPhysicalVsync:)];
       [gPhysicalLink addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
       gPhysicalLink.paused=YES;
@@ -1878,6 +1922,12 @@ static void pollContentFrameReport(void) {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1*NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{ pollContentFrameReport(); });
 }
+static uint64_t hostMonoNs(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * 1000000000ull + (uint64_t)ts.tv_nsec;
+}
+
 static NSString *sha256File(NSString *path) {
     NSData *data=path ? [NSData dataWithContentsOfFile:path] : nil;
     unsigned char digest[CC_SHA256_DIGEST_LENGTH];
@@ -1887,6 +1937,223 @@ static NSString *sha256File(NSString *path) {
     text=[NSMutableString stringWithCapacity:CC_SHA256_DIGEST_LENGTH*2];
     for (int i=0;i<CC_SHA256_DIGEST_LENGTH;i++) [text appendFormat:@"%02x", digest[i]];
     return text;
+}
+
+static NSString *sysctlText(const char *name) {
+    char buf[256];
+    size_t len = sizeof(buf);
+    memset(buf, 0, sizeof(buf));
+    if (!name || sysctlbyname(name, buf, &len, NULL, 0) != 0 || !buf[0]) return nil;
+    return [NSString stringWithUTF8String:buf];
+}
+
+static NSString *formatUUID(const uint8_t uuid[16]) {
+    return [NSString stringWithFormat:@"%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+            uuid[0], uuid[1], uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7],
+            uuid[8], uuid[9], uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15]];
+}
+
+static NSString *uuidAt(const uint8_t *bytes, size_t length) {
+    uint32_t magic;
+    if (!bytes || length < sizeof(struct mach_header_64)) return @"";
+    magic = *(const uint32_t *)bytes;
+    if (magic == FAT_MAGIC || magic == FAT_CIGAM) {
+        const struct fat_header *header = (const struct fat_header *)bytes;
+        int swap = magic == FAT_MAGIC;
+        uint32_t count = swap ? OSSwapBigToHostInt32(header->nfat_arch) : header->nfat_arch;
+        const struct fat_arch *arch;
+        uint32_t i;
+        if (sizeof(*header) + (size_t)count * sizeof(*arch) > length) return @"";
+        arch = (const struct fat_arch *)(bytes + sizeof(*header));
+        for (i = 0; i < count; i++) {
+            cpu_type_t cpu = swap ? (cpu_type_t)OSSwapBigToHostInt32(arch[i].cputype) : arch[i].cputype;
+            uint32_t off = swap ? OSSwapBigToHostInt32(arch[i].offset) : arch[i].offset;
+            uint32_t size = swap ? OSSwapBigToHostInt32(arch[i].size) : arch[i].size;
+            if (cpu == CPU_TYPE_ARM64 && (size_t)off + size <= length)
+                return uuidAt(bytes + off, size);
+        }
+        return @"";
+    }
+    if (magic == MH_MAGIC_64) {
+        const struct mach_header_64 *header = (const struct mach_header_64 *)bytes;
+        const uint8_t *cmd = bytes + sizeof(*header);
+        const uint8_t *end = bytes + length;
+        uint32_t i;
+        for (i = 0; i < header->ncmds; i++) {
+            const struct load_command *load;
+            if (cmd + sizeof(*load) > end) break;
+            load = (const struct load_command *)cmd;
+            if (load->cmdsize < sizeof(*load) || cmd + load->cmdsize > end) break;
+            if (load->cmd == LC_UUID && load->cmdsize >= sizeof(struct uuid_command))
+                return formatUUID(((const struct uuid_command *)cmd)->uuid);
+            cmd += load->cmdsize;
+        }
+    }
+    return @"";
+}
+
+static NSString *machoUUID(NSString *path) {
+    NSData *data = path.length ? [NSData dataWithContentsOfFile:path] : nil;
+    if (!data) return @"";
+    return uuidAt(data.bytes, data.length);
+}
+
+static NSDictionary *binaryRecord(NSString *role, NSString *path) {
+    NSString *uuid = machoUUID(path);
+    NSString *sha = sha256File(path);
+    return @{ @"role": role ?: @"",
+              @"uuid": uuid ?: @"",
+              @"sha256": sha ?: @"",
+              @"present": @((uuid.length > 0 && sha.length == 64)) };
+}
+
+static NSDictionary *displayLinkRecord(CADisplayLink *link, double *previous) {
+    double now = link ? link.timestamp : 0;
+    double delta = previous && *previous > 0 ? now - *previous : 0;
+    NSString *state = @"INACTIVE";
+    UIApplicationState app = UIApplication.sharedApplication.applicationState;
+    if (previous) *previous = now;
+    if (app == UIApplicationStateActive) state = @"ACTIVE";
+    else if (app == UIApplicationStateBackground) state = @"BACKGROUND";
+    return @{ @"timestamp": @(now),
+              @"targetTimestamp": @(link ? link.targetTimestamp : 0),
+              @"duration": @(link ? link.duration : 0),
+              @"maximumFPS": @(UIScreen.mainScreen.maximumFramesPerSecond),
+              @"callback_delta": @(delta),
+              @"thread": [NSString stringWithFormat:@"%llu", (unsigned long long)pthread_self()],
+              @"application_state": state };
+}
+
+static NSDictionary *captureEnvironment(int physical, int displayOverride, uint32_t hostW, uint32_t hostH) {
+    NSProcessInfo *process = NSProcessInfo.processInfo;
+    NSOperatingSystemVersion version = process.operatingSystemVersion;
+    UIScreen *screen = UIScreen.mainScreen;
+    NSBundle *bundle = NSBundle.mainBundle;
+    struct utsname sys;
+    NSString *osBuild = sysctlText("kern.osversion");
+    NSString *machine = sysctlText("hw.machine");
+    id<MTLDevice> gpu = MTLCreateSystemDefaultDevice();
+    NSString *thermal = @"UNKNOWN";
+    NSProcessInfoThermalState thermalState = process.thermalState;
+    int debugger = 0;
+    struct kinfo_proc info;
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()};
+    size_t infoSize = sizeof(info);
+    NSString *exe = bundle.executablePath;
+    NSString *egl = [bundle.bundlePath stringByAppendingPathComponent:@"Frameworks/libEGL.framework/libEGL"];
+    NSString *gles = [bundle.bundlePath stringByAppendingPathComponent:@"Frameworks/libGLESv2.framework/libGLESv2"];
+    NSArray *binaries = @[binaryRecord(@"executable", exe), binaryRecord(@"libEGL", egl), binaryRecord(@"libGLESv2", gles)];
+    BOOL provision = [[NSFileManager defaultManager] fileExistsAtPath:[bundle.bundlePath stringByAppendingPathComponent:@"embedded.mobileprovision"]];
+    memset(&sys, 0, sizeof(sys));
+    uname(&sys);
+    memset(&info, 0, sizeof(info));
+    if (sysctl(mib, 4, &info, &infoSize, NULL, 0) == 0)
+        debugger = (info.kp_proc.p_flag & P_TRACED) != 0;
+    if (thermalState == NSProcessInfoThermalStateNominal) thermal = @"NOMINAL";
+    else if (thermalState == NSProcessInfoThermalStateFair) thermal = @"FAIR";
+    else if (thermalState == NSProcessInfoThermalStateSerious) thermal = @"SERIOUS";
+    else if (thermalState == NSProcessInfoThermalStateCritical) thermal = @"CRITICAL";
+    UIDevice.currentDevice.batteryMonitoringEnabled = YES;
+    return @{
+        @"schema": @"agr.physical-environment.v1",
+        @"target_type": physical ? @"physical_device" : @"simulator",
+        @"kernel_role": physical ? @"device" : @"host_derived",
+        @"os": @{
+            @"system_name": UIDevice.currentDevice.systemName ?: @"",
+            @"system_version": UIDevice.currentDevice.systemVersion ?: @"",
+            @"major": @(version.majorVersion),
+            @"minor": @(version.minorVersion),
+            @"patch": @(version.patchVersion),
+            @"os_build": osBuild ?: [NSNull null],
+            @"os_build_available": @(osBuild != nil),
+            @"kernel_name": [NSString stringWithUTF8String:sys.sysname],
+            @"kernel_release": [NSString stringWithUTF8String:sys.release],
+            @"kernel_version": [NSString stringWithUTF8String:sys.version]
+        },
+        @"hardware": @{
+            @"hw_machine": machine ?: @"",
+            @"hw_machine_available": @(machine != nil),
+            @"marketing_model": [NSNull null],
+            @"architecture": physical ? @"arm64" : @"arm64-simulator",
+            @"logical_cpu_count": @(process.processorCount),
+            @"active_processor_count": @(process.activeProcessorCount),
+            @"page_size": @((long)sysconf(_SC_PAGESIZE)),
+            @"physical_memory": @(process.physicalMemory)
+        },
+        @"display": @{
+            @"logical_width": @(screen.bounds.size.width),
+            @"logical_height": @(screen.bounds.size.height),
+            @"native_width": @(screen.nativeBounds.size.width),
+            @"native_height": @(screen.nativeBounds.size.height),
+            @"scale": @(screen.scale),
+            @"native_scale": @(screen.nativeScale),
+            @"runtime_host_width": @(hostW),
+            @"runtime_host_height": @(hostH),
+            @"maximum_fps": @(screen.maximumFramesPerSecond),
+            @"display_override": @(displayOverride != 0),
+            @"source": displayOverride ? @"AGR_HOST_DISPLAY_OVERRIDE" : @"UIScreen.nativeBounds"
+        },
+        @"graphics": @{
+            @"metal_available": @(gpu != nil),
+            @"device_name": gpu.name ?: @"",
+            @"registry_id": @(gpu ? gpu.registryID : 0),
+            @"recommended_max_working_set": @(gpu ? gpu.recommendedMaxWorkingSetSize : 0)
+        },
+        @"process": @{
+            @"pid": @(getpid()),
+            @"process_name": process.processName ?: @"",
+            @"debugger_attached": @(debugger != 0),
+            @"environment_target": physical ? @"iphoneos" : @"simulator"
+        },
+        @"app": @{
+            @"bundle_id": bundle.bundleIdentifier ?: @"",
+            @"bundle_name": bundle.infoDictionary[@"CFBundleName"] ?: @"",
+            @"version": bundle.infoDictionary[@"CFBundleShortVersionString"] ?: @"",
+            @"build": bundle.infoDictionary[@"CFBundleVersion"] ?: @"",
+            @"executable_name": exe.lastPathComponent ?: @"",
+            @"signing_identity_available": @NO,
+            @"embedded_mobileprovision": @(provision)
+        },
+        @"power": @{
+            @"low_power_mode_enabled": @(process.isLowPowerModeEnabled),
+            @"thermal_state": thermal,
+            @"battery_monitoring_available": @(UIDevice.currentDevice.batteryState != UIDeviceBatteryStateUnknown),
+            @"battery_state": @(UIDevice.currentDevice.batteryState),
+            @"battery_level": @(UIDevice.currentDevice.batteryLevel)
+        },
+        @"lifecycle": @{ @"state": @"LAUNCHING" },
+        @"build": @{
+            @"branch": @AGR_BUILD_BRANCH,
+            @"commit": @AGR_BUILD_COMMIT,
+            @"tree": @AGR_BUILD_TREE
+        },
+        @"binaries": binaries
+    };
+}
+
+static void publishEnvironment(int physical, int displayOverride, uint32_t hostW, uint32_t hostH) {
+    NSDictionary *env = captureEnvironment(physical, displayOverride, hostW, hostH);
+    NSData *data = [NSJSONSerialization dataWithJSONObject:env options:0 error:nil];
+    NSString *text = data ? [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] : nil;
+    NSString *machine = env[@"hardware"][@"hw_machine"];
+    NSString *version = env[@"os"][@"system_version"];
+    int stored = -1;
+    BOOL partial = machine.length == 0 || version.length == 0;
+    gLatestEnvironment = env;
+    if (gPhysicalTraceReady && text.length)
+        stored = agr_physical_trace_set_environment_json(text.UTF8String);
+    for (NSDictionary *binary in env[@"binaries"]) {
+        if (!gPhysicalTraceReady) break;
+        agr_physical_trace_add_binary([binary[@"role"] UTF8String], [binary[@"uuid"] UTF8String], [binary[@"sha256"] UTF8String]);
+        physicalNote(AGR_PHYS_PHASE_BINARY_FINGERPRINT, 1, 0, 0,
+                     [[NSString stringWithFormat:@"role=%@ uuid=%@ sha256=%@",
+                       binary[@"role"], binary[@"uuid"], binary[@"sha256"]] UTF8String]);
+    }
+    if (!gPhysicalTraceReady) return;
+    physicalNote(AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_BEGIN, 0, 0, 0, NULL);
+    if (stored != 0) physicalNote(AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_FAIL, 1, 0, 0, "environment_json");
+    else if (partial) physicalNote(AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_PARTIAL, 1, 0, 0, "missing=hw_machine,system_version");
+    else physicalNote(AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_OK, 1, 0, 0, NULL);
 }
 
 static NSString *frozenBubbleApkPath(void) {
@@ -2034,12 +2301,33 @@ static void finishPhysicalReport(void) {
         @"display_height":@(gPhysicalHeight),
         @"content_produced":contentProduced ? @"YES" : @"NO",
         @"content_posted":contentPosted ? @"YES" : @"NO",
-        @"screen_presented":@"NOT_TESTED"
+        @"screen_presented":@"NOT_TESTED",
+        @"environment": gLatestEnvironment ?: @{},
+        @"display_link_frames": gDisplayLinkFrames ?: @[],
+        @"observation_start_monotonic": @(gObsStart),
+        @"observation_deadline": @(gObsDeadline),
+        @"observation_end": @(hostMonoNs()),
+        @"frames_observed": @(gPhysicalVsync),
+        @"stop_reason": gObsStop ?: @""
     };
     {
         const char *reason = gPhysicalError ? "RUNTIME_ERROR" :
             (gPhysicalStart != 0 ? "ACTIVITY_START_FAILED" :
              (contentPosted ? "CONTENT_POSTED" : "OBSERVATION_TIMEOUT"));
+        const char *stop = gPhysicalError || gPhysicalStart != 0 ? "RUNTIME_ERROR" :
+            (contentProduced ? "CONTENT_PRODUCED" :
+             (contentPosted ? "CONTENT_POSTED" :
+              (gPhysicalPolls >= 80 ? "OBSERVATION_DEADLINE" :
+               (gPhysicalVsync >= 4 ? "FRAME_BUDGET" : "OBSERVATION_DEADLINE"))));
+        agr_physical_trace_status preStatus;
+        memset(&preStatus, 0, sizeof(preStatus));
+        if (gPhysicalTraceReady) agr_physical_trace_copy_status(&preStatus);
+        if (preStatus.watchdog_stalled) stop = "WATCHDOG_STALL";
+        gObsStop=[NSString stringWithUTF8String:stop];
+        if (gPhysicalTraceReady) {
+            agr_physical_trace_set_observation(gObsStart, gObsDeadline, hostMonoNs(), gPhysicalVsync, stop);
+            physicalNote(AGR_PHYS_PHASE_OBSERVATION_WINDOW, 1, 0, 0, stop);
+        }
         agr_physical_trace_status traceStatus;
         NSMutableDictionary *full = [report mutableCopy];
         const char *authoritative = reason;
@@ -2047,6 +2335,14 @@ static void finishPhysicalReport(void) {
         if (gPhysicalTraceReady) agr_physical_trace_finish(reason, &traceStatus);
         if (traceStatus.termination_reason[0]) authoritative = traceStatus.termination_reason;
         full[@"run_id"] = [NSString stringWithUTF8String:traceStatus.run_id];
+        full[@"process_launch_id"] = [NSString stringWithUTF8String:traceStatus.process_launch_id];
+        full[@"environment"] = gLatestEnvironment ?: @{};
+        full[@"binaries"] = gLatestEnvironment[@"binaries"] ?: @[];
+        full[@"observation_start_monotonic"] = @(gObsStart);
+        full[@"observation_deadline"] = @(gObsDeadline);
+        full[@"observation_end"] = @(hostMonoNs());
+        full[@"frames_observed"] = @(gPhysicalVsync);
+        full[@"stop_reason"] = gObsStop ?: @"";
         full[@"final_state"] = [NSString stringWithUTF8String:authoritative];
         full[@"termination_reason"] = [NSString stringWithUTF8String:authoritative];
         full[@"last_trace_seq"] = @(traceStatus.last_seq);
@@ -2111,6 +2407,7 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
     physicalNote(AGR_PHYS_PHASE_APK_LOCATE_OK, 1, 0, 0, NULL);
     physicalNote(AGR_PHYS_PHASE_APK_SHA_BEGIN, 0, 0, 0, NULL);
     gPhysicalSha=sha256File(gPhysicalApkPath);
+    agr_physical_trace_set_apk_sha_actual(gPhysicalSha.UTF8String);
     if (![gPhysicalSha isEqualToString:expected]) {
         physicalNote(AGR_PHYS_PHASE_APK_SHA_FAIL, 1, 0, 0, "apk_sha256_mismatch");
         gPhysicalError=@"apk_sha256_mismatch";
@@ -2150,6 +2447,7 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
     physicalNote(display==0 ? AGR_PHYS_PHASE_HOST_DISPLAY_SET_OK : AGR_PHYS_PHASE_HOST_DISPLAY_SET_FAIL,
                 1, 0, 0, display==0 ? NULL : "host_display_failed");
     physicalNote(AGR_PHYS_PHASE_ACTIVITY_START_BEGIN, 0, 0, 0, NULL);
+    if (gPhysicalGame) dx_vm_set_draw_witness(agr_dex_game_vm(gPhysicalGame), 128);
     gPhysicalStart=agr_dex_game_start_activity(gPhysicalGame);
     if (gPhysicalStart==0) {
         DxVM *vm=agr_dex_game_vm(gPhysicalGame);
@@ -2158,7 +2456,12 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
         physicalNote(AGR_PHYS_PHASE_EXEC_PUBLISHED, 0, exec!=NULL, exec ? exec->id : 0, "root");
         if (gPhysicalLink) {
             gPhysicalLink.paused=NO;
+            gObsStart=hostMonoNs();
+            gObsDeadline=gObsStart + 8000000000ull;
+            gDisplayLinkFrames=[NSMutableArray array];
+            agr_physical_trace_set_observation(gObsStart, gObsDeadline, 0, 0, "");
             physicalNote(AGR_PHYS_PHASE_CADISPLAYLINK_STARTED, 1, 0, 0, NULL);
+            physicalNote(AGR_PHYS_PHASE_OBSERVATION_WINDOW, 1, 0, 0, "start");
         } else {
             finishPhysicalReport();
         }
@@ -2169,9 +2472,18 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
 }
 
 - (void)hostPhysicalVsync:(CADisplayLink *)link {
-    (void)link;
     if (!gPhysicalGame || gPhysicalFinished || gPhysicalContentHold) return;
     gPhysicalVsync++;
+    {
+        NSDictionary *frame=displayLinkRecord(link, &gLinkPrevious);
+        if (!gDisplayLinkFrames) gDisplayLinkFrames=[NSMutableArray array];
+        [gDisplayLinkFrames addObject:frame];
+        physicalNote(AGR_PHYS_PHASE_CADISPLAYLINK_FRAME, 0, 0, 0,
+                     [[NSString stringWithFormat:@"timestamp=%@ targetTimestamp=%@ duration=%@ maximumFPS=%@ delta=%@ thread=%@ app=%@",
+                       frame[@"timestamp"], frame[@"targetTimestamp"], frame[@"duration"],
+                       frame[@"maximumFPS"], frame[@"callback_delta"], frame[@"thread"],
+                       frame[@"application_state"]] UTF8String]);
+    }
     physicalNote(AGR_PHYS_PHASE_PHYSICAL_FRAME_BEGIN, 0, 0, 0, NULL);
     int result=agr_dex_game_choreographer_frame(gPhysicalGame);
     agr_dex_runtime_snapshot snapshot={0};
@@ -2189,9 +2501,10 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
 }
 
 - (void)hostTraversalVsync:(CADisplayLink *)link {
-    (void)link;
     if (!gDispatchGame || gDispatchFinished || gDispatchContentHold) return;
     gDispatchVsync++;
+    if (!gDisplayLinkFrames) gDisplayLinkFrames=[NSMutableArray array];
+    [gDisplayLinkFrames addObject:displayLinkRecord(link, &gLinkPrevious)];
     int result=agr_dex_game_choreographer_frame(gDispatchGame);
     agr_dex_runtime_snapshot snapshot={0};
     agr_dex_game_runtime_snapshot(gDispatchGame,&snapshot);
@@ -2206,6 +2519,53 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
         gDispatchContentHold=YES;
         pollContentFrameReport();
     }
+}
+- (void)applicationDidBecomeActive:(UIApplication *)application {
+    (void)application;
+    agr_physical_trace_set_lifecycle("ACTIVE", 1, 1);
+    physicalNote(AGR_PHYS_PHASE_APP_DID_BECOME_ACTIVE, 1, 0, 0, "ACTIVE");
+}
+- (void)applicationWillResignActive:(UIApplication *)application {
+    (void)application;
+    agr_physical_trace_set_lifecycle("INACTIVE", 1, 0);
+    physicalNote(AGR_PHYS_PHASE_APP_WILL_RESIGN_ACTIVE, 1, 0, 0, "INACTIVE");
+}
+- (void)applicationDidEnterBackground:(UIApplication *)application {
+    (void)application;
+    agr_physical_trace_set_lifecycle("BACKGROUND", 0, 0);
+    physicalNote(AGR_PHYS_PHASE_APP_DID_ENTER_BACKGROUND, 1, 0, 0, "BACKGROUND");
+}
+- (void)applicationWillEnterForeground:(UIApplication *)application {
+    (void)application;
+    agr_physical_trace_set_lifecycle("FOREGROUND", 1, 0);
+    physicalNote(AGR_PHYS_PHASE_APP_WILL_ENTER_FOREGROUND, 1, 0, 0, "FOREGROUND");
+}
+- (void)applicationWillTerminate:(UIApplication *)application {
+    (void)application;
+    physicalNote(AGR_PHYS_PHASE_APP_WILL_TERMINATE, 1, 0, 0, "TERMINATE");
+}
+- (void)agrMemoryWarning:(NSNotification *)note {
+    (void)note;
+    physicalNote(AGR_PHYS_PHASE_MEMORY_WARNING, 1, 0, 0, "memory_warning");
+}
+- (void)agrThermal:(NSNotification *)note {
+    (void)note;
+    physicalNote(AGR_PHYS_PHASE_THERMAL_CHANGED, 1, 0, 0, "thermal_state_change");
+    physicalNote(AGR_PHYS_PHASE_ENVIRONMENT_CHANGED, 1, 0, 0, "thermal");
+}
+- (void)agrPower:(NSNotification *)note {
+    (void)note;
+    physicalNote(AGR_PHYS_PHASE_LOW_POWER_CHANGED, 1, 0, 0,
+                 NSProcessInfo.processInfo.isLowPowerModeEnabled ? "low_power=1" : "low_power=0");
+    physicalNote(AGR_PHYS_PHASE_ENVIRONMENT_CHANGED, 1, 0, 0, "low_power");
+}
+- (void)agrProtectedAvailable:(NSNotification *)note {
+    (void)note;
+    physicalNote(AGR_PHYS_PHASE_PROTECTED_DATA_CHANGED, 1, 0, 0, "protected_data=available");
+}
+- (void)agrProtectedUnavailable:(NSNotification *)note {
+    (void)note;
+    physicalNote(AGR_PHYS_PHASE_PROTECTED_DATA_CHANGED, 1, 0, 0, "protected_data=unavailable");
 }
 @end
 int main(int argc, char **argv) {

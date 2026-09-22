@@ -166,6 +166,35 @@ def check_discovery(result):
     require(contract["closed_second"]["draw_count"] == 1, contract["closed_second"])
     require(contract["relayout_failure_result"] != 0, contract)
     require(contract["retry_result"] == 0, contract)
+    environment = result.get("environment") or {}
+    require(environment.get("target_type") == "simulator", environment.get("target_type"))
+    require(environment.get("kernel_role") == "host_derived", environment.get("kernel_role"))
+    require(bool(environment.get("os", {}).get("system_version")), environment.get("os"))
+    hardware = environment.get("hardware") or {}
+    require(bool(hardware.get("hw_machine")), hardware)
+    display = environment.get("display") or {}
+    require(display.get("runtime_host_width") == 1080, display)
+    require(display.get("runtime_host_height") == 2340, display)
+    require(display.get("native_width") not in (None, 0), display)
+    require(display.get("source") == "AGR_HOST_DISPLAY_OVERRIDE", display.get("source"))
+    roles = {item.get("role"): item for item in environment.get("binaries") or []}
+    for role in ("executable", "libEGL", "libGLESv2"):
+        item = roles.get(role) or {}
+        require(len(str(item.get("uuid") or "")) >= 32, item)
+        require(len(str(item.get("sha256") or "")) == 64, item)
+    frames = result.get("display_link_frames") or []
+    require(len(frames) >= 2, frames)
+    for frame in frames[:2]:
+        for key in ("timestamp", "targetTimestamp", "duration", "maximumFPS", "callback_delta", "thread", "application_state"):
+            require(key in frame, frame)
+    require(result.get("stop_reason") in ("CONTENT_PRODUCED", "OBSERVATION_DEADLINE", "FRAME_BUDGET"), result.get("stop_reason"))
+    require(result.get("observation_start_monotonic", 0) > 0, result.get("observation_start_monotonic"))
+    require(result.get("observation_deadline", 0) > result.get("observation_start_monotonic", 0), result.get("observation_deadline"))
+    ci_environment = result.get("ci_environment") or {}
+    require(ci_environment.get("simulator_runtime_requested"), ci_environment)
+    require(ci_environment.get("simulator_runtime_requested") == ci_environment.get("simulator_runtime_actual"), ci_environment)
+    require(ci_environment.get("simulator_device_type_requested") == "com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro", ci_environment)
+    require(ci_environment.get("simulator_device_type_actual") == ci_environment.get("simulator_device_type_requested"), ci_environment)
 
 
 def main():

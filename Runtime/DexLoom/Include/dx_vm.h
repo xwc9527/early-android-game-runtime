@@ -690,6 +690,9 @@ void dx_vm_set_telemetry_enabled(DxVM *vm, bool enabled);
 /* budget 0 disarms. A positive budget arms a fixed number of ENTER/EXIT
    publishes. This does not change method results. */
 void dx_vm_set_draw_witness(DxVM *vm, uint32_t budget);
+/* Read-only guest control-flow snapshot. Does not take a monitor lock,
+   clear a pending exception, or change the method result. */
+void dx_vm_forensic_exec_snapshot(DxVM *vm, const char *when);
 void dx_vm_witness_unresolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
                               uint32_t method_idx, const DxValue *args, uint8_t argc);
 void dx_vm_witness_resolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,

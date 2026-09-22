@@ -364,6 +364,7 @@ jobs:
           path: |
             build/iphoneos/AGRDevice-unsigned.ipa
             build/iphoneos/build-identity.txt
+            build/iphoneos/build-environment.json
           if-no-files-found: error
 
   closure-evidence:

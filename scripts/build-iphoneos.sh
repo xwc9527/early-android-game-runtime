@@ -75,6 +75,30 @@ cat > "$BUILD/obj/agr_build_identity.h" <<EOF
 #define AGR_BUILD_BRANCH "$BRANCH"
 EOF
 printf '%s\n%s\n%s\n' "$BRANCH" "$COMMIT" "$TREE" > "$BUILD/build-identity.txt"
+XCODE_VERSION="$(xcodebuild -version 2>/dev/null | tr '\n' ' ' || true)"
+SDK_VERSION="$(xcrun --sdk iphoneos --show-sdk-version 2>/dev/null || true)"
+RUSTC_VERSION="$(rustc -V 2>/dev/null || true)"
+python3 - "$BUILD/build-environment.json" "$BRANCH" "$COMMIT" "$TREE" "$XCODE_VERSION" "$SDK_VERSION" "$RUSTC_VERSION" <<'PY'
+import json, os, sys
+path, branch, commit, tree, xcode, sdk, rustc = sys.argv[1:]
+json.dump({
+    "schema": "agr.iphoneos-build-environment.v1",
+    "branch": branch,
+    "commit": commit,
+    "tree": tree,
+    "deployment_target": "15.0",
+    "sdk_name": "iphoneos",
+    "sdk_version": sdk,
+    "xcode": xcode,
+    "angle_version": "v2.1.28252",
+    "angle_sha256": "59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be",
+    "interpreter": "aarch64-apple-ios",
+    "rustc": rustc,
+    "runner_os": os.uname().sysname,
+    "runner_arch": os.uname().machine,
+}, open(path, "w"), indent=2)
+print()
+PY
 DEX="$ROOT/Runtime/DexLoom"; DEX_INCLUDE="$DEX/Include"
 DEX_SOURCES=("$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" "$DEX/VM/dx_exec.c" "$DEX/VM/dx_verifier.c" "$DEX/APK/dx_apk.c" "$DEX/APK/dx_manifest.c" "$DEX/APK/dx_resources.c" "$DEX/AndroidMini/framework_viewroot.c" "$DEX/poc_host.c" "$DEX/game_dex_runner.c")
 INDEX=0; DEX_OBJECTS=()
@@ -84,6 +108,7 @@ clang "${COMMON[@]}" -std=gnu11 -I"$DEX" -c "$ROOT/App/agr_physical_trace.c" -o 
 clang++ "${COMMON[@]}" -Wl,-dead_strip -Wl,-rpath,@executable_path/Frameworks -F"$ANGLE_FRAMEWORKS" "$BUILD/obj/main.o" "$BUILD/obj/agr_physical_trace.o" "$BUILD/obj/agr_runtime.o" "$BUILD/obj/agr_bionic_allocator.o" "$BUILD/obj/agr_guest_vma.o" "$BUILD/obj/agr_host_services_darwin.o" "$BUILD/obj/agr_bionic_thread_attr.o" "$BUILD/obj/agr_futex_host.o" "$BUILD/obj/agr_bionic_sync.o" "$BUILD/obj/agr_bionic_tls.o" "$BUILD/obj/agr_bionic_errno_host.o" "$BUILD/obj/agr_bionic_thread_lifecycle.o" "$BUILD/obj/agr_bionic_mmap.o" "$BUILD/obj/agr_aosp_linker.o" "$BUILD/obj/agr_aosp_dynamic.o" "$BUILD/obj/agr_ehabi.o" "$BUILD/obj/agr_contracts.o" "$BUILD/obj/agr_guest_runtime.o" "$BUILD/obj/agr_thread_context.o" "$BUILD/obj/agr_service_dispatch.o" "$BUILD/obj/agr_jni_methods.o" "${DEX_OBJECTS[@]}" "${AFW_OBJECTS[@]}" "${SKIA_OBJECTS[@]}" "${PNG_OBJECTS[@]}" "$ROOT/Runtime/ArmInterpreter/target/aarch64-apple-ios/release/libtouchhle_arm_interpreter.a" -lz -framework UIKit -framework Foundation -framework CoreGraphics -framework Security -framework Metal -framework QuartzCore -framework libEGL -framework libGLESv2 -o "$APP/AGRSimulator"
 cp "$ROOT/App/Info.plist" "$APP/Info.plist"; cp "$ROOT/App/Resources/"* "$APP/"
 cp "$BUILD/build-identity.txt" "$APP/agr-build-identity.txt"
+cp "$BUILD/build-environment.json" "$APP/agr-build-environment.json"
 nm -gU "$APP/AGRSimulator" > "$BUILD/nm-symbols.txt"
 missing=0
 for symbol in agr_dex_game_create_from_apk agr_dex_game_start_activity agr_dex_game_choreographer_frame agr_dex_game_runtime_snapshot dx_vm_execute_method dx_vm_current_exec agr_bitmap_decode agr_bitmap_draw agr_physical_trace_begin agr_forensic_publish; do

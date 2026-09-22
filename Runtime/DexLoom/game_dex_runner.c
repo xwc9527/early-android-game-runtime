@@ -828,6 +828,7 @@ struct agr_dex_game {
     void *content_surface_alloc_user;
     char content_surface_exception[160];
     int draw_witness_locked_once;
+    int exec_snapshot_post_once;
     struct {
         uint32_t id;
         uint8_t *xml;
@@ -2936,6 +2937,7 @@ static DxResult surface_holder_lock_canvas(DxVM *vm, DxFrame *frame, DxValue *ar
     if (game && !game->draw_witness_locked_once) {
         arm_method_witness(vm, 64);
         game->draw_witness_locked_once = 1;
+        dx_vm_forensic_exec_snapshot(vm, "lock_canvas");
     }
     framework_event(game, "surface_holder.canvas_locked");
     return DX_OK;
@@ -2950,6 +2952,10 @@ static DxResult surface_holder_unlock_canvas(DxVM *vm, DxFrame *frame, DxValue *
     canvas = args[1].tag == DX_VAL_OBJ ? args[1].obj : NULL;
     slot = content_slot_for_holder(game, args[0].obj);
     forensic_surface(AGR_PHYS_PHASE_CANVAS_POST_BEGIN, 1, dx_vm_current_exec(vm), slot, 0, 0, 0);
+    if (game && !game->exec_snapshot_post_once) {
+        game->exec_snapshot_post_once = 1;
+        dx_vm_forensic_exec_snapshot(vm, "post_begin");
+    }
     if (!slot) {
         dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
             vm, "Ljava/lang/IllegalArgumentException;", "canvas object must be the locked instance");
@@ -3000,6 +3006,7 @@ static DxResult surface_holder_unlock_canvas(DxVM *vm, DxFrame *frame, DxValue *
         content_surface_unlock(slot);
         forensic_publish(&posted);
     }
+    if (slot->post_count == 1) dx_vm_forensic_exec_snapshot(vm, "post_end");
     arm_method_witness(vm, 0);
     framework_event(game, "surface_holder.canvas_posted");
     return DX_OK;

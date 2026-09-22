@@ -107,7 +107,57 @@ def counter_value(final, events, name):
         return 0
 
 
-def classify(events, final, crash):
+def identity_ok(run, events, final=None):
+    if not isinstance(run, dict):
+        return False
+    run_id = run.get("run_id")
+    commit = run.get("commit")
+    tree = run.get("tree")
+    launch = run.get("process_launch_id")
+    if not run_id or not commit or not tree:
+        return False
+    for event in events:
+        if event.get("run_id") != run_id or event.get("commit") != commit or event.get("tree") != tree:
+            return False
+        event_launch = event.get("process_launch_id")
+        if launch and event_launch and event_launch != launch:
+            return False
+    if isinstance(final, dict) and final.get("run_id") and final.get("run_id") != run_id:
+        return False
+    if isinstance(final, dict) and launch and final.get("process_launch_id") and final.get("process_launch_id") != launch:
+        return False
+    return True
+
+
+BOUNDARY_CHAIN = [
+    "APK_OPEN_OK",
+    "ACTIVITY_START_OK",
+    "SURFACE_CREATED",
+    "SURFACE_CALLBACK_OK",
+    "SURFACE_CHANGED",
+    "THREAD_RUN_ENTER",
+    "CANVAS_LOCK_ACQUIRED",
+    "DRAW_BITMAP_END",
+    "PIXEL_MUTATION",
+    "CANVAS_POST_END",
+]
+
+
+def boundary_report(events):
+    seen = {name for name in BOUNDARY_CHAIN if phase_seen(events, name)}
+    last = ""
+    missing = ""
+    for name in BOUNDARY_CHAIN:
+        if name in seen and not missing:
+            last = name
+        elif name not in seen and not missing:
+            missing = name
+    return last, missing
+
+
+def classify(events, final, crash, run=None):
+    if isinstance(run, dict) and events and not identity_ok(run, events, final):
+        return "STALE_OR_MIXED_EVIDENCE"
     if crash and crash.get("signal"):
         return "NATIVE_CRASH"
     if phase_seen(events, "APK_LOCATE_FAIL") or phase_seen(events, "APK_SHA_FAIL") or phase_seen(events, "APK_OPEN_FAIL"):
@@ -152,6 +202,20 @@ def classify(events, final, crash):
         return "STALL_BEFORE_SURFACE"
     if phase_seen(events, "ACTIVITY_START_OK") and not phase_seen(events, "PHYSICAL_FRAME_END") and stalled:
         return "STALL_BEFORE_FIRST_FRAME"
+    if phase_seen(events, "EVIDENCE_CHANNEL_FAILED") or reason == "EVIDENCE_CHANNEL_FAILED":
+        return "EVIDENCE_CHANNEL_FAILED"
+    if phase_seen(events, "SURFACE_CALLBACK_THROW"):
+        return "CALLBACK_THROW"
+    if phase_seen(events, "SURFACE_CALLBACK_EXEC_ERROR"):
+        return "CALLBACK_EXEC_ERROR"
+    if phase_seen(events, "BITMAP_SCALE_FAIL"):
+        return "BITMAP_SCALE_FAIL"
+    if isinstance(run, dict) and run.get("state") == "ABRUPT_TERMINATION":
+        return "ABRUPT_TERMINATION"
+    if isinstance(run, dict) and run.get("state") == "NATIVE_SIGNAL_CRASH":
+        return "NATIVE_SIGNAL_CRASH"
+    if phase_seen(events, "THREAD_RUN_ENTER") and phase_seen(events, "CANVAS_LOCK_ACQUIRED") and not phase_seen(events, "DRAW_BITMAP_END") and not phase_seen(events, "GUEST_METHOD_ENTER"):
+        return "DRAW_NOT_ENTERED"
     if final is None:
         return "EVIDENCE_INCOMPLETE"
     return "EVIDENCE_INCOMPLETE"
@@ -182,20 +246,6 @@ def termination_surfaces(run, events, final):
     return authoritative, run_state, finalize_reason, consistent
 
 
-def identity_ok(run, events):
-    if not isinstance(run, dict):
-        return False
-    run_id = run.get("run_id")
-    commit = run.get("commit")
-    tree = run.get("tree")
-    if not run_id or not commit or not tree:
-        return False
-    for event in events:
-        if event.get("run_id") != run_id or event.get("commit") != commit or event.get("tree") != tree:
-            return False
-    return True
-
-
 def summarize(directory):
     root = pathlib.Path(directory)
     run = load_json(root / RUN_NAME)
@@ -207,6 +257,11 @@ def summarize(directory):
     monotonic = all(seqs[i] < seqs[i + 1] for i in range(len(seqs) - 1))
     termination_reason, run_state, finalize_reason, termination_consistent = termination_surfaces(
         run, events, final)
+    last_boundary, missing_boundary = boundary_report(events)
+    environment = run.get("environment") if isinstance(run, dict) else None
+    observation_stop = ""
+    if isinstance(run, dict) and isinstance(run.get("stop_reason"), str):
+        observation_stop = run.get("stop_reason")
     game = last_phase(events, "THREAD_RUN_ENTER") or last_phase(events, "THREAD_START") or last_phase(events, "CANVAS_LOCK_ACQUIRED")
     stage = ""
     for event in events:
@@ -215,7 +270,8 @@ def summarize(directory):
         elif event.get("phase") == "ACTIVITY_STAGE" and event.get("detail"):
             stage = event.get("detail")
     summary = {
-        "identity_valid": identity_ok(run, events),
+        "identity_valid": identity_ok(run, events, final),
+        "process_launch_id": None if not isinstance(run, dict) else run.get("process_launch_id"),
         "run_id": None if not isinstance(run, dict) else run.get("run_id"),
         "commit": None if not isinstance(run, dict) else run.get("commit"),
         "tree": None if not isinstance(run, dict) else run.get("tree"),
@@ -243,7 +299,11 @@ def summarize(directory):
         "stall": phase_seen(events, "WATCHDOG_STALL") or phase_seen(events, "WATCHDOG_NO_PROGRESS_8S"),
         "final_json_present": final is not None,
         "final_json_missing": final is None,
-        "classification": classify(events, final, crash),
+        "classification": classify(events, final, crash, run),
+        "last_confirmed_boundary": last_boundary,
+        "first_missing_expected_boundary": missing_boundary,
+        "stop_reason": observation_stop,
+        "environment_target_type": None if not isinstance(environment, dict) else environment.get("target_type"),
         "event_count": len(events),
         "termination_reason": termination_reason,
         "run_state": run_state,
