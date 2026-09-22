@@ -7289,24 +7289,53 @@ void dx_vm_note_post_vector_unresolved(DxVM *vm, DxFrame *frame, uint32_t pc, ui
 void dx_vm_note_unresolved_seen(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
                                 uint32_t method_idx, const char *cls, const char *name,
                                 const char *shorty, const DxValue *args, uint8_t argc) {
+    DxExecutionContext *exec;
+    uint32_t count;
     DxInvokeWitness *slot;
     if (!vm || !vm->telemetry.telemetry_enabled) return;
-    if (vm->unresolved_seen_count >= 16) return;
-    slot = &vm->unresolved_seen[vm->unresolved_seen_count++];
+    exec = dx_vm_current_exec(vm);
+    if (!exec) return;
+    count = __atomic_load_n(&exec->unresolved_count, __ATOMIC_RELAXED);
+    if (count >= DX_UNRESOLVED_TRACE_CAP) {
+        __atomic_fetch_add(&exec->unresolved_dropped, 1, __ATOMIC_RELEASE);
+        return;
+    }
+    slot = &exec->unresolved_trace[count];
     witness_fill(slot, vm, frame, pc, opcode, method_idx, args, argc);
     slot->resolved = 0;
     snprintf(slot->target_class, sizeof(slot->target_class), "%s", cls ? cls : "?");
     snprintf(slot->target_name, sizeof(slot->target_name), "%s", name ? name : "?");
     snprintf(slot->shorty, sizeof(slot->shorty), "%s", shorty ? shorty : "?");
+    __atomic_store_n(&exec->unresolved_count, count + 1, __ATOMIC_RELEASE);
 }
 
-uint32_t dx_vm_unresolved_seen_count(const DxVM *vm) {
-    return vm ? vm->unresolved_seen_count : 0;
+uint32_t dx_vm_unresolved_context_count(const DxVM *vm) {
+    return vm ? vm->exec_count : 0;
 }
 
-int dx_vm_copy_unresolved_seen(const DxVM *vm, uint32_t index, DxInvokeWitness *out) {
-    if (!vm || !out || index >= vm->unresolved_seen_count) return -1;
-    *out = vm->unresolved_seen[index];
+int dx_vm_copy_unresolved_context(const DxVM *vm, uint32_t index, DxUnresolvedContextInfo *out) {
+    DxExecutionContext *exec;
+    if (!vm || !out || index >= vm->exec_count) return -1;
+    exec = vm->execs[index];
+    if (!exec) return -1;
+    out->exec_id = exec->id;
+    out->count = __atomic_load_n(&exec->unresolved_count, __ATOMIC_ACQUIRE);
+    out->dropped = __atomic_load_n(&exec->unresolved_dropped, __ATOMIC_ACQUIRE);
+    if (out->count > DX_UNRESOLVED_TRACE_CAP) out->count = DX_UNRESOLVED_TRACE_CAP;
+    return 0;
+}
+
+int dx_vm_copy_unresolved_event(const DxVM *vm, uint32_t context_index, uint32_t event_index,
+                                DxInvokeWitness *out) {
+    DxExecutionContext *exec;
+    uint32_t count;
+    if (!vm || !out || context_index >= vm->exec_count) return -1;
+    exec = vm->execs[context_index];
+    if (!exec) return -1;
+    count = __atomic_load_n(&exec->unresolved_count, __ATOMIC_ACQUIRE);
+    if (count > DX_UNRESOLVED_TRACE_CAP) count = DX_UNRESOLVED_TRACE_CAP;
+    if (event_index >= count) return -1;
+    *out = exec->unresolved_trace[event_index];
     return 0;
 }
 

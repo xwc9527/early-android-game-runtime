@@ -14,6 +14,7 @@ on:
       - 'Tests/DexLoom/character-fordigit-host.c'
       - 'Tests/DexLoom/vector-core-host.c'
       - 'Tests/DexLoom/request-window-feature-host.c'
+      - 'Tests/DexLoom/unresolved-context-host.c'
       - 'Tests/DexLoom/canvas-state-clip-host.c'
       - 'Tests/DexLoom/make_thread_start_fixture.py'
       - 'Tests/DexLoom/surface-canvas-host.c'
@@ -110,6 +111,14 @@ jobs:
             /tmp/agr-dispatch-obj/dx_exec.o \
             /tmp/vector-core-host.o -lz -lm -o /tmp/vector-core-host
           /tmp/vector-core-host
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/unresolved-context-host.c \
+            -o /tmp/unresolved-context-host.o
+          cc -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o \
+            /tmp/unresolved-context-host.o -lz -lm -o /tmp/unresolved-context-host
+          /tmp/unresolved-context-host
           cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/request-window-feature-host.c \
             -o /tmp/request-window-feature-host.o
           g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \

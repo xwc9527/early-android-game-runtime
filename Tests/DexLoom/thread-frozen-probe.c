@@ -105,11 +105,18 @@ static void print_vector_trace(const agr_dex_game *game) {
         print_witness("VECTOR_UNRESOLVED", &follow);
     else
         printf("VECTOR_UNRESOLVED none\n");
-    n = dx_vm_unresolved_seen_count(vm);
-    printf("unresolved_seen_count=%u\n", n);
+    n = dx_vm_unresolved_context_count(vm);
+    printf("unresolved_context_count=%u\n", n);
     for (i = 0; i < n; i++) {
-        if (dx_vm_copy_unresolved_seen(vm, i, &follow) != 0) continue;
-        print_witness("UNRESOLVED_SEEN", &follow);
+        DxUnresolvedContextInfo info;
+        uint32_t event_index;
+        if (dx_vm_copy_unresolved_context(vm, i, &info) != 0) continue;
+        printf("UNRESOLVED_CONTEXT exec=%u count=%u dropped=%u\n",
+               info.exec_id, info.count, info.dropped);
+        for (event_index = 0; event_index < info.count; event_index++) {
+            if (dx_vm_copy_unresolved_event(vm, i, event_index, &follow) != 0) continue;
+            print_witness("UNRESOLVED", &follow);
+        }
     }
     n = dx_vm_vector_trace_count(vm);
     for (i = 0; i < n; i++) {

@@ -258,6 +258,7 @@ typedef struct {
 
 #define DX_FRAME_POOL_SIZE 64
 #define DX_MAX_EXEC_CONTEXTS 8
+#define DX_UNRESOLVED_TRACE_CAP 16
 
 typedef enum {
     DX_JAVA_THREAD_NEW = 0,
@@ -297,6 +298,12 @@ typedef struct DxExecutionContext {
     DxDiagnosticMethodEvent diagnostic_method_events[DX_DIAGNOSTIC_METHOD_EVENTS];
     uint64_t diagnostic_method_sequence;
     uint32_t diagnostic_method_event_count;
+
+    /* Unresolved-invoke diagnostics for this context only. The owning thread
+       publishes count with a release store after the slot is complete. */
+    DxInvokeWitness unresolved_trace[DX_UNRESOLVED_TRACE_CAP];
+    uint32_t unresolved_count;
+    uint32_t unresolved_dropped;
 
     DxFrame *frame_pool[DX_FRAME_POOL_SIZE];
     uint32_t frame_pool_count;
@@ -514,9 +521,6 @@ struct DxVM {
     int vector_seen_element_at;
     DxInvokeWitness vector_next_unresolved;
     int vector_next_unresolved_set;
-    /* First unresolved invokes in program order. Telemetry only. */
-    DxInvokeWitness unresolved_seen[16];
-    uint32_t unresolved_seen_count;
 };
 
 // VM lifecycle
@@ -711,7 +715,14 @@ void dx_vm_note_post_vector_unresolved(DxVM *vm, DxFrame *frame, uint32_t pc, ui
 void dx_vm_note_unresolved_seen(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
                                 uint32_t method_idx, const char *cls, const char *name,
                                 const char *shorty, const DxValue *args, uint8_t argc);
-uint32_t dx_vm_unresolved_seen_count(const DxVM *vm);
-int dx_vm_copy_unresolved_seen(const DxVM *vm, uint32_t index, DxInvokeWitness *out);
+typedef struct DxUnresolvedContextInfo {
+    uint32_t exec_id;
+    uint32_t count;
+    uint32_t dropped;
+} DxUnresolvedContextInfo;
+uint32_t dx_vm_unresolved_context_count(const DxVM *vm);
+int dx_vm_copy_unresolved_context(const DxVM *vm, uint32_t index, DxUnresolvedContextInfo *out);
+int dx_vm_copy_unresolved_event(const DxVM *vm, uint32_t context_index, uint32_t event_index,
+                                DxInvokeWitness *out);
 
 #endif // DX_VM_H
