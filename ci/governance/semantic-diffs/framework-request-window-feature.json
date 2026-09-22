@@ -70,7 +70,7 @@
   "remaining_uncertainty": [
     "No title view is generated. The AGR host window is already without a title, so FEATURE_NO_TITLE has no additional visible change.",
     "Theme windowNoTitle, ActionBar presentation, menus, fullscreen, orientation, and other window flags are not implemented.",
-    "Unresolved invoke records are per DxExecutionContext and are not a cross-thread program order. During the post-fix observation window, execution context 1 published count 0 and dropped 0. The first unresolved public invoke directly observed on execution context 0 is getIntent."
+    "Unresolved invoke records are per DxExecutionContext and are not a cross-thread program order. During the requestWindowFeature observation window, execution context 1 published count 0 and dropped 0, and the first unresolved public invoke directly observed on execution context 0 was getIntent. Activity.getIntent is a separate differential."
   ],
   "next_action": "Activity.requestWindowFeature(FEATURE_NO_TITLE) stays REAL_GAME_CONFIRMED for this encounter. Do not treat it as a proven blocker. Do not implement getIntent, Window.addFlags, or a title bar from this result. Do not rerun the content-frame Simulator.",
   "needs_experiment": false,

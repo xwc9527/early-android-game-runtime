@@ -530,6 +530,9 @@ void dx_exec_vm_shutdown(DxVM *vm) {
         set_state(exec, DX_JAVA_THREAD_TERMINATED);
     }
     free_monitors(vm);
+    /* Free published contexts under the registry lock so a diagnostic
+       snapshot cannot observe a pointer after it is released. */
+    dx_vm_shared_lock(vm);
     for (uint32_t i = 0; i < vm->exec_count; i++) {
         DxExecutionContext *exec = vm->execs[i];
         if (!exec || exec == vm->root_exec) continue;
@@ -548,10 +551,12 @@ void dx_exec_vm_shutdown(DxVM *vm) {
     } else {
         vm->exec_count = 0;
     }
+    dx_vm_shared_unlock(vm);
 }
 
 void dx_exec_vm_fini(DxVM *vm) {
     if (!vm || !vm->shared_ready) return;
+    dx_vm_shared_lock(vm);
     if (vm->root_exec) {
         for (uint32_t f = 0; f < vm->root_exec->frame_pool_count; f++)
             dx_free(vm->root_exec->frame_pool[f]);
@@ -564,6 +569,7 @@ void dx_exec_vm_fini(DxVM *vm) {
         if (vm->exec_count > 0) vm->execs[0] = NULL;
         vm->exec_count = 0;
     }
+    dx_vm_shared_unlock(vm);
     pthread_mutex_destroy(&vm->shared_mu);
     pthread_mutex_destroy(&vm->safepoint_mu);
     pthread_cond_destroy(&vm->safepoint_cv);

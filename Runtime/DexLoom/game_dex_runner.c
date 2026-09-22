@@ -125,6 +125,8 @@ static DxResult window_request_feature(DxVM *vm, DxFrame *frame,
                                        DxValue *args, uint32_t count);
 static DxResult activity_request_window_feature(DxVM *vm, DxFrame *frame,
                                                 DxValue *args, uint32_t count);
+static DxResult activity_get_intent(DxVM *vm, DxFrame *frame,
+                                    DxValue *args, uint32_t count);
 
 /* API19 Window.DEFAULT_FEATURES. PhoneWindow.requestFeature is the body. */
 #define AGR_FEATURE_OPTIONS_PANEL 0
@@ -491,6 +493,7 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(activity, "getApplication", "L", DX_ACC_PUBLIC, activity_get_application, 0);
     add_method(activity, "getWindow", "L", DX_ACC_PUBLIC, activity_get_window, 0);
     add_method(activity, "getWindowManager", "L", DX_ACC_PUBLIC, activity_get_window_manager, 0);
+    add_method(activity, "getIntent", "L", DX_ACC_PUBLIC, activity_get_intent, 0);
     add_method(activity, "requestWindowFeature", "ZI", DX_ACC_PUBLIC,
                activity_request_window_feature, 0);
     {
@@ -804,6 +807,8 @@ struct agr_dex_game {
     char framework_events[AGR_DEX_FRAMEWORK_TRACE_CAPACITY][96];
     uint32_t feature_event_count;
     char feature_events[AGR_FEATURE_EVENT_CAP][96];
+    uint32_t intent_event_count;
+    char intent_events[AGR_INTENT_EVENT_CAP][160];
     agr_canvas_trace canvas_trace[AGR_CANVAS_TRACE_CAP];
     uint32_t canvas_trace_count;
 };
@@ -824,6 +829,55 @@ static void note_feature_event(agr_dex_game *game, const char *text) {
     snprintf(game->feature_events[game->feature_event_count],
              sizeof(game->feature_events[0]), "%s", text);
     game->feature_event_count++;
+}
+
+static void note_intent_event(agr_dex_game *game, const char *text) {
+    if (!game || !text || game->intent_event_count >= AGR_INTENT_EVENT_CAP) return;
+    snprintf(game->intent_events[game->intent_event_count],
+             sizeof(game->intent_events[0]), "%s", text);
+    game->intent_event_count++;
+}
+
+/* API19 Activity.getIntent returns the Activity's current mIntent.
+   AGR stores that reference in _intent. The getter does not allocate. */
+static DxResult activity_get_intent(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = vm ? (agr_dex_game *)vm->framework_user : NULL;
+    DxValue value = DX_NULL_VALUE;
+    DxObject *activity;
+    DxObject *intent = NULL;
+    uint32_t pc = 0;
+    uint32_t method_idx = 0;
+    unsigned opcode = 0;
+    char text[160];
+    if (!frame || count < 1 || !args || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return DX_ERR_NULL_PTR;
+    activity = args[0].obj;
+    if (dx_vm_get_field(activity, "_intent", &value) == DX_OK && value.tag == DX_VAL_OBJ)
+        intent = value.obj;
+    frame->result = intent ? DX_OBJ_VALUE(intent) : DX_NULL_VALUE;
+    frame->has_result = true;
+    if (vm && vm->invoke_site_valid) {
+        pc = vm->invoke_site_pc;
+        opcode = vm->invoke_site_opcode;
+        method_idx = vm->invoke_site_method_idx;
+    }
+    snprintf(text, sizeof(text),
+             "get a=%llu field=%llu ret=%llu launch=%llu e=0 p=%u o=%u m=%u",
+             (unsigned long long)(uintptr_t)activity,
+             (unsigned long long)(uintptr_t)intent,
+             (unsigned long long)(uintptr_t)(frame->result.obj),
+             (unsigned long long)(uintptr_t)(game ? game->intent : NULL),
+             pc, opcode, method_idx);
+    note_intent_event(game, text);
+    if (frame->caller && frame->caller->method && frame->caller->method->name &&
+        frame->caller->method->declaring_class &&
+        frame->caller->method->declaring_class->descriptor) {
+        snprintf(text, sizeof(text), "who %s.%s",
+                 frame->caller->method->declaring_class->descriptor,
+                 frame->caller->method->name);
+        note_intent_event(game, text);
+    }
+    return DX_OK;
 }
 
 /* Java int shifts mask the count to 5 bits. */
@@ -3188,6 +3242,11 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
     for (uint32_t i = 0; i < snapshot->feature_event_count; i++)
         snprintf(snapshot->feature_events[i], sizeof(snapshot->feature_events[i]), "%s",
                  game->feature_events[i]);
+    snapshot->intent_event_count = game->intent_event_count < AGR_INTENT_EVENT_CAP
+        ? game->intent_event_count : AGR_INTENT_EVENT_CAP;
+    for (uint32_t i = 0; i < snapshot->intent_event_count; i++)
+        snprintf(snapshot->intent_events[i], sizeof(snapshot->intent_events[i]), "%s",
+                 game->intent_events[i]);
     if (dx_vm_current_exec(vm)->pending_exception && dx_vm_current_exec(vm)->pending_exception->klass &&
         dx_vm_current_exec(vm)->pending_exception->klass->descriptor)
         snprintf(snapshot->exception_class,sizeof(snapshot->exception_class),"%s",

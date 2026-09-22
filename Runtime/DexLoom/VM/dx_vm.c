@@ -7309,18 +7309,32 @@ void dx_vm_note_unresolved_seen(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t o
     __atomic_store_n(&exec->unresolved_count, count + 1, __ATOMIC_RELEASE);
 }
 
+/* Registry publication is vm->shared_mu, the same lock exec_create holds.
+   The trace slot itself stays single-writer and is not taken under that lock.
+   The snapshot is copied before the lock is released, so a later shutdown
+   free cannot invalidate the pointer the caller reads. */
 uint32_t dx_vm_unresolved_context_count(const DxVM *vm) {
-    return vm ? vm->exec_count : 0;
+    uint32_t count;
+    if (!vm) return 0;
+    dx_vm_shared_lock((DxVM *)vm);
+    count = vm->exec_count;
+    dx_vm_shared_unlock((DxVM *)vm);
+    return count;
 }
 
 int dx_vm_copy_unresolved_context(const DxVM *vm, uint32_t index, DxUnresolvedContextInfo *out) {
     DxExecutionContext *exec;
-    if (!vm || !out || index >= vm->exec_count) return -1;
+    if (!vm || !out) return -1;
+    dx_vm_shared_lock((DxVM *)vm);
+    if (index >= vm->exec_count || !vm->execs[index]) {
+        dx_vm_shared_unlock((DxVM *)vm);
+        return -1;
+    }
     exec = vm->execs[index];
-    if (!exec) return -1;
     out->exec_id = exec->id;
     out->count = __atomic_load_n(&exec->unresolved_count, __ATOMIC_ACQUIRE);
     out->dropped = __atomic_load_n(&exec->unresolved_dropped, __ATOMIC_ACQUIRE);
+    dx_vm_shared_unlock((DxVM *)vm);
     if (out->count > DX_UNRESOLVED_TRACE_CAP) out->count = DX_UNRESOLVED_TRACE_CAP;
     return 0;
 }
@@ -7329,13 +7343,23 @@ int dx_vm_copy_unresolved_event(const DxVM *vm, uint32_t context_index, uint32_t
                                 DxInvokeWitness *out) {
     DxExecutionContext *exec;
     uint32_t count;
-    if (!vm || !out || context_index >= vm->exec_count) return -1;
+    DxInvokeWitness slot;
+    if (!vm || !out) return -1;
+    dx_vm_shared_lock((DxVM *)vm);
+    if (context_index >= vm->exec_count || !vm->execs[context_index]) {
+        dx_vm_shared_unlock((DxVM *)vm);
+        return -1;
+    }
     exec = vm->execs[context_index];
-    if (!exec) return -1;
     count = __atomic_load_n(&exec->unresolved_count, __ATOMIC_ACQUIRE);
     if (count > DX_UNRESOLVED_TRACE_CAP) count = DX_UNRESOLVED_TRACE_CAP;
-    if (event_index >= count) return -1;
-    *out = exec->unresolved_trace[event_index];
+    if (event_index >= count) {
+        dx_vm_shared_unlock((DxVM *)vm);
+        return -1;
+    }
+    slot = exec->unresolved_trace[event_index];
+    dx_vm_shared_unlock((DxVM *)vm);
+    *out = slot;
     return 0;
 }
 

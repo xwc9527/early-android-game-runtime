@@ -35,6 +35,7 @@ typedef struct {
 #define AGR_DEX_METHOD_TRACE_CAPACITY 64
 #define AGR_DEX_FRAMEWORK_TRACE_CAPACITY 256
 #define AGR_FEATURE_EVENT_CAP 8
+#define AGR_INTENT_EVENT_CAP 4
 typedef struct {
     agr_dex_arg_kind kind;
     union { int32_t i; float f; const char *string; uint32_t object; } value;
@@ -120,6 +121,8 @@ typedef struct {
     char framework_events[AGR_DEX_FRAMEWORK_TRACE_CAPACITY][96];
     uint32_t feature_event_count;
     char feature_events[AGR_FEATURE_EVENT_CAP][96];
+    uint32_t intent_event_count;
+    char intent_events[AGR_INTENT_EVENT_CAP][160];
 } agr_dex_runtime_snapshot;
 
 agr_apk_package *agr_apk_package_open(const char *apk_path);

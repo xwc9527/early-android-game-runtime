@@ -190,6 +190,9 @@ static void print_snapshot(const char *label, const agr_dex_runtime_snapshot *sn
     printf("%s feature_event_count=%u\n", label, snapshot->feature_event_count);
     for (uint32_t i = 0; i < snapshot->feature_event_count && i < AGR_FEATURE_EVENT_CAP; i++)
         printf("FEATURE %s\n", snapshot->feature_events[i]);
+    printf("%s intent_event_count=%u\n", label, snapshot->intent_event_count);
+    for (uint32_t i = 0; i < snapshot->intent_event_count && i < AGR_INTENT_EVENT_CAP; i++)
+        printf("INTENT %s\n", snapshot->intent_events[i]);
 }
 
 int main(int argc, char **argv) {
