@@ -50,11 +50,17 @@ typedef unsigned char boolean;
 EOF
 COMMON=(-target "$TARGET" -isysroot "$SDK" -mios-simulator-version-min=15.0 -O2 -w)
 : > "$OUT/objects.list"
+JPEG_LIB=(
+  jaricom.c jcapimin.c jcapistd.c jcarith.c jccoefct.c jccolor.c jcdctmgr.c jchuff.c
+  jcinit.c jcmainct.c jcmarker.c jcmaster.c jcomapi.c jcparam.c jcprepct.c jcsample.c
+  jctrans.c jdapimin.c jdapistd.c jdarith.c jdatadst.c jdatasrc.c jdcoefct.c jdcolor.c
+  jddctmgr.c jdhuff.c jdinput.c jdmainct.c jdmarker.c jdmaster.c jdmerge.c jdpostct.c
+  jdsample.c jdtrans.c jerror.c jfdctflt.c jfdctfst.c jfdctint.c jidctflt.c jidctfst.c
+  jidctint.c jquant1.c jquant2.c jutils.c jmemmgr.c jmemnobs.c
+)
 i=0
-for SOURCE in "$CACHE/jpeg-9e"/*.c; do
-  base="$(basename "$SOURCE")"
-  case "$base" in cjpeg.c|djpeg.c|jpegtran.c|rdjpgcom.c|wrjpgcom.c|ckconfig.c|jmemdos.c|jmemmac.c|jmemansi.c|example.c) continue;; esac
-  clang "${COMMON[@]}" -I"$CACHE/jpeg-9e" -c "$SOURCE" -o "$OUT/jpeg-$i.o"
+for base in "${JPEG_LIB[@]}"; do
+  clang "${COMMON[@]}" -I"$CACHE/jpeg-9e" -c "$CACHE/jpeg-9e/$base" -o "$OUT/jpeg-$i.o"
   printf '%s\n' "$OUT/jpeg-$i.o" >> "$OUT/objects.list"
   i=$((i + 1))
 done

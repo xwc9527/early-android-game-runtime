@@ -3,7 +3,7 @@
   "enabled": true,
   "question": "Does unchanged Frozen Bubble on the normal UIKit CADisplayLink path lock the SurfaceView content Surface, draw a decoded Bitmap into it, and post a changed buffer without a harness render call?",
   "current_uncertainty": [
-    "Linux local probe already shows lock, drawBitmap, pixel mutation, and post. The Simulator build and CADisplayLink timing have not observed that content buffer."
+    "Linux local probe already shows lock, drawBitmap, pixel mutation, and post. Discovery 35705901992 failed while compiling jmemname.c and never launched the app, so the UIKit content buffer is still unobserved."
   ],
   "expected_outcome_a": {
     "result": "harness_called_do_traversal false, harness_called_render_api false, surfaceCreated 1, surfaceChanged 1, content Surface distinct from the root, lock_count > 0, draw_bitmap_count > 0, post_count > 0, pixel_change_count > 0, and the posted buffer hash differs from the pre-draw hash",
