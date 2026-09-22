@@ -327,7 +327,7 @@
         "source_hashes": {
           "Runtime/GuestRuntime/agr_jni_methods.c": "8bdc5b524175bb6066c696fa347162d43dc494d31a1b6a2b47914a6418f07d3d",
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
-          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507"
+          "Runtime/DexLoom/game_dex_runner.c": "7e96e0b92db3a7058ac4aece02e738700ecdd11aa579ae18eb6cce3647a619dc"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -684,7 +684,7 @@
           "gc_mark_roots"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
+          "Runtime/DexLoom/game_dex_runner.c": "7e96e0b92db3a7058ac4aece02e738700ecdd11aa579ae18eb6cce3647a619dc",
           "Runtime/DexLoom/VM/dx_vm.c": "58d0f23c98899e3442a5b5b3218d8c051d2e6f1b5a19f19fda877f4afb4ea8b3"
         }
       },
@@ -874,7 +874,7 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/APK/dx_manifest.c": "17d608e345e27ba2bcf564dd61e7918c79da4b243f32d811e59126996b27519e",
-          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
+          "Runtime/DexLoom/game_dex_runner.c": "7e96e0b92db3a7058ac4aece02e738700ecdd11aa579ae18eb6cce3647a619dc",
           "Runtime/DexLoom/VM/dx_vm.c": "58d0f23c98899e3442a5b5b3218d8c051d2e6f1b5a19f19fda877f4afb4ea8b3",
           "App/main.m": "5f3e106cfbe32c7c591b92a556e3e13f57435463bbe429507d3440509c93d74b"
         }
@@ -968,7 +968,7 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
+          "Runtime/DexLoom/game_dex_runner.c": "7e96e0b92db3a7058ac4aece02e738700ecdd11aa579ae18eb6cce3647a619dc",
           "App/main.m": "5f3e106cfbe32c7c591b92a556e3e13f57435463bbe429507d3440509c93d74b"
         }
       },
@@ -1078,7 +1078,7 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
+          "Runtime/DexLoom/game_dex_runner.c": "7e96e0b92db3a7058ac4aece02e738700ecdd11aa579ae18eb6cce3647a619dc",
           "App/main.m": "5f3e106cfbe32c7c591b92a556e3e13f57435463bbe429507d3440509c93d74b"
         }
       },
@@ -1168,8 +1168,8 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
-          "Runtime/DexLoom/game_dex_runner.h": "0bbbf6207632f8c115d717566fd72c0762972078c66c3d60aba1267c49078a75",
+          "Runtime/DexLoom/game_dex_runner.c": "7e96e0b92db3a7058ac4aece02e738700ecdd11aa579ae18eb6cce3647a619dc",
+          "Runtime/DexLoom/game_dex_runner.h": "8a82b12720fc7fa98e0c3957151930a9f6d904ed0f84328802ac6a31236d10b6",
           "App/main.m": "5f3e106cfbe32c7c591b92a556e3e13f57435463bbe429507d3440509c93d74b"
         }
       },
@@ -1264,8 +1264,8 @@
           "window.set_content_view"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
-          "Runtime/DexLoom/game_dex_runner.h": "0bbbf6207632f8c115d717566fd72c0762972078c66c3d60aba1267c49078a75",
+          "Runtime/DexLoom/game_dex_runner.c": "7e96e0b92db3a7058ac4aece02e738700ecdd11aa579ae18eb6cce3647a619dc",
+          "Runtime/DexLoom/game_dex_runner.h": "8a82b12720fc7fa98e0c3957151930a9f6d904ed0f84328802ac6a31236d10b6",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
           "Runtime/DexLoom/APK/dx_resources.c": "d1ccd60b46850517bb9905db8505f81222d8658b4af9b675547208f1eb07a0e2",
@@ -1380,8 +1380,8 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
-          "Runtime/DexLoom/game_dex_runner.h": "0bbbf6207632f8c115d717566fd72c0762972078c66c3d60aba1267c49078a75",
+          "Runtime/DexLoom/game_dex_runner.c": "7e96e0b92db3a7058ac4aece02e738700ecdd11aa579ae18eb6cce3647a619dc",
+          "Runtime/DexLoom/game_dex_runner.h": "8a82b12720fc7fa98e0c3957151930a9f6d904ed0f84328802ac6a31236d10b6",
           "App/main.m": "5f3e106cfbe32c7c591b92a556e3e13f57435463bbe429507d3440509c93d74b"
         }
       },
@@ -1488,8 +1488,8 @@
           "surface_holder.canvas_posted"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
-          "Runtime/DexLoom/game_dex_runner.h": "0bbbf6207632f8c115d717566fd72c0762972078c66c3d60aba1267c49078a75"
+          "Runtime/DexLoom/game_dex_runner.c": "7e96e0b92db3a7058ac4aece02e738700ecdd11aa579ae18eb6cce3647a619dc",
+          "Runtime/DexLoom/game_dex_runner.h": "8a82b12720fc7fa98e0c3957151930a9f6d904ed0f84328802ac6a31236d10b6"
         }
       },
       "verified_at_commit": "d3f4f3df8c50bcfd1448c16aac46da0b729e7a4d",
@@ -1588,7 +1588,7 @@
           "bitmap_recycle"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
+          "Runtime/DexLoom/game_dex_runner.c": "7e96e0b92db3a7058ac4aece02e738700ecdd11aa579ae18eb6cce3647a619dc",
           "Runtime/Bitmap/agr_bitmap.cpp": "43ab7c39bf2a0773bf4e3fe7da2672189e9d2f2d8ae3189b86d2b1dc72b8993a",
           "Runtime/Bitmap/agr_bitmap.h": "1762dac4ba053ef9bde49dd972d081d1edf86cf22b9ffcf4ed505737a6d80ade",
           "Runtime/Bitmap/host/SkImageDecoder_libjpeg_host.cpp": "355144e0333a2fbb65e5a30667d43d4578c1b115466443f6c79085aee82be0ad",
@@ -1693,8 +1693,8 @@
           "bitmap_recycle"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
-          "Runtime/DexLoom/game_dex_runner.h": "0bbbf6207632f8c115d717566fd72c0762972078c66c3d60aba1267c49078a75",
+          "Runtime/DexLoom/game_dex_runner.c": "7e96e0b92db3a7058ac4aece02e738700ecdd11aa579ae18eb6cce3647a619dc",
+          "Runtime/DexLoom/game_dex_runner.h": "8a82b12720fc7fa98e0c3957151930a9f6d904ed0f84328802ac6a31236d10b6",
           "Runtime/Bitmap/agr_bitmap.cpp": "43ab7c39bf2a0773bf4e3fe7da2672189e9d2f2d8ae3189b86d2b1dc72b8993a",
           "Runtime/Bitmap/agr_bitmap.h": "1762dac4ba053ef9bde49dd972d081d1edf86cf22b9ffcf4ed505737a6d80ade",
           "Runtime/Bitmap/host_skia_config.h": "17e0c2e73003e49c748bd4a700307006b1be61c9ff4f33f9962406127579ae9c",
@@ -1996,7 +1996,7 @@
           "agr_bitmap_scale"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
+          "Runtime/DexLoom/game_dex_runner.c": "7e96e0b92db3a7058ac4aece02e738700ecdd11aa579ae18eb6cce3647a619dc",
           "Runtime/Bitmap/agr_bitmap.cpp": "43ab7c39bf2a0773bf4e3fe7da2672189e9d2f2d8ae3189b86d2b1dc72b8993a",
           "Runtime/Bitmap/agr_bitmap.h": "1762dac4ba053ef9bde49dd972d081d1edf86cf22b9ffcf4ed505737a6d80ade"
         }
@@ -2157,8 +2157,8 @@
         "find_static_field_idx"
       ],
       "source_hashes": {
-        "Runtime/DexLoom/game_dex_runner.c": "e5bfcdcae8c0180d227821e85b5b60552549de1ae3f17d3652065557d9a57507",
-        "Runtime/DexLoom/game_dex_runner.h": "0bbbf6207632f8c115d717566fd72c0762972078c66c3d60aba1267c49078a75",
+        "Runtime/DexLoom/game_dex_runner.c": "7e96e0b92db3a7058ac4aece02e738700ecdd11aa579ae18eb6cce3647a619dc",
+        "Runtime/DexLoom/game_dex_runner.h": "8a82b12720fc7fa98e0c3957151930a9f6d904ed0f84328802ac6a31236d10b6",
         "Runtime/DexLoom/VM/dx_interpreter.c": "ef6a05b56d86d58a79caf9d65a0d638c30fdc3b537579ca8d78ddc9f061fcb73"
       }
     },
@@ -2283,6 +2283,107 @@
     ],
     "contracts": [
       "dex.vector_core"
+    ]
+  },
+  {
+    "id": "android.app.activity.request_window_feature",
+    "subsystem": "Activity.requestWindowFeature",
+    "android_api": "API19 Activity.requestWindowFeature(int) / PhoneWindow.requestFeature(int)",
+    "upstream": {
+      "revision": "Android 4.4.4_r2",
+      "repository": "platform/frameworks/base",
+      "paths": [
+        "core/java/android/app/Activity.java",
+        "core/java/android/view/Window.java",
+        "policy/src/com/android/internal/policy/impl/PhoneWindow.java"
+      ],
+      "symbols": [
+        "Activity.requestWindowFeature",
+        "Window.requestFeature",
+        "Window.FEATURE_NO_TITLE",
+        "PhoneWindow.requestFeature"
+      ],
+      "source_hashes": {
+        "core/java/android/app/Activity.java": "03874ea13f230ff2b92bc6d99522011f63a3076e9101655aa0249addc590cc4b",
+        "core/java/android/view/Window.java": "783bcaa039a6e9303bf73989a93ee15a318279b2baf961a36a6d3cf090f1d499",
+        "policy/src/com/android/internal/policy/impl/PhoneWindow.java": "72e77092b444c068108763a7bc5a059b0097a620e2249d70274e9443af0851cf"
+      },
+      "source_urls": {
+        "core/java/android/app/Activity.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/app/Activity.java?format=TEXT",
+        "core/java/android/view/Window.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/view/Window.java?format=TEXT",
+        "policy/src/com/android/internal/policy/impl/PhoneWindow.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/policy/src/com/android/internal/policy/impl/PhoneWindow.java?format=TEXT"
+      },
+      "symbols_by_path": {
+        "core/java/android/app/Activity.java": [
+          "public final boolean requestWindowFeature(int featureId)"
+        ],
+        "core/java/android/view/Window.java": [
+          "public static final int FEATURE_NO_TITLE = 1;",
+          "public static final int FEATURE_CUSTOM_TITLE = 7;",
+          "public static final int FEATURE_ACTION_BAR = 8;",
+          "public static final int FEATURE_ACTION_MODE_OVERLAY = 10;",
+          "protected static final int DEFAULT_FEATURES = (1 << FEATURE_OPTIONS_PANEL) |",
+          "public boolean requestFeature(int featureId)",
+          "protected void removeFeature(int featureId)"
+        ],
+        "policy/src/com/android/internal/policy/impl/PhoneWindow.java": [
+          "public boolean requestFeature(int featureId)",
+          "throw new AndroidRuntimeException(\"requestFeature() must be called before adding content\");",
+          "throw new AndroidRuntimeException(\"You cannot combine custom titles with other title features\");",
+          "return false; // Ignore. No title dominates.",
+          "removeFeature(FEATURE_ACTION_BAR);"
+        ]
+      }
+    },
+    "agr": {
+      "paths": [
+        "Runtime/DexLoom/game_dex_runner.c",
+        "Runtime/DexLoom/game_dex_runner.h",
+        "Tests/DexLoom/request-window-feature-host.c"
+      ],
+      "symbols": [
+        "activity_request_window_feature",
+        "window_request_feature"
+      ],
+      "source_hashes": {
+        "Runtime/DexLoom/game_dex_runner.c": "7e96e0b92db3a7058ac4aece02e738700ecdd11aa579ae18eb6cce3647a619dc",
+        "Runtime/DexLoom/game_dex_runner.h": "8a82b12720fc7fa98e0c3957151930a9f6d904ed0f84328802ac6a31236d10b6",
+        "Tests/DexLoom/request-window-feature-host.c": "a638466bad011f2761fbc6b9ae842e30f1ec6bd9eba9a84f5aad5556356cc2f7"
+      }
+    },
+    "verified_at_commit": "e40a18ece92a1f21192f95df9ff20970bf6d6ecc",
+    "status": "VALID",
+    "dependencies": [],
+    "observable_semantics": [
+      "Activity.requestWindowFeature forwards to the Window object stored on that Activity",
+      "PhoneWindow.requestFeature(FEATURE_NO_TITLE) before content returns true and sets the FEATURE_NO_TITLE bit",
+      "default features are (1<<FEATURE_OPTIONS_PANEL)|(1<<FEATURE_CONTEXT_MENU), so the stored value becomes 67",
+      "a repeat request before content returns true and keeps that bit",
+      "FEATURE_NO_TITLE already set and FEATURE_ACTION_BAR requested returns false and does not set ACTION_BAR",
+      "FEATURE_ACTION_BAR already set and FEATURE_NO_TITLE requested clears ACTION_BAR, sets NO_TITLE, and returns true",
+      "FEATURE_CUSTOM_TITLE already set and FEATURE_NO_TITLE requested throws AndroidRuntimeException and does not set NO_TITLE",
+      "after content is installed, requestFeature throws AndroidRuntimeException and does not change the bits"
+    ],
+    "internal_invariants": [
+      "feature bits live on the Activity window fields _features and _localFeatures",
+      "mContainer is null, so local features stay equal to features",
+      "content installation sets _contentParent on that same window",
+      "setContentView continues to use that window"
+    ],
+    "execution_placement": "HOST-DEX_HLE",
+    "host_substitutions": [
+      "PhoneWindow.requestFeature runs as Window.requestFeature on the existing Landroid/view/Window; object",
+      "the AGR host window is already title-less, so FEATURE_NO_TITLE does not generate a title view"
+    ],
+    "known_deviations": [
+      "the guest class remains Landroid/view/Window; rather than PhoneWindow",
+      "no title view, ActionBar, menu, fullscreen, orientation, or input policy is implemented",
+      "theme windowNoTitle is not parsed",
+      "features other than the FEATURE_NO_TITLE conflict rules in PhoneWindow.requestFeature are not given visual behavior",
+      "guest-visible FEATURE_NO_TITLE state is preserved; downstream visible effect is currently absorbed by the AGR host window shape"
+    ],
+    "contracts": [
+      "framework.request_window_feature.host"
     ]
   }
   ]

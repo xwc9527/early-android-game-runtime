@@ -121,6 +121,20 @@ static DxResult surface_holder_unlock_canvas(DxVM *vm, DxFrame *frame,
                                              DxValue *args, uint32_t count);
 static DxResult view_request_layout(DxVM *vm, DxFrame *frame,
                                     DxValue *args, uint32_t count);
+static DxResult window_request_feature(DxVM *vm, DxFrame *frame,
+                                       DxValue *args, uint32_t count);
+static DxResult activity_request_window_feature(DxVM *vm, DxFrame *frame,
+                                                DxValue *args, uint32_t count);
+
+/* API19 Window.DEFAULT_FEATURES. PhoneWindow.requestFeature is the body. */
+#define AGR_FEATURE_OPTIONS_PANEL 0
+#define AGR_FEATURE_NO_TITLE 1
+#define AGR_FEATURE_CONTEXT_MENU 6
+#define AGR_FEATURE_CUSTOM_TITLE 7
+#define AGR_FEATURE_ACTION_BAR 8
+#define AGR_FEATURE_ACTION_MODE_OVERLAY 10
+#define AGR_DEFAULT_WINDOW_FEATURES \
+    ((1 << AGR_FEATURE_OPTIONS_PANEL) | (1 << AGR_FEATURE_CONTEXT_MENU))
 
 static DxResult activity_on_post_resume(DxVM *vm, DxFrame *frame,
                                         DxValue *args, uint32_t count) {
@@ -477,6 +491,14 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(activity, "getApplication", "L", DX_ACC_PUBLIC, activity_get_application, 0);
     add_method(activity, "getWindow", "L", DX_ACC_PUBLIC, activity_get_window, 0);
     add_method(activity, "getWindowManager", "L", DX_ACC_PUBLIC, activity_get_window_manager, 0);
+    add_method(activity, "requestWindowFeature", "ZI", DX_ACC_PUBLIC,
+               activity_request_window_feature, 0);
+    {
+        DxClass *runtime_exception = dx_vm_find_class(vm, "Ljava/lang/RuntimeException;");
+        DxClass *android_runtime = reg_class(vm, "Landroid/util/AndroidRuntimeException;",
+                                             runtime_exception);
+        own_fields(android_runtime, 0, NULL, NULL);
+    }
     add_method(activity, "setContentView", "VL", DX_ACC_PUBLIC, activity_set_content_view, 0);
     add_method(activity, "setContentView", "VLL", DX_ACC_PUBLIC, activity_set_content_view, 0);
     add_method(activity, "setContentView", "VI", DX_ACC_PUBLIC, activity_set_content_layout, 0);
@@ -549,11 +571,14 @@ static DxResult register_game_framework(DxVM *vm) {
     const char *layout_types[] = { "I", "I", "I", "I" };
     own_fields(layout_params, 4, layout_names, layout_types);
     DxClass *window = reg_class(vm, "Landroid/view/Window;", obj);
-    const char *window_names[] = { "_decor", "_attributes" };
-    const char *window_types[] = { "Landroid/view/View;", "Landroid/view/WindowManager$LayoutParams;" };
-    own_fields(window, 2, window_names, window_types);
+    const char *window_names[] = { "_decor", "_attributes", "_features", "_localFeatures",
+                                   "_contentParent" };
+    const char *window_types[] = { "Landroid/view/View;", "Landroid/view/WindowManager$LayoutParams;",
+                                   "I", "I", "Landroid/view/View;" };
+    own_fields(window, 5, window_names, window_types);
     add_method(window, "getDecorView", "L", DX_ACC_PUBLIC, window_get_decor_view, 0);
     add_method(window, "getAttributes", "L", DX_ACC_PUBLIC, window_get_attributes, 0);
+    add_method(window, "requestFeature", "ZI", DX_ACC_PUBLIC, window_request_feature, 0);
     add_method(window, "setContentView", "VL", DX_ACC_PUBLIC, window_set_content_view, 0);
     add_method(window, "setContentView", "VLL", DX_ACC_PUBLIC, window_set_content_view, 0);
     add_method(window, "setContentView", "VI", DX_ACC_PUBLIC, window_set_content_layout, 0);
@@ -777,6 +802,8 @@ struct agr_dex_game {
     int choreographer_in_frame;
     uint32_t framework_event_count;
     char framework_events[AGR_DEX_FRAMEWORK_TRACE_CAPACITY][96];
+    uint32_t feature_event_count;
+    char feature_events[AGR_FEATURE_EVENT_CAP][96];
     agr_canvas_trace canvas_trace[AGR_CANVAS_TRACE_CAP];
     uint32_t canvas_trace_count;
 };
@@ -790,6 +817,168 @@ static void framework_event(agr_dex_game *game, const char *event) {
 
 static void viewroot_event(void *user, const char *event) {
     framework_event((agr_dex_game *)user, event);
+}
+
+static void note_feature_event(agr_dex_game *game, const char *text) {
+    if (!game || !text || game->feature_event_count >= AGR_FEATURE_EVENT_CAP) return;
+    snprintf(game->feature_events[game->feature_event_count],
+             sizeof(game->feature_events[0]), "%s", text);
+    game->feature_event_count++;
+}
+
+/* Java int shifts mask the count to 5 bits. */
+static int32_t feature_bit(int32_t feature_id) {
+    return (int32_t)(1u << (uint32_t)(feature_id & 31));
+}
+
+static int32_t window_feature_bits(DxObject *window) {
+    DxValue value = DX_NULL_VALUE;
+    if (!window || dx_vm_get_field(window, "_features", &value) != DX_OK ||
+        value.tag != DX_VAL_INT)
+        return 0;
+    return value.i;
+}
+
+static int window_has_content(DxObject *window) {
+    DxValue value = DX_NULL_VALUE;
+    return window && dx_vm_get_field(window, "_contentParent", &value) == DX_OK &&
+           value.tag == DX_VAL_OBJ && value.obj != NULL;
+}
+
+static void store_window_features(DxObject *window, int32_t bits) {
+    dx_vm_set_field(window, "_features", DX_INT_VALUE(bits));
+    dx_vm_set_field(window, "_localFeatures", DX_INT_VALUE(bits));
+}
+
+static DxResult feature_throw(DxVM *vm, const char *message) {
+    dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+        vm, "Landroid/util/AndroidRuntimeException;", message);
+    return DX_ERR_EXCEPTION;
+}
+
+/* API19 PhoneWindow.requestFeature. mContainer is null on this window, so
+   local features stay equal to features. No title view is generated. */
+static DxResult window_request_feature(DxVM *vm, DxFrame *frame,
+                                       DxValue *args, uint32_t count) {
+    DxObject *window;
+    int32_t feature_id;
+    int32_t features;
+    int32_t flag;
+    if (!frame || !vm || count < 2 || args[0].tag != DX_VAL_OBJ || !args[0].obj) {
+        if (vm) {
+            dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+                vm, "Ljava/lang/NullPointerException;", "window");
+            return DX_ERR_EXCEPTION;
+        }
+        return DX_ERR_NULL_PTR;
+    }
+    if (args[1].tag != DX_VAL_INT) return DX_ERR_INVALID_FORMAT;
+    window = args[0].obj;
+    feature_id = args[1].i;
+    if (window_has_content(window))
+        return feature_throw(vm, "requestFeature() must be called before adding content");
+    features = window_feature_bits(window);
+    if (features != AGR_DEFAULT_WINDOW_FEATURES && feature_id == AGR_FEATURE_CUSTOM_TITLE)
+        return feature_throw(vm, "You cannot combine custom titles with other title features");
+    if ((features & feature_bit(AGR_FEATURE_CUSTOM_TITLE)) != 0 &&
+        feature_id != AGR_FEATURE_CUSTOM_TITLE &&
+        feature_id != AGR_FEATURE_ACTION_MODE_OVERLAY)
+        return feature_throw(vm, "You cannot combine custom titles with other title features");
+    if ((features & feature_bit(AGR_FEATURE_NO_TITLE)) != 0 &&
+        feature_id == AGR_FEATURE_ACTION_BAR) {
+        frame->result = DX_INT_VALUE(0);
+        frame->has_result = true;
+        return DX_OK;
+    }
+    if ((features & feature_bit(AGR_FEATURE_ACTION_BAR)) != 0 &&
+        feature_id == AGR_FEATURE_NO_TITLE) {
+        features &= ~feature_bit(AGR_FEATURE_ACTION_BAR);
+    }
+    flag = feature_bit(feature_id);
+    features |= flag;
+    store_window_features(window, features);
+    frame->result = DX_INT_VALUE((features & flag) != 0 ? 1 : 0);
+    frame->has_result = true;
+    return DX_OK;
+}
+
+/* API19 Activity.requestWindowFeature forwards to the Activity's own window. */
+static DxResult activity_request_window_feature(DxVM *vm, DxFrame *frame,
+                                                DxValue *args, uint32_t count) {
+    agr_dex_game *game = vm ? (agr_dex_game *)vm->framework_user : NULL;
+    DxValue window_value = DX_NULL_VALUE;
+    DxObject *window = NULL;
+    DxClass *window_class;
+    DxMethod *method;
+    DxValue forwarded[2];
+    DxValue result = DX_NULL_VALUE;
+    DxResult rc;
+    int32_t before;
+    int32_t after;
+    int32_t feature_id = 0;
+    int content_before;
+    int exc;
+    int ret;
+    uint32_t pc = 0;
+    uint32_t method_idx = 0;
+    unsigned opcode = 0;
+    char text[96];
+    char caller[80];
+    if (!frame || !vm || count < 2 || args[0].tag != DX_VAL_OBJ || !args[0].obj) {
+        if (vm) {
+            dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+                vm, "Ljava/lang/NullPointerException;", "activity");
+            return DX_ERR_EXCEPTION;
+        }
+        return DX_ERR_NULL_PTR;
+    }
+    if (args[1].tag != DX_VAL_INT) return DX_ERR_INVALID_FORMAT;
+    feature_id = args[1].i;
+    if (dx_vm_get_field(args[0].obj, "_window", &window_value) != DX_OK ||
+        window_value.tag != DX_VAL_OBJ || !window_value.obj) {
+        dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+            vm, "Ljava/lang/NullPointerException;", "window");
+        return DX_ERR_EXCEPTION;
+    }
+    window = window_value.obj;
+    before = window_feature_bits(window);
+    content_before = window_has_content(window);
+    if (vm->invoke_site_valid) {
+        pc = vm->invoke_site_pc;
+        opcode = vm->invoke_site_opcode;
+        method_idx = vm->invoke_site_method_idx;
+    }
+    window_class = dx_vm_find_class(vm, "Landroid/view/Window;");
+    method = window_class ? dx_vm_find_method(window_class, "requestFeature", "ZI") : NULL;
+    if (!method) return DX_ERR_INVALID_FORMAT;
+    forwarded[0] = DX_OBJ_VALUE(window);
+    forwarded[1] = args[1];
+    rc = dx_vm_execute_method(vm, method, forwarded, 2, &result);
+    after = window_feature_bits(window);
+    exc = rc == DX_ERR_EXCEPTION ? 1 : 0;
+    ret = (!exc && result.tag == DX_VAL_INT) ? result.i : -1;
+    snprintf(text, sizeof(text),
+             "req a=%llu w=%llu id=%d b=%d f=%d r=%d e=%d c=%d p=%u o=%u m=%u",
+             (unsigned long long)(uintptr_t)args[0].obj,
+             (unsigned long long)(uintptr_t)window,
+             feature_id, before, after, ret, exc, content_before,
+             pc, (unsigned)opcode, method_idx);
+    note_feature_event(game, text);
+    caller[0] = 0;
+    if (frame->caller && frame->caller->method && frame->caller->method->name &&
+        frame->caller->method->declaring_class &&
+        frame->caller->method->declaring_class->descriptor) {
+        snprintf(caller, sizeof(caller), "%s.%s",
+                 frame->caller->method->declaring_class->descriptor,
+                 frame->caller->method->name);
+        snprintf(text, sizeof(text), "who %s", caller);
+        note_feature_event(game, text);
+    }
+    if (rc == DX_OK && result.tag == DX_VAL_INT) {
+        frame->result = result;
+        frame->has_result = true;
+    }
+    return rc;
 }
 
 /* PhoneWindow.setContentView(View, LayoutParams) installs one content child
@@ -827,6 +1016,20 @@ static DxResult install_content_view(agr_dex_game *game, DxObject *view,
                     break;
                 cursor = next.obj;
             }
+    }
+    if (game->window) {
+        DxValue activity_window = DX_NULL_VALUE;
+        char text[96];
+        dx_vm_set_field(game->window, "_contentParent", DX_OBJ_VALUE(view));
+        if (game->activity)
+            dx_vm_get_field(game->activity, "_window", &activity_window);
+        snprintf(text, sizeof(text), "content aw=%llu w=%llu f=%d p=%llu",
+                 (unsigned long long)(uintptr_t)(activity_window.tag == DX_VAL_OBJ
+                                                 ? activity_window.obj : NULL),
+                 (unsigned long long)(uintptr_t)game->window,
+                 window_feature_bits(game->window),
+                 (unsigned long long)(uintptr_t)view);
+        note_feature_event(game, text);
     }
     framework_event(game, "window.set_content_view");
     if (game->viewroot.attach_complete &&
@@ -2711,6 +2914,7 @@ int agr_dex_game_start_activity(agr_dex_game *game) {
     dx_vm_set_field(game->activity,"_intent",DX_OBJ_VALUE(game->intent));
     dx_vm_set_field(game->window,"_decor",DX_OBJ_VALUE(game->decor));
     dx_vm_set_field(game->window,"_attributes",DX_OBJ_VALUE(game->window_attributes));
+    store_window_features(game->window, AGR_DEFAULT_WINDOW_FEATURES);
     dx_vm_set_field(game->activity,"_window",DX_OBJ_VALUE(game->window));
     dx_vm_set_field(game->activity,"_windowManager",DX_OBJ_VALUE(game->window_manager));
     dx_vm_set_field(game->activity,"_decor",DX_OBJ_VALUE(game->decor));
@@ -2979,6 +3183,11 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
     for (uint32_t i=0;i<framework_count;i++)
         snprintf(snapshot->framework_events[i],sizeof(snapshot->framework_events[i]),"%s",
                  game->framework_events[(framework_start+i)%AGR_DEX_FRAMEWORK_TRACE_CAPACITY]);
+    snapshot->feature_event_count = game->feature_event_count < AGR_FEATURE_EVENT_CAP
+        ? game->feature_event_count : AGR_FEATURE_EVENT_CAP;
+    for (uint32_t i = 0; i < snapshot->feature_event_count; i++)
+        snprintf(snapshot->feature_events[i], sizeof(snapshot->feature_events[i]), "%s",
+                 game->feature_events[i]);
     if (dx_vm_current_exec(vm)->pending_exception && dx_vm_current_exec(vm)->pending_exception->klass &&
         dx_vm_current_exec(vm)->pending_exception->klass->descriptor)
         snprintf(snapshot->exception_class,sizeof(snapshot->exception_class),"%s",

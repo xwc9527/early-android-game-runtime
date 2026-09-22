@@ -1,0 +1,79 @@
+{
+  "schema_version": 2,
+  "classification": "AGR_INTERNAL_BUG",
+  "subsystem": "Activity.requestWindowFeature",
+  "observed_discontinuity": "FrozenBubble.onCreate pc 8 invokes Activity.requestWindowFeature(1). The game VM had no method, so the invoke was skipped. The same run still reached the game thread, Vector-backed GameScreen.paint, and PenguinSprite.paint, so the missing call is the earliest remaining unresolved public API on execution context 0 and not a proven blocker.",
+  "upstream": {
+    "map_entry": "android.app.activity.request_window_feature",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "core/java/android/app/Activity.java",
+      "core/java/android/view/Window.java",
+      "policy/src/com/android/internal/policy/impl/PhoneWindow.java"
+    ],
+    "call_path": [
+      "Activity.requestWindowFeature",
+      "Window.getWindow",
+      "PhoneWindow.requestFeature",
+      "Window.requestFeature",
+      "Window.removeFeature"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "Activity.requestWindowFeature returns getWindow().requestFeature(featureId).",
+    "PhoneWindow.requestFeature throws AndroidRuntimeException when content is already installed and does not change feature bits.",
+    "FEATURE_NO_TITLE requested before content returns true and sets bit 1<<1. Default features 65 become 67.",
+    "A repeat FEATURE_NO_TITLE request before content returns true and keeps 67.",
+    "FEATURE_NO_TITLE already set and FEATURE_ACTION_BAR requested returns false. The ACTION_BAR bit is not added.",
+    "FEATURE_ACTION_BAR already set and FEATURE_NO_TITLE requested removes ACTION_BAR, then sets FEATURE_NO_TITLE, and returns true.",
+    "FEATURE_CUSTOM_TITLE already set and FEATURE_NO_TITLE requested throws AndroidRuntimeException and does not set FEATURE_NO_TITLE.",
+    "The feature bits belong to the Window object held by the Activity. setContentView uses that same window, and the bits remain after content is installed."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/game_dex_runner.c",
+      "Runtime/DexLoom/game_dex_runner.h"
+    ],
+    "call_path": [
+      "activity_request_window_feature",
+      "window_request_feature",
+      "install_content_view"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "Activity.requestWindowFeature was unresolved, so FEATURE_NO_TITLE was neither returned nor stored on the Activity window.",
+      "relevance": "FrozenBubble.onCreate requests Window.FEATURE_NO_TITLE before setContentView. The call is guest-visible window state. It did not stop later painting."
+    }
+  ],
+  "earliest_evidenced_divergence": "API19 PhoneWindow.requestFeature stores FEATURE_NO_TITLE on the window and returns true before content. AGR skipped the invoke and left the window without that feature bit.",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "android-4.4.4_r2 Activity.requestWindowFeature returns getWindow().requestFeature. Window.FEATURE_NO_TITLE is 1. DEFAULT_FEATURES is (1<<FEATURE_OPTIONS_PANEL)|(1<<FEATURE_CONTEXT_MENU), value 65. Window.requestFeature ORs 1<<featureId into mFeatures and mLocalFeatures and returns whether the bit is set. There is no container, so the two fields stay equal. PhoneWindow.requestFeature throws AndroidRuntimeException(\"requestFeature() must be called before adding content\") when mContentParent is non-null. It throws AndroidRuntimeException(\"You cannot combine custom titles with other title features\") when FEATURE_CUSTOM_TITLE is combined with FEATURE_NO_TITLE. If FEATURE_NO_TITLE is set and FEATURE_ACTION_BAR is requested it returns false. If FEATURE_ACTION_BAR is set and FEATURE_NO_TITLE is requested it removeFeature(FEATURE_ACTION_BAR) and then sets FEATURE_NO_TITLE."
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Linux request-window-feature-host PASS. Before content, features and local features are 65 and the content parent is null. requestWindowFeature(1) returns 1 and features become 67 on the same window. A repeat returns 1 and stays 67. requestWindowFeature(8) then returns 0 and stays 67. setContentView keeps that window, features stay 67, and the content parent is non-null. A later requestWindowFeature(1) throws Landroid/util/AndroidRuntimeException; with message requestFeature() must be called before adding content and leaves 67. On a second window, requestWindowFeature(8) returns 1 and features are 321, then requestWindowFeature(1) returns 1 and features are 67. On a third window, requestWindowFeature(7) returns 1 and features are 193, then requestWindowFeature(1) throws the custom-title AndroidRuntimeException and leaves 193."
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "Local unchanged Frozen Bubble APK org.jfedor.frozenbubble_8 sha256 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569, Linux host 320x480. Pre-fix witness: UNRESOLVED_SEEN exec=0 caller=Lorg/jfedor/frozenbubble/FrozenBubble;.onCreate pc=8 opcode=0x6e method_idx=185 resolved=0 class=Lorg/jfedor/frozenbubble/FrozenBubble; method=requestWindowFeature shorty=ZI argc=2 arg1=1. The same run still reached PenguinSprite.paint, lock 6, post 6, draw_bitmap 24. Post-fix witness: FEATURE req a=94133032591872 w=94133032593728 id=1 b=65 f=67 r=1 e=0 c=0 p=8 o=110 m=185; who Lorg/jfedor/frozenbubble/FrozenBubble;.onCreate; content aw=94133032593728 w=94133032593728 f=67 p=94133032619408. Activity identity 94133032591872 is the FrozenBubble receiver. Window identity 94133032593728 is the same object before the request, after the request, and at setContentView. Features move from 65 to 67 and remain 67 after content. Return is 1. The invoke is absent from UNRESOLVED_SEEN. after_wait: created 1, changed 1, lock 6, unlock 6, post 6, draw_bitmap 24, pixels 1007400, hash_before 4f2d9f141eeda325, hash_after 2c8b0c801b36f84a, format 4, 320x480. GameScreen.paint size returns 1 and elementAt(0) returns the PenguinSprite, then PenguinSprite.paint runs. Character.forDigit count is 6. Canvas save/clipRect(REPLACE)/restore still runs. No unresolved invoke is recorded on execution context 1. The captured unresolved trace has 14 entries, all execution context 0, so the buffer did not hide a later context. The first of those is FrozenBubble.onCreate pc 11 getIntent shorty L. That is an observed unresolved public API on execution context 0, not a global earliest and not a proven blocker. This probe is not a Simulator run. guest-visible FEATURE_NO_TITLE state is preserved; downstream visible effect is currently absorbed by the AGR host window shape."
+    }
+  ],
+  "remaining_uncertainty": [
+    "No title view is generated. The AGR host window is already without a title, so FEATURE_NO_TITLE has no additional visible change.",
+    "Theme windowNoTitle, ActionBar presentation, menus, fullscreen, orientation, and other window flags are not implemented.",
+    "The captured unresolved trace is per observed invoke, not a cross-thread global sequence. Execution context 1 recorded no unresolved invoke. Execution context 0's first remaining unresolved public invoke is getIntent."
+  ],
+  "next_action": "Activity.requestWindowFeature(FEATURE_NO_TITLE) stays REAL_GAME_CONFIRMED for this encounter. Do not treat it as a proven blocker. Do not implement getIntent, Window.addFlags, or a title bar from this result. Do not rerun the content-frame Simulator.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "The existing Landroid/view/Window; object owned by the Activity stores _features, _localFeatures, and _contentParent. PhoneWindow.requestFeature is the body of Window.requestFeature. There is no second window and no title-bar view."
+}

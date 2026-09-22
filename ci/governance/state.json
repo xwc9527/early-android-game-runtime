@@ -30,10 +30,10 @@
     "causal_status": "REAL_GAME_CONFIRMED",
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "Do not implement Activity.requestWindowFeature in this phase. Do not rerun the content-frame Simulator.",
-    "primary_blocker": "FrozenBubble.onCreate pc 8 opcode 0x6e method_idx 185 calls unresolved requestWindowFeature shorty ZI argument 1 on execution context 0.",
-    "first_broken_boundary": "Activity requestWindowFeature during FrozenBubble.onCreate, before the game thread",
-    "first_broken_boundary_evidence": "Local unchanged Frozen Bubble org.jfedor.frozenbubble_8 sha256 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569, Linux 320x480. Vector core is resolved: GameScreen.paint size returns 1 and elementAt(0) returns the PenguinSprite added by addSprite, then PenguinSprite.paint runs. No unresolved invoke follows elementAt. The earliest unresolved invoke still present is FrozenBubble.onCreate pc 8 opcode 0x6e method_idx 185 requestWindowFeature shorty ZI argument 1, execution context 0."
+    "next_validation": "Do not rerun the content-frame Simulator. The next public API is not selected as a proven blocker. On execution context 0 the first unresolved public invoke in the captured trace is FrozenBubble.onCreate pc 11 opcode 0x6e method_idx 171 getIntent shorty L. Execution context 1 recorded no unresolved invoke. The 14-entry trace did not fill the 16-slot buffer, so this is not a global earliest unresolved API.",
+    "primary_blocker": "No proven guest-visible blocker is selected. requestWindowFeature was the earliest remaining unresolved public API on execution context 0. The unchanged APK continued through that call to the game thread and PenguinSprite.paint.",
+    "first_broken_boundary": "No proven guest-visible broken boundary is selected.",
+    "first_broken_boundary_evidence": "Local unchanged Frozen Bubble org.jfedor.frozenbubble_8 sha256 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569, Linux 320x480. Before the fix, FrozenBubble.onCreate pc 8 opcode 0x6e method_idx 185 requestWindowFeature shorty ZI argument 1 was unresolved on execution context 0, and the probe still reached PenguinSprite.paint with lock 6, post 6, and draw_bitmap 24. After the fix the same invoke resolves: activity and window identities match, features move from 65 to 67, the return is 1, and setContentView uses that same window with features still 67. GameScreen.paint size returns 1, elementAt(0) returns the PenguinSprite, and PenguinSprite.paint runs. The captured unresolved trace contains 14 invokes, all on execution context 0. The first of those is getIntent. Execution context 1 has no unresolved invoke in that trace."
   },
   "ci_budget": {
     "valid_closure_runs": 1,

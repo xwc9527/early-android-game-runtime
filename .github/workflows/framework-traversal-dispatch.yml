@@ -13,6 +13,7 @@ on:
       - 'Tests/DexLoom/thread-start-host.c'
       - 'Tests/DexLoom/character-fordigit-host.c'
       - 'Tests/DexLoom/vector-core-host.c'
+      - 'Tests/DexLoom/request-window-feature-host.c'
       - 'Tests/DexLoom/canvas-state-clip-host.c'
       - 'Tests/DexLoom/make_thread_start_fixture.py'
       - 'Tests/DexLoom/surface-canvas-host.c'
@@ -109,6 +110,16 @@ jobs:
             /tmp/agr-dispatch-obj/dx_exec.o \
             /tmp/vector-core-host.o -lz -lm -o /tmp/vector-core-host
           /tmp/vector-core-host
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/request-window-feature-host.c \
+            -o /tmp/request-window-feature-host.o
+          g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
+            /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
+            /tmp/request-window-feature-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/request-window-feature-host
+          /tmp/request-window-feature-host /tmp/activity-launch-fixture.dex
           python3 Tests/DexLoom/make_surface_canvas_fixture.py /tmp/surface-canvas.dex /tmp/surface-canvas-layouts
           cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/canvas-state-clip-host.c \
             -o /tmp/canvas-state-clip-host.o
@@ -139,7 +150,7 @@ jobs:
             Tests/DexLoom/fixtures/fb-background.jpg Tests/DexLoom/fixtures/fb-bubble.gif
       - name: Verify API19 source, semantic differential and governance
         run: |
-          python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --require-valid framework.window.set_content_view --require-valid framework.view.surface_view --require-valid framework.view.surface_holder_canvas --require-valid framework.graphics.bitmap_decode_resource --require-valid framework.graphics.canvas_bitmap --require-valid framework.graphics.bitmap_create_scaled --require-valid dalvik.vm.vtable --require-valid dalvik.thread.start --require-valid java.lang.character.for_digit --require-valid framework.graphics.canvas_state_clip --require-valid java.util.vector.core --verify-upstream --verify-only framework.viewroot.traversal_dispatch --verify-only framework.window.set_content_view --verify-only framework.view.surface_view --verify-only framework.view.surface_holder_canvas --verify-only framework.graphics.bitmap_decode_resource --verify-only framework.graphics.canvas_bitmap --verify-only framework.graphics.bitmap_create_scaled --verify-only dalvik.vm.vtable --verify-only dalvik.thread.start --verify-only java.lang.character.for_digit --verify-only framework.graphics.canvas_state_clip --verify-only java.util.vector.core --output build/artifacts/traversal-dispatch-upstream-map.json
+          python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --require-valid framework.window.set_content_view --require-valid framework.view.surface_view --require-valid framework.view.surface_holder_canvas --require-valid framework.graphics.bitmap_decode_resource --require-valid framework.graphics.canvas_bitmap --require-valid framework.graphics.bitmap_create_scaled --require-valid dalvik.vm.vtable --require-valid dalvik.thread.start --require-valid java.lang.character.for_digit --require-valid framework.graphics.canvas_state_clip --require-valid java.util.vector.core --require-valid android.app.activity.request_window_feature --verify-upstream --verify-only framework.viewroot.traversal_dispatch --verify-only framework.window.set_content_view --verify-only framework.view.surface_view --verify-only framework.view.surface_holder_canvas --verify-only framework.graphics.bitmap_decode_resource --verify-only framework.graphics.canvas_bitmap --verify-only framework.graphics.bitmap_create_scaled --verify-only dalvik.vm.vtable --verify-only dalvik.thread.start --verify-only java.lang.character.for_digit --verify-only framework.graphics.canvas_state_clip --verify-only java.util.vector.core --verify-only android.app.activity.request_window_feature --output build/artifacts/traversal-dispatch-upstream-map.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-traversal-dispatch.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-surface-view.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-surface-holder-canvas.json
@@ -151,6 +162,7 @@ jobs:
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-character-fordigit.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-canvas-state-clip.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-vector-core.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-request-window-feature.json
           python3 ci/validate-governance.py --mode discovery
           python3 ci/test-closure-attempt-ledger.py
           python3 ci/test-post-merge-evidence.py

@@ -70,9 +70,9 @@
     "elementAt of a negative index throws ArrayIndexOutOfBoundsException with the helper message length and index. API19 reaches the array when the index is negative and elementCount is positive, so the exception class matches and the message can differ.",
     "equals falls back to reference identity unless the key class defines an equals method other than Object.equals.",
     "modCount is not stored. Enumeration, iterator, insertElementAt, and the rest of Vector are not registered.",
-    "The earliest unresolved invoke still present, in program order, is FrozenBubble.onCreate pc 8 opcode 0x6e method_idx 185 requestWindowFeature shorty ZI argument 1, execution context 0. It occurs before paint and is outside this contract."
+    "Activity.requestWindowFeature is outside this Vector contract. It is resolved separately and was not a proven blocker."
   ],
-  "next_action": "java.util.Vector core stays REAL_GAME_CONFIRMED for Vector(), size, addElement, removeElement, and elementAt. The next public API is Activity requestWindowFeature. Do not implement Window, InputStream, or presentation in this contract. Do not rerun the content-frame Simulator.",
+  "next_action": "java.util.Vector core stays REAL_GAME_CONFIRMED for Vector(), size, addElement, removeElement, and elementAt. Do not reopen Vector. Do not rerun the content-frame Simulator.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "Vector is a guest class extending Object, with elementData, elementCount, and capacityIncrement. elementData is a guest object array, so the existing GC field and array walk keeps the elements alive. Public methods take the Vector monitor. This is not ArrayList."

@@ -180,6 +180,9 @@ static void print_snapshot(const char *label, const agr_dex_runtime_snapshot *sn
         const agr_dex_method_event *event = &snapshot->method_events[snapshot->method_event_count - 1];
         printf("%s last_event %s depth=%u\n", label, event->method, event->depth);
     }
+    printf("%s feature_event_count=%u\n", label, snapshot->feature_event_count);
+    for (uint32_t i = 0; i < snapshot->feature_event_count && i < AGR_FEATURE_EVENT_CAP; i++)
+        printf("FEATURE %s\n", snapshot->feature_events[i]);
 }
 
 int main(int argc, char **argv) {
