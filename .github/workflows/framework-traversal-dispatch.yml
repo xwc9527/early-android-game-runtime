@@ -25,6 +25,7 @@ on:
       - 'Runtime/Bitmap/**'
       - 'scripts/build-agr-bitmap-host.sh'
       - 'scripts/build-and-run-simulator.sh'
+      - 'scripts/build-iphoneos.sh'
       - 'ci/framework-traversal-dispatch-contract.py'
       - 'ci/build-framework-traversal-dispatch-summary.py'
       - 'ci/governance/**'
@@ -281,22 +282,45 @@ jobs:
           test '${{ steps.regressions.outcome }}' = success
 
   iphoneos:
-    if: ${{ inputs.run_kind == 'validation' || inputs.run_kind == 'closure' }}
+    if: ${{ github.event_name == 'push' || inputs.run_kind == 'validation' || inputs.run_kind == 'closure' }}
     needs: linux-source-contract
     runs-on: macos-15
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - name: Restore sample input cache
+        uses: actions/cache@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-full-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Restore ANGLE device slice
-        uses: actions/cache/restore@v4
+        uses: actions/cache@v4
         with:
           path: |
             build/iphoneos/angle-v2.1.28252
             build/iphoneos/angle-xcframeworks-v2.1.28252.zip
           key: agr-angle-iphoneos-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Restore Rust interpreter build
+        uses: actions/cache@v4
+        with:
+          path: |
+            Runtime/ArmInterpreter/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-iphoneos-aarch64-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
       - name: Build arm64 iphoneos Runtime
         run: bash scripts/build-iphoneos.sh
+      - name: Upload signable iphoneos artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agr-iphoneos-arm64-unsigned
+          path: |
+            build/iphoneos/AGRDevice-unsigned.ipa
+            build/iphoneos/build-identity.txt
+          if-no-files-found: error
 
   closure-evidence:
     if: ${{ always() && inputs.run_kind == 'closure' }}

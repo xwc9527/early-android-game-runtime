@@ -861,13 +861,16 @@ static DxResult activity_get_intent(DxVM *vm, DxFrame *frame, DxValue *args, uin
         opcode = vm->invoke_site_opcode;
         method_idx = vm->invoke_site_method_idx;
     }
+    /* Witness only. The returned Intent is still the _intent field. */
+    DxExecutionContext *exec = vm ? dx_vm_current_exec(vm) : NULL;
+    uint32_t exec_id = exec ? exec->id : 0;
     snprintf(text, sizeof(text),
-             "get a=%llu field=%llu ret=%llu launch=%llu e=0 p=%u o=%u m=%u",
+             "get a=%llu field=%llu ret=%llu launch=%llu e=%u p=%u o=%u m=%u",
              (unsigned long long)(uintptr_t)activity,
              (unsigned long long)(uintptr_t)intent,
              (unsigned long long)(uintptr_t)(frame->result.obj),
              (unsigned long long)(uintptr_t)(game ? game->intent : NULL),
-             pc, opcode, method_idx);
+             exec_id, pc, opcode, method_idx);
     note_intent_event(game, text);
     if (frame->caller && frame->caller->method && frame->caller->method->name &&
         frame->caller->method->declaring_class &&

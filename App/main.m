@@ -1,5 +1,15 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
+#import <CommonCrypto/CommonDigest.h>
+#import <TargetConditionals.h>
+#if __has_include("agr_build_identity.h")
+#include "agr_build_identity.h"
+#endif
+#ifndef AGR_BUILD_COMMIT
+#define AGR_BUILD_COMMIT "unknown"
+#define AGR_BUILD_TREE "unknown"
+#define AGR_BUILD_BRANCH "unknown"
+#endif
 #include "../Tests/Conformance/agr_contracts.h"
 #include <stdint.h>
 #include <stdlib.h>
@@ -1226,6 +1236,20 @@ static BOOL gDispatchContentHold = NO;
 static int gDispatchContentPolls = 0;
 static BOOL gDispatchOwnerGraph = NO;
 static CADisplayLink *gDispatchLink = nil;
+static CADisplayLink *gPhysicalLink = nil;
+static agr_dex_game *gPhysicalGame = NULL;
+static agr_apk_package *gPhysicalPackage = NULL;
+static uint32_t gPhysicalVsync = 0;
+static uint32_t gPhysicalWidth = 0;
+static uint32_t gPhysicalHeight = 0;
+static int gPhysicalStart = -1;
+static BOOL gPhysicalFinished = NO;
+static BOOL gPhysicalContentHold = NO;
+static int gPhysicalPolls = 0;
+static NSString *gPhysicalApkPath = nil;
+static NSString *gPhysicalSha = nil;
+static NSString *gPhysicalError = nil;
+static void armPhysicalRuntime(uint32_t width, uint32_t height);
 
 static NSDictionary *syntheticTraversalDispatchContract(uint32_t width, uint32_t height) {
     NSString *fixturePath=[[NSBundle mainBundle] pathForResource:@"activity-launch-fixture" ofType:@"dex"];
@@ -1666,12 +1690,24 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     BOOL frameworkRuntimeContinuation=[arguments containsObject:@"--framework-viewroot-attach-discovery"];
     BOOL firstTraversalDiscovery=[arguments containsObject:@"--framework-first-traversal-discovery"];
     BOOL traversalDispatch=[arguments containsObject:@"--framework-traversal-dispatch-discovery"];
+    BOOL physicalRuntime=NO;
 #if AGR_DEVICE_INTERACTIVE
-    interactive=YES;
+    physicalRuntime=![arguments containsObject:@"--interactive"];
+    if (!physicalRuntime) interactive=YES;
+#else
+    physicalRuntime=[arguments containsObject:@"--physical-runtime-validation"];
 #endif
-    UIViewController *controller = interactive ? [AGRDebugController new] : [UIViewController new]; controller.view.backgroundColor = UIColor.blackColor;
+    UIViewController *controller = (interactive && !physicalRuntime) ? [AGRDebugController new] : [UIViewController new]; controller.view.backgroundColor = UIColor.blackColor;
     self.window.rootViewController = controller; [self.window makeKeyAndVisible];
     CGSize displayPixels=UIScreen.mainScreen.nativeBounds.size;
+    if (physicalRuntime) {
+      gPhysicalLink=[CADisplayLink displayLinkWithTarget:self selector:@selector(hostPhysicalVsync:)];
+      [gPhysicalLink addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
+      gPhysicalLink.paused=YES;
+      uint32_t width=(uint32_t)displayPixels.width, height=(uint32_t)displayPixels.height;
+      dispatch_async(dispatch_get_main_queue(),^{ @autoreleasepool { armPhysicalRuntime(width,height); } });
+      return YES;
+    }
     if(!interactive && traversalDispatch){
       gDispatchLink=[CADisplayLink displayLinkWithTarget:self selector:@selector(hostTraversalVsync:)];
       [gDispatchLink addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
@@ -1720,6 +1756,229 @@ static void pollContentFrameReport(void) {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1*NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{ pollContentFrameReport(); });
 }
+static NSString *sha256File(NSString *path) {
+    NSData *data=path ? [NSData dataWithContentsOfFile:path] : nil;
+    unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+    NSMutableString *text;
+    if (!data || data.length > UINT32_MAX) return @"";
+    CC_SHA256(data.bytes, (CC_LONG)data.length, digest);
+    text=[NSMutableString stringWithCapacity:CC_SHA256_DIGEST_LENGTH*2];
+    for (int i=0;i<CC_SHA256_DIGEST_LENGTH;i++) [text appendFormat:@"%02x", digest[i]];
+    return text;
+}
+
+static NSString *frozenBubbleApkPath(void) {
+    NSString *bundled=[[NSBundle mainBundle] pathForResource:@"sample--frozen-bubble" ofType:@"apk"];
+    NSString *documents=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/org.jfedor.frozenbubble_8.apk"];
+    if (bundled.length) return bundled;
+    if ([[NSFileManager defaultManager] fileExistsAtPath:documents]) return documents;
+    return nil;
+}
+
+static void vectorWitnesses(DxVM *vm, NSString **sizeText, NSString **elementClass,
+                            NSString **paintText, BOOL *paintReached) {
+    uint32_t count=vm ? dx_vm_vector_trace_count(vm) : 0;
+    int haveSize=0;
+    int32_t sizeValue=0;
+    NSString *element=@"";
+    BOOL paint=NO;
+    NSString *paintWitness=@"";
+    uint32_t after;
+    uint32_t i;
+    for (i=0;i<count;i++) {
+        DxVectorTrace trace;
+        if (dx_vm_copy_vector_trace(vm, i, &trace)!=0) continue;
+        if (strcmp(trace.method, "size")==0 && trace.has_ret) {
+            haveSize=1;
+            sizeValue=trace.ret_i;
+        }
+        if (strcmp(trace.method, "elementAt")==0 && trace.ret_class[0]) {
+            if (!element.length || strstr(trace.ret_class, "PenguinSprite"))
+                element=[NSString stringWithUTF8String:trace.ret_class];
+        }
+    }
+    after=vm ? dx_vm_vector_after_element_count(vm) : 0;
+    for (i=0;i<after;i++) {
+        DxInvokeWitness witness;
+        if (dx_vm_copy_vector_after_element(vm, i, &witness)!=0) continue;
+        if (strcmp(witness.target_name, "paint")==0 && strstr(witness.recv_class, "PenguinSprite")) {
+            paint=YES;
+            paintWitness=[NSString stringWithFormat:@"exec=%u caller=%s recv=%s target=%s",
+                          witness.exec_id, witness.caller, witness.recv_class, witness.target_name];
+        }
+    }
+    *sizeText=haveSize ? [NSString stringWithFormat:@"%d", sizeValue] : @"";
+    *elementClass=element;
+    *paintText=paintWitness;
+    *paintReached=paint;
+}
+
+static void finishPhysicalReport(void) {
+    agr_dex_runtime_snapshot snapshot={0};
+    DxVM *vm=gPhysicalGame ? agr_dex_game_vm(gPhysicalGame) : NULL;
+    NSMutableArray *contexts=[NSMutableArray array];
+    NSString *vectorSize=@"";
+    NSString *elementClass=@"";
+    NSString *paintWitness=@"";
+    BOOL paintReached=NO;
+    BOOL contentProduced;
+    BOOL contentPosted;
+    NSString *documents;
+    NSData *json;
+    uint32_t contextCount;
+    uint32_t i;
+    if (gPhysicalFinished) return;
+    gPhysicalFinished=YES;
+    if (gPhysicalLink) { [gPhysicalLink invalidate]; gPhysicalLink=nil; }
+    if (gPhysicalGame) agr_dex_game_runtime_snapshot(gPhysicalGame, &snapshot);
+    vectorWitnesses(vm, &vectorSize, &elementClass, &paintWitness, &paintReached);
+    contextCount=vm ? dx_vm_unresolved_context_count(vm) : 0;
+    for (i=0;i<contextCount;i++) {
+        DxUnresolvedContextInfo info;
+        NSMutableArray *events=[NSMutableArray array];
+        uint32_t event;
+        if (dx_vm_copy_unresolved_context(vm, i, &info)!=0) continue;
+        for (event=0;event<info.count;event++) {
+            DxInvokeWitness witness;
+            if (dx_vm_copy_unresolved_event(vm, i, event, &witness)!=0) continue;
+            [events addObject:@{
+                @"exec":@(witness.exec_id),
+                @"pc":@(witness.pc),
+                @"class":[NSString stringWithUTF8String:witness.target_class],
+                @"method":[NSString stringWithUTF8String:witness.target_name],
+                @"shorty":[NSString stringWithUTF8String:witness.shorty]
+            }];
+        }
+        [contexts addObject:@{@"exec":@(info.exec_id), @"count":@(info.count),
+                              @"dropped":@(info.dropped), @"events":events}];
+    }
+    contentProduced=snapshot.canvas_lock_count>0 && snapshot.canvas_draw_bitmap_count>0 &&
+        snapshot.canvas_pixel_change_count>0 &&
+        snapshot.canvas_buffer_hash_before!=snapshot.canvas_buffer_hash_after;
+    contentPosted=snapshot.canvas_unlock_count>0 && snapshot.canvas_post_count>0;
+    NSDictionary *report=@{
+        @"schema":@"agr.physical-runtime.v1",
+        @"branch":@AGR_BUILD_BRANCH,
+        @"commit":@AGR_BUILD_COMMIT,
+        @"tree":@AGR_BUILD_TREE,
+        @"device_platform":@"iphoneos",
+        @"iphoneos":@YES,
+#if TARGET_OS_SIMULATOR
+        @"architecture":@"arm64-simulator",
+#else
+        @"architecture":@"arm64",
+#endif
+        @"apk_package":gPhysicalPackage ? [NSString stringWithUTF8String:agr_apk_package_name(gPhysicalPackage)] : @"",
+        @"apk_path":gPhysicalApkPath ?: @"",
+        @"apk_sha256":gPhysicalSha ?: @"",
+        @"apk_sha256_expected":@"57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569",
+        @"apk_opened":@(gPhysicalPackage!=NULL),
+        @"activity_launch_stage":launchStageName(gPhysicalGame ? agr_dex_game_launch_stage(gPhysicalGame) : AGR_ACTIVITY_LAUNCH_NONE),
+        @"launch_result":@(gPhysicalStart),
+        @"process_alive":@YES,
+        @"execution_contexts":contexts,
+        @"game_thread_exec":@(snapshot.canvas_lock_owner_exec),
+        @"game_thread_host":[NSString stringWithFormat:@"%llu", (unsigned long long)snapshot.canvas_lock_owner_host],
+        @"surface_created":@(snapshot.content_surface_created_count),
+        @"surface_changed":@(snapshot.content_surface_changed_count),
+        @"content_surface_valid":@(snapshot.content_surface_valid!=0),
+        @"content_surface_identity":[NSString stringWithFormat:@"%llu", (unsigned long long)snapshot.content_surface_identity],
+        @"root_surface_identity":[NSString stringWithFormat:@"%llu", (unsigned long long)snapshot.root_surface_identity],
+        @"content_surface_generation":@(snapshot.content_surface_generation),
+        @"width":@(snapshot.content_surface_width),
+        @"height":@(snapshot.content_surface_height),
+        @"format":@(snapshot.content_surface_format),
+        @"lock_count":@(snapshot.canvas_lock_count),
+        @"unlock_count":@(snapshot.canvas_unlock_count),
+        @"post_count":@(snapshot.canvas_post_count),
+        @"draw_bitmap_count":@(snapshot.canvas_draw_bitmap_count),
+        @"pixel_change_count":@(snapshot.canvas_pixel_change_count),
+        @"hash_before":[NSString stringWithFormat:@"%016llx", (unsigned long long)snapshot.canvas_buffer_hash_before],
+        @"hash_after":[NSString stringWithFormat:@"%016llx", (unsigned long long)snapshot.canvas_buffer_hash_after],
+        @"vector_size":vectorSize,
+        @"element_at_class":elementClass,
+        @"penguin_sprite_paint":@(paintReached),
+        @"penguin_sprite_paint_witness":paintWitness,
+        @"unresolved_contexts":contexts,
+        @"pending_exception":@(snapshot.pending_exception!=0),
+        @"exception_class":[NSString stringWithUTF8String:snapshot.exception_class],
+        @"runtime_error":gPhysicalError ? gPhysicalError : (gPhysicalGame ? [NSString stringWithUTF8String:agr_dex_game_launch_error(gPhysicalGame)] : @"apk_unavailable"),
+        @"vm_error":[NSString stringWithUTF8String:snapshot.error],
+        @"harness_called_do_traversal":@NO,
+        @"harness_called_render_api":@NO,
+        @"frame_owner":@"CADisplayLink",
+        @"host_vsync_count":@(gPhysicalVsync),
+        @"display_width":@(gPhysicalWidth),
+        @"display_height":@(gPhysicalHeight),
+        @"content_produced":contentProduced ? @"YES" : @"NO",
+        @"content_posted":contentPosted ? @"YES" : @"NO",
+        @"screen_presented":@"NOT_TESTED"
+    };
+    json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted error:nil];
+    documents=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+    [[NSFileManager defaultManager] createDirectoryAtPath:documents withIntermediateDirectories:YES attributes:nil error:nil];
+    [json writeToFile:[documents stringByAppendingPathComponent:@"agr-physical-runtime.json"] atomically:YES];
+    if (gPhysicalGame) agr_dex_game_destroy(gPhysicalGame);
+    gPhysicalGame=NULL;
+    if (gPhysicalPackage) agr_apk_package_close(gPhysicalPackage);
+    gPhysicalPackage=NULL;
+}
+
+static void pollPhysicalReport(void) {
+    agr_dex_runtime_snapshot snapshot={0};
+    int posted;
+    if (gPhysicalFinished || !gPhysicalGame) return;
+    agr_dex_game_runtime_snapshot(gPhysicalGame, &snapshot);
+    posted=snapshot.canvas_lock_count>0 && snapshot.canvas_draw_bitmap_count>0 &&
+        snapshot.canvas_pixel_change_count>0 && snapshot.canvas_post_count>0 &&
+        snapshot.canvas_buffer_hash_before!=snapshot.canvas_buffer_hash_after;
+    if (posted || gPhysicalPolls>=80) {
+        finishPhysicalReport();
+        return;
+    }
+    gPhysicalPolls++;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1*NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{ pollPhysicalReport(); });
+}
+
+static void armPhysicalRuntime(uint32_t width, uint32_t height) {
+    static NSString *const expected=@"57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569";
+    gPhysicalWidth=width;
+    gPhysicalHeight=height;
+    gPhysicalApkPath=frozenBubbleApkPath();
+    gPhysicalSha=sha256File(gPhysicalApkPath);
+    if (![gPhysicalSha isEqualToString:expected]) {
+        gPhysicalError=gPhysicalApkPath.length ? @"apk_sha256_mismatch" : @"apk_missing";
+        gPhysicalStart=-1;
+        finishPhysicalReport();
+        return;
+    }
+    gPhysicalPackage=agr_apk_package_open(gPhysicalApkPath.UTF8String);
+    gPhysicalGame=gPhysicalPackage ? agr_dex_game_create_from_apk(gPhysicalPackage) : NULL;
+    if (gPhysicalGame) agr_dex_game_enable_diagnostics(gPhysicalGame, 1);
+    if (gPhysicalGame) agr_dex_game_set_host_display(gPhysicalGame, width, height);
+    gPhysicalStart=gPhysicalGame ? agr_dex_game_start_activity(gPhysicalGame) : -1;
+    if (gPhysicalStart!=0 || !gPhysicalLink) finishPhysicalReport();
+    else gPhysicalLink.paused=NO;
+}
+
+- (void)hostPhysicalVsync:(CADisplayLink *)link {
+    (void)link;
+    if (!gPhysicalGame || gPhysicalFinished || gPhysicalContentHold) return;
+    gPhysicalVsync++;
+    int result=agr_dex_game_choreographer_frame(gPhysicalGame);
+    agr_dex_runtime_snapshot snapshot={0};
+    agr_dex_game_runtime_snapshot(gPhysicalGame, &snapshot);
+    if (result<0 || gPhysicalVsync>=4) {
+        finishPhysicalReport();
+        return;
+    }
+    if (snapshot.traversal_count>=2) {
+        gPhysicalContentHold=YES;
+        pollPhysicalReport();
+    }
+}
+
 - (void)hostTraversalVsync:(CADisplayLink *)link {
     (void)link;
     if (!gDispatchGame || gDispatchFinished || gDispatchContentHold) return;
