@@ -39,8 +39,8 @@
     }
   ],
   "earliest_evidenced_divergence": "API19 Character.forDigit returns a digit character for radix 2..36 and a digit in range. AGR had no method, so the invoke returned null.",
-  "causal_status": "CONTRACT_CONFIRMED",
-  "evidence_level": "CONTRACT_CONFIRMED",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
   "evidence": [
     {
       "type": "SOURCE",
@@ -49,14 +49,18 @@
     {
       "type": "CONTRACT",
       "artifact": "Linux character-fordigit-host PASS. forDigit(0,10) is 48, forDigit(9,10) is 57, forDigit(10,10) is 0, forDigit(-1,10) is 0, forDigit(0,2) is 48, forDigit(1,2) is 49, forDigit(10,16) is 97, forDigit(15,16) is 102, forDigit(35,36) is 122, forDigit(36,36) is 0, forDigit(1,1) is 0, forDigit(1,37) is 0, forDigit(0,36) is 48. The registered method is static native shorty CII."
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "Local unchanged Frozen Bubble APK org.jfedor.frozenbubble_8 sha256 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569, Linux host 320x480, diagnostics enabled. After three host frames and 300ms: surfaceCreated 1, surfaceChanged 1, lock 6, post 6, draw_bitmap 18. Six Character.forDigit calls on execution context 1. Each is caller Lorg/jfedor/frozenbubble/GameView$GameThread;.drawLevelNumber pc 18 opcode 0x71 invoke-static method_idx 82 shorty CII, arguments digit 1 radix 10, return tag INT value 49 ('1'). The next guest invoke is BubbleFont.paintChar pc 10 opcode 0x70 invoke-direct method_idx 119 BubbleFont.getCharIndex shorty IC, argument char 49, return 16. The earliest unresolved invoke after that return is Sprite.drawImageClipped pc 1 opcode 0x6e invoke-virtual method_idx 36 Landroid/graphics/Canvas;.save shorty II. This probe is not a new Simulator run."
     }
   ],
   "remaining_uncertainty": [
-    "The next guest call after forDigit was not re-probed on the Frozen Bubble APK or on Simulator.",
     "MIN_RADIX and MAX_RADIX fields are not registered. This call site passes the radix as an immediate.",
-    "This contract does not change the confirmed Simulator content frame on discovery 35711118165."
+    "The earliest unresolved API after forDigit is Canvas.save. clipRect and restore follow in the same Sprite.drawImageClipped method. java.util.Vector.size is later and is not the earliest blocker.",
+    "This confirmation does not change the Simulator content frame on discovery 35711118165."
   ],
-  "next_action": "Do not rerun the content-frame Simulator question for forDigit. Do not implement the next guest API until a probe shows it.",
+  "next_action": "Do not implement Canvas.save, clipRect, or restore in this phase. They are the next graphics boundary. Do not rerun the content-frame Simulator for forDigit.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "native_character_fordigit writes the char into the int result register. It does not allocate a Character object and does not change Canvas, Bitmap, or Thread."

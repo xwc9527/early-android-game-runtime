@@ -6932,3 +6932,137 @@ void dx_vm_set_telemetry_enabled(DxVM *vm, bool enabled) {
     if (!vm) return;
     vm->telemetry.telemetry_enabled = enabled;
 }
+
+static void witness_fill(DxInvokeWitness *w, DxVM *vm, DxFrame *frame, uint32_t pc,
+                         uint8_t opcode, uint32_t method_idx, const DxValue *args, uint8_t argc) {
+    const char *caller_cls = "?";
+    const char *caller_name = "?";
+    uint8_t n;
+    memset(w, 0, sizeof(*w));
+    w->exec_id = dx_vm_current_exec(vm) ? dx_vm_current_exec(vm)->id : 0;
+    w->pc = pc;
+    w->opcode = opcode;
+    w->method_idx = method_idx;
+    n = argc > 4 ? 4 : argc;
+    w->argc = n;
+    for (uint8_t i = 0; i < n; i++) {
+        w->arg_tag[i] = args ? (uint8_t)args[i].tag : 0;
+        w->arg_i[i] = args ? args[i].i : 0;
+    }
+    if (frame && frame->method) {
+        if (frame->method->declaring_class && frame->method->declaring_class->descriptor)
+            caller_cls = frame->method->declaring_class->descriptor;
+        if (frame->method->name) caller_name = frame->method->name;
+    }
+    snprintf(w->caller, sizeof(w->caller), "%s.%s", caller_cls, caller_name);
+}
+
+static void witness_target_from_dex(DxInvokeWitness *w, DxFrame *frame, uint32_t method_idx) {
+    DxDexFile *dex = NULL;
+    const char *cls = NULL;
+    const char *name = NULL;
+    const char *shorty = NULL;
+    if (frame && frame->method && frame->method->declaring_class)
+        dex = frame->method->declaring_class->dex_file;
+    if (!dex) return;
+    cls = dx_dex_get_method_class(dex, method_idx);
+    name = dx_dex_get_method_name(dex, method_idx);
+    shorty = dx_dex_get_method_shorty(dex, method_idx);
+    snprintf(w->target_class, sizeof(w->target_class), "%s", cls ? cls : "?");
+    snprintf(w->target_name, sizeof(w->target_name), "%s", name ? name : "?");
+    snprintf(w->shorty, sizeof(w->shorty), "%s", shorty ? shorty : "?");
+}
+
+static int witness_is_fordigit(const DxMethod *target) {
+    if (!target || !target->name || strcmp(target->name, "forDigit") != 0) return 0;
+    if (!target->declaring_class || !target->declaring_class->descriptor) return 0;
+    return strcmp(target->declaring_class->descriptor, "Ljava/lang/Character;") == 0;
+}
+
+void dx_vm_witness_unresolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                              uint32_t method_idx, const DxValue *args, uint8_t argc) {
+    DxInvokeWitness *slot;
+    if (!vm || !vm->telemetry.telemetry_enabled) return;
+    if (vm->witness_fordigit_count == 0) return;
+    if (vm->witness_unresolved_after_count >= 6) {
+        if (vm->witness_want_continuation) vm->witness_want_continuation = 0;
+        return;
+    }
+    slot = &vm->witness_unresolved_after[vm->witness_unresolved_after_count++];
+    witness_fill(slot, vm, frame, pc, opcode, method_idx, args, argc);
+    slot->resolved = 0;
+    witness_target_from_dex(slot, frame, method_idx);
+    if (vm->witness_want_continuation && !vm->witness_continuation_set) {
+        vm->witness_continuation = *slot;
+        vm->witness_continuation_set = 1;
+        vm->witness_want_continuation = 0;
+    }
+}
+
+void dx_vm_witness_resolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                            uint32_t method_idx, DxMethod *target, const DxValue *args,
+                            uint8_t argc, const DxValue *result, int has_result) {
+    if (!vm || !vm->telemetry.telemetry_enabled || !target) return;
+    if (witness_is_fordigit(target)) {
+        DxInvokeWitness *slot;
+        if (vm->witness_fordigit_count >= 8) return;
+        slot = &vm->witness_fordigit[vm->witness_fordigit_count++];
+        witness_fill(slot, vm, frame, pc, opcode, method_idx, args, argc);
+        slot->resolved = 1;
+        snprintf(slot->target_class, sizeof(slot->target_class), "%s",
+                 target->declaring_class && target->declaring_class->descriptor
+                     ? target->declaring_class->descriptor : "?");
+        snprintf(slot->target_name, sizeof(slot->target_name), "%s", target->name);
+        snprintf(slot->shorty, sizeof(slot->shorty), "%s", target->shorty ? target->shorty : "?");
+        if (has_result && result) {
+            slot->has_ret = 1;
+            slot->ret_tag = (uint8_t)result->tag;
+            slot->ret_i = result->i;
+        }
+        if (!vm->witness_continuation_set) vm->witness_want_continuation = 1;
+        return;
+    }
+    if (!vm->witness_want_continuation || vm->witness_continuation_set) return;
+    witness_fill(&vm->witness_continuation, vm, frame, pc, opcode, method_idx, args, argc);
+    vm->witness_continuation.resolved = 1;
+    snprintf(vm->witness_continuation.target_class, sizeof(vm->witness_continuation.target_class), "%s",
+             target->declaring_class && target->declaring_class->descriptor
+                 ? target->declaring_class->descriptor : "?");
+    snprintf(vm->witness_continuation.target_name, sizeof(vm->witness_continuation.target_name), "%s",
+             target->name ? target->name : "?");
+    snprintf(vm->witness_continuation.shorty, sizeof(vm->witness_continuation.shorty), "%s",
+             target->shorty ? target->shorty : "?");
+    if (has_result && result) {
+        vm->witness_continuation.has_ret = 1;
+        vm->witness_continuation.ret_tag = (uint8_t)result->tag;
+        vm->witness_continuation.ret_i = result->i;
+    }
+    vm->witness_continuation_set = 1;
+    vm->witness_want_continuation = 0;
+}
+
+uint32_t dx_vm_witness_fordigit_count(const DxVM *vm) {
+    return vm ? vm->witness_fordigit_count : 0;
+}
+
+int dx_vm_copy_witness_fordigit(const DxVM *vm, uint32_t index, DxInvokeWitness *out) {
+    if (!vm || !out || index >= vm->witness_fordigit_count) return -1;
+    *out = vm->witness_fordigit[index];
+    return 0;
+}
+
+int dx_vm_copy_witness_continuation(const DxVM *vm, DxInvokeWitness *out) {
+    if (!vm || !out || !vm->witness_continuation_set) return -1;
+    *out = vm->witness_continuation;
+    return 0;
+}
+
+uint32_t dx_vm_witness_unresolved_after_count(const DxVM *vm) {
+    return vm ? vm->witness_unresolved_after_count : 0;
+}
+
+int dx_vm_copy_witness_unresolved_after(const DxVM *vm, uint32_t index, DxInvokeWitness *out) {
+    if (!vm || !out || index >= vm->witness_unresolved_after_count) return -1;
+    *out = vm->witness_unresolved_after[index];
+    return 0;
+}

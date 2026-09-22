@@ -30,10 +30,10 @@
     "causal_status": "REAL_GAME_CONFIRMED",
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "Character.forDigit host contract on the game VM. Do not start another content-frame Simulator run for that method. Do not claim visual completeness or presentation.",
-    "primary_blocker": "No content-frame blocker remains. Discovery 35711118165 confirmed drawBitmap, pixel mutation, and post. Character.forDigit is implemented. The next guest call after forDigit was not re-probed.",
-    "first_broken_boundary": "none for the confirmed first content frame",
-    "first_broken_boundary_evidence": "Discovery 35711118165 commit 4f229c5b91653f6ca0f1d95bc23de40a29e0998a, unchanged Frozen Bubble, UIKit CADisplayLink, display 1206x2622. harness_called_do_traversal false, harness_called_render_api false, surfaceCreated 1, surfaceChanged 1, lock_count 1, draw_bitmap_count 2, pixel_change_count 3450366, post_count 1, hash_before 12442867522110196069, hash_after 3039551882826320397, bitmap res/drawable/background.jpg 3496x2622. FIRST_CONTENT_FRAME is SIMULATOR_CONFIRMED."
+    "next_validation": "Do not implement Canvas.save, clipRect, or restore in this phase. Do not rerun the content-frame Simulator for Character.forDigit.",
+    "primary_blocker": "After Character.forDigit returns, Sprite.drawImageClipped pc 1 invoke-virtual method_idx 36 calls unresolved Canvas.save shorty II.",
+    "first_broken_boundary": "Canvas.save on the guest draw path after Character.forDigit",
+    "first_broken_boundary_evidence": "Local unchanged Frozen Bubble org.jfedor.frozenbubble_8 sha256 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569, Linux 320x480. forDigit: exec 1, GameThread.drawLevelNumber pc 18 opcode 0x71 method_idx 82 shorty CII, args 1 and 10, return 49. Continuation: BubbleFont.paintChar pc 10 opcode 0x70 method_idx 119 getCharIndex shorty IC, arg char 49, return 16. Earliest unresolved after that return: Sprite.drawImageClipped pc 1 opcode 0x6e method_idx 36 Canvas.save shorty II. clipRect and restore follow in that method. Vector.size is later."
   },
   "ci_budget": {
     "valid_closure_runs": 1,

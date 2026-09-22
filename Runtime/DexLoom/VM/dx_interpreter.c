@@ -373,6 +373,12 @@ static DxResult handle_invoke(DxVM *vm, DxFrame *frame, const uint16_t *code,
         const char *mth_name = dx_dex_get_method_name(cur, method_idx);
         DX_WARN(TAG, "Cannot resolve method %s.%s - skipping",
                 cls_name ? cls_name : "?", mth_name ? mth_name : "?");
+        if (vm->telemetry.telemetry_enabled) {
+            DxValue missed[4];
+            uint8_t n = argc < 4 ? argc : 4;
+            for (uint8_t i = 0; i < n; i++) missed[i] = frame->registers[arg_regs[i]];
+            dx_vm_witness_unresolved(vm, frame, pc, opcode, method_idx, missed, n);
+        }
         frame->result = DX_NULL_VALUE;
         frame->has_result = true;
         return DX_OK;
@@ -628,6 +634,8 @@ static DxResult handle_invoke(DxVM *vm, DxFrame *frame, const uint16_t *code,
     DxValue call_result;
     memset(&call_result, 0, sizeof(call_result));
     DxResult res = dx_vm_execute_method(vm, target, call_args, argc, &call_result);
+    if (vm->telemetry.telemetry_enabled)
+        dx_vm_witness_resolved(vm, frame, pc, opcode, method_idx, target, call_args, argc, &call_result, 1);
 
     // Store result for move-result
     frame->result = call_result;
@@ -688,6 +696,15 @@ static DxResult handle_invoke_range(DxVM *vm, DxFrame *frame, const uint16_t *co
         const char *mth_name = dx_dex_get_method_name(cur, method_idx);
         DX_WARN(TAG, "Cannot resolve method %s.%s (range) - skipping",
                 cls_name ? cls_name : "?", mth_name ? mth_name : "?");
+        if (vm->telemetry.telemetry_enabled) {
+            DxValue missed[4];
+            uint8_t n = argc < 4 ? argc : 4;
+            for (uint8_t i = 0; i < n; i++) {
+                uint16_t reg = (uint16_t)(first_reg + i);
+                missed[i] = reg < DX_MAX_REGISTERS ? frame->registers[reg] : DX_INT_VALUE(0);
+            }
+            dx_vm_witness_unresolved(vm, frame, pc, opcode, method_idx, missed, n);
+        }
         frame->result = DX_NULL_VALUE;
         frame->has_result = true;
         return DX_OK;
@@ -925,6 +942,9 @@ static DxResult handle_invoke_range(DxVM *vm, DxFrame *frame, const uint16_t *co
     DxValue call_result;
     memset(&call_result, 0, sizeof(call_result));
     DxResult res = dx_vm_execute_method(vm, target, call_args, clamped_argc, &call_result);
+    if (vm->telemetry.telemetry_enabled)
+        dx_vm_witness_resolved(vm, frame, pc, opcode, method_idx, target, call_args, clamped_argc,
+                               &call_result, 1);
 
     frame->result = call_result;
     frame->has_result = true;

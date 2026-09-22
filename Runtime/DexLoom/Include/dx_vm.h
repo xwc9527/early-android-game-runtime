@@ -195,6 +195,25 @@ typedef struct {
 #define DX_DIAGNOSTIC_METHOD_TEXT 160
 #define DX_DIAGNOSTIC_METHOD_EVENTS 64
 
+/* One guest invoke observed while telemetry is enabled. */
+typedef struct DxInvokeWitness {
+    uint32_t exec_id;
+    uint32_t pc;
+    uint32_t method_idx;
+    uint8_t opcode;
+    uint8_t resolved;
+    uint8_t argc;
+    uint8_t ret_tag;
+    uint8_t has_ret;
+    int32_t arg_i[4];
+    uint8_t arg_tag[4];
+    int32_t ret_i;
+    char caller[96];
+    char target_class[96];
+    char target_name[48];
+    char shorty[24];
+} DxInvokeWitness;
+
 typedef struct {
     uint64_t sequence;
     uint32_t depth;
@@ -430,6 +449,16 @@ struct DxVM {
 
     // ── Telemetry (opt-in counters) ──
     DxTelemetry telemetry;
+
+    /* Opt-in invoke witness. Written only while telemetry is enabled.
+       Fixed capacity. Does not change guest-visible results. */
+    DxInvokeWitness witness_fordigit[8];
+    uint32_t witness_fordigit_count;
+    DxInvokeWitness witness_continuation;
+    int witness_continuation_set;
+    DxInvokeWitness witness_unresolved_after[6];
+    uint32_t witness_unresolved_after_count;
+    int witness_want_continuation;
 };
 
 // VM lifecycle
@@ -592,5 +621,15 @@ DxTelemetry dx_vm_get_telemetry(DxVM *vm);
 
 /// Enable or disable telemetry collection.
 void dx_vm_set_telemetry_enabled(DxVM *vm, bool enabled);
+void dx_vm_witness_unresolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                              uint32_t method_idx, const DxValue *args, uint8_t argc);
+void dx_vm_witness_resolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                            uint32_t method_idx, DxMethod *target, const DxValue *args,
+                            uint8_t argc, const DxValue *result, int has_result);
+uint32_t dx_vm_witness_fordigit_count(const DxVM *vm);
+int dx_vm_copy_witness_fordigit(const DxVM *vm, uint32_t index, DxInvokeWitness *out);
+int dx_vm_copy_witness_continuation(const DxVM *vm, DxInvokeWitness *out);
+uint32_t dx_vm_witness_unresolved_after_count(const DxVM *vm);
+int dx_vm_copy_witness_unresolved_after(const DxVM *vm, uint32_t index, DxInvokeWitness *out);
 
 #endif // DX_VM_H

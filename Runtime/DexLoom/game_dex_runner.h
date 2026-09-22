@@ -145,6 +145,7 @@ int agr_dex_game_resolve_method(agr_dex_game *game, const char *class_descriptor
                                 const char *name, const char *signature, int is_static);
 int agr_dex_game_start_activity(agr_dex_game *game);
 void agr_dex_game_enable_diagnostics(agr_dex_game *game, int enabled);
+struct DxVM *agr_dex_game_vm(const agr_dex_game *game);
 int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snapshot *snapshot);
 int agr_dex_game_post_resume_completed(const agr_dex_game *game);
 int agr_dex_game_viewroot_contract(agr_dex_game *game);

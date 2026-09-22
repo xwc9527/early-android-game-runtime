@@ -1,5 +1,6 @@
 /* Local unchanged-APK probe. Not a CI target: the APK is not in the repository. */
 #include "game_dex_runner.h"
+#include "dx_vm.h"
 #include "dx_log.h"
 #include <GLES2/gl2.h>
 #include <stdio.h>
@@ -14,6 +15,51 @@ void glTexParameteri(GLenum target, GLenum pname, GLint param) {
     (void)target; (void)pname; (void)param;
 }
 void glDeleteTextures(GLsizei n, const GLuint *textures) { (void)n; (void)textures; }
+
+static const char *opcode_name(uint8_t opcode) {
+    switch (opcode) {
+    case 0x6E: return "invoke-virtual";
+    case 0x6F: return "invoke-super";
+    case 0x70: return "invoke-direct";
+    case 0x71: return "invoke-static";
+    case 0x72: return "invoke-interface";
+    case 0x74: return "invoke-virtual/range";
+    case 0x75: return "invoke-super/range";
+    case 0x76: return "invoke-direct/range";
+    case 0x77: return "invoke-static/range";
+    case 0x78: return "invoke-interface/range";
+    default: return "invoke";
+    }
+}
+
+static void print_witness(const char *label, const DxInvokeWitness *w) {
+    printf("%s exec=%u caller=%s pc=%u opcode=0x%02x %s method_idx=%u "
+           "resolved=%u class=%s method=%s shorty=%s argc=%u "
+           "arg0=%d/%u arg1=%d/%u arg2=%d/%u arg3=%d/%u "
+           "has_ret=%u ret_tag=%u ret=%d\n",
+           label, w->exec_id, w->caller, w->pc, w->opcode, opcode_name(w->opcode),
+           w->method_idx, w->resolved, w->target_class, w->target_name, w->shorty, w->argc,
+           w->arg_i[0], w->arg_tag[0], w->arg_i[1], w->arg_tag[1],
+           w->arg_i[2], w->arg_tag[2], w->arg_i[3], w->arg_tag[3],
+           w->has_ret, w->ret_tag, w->ret_i);
+}
+
+static void print_witnesses(const agr_dex_game *game) {
+    DxVM *vm = agr_dex_game_vm(game);
+    uint32_t n = dx_vm_witness_fordigit_count(vm);
+    DxInvokeWitness w;
+    printf("fordigit_count=%u\n", n);
+    for (uint32_t i = 0; i < n; i++) {
+        if (dx_vm_copy_witness_fordigit(vm, i, &w) == 0) print_witness("FORDIGIT", &w);
+    }
+    if (dx_vm_copy_witness_continuation(vm, &w) == 0) print_witness("CONTINUATION", &w);
+    else printf("CONTINUATION none\n");
+    n = dx_vm_witness_unresolved_after_count(vm);
+    printf("unresolved_after_count=%u\n", n);
+    for (uint32_t i = 0; i < n; i++) {
+        if (dx_vm_copy_witness_unresolved_after(vm, i, &w) == 0) print_witness("UNRESOLVED", &w);
+    }
+}
 
 static void print_snapshot(const char *label, const agr_dex_runtime_snapshot *snapshot) {
     printf("%s stage_fields last=%s exception=%s error=%s created=%u changed=%u "
@@ -86,6 +132,7 @@ int main(int argc, char **argv) {
     usleep(300000);
     if (agr_dex_game_runtime_snapshot(game, &snapshot) == 0)
         print_snapshot("after_wait", &snapshot);
+    print_witnesses(game);
     agr_dex_game_destroy(game);
     agr_apk_package_close(package);
     printf("frozen probe: destroyed\n");

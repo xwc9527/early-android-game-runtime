@@ -2473,6 +2473,10 @@ void agr_dex_game_enable_diagnostics(agr_dex_game *game, int enabled) {
     dx_vm_set_telemetry_enabled(game->vm, enabled != 0);
 }
 
+struct DxVM *agr_dex_game_vm(const agr_dex_game *game) {
+    return game ? game->vm : NULL;
+}
+
 int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snapshot *snapshot) {
     if (!game || !game->vm || !snapshot) return -1;
     DxVM *vm=game->vm;
