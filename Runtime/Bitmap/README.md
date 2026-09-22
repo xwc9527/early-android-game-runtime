@@ -18,6 +18,15 @@ Android 4.4.4 zlib tree.
 build-wide configuration and preserves Android's little-endian RGBA
 `SkPMColor` layout.  It does not alter the PNG decoder.
 
-Only ARGB_8888 decode/upload is exposed for now.  Bitmap scaling, reuse,
-nine-patch handling, Java density transforms, and non-PNG codec registration
-remain outside this module until a real call path requires them.
+Decode targets `SkBitmap::kARGB_8888_Config`. With `host_skia_config.h`
+(`SK_R32_SHIFT=0`), `agr_bitmap_pixels()` is little-endian RGBA byte order
+(R, G, B, A). Index8 and RGB565 decodes are expanded to 8888 before return.
+JPEG and GIF registration use host wrappers under `Runtime/Bitmap/host/` that
+avoid linking full `SkCanvas` and adapt giflib5 close signatures.
+
+`agr_bitmap_draw` blits source pixels onto a raw destination buffer with
+floor(left/top), destination clipping, and SRC_OVER. It is the thin host helper
+behind DEX `Canvas.drawBitmap(Bitmap,float,float,Paint)` with null Paint.
+Bitmap scaling, reuse, nine-patch handling, Java density transforms, non-null
+Paint attributes, and a full Android Canvas remain outside this module until a
+real call path requires them.

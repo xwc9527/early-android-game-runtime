@@ -100,6 +100,7 @@ typedef struct {
     uint64_t canvas_buffer_hash_before;
     uint64_t canvas_buffer_hash_after;
     uint32_t canvas_pixel_change_count;
+    uint32_t canvas_draw_bitmap_count;
     char content_surface_exception[160];
     char last_method[160];
     char exception_class[160];

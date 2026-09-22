@@ -81,7 +81,7 @@
     "surfaceCreated and performDraw are not a first frame.",
     "The scaleFrom NullPointerException on this run followed GameThread.cleanUp clearing bitmap fields. The mismatched invoke was Thread.start, recorded in framework-dex-virtual-dispatch.json."
   ],
-  "next_action": "Do not rerun discovery 35683118511 and do not reopen SurfaceView. lockCanvas is framework-surface-holder-canvas.json.",
+  "next_action": "Do not rerun discovery 35683118511 and do not reopen SurfaceView. lockCanvas is framework-surface-holder-canvas.json. First content frame is framework-canvas-bitmap.json.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "The child Surface is an in-process buffer owned by the SurfaceView holder. It is not the ViewRoot window Surface and it is not a SurfaceFlinger child window. IWindowSession.addToDisplayWithoutInputChannel is not a separate process. A callback exception is recorded and cleared so the host Decor performDraw still runs."

@@ -14,6 +14,10 @@ on:
       - 'Tests/DexLoom/make_thread_start_fixture.py'
       - 'Tests/DexLoom/surface-canvas-host.c'
       - 'Tests/DexLoom/make_surface_canvas_fixture.py'
+      - 'Tests/DexLoom/agr-bitmap-draw-host.c'
+      - 'Tests/DexLoom/fixtures/**'
+      - 'Runtime/Bitmap/**'
+      - 'scripts/build-agr-bitmap-host.sh'
       - 'scripts/build-and-run-simulator.sh'
       - 'ci/framework-traversal-dispatch-contract.py'
       - 'ci/build-framework-traversal-dispatch-summary.py'
@@ -38,16 +42,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install GLES headers
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq libgles2-mesa-dev zlib1g-dev
+      - name: Install GLES headers and image codecs
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libgles2-mesa-dev zlib1g-dev libjpeg-dev libgif-dev g++
       - name: Compile and run the host traversal-dispatch contract
         run: |
           set -euo pipefail
           python3 Tests/DexLoom/make_activity_launch_fixture.py /tmp/activity-launch-fixture.dex
           python3 Tests/DexLoom/make_surface_callback_fixture.py /tmp/surface-callback-fixture.dex /tmp/surface-layouts
-          mkdir -p /tmp/agr-dispatch-obj
+          mkdir -p /tmp/agr-dispatch-obj /tmp/agr-bitmap-host
+          bash scripts/build-agr-bitmap-host.sh /tmp/agr-bitmap-host
+          mapfile -t BITMAP_OBJS < /tmp/agr-bitmap-host/objects.list
           DEX=Runtime/DexLoom
-          COMMON=(-std=gnu11 -O1 -I "$DEX/Include" -I "$DEX" -I Vendor/ANGLE-Headers -DGL_GLES_PROTOTYPES=1)
+          BITMAP=Runtime/Bitmap
+          COMMON=(-std=gnu11 -O1 -I "$DEX/Include" -I "$DEX" -I "$BITMAP" -I Vendor/ANGLE-Headers -DGL_GLES_PROTOTYPES=1)
           for source in \
             "$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" \
             "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" \
@@ -62,7 +69,7 @@ jobs:
             -o /tmp/agr-dispatch-obj/game_dex_runner.o
           cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/framework-traversal-dispatch-host.c \
             -o /tmp/agr-dispatch-obj/framework-traversal-dispatch-host.o
-          cc -pthread /tmp/agr-dispatch-obj/*.o -lz -lm -o /tmp/agr-dispatch-host
+          g++ -pthread /tmp/agr-dispatch-obj/*.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/agr-dispatch-host
           /tmp/agr-dispatch-host /tmp/activity-launch-fixture.dex /tmp/traversal-dispatch-host.json /tmp/surface-callback-fixture.dex /tmp/surface-layouts
           python3 ci/framework-traversal-dispatch-contract.py /tmp/traversal-dispatch-host.json
           python3 Tests/DexLoom/make_vtable_inheritance_fixture.py /tmp/vtable-inheritance.dex
@@ -86,20 +93,28 @@ jobs:
           python3 Tests/DexLoom/make_surface_canvas_fixture.py /tmp/surface-canvas.dex /tmp/surface-canvas-layouts
           cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/surface-canvas-host.c \
             -o /tmp/surface-canvas-host.o
-          cc -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+          g++ -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
             /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
             /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
             /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
             /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
             /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
-            /tmp/surface-canvas-host.o -lz -lm -o /tmp/surface-canvas-host
+            /tmp/surface-canvas-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/surface-canvas-host
           /tmp/surface-canvas-host /tmp/surface-canvas.dex /tmp/surface-canvas-layouts/canvas.xml
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/agr-bitmap-draw-host.c \
+            -o /tmp/agr-bitmap-draw-host.o
+          g++ -Wl,--gc-sections /tmp/agr-bitmap-draw-host.o "${BITMAP_OBJS[@]}" \
+            -ljpeg -lgif -lz -lm -lpthread -o /tmp/agr-bitmap-draw-host
+          /tmp/agr-bitmap-draw-host Tests/DexLoom/fixtures/fixture-2x2.png \
+            Tests/DexLoom/fixtures/fb-background.jpg Tests/DexLoom/fixtures/fb-bubble.gif
       - name: Verify API19 source, semantic differential and governance
         run: |
-          python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --require-valid framework.window.set_content_view --require-valid framework.view.surface_view --require-valid framework.view.surface_holder_canvas --require-valid dalvik.vm.vtable --require-valid dalvik.thread.start --verify-upstream --verify-only framework.viewroot.traversal_dispatch --verify-only framework.window.set_content_view --verify-only framework.view.surface_view --verify-only framework.view.surface_holder_canvas --verify-only dalvik.vm.vtable --verify-only dalvik.thread.start --output build/artifacts/traversal-dispatch-upstream-map.json
+          python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --require-valid framework.window.set_content_view --require-valid framework.view.surface_view --require-valid framework.view.surface_holder_canvas --require-valid framework.graphics.bitmap_decode_resource --require-valid framework.graphics.canvas_bitmap --require-valid dalvik.vm.vtable --require-valid dalvik.thread.start --verify-upstream --verify-only framework.viewroot.traversal_dispatch --verify-only framework.window.set_content_view --verify-only framework.view.surface_view --verify-only framework.view.surface_holder_canvas --verify-only framework.graphics.bitmap_decode_resource --verify-only framework.graphics.canvas_bitmap --verify-only dalvik.vm.vtable --verify-only dalvik.thread.start --output build/artifacts/traversal-dispatch-upstream-map.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-traversal-dispatch.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-surface-view.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-surface-holder-canvas.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-bitmap-decode-resource.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-canvas-bitmap.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-dex-virtual-dispatch.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-thread-start.json
           python3 ci/validate-governance.py --mode discovery

@@ -74,15 +74,12 @@
   ],
   "remaining_uncertainty": [
     "The Frozen Bubble probe is a local Linux host run. It is not Simulator discovery and not a device run.",
-    "No guest draw wrote the content buffer. post_count increments do not make a frame.",
-    "Canvas.drawBitmap has no pixel blit yet. BitmapFactory.decodeResource still stores a path and dimensions, not pixels.",
-    "Character.forDigit is also unresolved between the two drawBitmap calls. It is not the draw consumer.",
     "A successful lock does not arm the 100ms failure throttle. API19 also stamps the lock time on success, so a same-thread reentry waits. The null return is the same. Frozen Bubble does not double-lock.",
     "API19 does not guarantee that pixels survive a null-rect unlock. AGR keeps the previous backing. The caller must redraw the full surface.",
     "A generation mismatch clears the lock and throws IllegalStateException instead of posting onto a replaced buffer. The current game does not replace the surface while it is locked.",
     "System.currentTimeMillis still returns 0, so the GameThread delay stays 40ms."
   ],
-  "next_action": "Do not claim a first frame. Do not start a Simulator because lockCanvas exists. The next public draw API is Canvas.drawBitmap. A real blit has to copy agr_bitmap pixels onto this content Surface. Do not implement drawRGB, createScaledBitmap, Paint, or Matrix until a later probe reaches them.",
+  "next_action": "Do not reopen lockCanvas. Pixel blit and first content frame ownership are framework-canvas-bitmap.json. Protect this lock/post contract under later Character.forDigit and Simulator work.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "The content Surface stays an in-process child buffer. There is no SurfaceFlinger, BufferQueue IPC, or Binder graphics path. Guest-visible format remains 4. Host backing is 4 bytes per pixel and row bytes are width*4. One guest Canvas object is reused per slot and looked up by identity. The host mutex and condition cover only the locked-flag update. They are not held across guest bytecode, a Java monitor, or the VM shared lock. A waiter uses 10ms slices and returns null when stop_requested is set. Workers are joined before the pixels are freed. UI replacement defers while canvas_locked is set."

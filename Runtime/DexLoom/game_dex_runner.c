@@ -6,6 +6,7 @@
 #include "dx_resources.h"
 #include "game_dex_runner.h"
 #include "AndroidMini/framework_viewroot.h"
+#include "agr_bitmap.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -252,6 +253,8 @@ static DxResult bitmap_decode(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t 
     return DX_OK;
 }
 
+static DxResult bitmap_decode_byte_array(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
+
 /* Intrinsic pixel size of a PNG, GIF, or JPEG. A nine-patch PNG reports the
    content size, which is the IHDR size minus the one-pixel border. */
 static int encoded_image_size(const uint8_t *data, uint32_t size, int *width, int *height) {
@@ -364,6 +367,9 @@ static DxResult bitmap_decode_failed(DxVM *vm, DxFrame *frame, int reuse_bitmap)
 }
 
 static DxResult bitmap_decode_resource(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
+static DxResult bitmap_decode_byte_array(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
+static DxResult bitmap_recycle(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
+static DxResult canvas_draw_bitmap(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count);
 
 static DxResult bitmap_get_dimension(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
     const char *field = "_width";
@@ -519,6 +525,7 @@ static DxResult register_game_framework(DxVM *vm) {
     const char *canvas_names[] = { "_width", "_height", "_rowBytes", "_generation", "_format", "_locked" };
     const char *canvas_types[] = { "I", "I", "I", "I", "I", "I" };
     own_fields(canvas, 6, canvas_names, canvas_types);
+    add_method(canvas, "drawBitmap", "VLFFL", DX_ACC_PUBLIC, canvas_draw_bitmap, 0);
     DxClass *rect = reg_class(vm, "Landroid/graphics/Rect;", obj);
     const char *rect_names[] = { "left", "top", "right", "bottom" };
     const char *rect_types[] = { "I", "I", "I", "I" };
@@ -584,15 +591,16 @@ static DxResult register_game_framework(DxVM *vm) {
     own_fields(options, 5, option_names, option_types);
     add_method(options, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
     DxClass *bitmap = reg_class(vm, "Landroid/graphics/Bitmap;", obj);
-    const char *bitmap_names[] = { "_assetPath", "_width", "_height" };
-    const char *bitmap_types[] = { "Ljava/lang/String;", "I", "I" };
-    own_fields(bitmap, 3, bitmap_names, bitmap_types);
-    add_method(bitmap, "recycle", "V", DX_ACC_PUBLIC, noop, 0);
+    const char *bitmap_names[] = { "_assetPath", "_width", "_height", "_recycled" };
+    const char *bitmap_types[] = { "Ljava/lang/String;", "I", "I", "Z" };
+    own_fields(bitmap, 4, bitmap_names, bitmap_types);
+    add_method(bitmap, "recycle", "V", DX_ACC_PUBLIC, bitmap_recycle, 0);
     add_method(bitmap, "getWidth", "I", DX_ACC_PUBLIC, bitmap_get_dimension, 0);
     add_method(bitmap, "getHeight", "I", DX_ACC_PUBLIC, bitmap_get_dimension, 0);
     DxClass *factory = reg_class(vm, "Landroid/graphics/BitmapFactory;", obj);
     add_method(factory, "decodeStream", "LLLL", DX_ACC_PUBLIC | DX_ACC_STATIC, bitmap_decode, 1);
     add_method(factory, "decodeResource", "LLIL", DX_ACC_PUBLIC | DX_ACC_STATIC, bitmap_decode_resource, 1);
+    add_method(factory, "decodeByteArray", "L[BII", DX_ACC_PUBLIC | DX_ACC_STATIC, bitmap_decode_byte_array, 1);
 
     DxClass *gles = reg_class(vm, "Landroid/opengl/GLES20;", obj);
     add_method(gles, "glGenTextures", "VI[II", DX_ACC_PUBLIC | DX_ACC_STATIC, gles_gen_textures, 1);
@@ -629,7 +637,8 @@ static int read_file(const char *path, uint8_t **data, uint32_t *size) {
    this contract does not read Canvas row bytes; draws address the backing
    through the Canvas object, not through the format integer. */
 enum { AGR_CONTENT_SURFACE_CAP = 4, AGR_SURFACE_CALLBACK_CAP = 8,
-       AGR_PIXEL_FORMAT_RGB_565 = 4, AGR_CONTENT_BYTES_PER_PIXEL = 4 };
+       AGR_PIXEL_FORMAT_RGB_565 = 4, AGR_CONTENT_BYTES_PER_PIXEL = 4,
+       AGR_GUEST_BITMAP_CAP = 128 };
 
 struct agr_content_surface {
     DxObject *view;
@@ -664,7 +673,14 @@ struct agr_content_surface {
     uint64_t hash_before_lock;
     uint64_t hash_after_post;
     uint32_t pixel_change_count;
+    uint32_t draw_bitmap_count;
     int64_t last_lock_fail_ms;
+};
+
+struct agr_guest_bitmap {
+    DxObject *guest;
+    agr_bitmap *host;
+    int recycled;
 };
 
 struct agr_dex_game {
@@ -687,6 +703,8 @@ struct agr_dex_game {
     int32_t content_first_child_id;
     struct agr_content_surface content_surfaces[AGR_CONTENT_SURFACE_CAP];
     uint32_t content_surface_count;
+    struct agr_guest_bitmap bitmaps[AGR_GUEST_BITMAP_CAP];
+    uint32_t bitmap_count;
     void *(*content_surface_alloc)(void *, size_t);
     void (*content_surface_free)(void *, void *);
     void *content_surface_alloc_user;
@@ -1211,10 +1229,115 @@ static agr_dex_game *game_from_vm(DxVM *vm) {
 }
 
 /* API19 BitmapFactory.decodeResource(Resources, int, Options) opens the raw
-   resource and decodes it. Failure returns null. Failure with Options.inBitmap
-   set throws IllegalArgumentException. inJustDecodeBounds returns null after
-   writing outWidth and outHeight. Density scaling is not applied: Frozen
-   Bubble sets Options.inScaled false before these calls. */
+   resource and decodes it through KitKat SkImageDecoder (agr_bitmap). Failure
+   returns null. Failure with Options.inBitmap set throws IllegalArgumentException.
+   inJustDecodeBounds returns null after writing outWidth and outHeight without
+   allocating pixels. Density scaling is not applied: Frozen Bubble sets
+   Options.inScaled false before these calls. */
+static struct agr_guest_bitmap *guest_bitmap_slot(agr_dex_game *game, DxObject *guest) {
+    if (!game || !guest) return NULL;
+    for (uint32_t i = 0; i < game->bitmap_count; i++)
+        if (game->bitmaps[i].guest == guest) return &game->bitmaps[i];
+    return NULL;
+}
+
+static struct agr_guest_bitmap *guest_bitmap_attach(agr_dex_game *game, DxObject *guest,
+                                                    agr_bitmap *host) {
+    struct agr_guest_bitmap *slot;
+    if (!game || !guest || !host) return NULL;
+    slot = guest_bitmap_slot(game, guest);
+    if (slot) {
+        if (slot->host && slot->host != host) agr_bitmap_destroy(slot->host);
+        slot->host = host;
+        slot->recycled = 0;
+        return slot;
+    }
+    if (game->bitmap_count >= AGR_GUEST_BITMAP_CAP) {
+        agr_bitmap_destroy(host);
+        return NULL;
+    }
+    slot = &game->bitmaps[game->bitmap_count++];
+    slot->guest = guest;
+    slot->host = host;
+    slot->recycled = 0;
+    return slot;
+}
+
+static void release_guest_bitmaps(agr_dex_game *game) {
+    if (!game) return;
+    for (uint32_t i = 0; i < game->bitmap_count; i++) {
+        if (game->bitmaps[i].host) agr_bitmap_destroy(game->bitmaps[i].host);
+        game->bitmaps[i].host = NULL;
+        game->bitmaps[i].guest = NULL;
+        game->bitmaps[i].recycled = 1;
+    }
+    game->bitmap_count = 0;
+}
+
+static DxResult bitmap_decode_byte_array(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    DxObject *array;
+    int32_t offset, length;
+    uint8_t *bytes = NULL;
+    agr_bitmap *host;
+    DxClass *bitmap_class;
+    DxObject *bitmap;
+    int width, height;
+    if (count < 3 || args[0].tag != DX_VAL_OBJ || !args[0].obj || !args[0].obj->is_array)
+        return bitmap_decode_failed(vm, frame, 0);
+    array = args[0].obj;
+    offset = args[1].tag == DX_VAL_INT ? args[1].i : 0;
+    length = args[2].tag == DX_VAL_INT ? args[2].i : 0;
+    if (offset < 0 || length <= 0 ||
+        (uint64_t)offset + (uint64_t)length > (uint64_t)array->array_length ||
+        !array->array_elements)
+        return bitmap_decode_failed(vm, frame, 0);
+    bytes = (uint8_t *)malloc((size_t)length);
+    if (!bytes) return DX_ERR_OUT_OF_MEMORY;
+    for (int32_t i = 0; i < length; i++) {
+        DxValue cell = array->array_elements[offset + i];
+        bytes[i] = (uint8_t)(cell.tag == DX_VAL_INT ? cell.i : 0);
+    }
+    host = agr_bitmap_decode(bytes, (size_t)length);
+    free(bytes);
+    if (!host) return bitmap_decode_failed(vm, frame, 0);
+    width = (int)agr_bitmap_width(host);
+    height = (int)agr_bitmap_height(host);
+    if (width <= 0 || height <= 0 || !agr_bitmap_pixels(host)) {
+        agr_bitmap_destroy(host);
+        return bitmap_decode_failed(vm, frame, 0);
+    }
+    bitmap_class = dx_vm_find_class(vm, "Landroid/graphics/Bitmap;");
+    bitmap = bitmap_class ? dx_vm_alloc_object(vm, bitmap_class) : NULL;
+    if (!bitmap) {
+        agr_bitmap_destroy(host);
+        return bitmap_decode_failed(vm, frame, 0);
+    }
+    if (!guest_bitmap_attach(game, bitmap, host))
+        return bitmap_decode_failed(vm, frame, 0);
+    dx_vm_set_field(bitmap, "_width", DX_INT_VALUE(width));
+    dx_vm_set_field(bitmap, "_height", DX_INT_VALUE(height));
+    dx_vm_set_field(bitmap, "_recycled", DX_INT_VALUE(0));
+    frame->result = DX_OBJ_VALUE(bitmap);
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult bitmap_recycle(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    struct agr_guest_bitmap *slot;
+    (void)frame;
+    if (count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj) return DX_ERR_NULL_PTR;
+    slot = guest_bitmap_slot(game, args[0].obj);
+    if (slot && slot->host) {
+        agr_bitmap_destroy(slot->host);
+        slot->host = NULL;
+        slot->recycled = 1;
+    }
+    dx_vm_set_field(args[0].obj, "_recycled", DX_INT_VALUE(1));
+    return DX_OK;
+}
+
 static DxResult bitmap_decode_resource(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
     agr_dex_game *game = game_from_vm(vm);
     const DxResourceEntry *entry;
@@ -1225,34 +1348,119 @@ static DxResult bitmap_decode_resource(DxVM *vm, DxFrame *frame, DxValue *args, 
     int reuse_bitmap = options_value_set(args, count, "inBitmap");
     DxClass *bitmap_class;
     DxObject *bitmap;
+    agr_bitmap *host = NULL;
     if (count < 3 || args[1].tag != DX_VAL_INT)
         return bitmap_decode_failed(vm, frame, reuse_bitmap);
     entry = game ? resource_file_entry(game->resources, game->resource_apk,
                                        (uint32_t)args[1].i) : NULL;
     if (!entry || !entry->str_val || !game || !game->resource_apk ||
         dx_apk_find_entry(game->resource_apk, entry->str_val, &zip) != DX_OK ||
-        dx_apk_extract_entry(game->resource_apk, zip, &bytes, &size) != DX_OK ||
-        !encoded_image_size(bytes, size, &width, &height)) {
+        dx_apk_extract_entry(game->resource_apk, zip, &bytes, &size) != DX_OK) {
         dx_free(bytes);
         return bitmap_decode_failed(vm, frame, reuse_bitmap);
     }
-    dx_free(bytes);
     if (options_value_set(args, count, "inJustDecodeBounds")) {
+        if (!encoded_image_size(bytes, size, &width, &height)) {
+            dx_free(bytes);
+            return bitmap_decode_failed(vm, frame, reuse_bitmap);
+        }
+        dx_free(bytes);
         dx_vm_set_field(args[2].obj, "outWidth", DX_INT_VALUE(width));
         dx_vm_set_field(args[2].obj, "outHeight", DX_INT_VALUE(height));
         frame->result = DX_NULL_VALUE;
         frame->has_result = true;
         return DX_OK;
     }
+    host = agr_bitmap_decode(bytes, size);
+    dx_free(bytes);
+    if (!host) return bitmap_decode_failed(vm, frame, reuse_bitmap);
+    width = (int)agr_bitmap_width(host);
+    height = (int)agr_bitmap_height(host);
+    if (width <= 0 || height <= 0 || !agr_bitmap_pixels(host)) {
+        agr_bitmap_destroy(host);
+        return bitmap_decode_failed(vm, frame, reuse_bitmap);
+    }
     bitmap_class = dx_vm_find_class(vm, "Landroid/graphics/Bitmap;");
     bitmap = bitmap_class ? dx_vm_alloc_object(vm, bitmap_class) : NULL;
-    if (!bitmap) return bitmap_decode_failed(vm, frame, reuse_bitmap);
+    if (!bitmap) {
+        agr_bitmap_destroy(host);
+        return bitmap_decode_failed(vm, frame, reuse_bitmap);
+    }
+    if (!guest_bitmap_attach(game, bitmap, host))
+        return bitmap_decode_failed(vm, frame, reuse_bitmap);
     dx_vm_set_field(bitmap, "_assetPath",
                     DX_OBJ_VALUE(dx_vm_create_string(vm, entry->str_val)));
     dx_vm_set_field(bitmap, "_width", DX_INT_VALUE(width));
     dx_vm_set_field(bitmap, "_height", DX_INT_VALUE(height));
+    dx_vm_set_field(bitmap, "_recycled", DX_INT_VALUE(0));
     frame->result = DX_OBJ_VALUE(bitmap);
     frame->has_result = true;
+    return DX_OK;
+}
+
+static struct agr_content_surface *content_slot_for_canvas(agr_dex_game *game, DxObject *canvas) {
+    if (!game || !canvas) return NULL;
+    for (uint32_t i = 0; i < game->content_surface_count; i++)
+        if (game->content_surfaces[i].canvas == canvas) return &game->content_surfaces[i];
+    return NULL;
+}
+
+static uint64_t content_buffer_hash(const void *pixels, size_t bytes);
+
+/* API19 Canvas.drawBitmap(Bitmap, float, float, Paint). Frozen Bubble passes a
+   null Paint. Destination is the locked SurfaceView content Surface backing
+   (host RGBA8888 / SkPMColor layout). */
+static DxResult canvas_draw_bitmap(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    struct agr_content_surface *slot;
+    struct agr_guest_bitmap *bitmap_slot;
+    DxObject *canvas;
+    DxObject *bitmap;
+    float left, top;
+    int wrote;
+    uint64_t before, after;
+    size_t bytes;
+    (void)frame;
+    if (count < 4 || args[0].tag != DX_VAL_OBJ || !args[0].obj) return DX_ERR_NULL_PTR;
+    canvas = args[0].obj;
+    bitmap = args[1].tag == DX_VAL_OBJ ? args[1].obj : NULL;
+    left = args[2].tag == DX_VAL_FLOAT ? args[2].f :
+           args[2].tag == DX_VAL_INT ? (float)args[2].i : 0.f;
+    top = args[3].tag == DX_VAL_FLOAT ? args[3].f :
+          args[3].tag == DX_VAL_INT ? (float)args[3].i : 0.f;
+    /* args[4] Paint may be null. Null Paint uses default SRC_OVER. */
+    slot = content_slot_for_canvas(game, canvas);
+    if (!slot || !slot->canvas_locked || !slot->pixels ||
+        slot->locked_generation != slot->generation) {
+        return DX_OK;
+    }
+    if (!bitmap) return DX_OK;
+    bitmap_slot = guest_bitmap_slot(game, bitmap);
+    if (!bitmap_slot || bitmap_slot->recycled || !bitmap_slot->host ||
+        !agr_bitmap_pixels(bitmap_slot->host)) {
+        return DX_OK;
+    }
+    bytes = (size_t)slot->width * (size_t)slot->height * (size_t)AGR_CONTENT_BYTES_PER_PIXEL;
+    before = content_buffer_hash(slot->pixels, bytes);
+    wrote = agr_bitmap_draw(bitmap_slot->host,
+                            slot->pixels,
+                            slot->width,
+                            slot->height,
+                            (size_t)slot->row_bytes,
+                            left,
+                            top,
+                            slot->clip_left,
+                            slot->clip_top,
+                            slot->clip_right,
+                            slot->clip_bottom);
+    if (wrote < 0) return DX_OK;
+    after = content_buffer_hash(slot->pixels, bytes);
+    slot->draw_bitmap_count++;
+    if (after != before) {
+        if (wrote > 0) slot->pixel_change_count += (uint32_t)wrote;
+        else slot->pixel_change_count++;
+    }
+    framework_event(game, "canvas.draw_bitmap");
     return DX_OK;
 }
 
@@ -2229,6 +2437,7 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
             snapshot->canvas_buffer_hash_before=slot->hash_before_lock;
             snapshot->canvas_buffer_hash_after=slot->hash_after_post;
             snapshot->canvas_pixel_change_count=slot->pixel_change_count;
+            snapshot->canvas_draw_bitmap_count=slot->draw_bitmap_count;
             content_surface_unlock(slot);
         }
         snprintf(snapshot->content_surface_exception, sizeof(snapshot->content_surface_exception),
@@ -2322,6 +2531,7 @@ void agr_dex_game_destroy(agr_dex_game *game) {
     agr_viewroot_release(&game->viewroot);
     if (game->vm) dx_vm_destroy(game->vm);
     game->vm = NULL;
+    release_guest_bitmaps(game);
     release_content_surfaces(game);
     if (game->dex) dx_dex_free(game->dex);
     free(game->objects); free(game->bytes); free(game);

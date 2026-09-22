@@ -75,7 +75,7 @@
     "pthread_create failure sets TERMINATED and throws OutOfMemoryError. That path was not forced.",
     "The next public stop is unresolved SurfaceHolder.lockCanvas. It is outside this contract."
   ],
-  "next_action": "Do not reopen Thread. lockCanvas ownership is framework-surface-holder-canvas.json. Do not run a Simulator for this Thread contract.",
+  "next_action": "Do not reopen Thread. lockCanvas ownership is framework-surface-holder-canvas.json. First content frame ownership is framework-canvas-bitmap.json. Do not run a Simulator for this Thread contract.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "DxVM keeps process-global heap, class table, statics, interned strings, GC, framework and activity roots, and a recursive shared lock. DxExecutionContext keeps current_frame, stack_depth, pending_exception, insn_count, insn_limit, the watchdog timestamp, thread-local diagnostics, and the frame pool. The current context is thread-local. Thread.start creates a joinable Darwin pthread and returns. The shared lock is not held across run. GC takes a safepoint before that lock and marks every context. Inline-cache updates take the shared lock. A Java Thread is not entered in the guest pthread table. Monitors are per object, owned by an execution context, and recursive. Shutdown sets stop_requested and joins workers before the heap is freed."

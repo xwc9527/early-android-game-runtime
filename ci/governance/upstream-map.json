@@ -327,7 +327,7 @@
         "source_hashes": {
           "Runtime/GuestRuntime/agr_jni_methods.c": "8bdc5b524175bb6066c696fa347162d43dc494d31a1b6a2b47914a6418f07d3d",
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
-          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4"
+          "Runtime/DexLoom/game_dex_runner.c": "9cf416c804aeed3537c16c510718391bb1d0f79fd691b712738b7e4a638e8b95"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -684,7 +684,7 @@
           "gc_mark_roots"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
+          "Runtime/DexLoom/game_dex_runner.c": "9cf416c804aeed3537c16c510718391bb1d0f79fd691b712738b7e4a638e8b95",
           "Runtime/DexLoom/VM/dx_vm.c": "ae1b4042f3a3be171f2d2dd2a667b287699ed3e11459adaa0542a25f5a0d5871"
         }
       },
@@ -874,7 +874,7 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/APK/dx_manifest.c": "17d608e345e27ba2bcf564dd61e7918c79da4b243f32d811e59126996b27519e",
-          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
+          "Runtime/DexLoom/game_dex_runner.c": "9cf416c804aeed3537c16c510718391bb1d0f79fd691b712738b7e4a638e8b95",
           "Runtime/DexLoom/VM/dx_vm.c": "ae1b4042f3a3be171f2d2dd2a667b287699ed3e11459adaa0542a25f5a0d5871",
           "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
@@ -968,7 +968,7 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
+          "Runtime/DexLoom/game_dex_runner.c": "9cf416c804aeed3537c16c510718391bb1d0f79fd691b712738b7e4a638e8b95",
           "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
       },
@@ -1078,7 +1078,7 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
+          "Runtime/DexLoom/game_dex_runner.c": "9cf416c804aeed3537c16c510718391bb1d0f79fd691b712738b7e4a638e8b95",
           "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
       },
@@ -1168,8 +1168,8 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
-          "Runtime/DexLoom/game_dex_runner.h": "07a7f9197eb3174fc52f8ae3b0af8635e797aebcf5a4aa8e709fa27e0870bbd7",
+          "Runtime/DexLoom/game_dex_runner.c": "9cf416c804aeed3537c16c510718391bb1d0f79fd691b712738b7e4a638e8b95",
+          "Runtime/DexLoom/game_dex_runner.h": "bb17d3eecbf19c3149b617a4073371881afe489b3db3292b17bb219fa2612e1d",
           "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
       },
@@ -1264,8 +1264,8 @@
           "window.set_content_view"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
-          "Runtime/DexLoom/game_dex_runner.h": "07a7f9197eb3174fc52f8ae3b0af8635e797aebcf5a4aa8e709fa27e0870bbd7",
+          "Runtime/DexLoom/game_dex_runner.c": "9cf416c804aeed3537c16c510718391bb1d0f79fd691b712738b7e4a638e8b95",
+          "Runtime/DexLoom/game_dex_runner.h": "bb17d3eecbf19c3149b617a4073371881afe489b3db3292b17bb219fa2612e1d",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
           "Runtime/DexLoom/APK/dx_resources.c": "d1ccd60b46850517bb9905db8505f81222d8658b4af9b675547208f1eb07a0e2",
@@ -1380,8 +1380,8 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
-          "Runtime/DexLoom/game_dex_runner.h": "07a7f9197eb3174fc52f8ae3b0af8635e797aebcf5a4aa8e709fa27e0870bbd7",
+          "Runtime/DexLoom/game_dex_runner.c": "9cf416c804aeed3537c16c510718391bb1d0f79fd691b712738b7e4a638e8b95",
+          "Runtime/DexLoom/game_dex_runner.h": "bb17d3eecbf19c3149b617a4073371881afe489b3db3292b17bb219fa2612e1d",
           "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
       },
@@ -1488,8 +1488,8 @@
           "surface_holder.canvas_posted"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
-          "Runtime/DexLoom/game_dex_runner.h": "07a7f9197eb3174fc52f8ae3b0af8635e797aebcf5a4aa8e709fa27e0870bbd7"
+          "Runtime/DexLoom/game_dex_runner.c": "9cf416c804aeed3537c16c510718391bb1d0f79fd691b712738b7e4a638e8b95",
+          "Runtime/DexLoom/game_dex_runner.h": "bb17d3eecbf19c3149b617a4073371881afe489b3db3292b17bb219fa2612e1d"
         }
       },
       "verified_at_commit": "d3f4f3df8c50bcfd1448c16aac46da0b729e7a4d",
@@ -1530,8 +1530,7 @@
         "a successful lock does not arm the 100ms failure throttle",
         "pixels are kept across a null-rect post; API19 does not guarantee preservation",
         "a generation mismatch throws IllegalStateException instead of posting onto a replaced buffer",
-        "Canvas draw methods are not registered",
-        "pixel_change_count stays 0 until a draw writes the backing"
+        "Canvas.drawBitmap ownership is framework.graphics.canvas_bitmap"
       ],
       "contracts": [
         "framework.surface_holder_canvas.host"
@@ -1576,44 +1575,167 @@
       },
       "agr": {
         "paths": [
-          "Runtime/DexLoom/game_dex_runner.c"
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/Bitmap/agr_bitmap.cpp",
+          "Runtime/Bitmap/agr_bitmap.h",
+          "Runtime/Bitmap/host/SkImageDecoder_libjpeg_host.cpp",
+          "Runtime/Bitmap/host/SkImageDecoder_libgif_host.cpp"
         ],
         "symbols": [
           "bitmap_decode_resource",
-          "encoded_image_size",
-          "bitmap_get_dimension"
+          "guest_bitmap_attach",
+          "agr_bitmap_decode",
+          "bitmap_recycle"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4"
+          "Runtime/DexLoom/game_dex_runner.c": "9cf416c804aeed3537c16c510718391bb1d0f79fd691b712738b7e4a638e8b95",
+          "Runtime/Bitmap/agr_bitmap.cpp": "01005d40c468b257f69a29b14438ae56de32fff6bf494ff684f9add134634957",
+          "Runtime/Bitmap/agr_bitmap.h": "8091a79f04c3d1713012aa5b80152003830b57faff0d59e8f6abdc0759c38165",
+          "Runtime/Bitmap/host/SkImageDecoder_libjpeg_host.cpp": "355144e0333a2fbb65e5a30667d43d4578c1b115466443f6c79085aee82be0ad",
+          "Runtime/Bitmap/host/SkImageDecoder_libgif_host.cpp": "2401bb29714d005492c88e74800174300fafa500b9ef8596d7c3522f302bc5ef"
         }
       },
-      "verified_at_commit": "68ed7062e5060b9b4c209104bbd8187c906ef62a",
+      "verified_at_commit": "baec1890336c0b5cdda60b004941a0b5ced7f7ac",
       "status": "VALID",
       "dependencies": [],
       "observable_semantics": [
         "decodeResource(Resources, int, Options) returns a Bitmap for a decodable PNG, JPEG, or GIF resource",
-        "the Bitmap width and height are the encoded image dimensions",
+        "the Bitmap width and height are the decoded pixel dimensions",
+        "the Bitmap retains host pixel backing through agr_bitmap",
         "an unknown id or undecodable payload returns null",
         "Options.inBitmap set on a failed decode throws IllegalArgumentException",
-        "Options.inJustDecodeBounds returns null and writes outWidth and outHeight",
-        "getWidth and getHeight return the stored dimensions"
+        "Options.inJustDecodeBounds returns null and writes outWidth and outHeight without decoding pixels",
+        "getWidth and getHeight return the stored dimensions",
+        "recycle releases the host pixel backing"
       ],
       "internal_invariants": [
         "the Bitmap is not the ViewRoot Surface and not the SurfaceView content Surface",
         "the package APK must stay open while the game reads resources",
-        "no pixel buffer is allocated"
+        "inJustDecodeBounds does not allocate pixel backing"
       ],
       "execution_placement": "HOST-DEX_HLE",
       "host_substitutions": [
-        "resources.arsc string paths plus the APK zip entry stand in for Resources.openRawResource",
-        "PNG IHDR, GIF logical screen, and JPEG SOF supply the size in place of Skia"
+        "KitKat SkImageDecoder through agr_bitmap stands in for BitmapFactory native decode",
+        "guest Bitmap identity maps to a host agr_bitmap without storing a host pointer in a guest field"
       ],
       "known_deviations": [
         "density scaling is not applied",
-        "createScaledBitmap, recycle of pixel storage, and lockCanvas are not this contract"
+        "createScaledBitmap is not this contract",
+        "Canvas.drawBitmap ownership is framework.graphics.canvas_bitmap"
       ],
       "contracts": [
         "frozen-bubble.bitmap_decode_resource"
+      ]
+    },
+    {
+      "id": "framework.graphics.canvas_bitmap",
+      "subsystem": "Canvas.drawBitmap onto SurfaceHolder content",
+      "android_api": "API19 Canvas.drawBitmap(Bitmap,float,float,Paint)",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "graphics/java/android/graphics/Canvas.java",
+          "core/jni/android/graphics/Canvas.cpp",
+          "graphics/java/android/graphics/BitmapFactory.java",
+          "graphics/java/android/graphics/Bitmap.java"
+        ],
+        "symbols": [
+          "Canvas.drawBitmap",
+          "native_drawBitmap",
+          "BitmapFactory.decodeResource",
+          "Bitmap.recycle"
+        ],
+        "source_hashes": {
+          "graphics/java/android/graphics/Canvas.java": "a933fccbec67fb0eaff9d527974c0ba16f652453aed8d991aa14429623b4514c",
+          "core/jni/android/graphics/Canvas.cpp": "3f9f621a284282fcfa8cb018181a0a4bc30781beb80607d9d4e842ecb2abb2e2",
+          "graphics/java/android/graphics/BitmapFactory.java": "e8a6d88ed9b331ccce0012496e5d4fde4b5d700fc011bf8e3e6df9a2b02ac31d",
+          "graphics/java/android/graphics/Bitmap.java": "9437b6a00eb5cb4d12487d2244e6e2aa41ed62bd80295d9876646d8c25bb41c9"
+        },
+        "source_urls": {
+          "graphics/java/android/graphics/Canvas.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/graphics/java/android/graphics/Canvas.java",
+          "core/jni/android/graphics/Canvas.cpp": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/jni/android/graphics/Canvas.cpp",
+          "graphics/java/android/graphics/BitmapFactory.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/graphics/java/android/graphics/BitmapFactory.java",
+          "graphics/java/android/graphics/Bitmap.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/graphics/java/android/graphics/Bitmap.java"
+        },
+        "symbols_by_path": {
+          "graphics/java/android/graphics/Canvas.java": [
+            "public void drawBitmap(Bitmap bitmap, float left, float top, Paint paint)"
+          ],
+          "core/jni/android/graphics/Canvas.cpp": [
+            "drawBitmap__BitmapFFPaint",
+            "canvas->drawBitmap(*bitmap, left_, top_, paint)"
+          ],
+          "graphics/java/android/graphics/BitmapFactory.java": [
+            "public static Bitmap decodeResource(Resources res, int id, Options opts)"
+          ],
+          "graphics/java/android/graphics/Bitmap.java": [
+            "public void recycle()"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/DexLoom/game_dex_runner.h",
+          "Runtime/Bitmap/agr_bitmap.cpp",
+          "Runtime/Bitmap/agr_bitmap.h",
+          "Runtime/Bitmap/host_skia_config.h",
+          "Runtime/Bitmap/host/SkImageDecoder_libjpeg_host.cpp",
+          "Runtime/Bitmap/host/SkImageDecoder_libgif_host.cpp"
+        ],
+        "symbols": [
+          "canvas_draw_bitmap",
+          "agr_bitmap_draw",
+          "agr_bitmap_decode",
+          "guest_bitmap_attach",
+          "bitmap_recycle"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/game_dex_runner.c": "9cf416c804aeed3537c16c510718391bb1d0f79fd691b712738b7e4a638e8b95",
+          "Runtime/DexLoom/game_dex_runner.h": "bb17d3eecbf19c3149b617a4073371881afe489b3db3292b17bb219fa2612e1d",
+          "Runtime/Bitmap/agr_bitmap.cpp": "01005d40c468b257f69a29b14438ae56de32fff6bf494ff684f9add134634957",
+          "Runtime/Bitmap/agr_bitmap.h": "8091a79f04c3d1713012aa5b80152003830b57faff0d59e8f6abdc0759c38165",
+          "Runtime/Bitmap/host_skia_config.h": "17e0c2e73003e49c748bd4a700307006b1be61c9ff4f33f9962406127579ae9c",
+          "Runtime/Bitmap/host/SkImageDecoder_libjpeg_host.cpp": "355144e0333a2fbb65e5a30667d43d4578c1b115466443f6c79085aee82be0ad",
+          "Runtime/Bitmap/host/SkImageDecoder_libgif_host.cpp": "2401bb29714d005492c88e74800174300fafa500b9ef8596d7c3522f302bc5ef"
+        }
+      },
+      "verified_at_commit": "baec1890336c0b5cdda60b004941a0b5ced7f7ac",
+      "status": "VALID",
+      "dependencies": [
+        "framework.view.surface_holder_canvas",
+        "framework.graphics.bitmap_decode_resource"
+      ],
+      "observable_semantics": [
+        "drawBitmap(Bitmap,float,float,null) writes source pixels into the locked content Surface",
+        "float left/top use floor placement on the pixel grid",
+        "destination clipping prevents out-of-bounds writes",
+        "a fully off-screen draw writes nothing",
+        "pixel_change_count increases when destination bytes change",
+        "unlockCanvasAndPost after a mutating draw posts the changed buffer",
+        "the Canvas target remains the SurfaceView child content Surface"
+      ],
+      "internal_invariants": [
+        "guest Bitmap identity maps to host agr_bitmap without a host pointer in a guest field",
+        "drawBitmap requires an active canvas lock on the current generation",
+        "host surface mutex is not held across guest bytecode",
+        "workers are joined before guest bitmaps and content pixels are freed"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "agr_bitmap_draw performs clipped SRC_OVER instead of linking full SkCanvas for this overload",
+        "destination backing remains host RGBA8888 while guest-visible format stays RGB_565"
+      ],
+      "known_deviations": [
+        "non-null Paint attributes are not applied",
+        "createScaledBitmap, save/restore, clipRect, and drawRGB are not this contract",
+        "UIKit/Metal presentation is not this contract"
+      ],
+      "contracts": [
+        "framework.canvas_bitmap.host",
+        "frozen-bubble.first_content_frame"
       ]
     },
     {
