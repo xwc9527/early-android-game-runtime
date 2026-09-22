@@ -1592,7 +1592,7 @@
           "Runtime/Bitmap/agr_bitmap.cpp": "01005d40c468b257f69a29b14438ae56de32fff6bf494ff684f9add134634957",
           "Runtime/Bitmap/agr_bitmap.h": "8091a79f04c3d1713012aa5b80152003830b57faff0d59e8f6abdc0759c38165",
           "Runtime/Bitmap/host/SkImageDecoder_libjpeg_host.cpp": "355144e0333a2fbb65e5a30667d43d4578c1b115466443f6c79085aee82be0ad",
-          "Runtime/Bitmap/host/SkImageDecoder_libgif_host.cpp": "2401bb29714d005492c88e74800174300fafa500b9ef8596d7c3522f302bc5ef"
+          "Runtime/Bitmap/host/SkImageDecoder_libgif_host.cpp": "bb75991c6a05f58a606142678c30436748d686effdd8f05275c1aab48a956c85"
         }
       },
       "verified_at_commit": "142c8b120ae52e3e0e2216c000150a8e198210cc",
@@ -1699,7 +1699,7 @@
           "Runtime/Bitmap/agr_bitmap.h": "8091a79f04c3d1713012aa5b80152003830b57faff0d59e8f6abdc0759c38165",
           "Runtime/Bitmap/host_skia_config.h": "17e0c2e73003e49c748bd4a700307006b1be61c9ff4f33f9962406127579ae9c",
           "Runtime/Bitmap/host/SkImageDecoder_libjpeg_host.cpp": "355144e0333a2fbb65e5a30667d43d4578c1b115466443f6c79085aee82be0ad",
-          "Runtime/Bitmap/host/SkImageDecoder_libgif_host.cpp": "2401bb29714d005492c88e74800174300fafa500b9ef8596d7c3522f302bc5ef"
+          "Runtime/Bitmap/host/SkImageDecoder_libgif_host.cpp": "bb75991c6a05f58a606142678c30436748d686effdd8f05275c1aab48a956c85"
         }
       },
       "verified_at_commit": "142c8b120ae52e3e0e2216c000150a8e198210cc",

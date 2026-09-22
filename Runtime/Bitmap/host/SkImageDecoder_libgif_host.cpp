@@ -186,8 +186,10 @@ static bool skip_src_rows(GifFileType* gif, uint8_t* dst, int width, int rowsToS
 }
 
 #if GIFLIB_MAJOR >= 5
-/* Host giflib 5 closes with an error out-parameter. KitKat used giflib 4. */
-static int agr_giflib5_close(GifFileType* gif) {
+/* Host giflib 5 closes with an error out-parameter. KitKat used giflib 4.
+ * External linkage is required: SkAutoTCallIProc takes the closer as a
+ * non-type template argument. */
+int agr_giflib5_close(GifFileType* gif) {
     return DGifCloseFile(gif, NULL);
 }
 #endif
