@@ -190,6 +190,10 @@ typedef struct {
     uint32_t classes_loaded;
     uint32_t exceptions_thrown;
     bool     telemetry_enabled;
+    /* Bounded guest-method witness. Armed only while a diagnostic window
+       is open. Zero means the publisher stays silent. */
+    int      draw_witness_armed;
+    uint32_t draw_witness_remaining;
 } DxTelemetry;
 
 #define DX_DIAGNOSTIC_METHOD_TEXT 160
@@ -683,6 +687,9 @@ DxTelemetry dx_vm_get_telemetry(DxVM *vm);
 
 /// Enable or disable telemetry collection.
 void dx_vm_set_telemetry_enabled(DxVM *vm, bool enabled);
+/* budget 0 disarms. A positive budget arms a fixed number of ENTER/EXIT
+   publishes. This does not change method results. */
+void dx_vm_set_draw_witness(DxVM *vm, uint32_t budget);
 void dx_vm_witness_unresolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
                               uint32_t method_idx, const DxValue *args, uint8_t argc);
 void dx_vm_witness_resolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,

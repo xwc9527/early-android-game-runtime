@@ -99,6 +99,14 @@ def last_phase(events, name):
     return found
 
 
+def counter_value(final, events, name):
+    source = final if isinstance(final, dict) and name in final else (events[-1] if events else {})
+    try:
+        return int(source.get(name) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 def classify(events, final, crash):
     if crash and crash.get("signal"):
         return "NATIVE_CRASH"
@@ -116,12 +124,15 @@ def classify(events, final, crash):
         phase_seen(events, "CANVAS_POST_END") and isinstance(final, dict) and final.get("content_posted") == "YES"
     )
     if posted and not (crash and crash.get("signal")):
-        counters_ok = True
-        if isinstance(final, dict):
-            counters_ok = all(int(final.get(name) or 0) > 0 for name in (
-                "lock_count", "unlock_count", "post_count", "draw_bitmap_count", "pixel_change_count"))
-        if counters_ok:
+        lock_count = counter_value(final, events, "lock_count")
+        unlock_count = counter_value(final, events, "unlock_count")
+        post_count = counter_value(final, events, "post_count")
+        draw_count = counter_value(final, events, "draw_bitmap_count")
+        pixel_count = counter_value(final, events, "pixel_change_count")
+        if lock_count > 0 and unlock_count > 0 and post_count > 0 and draw_count > 0 and pixel_count > 0:
             return "PHYSICAL_PASS"
+        if post_count > 0 and (draw_count == 0 or pixel_count == 0):
+            return "CONTENT_POSTED_WITHOUT_DRAW"
     last = events[-1] if events else {}
     canvas_locked = bool(last.get("canvas_locked"))
     lock_count = int(last.get("lock_count") or 0)

@@ -76,6 +76,8 @@ def ordered(trace, events):
 
 
 def check_discovery(result):
+    require(result.get("display_width") == 1080, result.get("display_width"))
+    require(result.get("display_height") == 2340, result.get("display_height"))
     require(result.get("sample") == "frozen-bubble", result.get("sample"))
     require(result.get("consumer") == "uikit-cadisplaylink", result.get("consumer"))
     require(clear(result.get("harness_called_do_traversal")), result)
@@ -134,6 +136,8 @@ def check_discovery(result):
     require(after.get("canvas_pixel_change_count", 0) > 0, content)
     require(after.get("canvas_post_count", 0) > 0, content)
     require(after.get("canvas_buffer_hash_before") != after.get("canvas_buffer_hash_after"), content)
+    require(after.get("content_surface_width") == 1080, after.get("content_surface_width"))
+    require(after.get("content_surface_height") == 2340, after.get("content_surface_height"))
     trace = after["framework_trace"]
     ordered(trace, (
         "choreographer.frame",

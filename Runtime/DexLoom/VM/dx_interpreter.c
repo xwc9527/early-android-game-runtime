@@ -2,6 +2,8 @@
 #include "../Include/dx_dex.h"
 #include "../Include/dx_log.h"
 #include "../Include/dx_runtime.h"
+#include "../agr_forensic.h"
+#include <pthread.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -1143,6 +1145,46 @@ static void release_entered_exec(DxExecutionContext **slot) {
     if (slot) dx_exec_leave(*slot);
 }
 
+extern void agr_forensic_publish(const agr_forensic_sample *) __attribute__((weak));
+
+/* Generic ENTER/EXIT while a diagnostic window is armed. No package test.
+   A zero budget or a missing recorder publishes nothing and does not change
+   the method result. */
+static int publish_guest_method(DxVM *vm, DxMethod *method, int enter) {
+    agr_forensic_sample sample;
+    uint32_t previous;
+    const char *cls;
+    const char *name;
+    if (!vm || !method || !vm->telemetry.telemetry_enabled) return 0;
+    if (!__atomic_load_n(&vm->telemetry.draw_witness_armed, __ATOMIC_ACQUIRE)) return 0;
+    previous = __atomic_fetch_sub(&vm->telemetry.draw_witness_remaining, 1, __ATOMIC_ACQ_REL);
+    if (previous == 0) {
+        __atomic_fetch_add(&vm->telemetry.draw_witness_remaining, 1, __ATOMIC_ACQ_REL);
+        return 0;
+    }
+    if (!agr_forensic_publish) return 1;
+    memset(&sample, 0, sizeof(sample));
+    sample.phase = enter ? AGR_PHYS_PHASE_GUEST_METHOD_ENTER : AGR_PHYS_PHASE_GUEST_METHOD_EXIT;
+    sample.critical = 0;
+    sample.host_thread = (uint64_t)pthread_self();
+    if (dx_vm_current_exec(vm)) {
+        sample.has_exec = 1;
+        sample.exec_id = dx_vm_current_exec(vm)->id;
+        if (dx_vm_current_exec(vm)->has_host_thread)
+            sample.host_thread = (uint64_t)(uintptr_t)dx_vm_current_exec(vm)->host_thread;
+        sample.thread_state = 2;
+    }
+    cls = method->declaring_class && method->declaring_class->descriptor
+        ? method->declaring_class->descriptor : "";
+    name = method->name ? method->name : "";
+    snprintf(sample.class_name, sizeof(sample.class_name), "%s", cls);
+    snprintf(sample.method_name, sizeof(sample.method_name), "%s", name);
+    snprintf(sample.detail, sizeof(sample.detail), "%s;%s",
+             enter ? "ENTER" : "EXIT", method->shorty ? method->shorty : "");
+    agr_forensic_publish(&sample);
+    return 1;
+}
+
 DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                                uint32_t arg_count, DxValue *result) {
     if (!vm || !method) return DX_ERR_NULL_PTR;
@@ -1241,6 +1283,8 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
             dx_vm_current_exec(vm)->diagnostic_method_event_count++;
     }
 
+    int method_witness = publish_guest_method(vm, method, 1);
+
     // Handle native methods
     if (method->is_native) {
         if (!method->native_fn && !vm->unbound_native_fn) {
@@ -1283,6 +1327,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                     dx_result_string(res));
         }
         dx_vm_free_frame(vm, frame);
+        if (method_witness) publish_guest_method(vm, method, 0);
         return res;
     }
 
@@ -1297,6 +1342,7 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                     dx_vm_current_exec(vm)->trace_depth * 2, "", _trace_cls, _trace_mth);
         }
         if (result) *result = DX_NULL_VALUE;
+        if (method_witness) publish_guest_method(vm, method, 0);
         return DX_OK;
     }
 
@@ -1307,11 +1353,15 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
                  method->declaring_class ? method->declaring_class->descriptor : "?",
                  method->name ? method->name : "?");
         if (_trace_method_active) dx_vm_current_exec(vm)->trace_depth--;
+        if (method_witness) publish_guest_method(vm, method, 0);
         return DX_ERR_VERIFICATION_FAILED;
     }
 
     DxFrame *frame = dx_vm_alloc_frame(vm);
-    if (!frame) return DX_ERR_OUT_OF_MEMORY;
+    if (!frame) {
+        if (method_witness) publish_guest_method(vm, method, 0);
+        return DX_ERR_OUT_OF_MEMORY;
+    }
 
     frame->method = method;
     frame->caller = dx_vm_current_exec(vm)->current_frame;
@@ -4163,6 +4213,7 @@ done:
         *result = frame->result;
     }
 
+    if (method_witness) publish_guest_method(vm, method, 0);
     dx_vm_free_frame(vm, frame);
     return exec_result;
 }

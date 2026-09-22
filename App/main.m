@@ -1825,6 +1825,16 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
       [gDispatchLink addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
       gDispatchLink.paused=YES;
       uint32_t width=(uint32_t)displayPixels.width, height=(uint32_t)displayPixels.height;
+      const char *forcedWidth=getenv("AGR_HOST_DISPLAY_WIDTH");
+      const char *forcedHeight=getenv("AGR_HOST_DISPLAY_HEIGHT");
+      if (forcedWidth && forcedHeight) {
+        unsigned long parsedWidth=strtoul(forcedWidth, NULL, 10);
+        unsigned long parsedHeight=strtoul(forcedHeight, NULL, 10);
+        if (parsedWidth>0 && parsedWidth<=10000 && parsedHeight>0 && parsedHeight<=10000) {
+          width=(uint32_t)parsedWidth;
+          height=(uint32_t)parsedHeight;
+        }
+      }
       dispatch_async(dispatch_get_main_queue(),^{ @autoreleasepool { armTraversalDispatchApk(width,height); } });
     } else if(!interactive){
       /* Returning from didFinishLaunching promptly is required even for the

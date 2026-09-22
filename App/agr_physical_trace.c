@@ -59,7 +59,7 @@ static uint32_t g_heartbeat_count = 0;
 static uint32_t g_no_progress_level = 0;
 static uint32_t g_reported_level = 0;
 static int g_stalled = 0;
-static uint8_t g_phase_synced[64];
+static uint8_t g_phase_synced[96];
 static uint32_t g_sync_count = 0;
 static int g_finished = 0;
 static char g_dir[512];
@@ -164,6 +164,15 @@ const char *agr_physical_phase_name(uint32_t phase) {
     case AGR_PHYS_PHASE_SNAPSHOT_UNAVAILABLE: return "SNAPSHOT_UNAVAILABLE";
     case AGR_PHYS_PHASE_FINALIZE_BEGIN: return "FINALIZE_BEGIN";
     case AGR_PHYS_PHASE_FINALIZE_END: return "FINALIZE_END";
+    case AGR_PHYS_PHASE_SURFACE_CALLBACK_BEGIN: return "SURFACE_CALLBACK_BEGIN";
+    case AGR_PHYS_PHASE_SURFACE_CALLBACK_OK: return "SURFACE_CALLBACK_OK";
+    case AGR_PHYS_PHASE_SURFACE_CALLBACK_THROW: return "SURFACE_CALLBACK_THROW";
+    case AGR_PHYS_PHASE_SURFACE_CALLBACK_EXEC_ERROR: return "SURFACE_CALLBACK_EXEC_ERROR";
+    case AGR_PHYS_PHASE_BITMAP_SCALE_BEGIN: return "BITMAP_SCALE_BEGIN";
+    case AGR_PHYS_PHASE_BITMAP_SCALE_END: return "BITMAP_SCALE_END";
+    case AGR_PHYS_PHASE_BITMAP_SCALE_FAIL: return "BITMAP_SCALE_FAIL";
+    case AGR_PHYS_PHASE_GUEST_METHOD_ENTER: return "GUEST_METHOD_ENTER";
+    case AGR_PHYS_PHASE_GUEST_METHOD_EXIT: return "GUEST_METHOD_EXIT";
     default: return "NONE";
     }
 }
@@ -244,10 +253,13 @@ static void remember_exec(const agr_forensic_sample *sample) {
         g_has_game = 1;
         g_game_state = sample->thread_state;
         g_game_host = sample->host_thread;
-    } else if (!g_has_root &&
-               (sample->phase == AGR_PHYS_PHASE_ACTIVITY_START_OK ||
-                sample->phase == AGR_PHYS_PHASE_EXEC_PUBLISHED ||
-                sample->phase == AGR_PHYS_PHASE_APP_LAUNCH_BEGIN)) {
+    }
+    /* Activity start owns the root context. A worker Thread.start publishes
+       EXEC_PUBLISHED before main notes the root, so the first publish must
+       not win. Only the explicit root detail, or ACTIVITY_START_OK, sets it. */
+    if (sample->phase == AGR_PHYS_PHASE_ACTIVITY_START_OK ||
+        (sample->phase == AGR_PHYS_PHASE_EXEC_PUBLISHED &&
+         strcmp(sample->detail, "root") == 0)) {
         g_root_exec = sample->exec_id;
         g_has_root = 1;
     }
@@ -262,6 +274,9 @@ static int phase_always_sync(uint32_t phase) {
     case AGR_PHYS_PHASE_HOST_DISPLAY_SET_FAIL:
     case AGR_PHYS_PHASE_ACTIVITY_START_FAIL:
     case AGR_PHYS_PHASE_CANVAS_LOCK_FAILED:
+    case AGR_PHYS_PHASE_SURFACE_CALLBACK_THROW:
+    case AGR_PHYS_PHASE_SURFACE_CALLBACK_EXEC_ERROR:
+    case AGR_PHYS_PHASE_BITMAP_SCALE_FAIL:
     case AGR_PHYS_PHASE_RUNTIME_ERROR:
     case AGR_PHYS_PHASE_WATCHDOG_NO_PROGRESS_8S:
     case AGR_PHYS_PHASE_WATCHDOG_STALL:
@@ -285,6 +300,12 @@ static int phase_never_sync(uint32_t phase) {
     case AGR_PHYS_PHASE_PHYSICAL_FRAME_BEGIN:
     case AGR_PHYS_PHASE_PHYSICAL_FRAME_END:
     case AGR_PHYS_PHASE_SNAPSHOT_UNAVAILABLE:
+    case AGR_PHYS_PHASE_SURFACE_CALLBACK_BEGIN:
+    case AGR_PHYS_PHASE_SURFACE_CALLBACK_OK:
+    case AGR_PHYS_PHASE_BITMAP_SCALE_BEGIN:
+    case AGR_PHYS_PHASE_BITMAP_SCALE_END:
+    case AGR_PHYS_PHASE_GUEST_METHOD_ENTER:
+    case AGR_PHYS_PHASE_GUEST_METHOD_EXIT:
         return 1;
     default:
         return 0;

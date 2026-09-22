@@ -7161,6 +7161,17 @@ void dx_vm_set_telemetry_enabled(DxVM *vm, bool enabled) {
     vm->telemetry.telemetry_enabled = enabled;
 }
 
+void dx_vm_set_draw_witness(DxVM *vm, uint32_t budget) {
+    if (!vm) return;
+    if (budget == 0) {
+        __atomic_store_n(&vm->telemetry.draw_witness_armed, 0, __ATOMIC_RELEASE);
+        __atomic_store_n(&vm->telemetry.draw_witness_remaining, 0, __ATOMIC_RELEASE);
+        return;
+    }
+    __atomic_store_n(&vm->telemetry.draw_witness_remaining, budget, __ATOMIC_RELEASE);
+    __atomic_store_n(&vm->telemetry.draw_witness_armed, 1, __ATOMIC_RELEASE);
+}
+
 static void witness_fill(DxInvokeWitness *w, DxVM *vm, DxFrame *frame, uint32_t pc,
                          uint8_t opcode, uint32_t method_idx, const DxValue *args, uint8_t argc) {
     const char *caller_cls = "?";

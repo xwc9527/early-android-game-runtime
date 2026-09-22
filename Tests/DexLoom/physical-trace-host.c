@@ -372,6 +372,55 @@ static void test_stall_reason_agreement(const char *script) {
     quiet_watchdog();
 }
 
+static void test_root_exec_attribution(void) {
+    const char *dir = "/tmp/agr-phys-root";
+    agr_physical_trace_config config;
+    agr_physical_trace_status status;
+    mkdir(dir, 0755);
+    quiet_watchdog();
+    config = config_for(dir);
+    expect(agr_physical_trace_begin(&config) == 0, "root begin");
+    note(AGR_PHYS_PHASE_THREAD_START, 1, 1, 1, 77, 0, 0, 0, 0, 0, 0, NULL);
+    note(AGR_PHYS_PHASE_EXEC_PUBLISHED, 0, 1, 1, 77, 0, 0, 0, 0, 0, 0, "");
+    agr_physical_trace_copy_status(&status);
+    expect(status.has_root_exec == 0, "worker publish is not root");
+    expect(status.has_game_exec == 1 && status.game_exec == 1, "worker is the game exec");
+    note(AGR_PHYS_PHASE_ACTIVITY_START_OK, 1, 1, 0, 11, 0, 0, 0, 0, 0, 0, NULL);
+    note(AGR_PHYS_PHASE_EXEC_PUBLISHED, 0, 1, 0, 11, 0, 0, 0, 0, 0, 0, "root");
+    agr_physical_trace_copy_status(&status);
+    expect(status.has_root_exec == 1 && status.root_exec == 0, "activity start owns root");
+    expect(status.game_exec == 1, "game exec stays the worker");
+    agr_physical_trace_shutdown();
+}
+
+static void test_posted_without_draw(const char *script) {
+    const char *dir = "/tmp/agr-phys-nodraw";
+    agr_physical_trace_config config;
+    char summary[256];
+    FILE *fp;
+    mkdir(dir, 0755);
+    quiet_watchdog();
+    config = config_for(dir);
+    expect(agr_physical_trace_begin(&config) == 0, "nodraw begin");
+    note(AGR_PHYS_PHASE_ACTIVITY_START_OK, 1, 1, 0, 3, 0, 0, 0, 0, 0, 0, NULL);
+    note(AGR_PHYS_PHASE_CANVAS_LOCK_ACQUIRED, 1, 1, 7, 99, 1, 119, 119, 119, 0, 0, NULL);
+    note(AGR_PHYS_PHASE_CANVAS_POST_END, 1, 1, 7, 99, 0, 119, 119, 119, 0, 0, NULL);
+    agr_physical_trace_finish("CONTENT_POSTED", NULL);
+    agr_physical_trace_shutdown();
+    fp = fopen("/tmp/agr-phys-nodraw/agr-physical-runtime.json", "w");
+    expect(fp != NULL, "nodraw runtime");
+    if (fp) {
+        fputs("{\"termination_reason\":\"CONTENT_POSTED\",\"content_posted\":\"YES\","
+              "\"lock_count\":119,\"unlock_count\":119,\"post_count\":119,"
+              "\"draw_bitmap_count\":0,\"pixel_change_count\":0}\n", fp);
+        fclose(fp);
+    }
+    snprintf(summary, sizeof(summary), "%s/summary.json", dir);
+    expect(run_parser(script, dir, summary) == 0, "nodraw parser");
+    expect(strcmp(classification_of(summary), "CONTENT_POSTED_WITHOUT_DRAW") == 0,
+           "posted without draw");
+}
+
 static void test_canvas_and_pass(const char *script) {
     const char *stall_dir = "/tmp/agr-phys-stall";
     const char *pass_dir = "/tmp/agr-phys-pass";
@@ -457,6 +506,8 @@ int main(int argc, char **argv) {
     test_watchdog_and_probe();
     test_frame_sync_policy();
     test_stall_reason_agreement(script);
+    test_root_exec_attribution();
+    test_posted_without_draw(script);
     test_canvas_and_pass(script);
     test_crash(script);
     if (g_failures) {

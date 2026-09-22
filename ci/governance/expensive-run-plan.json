@@ -1,23 +1,24 @@
 {
   "schema_version": 1,
   "enabled": true,
-  "question": "Does unchanged Frozen Bubble on the normal UIKit CADisplayLink path lock the SurfaceView content Surface, draw a decoded Bitmap into it, and post a changed buffer without a harness render call?",
+  "question": "At host display 1080x2340, does unchanged Frozen Bubble on the normal UIKit CADisplayLink path draw a Bitmap into the SurfaceView content Surface and post a changed buffer, or does it reproduce the physical lock/post path with draw_bitmap_count 0?",
   "current_uncertainty": [
-    "Discovery 35711118165 on 4f229c5 answered the question: harness flags false, surfaceCreated 1, surfaceChanged 1, lock_count 1, draw_bitmap_count 2, pixel_change_count 3450366, post_count 1, hash_before 12442867522110196069 differs from hash_after 3039551882826320397. FIRST_CONTENT_FRAME is SIMULATOR_CONFIRMED. Another run of this same question has no remaining uncertainty."
+    "Linux at 1080x2340 with APK sha256 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569 draws and changes the buffer. The physical iPhone at the same size posted 119 times with draw_bitmap_count 0 and an unchanged hash. The Simulator UIKit path has not been run at this host display."
   ],
   "expected_outcome_a": {
-    "result": "harness_called_do_traversal false, harness_called_render_api false, surfaceCreated 1, surfaceChanged 1, content Surface distinct from the root, lock_count > 0, draw_bitmap_count > 0, post_count > 0, pixel_change_count > 0, and the posted buffer hash differs from the pre-draw hash",
+    "result": "harness_called_do_traversal false, harness_called_render_api false, display 1080x2340, surfaceCreated 1, surfaceChanged 1, lock_count > 0, draw_bitmap_count > 0, pixel_change_count > 0, post_count > 0, and the posted buffer hash differs from the pre-draw hash",
     "excludes": [
-      "the claim that the Linux content frame is host-only and does not occur under UIKit CADisplayLink"
+      "an iOS Runtime failure at the physical 1080x2340 scale",
+      "treating Bitmap decode as proof that Bitmap.createScaledBitmap ran at this size"
     ]
   },
   "expected_outcome_b": {
-    "result": "the UIKit path reaches the content Surface but lock, drawBitmap, or the posted hash does not show a pixel change",
+    "result": "the UIKit path locks and posts the 1080x2340 content Surface with draw_bitmap_count 0 or an unchanged buffer hash",
     "excludes": [
-      "treating the Linux probe as Simulator confirmation",
-      "continuing to Character.forDigit before the content-frame divergence is fixed"
+      "treating the Linux 1080x2340 draw as the iOS result",
+      "guessing a presentation or unresolved-API fix before the Simulator draw path is observed"
     ]
   },
-  "why_cheaper_test_is_insufficient": "The Linux host contract and the local APK probe do not execute UIKit CADisplayLink, the iOS Simulator Skia/JPEG link, or the display-link observation window. Source inspection cannot show whether that host path posts a changed content buffer.",
+  "why_cheaper_test_is_insufficient": "The Linux 1080x2340 probe already draws. It does not execute UIKit CADisplayLink or the iOS Simulator bitmap link. The physical device at that size posted without a draw, so the remaining automated discriminator is the Simulator host display set to 1080x2340.",
   "prior_expensive_runs_without_information_gain": 0
 }

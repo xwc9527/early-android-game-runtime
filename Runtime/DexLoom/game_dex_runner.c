@@ -827,6 +827,7 @@ struct agr_dex_game {
     void (*content_surface_free)(void *, void *);
     void *content_surface_alloc_user;
     char content_surface_exception[160];
+    int draw_witness_locked_once;
     struct {
         uint32_t id;
         uint8_t *xml;
@@ -1690,6 +1691,15 @@ static DxResult bitmap_recycle(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t
     return DX_OK;
 }
 
+static void publish_bitmap_scale(DxVM *vm, uint32_t phase, const char *detail) {
+    agr_forensic_sample sample = forensic_fill(phase, 0, vm ? dx_vm_current_exec(vm) : NULL,
+                                               NULL, 0, 0, 0);
+    snprintf(sample.class_name, sizeof(sample.class_name), "Landroid/graphics/Bitmap;");
+    snprintf(sample.method_name, sizeof(sample.method_name), "createScaledBitmap");
+    snprintf(sample.detail, sizeof(sample.detail), "%s", detail ? detail : "");
+    forensic_publish(&sample);
+}
+
 /* API19 Bitmap.createScaledBitmap(Bitmap, int, int, boolean).
    Same requested dimensions return the source object. Any other positive
    size returns a new Bitmap whose pixels are the scaled source. A null
@@ -1706,6 +1716,7 @@ static DxResult bitmap_create_scaled(DxVM *vm, DxFrame *frame, DxValue *args, ui
     DxValue path = DX_NULL_VALUE;
     int dst_w, dst_h, filter, src_w, src_h;
     if (count < 4 || args[0].tag != DX_VAL_OBJ || !args[0].obj) {
+        publish_bitmap_scale(vm, AGR_PHYS_PHASE_BITMAP_SCALE_FAIL, "fail=NPE;src=0");
         dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
             vm, "Ljava/lang/NullPointerException;", "bitmap");
         return DX_ERR_EXCEPTION;
@@ -1715,17 +1726,20 @@ static DxResult bitmap_create_scaled(DxVM *vm, DxFrame *frame, DxValue *args, ui
     dst_h = args[2].tag == DX_VAL_INT ? args[2].i : 0;
     filter = args[3].tag == DX_VAL_INT && args[3].i != 0;
     if (dst_w <= 0) {
+        publish_bitmap_scale(vm, AGR_PHYS_PHASE_BITMAP_SCALE_FAIL, "fail=IAE_W;src=1");
         dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
             vm, "Ljava/lang/IllegalArgumentException;", "width must be > 0");
         return DX_ERR_EXCEPTION;
     }
     if (dst_h <= 0) {
+        publish_bitmap_scale(vm, AGR_PHYS_PHASE_BITMAP_SCALE_FAIL, "fail=IAE_H;src=1");
         dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
             vm, "Ljava/lang/IllegalArgumentException;", "height must be > 0");
         return DX_ERR_EXCEPTION;
     }
     slot = guest_bitmap_slot(game, source);
     if (!slot || slot->recycled || !slot->host || !agr_bitmap_pixels(slot->host)) {
+        publish_bitmap_scale(vm, AGR_PHYS_PHASE_BITMAP_SCALE_FAIL, "fail=RECYCLED;src=0");
         dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
             vm, "Ljava/lang/IllegalStateException;",
             "Can't call getWidth() on a recycled bitmap");
@@ -1733,17 +1747,30 @@ static DxResult bitmap_create_scaled(DxVM *vm, DxFrame *frame, DxValue *args, ui
     }
     src_w = (int)agr_bitmap_width(slot->host);
     src_h = (int)agr_bitmap_height(slot->host);
+    {
+        char detail[96];
+        snprintf(detail, sizeof(detail), "src=%d,%d;dst=%d,%d;filter=%d;src_ok=1",
+                 src_w, src_h, dst_w, dst_h, filter);
+        publish_bitmap_scale(vm, AGR_PHYS_PHASE_BITMAP_SCALE_BEGIN, detail);
+    }
     if (src_w == dst_w && src_h == dst_h) {
+        char detail[96];
+        snprintf(detail, sizeof(detail), "dst=%d,%d;same=1;src_ok=1", dst_w, dst_h);
+        publish_bitmap_scale(vm, AGR_PHYS_PHASE_BITMAP_SCALE_END, detail);
         frame->result = DX_OBJ_VALUE(source);
         frame->has_result = true;
         return DX_OK;
     }
     scaled = agr_bitmap_scale(slot->host, dst_w, dst_h, filter);
-    if (!scaled) return DX_ERR_OUT_OF_MEMORY;
+    if (!scaled) {
+        publish_bitmap_scale(vm, AGR_PHYS_PHASE_BITMAP_SCALE_FAIL, "fail=OOM;src_ok=1");
+        return DX_ERR_OUT_OF_MEMORY;
+    }
     bitmap_class = dx_vm_find_class(vm, "Landroid/graphics/Bitmap;");
     bitmap = bitmap_class ? dx_vm_alloc_object(vm, bitmap_class) : NULL;
     if (!bitmap || !guest_bitmap_attach(game, bitmap, scaled)) {
         if (!bitmap) agr_bitmap_destroy(scaled);
+        publish_bitmap_scale(vm, AGR_PHYS_PHASE_BITMAP_SCALE_FAIL, "fail=ATTACH;src_ok=1");
         frame->result = DX_NULL_VALUE;
         frame->has_result = true;
         return DX_OK;
@@ -1753,6 +1780,12 @@ static DxResult bitmap_create_scaled(DxVM *vm, DxFrame *frame, DxValue *args, ui
     dx_vm_set_field(bitmap, "_width", DX_INT_VALUE((int)agr_bitmap_width(scaled)));
     dx_vm_set_field(bitmap, "_height", DX_INT_VALUE((int)agr_bitmap_height(scaled)));
     dx_vm_set_field(bitmap, "_recycled", DX_INT_VALUE(0));
+    {
+        char detail[96];
+        snprintf(detail, sizeof(detail), "dst=%d,%d;same=0;src_ok=1",
+                 (int)agr_bitmap_width(scaled), (int)agr_bitmap_height(scaled));
+        publish_bitmap_scale(vm, AGR_PHYS_PHASE_BITMAP_SCALE_END, detail);
+    }
     frame->result = DX_OBJ_VALUE(bitmap);
     frame->has_result = true;
     return DX_OK;
@@ -2260,28 +2293,98 @@ static struct agr_content_surface *content_slot_new(agr_dex_game *game, DxObject
     return slot;
 }
 
-static void content_surface_note_exception(agr_dex_game *game, DxVM *vm) {
-    if (!game || !vm || !dx_vm_current_exec(vm)->pending_exception || !dx_vm_current_exec(vm)->pending_exception->klass ||
-        !dx_vm_current_exec(vm)->pending_exception->klass->descriptor) return;
+/* API19 SurfaceView.updateWindow does not catch callback exceptions.
+   A thrown callback stays pending on this execution context. The copy below
+   is durable evidence. It is not guest success and it does not clear the
+   exception. */
+typedef enum {
+    AGR_SURFACE_CALLBACK_OK = 0,
+    AGR_SURFACE_CALLBACK_MISSING = 1,
+    AGR_SURFACE_CALLBACK_THROW = 2,
+    AGR_SURFACE_CALLBACK_EXEC_ERROR = 3
+} agr_surface_callback_result;
+
+static void content_surface_record_exception(agr_dex_game *game, DxVM *vm) {
+    DxExecutionContext *exec;
+    if (!game || !vm) return;
+    exec = dx_vm_current_exec(vm);
+    if (!exec || !exec->pending_exception || !exec->pending_exception->klass ||
+        !exec->pending_exception->klass->descriptor) return;
     snprintf(game->content_surface_exception, sizeof(game->content_surface_exception),
-             "%s", dx_vm_current_exec(vm)->pending_exception->klass->descriptor);
-    dx_vm_current_exec(vm)->pending_exception = NULL;
+             "%s", exec->pending_exception->klass->descriptor);
 }
 
-static int invoke_surface_callback(DxVM *vm, DxObject *callback, const char *name,
-                                   const char *shorty, DxValue *args, uint32_t argc) {
+static const char *callback_result_token(agr_surface_callback_result result) {
+    switch (result) {
+    case AGR_SURFACE_CALLBACK_OK: return "CALLBACK_OK";
+    case AGR_SURFACE_CALLBACK_MISSING: return "CALLBACK_MISSING";
+    case AGR_SURFACE_CALLBACK_THROW: return "CALLBACK_THROW";
+    case AGR_SURFACE_CALLBACK_EXEC_ERROR: return "CALLBACK_EXEC_ERROR";
+    }
+    return "CALLBACK_EXEC_ERROR";
+}
+
+static uint32_t callback_result_phase(agr_surface_callback_result result) {
+    switch (result) {
+    case AGR_SURFACE_CALLBACK_OK: return AGR_PHYS_PHASE_SURFACE_CALLBACK_OK;
+    case AGR_SURFACE_CALLBACK_THROW: return AGR_PHYS_PHASE_SURFACE_CALLBACK_THROW;
+    case AGR_SURFACE_CALLBACK_MISSING:
+    case AGR_SURFACE_CALLBACK_EXEC_ERROR:
+        return AGR_PHYS_PHASE_SURFACE_CALLBACK_EXEC_ERROR;
+    }
+    return AGR_PHYS_PHASE_SURFACE_CALLBACK_EXEC_ERROR;
+}
+
+static void arm_method_witness(DxVM *vm, uint32_t budget) {
+    if (!vm || !vm->telemetry.telemetry_enabled) return;
+    dx_vm_set_draw_witness(vm, budget);
+}
+
+static void publish_surface_callback(uint32_t phase, DxVM *vm, struct agr_content_surface *slot,
+                                     DxObject *target, const char *name,
+                                     const char *token, const char *exception_class,
+                                     const char *when, int width, int height) {
+    agr_forensic_sample sample = forensic_fill(phase, 0, vm ? dx_vm_current_exec(vm) : NULL,
+                                               slot, 0, 0, 0);
+    const char *cls = target && target->klass && target->klass->descriptor
+        ? target->klass->descriptor : "";
+    snprintf(sample.class_name, sizeof(sample.class_name), "%s", cls);
+    snprintf(sample.method_name, sizeof(sample.method_name), "%s", name ? name : "");
+    snprintf(sample.detail, sizeof(sample.detail), "%s;%s;%s;%d;%d",
+             token ? token : "", exception_class ? exception_class : "",
+             when ? when : "", width, height);
+    forensic_publish(&sample);
+}
+
+static agr_surface_callback_result invoke_surface_callback(DxVM *vm, DxObject *callback,
+                                                           const char *name, const char *shorty,
+                                                           DxValue *args, uint32_t argc) {
     DxMethod *method;
     DxResult result;
-    if (!vm || !callback || !callback->klass) return 0;
+    DxExecutionContext *exec;
+    if (!vm || !callback || !callback->klass) return AGR_SURFACE_CALLBACK_MISSING;
     method = dx_vm_find_method(callback->klass, name, shorty);
-    if (!method) return 0;
+    if (!method) return AGR_SURFACE_CALLBACK_MISSING;
     result = dx_vm_execute_method(vm, method, args, argc, NULL);
-    {
-        int threw = dx_vm_current_exec(vm)->pending_exception != NULL;
-        content_surface_note_exception(game_from_vm(vm), vm);
-        if (result != DX_OK && result != DX_ERR_EXCEPTION) return 0;
-        return threw ? -1 : 1;
+    exec = dx_vm_current_exec(vm);
+    if (exec && exec->pending_exception) {
+        content_surface_record_exception(game_from_vm(vm), vm);
+        return AGR_SURFACE_CALLBACK_THROW;
     }
+    if (result != DX_OK) return AGR_SURFACE_CALLBACK_EXEC_ERROR;
+    return AGR_SURFACE_CALLBACK_OK;
+}
+
+static void note_callback_result(DxVM *vm, struct agr_content_surface *slot, DxObject *target,
+                                 const char *name, agr_surface_callback_result result,
+                                 const char *when, int width, int height) {
+    const char *exception_class = "";
+    DxExecutionContext *exec = vm ? dx_vm_current_exec(vm) : NULL;
+    if (result == AGR_SURFACE_CALLBACK_THROW && exec && exec->pending_exception &&
+        exec->pending_exception->klass && exec->pending_exception->klass->descriptor)
+        exception_class = exec->pending_exception->klass->descriptor;
+    publish_surface_callback(callback_result_phase(result), vm, slot, target, name,
+                             callback_result_token(result), exception_class, when, width, height);
 }
 
 static void *content_pixels_alloc(agr_dex_game *game, size_t bytes) {
@@ -2400,22 +2503,37 @@ static void update_surface_view(DxVM *vm, agr_dex_game *game, DxObject *view,
         framework_event(game, "surface_view.child_surface_created");
         for (uint32_t i = 0; i < count; i++) {
             DxValue args[5];
-            int created;
+            agr_surface_callback_result created;
+            agr_surface_callback_result changed;
             args[0] = DX_OBJ_VALUE(callbacks[i]);
             args[1] = DX_OBJ_VALUE(holder);
+            publish_surface_callback(AGR_PHYS_PHASE_SURFACE_CALLBACK_BEGIN, vm, slot, callbacks[i],
+                                     "surfaceCreated", "CALLBACK_BEGIN", "", "create", width, height);
+            arm_method_witness(vm, 96);
             created = invoke_surface_callback(vm, callbacks[i], "surfaceCreated", "VL", args, 2);
-            content_surface_lock(slot);
-            if (created) slot->created_count++;
-            content_surface_unlock(slot);
-            if (created < 0) continue;
+            arm_method_witness(vm, 0);
+            if (created == AGR_SURFACE_CALLBACK_OK) {
+                content_surface_lock(slot);
+                slot->created_count++;
+                content_surface_unlock(slot);
+            }
+            note_callback_result(vm, slot, callbacks[i], "surfaceCreated", created, "create", width, height);
+            if (created == AGR_SURFACE_CALLBACK_THROW) break;
             args[2] = DX_INT_VALUE(format);
             args[3] = DX_INT_VALUE(width);
             args[4] = DX_INT_VALUE(height);
-            if (invoke_surface_callback(vm, callbacks[i], "surfaceChanged", "VLIII", args, 5)) {
+            publish_surface_callback(AGR_PHYS_PHASE_SURFACE_CALLBACK_BEGIN, vm, slot, callbacks[i],
+                                     "surfaceChanged", "CALLBACK_BEGIN", "", "create", width, height);
+            arm_method_witness(vm, 96);
+            changed = invoke_surface_callback(vm, callbacks[i], "surfaceChanged", "VLIII", args, 5);
+            arm_method_witness(vm, 0);
+            if (changed == AGR_SURFACE_CALLBACK_OK) {
                 content_surface_lock(slot);
                 slot->changed_count++;
                 content_surface_unlock(slot);
             }
+            note_callback_result(vm, slot, callbacks[i], "surfaceChanged", changed, "create", width, height);
+            if (changed == AGR_SURFACE_CALLBACK_THROW) break;
         }
         content_surface_lock(slot);
         if (slot->created_count) framework_event(game, "surface_holder.surface_created");
@@ -2451,16 +2569,24 @@ static void update_surface_view(DxVM *vm, agr_dex_game *game, DxObject *view,
         content_surface_unlock(slot);
         for (uint32_t i = 0; i < count; i++) {
             DxValue args[5];
+            agr_surface_callback_result changed;
             args[0] = DX_OBJ_VALUE(callbacks[i]);
             args[1] = DX_OBJ_VALUE(holder);
             args[2] = DX_INT_VALUE(format);
             args[3] = DX_INT_VALUE(width);
             args[4] = DX_INT_VALUE(height);
-            if (invoke_surface_callback(vm, callbacks[i], "surfaceChanged", "VLIII", args, 5)) {
+            publish_surface_callback(AGR_PHYS_PHASE_SURFACE_CALLBACK_BEGIN, vm, slot, callbacks[i],
+                                     "surfaceChanged", "CALLBACK_BEGIN", "", "resize", width, height);
+            arm_method_witness(vm, 96);
+            changed = invoke_surface_callback(vm, callbacks[i], "surfaceChanged", "VLIII", args, 5);
+            arm_method_witness(vm, 0);
+            if (changed == AGR_SURFACE_CALLBACK_OK) {
                 content_surface_lock(slot);
                 slot->changed_count++;
                 content_surface_unlock(slot);
             }
+            note_callback_result(vm, slot, callbacks[i], "surfaceChanged", changed, "resize", width, height);
+            if (changed == AGR_SURFACE_CALLBACK_THROW) break;
         }
         content_surface_lock(slot);
         if (slot->changed_count != before) {
@@ -2807,6 +2933,10 @@ static DxResult surface_holder_lock_canvas(DxVM *vm, DxFrame *frame, DxValue *ar
         content_surface_unlock(slot);
         forensic_publish(&locked);
     }
+    if (game && !game->draw_witness_locked_once) {
+        arm_method_witness(vm, 64);
+        game->draw_witness_locked_once = 1;
+    }
     framework_event(game, "surface_holder.canvas_locked");
     return DX_OK;
 }
@@ -2870,6 +3000,7 @@ static DxResult surface_holder_unlock_canvas(DxVM *vm, DxFrame *frame, DxValue *
         content_surface_unlock(slot);
         forensic_publish(&posted);
     }
+    arm_method_witness(vm, 0);
     framework_event(game, "surface_holder.canvas_posted");
     return DX_OK;
 }
