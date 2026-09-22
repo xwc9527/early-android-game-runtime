@@ -70,7 +70,7 @@ jobs:
 
   simulator-focused:
     needs: linux-source-contract
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, 'Dispatch the planned SurfaceView Simulator discovery'))
     runs-on: macos-15
     timeout-minutes: 90
     env:
@@ -78,7 +78,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Admit a new discovery simulator
-        if: ${{ inputs.run_kind == 'discovery' }}
+        if: ${{ inputs.run_kind == 'discovery' || (github.event_name == 'push' && contains(github.event.head_commit.message, 'Dispatch the planned SurfaceView Simulator discovery')) }}
         run: python3 ci/validate-expensive-run.py ci/governance/expensive-run-plan.json
       - uses: dtolnay/rust-toolchain@stable
       - name: Restore pinned APK inputs
