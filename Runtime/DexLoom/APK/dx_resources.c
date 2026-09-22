@@ -602,12 +602,13 @@ DxResult dx_resources_parse(const uint8_t *data, uint32_t size, DxResources **ou
                 if (sub_size < 8 || sub_pos + sub_size > size) break;
 
                 if (sub_type == RES_TABLE_TYPE_TYPE) {
-                    // ResTable_type: extract entries
-                    if (sub_pos + 76 > size) { sub_pos += sub_size; continue; }
+                    /* API19 ResTable_type: id at 8, entryCount at 12, entriesStart at 16.
+                       The config follows at 20 and its size varies with the header. */
+                    if (sub_pos + 20 > size) { sub_pos += sub_size; continue; }
 
                     uint8_t type_id = data[sub_pos + 8]; // 1-based
-                    uint32_t entry_count = read_u32(data + sub_pos + 48);
-                    uint32_t entries_start = read_u32(data + sub_pos + 52);
+                    uint32_t entry_count = read_u32(data + sub_pos + 12);
+                    uint32_t entries_start = read_u32(data + sub_pos + 16);
 
                     // Parse the ResTable_config embedded in this type chunk.
                     // The config sits at offset 20 from chunk start (after

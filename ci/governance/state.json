@@ -30,10 +30,10 @@
     "causal_status": "REAL_GAME_CONFIRMED",
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "one focused Simulator discovery of Frozen Bubble setContentView(View)",
-    "primary_blocker": "real APK has not yet confirmed the content child is installed during onCreate",
-    "first_broken_boundary": "Activity.setContentView(Landroid/view/View;)V",
-    "first_broken_boundary_evidence": "discovery run 35666933096 skipped the View overload; the host contract now installs one content child without executing a traversal"
+    "next_validation": "one focused Simulator discovery of Frozen Bubble setContentView(int) content-child installation",
+    "primary_blocker": "Simulator normal path has not yet confirmed the inflated content child at resume",
+    "first_broken_boundary": "Activity.setContentView(I)V",
+    "first_broken_boundary_evidence": "discovery run 35668200026 invoked setContentView but installed no child because the int overload bound to setContentView(View, LayoutParams). A local host execution of the same APK now installs one MATCH_PARENT child and still ends start at handoff.viewroot_traversal."
   },
   "ci_budget": {
     "valid_closure_runs": 1,

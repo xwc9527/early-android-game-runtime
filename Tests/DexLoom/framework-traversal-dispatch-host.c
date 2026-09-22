@@ -3,6 +3,7 @@
    and never agr_dex_game_do_traversal on the dispatch game. A second game
    keeps the closed explicit do_traversal ordering. */
 #include "game_dex_runner.h"
+#include "layout-content-fixture.inc"
 #include <GLES2/gl2.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -225,6 +226,30 @@ int main(int argc, char **argv) {
            late_ran.draw_count == 2 && late_ran.surface_generation == 1,
            "a later setContentView posts one more traversal and the next frame draws");
     if (late) agr_dex_game_destroy(late);
+
+    agr_dex_game *layout = open_fixture(dex, dex_size);
+    int layout_ready = -1, layout_set = -1;
+    agr_dex_runtime_snapshot layout_before = {0}, layout_after = {0};
+    if (layout && agr_dex_game_set_host_display(layout, width, height) == 0 &&
+        agr_dex_game_start_activity(layout) == 0) {
+        layout_ready = agr_dex_game_provide_layout(layout, 0x7f030000, k_layout_xml,
+                                                   (uint32_t)sizeof(k_layout_xml));
+        agr_dex_game_runtime_snapshot(layout, &layout_before);
+        layout_set = agr_dex_game_set_content_layout(layout, 0x7f030000);
+        agr_dex_game_runtime_snapshot(layout, &layout_after);
+    }
+    expect(layout_ready == 0 && layout_set == 0 &&
+           !layout_before.content_view_installed && layout_before.traversal_count == 0 &&
+           layout_before.traversal_scheduled &&
+           layout_after.content_view_installed && layout_after.content_child_count == 1 &&
+           layout_after.content_first_child_id == 0x7f060001 &&
+           layout_after.content_layout_width == -1 && layout_after.content_layout_height == -1 &&
+           layout_after.traversal_count == 0 && layout_after.traversal_scheduled &&
+           layout_after.draw_count == 0 &&
+           trace_has(&layout_after, "window.set_content_view") &&
+           !trace_has(&layout_after, "viewroot.traversal.consumed"),
+           "setContentView(int) inflates one MATCH_PARENT child and does not consume the traversal");
+    if (layout) agr_dex_game_destroy(layout);
     free(dex);
 
     if (g_failures) {
@@ -249,8 +274,15 @@ int main(int argc, char **argv) {
             "    \"first_draw_count\": 0, \"second_traversal_count\": 2, \"second_draw_count\": 1},\n"
             "  \"relayout_failure_result\": -1,\n"
             "  \"relayout_failure_scheduled\": true,\n"
-            "  \"relayout_failure_surface_valid\": false\n"
-            "}\n", width, height);
+            "  \"relayout_failure_surface_valid\": false,\n"
+            "  \"layout_install\": {\"content_view_installed\": true, \"content_child_count\": %d,\n"
+            "    \"content_first_child_id\": %d, \"content_layout_width\": %d,\n"
+            "    \"content_layout_height\": %d, \"traversal_count\": %u, \"traversal_scheduled\": true,\n"
+            "    \"draw_count\": %u}\n"
+            "}\n", width, height,
+            layout_after.content_child_count, layout_after.content_first_child_id,
+            layout_after.content_layout_width, layout_after.content_layout_height,
+            layout_after.traversal_count, layout_after.draw_count);
         fclose(out);
     }
     printf("traversal dispatch host contract: PASS\n");

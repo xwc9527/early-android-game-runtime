@@ -69,13 +69,22 @@
     {
       "type": "REAL_GAME",
       "artifact": "Simulator discovery 35666933096 unchanged Frozen Bubble: classification viewroot_draw_entered, host_vsync_count 2, harness_called_do_traversal false, traversal_count 2, surface_generation 1, draw_count 1. The job failed afterward in the contract checker because NSJSON passed was 1."
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "Simulator discovery 35668200026: the two-frame chain still reached viewroot_draw_entered, and FrozenBubble.onCreate invoked setContentView, but content_view_installed stayed false because the int overload bound to setContentView(View, LayoutParams)."
+    },
+    {
+      "type": "RUNTIME",
+      "artifact": "Local host execution of org.jfedor.frozenbubble 1.7 after setContentView(int) inflation: content_child_count 1, layout -1,-1, start still ends at handoff.viewroot_traversal."
     }
   ],
   "remaining_uncertainty": [
     "performDraw of the host Decor is not a first frame and does not create a SurfaceView surface.",
-    "Host contract installs one MATCH_PARENT content child and does not execute a scheduled traversal. Frozen Bubble onCreate confirmation is the next Simulator question."
+    "Discovery 35668200026 reached viewroot_draw_entered with no content child because setContentView(int) bound to the View overload.",
+    "A local host execution of the same APK now installs one MATCH_PARENT child and leaves the traversal scheduled. Simulator confirmation is still open."
   ],
-  "next_action": "Run one focused Simulator discovery asking whether unchanged Frozen Bubble installs that content view and still reaches viewroot_draw_entered.",
+  "next_action": "Run one focused Simulator discovery asking whether unchanged Frozen Bubble resume has content_child_count at least 1 with layout -1,-1 and still reaches viewroot_draw_entered without a harness do_traversal.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "UIKit CADisplayLink is the vsync endpoint in place of DisplayEventReceiver. One host frame runs at most one posted traversal callback. There is no Looper sync barrier and the frame function is not re-entered."

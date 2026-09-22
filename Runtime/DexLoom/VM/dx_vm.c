@@ -87,6 +87,9 @@ void dx_vm_destroy(DxVM *vm) {
             }
             dx_free(vm->classes[i]->interfaces);
             dx_free(vm->classes[i]->annotations);
+            if (vm->classes[i]->owns_descriptor) {
+                dx_free((void *)vm->classes[i]->descriptor);
+            }
             dx_free(vm->classes[i]);
         }
     }
@@ -185,10 +188,11 @@ static DxClass *create_class(DxVM *vm, const char *descriptor, DxClass *super, b
     DxClass *cls = (DxClass *)dx_malloc(sizeof(DxClass));
     if (!cls) return NULL;
 
-    cls->descriptor = descriptor;  // owned by DEX or static string
+    cls->descriptor = descriptor;  // owned by DEX, a static string, or this class
     cls->super_class = super;
     cls->status = DX_CLASS_LOADED;
     cls->is_framework = is_framework;
+    cls->owns_descriptor = false;
 
     vm->classes[vm->class_count++] = cls;
     dx_vm_class_hash_insert(vm, cls);
@@ -2656,13 +2660,140 @@ static DxResult native_constructor_newinstance(DxVM *vm, DxFrame *frame, DxValue
 // Reflection: Array.newInstance
 // ============================================================
 
-static DxResult native_array_newinstance(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
-    (void)arg_count;
-    // args[0] = Class componentType, args[1] = int length
-    int32_t length = (arg_count > 1 && args[1].tag == DX_VAL_INT) ? args[1].i : 0;
-    if (length < 0) length = 0;
+static const char *stable_type_descriptor(DxVM *vm, const char *descriptor, bool *owned) {
+    *owned = false;
+    if (!descriptor) return NULL;
+    for (uint32_t d = 0; d < vm->dex_count; d++) {
+        DxDexFile *dex = vm->dex_files[d];
+        if (!dex) continue;
+        for (uint32_t i = 0; i < dex->type_count; i++) {
+            const char *type = dx_dex_get_type(dex, i);
+            if (type && strcmp(type, descriptor) == 0) return type;
+        }
+    }
+    size_t length = strlen(descriptor);
+    char *copy = (char *)dx_malloc(length + 1);
+    if (!copy) return NULL;
+    memcpy(copy, descriptor, length + 1);
+    *owned = true;
+    return copy;
+}
 
-    DxObject *arr = dx_vm_alloc_array(vm, (uint32_t)length);
+static bool primitive_descriptor(const char *descriptor) {
+    return descriptor && descriptor[0] && descriptor[1] == '\0' &&
+           strchr("VZBSCIJFD", descriptor[0]) != NULL;
+}
+
+DxClass *dx_vm_resolve_type(DxVM *vm, const char *descriptor) {
+    if (!vm || !descriptor || !descriptor[0]) return NULL;
+    DxClass *existing = dx_vm_find_class(vm, descriptor);
+    if (existing) return existing;
+    if (descriptor[0] == '[' || primitive_descriptor(descriptor)) {
+        bool owned = false;
+        const char *stable = stable_type_descriptor(vm, descriptor, &owned);
+        if (!stable) return NULL;
+        DxClass *cls = create_class(vm, stable, vm->class_object, true);
+        if (!cls) {
+            if (owned) dx_free((void *)stable);
+            return NULL;
+        }
+        cls->owns_descriptor = owned;
+        cls->status = DX_CLASS_INITIALIZED;
+        return cls;
+    }
+    DxClass *loaded = NULL;
+    if (dx_vm_load_class(vm, descriptor, &loaded) != DX_OK) return NULL;
+    return loaded;
+}
+
+DxObject *dx_vm_box_class(DxVM *vm, const char *descriptor) {
+    DxClass *represented = dx_vm_resolve_type(vm, descriptor);
+    if (!represented) return NULL;
+    DxClass *class_cls = dx_vm_find_class(vm, "Ljava/lang/Class;");
+    DxObject *class_obj = dx_vm_alloc_object(vm, class_cls ? class_cls : represented);
+    if (class_obj) {
+        /* Class.forName stores the represented type in klass. */
+        class_obj->klass = represented;
+    }
+    return class_obj;
+}
+
+static const char *class_argument_descriptor(DxValue arg) {
+    if (arg.tag != DX_VAL_OBJ || !arg.obj || !arg.obj->klass) return NULL;
+    return arg.obj->klass->descriptor;
+}
+
+static bool array_type_descriptor(const char *component, uint32_t dimensions,
+                                  char *out, size_t cap) {
+    size_t component_len;
+    if (!component || !out || dimensions == 0 || dimensions > 255) return false;
+    component_len = strlen(component);
+    if (dimensions + component_len + 1 > cap) return false;
+    for (uint32_t i = 0; i < dimensions; i++) out[i] = '[';
+    memcpy(out + dimensions, component, component_len + 1);
+    return true;
+}
+
+static DxObject *alloc_typed_array(DxVM *vm, const char *array_descriptor, uint32_t length) {
+    DxClass *cls = dx_vm_resolve_type(vm, array_descriptor);
+    DxObject *arr = dx_vm_alloc_array(vm, length);
+    if (arr && cls) arr->klass = cls;
+    return arr;
+}
+
+static DxObject *alloc_dimensional_array(DxVM *vm, const char *component,
+                                         const int32_t *dimensions, uint32_t count,
+                                         uint32_t index) {
+    char descriptor[768];
+    uint32_t remaining = count - index;
+    int32_t length;
+    DxObject *arr;
+    if (!array_type_descriptor(component, remaining, descriptor, sizeof(descriptor))) {
+        return NULL;
+    }
+    length = dimensions[index];
+    if (length < 0) length = 0;
+    arr = alloc_typed_array(vm, descriptor, (uint32_t)length);
+    if (!arr || index + 1 >= count) return arr;
+    for (uint32_t i = 0; i < arr->array_length; i++) {
+        DxObject *inner = alloc_dimensional_array(vm, component, dimensions, count, index + 1);
+        arr->array_elements[i] = inner ? DX_OBJ_VALUE(inner) : DX_NULL_VALUE;
+    }
+    return arr;
+}
+
+static DxResult native_array_newinstance(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    const char *component = (arg_count > 0) ? class_argument_descriptor(args[0]) : NULL;
+    int32_t length = (arg_count > 1 && args[1].tag == DX_VAL_INT) ? args[1].i : 0;
+    char descriptor[768];
+    DxObject *arr = NULL;
+    if (length < 0) length = 0;
+    if (component && array_type_descriptor(component, 1, descriptor, sizeof(descriptor))) {
+        arr = alloc_typed_array(vm, descriptor, (uint32_t)length);
+    }
+    frame->result = arr ? DX_OBJ_VALUE(arr) : DX_NULL_VALUE;
+    frame->has_result = true;
+    return DX_OK;
+}
+
+/* Array.newInstance(Class componentType, int[] dimensions). */
+static DxResult native_array_newinstance_dims(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    const char *component = (arg_count > 0) ? class_argument_descriptor(args[0]) : NULL;
+    DxObject *dims = (arg_count > 1 && args[1].tag == DX_VAL_OBJ) ? args[1].obj : NULL;
+    int32_t values[16];
+    uint32_t count = 0;
+    DxObject *arr = NULL;
+    if (component && dims && dims->is_array && dims->array_elements) {
+        count = dims->array_length;
+        if (count > 16) count = 16;
+        for (uint32_t i = 0; i < count; i++) {
+            values[i] = (dims->array_elements[i].tag == DX_VAL_INT)
+                ? dims->array_elements[i].i : 0;
+        }
+        if (count > 0) {
+            arr = alloc_dimensional_array(vm, component, values, count, 0);
+        }
+    }
     frame->result = arr ? DX_OBJ_VALUE(arr) : DX_NULL_VALUE;
     frame->has_result = true;
     return DX_OK;
@@ -3372,6 +3503,8 @@ DxResult dx_register_java_lang(DxVM *vm) {
     DxClass *array_cls = create_class(vm, "Ljava/lang/reflect/Array;", obj_cls, true);
     add_native_method(array_cls, "newInstance", "LLI", DX_ACC_PUBLIC | DX_ACC_STATIC,
                       native_array_newinstance, true);
+    add_native_method(array_cls, "newInstance", "LLL", DX_ACC_PUBLIC | DX_ACC_STATIC,
+                      native_array_newinstance_dims, true);
     add_native_method(array_cls, "getLength", "IL", DX_ACC_PUBLIC | DX_ACC_STATIC,
                       native_array_getlength, true);
     add_native_method(array_cls, "get", "LLI", DX_ACC_PUBLIC | DX_ACC_STATIC,

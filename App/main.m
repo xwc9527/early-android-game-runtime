@@ -995,6 +995,8 @@ static NSDictionary *dexSnapshotDictionary(const agr_dex_runtime_snapshot *snaps
       @"content_view_installed":snapshot->content_view_installed ? @YES : @NO,
       @"content_layout_width":@(snapshot->content_layout_width),
       @"content_layout_height":@(snapshot->content_layout_height),
+      @"content_child_count":@(snapshot->content_child_count),
+      @"content_first_child_id":@(snapshot->content_first_child_id),
       @"last_method":[NSString stringWithUTF8String:snapshot->last_method],
       @"method_trace":methods, @"framework_trace":framework,
       @"exception_class":[NSString stringWithUTF8String:snapshot->exception_class],

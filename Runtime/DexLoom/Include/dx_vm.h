@@ -71,6 +71,7 @@ struct DxClass {
     uint32_t         dex_class_def_idx;
     uint8_t          source_dex_idx;    // index into vm->dex_files[] this class came from
     bool             is_framework;      // true for built-in Android stubs
+    bool             owns_descriptor;   // true when descriptor was allocated for a synthetic type
 };
 
 // Inline cache for monomorphic/polymorphic call site optimization
@@ -422,6 +423,11 @@ void      dx_vm_gc_step(DxVM *vm);   // incremental GC step (processes up to 256
 // Object operations
 DxObject *dx_vm_alloc_object(DxVM *vm, DxClass *cls);
 DxObject *dx_vm_alloc_array(DxVM *vm, uint32_t length);
+/* Resolve a class, array, or primitive descriptor. Array classes are created
+   on demand so check-cast can match their descriptor. */
+DxClass  *dx_vm_resolve_type(DxVM *vm, const char *descriptor);
+/* Class object whose klass is the resolved type (same convention as Class.forName). */
+DxObject *dx_vm_box_class(DxVM *vm, const char *descriptor);
 void      dx_vm_release_object(DxVM *vm, DxObject *obj);
 DxResult  dx_vm_set_field(DxObject *obj, const char *name, DxValue value);
 DxResult  dx_vm_get_field(DxObject *obj, const char *name, DxValue *out);

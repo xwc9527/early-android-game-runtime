@@ -40,6 +40,13 @@ def check_host(result):
     require(result["relayout_failure_result"] != 0, result)
     require(result["relayout_failure_scheduled"] is True, result)
     require(result["relayout_failure_surface_valid"] is False, result)
+    layout = result["layout_install"]
+    require(layout["content_view_installed"] is True, layout)
+    require(layout["content_child_count"] == 1, layout)
+    require(layout["content_first_child_id"] == 0x7F060001, layout)
+    require(layout["content_layout_width"] == -1 and layout["content_layout_height"] == -1, layout)
+    require(layout["traversal_count"] == 0 and layout["traversal_scheduled"] is True, layout)
+    require(layout["draw_count"] == 0, layout)
 
 
 def ordered(trace, events):
@@ -62,6 +69,7 @@ def check_discovery(result):
     require(flag(before.get("content_view_installed")), before)
     require(before.get("content_layout_width") == -1, before)
     require(before.get("content_layout_height") == -1, before)
+    require(before.get("content_child_count", 0) >= 1, before)
     frames = result["frames"]
     require(len(frames) >= 2, frames)
     first, second = frames[0], frames[1]

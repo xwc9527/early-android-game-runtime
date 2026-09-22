@@ -76,6 +76,8 @@ typedef struct {
     int content_view_installed;
     int content_layout_width;
     int content_layout_height;
+    int content_child_count;
+    int content_first_child_id;
     char last_method[160];
     char exception_class[160];
     char error[256];
@@ -126,6 +128,12 @@ int agr_dex_game_choreographer_frame(agr_dex_game *game);
    MATCH_PARENT params. Schedules a traversal only when the decor is already
    attached, and does not execute it. */
 int agr_dex_game_set_content_view(agr_dex_game *game);
+/* Compiled layout XML addressed by resource id. APK open installs these from
+   resources.arsc. setContentView(int) inflates one and does not execute a
+   scheduled traversal. */
+int agr_dex_game_provide_layout(agr_dex_game *game, uint32_t layout_id,
+                                const void *xml, uint32_t size);
+int agr_dex_game_set_content_layout(agr_dex_game *game, uint32_t layout_id);
 int agr_dex_game_set_surface_allocator(agr_dex_game *game,
                                        void *(*allocate)(void *user, size_t bytes),
                                        void (*release)(void *user, void *pixels), void *user);

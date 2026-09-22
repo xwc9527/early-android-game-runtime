@@ -1,22 +1,22 @@
 {
   "schema_version": 1,
   "enabled": true,
-  "question": "Does unchanged Frozen Bubble onCreate now install a MATCH_PARENT content view before the first host frame, while the same CADisplayLink path still consumes traversal 1 and traversal 2 without a harness do_traversal?",
+  "question": "Does unchanged Frozen Bubble onCreate, which calls setContentView(int) for res/layout/main.xml, now install a MATCH_PARENT content parent with at least one child before the first host frame, while the same CADisplayLink path still consumes traversal 1 and traversal 2 without a harness do_traversal?",
   "current_uncertainty": [
-    "The Linux host contract installs a synthetic content view and does not execute a scheduled traversal. It does not prove FrozenBubble.onCreate reaches Activity.setContentView(View) or that GameView construction still lets launch resume."
+    "A local host execution of the APK installs the inflated child and still ends start at handoff.viewroot_traversal. That execution is not the Simulator UIKit CADisplayLink path."
   ],
   "expected_outcome_a": {
-    "result": "classification viewroot_draw_entered, content_view_installed true with layout -1,-1 at resume, traversal_count 2, surface_generation 1, draw_count at least 1, harness_called_do_traversal false",
+    "result": "classification viewroot_draw_entered, resume content_view_installed true, content_child_count at least 1, layout -1,-1, traversal_count 2, surface_generation 1, draw_count at least 1, harness_called_do_traversal false",
     "excludes": [
-      "the claim that setContentView(View) is still skipped on the normal Frozen Bubble path"
+      "the claim that setContentView(int) inflation still fails to install a content child on the normal Frozen Bubble path"
     ]
   },
   "expected_outcome_b": {
-    "result": "launch fails inside onCreate, or resume has no content view, or the two-frame Surface chain regresses",
+    "result": "resume has no content child, launch fails inside onCreate, or the two-frame Surface chain regresses",
     "excludes": [
-      "the claim that registering setContentView(View) is sufficient for this APK to keep the draw-entry chain"
+      "the claim that the Linux layout contract is sufficient for this APK on the Simulator normal path"
     ]
   },
-  "why_cheaper_test_is_insufficient": "The Linux fixture Activity does not construct Frozen Bubble GameView or execute that APK's onCreate.",
+  "why_cheaper_test_is_insufficient": "The Linux fixture does not execute FrozenBubble.onCreate. The local APK probe does not use UIKit CADisplayLink.",
   "prior_expensive_runs_without_information_gain": 0
 }

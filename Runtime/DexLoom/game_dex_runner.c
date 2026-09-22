@@ -3,6 +3,7 @@
 #include "dx_memory.h"
 #include "dx_apk.h"
 #include "dx_manifest.h"
+#include "dx_resources.h"
 #include "game_dex_runner.h"
 #include "AndroidMini/framework_viewroot.h"
 #include <stdio.h>
@@ -90,8 +91,14 @@ static DxResult window_manager_add_view(DxVM *vm, DxFrame *frame,
                                         DxValue *args, uint32_t count);
 static DxResult activity_set_content_view(DxVM *vm, DxFrame *frame,
                                           DxValue *args, uint32_t count);
+static DxResult activity_set_content_layout(DxVM *vm, DxFrame *frame,
+                                            DxValue *args, uint32_t count);
+static DxResult activity_find_view_by_id(DxVM *vm, DxFrame *frame,
+                                         DxValue *args, uint32_t count);
 static DxResult window_set_content_view(DxVM *vm, DxFrame *frame,
                                         DxValue *args, uint32_t count);
+static DxResult window_set_content_layout(DxVM *vm, DxFrame *frame,
+                                          DxValue *args, uint32_t count);
 
 static DxResult activity_on_post_resume(DxVM *vm, DxFrame *frame,
                                         DxValue *args, uint32_t count) {
@@ -312,6 +319,8 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(activity, "getWindowManager", "L", DX_ACC_PUBLIC, activity_get_window_manager, 0);
     add_method(activity, "setContentView", "VL", DX_ACC_PUBLIC, activity_set_content_view, 0);
     add_method(activity, "setContentView", "VLL", DX_ACC_PUBLIC, activity_set_content_view, 0);
+    add_method(activity, "setContentView", "VI", DX_ACC_PUBLIC, activity_set_content_layout, 0);
+    add_method(activity, "findViewById", "LI", DX_ACC_PUBLIC, activity_find_view_by_id, 0);
     add_method(activity, "onContentChanged", "V", DX_ACC_PUBLIC, noop, 0);
     add_method(native_activity, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
     add_method(native_activity, "onCreate", "VL", DX_ACC_PUBLIC, noop, 0);
@@ -325,12 +334,27 @@ static DxResult register_game_framework(DxVM *vm) {
     const char *view_names[] = { "_visibility", "_layoutParams", "_parent", "_attachInfo",
                                  "_attachedToWindow", "_measuredWidth", "_measuredHeight",
                                  "_left", "_top", "_right", "_bottom", "_content",
-                                 "_layoutWidth", "_layoutHeight" };
+                                 "_layoutWidth", "_layoutHeight", "_id", "_child", "_next" };
     const char *view_types[] = { "I", "Landroid/view/WindowManager$LayoutParams;",
                                  "Landroid/view/ViewRootImpl;", "Landroid/view/View$AttachInfo;",
                                  "Z", "I", "I", "I", "I", "I", "I", "Landroid/view/View;",
-                                 "I", "I" };
-    own_fields(view, 14, view_names, view_types);
+                                 "I", "I", "I", "Landroid/view/View;", "Landroid/view/View;" };
+    own_fields(view, 17, view_names, view_types);
+    add_method(view, "<init>", "VL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
+    add_method(view, "<init>", "VLL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
+    DxClass *view_group = reg_class(vm, "Landroid/view/ViewGroup;", view);
+    own_fields(view_group, 0, NULL, NULL);
+    add_method(view_group, "<init>", "VL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
+    add_method(view_group, "<init>", "VLL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
+    DxClass *frame_layout = reg_class(vm, "Landroid/widget/FrameLayout;", view_group);
+    own_fields(frame_layout, 0, NULL, NULL);
+    add_method(frame_layout, "<init>", "VL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
+    add_method(frame_layout, "<init>", "VLL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
+    DxClass *surface_view = reg_class(vm, "Landroid/view/SurfaceView;", view);
+    own_fields(surface_view, 0, NULL, NULL);
+    add_method(surface_view, "<init>", "VL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
+    add_method(surface_view, "<init>", "VLL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
+    reg_class(vm, "Landroid/util/AttributeSet;", obj);
     add_method(view, "setVisibility", "VI", DX_ACC_PUBLIC, view_set_visibility, 0);
     DxClass *layout_params = reg_class(vm, "Landroid/view/WindowManager$LayoutParams;", obj);
     const char *layout_names[] = { "_type", "_softInputMode", "_width", "_height" };
@@ -344,6 +368,7 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(window, "getAttributes", "L", DX_ACC_PUBLIC, window_get_attributes, 0);
     add_method(window, "setContentView", "VL", DX_ACC_PUBLIC, window_set_content_view, 0);
     add_method(window, "setContentView", "VLL", DX_ACC_PUBLIC, window_set_content_view, 0);
+    add_method(window, "setContentView", "VI", DX_ACC_PUBLIC, window_set_content_layout, 0);
     DxClass *window_manager = reg_class(vm, "Landroid/view/WindowManager;", obj);
     const char *manager_names[] = { "_lastView", "_lastLayoutParams", "_viewRoot" };
     const char *manager_types[] = { "Landroid/view/View;", "Landroid/view/WindowManager$LayoutParams;",
@@ -437,6 +462,14 @@ struct agr_dex_game {
     DxObject *content_view;
     int32_t content_width;
     int32_t content_height;
+    int content_child_count;
+    int32_t content_first_child_id;
+    struct {
+        uint32_t id;
+        uint8_t *xml;
+        uint32_t size;
+    } *layouts;
+    uint32_t layout_count;
     DxObject *window_manager;
     DxObject *window_attributes;
     agr_activity_launch_stage launch_stage;
@@ -488,6 +521,24 @@ static DxResult install_content_view(agr_dex_game *game, DxObject *view,
     game->content_view = view;
     game->content_width = width;
     game->content_height = height;
+    game->content_child_count = 0;
+    game->content_first_child_id = 0;
+    {
+        DxValue child = DX_NULL_VALUE;
+        if (dx_vm_get_field(view, "_child", &child) == DX_OK && child.tag == DX_VAL_OBJ)
+            for (DxObject *cursor = child.obj; cursor; ) {
+                DxValue next = DX_NULL_VALUE;
+                DxValue child_id = DX_NULL_VALUE;
+                if (game->content_child_count == 0 &&
+                    dx_vm_get_field(cursor, "_id", &child_id) == DX_OK &&
+                    child_id.tag == DX_VAL_INT)
+                    game->content_first_child_id = child_id.i;
+                game->content_child_count++;
+                if (dx_vm_get_field(cursor, "_next", &next) != DX_OK || next.tag != DX_VAL_OBJ)
+                    break;
+                cursor = next.obj;
+            }
+    }
     framework_event(game, "window.set_content_view");
     if (game->viewroot.attach_complete &&
         agr_viewroot_request_layout(&game->viewroot, viewroot_event, game) != DX_OK)
@@ -541,6 +592,244 @@ static DxResult activity_set_content_view(DxVM *vm, DxFrame *frame,
     forwarded[1] = args[1];
     if (count >= 3) forwarded[2] = args[2];
     return dx_vm_execute_method(vm, method, forwarded, count >= 3 ? 3u : 2u, NULL);
+}
+
+static uint16_t axml_u16(const uint8_t *p) {
+    return (uint16_t)(p[0] | (p[1] << 8));
+}
+
+static uint32_t axml_u32(const uint8_t *p) {
+    return (uint32_t)(p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24));
+}
+
+static const char *axml_string(const DxAxmlParser *parser, uint32_t index) {
+    if (!parser || index == 0xFFFFFFFFu || index >= parser->string_count) return NULL;
+    return parser->strings[index];
+}
+
+static int view_class_descriptor(const char *name, char *out, size_t cap) {
+    if (!name || !name[0] || !out || cap < 4) return 0;
+    if (strchr(name, '.')) {
+        size_t length = strlen(name);
+        if (length + 3 > cap) return 0;
+        out[0] = 'L';
+        for (size_t i = 0; i < length; i++) out[i + 1] = name[i] == '.' ? '/' : name[i];
+        out[length + 1] = ';';
+        out[length + 2] = 0;
+        return 1;
+    }
+    return snprintf(out, cap, "Landroid/widget/%s;", name) > 0;
+}
+
+static void link_child(DxObject *parent, DxObject *child) {
+    DxValue first = DX_NULL_VALUE;
+    if (!parent || !child) return;
+    dx_vm_set_field(child, "_parent", DX_OBJ_VALUE(parent));
+    if (dx_vm_get_field(parent, "_child", &first) != DX_OK ||
+        first.tag != DX_VAL_OBJ || !first.obj) {
+        dx_vm_set_field(parent, "_child", DX_OBJ_VALUE(child));
+        return;
+    }
+    DxObject *cursor = first.obj;
+    for (;;) {
+        DxValue next = DX_NULL_VALUE;
+        if (dx_vm_get_field(cursor, "_next", &next) != DX_OK ||
+            next.tag != DX_VAL_OBJ || !next.obj) {
+            dx_vm_set_field(cursor, "_next", DX_OBJ_VALUE(child));
+            return;
+        }
+        cursor = next.obj;
+    }
+}
+
+static DxObject *inflate_one_view(agr_dex_game *game, const char *name,
+                                  int32_t id, int32_t width, int32_t height) {
+    char descriptor[256];
+    DxClass *cls = NULL;
+    DxObject *view = NULL;
+    DxMethod *init = NULL;
+    if (!view_class_descriptor(name, descriptor, sizeof(descriptor))) return NULL;
+    cls = dx_vm_find_class(game->vm, descriptor);
+    if (!cls && dx_vm_load_class(game->vm, descriptor, &cls) != DX_OK) return NULL;
+    if (!cls) return NULL;
+    view = dx_vm_alloc_object(game->vm, cls);
+    if (!view) return NULL;
+    init = dx_vm_find_method(cls, "<init>", "VLL");
+    if (!init) init = dx_vm_find_method(cls, "<init>", "VL");
+    if (init) {
+        DxValue args[3];
+        uint32_t argc = 2;
+        args[0] = DX_OBJ_VALUE(view);
+        args[1] = DX_OBJ_VALUE(game->activity);
+        args[2] = DX_NULL_VALUE;
+        if (init->shorty && !strcmp(init->shorty, "VLL")) argc = 3;
+        if (dx_vm_execute_method(game->vm, init, args, argc, NULL) != DX_OK) return NULL;
+    }
+    dx_vm_set_field(view, "_id", DX_INT_VALUE(id));
+    dx_vm_set_field(view, "_layoutWidth", DX_INT_VALUE(width));
+    dx_vm_set_field(view, "_layoutHeight", DX_INT_VALUE(height));
+    return view;
+}
+
+/* PhoneWindow.setContentView(int) inflates into the content parent.
+   layout_width/height -1 is MATCH_PARENT. An unknown class fails the
+   inflation instead of installing a placeholder. */
+static DxResult inflate_layout(agr_dex_game *game, const uint8_t *xml, uint32_t size,
+                               DxObject **root_out, int32_t *width, int32_t *height) {
+    DxAxmlParser *parser = NULL;
+    DxObject *stack[16];
+    int depth = 0;
+    DxObject *root = NULL;
+    uint32_t pos;
+    if (!game || !xml || !root_out || dx_axml_parse(xml, size, &parser) != DX_OK) return DX_ERR_INVALID_FORMAT;
+    pos = 8;
+    while (pos + 8 <= size) {
+        uint16_t chunk_type = axml_u16(xml + pos);
+        uint16_t header_size = axml_u16(xml + pos + 2);
+        uint32_t chunk_size = axml_u32(xml + pos + 4);
+        if (chunk_size < 8 || pos + chunk_size > size || header_size < 8) {
+            dx_axml_free(parser);
+            return DX_ERR_INVALID_FORMAT;
+        }
+        if (chunk_type == 0x0102) {
+            uint32_t ext = pos + header_size;
+            uint32_t name_idx, attr_start;
+            uint16_t attr_size, attr_count;
+            int32_t id = 0, layout_width = -1, layout_height = -1;
+            const char *name;
+            DxObject *view;
+            if (ext + 20 > pos + chunk_size) { dx_axml_free(parser); return DX_ERR_INVALID_FORMAT; }
+            name_idx = axml_u32(xml + ext + 4);
+            attr_start = axml_u16(xml + ext + 8);
+            attr_size = axml_u16(xml + ext + 10);
+            attr_count = axml_u16(xml + ext + 12);
+            name = axml_string(parser, name_idx);
+            for (uint16_t i = 0; i < attr_count; i++) {
+                uint32_t at = ext + attr_start + (uint32_t)i * attr_size;
+                const char *attr_name;
+                uint8_t value_type;
+                uint32_t value_data;
+                if (attr_size < 20 || at + 20 > pos + chunk_size) continue;
+                attr_name = axml_string(parser, axml_u32(xml + at + 4));
+                value_type = xml[at + 15];
+                value_data = axml_u32(xml + at + 16);
+                if (attr_name && !strcmp(attr_name, "id") && value_type == 0x01)
+                    id = (int32_t)value_data;
+                else if (attr_name && !strcmp(attr_name, "layout_width") && value_type == 0x10)
+                    layout_width = (int32_t)value_data;
+                else if (attr_name && !strcmp(attr_name, "layout_height") && value_type == 0x10)
+                    layout_height = (int32_t)value_data;
+            }
+            view = inflate_one_view(game, name, id, layout_width, layout_height);
+            if (!view || depth >= 16) { dx_axml_free(parser); return DX_ERR_INVALID_FORMAT; }
+            if (depth > 0) link_child(stack[depth - 1], view);
+            else root = view;
+            stack[depth++] = view;
+        } else if (chunk_type == 0x0103) {
+            if (depth > 0) depth--;
+        }
+        pos += chunk_size;
+    }
+    dx_axml_free(parser);
+    if (!root) return DX_ERR_INVALID_FORMAT;
+    *root_out = root;
+    if (width) {
+        DxValue value = DX_NULL_VALUE;
+        *width = -1;
+        if (dx_vm_get_field(root, "_layoutWidth", &value) == DX_OK && value.tag == DX_VAL_INT)
+            *width = value.i;
+    }
+    if (height) {
+        DxValue value = DX_NULL_VALUE;
+        *height = -1;
+        if (dx_vm_get_field(root, "_layoutHeight", &value) == DX_OK && value.tag == DX_VAL_INT)
+            *height = value.i;
+    }
+    return DX_OK;
+}
+
+static const uint8_t *layout_xml(const agr_dex_game *game, uint32_t id, uint32_t *size) {
+    if (size) *size = 0;
+    if (!game) return NULL;
+    for (uint32_t i = 0; i < game->layout_count; i++) {
+        if (game->layouts[i].id == id) {
+            if (size) *size = game->layouts[i].size;
+            return game->layouts[i].xml;
+        }
+    }
+    return NULL;
+}
+
+static DxResult window_set_content_layout(DxVM *vm, DxFrame *frame,
+                                          DxValue *args, uint32_t count) {
+    (void)frame;
+    agr_dex_game *game = vm ? (agr_dex_game *)vm->framework_user : NULL;
+    const uint8_t *xml;
+    uint32_t xml_size = 0;
+    DxObject *root = NULL;
+    int32_t width = -1, height = -1;
+    if (!game || count < 2 || args[0].tag != DX_VAL_OBJ || args[0].obj != game->window ||
+        args[1].tag != DX_VAL_INT)
+        return DX_ERR_INVALID_FORMAT;
+    xml = layout_xml(game, (uint32_t)args[1].i, &xml_size);
+    if (!xml || inflate_layout(game, xml, xml_size, &root, &width, &height) != DX_OK)
+        return DX_ERR_INVALID_FORMAT;
+    return install_content_view(game, root, width, height);
+}
+
+static DxResult activity_set_content_layout(DxVM *vm, DxFrame *frame,
+                                            DxValue *args, uint32_t count) {
+    (void)frame;
+    agr_dex_game *game = vm ? (agr_dex_game *)vm->framework_user : NULL;
+    DxClass *window;
+    DxMethod *method;
+    DxValue forwarded[2];
+    if (!game || count < 2 || args[0].tag != DX_VAL_OBJ || args[0].obj != game->activity ||
+        args[1].tag != DX_VAL_INT)
+        return DX_ERR_INVALID_FORMAT;
+    window = dx_vm_find_class(vm, "Landroid/view/Window;");
+    method = dx_vm_find_method(window, "setContentView", "VI");
+    if (!method) return DX_ERR_INVALID_FORMAT;
+    forwarded[0] = DX_OBJ_VALUE(game->window);
+    forwarded[1] = args[1];
+    return dx_vm_execute_method(vm, method, forwarded, 2, NULL);
+}
+
+static DxObject *find_view_in_tree(DxObject *view, int32_t id);
+
+static DxObject *find_view_and_siblings(DxObject *view, int32_t id) {
+    while (view) {
+        DxObject *found = find_view_in_tree(view, id);
+        DxValue next = DX_NULL_VALUE;
+        if (found) return found;
+        if (dx_vm_get_field(view, "_next", &next) != DX_OK || next.tag != DX_VAL_OBJ) break;
+        view = next.obj;
+    }
+    return NULL;
+}
+
+static DxObject *find_view_in_tree(DxObject *view, int32_t id) {
+    DxValue value = DX_NULL_VALUE;
+    if (!view) return NULL;
+    if (dx_vm_get_field(view, "_id", &value) == DX_OK && value.tag == DX_VAL_INT && value.i == id)
+        return view;
+    if (dx_vm_get_field(view, "_child", &value) == DX_OK && value.tag == DX_VAL_OBJ)
+        return find_view_and_siblings(value.obj, id);
+    return NULL;
+}
+
+static DxResult activity_find_view_by_id(DxVM *vm, DxFrame *frame,
+                                         DxValue *args, uint32_t count) {
+    agr_dex_game *game = vm ? (agr_dex_game *)vm->framework_user : NULL;
+    DxObject *found = NULL;
+    if (!frame) return DX_ERR_INVALID_FORMAT;
+    if (!game || count < 2 || args[0].tag != DX_VAL_OBJ || args[0].obj != game->activity ||
+        args[1].tag != DX_VAL_INT)
+        return DX_ERR_INVALID_FORMAT;
+    found = find_view_in_tree(game->content_view, args[1].i);
+    frame->result = found ? DX_OBJ_VALUE(found) : DX_NULL_VALUE;
+    frame->has_result = true;
+    return DX_OK;
 }
 
 static DxResult window_manager_add_view(DxVM *vm, DxFrame *frame,
@@ -1022,6 +1311,8 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
     snapshot->content_view_installed=game->content_view!=NULL;
     snapshot->content_layout_width=game->content_view ? game->content_width : 0;
     snapshot->content_layout_height=game->content_view ? game->content_height : 0;
+    snapshot->content_child_count=game->content_view ? game->content_child_count : 0;
+    snapshot->content_first_child_id=game->content_view ? game->content_first_child_id : 0;
     snprintf(snapshot->last_method,sizeof(snapshot->last_method),"%s",vm->diagnostic_last_method);
     snprintf(snapshot->error,sizeof(snapshot->error),"%s",vm->error_msg);
     uint32_t method_count=vm->diagnostic_method_event_count;
@@ -1102,6 +1393,8 @@ const char *agr_dex_game_launch_error(const agr_dex_game *game) {
 void agr_dex_game_destroy(agr_dex_game *game) {
     if (!game) return;
     if (g_activity==game->activity) g_activity=NULL;
+    for (uint32_t i = 0; i < game->layout_count; i++) free(game->layouts[i].xml);
+    free(game->layouts);
     agr_viewroot_release(&game->viewroot);
     if (game->vm) dx_vm_destroy(game->vm);
     if (game->dex) dx_dex_free(game->dex);
@@ -1137,6 +1430,72 @@ int agr_dex_game_set_content_view(agr_dex_game *game) {
     if (!view || !method) return -1;
     DxValue args[2] = {DX_OBJ_VALUE(game->activity), DX_OBJ_VALUE(view)};
     return dx_vm_execute_method(game->vm, method, args, 2, NULL) == DX_OK ? 0 : -1;
+}
+
+int agr_dex_game_provide_layout(agr_dex_game *game, uint32_t layout_id,
+                                const void *xml, uint32_t size) {
+    uint8_t *copy;
+    if (!game || !xml || !size || !layout_id) return -1;
+    copy = malloc(size);
+    if (!copy) return -1;
+    memcpy(copy, xml, size);
+    for (uint32_t i = 0; i < game->layout_count; i++) {
+        if (game->layouts[i].id == layout_id) {
+            free(game->layouts[i].xml);
+            game->layouts[i].xml = copy;
+            game->layouts[i].size = size;
+            return 0;
+        }
+    }
+    void *grown = realloc(game->layouts, sizeof(*game->layouts) * (game->layout_count + 1));
+    if (!grown) { free(copy); return -1; }
+    game->layouts = grown;
+    game->layouts[game->layout_count].id = layout_id;
+    game->layouts[game->layout_count].xml = copy;
+    game->layouts[game->layout_count].size = size;
+    game->layout_count++;
+    return 0;
+}
+
+int agr_dex_game_set_content_layout(agr_dex_game *game, uint32_t layout_id) {
+    DxClass *activity;
+    DxMethod *method;
+    DxValue args[2];
+    if (!game || !game->vm || !game->activity || !layout_id) return -1;
+    activity = dx_vm_find_class(game->vm, "Landroid/app/Activity;");
+    method = activity ? dx_vm_find_method(activity, "setContentView", "VI") : NULL;
+    if (!method) return -1;
+    args[0] = DX_OBJ_VALUE(game->activity);
+    args[1] = DX_INT_VALUE((int32_t)layout_id);
+    return dx_vm_execute_method(game->vm, method, args, 2, NULL) == DX_OK ? 0 : -1;
+}
+
+static void load_apk_layouts(agr_dex_game *game, const agr_apk_package *package) {
+    const DxZipEntry *entry = NULL;
+    uint8_t *table = NULL;
+    uint32_t table_size = 0;
+    DxResources *resources = NULL;
+    if (!game || !package || !package->apk) return;
+    if (dx_apk_find_entry(package->apk, "resources.arsc", &entry) != DX_OK ||
+        dx_apk_extract_entry(package->apk, entry, &table, &table_size) != DX_OK)
+        return;
+    if (dx_resources_parse(table, table_size, &resources) != DX_OK) {
+        dx_free(table);
+        return;
+    }
+    dx_free(table);
+    for (uint32_t i = 0; resources && i < resources->layout_entry_count; i++) {
+        const char *filename = resources->layout_entries[i].filename;
+        const DxZipEntry *xml_entry = NULL;
+        uint8_t *xml = NULL;
+        uint32_t xml_size = 0;
+        if (!filename || dx_apk_find_entry(package->apk, filename, &xml_entry) != DX_OK ||
+            dx_apk_extract_entry(package->apk, xml_entry, &xml, &xml_size) != DX_OK)
+            continue;
+        agr_dex_game_provide_layout(game, resources->layout_entries[i].id, xml, xml_size);
+        dx_free(xml);
+    }
+    dx_resources_free(resources);
 }
 
 int agr_dex_game_choreographer_frame(agr_dex_game *game) {
@@ -1297,9 +1656,11 @@ agr_dex_game *agr_dex_game_create(const char *dex_path) {
 }
 
 agr_dex_game *agr_dex_game_create_from_apk(const agr_apk_package *package) {
-    return package?create_game(package->dex_bytes,package->dex_size,
-        package->activity_descriptor,package->application_descriptor,
-        package->manifest->package_name):NULL;
+    agr_dex_game *game = package ? create_game(package->dex_bytes, package->dex_size,
+        package->activity_descriptor, package->application_descriptor,
+        package->manifest->package_name) : NULL;
+    if (game && game->vm) load_apk_layouts(game, package);
+    return game;
 }
 
 int agr_dex_game_play_sound(agr_dex_game *game, const char *path, float direction, int32_t *play_id) {

@@ -2069,8 +2069,10 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
         case 0x1C: { // const-class vAA, type@BBBB (21c)
 #endif
             uint8_t dst = (inst >> 8) & 0xFF;
-            // Return null for class objects - proper Class<T> not modeled
-            pinned_regs[dst] = DX_NULL_VALUE;
+            uint16_t type_idx = code[pc + 1];
+            const char *type_desc = dx_dex_get_type(cur_dex, type_idx);
+            DxObject *class_obj = type_desc ? dx_vm_box_class(vm, type_desc) : NULL;
+            pinned_regs[dst] = class_obj ? DX_OBJ_VALUE(class_obj) : DX_NULL_VALUE;
             pc += 2;
             DISPATCH_NEXT;
         }
@@ -2250,10 +2252,16 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
 #endif
             uint8_t dst = (inst >> 8) & 0x0F;
             uint8_t size_reg = (inst >> 12) & 0x0F;
+            uint16_t type_idx = code[pc + 1];
+            const char *type_desc = dx_dex_get_type(cur_dex, type_idx);
             int32_t length = pinned_regs[size_reg].i;
             if (length < 0) length = 0;
             DxObject *arr = dx_vm_alloc_array(vm, (uint32_t)length);
             if (arr) {
+                if (type_desc) {
+                    DxClass *array_cls = dx_vm_resolve_type(vm, type_desc);
+                    if (array_cls) arr->klass = array_cls;
+                }
                 pinned_regs[dst] = DX_OBJ_VALUE(arr);
             } else {
                 pinned_regs[dst] = DX_NULL_VALUE;
@@ -2269,9 +2277,15 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
 #endif
             uint8_t argc;
             uint8_t arg_regs[5];
+            uint16_t type_idx = code[pc + 1];
+            const char *type_desc = dx_dex_get_type(cur_dex, type_idx);
             decode_35c_args(code, pc, &argc, arg_regs);
             DxObject *arr = dx_vm_alloc_array(vm, argc);
             if (arr) {
+                if (type_desc) {
+                    DxClass *array_cls = dx_vm_resolve_type(vm, type_desc);
+                    if (array_cls) arr->klass = array_cls;
+                }
                 for (uint8_t i = 0; i < argc; i++) {
                     arr->array_elements[i] = pinned_regs[arg_regs[i]];
                 }
@@ -2290,9 +2304,15 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
         case 0x25: { // filled-new-array/range {vCCCC .. vNNNN}, type@BBBB (3rc)
 #endif
             uint8_t argc = (inst >> 8) & 0xFF;
+            uint16_t type_idx = code[pc + 1];
             uint16_t first_reg = code[pc + 2];
+            const char *type_desc = dx_dex_get_type(cur_dex, type_idx);
             DxObject *arr = dx_vm_alloc_array(vm, argc);
             if (arr) {
+                if (type_desc) {
+                    DxClass *array_cls = dx_vm_resolve_type(vm, type_desc);
+                    if (array_cls) arr->klass = array_cls;
+                }
                 for (uint8_t i = 0; i < argc; i++) {
                     uint16_t reg = first_reg + i;
                     if (reg < DX_MAX_REGISTERS) {
