@@ -1,6 +1,7 @@
 #include "../Include/dx_vm.h"
 #include "../Include/dx_log.h"
 #include "../Include/dx_memory.h"
+#include "../agr_forensic.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -18,6 +19,30 @@ static void set_state(DxExecutionContext *exec, DxJavaThreadState state) {
 
 static DxJavaThreadState get_state(DxExecutionContext *exec) {
     return (DxJavaThreadState)__atomic_load_n((int *)&exec->state, __ATOMIC_ACQUIRE);
+}
+
+extern void agr_forensic_publish(const agr_forensic_sample *) __attribute__((weak));
+
+static uint32_t forensic_thread_state(DxExecutionContext *exec) {
+    DxJavaThreadState state = exec ? get_state(exec) : DX_JAVA_THREAD_NEW;
+    if (state == DX_JAVA_THREAD_STARTING) return 1;
+    if (state == DX_JAVA_THREAD_RUNNING && exec && exec->at_safepoint) return 3;
+    if (state == DX_JAVA_THREAD_RUNNING) return 2;
+    if (state == DX_JAVA_THREAD_TERMINATED) return 4;
+    return 0;
+}
+
+static void forensic_thread(uint32_t phase, DxExecutionContext *exec) {
+    agr_forensic_sample sample;
+    if (!agr_forensic_publish || !exec) return;
+    memset(&sample, 0, sizeof(sample));
+    sample.phase = phase;
+    sample.critical = 1;
+    sample.has_exec = 1;
+    sample.exec_id = exec->id;
+    sample.thread_state = forensic_thread_state(exec);
+    sample.host_thread = exec->has_host_thread ? (uint64_t)(uintptr_t)exec->host_thread : (uint64_t)pthread_self();
+    agr_forensic_publish(&sample);
 }
 
 static const char *thread_state_name(DxJavaThreadState state) {
@@ -240,6 +265,7 @@ static void *java_worker_main(void *arg) {
     exec->host_thread = pthread_self();
     exec->has_host_thread = 1;
     set_state(exec, DX_JAVA_THREAD_RUNNING);
+    forensic_thread(AGR_PHYS_PHASE_THREAD_RUN_ENTER, exec);
     DxObject *self = exec->java_thread;
     const char *method_name = "run";
     DxMethod *run = NULL;
@@ -263,6 +289,7 @@ static void *java_worker_main(void *arg) {
     set_state(exec, DX_JAVA_THREAD_TERMINATED);
     pthread_cond_broadcast(&exec->done_cv);
     pthread_mutex_unlock(&exec->life_mu);
+    forensic_thread(AGR_PHYS_PHASE_THREAD_RUN_EXIT, exec);
     fprintf(stderr,
             "JTHREAD event=%s caller_exec=0 caller_host=0 worker_exec=%u worker_host=%lu java=%p state=%s method=%s rc=%d exception=%s insns=%llu error=%s\n",
             rc == DX_OK ? "run_exit" : "run_exit_error",
@@ -332,6 +359,8 @@ DxResult native_thread_start(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t a
     exec->has_host_thread = 1;
     exec->joinable = 1;
     thread_log("start", dx_vm_current_exec(vm), exec, "start");
+    forensic_thread(AGR_PHYS_PHASE_THREAD_START, exec);
+    forensic_thread(AGR_PHYS_PHASE_EXEC_PUBLISHED, exec);
     dx_vm_monitor_exit(vm, self);
     return DX_OK;
 }

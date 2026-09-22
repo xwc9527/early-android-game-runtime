@@ -7,6 +7,7 @@
 #include "game_dex_runner.h"
 #include "AndroidMini/framework_viewroot.h"
 #include "agr_bitmap.h"
+#include "agr_forensic.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +15,12 @@
 #include <math.h>
 #include <pthread.h>
 #include <GLES2/gl2.h>
+
+extern void agr_forensic_publish(const agr_forensic_sample *) __attribute__((weak));
+
+static void forensic_publish(const agr_forensic_sample *sample) {
+    if (agr_forensic_publish) agr_forensic_publish(sample);
+}
 
 typedef int32_t (*AgrDexUploadFn)(void *user, const char *asset_path);
 static AgrDexUploadFn g_upload;
@@ -737,6 +744,48 @@ struct agr_content_surface {
     uint64_t lock_owner_host;
     int64_t last_lock_fail_ms;
 };
+
+static agr_forensic_sample forensic_fill(uint32_t phase, int critical, DxExecutionContext *exec,
+                                         const struct agr_content_surface *slot,
+                                         uint32_t before, uint32_t after, int has_counters) {
+    agr_forensic_sample sample;
+    memset(&sample, 0, sizeof(sample));
+    sample.phase = phase;
+    sample.critical = critical;
+    sample.host_thread = (uint64_t)pthread_self();
+    if (exec) {
+        sample.has_exec = 1;
+        sample.exec_id = exec->id;
+        if (exec->has_host_thread)
+            sample.host_thread = (uint64_t)(uintptr_t)exec->host_thread;
+        sample.thread_state = 2;
+    }
+    if (slot) {
+        sample.canvas_locked = slot->canvas_locked;
+        sample.lock_owner_exec = slot->lock_owner_exec;
+        sample.lock_count = slot->lock_count;
+        sample.unlock_count = slot->unlock_count;
+        sample.post_count = slot->post_count;
+        sample.draw_bitmap_count = slot->draw_bitmap_count;
+        sample.pixel_change_count = slot->pixel_change_count;
+        sample.surface_generation = slot->generation;
+        sample.surface_identity = (uint64_t)(uintptr_t)slot->surface;
+        sample.surface_valid = slot->valid;
+        sample.created_count = slot->created_count;
+        sample.changed_count = slot->changed_count;
+    }
+    sample.counter_before = before;
+    sample.counter_after = after;
+    sample.has_counters = has_counters;
+    return sample;
+}
+
+static void forensic_surface(uint32_t phase, int critical, DxExecutionContext *exec,
+                             const struct agr_content_surface *slot,
+                             uint32_t before, uint32_t after, int has_counters) {
+    agr_forensic_sample sample = forensic_fill(phase, critical, exec, slot, before, after, has_counters);
+    forensic_publish(&sample);
+}
 
 struct agr_guest_bitmap {
     DxObject *guest;
@@ -2105,6 +2154,8 @@ static DxResult canvas_draw_bitmap(DxVM *vm, DxFrame *frame, DxValue *args, uint
     }
     bytes = (size_t)slot->width * (size_t)slot->height * (size_t)AGR_CONTENT_BYTES_PER_PIXEL;
     before = content_buffer_hash(slot->pixels, bytes);
+    forensic_surface(AGR_PHYS_PHASE_DRAW_BITMAP_BEGIN, 0, dx_vm_current_exec(vm), slot,
+                     slot->draw_bitmap_count, slot->draw_bitmap_count, 1);
     if (!game->first_bitmap_noted) {
         DxValue path = DX_NULL_VALUE;
         const char *text = NULL;
@@ -2160,6 +2211,11 @@ static DxResult canvas_draw_bitmap(DxVM *vm, DxFrame *frame, DxValue *args, uint
         else slot->pixel_change_count++;
     }
     framework_event(game, "canvas.draw_bitmap");
+    forensic_surface(AGR_PHYS_PHASE_DRAW_BITMAP_END, 1, dx_vm_current_exec(vm), slot,
+                     slot->draw_bitmap_count - 1, slot->draw_bitmap_count, 1);
+    if (after != before)
+        forensic_surface(AGR_PHYS_PHASE_PIXEL_MUTATION, 0, dx_vm_current_exec(vm), slot,
+                         0, slot->pixel_change_count, 1);
     return DX_OK;
 }
 
@@ -2363,7 +2419,17 @@ static void update_surface_view(DxVM *vm, agr_dex_game *game, DxObject *view,
         content_surface_lock(slot);
         if (slot->created_count) framework_event(game, "surface_holder.surface_created");
         if (slot->changed_count) framework_event(game, "surface_holder.surface_changed");
-        content_surface_unlock(slot);
+        {
+            agr_forensic_sample created;
+            agr_forensic_sample changed;
+            int note_created = slot->created_count != 0;
+            int note_changed = slot->changed_count != 0;
+            created = forensic_fill(AGR_PHYS_PHASE_SURFACE_CREATED, 1, dx_vm_current_exec(vm), slot, 0, slot->created_count, 1);
+            changed = forensic_fill(AGR_PHYS_PHASE_SURFACE_CHANGED, 1, dx_vm_current_exec(vm), slot, 0, slot->changed_count, 1);
+            content_surface_unlock(slot);
+            if (note_created) forensic_publish(&created);
+            if (note_changed) forensic_publish(&changed);
+        }
         return;
     }
     slot->width = width;
@@ -2396,8 +2462,15 @@ static void update_surface_view(DxVM *vm, agr_dex_game *game, DxObject *view,
             }
         }
         content_surface_lock(slot);
-        if (slot->changed_count != before) framework_event(game, "surface_holder.surface_changed");
-        content_surface_unlock(slot);
+        if (slot->changed_count != before) {
+            agr_forensic_sample changed = forensic_fill(AGR_PHYS_PHASE_SURFACE_CHANGED, 1,
+                                                        dx_vm_current_exec(vm), slot, before, slot->changed_count, 1);
+            framework_event(game, "surface_holder.surface_changed");
+            content_surface_unlock(slot);
+            forensic_publish(&changed);
+        } else {
+            content_surface_unlock(slot);
+        }
     }
 }
 
@@ -2655,6 +2728,7 @@ static DxResult surface_holder_lock_canvas(DxVM *vm, DxFrame *frame, DxValue *ar
     if (count >= 2 && args[1].tag == DX_VAL_OBJ) rect = args[1].obj;
     slot = content_slot_for_holder(game, args[0].obj);
     if (!slot || !exec) return DX_OK;
+    forensic_surface(AGR_PHYS_PHASE_CANVAS_LOCK_BEGIN, 0, exec, slot, slot->lock_count, slot->lock_count, 1);
     content_surface_lock(slot);
     while (slot->canvas_locked && slot->lock_owner_exec != exec->id && !exec->stop_requested) {
         struct timespec ts;
@@ -2675,14 +2749,17 @@ static DxResult surface_holder_lock_canvas(DxVM *vm, DxFrame *frame, DxValue *ar
     if (slot->canvas_locked && slot->lock_owner_exec == exec->id) {
         /* SurfaceView swallows Surface's already-locked exception and returns null. */
         content_lock_failure_throttle(slot, exec);
+        forensic_surface(AGR_PHYS_PHASE_CANVAS_LOCK_FAILED, 1, exec, slot, 0, 0, 0);
         return DX_OK;
     }
     if (!slot->valid || !slot->pixels || !slot->created || slot->width <= 0 || slot->height <= 0) {
         content_lock_failure_throttle(slot, exec);
+        forensic_surface(AGR_PHYS_PHASE_CANVAS_LOCK_FAILED, 1, exec, slot, 0, 0, 0);
         return DX_OK;
     }
     if (!content_clip_from_rect(rect, slot->width, slot->height, &left, &top, &right, &bottom)) {
         content_lock_failure_throttle(slot, exec);
+        forensic_surface(AGR_PHYS_PHASE_CANVAS_LOCK_FAILED, 1, exec, slot, 0, 0, 0);
         return DX_OK;
     }
     if (!slot->canvas) {
@@ -2693,12 +2770,14 @@ static DxResult surface_holder_lock_canvas(DxVM *vm, DxFrame *frame, DxValue *ar
         content_surface_lock(slot);
         if (!canvas) {
             content_surface_unlock(slot);
+            forensic_surface(AGR_PHYS_PHASE_CANVAS_LOCK_FAILED, 1, exec, slot, 0, 0, 0);
             return DX_ERR_OUT_OF_MEMORY;
         }
         if (!slot->canvas) slot->canvas = canvas;
     }
     if (slot->canvas_locked || !slot->valid || !slot->pixels) {
         content_lock_failure_throttle(slot, exec);
+        forensic_surface(AGR_PHYS_PHASE_CANVAS_LOCK_FAILED, 1, exec, slot, 0, 0, 0);
         return DX_OK;
     }
     slot->clip_left = left;
@@ -2721,7 +2800,12 @@ static DxResult surface_holder_lock_canvas(DxVM *vm, DxFrame *frame, DxValue *ar
     }
     content_bind_canvas(slot, slot->canvas);
     frame->result = DX_OBJ_VALUE(slot->canvas);
-    content_surface_unlock(slot);
+    {
+        agr_forensic_sample locked = forensic_fill(AGR_PHYS_PHASE_CANVAS_LOCK_ACQUIRED, 1, exec, slot,
+                                                   slot->lock_count - 1, slot->lock_count, 1);
+        content_surface_unlock(slot);
+        forensic_publish(&locked);
+    }
     framework_event(game, "surface_holder.canvas_locked");
     return DX_OK;
 }
@@ -2734,6 +2818,7 @@ static DxResult surface_holder_unlock_canvas(DxVM *vm, DxFrame *frame, DxValue *
     if (count < 2 || args[0].tag != DX_VAL_OBJ || !args[0].obj) return DX_ERR_NULL_PTR;
     canvas = args[1].tag == DX_VAL_OBJ ? args[1].obj : NULL;
     slot = content_slot_for_holder(game, args[0].obj);
+    forensic_surface(AGR_PHYS_PHASE_CANVAS_POST_BEGIN, 1, dx_vm_current_exec(vm), slot, 0, 0, 0);
     if (!slot) {
         dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
             vm, "Ljava/lang/IllegalArgumentException;", "canvas object must be the locked instance");
@@ -2778,7 +2863,12 @@ static DxResult surface_holder_unlock_canvas(DxVM *vm, DxFrame *frame, DxValue *
     slot->clip_bottom = slot->height;
     dx_vm_set_field(canvas, "_locked", DX_INT_VALUE(0));
     pthread_cond_broadcast(&slot->cv);
-    content_surface_unlock(slot);
+    {
+        agr_forensic_sample posted = forensic_fill(AGR_PHYS_PHASE_CANVAS_POST_END, 1, dx_vm_current_exec(vm), slot,
+                                                   slot->post_count - 1, slot->post_count, 1);
+        content_surface_unlock(slot);
+        forensic_publish(&posted);
+    }
     framework_event(game, "surface_holder.canvas_posted");
     return DX_OK;
 }

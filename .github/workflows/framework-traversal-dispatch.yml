@@ -16,6 +16,10 @@ on:
       - 'Tests/DexLoom/request-window-feature-host.c'
       - 'Tests/DexLoom/unresolved-context-host.c'
       - 'Tests/DexLoom/get-intent-host.c'
+      - 'Tests/DexLoom/physical-trace-host.c'
+      - 'App/agr_physical_trace.c'
+      - 'Runtime/DexLoom/agr_forensic.h'
+      - 'ci/physical-runtime-evidence.py'
       - 'Tests/DexLoom/canvas-state-clip-host.c'
       - 'Tests/DexLoom/make_thread_start_fixture.py'
       - 'Tests/DexLoom/surface-canvas-host.c'
@@ -169,6 +173,12 @@ jobs:
             -ljpeg -lgif -lz -lm -lpthread -o /tmp/agr-bitmap-draw-host
           /tmp/agr-bitmap-draw-host Tests/DexLoom/fixtures/fixture-2x2.png \
             Tests/DexLoom/fixtures/fb-background.jpg Tests/DexLoom/fixtures/fb-bubble.gif
+          cc -std=gnu11 -Wall -Wextra -Werror -pthread -I Runtime/DexLoom \
+            -c App/agr_physical_trace.c -o /tmp/agr_physical_trace.o
+          cc -std=gnu11 -Wall -Wextra -Werror -pthread -I Runtime/DexLoom \
+            -c Tests/DexLoom/physical-trace-host.c -o /tmp/physical-trace-host.o
+          cc -pthread /tmp/agr_physical_trace.o /tmp/physical-trace-host.o -o /tmp/physical-trace-host
+          /tmp/physical-trace-host ci/physical-runtime-evidence.py
       - name: Verify API19 source, semantic differential and governance
         run: |
           python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --require-valid framework.window.set_content_view --require-valid framework.view.surface_view --require-valid framework.view.surface_holder_canvas --require-valid framework.graphics.bitmap_decode_resource --require-valid framework.graphics.canvas_bitmap --require-valid framework.graphics.bitmap_create_scaled --require-valid dalvik.vm.vtable --require-valid dalvik.thread.start --require-valid java.lang.character.for_digit --require-valid framework.graphics.canvas_state_clip --require-valid java.util.vector.core --require-valid android.app.activity.request_window_feature --require-valid android.app.activity.get_intent --verify-upstream --verify-only framework.viewroot.traversal_dispatch --verify-only framework.window.set_content_view --verify-only framework.view.surface_view --verify-only framework.view.surface_holder_canvas --verify-only framework.graphics.bitmap_decode_resource --verify-only framework.graphics.canvas_bitmap --verify-only framework.graphics.bitmap_create_scaled --verify-only dalvik.vm.vtable --verify-only dalvik.thread.start --verify-only java.lang.character.for_digit --verify-only framework.graphics.canvas_state_clip --verify-only java.util.vector.core --verify-only android.app.activity.request_window_feature --verify-only android.app.activity.get_intent --output build/artifacts/traversal-dispatch-upstream-map.json

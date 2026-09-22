@@ -12,6 +12,7 @@
 #endif
 #include "../Tests/Conformance/agr_contracts.h"
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "agr_runtime.h"
@@ -23,6 +24,8 @@
 #include "agr_bitmap.h"
 #include "agr_guest_runtime.h"
 #include "game_dex_runner.h"
+#include "agr_forensic.h"
+#include <pthread.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
@@ -1249,7 +1252,95 @@ static int gPhysicalPolls = 0;
 static NSString *gPhysicalApkPath = nil;
 static NSString *gPhysicalSha = nil;
 static NSString *gPhysicalError = nil;
+static int gPhysicalTraceReady = 0;
+static uint32_t gPhysicalLastTraversal = 0;
+static int gPhysicalSawAttach = 0;
+static int gPhysicalSawSchedule = 0;
+static int gPhysicalSawVectorSize = 0;
+static int gPhysicalSawVectorElement = 0;
+static int gPhysicalSawPaint = 0;
+static char gPhysicalLastStage[32];
 static void armPhysicalRuntime(uint32_t width, uint32_t height);
+
+static void physicalNote(uint32_t phase, int critical, int hasExec, uint32_t execId, const char *detail) {
+    agr_forensic_sample sample;
+    memset(&sample, 0, sizeof(sample));
+    sample.phase = phase;
+    sample.critical = critical;
+    sample.has_exec = hasExec;
+    sample.exec_id = execId;
+    sample.host_thread = (uint64_t)pthread_self();
+    if (detail) snprintf(sample.detail, sizeof(sample.detail), "%s", detail);
+    agr_physical_trace_event(&sample);
+}
+
+static void physicalPublish(const agr_dex_runtime_snapshot *snapshot) {
+    agr_forensic_sample sample;
+    if (!snapshot) return;
+    memset(&sample, 0, sizeof(sample));
+    sample.surface_valid = snapshot->content_surface_valid;
+    sample.surface_generation = snapshot->content_surface_generation;
+    sample.surface_identity = snapshot->content_surface_identity;
+    sample.canvas_locked = snapshot->canvas_locked;
+    sample.lock_owner_exec = snapshot->canvas_lock_owner_exec;
+    sample.lock_count = snapshot->canvas_lock_count;
+    sample.unlock_count = snapshot->canvas_unlock_count;
+    sample.post_count = snapshot->canvas_post_count;
+    sample.draw_bitmap_count = snapshot->canvas_draw_bitmap_count;
+    sample.pixel_change_count = snapshot->canvas_pixel_change_count;
+    sample.created_count = snapshot->content_surface_created_count;
+    sample.changed_count = snapshot->content_surface_changed_count;
+    sample.host_thread = snapshot->canvas_lock_owner_host;
+    if (snapshot->canvas_lock_owner_exec) {
+        sample.has_exec = 1;
+        sample.exec_id = snapshot->canvas_lock_owner_exec;
+    }
+    agr_physical_trace_publish_ownership(&sample);
+}
+
+static void vectorWitnesses(DxVM *vm, NSString **sizeText, NSString **elementClass,
+                            NSString **paintText, BOOL *paintReached);
+
+static void physicalObserve(const agr_dex_runtime_snapshot *snapshot, DxVM *vm) {
+    const char *stage;
+    NSString *vectorSize = @"";
+    NSString *elementClass = @"";
+    NSString *paintWitness = @"";
+    BOOL paint = NO;
+    if (!snapshot) return;
+    physicalPublish(snapshot);
+    stage = launchStageName(gPhysicalGame ? agr_dex_game_launch_stage(gPhysicalGame) : AGR_ACTIVITY_LAUNCH_NONE).UTF8String;
+    if (stage && strncmp(gPhysicalLastStage, stage, sizeof(gPhysicalLastStage)) != 0) {
+        snprintf(gPhysicalLastStage, sizeof(gPhysicalLastStage), "%s", stage);
+        physicalNote(AGR_PHYS_PHASE_ACTIVITY_STAGE, 0, 0, 0, stage);
+    }
+    if (!gPhysicalSawAttach && snapshot->viewroot_attach_completed) {
+        gPhysicalSawAttach = 1;
+        physicalNote(AGR_PHYS_PHASE_VIEWROOT_ATTACH, 0, 0, 0, "attach_complete");
+    }
+    if (!gPhysicalSawSchedule && snapshot->traversal_scheduled) {
+        gPhysicalSawSchedule = 1;
+        physicalNote(AGR_PHYS_PHASE_TRAVERSAL_SCHEDULED, 0, 0, 0, NULL);
+    }
+    if (snapshot->traversal_count > gPhysicalLastTraversal) {
+        physicalNote(AGR_PHYS_PHASE_TRAVERSAL_BEGIN, 0, 0, 0, NULL);
+        physicalNote(AGR_PHYS_PHASE_TRAVERSAL_END, 0, 0, 0, NULL);
+        gPhysicalLastTraversal = snapshot->traversal_count;
+    }
+    vectorWitnesses(vm, &vectorSize, &elementClass, &paintWitness, &paint);
+    if (!gPhysicalSawVectorSize && vectorSize.length) {
+        gPhysicalSawVectorSize = 1;
+        physicalNote(AGR_PHYS_PHASE_VECTOR_SIZE, 0, 0, 0, vectorSize.UTF8String);
+    }
+    if (!gPhysicalSawVectorElement && elementClass.length) {
+        gPhysicalSawVectorElement = 1;
+        physicalNote(AGR_PHYS_PHASE_VECTOR_ELEMENT, 0, 0, 0, elementClass.UTF8String);
+    }
+    if (!gPhysicalSawPaint && paint) {
+        gPhysicalSawPaint = 1;
+        physicalNote(AGR_PHYS_PHASE_PENGUIN_SPRITE_PAINT_WITNESS, 1, 0, 0, "PenguinSprite.paint");
+    }
+}
 
 static NSDictionary *syntheticTraversalDispatchContract(uint32_t width, uint32_t height) {
     NSString *fixturePath=[[NSBundle mainBundle] pathForResource:@"activity-launch-fixture" ofType:@"dex"];
@@ -1701,9 +1792,26 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     self.window.rootViewController = controller; [self.window makeKeyAndVisible];
     CGSize displayPixels=UIScreen.mainScreen.nativeBounds.size;
     if (physicalRuntime) {
+      NSString *documents=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+      agr_physical_trace_config traceConfig;
+      [[NSFileManager defaultManager] createDirectoryAtPath:documents withIntermediateDirectories:YES attributes:nil error:nil];
+      memset(&traceConfig, 0, sizeof(traceConfig));
+      traceConfig.directory=documents.UTF8String;
+      traceConfig.branch=AGR_BUILD_BRANCH;
+      traceConfig.commit=AGR_BUILD_COMMIT;
+      traceConfig.tree=AGR_BUILD_TREE;
+      traceConfig.device_platform="iphoneos";
+#if TARGET_OS_SIMULATOR
+      traceConfig.architecture="arm64-simulator";
+#else
+      traceConfig.architecture="arm64";
+#endif
+      traceConfig.apk_sha256_expected="57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569";
+      gPhysicalTraceReady=agr_physical_trace_begin(&traceConfig)==0;
       gPhysicalLink=[CADisplayLink displayLinkWithTarget:self selector:@selector(hostPhysicalVsync:)];
       [gPhysicalLink addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
       gPhysicalLink.paused=YES;
+      physicalNote(AGR_PHYS_PHASE_CADISPLAYLINK_CREATED, 1, 0, 0, NULL);
       uint32_t width=(uint32_t)displayPixels.width, height=(uint32_t)displayPixels.height;
       dispatch_async(dispatch_get_main_queue(),^{ @autoreleasepool { armPhysicalRuntime(width,height); } });
       return YES;
@@ -1914,10 +2022,36 @@ static void finishPhysicalReport(void) {
         @"content_posted":contentPosted ? @"YES" : @"NO",
         @"screen_presented":@"NOT_TESTED"
     };
+    {
+        const char *reason = gPhysicalError ? "RUNTIME_ERROR" :
+            (gPhysicalStart != 0 ? "ACTIVITY_START_FAILED" :
+             (contentPosted ? "CONTENT_POSTED" : "OBSERVATION_TIMEOUT"));
+        agr_physical_trace_status traceStatus;
+        NSMutableDictionary *full = [report mutableCopy];
+        memset(&traceStatus, 0, sizeof(traceStatus));
+        if (gPhysicalTraceReady) agr_physical_trace_finish(reason, &traceStatus);
+        full[@"run_id"] = [NSString stringWithUTF8String:traceStatus.run_id];
+        full[@"final_state"] = [NSString stringWithUTF8String:reason];
+        full[@"termination_reason"] = [NSString stringWithUTF8String:reason];
+        full[@"last_trace_seq"] = @(traceStatus.last_seq);
+        full[@"last_trace_event"] = [NSString stringWithUTF8String:traceStatus.last_event];
+        full[@"trace_file"] = [NSString stringWithUTF8String:traceStatus.trace_file];
+        full[@"trace_event_count"] = @(traceStatus.event_count);
+        full[@"watchdog_state"] = [NSString stringWithUTF8String:traceStatus.watchdog_state];
+        full[@"watchdog_heartbeat_count"] = @(traceStatus.heartbeat_count);
+        full[@"watchdog_no_progress_level"] = @(traceStatus.no_progress_level);
+        full[@"max_progress_gap_ms"] = @(traceStatus.max_progress_gap_ms);
+        full[@"progress_age_ms"] = @(traceStatus.progress_age_ms);
+        full[@"crash_marker_present"] = @(traceStatus.crash_marker_present != 0);
+        full[@"root_exec"] = traceStatus.has_root_exec ? @(traceStatus.root_exec) : [NSNull null];
+        full[@"game_thread_state"] = @(traceStatus.game_thread_state);
+        report = full;
+    }
     json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted error:nil];
     documents=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
     [[NSFileManager defaultManager] createDirectoryAtPath:documents withIntermediateDirectories:YES attributes:nil error:nil];
-    [json writeToFile:[documents stringByAppendingPathComponent:@"agr-physical-runtime.json"] atomically:YES];
+    if (![json writeToFile:[documents stringByAppendingPathComponent:@"agr-physical-runtime.json"] atomically:YES])
+        agr_physical_trace_note_writer_error("EVIDENCE_WRITER_ERROR");
     if (gPhysicalGame) agr_dex_game_destroy(gPhysicalGame);
     gPhysicalGame=NULL;
     if (gPhysicalPackage) agr_apk_package_close(gPhysicalPackage);
@@ -1929,6 +2063,7 @@ static void pollPhysicalReport(void) {
     int posted;
     if (gPhysicalFinished || !gPhysicalGame) return;
     agr_dex_game_runtime_snapshot(gPhysicalGame, &snapshot);
+    physicalObserve(&snapshot, agr_dex_game_vm(gPhysicalGame));
     posted=snapshot.canvas_lock_count>0 && snapshot.canvas_draw_bitmap_count>0 &&
         snapshot.canvas_pixel_change_count>0 && snapshot.canvas_post_count>0 &&
         snapshot.canvas_buffer_hash_before!=snapshot.canvas_buffer_hash_after;
@@ -1943,32 +2078,88 @@ static void pollPhysicalReport(void) {
 
 static void armPhysicalRuntime(uint32_t width, uint32_t height) {
     static NSString *const expected=@"57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569";
+    int display = -1;
     gPhysicalWidth=width;
     gPhysicalHeight=height;
+    physicalNote(AGR_PHYS_PHASE_APK_LOCATE_BEGIN, 0, 0, 0, NULL);
     gPhysicalApkPath=frozenBubbleApkPath();
-    gPhysicalSha=sha256File(gPhysicalApkPath);
-    if (![gPhysicalSha isEqualToString:expected]) {
-        gPhysicalError=gPhysicalApkPath.length ? @"apk_sha256_mismatch" : @"apk_missing";
+    if (!gPhysicalApkPath.length) {
+        physicalNote(AGR_PHYS_PHASE_APK_LOCATE_FAIL, 1, 0, 0, "apk_missing");
+        gPhysicalError=@"apk_missing";
         gPhysicalStart=-1;
+        physicalNote(AGR_PHYS_PHASE_RUNTIME_ERROR, 1, 0, 0, "apk_missing");
         finishPhysicalReport();
         return;
     }
+    physicalNote(AGR_PHYS_PHASE_APK_LOCATE_OK, 1, 0, 0, NULL);
+    physicalNote(AGR_PHYS_PHASE_APK_SHA_BEGIN, 0, 0, 0, NULL);
+    gPhysicalSha=sha256File(gPhysicalApkPath);
+    if (![gPhysicalSha isEqualToString:expected]) {
+        physicalNote(AGR_PHYS_PHASE_APK_SHA_FAIL, 1, 0, 0, "apk_sha256_mismatch");
+        gPhysicalError=@"apk_sha256_mismatch";
+        gPhysicalStart=-1;
+        physicalNote(AGR_PHYS_PHASE_RUNTIME_ERROR, 1, 0, 0, "apk_sha256_mismatch");
+        finishPhysicalReport();
+        return;
+    }
+    physicalNote(AGR_PHYS_PHASE_APK_SHA_OK, 1, 0, 0, NULL);
+    physicalNote(AGR_PHYS_PHASE_APK_OPEN_BEGIN, 0, 0, 0, NULL);
     gPhysicalPackage=agr_apk_package_open(gPhysicalApkPath.UTF8String);
-    gPhysicalGame=gPhysicalPackage ? agr_dex_game_create_from_apk(gPhysicalPackage) : NULL;
-    if (gPhysicalGame) agr_dex_game_enable_diagnostics(gPhysicalGame, 1);
-    if (gPhysicalGame) agr_dex_game_set_host_display(gPhysicalGame, width, height);
-    gPhysicalStart=gPhysicalGame ? agr_dex_game_start_activity(gPhysicalGame) : -1;
-    if (gPhysicalStart!=0 || !gPhysicalLink) finishPhysicalReport();
-    else gPhysicalLink.paused=NO;
+    if (!gPhysicalPackage) {
+        physicalNote(AGR_PHYS_PHASE_APK_OPEN_FAIL, 1, 0, 0, "apk_open_failed");
+        gPhysicalError=@"apk_open_failed";
+        gPhysicalStart=-1;
+        physicalNote(AGR_PHYS_PHASE_RUNTIME_ERROR, 1, 0, 0, "apk_open_failed");
+        finishPhysicalReport();
+        return;
+    }
+    physicalNote(AGR_PHYS_PHASE_APK_OPEN_OK, 1, 0, 0, NULL);
+    physicalNote(AGR_PHYS_PHASE_GAME_CREATE_BEGIN, 0, 0, 0, NULL);
+    gPhysicalGame=agr_dex_game_create_from_apk(gPhysicalPackage);
+    if (!gPhysicalGame) {
+        physicalNote(AGR_PHYS_PHASE_GAME_CREATE_FAIL, 1, 0, 0, "game_create_failed");
+        gPhysicalError=@"game_create_failed";
+        gPhysicalStart=-1;
+        physicalNote(AGR_PHYS_PHASE_RUNTIME_ERROR, 1, 0, 0, "game_create_failed");
+        finishPhysicalReport();
+        return;
+    }
+    physicalNote(AGR_PHYS_PHASE_GAME_CREATE_OK, 1, 0, 0, NULL);
+    agr_dex_game_enable_diagnostics(gPhysicalGame, 1);
+    physicalNote(AGR_PHYS_PHASE_DIAGNOSTICS_ENABLED, 0, 0, 0, NULL);
+    physicalNote(AGR_PHYS_PHASE_HOST_DISPLAY_SET_BEGIN, 0, 0, 0, NULL);
+    display=agr_dex_game_set_host_display(gPhysicalGame, width, height);
+    physicalNote(display==0 ? AGR_PHYS_PHASE_HOST_DISPLAY_SET_OK : AGR_PHYS_PHASE_HOST_DISPLAY_SET_FAIL,
+                1, 0, 0, display==0 ? NULL : "host_display_failed");
+    physicalNote(AGR_PHYS_PHASE_ACTIVITY_START_BEGIN, 0, 0, 0, NULL);
+    gPhysicalStart=agr_dex_game_start_activity(gPhysicalGame);
+    if (gPhysicalStart==0) {
+        DxVM *vm=agr_dex_game_vm(gPhysicalGame);
+        DxExecutionContext *exec=vm ? dx_vm_current_exec(vm) : NULL;
+        physicalNote(AGR_PHYS_PHASE_ACTIVITY_START_OK, 1, exec!=NULL, exec ? exec->id : 0, NULL);
+        physicalNote(AGR_PHYS_PHASE_EXEC_PUBLISHED, 0, exec!=NULL, exec ? exec->id : 0, "root");
+        if (gPhysicalLink) {
+            gPhysicalLink.paused=NO;
+            physicalNote(AGR_PHYS_PHASE_CADISPLAYLINK_STARTED, 1, 0, 0, NULL);
+        } else {
+            finishPhysicalReport();
+        }
+    } else {
+        physicalNote(AGR_PHYS_PHASE_ACTIVITY_START_FAIL, 1, 0, 0, "activity_start_failed");
+        finishPhysicalReport();
+    }
 }
 
 - (void)hostPhysicalVsync:(CADisplayLink *)link {
     (void)link;
     if (!gPhysicalGame || gPhysicalFinished || gPhysicalContentHold) return;
     gPhysicalVsync++;
+    physicalNote(AGR_PHYS_PHASE_PHYSICAL_FRAME_BEGIN, 0, 0, 0, NULL);
     int result=agr_dex_game_choreographer_frame(gPhysicalGame);
     agr_dex_runtime_snapshot snapshot={0};
     agr_dex_game_runtime_snapshot(gPhysicalGame, &snapshot);
+    physicalObserve(&snapshot, agr_dex_game_vm(gPhysicalGame));
+    physicalNote(AGR_PHYS_PHASE_PHYSICAL_FRAME_END, 0, 0, 0, NULL);
     if (result<0 || gPhysicalVsync>=4) {
         finishPhysicalReport();
         return;

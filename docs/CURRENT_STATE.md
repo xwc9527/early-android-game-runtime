@@ -10,7 +10,7 @@ Discovery run `35666933096` launched unchanged Frozen Bubble with UIKit `CADispl
 
 ## Physical device runtime
 
-FIRST_CONTENT_FRAME stays SIMULATOR_CONFIRMED. Physical-device runtime confirmation is the active gate and is not yet confirmed. The iphoneos app's default entry loads unchanged `org.jfedor.frozenbubble_8`, starts the Activity, and drives `agr_dex_game_choreographer_frame` from `CADisplayLink`. It writes `Documents/agr-physical-runtime.json` and does not call `do_traversal`, `lockCanvas`, `drawBitmap`, or `post`. `SCREEN_PRESENTATION` is not claimed. `Intent.getExtras` remains the next execution-context-0 encounter and is not selected as a blocker.
+FIRST_CONTENT_FRAME stays SIMULATOR_CONFIRMED. Physical-device runtime confirmation is not yet confirmed. The iphoneos default entry still loads unchanged `org.jfedor.frozenbubble_8` and drives `agr_dex_game_choreographer_frame` from `CADisplayLink`. It does not call `do_traversal`, `lockCanvas`, `drawBitmap`, or `post`. The device path now opens a durable forensic channel before the APK is touched: `Documents/agr-physical-run.json`, append-only `Documents/agr-physical-trace.ndjson`, and the existing `Documents/agr-physical-runtime.json` summary. A dedicated pthread watchdog records 2s/5s/8s no-progress markers and does not kill the process. Catchable fatal signals write `Documents/agr-physical-crash.bin`; `SIGKILL` cannot be caught. `SCREEN_PRESENTATION` is not claimed. `Intent.getExtras` remains the next execution-context-0 encounter and is not selected as a blocker. The state is `PHYSICAL_TRACE_READY`, not `PHYSICAL_DEVICE_RUNTIME_CONFIRMED`.
 
 ## Merged First Traversal baseline
 
