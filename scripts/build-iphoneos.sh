@@ -83,15 +83,16 @@ clang "${COMMON[@]}" -fobjc-arc -DAGR_DEVICE_INTERACTIVE=1 -I"$BUILD/obj" -I"$RO
 clang++ "${COMMON[@]}" -Wl,-dead_strip -Wl,-rpath,@executable_path/Frameworks -F"$ANGLE_FRAMEWORKS" "$BUILD/obj/main.o" "$BUILD/obj/agr_runtime.o" "$BUILD/obj/agr_bionic_allocator.o" "$BUILD/obj/agr_guest_vma.o" "$BUILD/obj/agr_host_services_darwin.o" "$BUILD/obj/agr_bionic_thread_attr.o" "$BUILD/obj/agr_futex_host.o" "$BUILD/obj/agr_bionic_sync.o" "$BUILD/obj/agr_bionic_tls.o" "$BUILD/obj/agr_bionic_errno_host.o" "$BUILD/obj/agr_bionic_thread_lifecycle.o" "$BUILD/obj/agr_bionic_mmap.o" "$BUILD/obj/agr_aosp_linker.o" "$BUILD/obj/agr_aosp_dynamic.o" "$BUILD/obj/agr_ehabi.o" "$BUILD/obj/agr_contracts.o" "$BUILD/obj/agr_guest_runtime.o" "$BUILD/obj/agr_thread_context.o" "$BUILD/obj/agr_service_dispatch.o" "$BUILD/obj/agr_jni_methods.o" "${DEX_OBJECTS[@]}" "${AFW_OBJECTS[@]}" "${SKIA_OBJECTS[@]}" "${PNG_OBJECTS[@]}" "$ROOT/Runtime/ArmInterpreter/target/aarch64-apple-ios/release/libtouchhle_arm_interpreter.a" -lz -framework UIKit -framework Foundation -framework CoreGraphics -framework Security -framework Metal -framework QuartzCore -framework libEGL -framework libGLESv2 -o "$APP/AGRSimulator"
 cp "$ROOT/App/Info.plist" "$APP/Info.plist"; cp "$ROOT/App/Resources/"* "$APP/"
 cp "$BUILD/build-identity.txt" "$APP/agr-build-identity.txt"
+nm -gU "$APP/AGRSimulator" > "$BUILD/nm-symbols.txt"
 missing=0
 for symbol in agr_dex_game_create_from_apk agr_dex_game_start_activity agr_dex_game_choreographer_frame agr_dex_game_runtime_snapshot dx_vm_execute_method dx_vm_current_exec agr_bitmap_decode agr_bitmap_draw; do
-  if ! nm "$APP/AGRSimulator" | grep -q "$symbol"; then
+  if ! grep -q "$symbol" "$BUILD/nm-symbols.txt"; then
     echo "iphoneos runtime coverage missing symbol $symbol"
     missing=1
   fi
 done
 for text in 'Ljava/util/Vector;' 'Ljava/lang/Thread;' lockCanvas drawBitmap SurfaceHolder; do
-  if ! strings "$APP/AGRSimulator" | grep -q -F "$text"; then
+  if ! grep -a -F -q "$text" "$APP/AGRSimulator"; then
     echo "iphoneos runtime coverage missing text $text"
     missing=1
   fi
