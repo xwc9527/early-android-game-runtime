@@ -13,6 +13,7 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include <errno.h>
 #include <pthread.h>
 #include <GLES2/gl2.h>
 
@@ -3220,6 +3221,24 @@ int agr_dex_game_copy_canvas_trace(const agr_dex_game *game, uint32_t index,
                                    agr_canvas_trace *out) {
     if (!game || !out || index >= game->canvas_trace_count) return -1;
     *out = game->canvas_trace[index];
+    return 0;
+}
+
+int agr_dex_game_diagnostic_content_lock_busy(const agr_dex_game *game) {
+    uint32_t i;
+    if (!game) return 0;
+    for (i = 0; i < game->content_surface_count && i < AGR_CONTENT_SURFACE_CAP; i++) {
+        struct agr_content_surface *slot =
+            (struct agr_content_surface *)&game->content_surfaces[i];
+        int rc;
+        if (!slot->mutex_ready) continue;
+        rc = pthread_mutex_trylock(&slot->mu);
+        if (rc == 0) {
+            pthread_mutex_unlock(&slot->mu);
+            continue;
+        }
+        if (rc == EBUSY) return 1;
+    }
     return 0;
 }
 

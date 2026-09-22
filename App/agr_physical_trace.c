@@ -59,7 +59,8 @@ static uint32_t g_heartbeat_count = 0;
 static uint32_t g_no_progress_level = 0;
 static uint32_t g_reported_level = 0;
 static int g_stalled = 0;
-static int g_draw_fsynced = 0;
+static uint8_t g_phase_synced[64];
+static uint32_t g_sync_count = 0;
 static int g_finished = 0;
 static char g_dir[512];
 static char g_run_id[40];
@@ -252,20 +253,71 @@ static void remember_exec(const agr_forensic_sample *sample) {
     }
 }
 
-static int want_fsync(const agr_forensic_sample *sample) {
-    if (!sample->critical) return 0;
-    if (sample->phase == AGR_PHYS_PHASE_DRAW_BITMAP_END) {
-        if (g_draw_fsynced) return 0;
-        g_draw_fsynced = 1;
-    }
-    if (sample->phase == AGR_PHYS_PHASE_DRAW_BITMAP_BEGIN ||
-        sample->phase == AGR_PHYS_PHASE_PIXEL_MUTATION ||
-        sample->phase == AGR_PHYS_PHASE_WATCHDOG_HEARTBEAT ||
-        sample->phase == AGR_PHYS_PHASE_CANVAS_LOCK_BEGIN ||
-        sample->phase == AGR_PHYS_PHASE_PHYSICAL_FRAME_BEGIN ||
-        sample->phase == AGR_PHYS_PHASE_PHYSICAL_FRAME_END)
+static int phase_always_sync(uint32_t phase) {
+    switch (phase) {
+    case AGR_PHYS_PHASE_APK_LOCATE_FAIL:
+    case AGR_PHYS_PHASE_APK_SHA_FAIL:
+    case AGR_PHYS_PHASE_APK_OPEN_FAIL:
+    case AGR_PHYS_PHASE_GAME_CREATE_FAIL:
+    case AGR_PHYS_PHASE_HOST_DISPLAY_SET_FAIL:
+    case AGR_PHYS_PHASE_ACTIVITY_START_FAIL:
+    case AGR_PHYS_PHASE_CANVAS_LOCK_FAILED:
+    case AGR_PHYS_PHASE_RUNTIME_ERROR:
+    case AGR_PHYS_PHASE_WATCHDOG_NO_PROGRESS_8S:
+    case AGR_PHYS_PHASE_WATCHDOG_STALL:
+    case AGR_PHYS_PHASE_FINALIZE_BEGIN:
+    case AGR_PHYS_PHASE_FINALIZE_END:
+        return 1;
+    default:
         return 0;
-    return 1;
+    }
+}
+
+static int phase_never_sync(uint32_t phase) {
+    switch (phase) {
+    case AGR_PHYS_PHASE_DRAW_BITMAP_BEGIN:
+    case AGR_PHYS_PHASE_PIXEL_MUTATION:
+    case AGR_PHYS_PHASE_WATCHDOG_HEARTBEAT:
+    case AGR_PHYS_PHASE_WATCHDOG_NO_PROGRESS_2S:
+    case AGR_PHYS_PHASE_WATCHDOG_NO_PROGRESS_5S:
+    case AGR_PHYS_PHASE_CANVAS_LOCK_BEGIN:
+    case AGR_PHYS_PHASE_CANVAS_POST_BEGIN:
+    case AGR_PHYS_PHASE_PHYSICAL_FRAME_BEGIN:
+    case AGR_PHYS_PHASE_PHYSICAL_FRAME_END:
+    case AGR_PHYS_PHASE_SNAPSHOT_UNAVAILABLE:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/* First arrival of a responsibility boundary. Later repeats only append. */
+static int phase_first_sync(uint32_t phase) {
+    switch (phase) {
+    case AGR_PHYS_PHASE_THREAD_RUN_ENTER:
+    case AGR_PHYS_PHASE_SURFACE_CREATED:
+    case AGR_PHYS_PHASE_SURFACE_CHANGED:
+    case AGR_PHYS_PHASE_CANVAS_LOCK_ACQUIRED:
+    case AGR_PHYS_PHASE_DRAW_BITMAP_END:
+    case AGR_PHYS_PHASE_CANVAS_POST_END:
+    case AGR_PHYS_PHASE_PENGUIN_SPRITE_PAINT_WITNESS:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static int want_fsync(const agr_forensic_sample *sample) {
+    uint32_t phase = sample->phase;
+    if (phase >= sizeof(g_phase_synced)) return 0;
+    if (phase_always_sync(phase)) return 1;
+    if (phase_never_sync(phase)) return 0;
+    if (phase_first_sync(phase) || sample->critical) {
+        if (g_phase_synced[phase]) return 0;
+        g_phase_synced[phase] = 1;
+        return 1;
+    }
+    return 0;
 }
 
 /* Caller holds g_mu. write() lands in the kernel cache. fsync is reserved
@@ -339,7 +391,10 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
     }
     if (n < 0 || (size_t)n >= sizeof(line)) return;
     if (write(g_trace_fd, line, (size_t)n) != n) return;
-    if (sync) fsync(g_trace_fd);
+    if (sync) {
+        fsync(g_trace_fd);
+        g_sync_count++;
+    }
     g_bytes += (uint32_t)n;
     g_event_count++;
     update_crash_image(seq, sample);
@@ -385,6 +440,7 @@ static void fill_status(agr_physical_trace_status *out) {
     out->has_game_exec = g_has_game;
     out->game_thread_state = g_game_state;
     out->game_host_thread = g_game_host;
+    copy_text(out->termination_reason, sizeof(out->termination_reason), g_reason);
     if (g_crash_fd >= 0) {
         struct stat st;
         char path[640];
@@ -621,6 +677,14 @@ void agr_physical_trace_set_lock_probe(int (*probe)(void *user), void *user) {
     pthread_mutex_unlock(&g_mu);
 }
 
+uint32_t agr_physical_trace_sync_count(void) {
+    uint32_t count;
+    pthread_mutex_lock(&g_mu);
+    count = g_sync_count;
+    pthread_mutex_unlock(&g_mu);
+    return count;
+}
+
 int agr_physical_trace_begin(const agr_physical_trace_config *config) {
     char path[640];
     agr_forensic_sample launch;
@@ -651,7 +715,8 @@ int agr_physical_trace_begin(const agr_physical_trace_config *config) {
     g_no_progress_level = 0;
     g_reported_level = 0;
     g_stalled = 0;
-    g_draw_fsynced = 0;
+    memset(g_phase_synced, 0, sizeof(g_phase_synced));
+    g_sync_count = 0;
     g_finished = 0;
     g_stop = 0;
     g_has_own = 0;

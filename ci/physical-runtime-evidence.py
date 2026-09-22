@@ -146,6 +146,31 @@ def classify(events, final, crash):
     return "EVIDENCE_INCOMPLETE"
 
 
+def termination_surfaces(run, events, final):
+    run_state = ""
+    if isinstance(run, dict) and isinstance(run.get("state"), str):
+        run_state = run["state"]
+    finalize = last_phase(events, "FINALIZE_END") or last_phase(events, "FINALIZE_BEGIN")
+    finalize_reason = ""
+    if isinstance(finalize, dict) and isinstance(finalize.get("detail"), str):
+        finalize_reason = finalize["detail"]
+    final_reason = ""
+    if isinstance(final, dict):
+        final_reason = str(final.get("termination_reason") or final.get("final_state") or "")
+    authoritative = finalize_reason or final_reason
+    if not authoritative and run_state not in ("", "RUNNING"):
+        authoritative = run_state
+    consistent = True
+    if finalize_reason:
+        if run_state and run_state != finalize_reason:
+            consistent = False
+        if final_reason and final_reason != finalize_reason:
+            consistent = False
+    elif final_reason and run_state not in ("", "RUNNING") and run_state != final_reason:
+        consistent = False
+    return authoritative, run_state, finalize_reason, consistent
+
+
 def identity_ok(run, events):
     if not isinstance(run, dict):
         return False
@@ -169,6 +194,8 @@ def summarize(directory):
     last = events[-1] if events else {}
     seqs = [int(event.get("seq") or 0) for event in events]
     monotonic = all(seqs[i] < seqs[i + 1] for i in range(len(seqs) - 1))
+    termination_reason, run_state, finalize_reason, termination_consistent = termination_surfaces(
+        run, events, final)
     game = last_phase(events, "THREAD_RUN_ENTER") or last_phase(events, "THREAD_START") or last_phase(events, "CANVAS_LOCK_ACQUIRED")
     stage = ""
     for event in events:
@@ -207,6 +234,10 @@ def summarize(directory):
         "final_json_missing": final is None,
         "classification": classify(events, final, crash),
         "event_count": len(events),
+        "termination_reason": termination_reason,
+        "run_state": run_state,
+        "finalize_reason": finalize_reason,
+        "termination_consistent": termination_consistent,
     }
     if crash and crash.get("last_seq") and (not seqs or crash["last_seq"] >= seqs[-1]):
         summary["last_durable_seq"] = crash["last_seq"]

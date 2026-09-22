@@ -229,6 +229,149 @@ static void test_watchdog_and_probe(void) {
     agr_physical_trace_shutdown();
 }
 
+static int span_has(const char *start, const char *end, const char *needle) {
+    size_t n = strlen(needle);
+    size_t len = (size_t)(end - start);
+    size_t i;
+    if (n == 0 || n > len) return 0;
+    for (i = 0; i + n <= len; i++) {
+        if (memcmp(start + i, needle, n) == 0) return 1;
+    }
+    return 0;
+}
+
+static int line_contains(const char *body, const char *phase, const char *detail) {
+    const char *cursor = body;
+    char phase_key[96];
+    char detail_key[160];
+    snprintf(phase_key, sizeof(phase_key), "\"phase\":\"%s\"", phase);
+    snprintf(detail_key, sizeof(detail_key), "\"detail\":\"%s\"", detail);
+    while ((cursor = strstr(cursor, phase_key)) != NULL) {
+        const char *line = cursor;
+        const char *end;
+        while (line > body && line[-1] != '\n') line--;
+        end = strchr(cursor, '\n');
+        if (!end) end = cursor + strlen(cursor);
+        if (span_has(line, end, detail_key)) return 1;
+        cursor += strlen(phase_key);
+    }
+    return 0;
+}
+
+static void test_frame_sync_policy(void) {
+    const char *dir = "/tmp/agr-phys-sync";
+    agr_physical_trace_config config;
+    uint32_t base;
+    uint32_t after_bounds;
+    uint32_t after_frames;
+    uint32_t after_repeat;
+    uint32_t after_fail;
+    int frame;
+    mkdir(dir, 0755);
+    quiet_watchdog();
+    config = config_for(dir);
+    expect(agr_physical_trace_begin(&config) == 0, "sync begin");
+    base = agr_physical_trace_sync_count();
+    note(AGR_PHYS_PHASE_THREAD_RUN_ENTER, 1, 1, 7, 99, 0, 0, 0, 0, 0, 0, NULL);
+    note(AGR_PHYS_PHASE_SURFACE_CREATED, 1, 1, 7, 99, 0, 0, 0, 0, 0, 0, NULL);
+    note(AGR_PHYS_PHASE_SURFACE_CHANGED, 1, 1, 7, 99, 0, 0, 0, 0, 0, 0, NULL);
+    note(AGR_PHYS_PHASE_PENGUIN_SPRITE_PAINT_WITNESS, 1, 1, 7, 99, 0, 0, 0, 0, 0, 0, NULL);
+    after_bounds = agr_physical_trace_sync_count();
+    expect(after_bounds == base + 4, "first responsibility boundaries");
+    note(AGR_PHYS_PHASE_THREAD_RUN_ENTER, 1, 1, 7, 99, 0, 0, 0, 0, 0, 0, NULL);
+    note(AGR_PHYS_PHASE_SURFACE_CREATED, 1, 1, 7, 99, 0, 0, 0, 0, 0, 0, NULL);
+    note(AGR_PHYS_PHASE_SURFACE_CHANGED, 1, 1, 7, 99, 0, 0, 0, 0, 0, 0, NULL);
+    note(AGR_PHYS_PHASE_PENGUIN_SPRITE_PAINT_WITNESS, 1, 1, 7, 99, 0, 0, 0, 0, 0, 0, NULL);
+    expect(agr_physical_trace_sync_count() == after_bounds, "repeat boundaries stay cached");
+    for (frame = 0; frame < 4; frame++) {
+        note(AGR_PHYS_PHASE_CANVAS_LOCK_ACQUIRED, 1, 1, 7, 99, 1, frame + 1, frame, frame, frame, 0, NULL);
+        note(AGR_PHYS_PHASE_DRAW_BITMAP_END, 1, 1, 7, 99, 1, frame + 1, frame, frame, frame + 1, 8, NULL);
+        note(AGR_PHYS_PHASE_CANVAS_POST_BEGIN, 1, 1, 7, 99, 1, frame + 1, frame, frame, frame + 1, 8, NULL);
+        note(AGR_PHYS_PHASE_CANVAS_POST_END, 1, 1, 7, 99, 0, frame + 1, frame + 1, frame + 1, frame + 1, 8, NULL);
+        note(AGR_PHYS_PHASE_CANVAS_LOCK_BEGIN, 1, 1, 7, 99, 0, frame + 1, frame, frame, frame, 0, NULL);
+        note(AGR_PHYS_PHASE_DRAW_BITMAP_BEGIN, 1, 1, 7, 99, 1, frame + 1, frame, frame, frame, 0, NULL);
+        note(AGR_PHYS_PHASE_PIXEL_MUTATION, 1, 1, 7, 99, 1, frame + 1, frame, frame, frame, 8, NULL);
+        note(AGR_PHYS_PHASE_PHYSICAL_FRAME_BEGIN, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, NULL);
+        note(AGR_PHYS_PHASE_PHYSICAL_FRAME_END, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, NULL);
+    }
+    after_frames = agr_physical_trace_sync_count();
+    expect(after_frames == after_bounds + 3, "first lock draw post only");
+    note(AGR_PHYS_PHASE_CANVAS_LOCK_ACQUIRED, 1, 1, 7, 99, 1, 5, 4, 4, 4, 8, NULL);
+    note(AGR_PHYS_PHASE_DRAW_BITMAP_END, 1, 1, 7, 99, 1, 5, 4, 4, 5, 8, NULL);
+    note(AGR_PHYS_PHASE_CANVAS_POST_BEGIN, 1, 1, 7, 99, 1, 5, 4, 4, 5, 8, NULL);
+    note(AGR_PHYS_PHASE_CANVAS_POST_END, 1, 1, 7, 99, 0, 5, 5, 5, 5, 8, NULL);
+    after_repeat = agr_physical_trace_sync_count();
+    expect(after_repeat == after_frames, "later frames do not fsync");
+    note(AGR_PHYS_PHASE_CANVAS_LOCK_FAILED, 1, 1, 7, 99, 0, 5, 5, 5, 5, 8, "lock_failed");
+    note(AGR_PHYS_PHASE_CANVAS_LOCK_FAILED, 1, 1, 7, 99, 0, 5, 5, 5, 5, 8, "lock_failed");
+    note(AGR_PHYS_PHASE_RUNTIME_ERROR, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, "runtime");
+    note(AGR_PHYS_PHASE_WATCHDOG_NO_PROGRESS_8S, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, "age_ms=8000");
+    note(AGR_PHYS_PHASE_WATCHDOG_STALL, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, "WATCHDOG_STALL");
+    after_fail = agr_physical_trace_sync_count();
+    expect(after_fail == after_repeat + 5, "failures stay durable");
+    agr_physical_trace_finish("RUNTIME_ERROR", NULL);
+    expect(agr_physical_trace_sync_count() == after_fail + 2, "finalize stays durable");
+    agr_physical_trace_shutdown();
+}
+
+static void test_stall_reason_agreement(const char *script) {
+    const char *dir = "/tmp/agr-phys-reason";
+    agr_physical_trace_config config;
+    agr_physical_trace_status status;
+    char path[256];
+    char summary[256];
+    char body[65536];
+    FILE *fp;
+    size_t n;
+    mkdir(dir, 0755);
+    agr_physical_trace_set_watchdog_for_test(20, 40, 80, 120);
+    config = config_for(dir);
+    expect(agr_physical_trace_begin(&config) == 0, "reason begin");
+    note(AGR_PHYS_PHASE_CANVAS_LOCK_ACQUIRED, 1, 1, 7, 99, 1, 1, 0, 0, 0, 0, NULL);
+    usleep(400000);
+    agr_physical_trace_copy_status(&status);
+    expect(status.watchdog_stalled == 1, "reason stalled");
+    expect(agr_physical_trace_finish("OBSERVATION_TIMEOUT", &status) == 0, "reason finish");
+    expect(strcmp(status.termination_reason, "WATCHDOG_STALL") == 0, "status reason");
+    snprintf(path, sizeof(path), "%s/agr-physical-run.json", dir);
+    fp = fopen(path, "r");
+    n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
+    if (fp) fclose(fp);
+    body[n] = 0;
+    expect(strstr(body, "\"state\": \"WATCHDOG_STALL\"") != NULL, "run state");
+    snprintf(path, sizeof(path), "%s/agr-physical-trace.ndjson", dir);
+    fp = fopen(path, "r");
+    n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
+    if (fp) fclose(fp);
+    body[n] = 0;
+    expect(line_contains(body, "FINALIZE_BEGIN", "WATCHDOG_STALL"), "finalize begin reason");
+    expect(line_contains(body, "FINALIZE_END", "WATCHDOG_STALL"), "finalize end reason");
+    expect(strstr(body, "OBSERVATION_TIMEOUT") == NULL, "caller reason absent");
+    snprintf(path, sizeof(path), "%s/agr-physical-runtime.json", dir);
+    fp = fopen(path, "w");
+    expect(fp != NULL, "runtime json");
+    if (fp) {
+        fprintf(fp,
+                "{\"termination_reason\":\"%s\",\"final_state\":\"%s\",\"content_posted\":\"NO\","
+                "\"lock_count\":1,\"unlock_count\":0,\"post_count\":0,\"draw_bitmap_count\":0,"
+                "\"pixel_change_count\":0}\n",
+                status.termination_reason, status.termination_reason);
+        fclose(fp);
+    }
+    agr_physical_trace_shutdown();
+    snprintf(summary, sizeof(summary), "%s/summary.json", dir);
+    expect(run_parser(script, dir, summary) == 0, "reason parser");
+    fp = fopen(summary, "r");
+    n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
+    if (fp) fclose(fp);
+    body[n] = 0;
+    expect(strstr(body, "\"termination_reason\": \"WATCHDOG_STALL\"") != NULL, "summary reason");
+    expect(strstr(body, "\"run_state\": \"WATCHDOG_STALL\"") != NULL, "summary run");
+    expect(strstr(body, "\"finalize_reason\": \"WATCHDOG_STALL\"") != NULL, "summary finalize");
+    expect(strstr(body, "\"termination_consistent\": true") != NULL, "summary consistent");
+    quiet_watchdog();
+}
+
 static void test_canvas_and_pass(const char *script) {
     const char *stall_dir = "/tmp/agr-phys-stall";
     const char *pass_dir = "/tmp/agr-phys-pass";
@@ -312,6 +455,8 @@ int main(int argc, char **argv) {
     test_truncated_and_missing_final(script);
     test_stale_archive(script);
     test_watchdog_and_probe();
+    test_frame_sync_policy();
+    test_stall_reason_agreement(script);
     test_canvas_and_pass(script);
     test_crash(script);
     if (g_failures) {

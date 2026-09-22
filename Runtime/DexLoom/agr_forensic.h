@@ -144,6 +144,9 @@ typedef struct agr_physical_trace_status {
     int has_game_exec;
     uint32_t game_thread_state;
     uint64_t game_host_thread;
+    /* Authoritative finish reason. WATCHDOG_STALL replaces a later caller
+       reason except CONTENT_POSTED. */
+    char termination_reason[64];
 } agr_physical_trace_status;
 
 int agr_physical_trace_begin(const agr_physical_trace_config *config);
@@ -151,8 +154,13 @@ void agr_physical_trace_event(const agr_forensic_sample *sample);
 void agr_physical_trace_publish_ownership(const agr_forensic_sample *sample);
 void agr_physical_trace_set_watchdog_for_test(uint32_t poll_ms, uint32_t gap2_ms,
                                                uint32_t gap5_ms, uint32_t gap8_ms);
-/* Non-zero means a Runtime lock is busy. The probe must not block. */
+/* Non-zero means a Runtime lock is busy. The probe must not block, take a
+   guest callback, or run Java. Production passes
+   agr_dex_game_diagnostic_content_lock_busy. */
 void agr_physical_trace_set_lock_probe(int (*probe)(void *user), void *user);
+/* Number of trace fsync calls since begin. Repeating render events do not
+   increment it after the first checkpoint of that phase. */
+uint32_t agr_physical_trace_sync_count(void);
 int agr_physical_trace_finish(const char *termination_reason, agr_physical_trace_status *out);
 void agr_physical_trace_note_writer_error(const char *detail);
 void agr_physical_trace_copy_status(agr_physical_trace_status *out);

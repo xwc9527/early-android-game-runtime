@@ -153,6 +153,10 @@ int agr_dex_game_start_activity(agr_dex_game *game);
 void agr_dex_game_enable_diagnostics(agr_dex_game *game, int enabled);
 struct DxVM *agr_dex_game_vm(const agr_dex_game *game);
 int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snapshot *snapshot);
+/* Try the existing content-surface mutex and release it immediately.
+   Returns non-zero only when that mutex is already locked. No guest call,
+   no draw, and no blocking lock. */
+int agr_dex_game_diagnostic_content_lock_busy(const agr_dex_game *game);
 int agr_dex_game_post_resume_completed(const agr_dex_game *game);
 int agr_dex_game_viewroot_contract(agr_dex_game *game);
 int agr_dex_game_do_traversal(agr_dex_game *game, uint32_t display_width_pixels,

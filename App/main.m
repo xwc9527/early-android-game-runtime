@@ -1262,6 +1262,10 @@ static int gPhysicalSawPaint = 0;
 static char gPhysicalLastStage[32];
 static void armPhysicalRuntime(uint32_t width, uint32_t height);
 
+static int physicalContentLockBusy(void *user) {
+    return agr_dex_game_diagnostic_content_lock_busy((const agr_dex_game *)user);
+}
+
 static void physicalNote(uint32_t phase, int critical, int hasExec, uint32_t execId, const char *detail) {
     agr_forensic_sample sample;
     memset(&sample, 0, sizeof(sample));
@@ -2028,11 +2032,13 @@ static void finishPhysicalReport(void) {
              (contentPosted ? "CONTENT_POSTED" : "OBSERVATION_TIMEOUT"));
         agr_physical_trace_status traceStatus;
         NSMutableDictionary *full = [report mutableCopy];
+        const char *authoritative = reason;
         memset(&traceStatus, 0, sizeof(traceStatus));
         if (gPhysicalTraceReady) agr_physical_trace_finish(reason, &traceStatus);
+        if (traceStatus.termination_reason[0]) authoritative = traceStatus.termination_reason;
         full[@"run_id"] = [NSString stringWithUTF8String:traceStatus.run_id];
-        full[@"final_state"] = [NSString stringWithUTF8String:reason];
-        full[@"termination_reason"] = [NSString stringWithUTF8String:reason];
+        full[@"final_state"] = [NSString stringWithUTF8String:authoritative];
+        full[@"termination_reason"] = [NSString stringWithUTF8String:authoritative];
         full[@"last_trace_seq"] = @(traceStatus.last_seq);
         full[@"last_trace_event"] = [NSString stringWithUTF8String:traceStatus.last_event];
         full[@"trace_file"] = [NSString stringWithUTF8String:traceStatus.trace_file];
@@ -2052,6 +2058,7 @@ static void finishPhysicalReport(void) {
     [[NSFileManager defaultManager] createDirectoryAtPath:documents withIntermediateDirectories:YES attributes:nil error:nil];
     if (![json writeToFile:[documents stringByAppendingPathComponent:@"agr-physical-runtime.json"] atomically:YES])
         agr_physical_trace_note_writer_error("EVIDENCE_WRITER_ERROR");
+    agr_physical_trace_set_lock_probe(NULL, NULL);
     if (gPhysicalGame) agr_dex_game_destroy(gPhysicalGame);
     gPhysicalGame=NULL;
     if (gPhysicalPackage) agr_apk_package_close(gPhysicalPackage);
@@ -2125,6 +2132,7 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
         return;
     }
     physicalNote(AGR_PHYS_PHASE_GAME_CREATE_OK, 1, 0, 0, NULL);
+    agr_physical_trace_set_lock_probe(physicalContentLockBusy, gPhysicalGame);
     agr_dex_game_enable_diagnostics(gPhysicalGame, 1);
     physicalNote(AGR_PHYS_PHASE_DIAGNOSTICS_ENABLED, 0, 0, 0, NULL);
     physicalNote(AGR_PHYS_PHASE_HOST_DISPLAY_SET_BEGIN, 0, 0, 0, NULL);
