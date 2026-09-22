@@ -674,6 +674,7 @@ struct agr_content_surface {
     uint32_t post_count;
     uint32_t last_post_generation;
     uint64_t hash_before_lock;
+    int hash_before_set;
     uint64_t hash_after_post;
     uint32_t pixel_change_count;
     uint32_t draw_bitmap_count;
@@ -1716,6 +1717,9 @@ static void update_surface_view(DxVM *vm, agr_dex_game *game, DxObject *view,
             return;
         }
         slot->pixels = pixels;
+        slot->hash_before_set = 0;
+        slot->hash_before_lock = 0;
+        slot->hash_after_post = 0;
         slot->generation++;
         slot->width = width;
         slot->height = height;
@@ -2103,8 +2107,13 @@ static DxResult surface_holder_lock_canvas(DxVM *vm, DxFrame *frame, DxValue *ar
     slot->lock_owner_host = exec->has_host_thread ? (uint64_t)(uintptr_t)exec->host_thread : 0;
     slot->locked_generation = slot->generation;
     slot->lock_count++;
-    slot->hash_before_lock = content_buffer_hash(slot->pixels,
-        (size_t)slot->width * (size_t)slot->height * (size_t)AGR_CONTENT_BYTES_PER_PIXEL);
+    /* Keep the first lock of this buffer. A later lock would replace the
+       pre-draw hash with the already posted pixels and hide a real mutation. */
+    if (!slot->hash_before_set) {
+        slot->hash_before_lock = content_buffer_hash(slot->pixels,
+            (size_t)slot->width * (size_t)slot->height * (size_t)AGR_CONTENT_BYTES_PER_PIXEL);
+        slot->hash_before_set = 1;
+    }
     content_bind_canvas(slot, slot->canvas);
     frame->result = DX_OBJ_VALUE(slot->canvas);
     content_surface_unlock(slot);

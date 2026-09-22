@@ -3,7 +3,7 @@
   "enabled": true,
   "question": "Does unchanged Frozen Bubble on the normal UIKit CADisplayLink path lock the SurfaceView content Surface, draw a decoded Bitmap into it, and post a changed buffer without a harness render call?",
   "current_uncertainty": [
-    "Discovery 35707262789 launched unchanged Frozen Bubble on UIKit CADisplayLink at 1206x2622. lock_count 3 and post_count 3, but draw_bitmap_count 0, pixel_change_count 0, and the buffer hash was unchanged. DEX scaleFrom calls Bitmap.createScaledBitmap when the display scale is not 1, and that method was unresolved so the drawn Bitmap was null. The same question is rerun after createScaledBitmap returns scaled pixels."
+    "Discovery 35709317186 on e4cbb2b drew background.jpg: lock 3, draw_bitmap_count 4, pixel_change_count 6900732, post 2, but canvas_buffer_hash_before equaled canvas_buffer_hash_after because each later lock replaced the pre-draw hash. The same question is rerun after the first lock hash is preserved and the discovery gate requires a changed hash."
   ],
   "expected_outcome_a": {
     "result": "harness_called_do_traversal false, harness_called_render_api false, surfaceCreated 1, surfaceChanged 1, content Surface distinct from the root, lock_count > 0, draw_bitmap_count > 0, post_count > 0, pixel_change_count > 0, and the posted buffer hash differs from the pre-draw hash",

@@ -327,7 +327,7 @@
         "source_hashes": {
           "Runtime/GuestRuntime/agr_jni_methods.c": "8bdc5b524175bb6066c696fa347162d43dc494d31a1b6a2b47914a6418f07d3d",
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
-          "Runtime/DexLoom/game_dex_runner.c": "bb9fc285b992fb065ee5f4de51be166c6269cbda60952cb67fb1f42c2f858f65"
+          "Runtime/DexLoom/game_dex_runner.c": "85d7cc45c581313800a4e6f4393f6cc7cb1d5d59771265ecbcce530d1656aa89"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -684,7 +684,7 @@
           "gc_mark_roots"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "bb9fc285b992fb065ee5f4de51be166c6269cbda60952cb67fb1f42c2f858f65",
+          "Runtime/DexLoom/game_dex_runner.c": "85d7cc45c581313800a4e6f4393f6cc7cb1d5d59771265ecbcce530d1656aa89",
           "Runtime/DexLoom/VM/dx_vm.c": "ae1b4042f3a3be171f2d2dd2a667b287699ed3e11459adaa0542a25f5a0d5871"
         }
       },
@@ -874,7 +874,7 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/APK/dx_manifest.c": "17d608e345e27ba2bcf564dd61e7918c79da4b243f32d811e59126996b27519e",
-          "Runtime/DexLoom/game_dex_runner.c": "bb9fc285b992fb065ee5f4de51be166c6269cbda60952cb67fb1f42c2f858f65",
+          "Runtime/DexLoom/game_dex_runner.c": "85d7cc45c581313800a4e6f4393f6cc7cb1d5d59771265ecbcce530d1656aa89",
           "Runtime/DexLoom/VM/dx_vm.c": "ae1b4042f3a3be171f2d2dd2a667b287699ed3e11459adaa0542a25f5a0d5871",
           "App/main.m": "95cab6cb2462dd7b9b4a68601713f85d0805d450b3ddf841b8043c0749a1beb4"
         }
@@ -968,7 +968,7 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "bb9fc285b992fb065ee5f4de51be166c6269cbda60952cb67fb1f42c2f858f65",
+          "Runtime/DexLoom/game_dex_runner.c": "85d7cc45c581313800a4e6f4393f6cc7cb1d5d59771265ecbcce530d1656aa89",
           "App/main.m": "95cab6cb2462dd7b9b4a68601713f85d0805d450b3ddf841b8043c0749a1beb4"
         }
       },
@@ -1078,7 +1078,7 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "bb9fc285b992fb065ee5f4de51be166c6269cbda60952cb67fb1f42c2f858f65",
+          "Runtime/DexLoom/game_dex_runner.c": "85d7cc45c581313800a4e6f4393f6cc7cb1d5d59771265ecbcce530d1656aa89",
           "App/main.m": "95cab6cb2462dd7b9b4a68601713f85d0805d450b3ddf841b8043c0749a1beb4"
         }
       },
@@ -1168,7 +1168,7 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "bb9fc285b992fb065ee5f4de51be166c6269cbda60952cb67fb1f42c2f858f65",
+          "Runtime/DexLoom/game_dex_runner.c": "85d7cc45c581313800a4e6f4393f6cc7cb1d5d59771265ecbcce530d1656aa89",
           "Runtime/DexLoom/game_dex_runner.h": "5faea874230b6121550bffcbec21c6588e5537eefe11b5ac427822b8bdcf0193",
           "App/main.m": "95cab6cb2462dd7b9b4a68601713f85d0805d450b3ddf841b8043c0749a1beb4"
         }
@@ -1264,7 +1264,7 @@
           "window.set_content_view"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "bb9fc285b992fb065ee5f4de51be166c6269cbda60952cb67fb1f42c2f858f65",
+          "Runtime/DexLoom/game_dex_runner.c": "85d7cc45c581313800a4e6f4393f6cc7cb1d5d59771265ecbcce530d1656aa89",
           "Runtime/DexLoom/game_dex_runner.h": "5faea874230b6121550bffcbec21c6588e5537eefe11b5ac427822b8bdcf0193",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
@@ -1380,7 +1380,7 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "bb9fc285b992fb065ee5f4de51be166c6269cbda60952cb67fb1f42c2f858f65",
+          "Runtime/DexLoom/game_dex_runner.c": "85d7cc45c581313800a4e6f4393f6cc7cb1d5d59771265ecbcce530d1656aa89",
           "Runtime/DexLoom/game_dex_runner.h": "5faea874230b6121550bffcbec21c6588e5537eefe11b5ac427822b8bdcf0193",
           "App/main.m": "95cab6cb2462dd7b9b4a68601713f85d0805d450b3ddf841b8043c0749a1beb4"
         }
@@ -1488,7 +1488,7 @@
           "surface_holder.canvas_posted"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "bb9fc285b992fb065ee5f4de51be166c6269cbda60952cb67fb1f42c2f858f65",
+          "Runtime/DexLoom/game_dex_runner.c": "85d7cc45c581313800a4e6f4393f6cc7cb1d5d59771265ecbcce530d1656aa89",
           "Runtime/DexLoom/game_dex_runner.h": "5faea874230b6121550bffcbec21c6588e5537eefe11b5ac427822b8bdcf0193"
         }
       },
@@ -1588,7 +1588,7 @@
           "bitmap_recycle"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "bb9fc285b992fb065ee5f4de51be166c6269cbda60952cb67fb1f42c2f858f65",
+          "Runtime/DexLoom/game_dex_runner.c": "85d7cc45c581313800a4e6f4393f6cc7cb1d5d59771265ecbcce530d1656aa89",
           "Runtime/Bitmap/agr_bitmap.cpp": "43ab7c39bf2a0773bf4e3fe7da2672189e9d2f2d8ae3189b86d2b1dc72b8993a",
           "Runtime/Bitmap/agr_bitmap.h": "1762dac4ba053ef9bde49dd972d081d1edf86cf22b9ffcf4ed505737a6d80ade",
           "Runtime/Bitmap/host/SkImageDecoder_libjpeg_host.cpp": "355144e0333a2fbb65e5a30667d43d4578c1b115466443f6c79085aee82be0ad",
@@ -1693,7 +1693,7 @@
           "bitmap_recycle"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "bb9fc285b992fb065ee5f4de51be166c6269cbda60952cb67fb1f42c2f858f65",
+          "Runtime/DexLoom/game_dex_runner.c": "85d7cc45c581313800a4e6f4393f6cc7cb1d5d59771265ecbcce530d1656aa89",
           "Runtime/DexLoom/game_dex_runner.h": "5faea874230b6121550bffcbec21c6588e5537eefe11b5ac427822b8bdcf0193",
           "Runtime/Bitmap/agr_bitmap.cpp": "43ab7c39bf2a0773bf4e3fe7da2672189e9d2f2d8ae3189b86d2b1dc72b8993a",
           "Runtime/Bitmap/agr_bitmap.h": "1762dac4ba053ef9bde49dd972d081d1edf86cf22b9ffcf4ed505737a6d80ade",
@@ -1996,7 +1996,7 @@
           "agr_bitmap_scale"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "bb9fc285b992fb065ee5f4de51be166c6269cbda60952cb67fb1f42c2f858f65",
+          "Runtime/DexLoom/game_dex_runner.c": "85d7cc45c581313800a4e6f4393f6cc7cb1d5d59771265ecbcce530d1656aa89",
           "Runtime/Bitmap/agr_bitmap.cpp": "43ab7c39bf2a0773bf4e3fe7da2672189e9d2f2d8ae3189b86d2b1dc72b8993a",
           "Runtime/Bitmap/agr_bitmap.h": "1762dac4ba053ef9bde49dd972d081d1edf86cf22b9ffcf4ed505737a6d80ade"
         }

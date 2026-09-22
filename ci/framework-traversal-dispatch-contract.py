@@ -114,6 +114,26 @@ def check_discovery(result):
     after = result["after_snapshot"]
     require(after["traversal_count"] == 2 and after["draw_count"] >= 1, after)
     require(flag(after["surface_valid"]) and clear(after["traversal_scheduled"]), after)
+    content = {
+        "harness_called_do_traversal": result.get("harness_called_do_traversal"),
+        "harness_called_render_api": result.get("harness_called_render_api"),
+        "content_surface_created_count": after.get("content_surface_created_count"),
+        "content_surface_changed_count": after.get("content_surface_changed_count"),
+        "canvas_lock_count": after.get("canvas_lock_count"),
+        "canvas_draw_bitmap_count": after.get("canvas_draw_bitmap_count"),
+        "canvas_pixel_change_count": after.get("canvas_pixel_change_count"),
+        "canvas_post_count": after.get("canvas_post_count"),
+        "canvas_buffer_hash_before": after.get("canvas_buffer_hash_before"),
+        "canvas_buffer_hash_after": after.get("canvas_buffer_hash_after"),
+    }
+    require(clear(result.get("harness_called_render_api")), content)
+    require(after.get("content_surface_created_count") == 1, content)
+    require(after.get("content_surface_changed_count") == 1, content)
+    require(after.get("canvas_lock_count", 0) > 0, content)
+    require(after.get("canvas_draw_bitmap_count", 0) > 0, content)
+    require(after.get("canvas_pixel_change_count", 0) > 0, content)
+    require(after.get("canvas_post_count", 0) > 0, content)
+    require(after.get("canvas_buffer_hash_before") != after.get("canvas_buffer_hash_after"), content)
     trace = after["framework_trace"]
     ordered(trace, (
         "choreographer.frame",
