@@ -1595,7 +1595,7 @@
           "Runtime/Bitmap/host/SkImageDecoder_libgif_host.cpp": "bb75991c6a05f58a606142678c30436748d686effdd8f05275c1aab48a956c85"
         }
       },
-      "verified_at_commit": "142c8b120ae52e3e0e2216c000150a8e198210cc",
+      "verified_at_commit": "bb4c771e2f8c70a218b42569ec00c356f109a358",
       "status": "VALID",
       "dependencies": [],
       "observable_semantics": [
@@ -1702,7 +1702,7 @@
           "Runtime/Bitmap/host/SkImageDecoder_libgif_host.cpp": "bb75991c6a05f58a606142678c30436748d686effdd8f05275c1aab48a956c85"
         }
       },
-      "verified_at_commit": "142c8b120ae52e3e0e2216c000150a8e198210cc",
+      "verified_at_commit": "bb4c771e2f8c70a218b42569ec00c356f109a358",
       "status": "VALID",
       "dependencies": [
         "framework.view.surface_holder_canvas",
