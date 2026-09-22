@@ -3,7 +3,7 @@
   "enabled": true,
   "question": "Does unchanged Frozen Bubble on the normal UIKit CADisplayLink path lock the SurfaceView content Surface, draw a decoded Bitmap into it, and post a changed buffer without a harness render call?",
   "current_uncertainty": [
-    "Discovery 35709317186 on e4cbb2b drew background.jpg: lock 3, draw_bitmap_count 4, pixel_change_count 6900732, post 2, but canvas_buffer_hash_before equaled canvas_buffer_hash_after because each later lock replaced the pre-draw hash. The same question is rerun after the first lock hash is preserved and the discovery gate requires a changed hash."
+    "Discovery 35710347602 on f7a43a4 kept the empty pre-draw hash and drew background.jpg once (pixel_change_count 3162132) but closed the report during that lock, so post_count was 0 and hash_after was 0. The same question is rerun after the report waits for the first posted changed buffer or a 4 second bound."
   ],
   "expected_outcome_a": {
     "result": "harness_called_do_traversal false, harness_called_render_api false, surfaceCreated 1, surfaceChanged 1, content Surface distinct from the root, lock_count > 0, draw_bitmap_count > 0, post_count > 0, pixel_change_count > 0, and the posted buffer hash differs from the pre-draw hash",

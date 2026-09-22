@@ -1223,6 +1223,7 @@ static uint32_t gDispatchHeight = 0;
 static int gDispatchStart = -1;
 static BOOL gDispatchFinished = NO;
 static BOOL gDispatchContentHold = NO;
+static int gDispatchContentPolls = 0;
 static BOOL gDispatchOwnerGraph = NO;
 static CADisplayLink *gDispatchLink = nil;
 
@@ -1701,6 +1702,24 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     }
     return YES;
 }
+static void pollContentFrameReport(void) {
+    agr_dex_runtime_snapshot snapshot={0};
+    int posted;
+    if (gDispatchFinished || !gDispatchGame) return;
+    agr_dex_game_runtime_snapshot(gDispatchGame,&snapshot);
+    posted=snapshot.canvas_lock_count>0 && snapshot.canvas_draw_bitmap_count>0 &&
+        snapshot.canvas_pixel_change_count>0 && snapshot.canvas_post_count>0 &&
+        snapshot.canvas_buffer_hash_before!=snapshot.canvas_buffer_hash_after;
+    /* One content frame can outlast 600ms when the first blit is a scaled
+       1206x2622 background. Keep polling until that post, or 4 seconds. */
+    if (posted || gDispatchContentPolls>=40) {
+        finishTraversalDispatchReport();
+        return;
+    }
+    gDispatchContentPolls++;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1*NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{ pollContentFrameReport(); });
+}
 - (void)hostTraversalVsync:(CADisplayLink *)link {
     (void)link;
     if (!gDispatchGame || gDispatchFinished || gDispatchContentHold) return;
@@ -1713,13 +1732,11 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
         finishTraversalDispatchReport();
         return;
     }
-    /* The second host frame creates the child Surface and starts GameThread.
-       Do not pump another traversal. Wait so the worker can lock, drawBitmap,
-       and post before the snapshot is read. */
+    /* The second host frame creates the child Surface. Stop host traversals
+       and let the worker lock, draw, and post. */
     if (snapshot.traversal_count>=2) {
         gDispatchContentHold=YES;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.6*NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{ finishTraversalDispatchReport(); });
+        pollContentFrameReport();
     }
 }
 @end
