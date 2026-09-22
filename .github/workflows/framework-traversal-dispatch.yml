@@ -200,7 +200,7 @@ jobs:
             /tmp/agr_physical_trace.o /tmp/surface-callback-outcome-host.o "${BITMAP_OBJS[@]}" \
             -ljpeg -lgif -lz -lm -o /tmp/surface-callback-outcome-host
           /tmp/surface-callback-outcome-host /tmp/surface-callback-outcome.dex /tmp/surface-callback-outcome-layouts
-          test -f samples/org.jfedor.frozenbubble_8.apk
+          test -f samples/frozen-bubble.apk
           cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/frozen-bubble-1080-host.c \
             -o /tmp/frozen-bubble-1080-host.o
           g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
@@ -210,7 +210,7 @@ jobs:
             /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
             /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
             /tmp/frozen-bubble-1080-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/frozen-bubble-1080-host
-          /tmp/frozen-bubble-1080-host samples/org.jfedor.frozenbubble_8.apk
+          /tmp/frozen-bubble-1080-host samples/frozen-bubble.apk
       - name: Verify API19 source, semantic differential and governance
         run: |
           python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --require-valid framework.window.set_content_view --require-valid framework.view.surface_view --require-valid framework.view.surface_holder_canvas --require-valid framework.graphics.bitmap_decode_resource --require-valid framework.graphics.canvas_bitmap --require-valid framework.graphics.bitmap_create_scaled --require-valid dalvik.vm.vtable --require-valid dalvik.thread.start --require-valid java.lang.character.for_digit --require-valid framework.graphics.canvas_state_clip --require-valid java.util.vector.core --require-valid android.app.activity.request_window_feature --require-valid android.app.activity.get_intent --verify-upstream --verify-only framework.viewroot.traversal_dispatch --verify-only framework.window.set_content_view --verify-only framework.view.surface_view --verify-only framework.view.surface_holder_canvas --verify-only framework.graphics.bitmap_decode_resource --verify-only framework.graphics.canvas_bitmap --verify-only framework.graphics.bitmap_create_scaled --verify-only dalvik.vm.vtable --verify-only dalvik.thread.start --verify-only java.lang.character.for_digit --verify-only framework.graphics.canvas_state_clip --verify-only java.util.vector.core --verify-only android.app.activity.request_window_feature --verify-only android.app.activity.get_intent --output build/artifacts/traversal-dispatch-upstream-map.json

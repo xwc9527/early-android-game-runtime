@@ -27,10 +27,11 @@ static int g_failures = 0;
 static void expect(int condition, const char *message) {
     if (condition) {
         printf("PASS %s\n", message);
-        return;
+    } else {
+        printf("FAIL %s\n", message);
+        g_failures++;
     }
-    printf("FAIL %s\n", message);
-    g_failures++;
+    fflush(stdout);
 }
 
 static int sha256_matches(const char *path) {
@@ -49,7 +50,7 @@ static int sha256_matches(const char *path) {
 }
 
 int main(int argc, char **argv) {
-    const char *apk_path = argc > 1 ? argv[1] : "samples/org.jfedor.frozenbubble_8.apk";
+    const char *apk_path = argc > 1 ? argv[1] : "samples/frozen-bubble.apk";
     agr_apk_package *package;
     agr_dex_game *game;
     agr_dex_runtime_snapshot snapshot;
