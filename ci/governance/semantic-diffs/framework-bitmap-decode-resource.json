@@ -63,7 +63,7 @@
     "createScaledBitmap and lockCanvas were not reached.",
     "Virtual dispatch of Thread.start is a separate differential. This Bitmap contract does not own it."
   ],
-  "next_action": "Do not extend decodeResource. The cleanUp entry is the virtual-dispatch defect, and the post-fix stop is synchronous Thread.start. Do not implement lockCanvas or createScaledBitmap here.",
+  "next_action": "Do not extend decodeResource from this differential. The worker now passes lockCanvas. The next draw API is Canvas.drawBitmap, recorded in framework-surface-holder-canvas.json.",
   "needs_experiment": false,
   "experimental": false,
   "host_adaptation": "The Bitmap stores the resource path and the encoded width and height. It does not allocate a pixel buffer and it is not the ViewRoot Surface. Nine-patch PNG content size subtracts the one-pixel border when an npTc chunk is present."

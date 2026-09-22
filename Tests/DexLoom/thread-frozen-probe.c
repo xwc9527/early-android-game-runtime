@@ -17,7 +17,9 @@ void glDeleteTextures(GLsizei n, const GLuint *textures) { (void)n; (void)textur
 
 static void print_snapshot(const char *label, const agr_dex_runtime_snapshot *snapshot) {
     printf("%s stage_fields last=%s exception=%s error=%s created=%u changed=%u "
-           "content=%llu root=%llu draw=%u stack=%u\n",
+           "content=%llu root=%llu draw=%u stack=%u "
+           "lock=%u unlock=%u post=%u locked=%d owner=%u locked_gen=%u post_gen=%u "
+           "row=%d hash_before=%llx hash_after=%llx pixels=%u format=%d %dx%d gen=%u\n",
            label,
            snapshot->last_method,
            snapshot->exception_class,
@@ -27,7 +29,22 @@ static void print_snapshot(const char *label, const agr_dex_runtime_snapshot *sn
            (unsigned long long)snapshot->content_surface_identity,
            (unsigned long long)snapshot->root_surface_identity,
            snapshot->draw_count,
-           snapshot->stack_depth);
+           snapshot->stack_depth,
+           snapshot->canvas_lock_count,
+           snapshot->canvas_unlock_count,
+           snapshot->canvas_post_count,
+           snapshot->canvas_locked,
+           snapshot->canvas_lock_owner_exec,
+           snapshot->canvas_locked_generation,
+           snapshot->canvas_last_post_generation,
+           snapshot->canvas_row_bytes,
+           (unsigned long long)snapshot->canvas_buffer_hash_before,
+           (unsigned long long)snapshot->canvas_buffer_hash_after,
+           snapshot->canvas_pixel_change_count,
+           snapshot->content_surface_format,
+           snapshot->content_surface_width,
+           snapshot->content_surface_height,
+           snapshot->content_surface_generation);
     if (snapshot->method_event_count) {
         const agr_dex_method_event *event = &snapshot->method_events[snapshot->method_event_count - 1];
         printf("%s last_event %s depth=%u\n", label, event->method, event->depth);

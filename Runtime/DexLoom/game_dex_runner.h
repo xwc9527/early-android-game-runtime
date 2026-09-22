@@ -89,6 +89,17 @@ typedef struct {
     uint64_t content_surface_identity;
     uint64_t root_surface_identity;
     int32_t content_surface_owner_id;
+    uint32_t canvas_lock_count;
+    uint32_t canvas_unlock_count;
+    uint32_t canvas_post_count;
+    int canvas_locked;
+    uint32_t canvas_lock_owner_exec;
+    uint32_t canvas_locked_generation;
+    uint32_t canvas_last_post_generation;
+    int canvas_row_bytes;
+    uint64_t canvas_buffer_hash_before;
+    uint64_t canvas_buffer_hash_after;
+    uint32_t canvas_pixel_change_count;
     char content_surface_exception[160];
     char last_method[160];
     char exception_class[160];

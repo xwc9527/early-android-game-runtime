@@ -30,10 +30,10 @@
     "causal_status": "REAL_GAME_CONFIRMED",
     "evidence_level": "REAL_GAME_CONFIRMED",
     "classification": "ANDROID_SEMANTIC_BUG",
-    "next_validation": "Thread.start returns and GameThread.run progresses on a separate execution context. Do not rerun Simulator discovery 35683118511. Do not start a Simulator for lockCanvas: the local probe already shows onCreate finished and the Surface callbacks still ran. The next public API is SurfaceHolder.lockCanvas.",
-    "primary_blocker": "GameThread.run reaches SurfaceHolder.lockCanvas. The invoke is unresolved and skipped, and the loop continues. This is not a first frame.",
-    "first_broken_boundary": "Landroid/view/SurfaceHolder;.lockCanvas is unresolved",
-    "first_broken_boundary_evidence": "Local unchanged Frozen Bubble probe: start_activity 0, launch_stage 9, surfaceCreated 1, surfaceChanged 1, content Surface distinct from the root. JTHREAD start caller_exec 0 worker_exec 1. run_enter on GameView$GameThread. After 300ms the worker has skipped lockCanvas 7 times. Destroy then cancels the worker at rc 21 with 208 instructions. scaleFrom is the last UI diagnostic method and has an empty exception."
+    "next_validation": "Do not start a Simulator because lockCanvas exists. The local probe already shows lock and post without pixel mutation. Do not rerun discovery 35683118511. The next public draw API is Canvas.drawBitmap. A real blit has to copy agr_bitmap pixels onto the content Surface.",
+    "primary_blocker": "GameThread.doDraw reaches Canvas.drawBitmap. lockCanvas returns a Canvas bound to the content Surface and unlockCanvasAndPost posts it, but no guest draw writes pixels. post_count is 7 and pixel_change_count is 0. This is not a first frame.",
+    "first_broken_boundary": "Landroid/graphics/Canvas;.drawBitmap shorty VLFFL is unresolved",
+    "first_broken_boundary_evidence": "Local unchanged Frozen Bubble probe after lockCanvas: start_activity 0, launch_stage 9, surfaceCreated 1, surfaceChanged 1, content Surface distinct from the root, format 4, 320x480, row bytes 1280, generation 1. lock_count 7, unlock_count 7, post_count 7, canvas_locked 0, lock owner execution context 1, locked generation 1, post generation 1, hash before and after 4f2d9f141eeda325, pixel_change_count 0. The harness did not call lockCanvas or a draw API. The first unresolved draw method is Canvas.drawBitmap method_idx 31 shorty VLFFL. Destroy cancels the worker at rc 21 with 4926 instructions. This is not a first frame."
   },
   "ci_budget": {
     "valid_closure_runs": 1,

@@ -327,7 +327,7 @@
         "source_hashes": {
           "Runtime/GuestRuntime/agr_jni_methods.c": "8bdc5b524175bb6066c696fa347162d43dc494d31a1b6a2b47914a6418f07d3d",
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
-          "Runtime/DexLoom/game_dex_runner.c": "53aefbda622ed9eebd682025bf8ec740317fca457fa234ec3ad43ebbe8a36348"
+          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4"
         }
       },
       "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
@@ -684,7 +684,7 @@
           "gc_mark_roots"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "53aefbda622ed9eebd682025bf8ec740317fca457fa234ec3ad43ebbe8a36348",
+          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
           "Runtime/DexLoom/VM/dx_vm.c": "ae1b4042f3a3be171f2d2dd2a667b287699ed3e11459adaa0542a25f5a0d5871"
         }
       },
@@ -874,7 +874,7 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/APK/dx_manifest.c": "17d608e345e27ba2bcf564dd61e7918c79da4b243f32d811e59126996b27519e",
-          "Runtime/DexLoom/game_dex_runner.c": "53aefbda622ed9eebd682025bf8ec740317fca457fa234ec3ad43ebbe8a36348",
+          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
           "Runtime/DexLoom/VM/dx_vm.c": "ae1b4042f3a3be171f2d2dd2a667b287699ed3e11459adaa0542a25f5a0d5871",
           "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
@@ -968,7 +968,7 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "53aefbda622ed9eebd682025bf8ec740317fca457fa234ec3ad43ebbe8a36348",
+          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
           "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
       },
@@ -1078,7 +1078,7 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "53aefbda622ed9eebd682025bf8ec740317fca457fa234ec3ad43ebbe8a36348",
+          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
           "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
       },
@@ -1168,8 +1168,8 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "53aefbda622ed9eebd682025bf8ec740317fca457fa234ec3ad43ebbe8a36348",
-          "Runtime/DexLoom/game_dex_runner.h": "02ba9391b92c703e12b003824554908f4951af3233560038033be65d08466a5d",
+          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
+          "Runtime/DexLoom/game_dex_runner.h": "07a7f9197eb3174fc52f8ae3b0af8635e797aebcf5a4aa8e709fa27e0870bbd7",
           "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
       },
@@ -1264,8 +1264,8 @@
           "window.set_content_view"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "53aefbda622ed9eebd682025bf8ec740317fca457fa234ec3ad43ebbe8a36348",
-          "Runtime/DexLoom/game_dex_runner.h": "02ba9391b92c703e12b003824554908f4951af3233560038033be65d08466a5d",
+          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
+          "Runtime/DexLoom/game_dex_runner.h": "07a7f9197eb3174fc52f8ae3b0af8635e797aebcf5a4aa8e709fa27e0870bbd7",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
           "Runtime/DexLoom/APK/dx_resources.c": "d1ccd60b46850517bb9905db8505f81222d8658b4af9b675547208f1eb07a0e2",
@@ -1380,8 +1380,8 @@
         "source_hashes": {
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
-          "Runtime/DexLoom/game_dex_runner.c": "53aefbda622ed9eebd682025bf8ec740317fca457fa234ec3ad43ebbe8a36348",
-          "Runtime/DexLoom/game_dex_runner.h": "02ba9391b92c703e12b003824554908f4951af3233560038033be65d08466a5d",
+          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
+          "Runtime/DexLoom/game_dex_runner.h": "07a7f9197eb3174fc52f8ae3b0af8635e797aebcf5a4aa8e709fa27e0870bbd7",
           "App/main.m": "bf15572af606a33373e3ddbbfd670ca4483a1b64c4af865a206814ea99ab6cff"
         }
       },
@@ -1414,12 +1414,127 @@
       "known_deviations": [
         "a callback exception is recorded and does not abort host Decor performDraw",
         "surfaceDestroyed, recreation, and pause/resume surface recreation are not this contract",
-        "lockCanvas is downstream of the callback",
+        "lockCanvas ownership is framework.view.surface_holder_canvas",
         "BitmapFactory.decodeResource belongs to framework.graphics.bitmap_decode_resource"
       ],
       "contracts": [
         "framework.traversal_dispatch.host",
         "frozen-bubble.traversal_dispatch"
+      ]
+    },
+    {
+      "id": "framework.view.surface_holder_canvas",
+      "subsystem": "SurfaceHolder lockCanvas and unlockCanvasAndPost",
+      "android_api": "API19 SurfaceView.SurfaceHolder.lockCanvas and Surface.lockCanvas",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "core/java/android/view/SurfaceView.java",
+          "core/java/android/view/Surface.java",
+          "core/java/android/view/SurfaceHolder.java"
+        ],
+        "symbols": [
+          "SurfaceView.internalLockCanvas",
+          "Surface.lockCanvas",
+          "Surface.unlockCanvasAndPost",
+          "SurfaceHolder.lockCanvas",
+          "SurfaceHolder.unlockCanvasAndPost"
+        ],
+        "source_hashes": {
+          "core/java/android/view/SurfaceView.java": "9a012731b9681aa825b73624c0822f2e528451b0e6eb1427c9361953c0e88940",
+          "core/java/android/view/Surface.java": "a7f42c04f8968368171552f147488407a4f1561c7065008a233fe392548294e2",
+          "core/java/android/view/SurfaceHolder.java": "26809a5e2913c0ab8e956f6578904d8c7703722e9466aa0f0fb38b1c7b6c0516"
+        },
+        "source_urls": {
+          "core/java/android/view/SurfaceView.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/SurfaceView.java",
+          "core/java/android/view/Surface.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/Surface.java",
+          "core/java/android/view/SurfaceHolder.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/SurfaceHolder.java"
+        },
+        "symbols_by_path": {
+          "core/java/android/view/SurfaceView.java": [
+            "private final Canvas internalLockCanvas(Rect dirty)",
+            "public Canvas lockCanvas(Rect inOutDirty)",
+            "public void unlockCanvasAndPost(Canvas canvas)",
+            "mSurfaceLock.lock()",
+            "mLastLockTime + 100"
+          ],
+          "core/java/android/view/Surface.java": [
+            "public Canvas lockCanvas(Rect inOutDirty)",
+            "public void unlockCanvasAndPost(Canvas canvas)",
+            "Surface was already locked",
+            "canvas object must be the same instance that ",
+            "Surface was not locked",
+            "return mCanvas;"
+          ],
+          "core/java/android/view/SurfaceHolder.java": [
+            "public Canvas lockCanvas();",
+            "public Canvas lockCanvas(Rect dirty);",
+            "public void unlockCanvasAndPost(Canvas canvas);"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/DexLoom/game_dex_runner.h"
+        ],
+        "symbols": [
+          "surface_holder_lock_canvas",
+          "surface_holder_unlock_canvas",
+          "AGR_CONTENT_BYTES_PER_PIXEL",
+          "surface_holder.canvas_locked",
+          "surface_holder.canvas_posted"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4",
+          "Runtime/DexLoom/game_dex_runner.h": "07a7f9197eb3174fc52f8ae3b0af8635e797aebcf5a4aa8e709fa27e0870bbd7"
+        }
+      },
+      "verified_at_commit": "d3f4f3df8c50bcfd1448c16aac46da0b729e7a4d",
+      "status": "VALID",
+      "dependencies": [
+        "framework.view.surface_view"
+      ],
+      "observable_semantics": [
+        "lockCanvas() and lockCanvas(Rect) on a valid created surface return one Canvas bound to that surface",
+        "the Canvas width, height, and generation match the child content Surface",
+        "a null dirty rect covers the full surface and an invalid dirty rect returns null",
+        "a surface that is not created, or a same-context second lock, returns null",
+        "another execution context does not obtain write ownership while the lock is held",
+        "unlockCanvasAndPost of a different Canvas throws IllegalArgumentException",
+        "unlockCanvasAndPost when the surface is not locked throws IllegalStateException",
+        "unlockCanvasAndPost of the locked Canvas releases the lock and increments post_count",
+        "the next lock succeeds",
+        "a post with no draw leaves the buffer hash unchanged"
+      ],
+      "internal_invariants": [
+        "one holder has one writer",
+        "the Canvas target is the SurfaceView child buffer, not the ViewRoot root Surface",
+        "the host mutex is held only around the locked-flag update",
+        "the host mutex is not held across guest bytecode or the VM shared lock",
+        "workers are joined before the content pixels are freed",
+        "surface replacement waits while a Canvas lock is held",
+        "the guest Canvas is reused by object identity and stores no host pointer"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "the child Surface remains an in-process buffer",
+        "guest-visible format stays PixelFormat.RGB_565 (4) while the backing is 4 bytes per pixel",
+        "row bytes are width times 4",
+        "a pthread mutex and condition stand in for SurfaceView.mSurfaceLock around the locked flag only"
+      ],
+      "known_deviations": [
+        "SurfaceFlinger, BufferQueue IPC, and Binder graphics are not implemented",
+        "a successful lock does not arm the 100ms failure throttle",
+        "pixels are kept across a null-rect post; API19 does not guarantee preservation",
+        "a generation mismatch throws IllegalStateException instead of posting onto a replaced buffer",
+        "Canvas draw methods are not registered",
+        "pixel_change_count stays 0 until a draw writes the backing"
+      ],
+      "contracts": [
+        "framework.surface_holder_canvas.host"
       ]
     },
     {
@@ -1469,7 +1584,7 @@
           "bitmap_get_dimension"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "53aefbda622ed9eebd682025bf8ec740317fca457fa234ec3ad43ebbe8a36348"
+          "Runtime/DexLoom/game_dex_runner.c": "748d71d00c8ef93f580305383d1595e631c9da5f0349eea2533aeb57b65dd1c4"
         }
       },
       "verified_at_commit": "68ed7062e5060b9b4c209104bbd8187c906ef62a",

@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <pthread.h>
 #include <GLES2/gl2.h>
 
 typedef int32_t (*AgrDexUploadFn)(void *user, const char *asset_path);
@@ -111,6 +113,10 @@ static DxResult surface_holder_get_surface(DxVM *vm, DxFrame *frame,
                                            DxValue *args, uint32_t count);
 static DxResult surface_holder_get_surface_frame(DxVM *vm, DxFrame *frame,
                                                  DxValue *args, uint32_t count);
+static DxResult surface_holder_lock_canvas(DxVM *vm, DxFrame *frame,
+                                           DxValue *args, uint32_t count);
+static DxResult surface_holder_unlock_canvas(DxVM *vm, DxFrame *frame,
+                                             DxValue *args, uint32_t count);
 static DxResult view_request_layout(DxVM *vm, DxFrame *frame,
                                     DxValue *args, uint32_t count);
 
@@ -506,6 +512,13 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(holder, "removeCallback", "VL", DX_ACC_PUBLIC, surface_holder_remove_callback, 0);
     add_method(holder, "getSurface", "L", DX_ACC_PUBLIC, surface_holder_get_surface, 0);
     add_method(holder, "getSurfaceFrame", "L", DX_ACC_PUBLIC, surface_holder_get_surface_frame, 0);
+    add_method(holder, "lockCanvas", "L", DX_ACC_PUBLIC, surface_holder_lock_canvas, 0);
+    add_method(holder, "lockCanvas", "LL", DX_ACC_PUBLIC, surface_holder_lock_canvas, 0);
+    add_method(holder, "unlockCanvasAndPost", "VL", DX_ACC_PUBLIC, surface_holder_unlock_canvas, 0);
+    DxClass *canvas = reg_class(vm, "Landroid/graphics/Canvas;", obj);
+    const char *canvas_names[] = { "_width", "_height", "_rowBytes", "_generation", "_format", "_locked" };
+    const char *canvas_types[] = { "I", "I", "I", "I", "I", "I" };
+    own_fields(canvas, 6, canvas_names, canvas_types);
     DxClass *rect = reg_class(vm, "Landroid/graphics/Rect;", obj);
     const char *rect_names[] = { "left", "top", "right", "bottom" };
     const char *rect_types[] = { "I", "I", "I", "I" };
@@ -611,14 +624,18 @@ static int read_file(const char *path, uint8_t **data, uint32_t *size) {
 }
 
 /* API19 SurfaceView child surface. Distinct from the ViewRoot window Surface.
-   PixelFormat.RGB_565 is 4, the SurfaceView default. */
+   PixelFormat.RGB_565 is 4, the SurfaceView default reported to surfaceChanged.
+   The in-process backing is 4 bytes per pixel (host RGBA8888). Guest code in
+   this contract does not read Canvas row bytes; draws address the backing
+   through the Canvas object, not through the format integer. */
 enum { AGR_CONTENT_SURFACE_CAP = 4, AGR_SURFACE_CALLBACK_CAP = 8,
-       AGR_PIXEL_FORMAT_RGB_565 = 4 };
+       AGR_PIXEL_FORMAT_RGB_565 = 4, AGR_CONTENT_BYTES_PER_PIXEL = 4 };
 
 struct agr_content_surface {
     DxObject *view;
     DxObject *holder;
     DxObject *surface;
+    DxObject *canvas;
     DxObject *callbacks[AGR_SURFACE_CALLBACK_CAP];
     uint32_t callback_count;
     int created;
@@ -626,10 +643,28 @@ struct agr_content_surface {
     int width;
     int height;
     int format;
+    int row_bytes;
     uint32_t generation;
     uint32_t created_count;
     uint32_t changed_count;
     void *pixels;
+    /* Host exclusion for the content buffer. Not the Java monitor, and not
+       the VM shared lock. Held only around the locked-flag update. */
+    pthread_mutex_t mu;
+    pthread_cond_t cv;
+    int mutex_ready;
+    int canvas_locked;
+    uint32_t lock_owner_exec;
+    uint32_t locked_generation;
+    int clip_left, clip_top, clip_right, clip_bottom;
+    uint32_t lock_count;
+    uint32_t unlock_count;
+    uint32_t post_count;
+    uint32_t last_post_generation;
+    uint64_t hash_before_lock;
+    uint64_t hash_after_post;
+    uint32_t pixel_change_count;
+    int64_t last_lock_fail_ms;
 };
 
 struct agr_dex_game {
@@ -1255,6 +1290,9 @@ static struct agr_content_surface *content_slot_new(agr_dex_game *game, DxObject
     slot = &game->content_surfaces[game->content_surface_count++];
     memset(slot, 0, sizeof(*slot));
     slot->view = view;
+    pthread_mutex_init(&slot->mu, NULL);
+    pthread_cond_init(&slot->cv, NULL);
+    slot->mutex_ready = 1;
     return slot;
 }
 
@@ -1298,8 +1336,20 @@ static void content_pixels_free(agr_dex_game *game, void *pixels) {
 static void release_content_surfaces(agr_dex_game *game) {
     if (!game) return;
     for (uint32_t i = 0; i < game->content_surface_count; i++) {
-        content_pixels_free(game, game->content_surfaces[i].pixels);
-        game->content_surfaces[i].pixels = NULL;
+        struct agr_content_surface *slot = &game->content_surfaces[i];
+        if (slot->mutex_ready) {
+            pthread_mutex_lock(&slot->mu);
+            slot->canvas_locked = 0;
+            pthread_cond_broadcast(&slot->cv);
+            pthread_mutex_unlock(&slot->mu);
+        }
+        content_pixels_free(game, slot->pixels);
+        slot->pixels = NULL;
+        if (slot->mutex_ready) {
+            pthread_cond_destroy(&slot->cv);
+            pthread_mutex_destroy(&slot->mu);
+            slot->mutex_ready = 0;
+        }
     }
 }
 
@@ -1307,10 +1357,21 @@ static void release_content_surfaces(agr_dex_game *game) {
    updateWindow creates the child surface only after a positive frame and only
    while the window and the view are VISIBLE. surfaceCreated runs once;
    surfaceChanged follows on that creation and on a later size change. */
+static void content_surface_lock(struct agr_content_surface *slot) {
+    if (slot && slot->mutex_ready) pthread_mutex_lock(&slot->mu);
+}
+
+static void content_surface_unlock(struct agr_content_surface *slot) {
+    if (slot && slot->mutex_ready) pthread_mutex_unlock(&slot->mu);
+}
+
 static void update_surface_view(DxVM *vm, agr_dex_game *game, DxObject *view,
                                 int window_visible) {
     struct agr_content_surface *slot;
-    int width, height, visible, same;
+    DxObject *callbacks[AGR_SURFACE_CALLBACK_CAP];
+    DxObject *holder = NULL;
+    int width, height, visible, same, format;
+    uint32_t count = 0;
     if (!class_is_surface_view(view->klass)) return;
     slot = content_slot_for_view(game, view);
     if (!slot) return;
@@ -1318,27 +1379,44 @@ static void update_surface_view(DxVM *vm, agr_dex_game *game, DxObject *view,
     height = view_int(view, "_measuredHeight", 0);
     visible = window_visible && view_int(view, "_visibility", 0) == 0;
     if (!visible || width <= 0 || height <= 0) return;
+    content_surface_lock(slot);
+    /* A locked Canvas owns the backing. Replacement waits until unlock. */
+    if (slot->canvas_locked) {
+        content_surface_unlock(slot);
+        return;
+    }
     same = slot->created && slot->valid && slot->width == width && slot->height == height &&
         slot->format == AGR_PIXEL_FORMAT_RGB_565;
-    if (same) return;
+    if (same) {
+        content_surface_unlock(slot);
+        return;
+    }
     if (!slot->created) {
         size_t bytes;
         void *pixels;
-        if ((size_t)width > SIZE_MAX / 4u / (size_t)height) {
+        content_surface_unlock(slot);
+        if ((size_t)width > SIZE_MAX / (size_t)AGR_CONTENT_BYTES_PER_PIXEL / (size_t)height) {
             framework_event(game, "surface_view.allocation_failed");
             return;
         }
-        bytes = (size_t)width * (size_t)height * 4u;
+        bytes = (size_t)width * (size_t)height * (size_t)AGR_CONTENT_BYTES_PER_PIXEL;
         pixels = content_pixels_alloc(game, bytes);
         if (!pixels) {
             framework_event(game, "surface_view.allocation_failed");
             return;
         }
         memset(pixels, 0, bytes);
+        content_surface_lock(slot);
+        if (slot->canvas_locked || slot->created) {
+            content_surface_unlock(slot);
+            content_pixels_free(game, pixels);
+            return;
+        }
         slot->pixels = pixels;
         slot->generation++;
         slot->width = width;
         slot->height = height;
+        slot->row_bytes = width * AGR_CONTENT_BYTES_PER_PIXEL;
         slot->format = AGR_PIXEL_FORMAT_RGB_565;
         slot->valid = 1;
         slot->created = 1;
@@ -1346,52 +1424,70 @@ static void update_surface_view(DxVM *vm, agr_dex_game *game, DxObject *view,
         dx_vm_set_field(slot->surface, "_generation", DX_INT_VALUE((int32_t)slot->generation));
         dx_vm_set_field(slot->surface, "_width", DX_INT_VALUE(width));
         dx_vm_set_field(slot->surface, "_height", DX_INT_VALUE(height));
+        count = slot->callback_count;
+        if (count > AGR_SURFACE_CALLBACK_CAP) count = AGR_SURFACE_CALLBACK_CAP;
+        memcpy(callbacks, slot->callbacks, sizeof(DxObject *) * count);
+        holder = slot->holder;
+        format = slot->format;
+        content_surface_unlock(slot);
         framework_event(game, "surface_view.child_surface_created");
-        {
-            DxObject *callbacks[AGR_SURFACE_CALLBACK_CAP];
-            uint32_t count = slot->callback_count;
-            if (count > AGR_SURFACE_CALLBACK_CAP) count = AGR_SURFACE_CALLBACK_CAP;
-            memcpy(callbacks, slot->callbacks, sizeof(DxObject *) * count);
-            for (uint32_t i = 0; i < count; i++) {
-                DxValue args[5];
-                int created;
-                args[0] = DX_OBJ_VALUE(callbacks[i]);
-                args[1] = DX_OBJ_VALUE(slot->holder);
-                created = invoke_surface_callback(vm, callbacks[i], "surfaceCreated", "VL", args, 2);
-                if (created) slot->created_count++;
-                if (created < 0) continue;
-                args[2] = DX_INT_VALUE(slot->format);
-                args[3] = DX_INT_VALUE(width);
-                args[4] = DX_INT_VALUE(height);
-                if (invoke_surface_callback(vm, callbacks[i], "surfaceChanged", "VLIII", args, 5))
-                    slot->changed_count++;
+        for (uint32_t i = 0; i < count; i++) {
+            DxValue args[5];
+            int created;
+            args[0] = DX_OBJ_VALUE(callbacks[i]);
+            args[1] = DX_OBJ_VALUE(holder);
+            created = invoke_surface_callback(vm, callbacks[i], "surfaceCreated", "VL", args, 2);
+            content_surface_lock(slot);
+            if (created) slot->created_count++;
+            content_surface_unlock(slot);
+            if (created < 0) continue;
+            args[2] = DX_INT_VALUE(format);
+            args[3] = DX_INT_VALUE(width);
+            args[4] = DX_INT_VALUE(height);
+            if (invoke_surface_callback(vm, callbacks[i], "surfaceChanged", "VLIII", args, 5)) {
+                content_surface_lock(slot);
+                slot->changed_count++;
+                content_surface_unlock(slot);
             }
         }
+        content_surface_lock(slot);
         if (slot->created_count) framework_event(game, "surface_holder.surface_created");
         if (slot->changed_count) framework_event(game, "surface_holder.surface_changed");
+        content_surface_unlock(slot);
         return;
     }
     slot->width = width;
     slot->height = height;
+    slot->row_bytes = width * AGR_CONTENT_BYTES_PER_PIXEL;
     dx_vm_set_field(slot->surface, "_width", DX_INT_VALUE(width));
     dx_vm_set_field(slot->surface, "_height", DX_INT_VALUE(height));
+    count = slot->callback_count;
+    if (count > AGR_SURFACE_CALLBACK_CAP) count = AGR_SURFACE_CALLBACK_CAP;
+    memcpy(callbacks, slot->callbacks, sizeof(DxObject *) * count);
+    holder = slot->holder;
+    format = slot->format;
+    content_surface_unlock(slot);
     {
-        DxObject *callbacks[AGR_SURFACE_CALLBACK_CAP];
-        uint32_t count = slot->callback_count;
-        uint32_t before = slot->changed_count;
-        if (count > AGR_SURFACE_CALLBACK_CAP) count = AGR_SURFACE_CALLBACK_CAP;
-        memcpy(callbacks, slot->callbacks, sizeof(DxObject *) * count);
+        uint32_t before;
+        content_surface_lock(slot);
+        before = slot->changed_count;
+        content_surface_unlock(slot);
         for (uint32_t i = 0; i < count; i++) {
             DxValue args[5];
             args[0] = DX_OBJ_VALUE(callbacks[i]);
-            args[1] = DX_OBJ_VALUE(slot->holder);
-            args[2] = DX_INT_VALUE(slot->format);
+            args[1] = DX_OBJ_VALUE(holder);
+            args[2] = DX_INT_VALUE(format);
             args[3] = DX_INT_VALUE(width);
             args[4] = DX_INT_VALUE(height);
-            if (invoke_surface_callback(vm, callbacks[i], "surfaceChanged", "VLIII", args, 5))
+            if (invoke_surface_callback(vm, callbacks[i], "surfaceChanged", "VLIII", args, 5)) {
+                content_surface_lock(slot);
                 slot->changed_count++;
+                content_surface_unlock(slot);
+            }
         }
+        content_surface_lock(slot);
         if (slot->changed_count != before) framework_event(game, "surface_holder.surface_changed");
+        content_surface_unlock(slot);
     }
 }
 
@@ -1549,6 +1645,215 @@ static DxResult surface_holder_get_surface_frame(DxVM *vm, DxFrame *frame, DxVal
     dx_vm_set_field(rect, "bottom", DX_INT_VALUE(height));
     frame->result = DX_OBJ_VALUE(rect);
     frame->has_result = true;
+    return DX_OK;
+}
+
+/* Lock order: the host surface mutex is not held across guest bytecode, a
+   Java monitor, or the VM shared lock. Callers may hold a Java monitor and
+   then call lockCanvas. Allocation takes the VM lock only while the surface
+   mutex is released. UI replacement waits on the canvas_locked flag. */
+static int64_t content_now_ms(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (int64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
+static void content_safepoint_sleep(DxExecutionContext *exec, int64_t millis) {
+    while (millis > 0 && exec && !exec->stop_requested) {
+        uint32_t slice = millis > 10 ? 10 : (uint32_t)millis;
+        struct timespec ts;
+        ts.tv_sec = slice / 1000;
+        ts.tv_nsec = (long)(slice % 1000) * 1000000L;
+        __atomic_store_n(&exec->at_safepoint, 1, __ATOMIC_RELEASE);
+        nanosleep(&ts, NULL);
+        __atomic_store_n(&exec->at_safepoint, 0, __ATOMIC_RELEASE);
+        millis -= slice;
+    }
+}
+
+static uint64_t content_buffer_hash(const void *pixels, size_t bytes) {
+    const uint8_t *cursor = pixels;
+    uint64_t hash = 14695981039346656037ull;
+    if (!cursor) return 0;
+    for (size_t i = 0; i < bytes; i++) {
+        hash ^= cursor[i];
+        hash *= 1099511628211ull;
+    }
+    return hash;
+}
+
+static void content_bind_canvas(struct agr_content_surface *slot, DxObject *canvas) {
+    dx_vm_set_field(canvas, "_width", DX_INT_VALUE(slot->width));
+    dx_vm_set_field(canvas, "_height", DX_INT_VALUE(slot->height));
+    dx_vm_set_field(canvas, "_rowBytes", DX_INT_VALUE(slot->row_bytes));
+    dx_vm_set_field(canvas, "_generation", DX_INT_VALUE((int32_t)slot->generation));
+    dx_vm_set_field(canvas, "_format", DX_INT_VALUE(slot->format));
+    dx_vm_set_field(canvas, "_locked", DX_INT_VALUE(1));
+}
+
+static int content_clip_from_rect(DxObject *rect, int width, int height,
+                                  int *left, int *top, int *right, int *bottom) {
+    int values[4];
+    const char *names[] = { "left", "top", "right", "bottom" };
+    *left = 0;
+    *top = 0;
+    *right = width;
+    *bottom = height;
+    if (!rect) return 1;
+    for (int i = 0; i < 4; i++) {
+        DxValue value = DX_NULL_VALUE;
+        if (dx_vm_get_field(rect, names[i], &value) != DX_OK || value.tag != DX_VAL_INT)
+            return 0;
+        values[i] = value.i;
+    }
+    if (values[2] < values[0] || values[3] < values[1]) return 0;
+    if (values[0] > *left) *left = values[0];
+    if (values[1] > *top) *top = values[1];
+    if (values[2] < *right) *right = values[2];
+    if (values[3] < *bottom) *bottom = values[3];
+    if (*left < 0) *left = 0;
+    if (*top < 0) *top = 0;
+    if (*right > width) *right = width;
+    if (*bottom > height) *bottom = height;
+    return *right >= *left && *bottom >= *top;
+}
+
+static void content_lock_failure_throttle(struct agr_content_surface *slot,
+                                          DxExecutionContext *exec) {
+    int64_t now = content_now_ms();
+    int64_t wait = 0;
+    if (slot->last_lock_fail_ms != 0) {
+        int64_t next = slot->last_lock_fail_ms + 100;
+        if (next > now) wait = next - now;
+    }
+    slot->last_lock_fail_ms = now + wait;
+    content_surface_unlock(slot);
+    if (wait > 0) content_safepoint_sleep(exec, wait);
+}
+
+static DxResult surface_holder_lock_canvas(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    struct agr_content_surface *slot;
+    DxExecutionContext *exec = dx_vm_current_exec(vm);
+    DxObject *rect = NULL;
+    DxObject *canvas = NULL;
+    int left, top, right, bottom;
+    if (!frame) return DX_ERR_INVALID_FORMAT;
+    frame->result = DX_NULL_VALUE;
+    frame->has_result = true;
+    if (count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj) return DX_ERR_NULL_PTR;
+    if (count >= 2 && args[1].tag == DX_VAL_OBJ) rect = args[1].obj;
+    slot = content_slot_for_holder(game, args[0].obj);
+    if (!slot || !exec) return DX_OK;
+    content_surface_lock(slot);
+    while (slot->canvas_locked && slot->lock_owner_exec != exec->id && !exec->stop_requested) {
+        struct timespec ts;
+        __atomic_store_n(&exec->at_safepoint, 1, __ATOMIC_RELEASE);
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_nsec += 10000000L;
+        if (ts.tv_nsec >= 1000000000L) {
+            ts.tv_sec += 1;
+            ts.tv_nsec -= 1000000000L;
+        }
+        pthread_cond_timedwait(&slot->cv, &slot->mu, &ts);
+        __atomic_store_n(&exec->at_safepoint, 0, __ATOMIC_RELEASE);
+    }
+    if (exec->stop_requested) {
+        content_surface_unlock(slot);
+        return DX_OK;
+    }
+    if (slot->canvas_locked && slot->lock_owner_exec == exec->id) {
+        /* SurfaceView swallows Surface's already-locked exception and returns null. */
+        content_lock_failure_throttle(slot, exec);
+        return DX_OK;
+    }
+    if (!slot->valid || !slot->pixels || !slot->created || slot->width <= 0 || slot->height <= 0) {
+        content_lock_failure_throttle(slot, exec);
+        return DX_OK;
+    }
+    if (!content_clip_from_rect(rect, slot->width, slot->height, &left, &top, &right, &bottom)) {
+        content_lock_failure_throttle(slot, exec);
+        return DX_OK;
+    }
+    if (!slot->canvas) {
+        DxClass *canvas_cls;
+        content_surface_unlock(slot);
+        canvas_cls = dx_vm_find_class(vm, "Landroid/graphics/Canvas;");
+        canvas = canvas_cls ? dx_vm_alloc_object(vm, canvas_cls) : NULL;
+        content_surface_lock(slot);
+        if (!canvas) {
+            content_surface_unlock(slot);
+            return DX_ERR_OUT_OF_MEMORY;
+        }
+        if (!slot->canvas) slot->canvas = canvas;
+    }
+    if (slot->canvas_locked || !slot->valid || !slot->pixels) {
+        content_lock_failure_throttle(slot, exec);
+        return DX_OK;
+    }
+    slot->clip_left = left;
+    slot->clip_top = top;
+    slot->clip_right = right;
+    slot->clip_bottom = bottom;
+    slot->canvas_locked = 1;
+    slot->lock_owner_exec = exec->id;
+    slot->locked_generation = slot->generation;
+    slot->lock_count++;
+    slot->hash_before_lock = content_buffer_hash(slot->pixels,
+        (size_t)slot->width * (size_t)slot->height * (size_t)AGR_CONTENT_BYTES_PER_PIXEL);
+    content_bind_canvas(slot, slot->canvas);
+    frame->result = DX_OBJ_VALUE(slot->canvas);
+    content_surface_unlock(slot);
+    framework_event(game, "surface_holder.canvas_locked");
+    return DX_OK;
+}
+
+static DxResult surface_holder_unlock_canvas(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    agr_dex_game *game = game_from_vm(vm);
+    struct agr_content_surface *slot;
+    DxObject *canvas;
+    (void)frame;
+    if (count < 2 || args[0].tag != DX_VAL_OBJ || !args[0].obj) return DX_ERR_NULL_PTR;
+    canvas = args[1].tag == DX_VAL_OBJ ? args[1].obj : NULL;
+    slot = content_slot_for_holder(game, args[0].obj);
+    if (!slot) {
+        dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+            vm, "Ljava/lang/IllegalArgumentException;", "canvas object must be the locked instance");
+        return DX_ERR_EXCEPTION;
+    }
+    content_surface_lock(slot);
+    if (!canvas || canvas != slot->canvas) {
+        content_surface_unlock(slot);
+        dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+            vm, "Ljava/lang/IllegalArgumentException;",
+            "canvas object must be the same instance that was previously returned by lockCanvas");
+        return DX_ERR_EXCEPTION;
+    }
+    if (!slot->canvas_locked) {
+        content_surface_unlock(slot);
+        dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+            vm, "Ljava/lang/IllegalStateException;", "Surface was not locked");
+        return DX_ERR_EXCEPTION;
+    }
+    if (slot->locked_generation != slot->generation || !slot->pixels) {
+        slot->canvas_locked = 0;
+        dx_vm_set_field(canvas, "_locked", DX_INT_VALUE(0));
+        pthread_cond_broadcast(&slot->cv);
+        content_surface_unlock(slot);
+        dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+            vm, "Ljava/lang/IllegalStateException;", "Surface generation changed while locked");
+        return DX_ERR_EXCEPTION;
+    }
+    slot->hash_after_post = content_buffer_hash(slot->pixels,
+        (size_t)slot->width * (size_t)slot->height * (size_t)AGR_CONTENT_BYTES_PER_PIXEL);
+    slot->post_count++;
+    slot->unlock_count++;
+    slot->last_post_generation = slot->generation;
+    slot->canvas_locked = 0;
+    dx_vm_set_field(canvas, "_locked", DX_INT_VALUE(0));
+    pthread_cond_broadcast(&slot->cv);
+    content_surface_unlock(slot);
+    framework_event(game, "surface_holder.canvas_posted");
     return DX_OK;
 }
 
@@ -1902,6 +2207,7 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
         struct agr_content_surface *slot = first_content_surface(game, game->content_view);
         snapshot->root_surface_identity=(uint64_t)(uintptr_t)game->viewroot.surface;
         if (slot) {
+            content_surface_lock(slot);
             snapshot->content_surface_valid=slot->valid;
             snapshot->content_surface_generation=slot->generation;
             snapshot->content_surface_width=slot->width;
@@ -1912,6 +2218,18 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
             snapshot->content_surface_changed_count=slot->changed_count;
             snapshot->content_surface_identity=(uint64_t)(uintptr_t)slot->surface;
             snapshot->content_surface_owner_id=view_int(slot->view, "_id", 0);
+            snapshot->canvas_lock_count=slot->lock_count;
+            snapshot->canvas_unlock_count=slot->unlock_count;
+            snapshot->canvas_post_count=slot->post_count;
+            snapshot->canvas_locked=slot->canvas_locked;
+            snapshot->canvas_lock_owner_exec=slot->lock_owner_exec;
+            snapshot->canvas_locked_generation=slot->locked_generation;
+            snapshot->canvas_last_post_generation=slot->last_post_generation;
+            snapshot->canvas_row_bytes=slot->row_bytes;
+            snapshot->canvas_buffer_hash_before=slot->hash_before_lock;
+            snapshot->canvas_buffer_hash_after=slot->hash_after_post;
+            snapshot->canvas_pixel_change_count=slot->pixel_change_count;
+            content_surface_unlock(slot);
         }
         snprintf(snapshot->content_surface_exception, sizeof(snapshot->content_surface_exception),
                  "%s", game->content_surface_exception);
@@ -1999,9 +2317,12 @@ void agr_dex_game_destroy(agr_dex_game *game) {
     for (uint32_t i = 0; i < game->layout_count; i++) free(game->layouts[i].xml);
     free(game->layouts);
     dx_resources_free(game->resources);
-    release_content_surfaces(game);
+    /* Join workers before freeing a buffer a Canvas lock may still name.
+       stop_requested unblocks a waiter on the next 10ms surface-cond slice. */
     agr_viewroot_release(&game->viewroot);
     if (game->vm) dx_vm_destroy(game->vm);
+    game->vm = NULL;
+    release_content_surfaces(game);
     if (game->dex) dx_dex_free(game->dex);
     free(game->objects); free(game->bytes); free(game);
 }

@@ -12,6 +12,8 @@ on:
       - 'Tests/DexLoom/make_vtable_inheritance_fixture.py'
       - 'Tests/DexLoom/thread-start-host.c'
       - 'Tests/DexLoom/make_thread_start_fixture.py'
+      - 'Tests/DexLoom/surface-canvas-host.c'
+      - 'Tests/DexLoom/make_surface_canvas_fixture.py'
       - 'scripts/build-and-run-simulator.sh'
       - 'ci/framework-traversal-dispatch-contract.py'
       - 'ci/build-framework-traversal-dispatch-summary.py'
@@ -81,11 +83,23 @@ jobs:
             /tmp/agr-dispatch-obj/dx_exec.o \
             /tmp/thread-start-host.o -lz -lm -o /tmp/thread-start-host
           /tmp/thread-start-host /tmp/thread-start.dex
+          python3 Tests/DexLoom/make_surface_canvas_fixture.py /tmp/surface-canvas.dex /tmp/surface-canvas-layouts
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/surface-canvas-host.c \
+            -o /tmp/surface-canvas-host.o
+          cc -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
+            /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
+            /tmp/surface-canvas-host.o -lz -lm -o /tmp/surface-canvas-host
+          /tmp/surface-canvas-host /tmp/surface-canvas.dex /tmp/surface-canvas-layouts/canvas.xml
       - name: Verify API19 source, semantic differential and governance
         run: |
-          python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --require-valid framework.window.set_content_view --require-valid framework.view.surface_view --require-valid dalvik.vm.vtable --require-valid dalvik.thread.start --verify-upstream --verify-only framework.viewroot.traversal_dispatch --verify-only framework.window.set_content_view --verify-only framework.view.surface_view --verify-only dalvik.vm.vtable --verify-only dalvik.thread.start --output build/artifacts/traversal-dispatch-upstream-map.json
+          python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --require-valid framework.window.set_content_view --require-valid framework.view.surface_view --require-valid framework.view.surface_holder_canvas --require-valid dalvik.vm.vtable --require-valid dalvik.thread.start --verify-upstream --verify-only framework.viewroot.traversal_dispatch --verify-only framework.window.set_content_view --verify-only framework.view.surface_view --verify-only framework.view.surface_holder_canvas --verify-only dalvik.vm.vtable --verify-only dalvik.thread.start --output build/artifacts/traversal-dispatch-upstream-map.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-traversal-dispatch.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-surface-view.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-surface-holder-canvas.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-dex-virtual-dispatch.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-thread-start.json
           python3 ci/validate-governance.py --mode discovery
