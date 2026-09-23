@@ -684,11 +684,11 @@
           "gc_mark_roots"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "8acb40425408cd88cf8432fcf1bd2ee93b04c9667e09a519d44c67c366fb3d9d",
-          "Runtime/DexLoom/VM/dx_vm.c": "5041686fe425cf6067dd77cab64f0ba77b5b2af0c8d26eaaa7b462af30993411"
+          "Runtime/DexLoom/game_dex_runner.c": "179fa47a17afc4642d3ec457cc71d176ba751bd15793b365baeca36987fb443b",
+          "Runtime/DexLoom/VM/dx_vm.c": "ebfb55f49f7825f912bdb1173f6f497e26b0fbcd9058afbc59d4ae51a140c7ee"
         }
       },
-      "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
+      "verified_at_commit": "49932c0255c67c19db23d8fcbbbeed221a8a1611",
       "status": "VALID",
       "dependencies": [],
       "observable_semantics": [
