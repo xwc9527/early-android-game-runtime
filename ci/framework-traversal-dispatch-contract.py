@@ -193,8 +193,31 @@ def check_discovery(result):
     ci_environment = result.get("ci_environment") or {}
     require(ci_environment.get("simulator_runtime_requested"), ci_environment)
     require(ci_environment.get("simulator_runtime_requested") == ci_environment.get("simulator_runtime_actual"), ci_environment)
+    require(ci_environment.get("physical_target_os") == "26.3.1 (a)", ci_environment)
+    require(ci_environment.get("simulator_runtime_version"), ci_environment)
+    require(ci_environment.get("os_version_parity") in (
+        "SAME_26_3_MINOR", "SAME_26_MAJOR_CLOSEST", "VERSION_DIFFERENT_FALLBACK"), ci_environment)
+    require(ci_environment.get("xcode_version") and ci_environment.get("sdk_name") == "iphonesimulator" and
+            ci_environment.get("sdk_version"), ci_environment)
     require(ci_environment.get("simulator_device_type_requested") == "com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro", ci_environment)
     require(ci_environment.get("simulator_device_type_actual") == ci_environment.get("simulator_device_type_requested"), ci_environment)
+    build_environment = result.get("build_environment") or {}
+    for key in ("branch", "commit", "tree"):
+        require(bool(result.get(key)) and result.get(key) != "unknown", result)
+        require(build_environment.get(key) == result.get(key), build_environment)
+    for key in ("xcode", "sdk_name", "sdk_version", "deployment_target", "angle_version",
+                "angle_identity", "interpreter_build_identity", "physical_target_os",
+                "simulator_runtime_requested", "simulator_runtime_actual",
+                "simulator_runtime_version", "os_version_parity", "simulator_device_type"):
+        require(build_environment.get(key) not in (None, "", "unknown"), build_environment)
+    require(build_environment.get("simulator_runtime_requested") == ci_environment.get("simulator_runtime_requested"),
+            {"build": build_environment, "ci": ci_environment})
+    require(build_environment.get("simulator_runtime_actual") == ci_environment.get("simulator_runtime_actual"),
+            {"build": build_environment, "ci": ci_environment})
+    require(build_environment.get("simulator_runtime_version") == ci_environment.get("simulator_runtime_version"),
+            {"build": build_environment, "ci": ci_environment})
+    require(build_environment.get("os_version_parity") == ci_environment.get("os_version_parity"),
+            {"build": build_environment, "ci": ci_environment})
 
 
 def main():

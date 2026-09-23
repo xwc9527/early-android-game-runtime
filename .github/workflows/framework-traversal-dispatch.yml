@@ -23,6 +23,9 @@ on:
       - 'App/agr_physical_trace.c'
       - 'Runtime/DexLoom/agr_forensic.h'
       - 'ci/physical-runtime-evidence.py'
+      - 'ci/physical-environment-diff.py'
+      - 'ci/select-simulator-runtime.py'
+      - 'Tests/DexLoom/physical-runtime-evidence-test.py'
       - 'Tests/DexLoom/canvas-state-clip-host.c'
       - 'Tests/DexLoom/make_thread_start_fixture.py'
       - 'Tests/DexLoom/surface-canvas-host.c'
@@ -188,6 +191,7 @@ jobs:
             -c Tests/DexLoom/physical-trace-host.c -o /tmp/physical-trace-host.o
           cc -pthread /tmp/agr_physical_trace.o /tmp/physical-trace-host.o -o /tmp/physical-trace-host
           /tmp/physical-trace-host ci/physical-runtime-evidence.py
+          python3 Tests/DexLoom/physical-runtime-evidence-test.py
           python3 Tests/DexLoom/make_surface_callback_outcome_fixture.py /tmp/surface-callback-outcome.dex /tmp/surface-callback-outcome-layouts
           cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/surface-callback-outcome-host.c \
             -o /tmp/surface-callback-outcome-host.o

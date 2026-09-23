@@ -136,6 +136,8 @@ typedef struct agr_forensic_sample {
     uint32_t surface_generation;
     uint64_t surface_identity;
     int surface_valid;
+    uint32_t guest_pc;
+    int has_guest_pc;
     uint32_t created_count;
     uint32_t changed_count;
     uint32_t counter_before;
@@ -164,6 +166,9 @@ typedef struct agr_physical_trace_config {
 typedef struct agr_physical_trace_status {
     char run_id[40];
     char process_launch_id[40];
+    long pid;
+    char process_start_wall_time[40];
+    uint64_t process_start_monotonic_ns;
     uint64_t last_seq;
     uint32_t event_count;
     char last_event[64];
@@ -205,6 +210,7 @@ void agr_physical_trace_copy_status(agr_physical_trace_status *out);
 /* Stores one JSON object. Both run.json and runtime.json embed it.
    A null or empty value records environment as null. */
 int agr_physical_trace_set_environment_json(const char *json);
+int agr_physical_trace_set_environment_end_json(const char *json, const char *changes_json);
 void agr_physical_trace_set_lifecycle(const char *state, int foreground, int active);
 void agr_physical_trace_set_apk_sha_actual(const char *sha256);
 void agr_physical_trace_set_observation(uint64_t start_monotonic, uint64_t deadline,

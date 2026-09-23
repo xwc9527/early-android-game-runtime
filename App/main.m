@@ -1275,11 +1275,45 @@ static void publishEnvironment(int physical, int displayOverride, uint32_t hostW
 static NSDictionary *displayLinkRecord(CADisplayLink *link, double *previous);
 static uint64_t hostMonoNs(void);
 static NSDictionary *gLatestEnvironment;
+static NSDictionary *gStartEnvironment;
 static NSMutableArray *gDisplayLinkFrames;
 static double gLinkPrevious = 0;
 static uint64_t gObsStart = 0;
 static uint64_t gObsDeadline = 0;
 static NSString *gObsStop = @"";
+
+static NSDictionary *bundleBuildEnvironment(void) {
+    NSString *path=[[NSBundle mainBundle] pathForResource:@"agr-build-environment" ofType:@"json"];
+    NSData *data=path ? [NSData dataWithContentsOfFile:path] : nil;
+    id value=data ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
+    return [value isKindOfClass:[NSDictionary class]] ? value : @{};
+}
+
+static NSArray *environmentDifferences(NSDictionary *start, NSDictionary *end) {
+    NSArray<NSArray<NSString *> *> *paths=@[
+      @[@"lifecycle", @"state"], @[@"lifecycle", @"active"],
+      @[@"power", @"thermal_state"], @[@"power", @"low_power_mode_enabled"],
+      @[@"power", @"battery_state"], @[@"power", @"battery_level"],
+      @[@"display", @"logical_width"], @[@"display", @"logical_height"],
+      @[@"display", @"native_width"], @[@"display", @"native_height"],
+      @[@"display", @"scale"], @[@"display", @"native_scale"],
+      @[@"display", @"maximum_fps"], @[@"graphics", @"device_name"]
+    ];
+    NSMutableArray *changes=[NSMutableArray array];
+    for (NSArray<NSString *> *path in paths) {
+        id left=start;
+        id right=end;
+        for (NSString *key in path) {
+            left=[left isKindOfClass:[NSDictionary class]] ? left[key] : nil;
+            right=[right isKindOfClass:[NSDictionary class]] ? right[key] : nil;
+        }
+        if ((left==[NSNull null]) || (right==[NSNull null])) continue;
+        if ((left || right) && ![left isEqual:right])
+            [changes addObject:@{@"field":[path componentsJoinedByString:@"."],
+                                 @"start":left ?: [NSNull null], @"end":right ?: [NSNull null]}];
+    }
+    return changes;
+}
 
 static int physicalContentLockBusy(void *user) {
     return agr_dex_game_diagnostic_content_lock_busy((const agr_dex_game *)user);
@@ -1463,6 +1497,8 @@ static void finishTraversalDispatchReport(void) {
           (gDispatchVsync>=4 ? @"FRAME_BUDGET" : @"OBSERVATION_DEADLINE")));
     NSDictionary *report=@{ @"schema":@"agr.framework-traversal-dispatch.discovery.v1",
       @"sample":@"frozen-bubble", @"consumer":@"uikit-cadisplaylink",
+      @"branch":@AGR_BUILD_BRANCH, @"commit":@AGR_BUILD_COMMIT, @"tree":@AGR_BUILD_TREE,
+      @"build_environment":bundleBuildEnvironment(),
       @"harness_called_do_traversal":@NO, @"harness_called_render_api":@NO,
       @"host_vsync_count":@(gDispatchVsync),
       @"display_width":@(gDispatchWidth), @"display_height":@(gDispatchHeight),
@@ -1813,7 +1849,6 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
 @implementation AppDelegate
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)options {
     (void)application; (void)options;
-    self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
     NSArray<NSString *> *arguments=NSProcessInfo.processInfo.arguments;
     BOOL interactive=[arguments containsObject:@"--interactive"];
     BOOL dexParserCompatibility=[arguments containsObject:@"--dex-parser-compatibility"];
@@ -1828,10 +1863,10 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
 #else
     physicalRuntime=[arguments containsObject:@"--physical-runtime-validation"];
 #endif
-    UIViewController *controller = (interactive && !physicalRuntime) ? [AGRDebugController new] : [UIViewController new]; controller.view.backgroundColor = UIColor.blackColor;
-    self.window.rootViewController = controller; [self.window makeKeyAndVisible];
-    CGSize displayPixels=UIScreen.mainScreen.nativeBounds.size;
     if (physicalRuntime) {
+      /* Establish a new Documents current-root before constructing the app
+         window or creating any Runtime objects. UIApplication has entered its
+         launch delegate, but no app-owned UIKit scene has been initialized. */
       NSString *documents=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
       agr_physical_trace_config traceConfig;
       [[NSFileManager defaultManager] createDirectoryAtPath:documents withIntermediateDirectories:YES attributes:nil error:nil];
@@ -1840,16 +1875,24 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
       traceConfig.branch=AGR_BUILD_BRANCH;
       traceConfig.commit=AGR_BUILD_COMMIT;
       traceConfig.tree=AGR_BUILD_TREE;
-      traceConfig.device_platform="iphoneos";
 #if TARGET_OS_SIMULATOR
+      traceConfig.device_platform="iphonesimulator";
       traceConfig.architecture="arm64-simulator";
 #else
+      traceConfig.device_platform="iphoneos";
       traceConfig.architecture="arm64";
 #endif
       traceConfig.apk_sha256_expected="57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569";
       gPhysicalTraceReady=agr_physical_trace_begin(&traceConfig)==0;
+    }
+    CGSize displayPixels=UIScreen.mainScreen.nativeBounds.size;
+    self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
+    UIViewController *controller = (interactive && !physicalRuntime) ? [AGRDebugController new] : [UIViewController new]; controller.view.backgroundColor = UIColor.blackColor;
+    self.window.rootViewController = controller; [self.window makeKeyAndVisible];
+    if (physicalRuntime) {
       physicalNote(AGR_PHYS_PHASE_APP_DID_FINISH_LAUNCHING, 1, 0, 0, "NEW_PROCESS");
-      publishEnvironment(1, 0, (uint32_t)displayPixels.width, (uint32_t)displayPixels.height);
+      publishEnvironment(TARGET_OS_SIMULATOR ? 0 : 1, 0,
+                         (uint32_t)displayPixels.width, (uint32_t)displayPixels.height);
       agr_physical_trace_set_lifecycle("LAUNCHING", 1, 0);
       [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrMemoryWarning:) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
       [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrThermal:) name:NSProcessInfoThermalStateDidChangeNotification object:nil];
@@ -2056,6 +2099,9 @@ static NSDictionary *captureEnvironment(int physical, int displayOverride, uint3
     UIDevice.currentDevice.batteryMonitoringEnabled = YES;
     uint64_t workingSet = 0;
     if (gpu && @available(iOS 16.0, *)) workingSet = gpu.recommendedMaxWorkingSetSize;
+    UIApplicationState appState=UIApplication.sharedApplication.applicationState;
+    NSString *lifecycle=appState==UIApplicationStateActive ? @"ACTIVE" :
+        (appState==UIApplicationStateBackground ? @"BACKGROUND" : @"INACTIVE");
     return @{
         @"schema": @"agr.physical-environment.v1",
         @"target_type": physical ? @"physical_device" : @"simulator",
@@ -2123,11 +2169,22 @@ static NSDictionary *captureEnvironment(int physical, int displayOverride, uint3
             @"battery_state": @(UIDevice.currentDevice.batteryState),
             @"battery_level": @(UIDevice.currentDevice.batteryLevel)
         },
-        @"lifecycle": @{ @"state": @"LAUNCHING" },
+        @"lifecycle": @{ @"state": lifecycle, @"active":@(appState==UIApplicationStateActive),
+                          @"foreground":@(appState!=UIApplicationStateBackground) },
         @"build": @{
             @"branch": @AGR_BUILD_BRANCH,
             @"commit": @AGR_BUILD_COMMIT,
             @"tree": @AGR_BUILD_TREE
+        },
+        @"build_environment": bundleBuildEnvironment(),
+        @"simulator": @{
+            @"physical_target_os": physical ? (UIDevice.currentDevice.systemVersion ?: @"") :
+                (bundleBuildEnvironment()[@"physical_target_os"] ?: [NSNull null]),
+            @"runtime_requested": bundleBuildEnvironment()[@"simulator_runtime_requested"] ?: [NSNull null],
+            @"runtime_actual": bundleBuildEnvironment()[@"simulator_runtime_actual"] ?: [NSNull null],
+            @"runtime_version": bundleBuildEnvironment()[@"simulator_runtime_version"] ?: [NSNull null],
+            @"os_version_parity": bundleBuildEnvironment()[@"os_version_parity"] ?: [NSNull null],
+            @"device_type": bundleBuildEnvironment()[@"simulator_device_type"] ?: [NSNull null]
         },
         @"binaries": binaries
     };
@@ -2142,6 +2199,7 @@ static void publishEnvironment(int physical, int displayOverride, uint32_t hostW
     int stored = -1;
     BOOL partial = machine.length == 0 || version.length == 0;
     gLatestEnvironment = env;
+    if (!gStartEnvironment) gStartEnvironment = env;
     if (gPhysicalTraceReady && text.length)
         stored = agr_physical_trace_set_environment_json(text.UTF8String);
     for (NSDictionary *binary in env[@"binaries"]) {
@@ -2216,11 +2274,26 @@ static void finishPhysicalReport(void) {
     BOOL contentPosted;
     NSString *documents;
     NSData *json;
+    NSDictionary *environmentEnd;
+    NSArray *environmentChanges;
+    NSData *environmentEndData;
+    NSData *environmentChangesData;
     uint32_t contextCount;
     uint32_t i;
     if (gPhysicalFinished) return;
     gPhysicalFinished=YES;
     if (gPhysicalLink) { [gPhysicalLink invalidate]; gPhysicalLink=nil; }
+    environmentEnd=captureEnvironment(TARGET_OS_SIMULATOR ? 0 : 1, 0,
+                                      gPhysicalWidth, gPhysicalHeight);
+    environmentChanges=environmentDifferences(gStartEnvironment ?: gLatestEnvironment ?: @{}, environmentEnd);
+    environmentEndData=[NSJSONSerialization dataWithJSONObject:environmentEnd options:0 error:nil];
+    environmentChangesData=[NSJSONSerialization dataWithJSONObject:environmentChanges options:0 error:nil];
+    if (gPhysicalTraceReady) {
+        NSString *endText=environmentEndData ? [[NSString alloc] initWithData:environmentEndData encoding:NSUTF8StringEncoding] : nil;
+        NSString *changesText=environmentChangesData ? [[NSString alloc] initWithData:environmentChangesData encoding:NSUTF8StringEncoding] : nil;
+        if (endText.length) agr_physical_trace_set_environment_end_json(endText.UTF8String, changesText.UTF8String);
+        if (environmentChanges.count) physicalNote(AGR_PHYS_PHASE_ENVIRONMENT_CHANGED, 1, 0, 0, "environment_end_diff");
+    }
     if (gPhysicalGame) agr_dex_game_runtime_snapshot(gPhysicalGame, &snapshot);
     vectorWitnesses(vm, &vectorSize, &elementClass, &paintWitness, &paintReached);
     contextCount=vm ? dx_vm_unresolved_context_count(vm) : 0;
@@ -2252,8 +2325,13 @@ static void finishPhysicalReport(void) {
         @"branch":@AGR_BUILD_BRANCH,
         @"commit":@AGR_BUILD_COMMIT,
         @"tree":@AGR_BUILD_TREE,
+#if TARGET_OS_SIMULATOR
+        @"device_platform":@"iphonesimulator",
+        @"iphoneos":@NO,
+#else
         @"device_platform":@"iphoneos",
         @"iphoneos":@YES,
+#endif
 #if TARGET_OS_SIMULATOR
         @"architecture":@"arm64-simulator",
 #else
@@ -2265,6 +2343,7 @@ static void finishPhysicalReport(void) {
         @"apk_sha256_expected":@"57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569",
         @"apk_opened":@(gPhysicalPackage!=NULL),
         @"activity_launch_stage":launchStageName(gPhysicalGame ? agr_dex_game_launch_stage(gPhysicalGame) : AGR_ACTIVITY_LAUNCH_NONE),
+        @"activity_resumed":@([launchStageName(gPhysicalGame ? agr_dex_game_launch_stage(gPhysicalGame) : AGR_ACTIVITY_LAUNCH_NONE) caseInsensitiveCompare:@"resumed"]==NSOrderedSame),
         @"launch_result":@(gPhysicalStart),
         @"process_alive":@YES,
         @"execution_contexts":contexts,
@@ -2272,6 +2351,7 @@ static void finishPhysicalReport(void) {
         @"game_thread_host":[NSString stringWithFormat:@"%llu", (unsigned long long)snapshot.canvas_lock_owner_host],
         @"surface_created":@(snapshot.content_surface_created_count),
         @"surface_changed":@(snapshot.content_surface_changed_count),
+        @"surface_callback_ok_count":@(snapshot.content_surface_created_count + snapshot.content_surface_changed_count),
         @"content_surface_valid":@(snapshot.content_surface_valid!=0),
         @"content_surface_identity":[NSString stringWithFormat:@"%llu", (unsigned long long)snapshot.content_surface_identity],
         @"root_surface_identity":[NSString stringWithFormat:@"%llu", (unsigned long long)snapshot.root_surface_identity],
@@ -2304,7 +2384,10 @@ static void finishPhysicalReport(void) {
         @"content_produced":contentProduced ? @"YES" : @"NO",
         @"content_posted":contentPosted ? @"YES" : @"NO",
         @"screen_presented":@"NOT_TESTED",
-        @"environment": gLatestEnvironment ?: @{},
+        @"environment": gStartEnvironment ?: gLatestEnvironment ?: @{},
+        @"environment_start": gStartEnvironment ?: gLatestEnvironment ?: @{},
+        @"environment_end": environmentEnd ?: @{},
+        @"environment_changed": environmentChanges ?: @[],
         @"display_link_frames": gDisplayLinkFrames ?: @[],
         @"observation_start_monotonic": @(gObsStart),
         @"observation_deadline": @(gObsDeadline),
@@ -2338,8 +2421,14 @@ static void finishPhysicalReport(void) {
         if (traceStatus.termination_reason[0]) authoritative = traceStatus.termination_reason;
         full[@"run_id"] = [NSString stringWithUTF8String:traceStatus.run_id];
         full[@"process_launch_id"] = [NSString stringWithUTF8String:traceStatus.process_launch_id];
-        full[@"environment"] = gLatestEnvironment ?: @{};
-        full[@"binaries"] = gLatestEnvironment[@"binaries"] ?: @[];
+        full[@"pid"] = @(traceStatus.pid);
+        full[@"process_start_wall_time"] = [NSString stringWithUTF8String:traceStatus.process_start_wall_time];
+        full[@"process_start_monotonic_ns"] = @(traceStatus.process_start_monotonic_ns);
+        full[@"environment"] = gStartEnvironment ?: gLatestEnvironment ?: @{};
+        full[@"environment_start"] = gStartEnvironment ?: gLatestEnvironment ?: @{};
+        full[@"environment_end"] = environmentEnd ?: @{};
+        full[@"environment_changed"] = environmentChanges ?: @[];
+        full[@"binaries"] = (gStartEnvironment ?: gLatestEnvironment)[@"binaries"] ?: @[];
         full[@"observation_start_monotonic"] = @(gObsStart);
         full[@"observation_deadline"] = @(gObsDeadline);
         full[@"observation_end"] = @(hostMonoNs());

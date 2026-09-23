@@ -39,6 +39,47 @@ fi
 if [[ "$MODE" == "build" || "$MODE" == "all" ]]; then
   SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
   TARGET="arm64-apple-ios15.0-simulator"
+  BRANCH="$(git -C "$ROOT" rev-parse --abbrev-ref HEAD)"
+  COMMIT="$(git -C "$ROOT" rev-parse HEAD)"
+  TREE="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"
+  XCODE_VERSION="$(xcodebuild -version 2>/dev/null | tr '\n' ' ' || true)"
+  SDK_VERSION="$(xcrun --sdk iphonesimulator --show-sdk-version 2>/dev/null || true)"
+  mkdir -p "$BUILD/obj"
+  cat > "$BUILD/obj/agr_build_identity.h" <<EOF
+#define AGR_BUILD_COMMIT "$COMMIT"
+#define AGR_BUILD_TREE "$TREE"
+#define AGR_BUILD_BRANCH "$BRANCH"
+EOF
+  if [[ ! -s "$ARTIFACTS/ci-environment.json" ]]; then
+    python3 "$ROOT/ci/select-simulator-runtime.py" "$ARTIFACTS/ci-environment.json" > "$ARTIFACTS/simulator-device.txt"
+  fi
+  python3 - "$BUILD/build-environment.json" "$ARTIFACTS/ci-environment.json" "$BRANCH" "$COMMIT" "$TREE" "$XCODE_VERSION" "$SDK_VERSION" <<'PY'
+import json, sys
+out_path, sim_path, branch, commit, tree, xcode, sdk = sys.argv[1:]
+try:
+    sim = json.load(open(sim_path, encoding="utf-8"))
+except (OSError, json.JSONDecodeError):
+    sim = {}
+data = {
+    "schema": "agr.iphonesimulator-build-environment.v1",
+    "branch": branch, "commit": commit, "tree": tree,
+    "xcode": xcode, "sdk_name": "iphonesimulator", "sdk_version": sdk,
+    "deployment_target": "15.0",
+    "angle_version": "v2.1.28252",
+    "angle_identity": "59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be",
+    "angle_sha256": "59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be",
+    "interpreter_build_identity": "touchhle-arm-interpreter:aarch64-apple-ios-sim:release",
+    "physical_target_os": sim.get("physical_target_os"),
+    "simulator_runtime_requested": sim.get("simulator_runtime_requested"),
+    "simulator_runtime_actual": sim.get("simulator_runtime_actual"),
+    "simulator_runtime_version": sim.get("simulator_runtime_version"),
+    "os_version_parity": sim.get("os_version_parity"),
+    "simulator_device_type": sim.get("simulator_device_type_actual"),
+}
+with open(out_path, "w", encoding="utf-8") as f:
+    json.dump(data, f, indent=2)
+    f.write("\n")
+PY
   ANGLE_ROOT="$BUILD/angle-v2.1.28252"
   test -d "$ANGLE_ROOT/dist/EGL.xcframework"
   rustup target list --installed | grep -qx aarch64-apple-ios-sim
@@ -101,10 +142,11 @@ DEX="$ROOT/Runtime/DexLoom"; DEX_INCLUDE="$DEX/Include"
 DEX_SOURCES=("$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" "$DEX/VM/dx_exec.c" "$DEX/VM/dx_verifier.c" "$DEX/APK/dx_apk.c" "$DEX/APK/dx_manifest.c" "$DEX/APK/dx_resources.c" "$DEX/AndroidMini/framework_viewroot.c" "$DEX/poc_host.c" "$DEX/game_dex_runner.c")
 INDEX=0; DEX_OBJECTS=()
 for SOURCE in "${DEX_SOURCES[@]}"; do OBJECT="$BUILD/obj/dex-$INDEX.o"; clang "${COMMON[@]}" -std=gnu11 -DGL_GLES_PROTOTYPES=1 -I"$ROOT/Vendor/ANGLE-Headers" -I"$DEX_INCLUDE" -I"$BITMAP" -c "$SOURCE" -o "$OBJECT"; DEX_OBJECTS+=("$OBJECT"); INDEX=$((INDEX+1)); done
-clang "${COMMON[@]}" -fobjc-arc -I"$ROOT/Vendor/ANGLE-Headers" -I"$ROOT/Runtime/NativeCore" -I"$ROOT/Runtime/GuestRuntime" -I"$DEX" -I"$DEX_INCLUDE" -I"$AFW" -I"$BITMAP" -c "$ROOT/App/main.m" -o "$BUILD/obj/main.o"
+clang "${COMMON[@]}" -fobjc-arc -I"$BUILD/obj" -I"$ROOT/Vendor/ANGLE-Headers" -I"$ROOT/Runtime/NativeCore" -I"$ROOT/Runtime/GuestRuntime" -I"$DEX" -I"$DEX_INCLUDE" -I"$AFW" -I"$BITMAP" -c "$ROOT/App/main.m" -o "$BUILD/obj/main.o"
 clang "${COMMON[@]}" -std=gnu11 -I"$DEX" -c "$ROOT/App/agr_physical_trace.c" -o "$BUILD/obj/agr_physical_trace.o"
 clang++ "${COMMON[@]}" -Wl,-dead_strip -Wl,-rpath,@executable_path/Frameworks -F"$ANGLE_FRAMEWORKS" "$BUILD/obj/main.o" "$BUILD/obj/agr_physical_trace.o" "$BUILD/obj/agr_runtime.o" "$BUILD/obj/agr_bionic_allocator.o" "$BUILD/obj/agr_guest_vma.o" "$BUILD/obj/agr_host_services_darwin.o" "$BUILD/obj/agr_bionic_thread_attr.o" "$BUILD/obj/agr_futex_host.o" "$BUILD/obj/agr_bionic_sync.o" "$BUILD/obj/agr_bionic_tls.o" "$BUILD/obj/agr_bionic_errno_host.o" "$BUILD/obj/agr_bionic_thread_lifecycle.o" "$BUILD/obj/agr_bionic_mmap.o" "$BUILD/obj/agr_aosp_linker.o" "$BUILD/obj/agr_aosp_dynamic.o" "$BUILD/obj/agr_ehabi.o" "$BUILD/obj/agr_contracts.o" "$BUILD/obj/agr_guest_runtime.o" "$BUILD/obj/agr_thread_context.o" "$BUILD/obj/agr_service_dispatch.o" "$BUILD/obj/agr_jni_methods.o" "${DEX_OBJECTS[@]}" "${AFW_OBJECTS[@]}" "${SKIA_OBJECTS[@]}" "${PNG_OBJECTS[@]}" "${CODEC_OBJECTS[@]}" "$ROOT/Runtime/ArmInterpreter/target/aarch64-apple-ios-sim/release/libtouchhle_arm_interpreter.a" -lz -framework UIKit -framework Foundation -framework CoreGraphics -framework Security -framework Metal -framework QuartzCore -framework libEGL -framework libGLESv2 -o "$APP/AGRSimulator"
 cp "$ROOT/App/Info.plist" "$APP/Info.plist"; cp "$ROOT/App/Resources/"* "$APP/"
+cp "$BUILD/build-environment.json" "$APP/agr-build-environment.json"
 cp "$ROOT/Tests/Trajectories/kungfoo-barracuda.json" "$APP/"
 mkdir -p "$APP/Frameworks"; ditto "$ANGLE_FRAMEWORKS/libEGL.framework" "$APP/Frameworks/libEGL.framework"; ditto "$ANGLE_FRAMEWORKS/libGLESv2.framework" "$APP/Frameworks/libGLESv2.framework"
 codesign --force --sign - "$APP/Frameworks/libEGL.framework"; codesign --force --sign - "$APP/Frameworks/libGLESv2.framework"; codesign --force --sign - "$APP"

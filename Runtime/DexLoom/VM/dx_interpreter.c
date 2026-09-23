@@ -1153,19 +1153,36 @@ extern void agr_forensic_publish(const agr_forensic_sample *) __attribute__((wea
 static int publish_guest_method(DxVM *vm, DxMethod *method, int enter) {
     agr_forensic_sample sample;
     uint32_t previous;
+    int critical_method = 0;
     const char *cls;
     const char *name;
     if (!vm || !method || !vm->telemetry.telemetry_enabled) return 0;
-    if (!__atomic_load_n(&vm->telemetry.draw_witness_armed, __ATOMIC_ACQUIRE)) return 0;
-    previous = __atomic_fetch_sub(&vm->telemetry.draw_witness_remaining, 1, __ATOMIC_ACQ_REL);
-    if (previous == 0) {
-        __atomic_fetch_add(&vm->telemetry.draw_witness_remaining, 1, __ATOMIC_ACQ_REL);
-        return 0;
+    cls = method->declaring_class && method->declaring_class->descriptor
+        ? method->declaring_class->descriptor : "";
+    name = method->name ? method->name : "";
+    if (strstr(cls, "GameThread;") &&
+        (strcmp(name, "setSurfaceSize") == 0 || strcmp(name, "resizeBitmaps") == 0 ||
+         strcmp(name, "doDraw") == 0)) critical_method = 1;
+    if (strstr(cls, "FrozenGame;") && strcmp(name, "<init>") == 0) critical_method = 1;
+    if (strncmp(cls, "Landroid/graphics/Canvas;", 25) == 0 &&
+        (strncmp(name, "draw", 4) == 0 || strncmp(name, "clip", 4) == 0 ||
+         strcmp(name, "save") == 0 || strcmp(name, "restore") == 0 ||
+         strcmp(name, "concat") == 0 || strcmp(name, "translate") == 0 ||
+         strcmp(name, "rotate") == 0 || strcmp(name, "scale") == 0 ||
+         strcmp(name, "setMatrix") == 0 || strcmp(name, "setBitmap") == 0))
+        critical_method = 1;
+    if (!critical_method) {
+        if (!__atomic_load_n(&vm->telemetry.draw_witness_armed, __ATOMIC_ACQUIRE)) return 0;
+        previous = __atomic_fetch_sub(&vm->telemetry.draw_witness_remaining, 1, __ATOMIC_ACQ_REL);
+        if (previous == 0) {
+            __atomic_fetch_add(&vm->telemetry.draw_witness_remaining, 1, __ATOMIC_ACQ_REL);
+            return 0;
+        }
     }
     if (!agr_forensic_publish) return 1;
     memset(&sample, 0, sizeof(sample));
     sample.phase = enter ? AGR_PHYS_PHASE_GUEST_METHOD_ENTER : AGR_PHYS_PHASE_GUEST_METHOD_EXIT;
-    sample.critical = 0;
+    sample.critical = critical_method;
     sample.host_thread = (uint64_t)pthread_self();
     if (dx_vm_current_exec(vm)) {
         sample.has_exec = 1;
@@ -1174,13 +1191,16 @@ static int publish_guest_method(DxVM *vm, DxMethod *method, int enter) {
             sample.host_thread = (uint64_t)(uintptr_t)dx_vm_current_exec(vm)->host_thread;
         sample.thread_state = 2;
     }
-    cls = method->declaring_class && method->declaring_class->descriptor
-        ? method->declaring_class->descriptor : "";
-    name = method->name ? method->name : "";
     snprintf(sample.class_name, sizeof(sample.class_name), "%s", cls);
     snprintf(sample.method_name, sizeof(sample.method_name), "%s", name);
-    snprintf(sample.detail, sizeof(sample.detail), "%s;%s",
+    snprintf(sample.detail, sizeof(sample.detail), "%s;%s;%s",
+             critical_method ? "CRITICAL" : "GENERIC",
              enter ? "ENTER" : "EXIT", method->shorty ? method->shorty : "");
+    DxExecutionContext *exec = dx_vm_current_exec(vm);
+    if (exec && exec->current_frame) {
+        sample.guest_pc = exec->current_frame->pc;
+        sample.has_guest_pc = 1;
+    }
     agr_forensic_publish(&sample);
     return 1;
 }

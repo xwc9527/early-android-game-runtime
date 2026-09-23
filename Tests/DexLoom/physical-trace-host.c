@@ -115,7 +115,8 @@ static void test_sequence_and_identity(const char *script) {
         size_t n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
         if (fp) fclose(fp);
         body[n] = 0;
-        expect(strstr(body, "\"identity_valid\": true") != NULL, "identity");
+        expect(strstr(body, "\"current_run_identity_confirmed\": true") != NULL, "current run identity");
+        expect(strstr(body, "\"identity_valid\": false") != NULL, "incomplete evidence not pass identity");
         expect(strstr(body, "\"sequence_monotonic\": true") != NULL, "monotonic");
         expect(strstr(body, status.run_id) != NULL, "run id");
     }
@@ -418,7 +419,7 @@ static void test_posted_without_draw(const char *script) {
     snprintf(summary, sizeof(summary), "%s/summary.json", dir);
     expect(run_parser(script, dir, summary) == 0, "nodraw parser");
     expect(strcmp(classification_of(summary), "CONTENT_POSTED_WITHOUT_DRAW") == 0,
-           "posted without draw");
+           "posted without any game thread evidence");
 }
 
 static void test_canvas_and_pass(const char *script) {
@@ -439,7 +440,7 @@ static void test_canvas_and_pass(const char *script) {
     agr_physical_trace_shutdown();
     snprintf(summary, sizeof(summary), "%s/summary.json", stall_dir);
     expect(run_parser(script, stall_dir, summary) == 0, "stall parser");
-    expect(strcmp(classification_of(summary), "STALL_CANVAS_LOCKED") == 0, "canvas class");
+    expect(strcmp(classification_of(summary), "WATCHDOG_STALL") == 0, "watchdog class");
 
     mkdir(pass_dir, 0755);
     quiet_watchdog();
@@ -461,7 +462,7 @@ static void test_canvas_and_pass(const char *script) {
     fclose(fp);
     snprintf(summary, sizeof(summary), "%s/summary.json", pass_dir);
     expect(run_parser(script, pass_dir, summary) == 0, "pass parser");
-    expect(strcmp(classification_of(summary), "PHYSICAL_PASS") == 0, "pass class");
+    expect(strcmp(classification_of(summary), "EVIDENCE_INCOMPLETE") == 0, "strict pass requires full evidence");
 }
 
 static void test_crash(const char *script) {
@@ -485,7 +486,7 @@ static void test_crash(const char *script) {
         expect(WIFSIGNALED(status) && WTERMSIG(status) == SIGABRT, "child sigabrt");
         snprintf(summary, sizeof(summary), "%s/summary.json", dir);
         expect(run_parser(script, dir, summary) == 0, "crash parser");
-        expect(strcmp(classification_of(summary), "NATIVE_CRASH") == 0, "crash class");
+        expect(strcmp(classification_of(summary), "NATIVE_SIGNAL_CRASH") == 0, "crash class");
         {
             FILE *fp = fopen(summary, "r");
             char body[8192];

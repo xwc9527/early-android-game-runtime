@@ -67,7 +67,14 @@ static char g_run_id[40];
 static char g_launch_id[40];
 static char g_state[64];
 static char g_env_json[12288];
+static char g_env_end_json[12288];
+static char g_env_changes_json[4096];
 static int g_env_set = 0;
+static int g_env_end_set = 0;
+static int g_env_changed = 0;
+static pid_t g_pid = 0;
+static char g_process_start_wall[40];
+static uint64_t g_process_start_mono_ns = 0;
 static char g_life[32];
 static int g_foreground = 0;
 static int g_app_active = 0;
@@ -115,6 +122,26 @@ static uint64_t mono_ns(void) {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (uint64_t)ts.tv_sec * 1000000000ull + (uint64_t)ts.tv_nsec;
+}
+
+static void capture_process_identity(void) {
+    struct timespec wall;
+    struct tm utc;
+    time_t seconds;
+    g_pid = getpid();
+    g_process_start_mono_ns = mono_ns();
+    memset(&wall, 0, sizeof(wall));
+    memset(&utc, 0, sizeof(utc));
+    if (clock_gettime(CLOCK_REALTIME, &wall) != 0) {
+        g_process_start_wall[0] = 0;
+        return;
+    }
+    seconds = wall.tv_sec;
+    gmtime_r(&seconds, &utc);
+    snprintf(g_process_start_wall, sizeof(g_process_start_wall),
+             "%04d-%02d-%02dT%02d:%02d:%02d.%03ldZ",
+             utc.tm_year + 1900, utc.tm_mon + 1, utc.tm_mday,
+             utc.tm_hour, utc.tm_min, utc.tm_sec, wall.tv_nsec / 1000000L);
 }
 
 static void copy_text(char *dst, size_t cap, const char *src) {
@@ -271,11 +298,15 @@ static void write_run_file(const char *state) {
     int fd;
     int n;
     const char *env;
+    const char *env_end;
+    const char *env_changes;
     if (state && state[0]) copy_text(g_state, sizeof(g_state), state);
     path_join(path, sizeof(path), RUN_NAME);
     format_binaries(binaries, sizeof(binaries));
     if (!binaries[0]) snprintf(binaries, sizeof(binaries), "[]");
     env = g_env_set && g_env_json[0] == '{' ? g_env_json : "null";
+    env_end = g_env_end_set && g_env_end_json[0] == '{' ? g_env_end_json : "null";
+    env_changes = g_env_changed && g_env_changes_json[0] == '[' ? g_env_changes_json : "[]";
     body = (char *)malloc(65536);
     if (!body) return;
     n = snprintf(body, 65536,
@@ -284,6 +315,9 @@ static void write_run_file(const char *state) {
                  "  \"run_id\": \"%s\",\n"
                  "  \"process_launch_id\": \"%s\",\n"
                  "  \"launch_kind\": \"NEW_PROCESS\",\n"
+                 "  \"pid\": %ld,\n"
+                 "  \"process_start_wall_time\": \"%s\",\n"
+                 "  \"process_start_monotonic_ns\": %llu,\n"
                  "  \"branch\": \"%s\",\n"
                  "  \"commit\": \"%s\",\n"
                  "  \"tree\": \"%s\",\n"
@@ -292,6 +326,7 @@ static void write_run_file(const char *state) {
                  "  \"apk_sha256_expected\": \"%s\",\n"
                  "  \"apk_sha256_actual\": \"%s\",\n"
                  "  \"state\": \"%s\",\n"
+                 "  \"termination_reason\": \"%s\",\n"
                  "  \"lifecycle_state\": \"%s\",\n"
                  "  \"foreground\": %s,\n"
                  "  \"active\": %s,\n"
@@ -307,9 +342,10 @@ static void write_run_file(const char *state) {
                  "  \"stop_reason\": \"%s\",\n"
                  "  \"binaries\": %s,\n"
                  "  \"environment\": ",
-                 AGR_PHYSICAL_RUN_SCHEMA, g_run_id, g_launch_id, g_branch, g_commit, g_tree,
+                 AGR_PHYSICAL_RUN_SCHEMA, g_run_id, g_launch_id, (long)g_pid, g_process_start_wall,
+                 (unsigned long long)g_process_start_mono_ns, g_branch, g_commit, g_tree,
                  g_platform, g_arch, g_apk_sha, g_apk_actual,
-                 g_state[0] ? g_state : "RUNNING",
+                 g_state[0] ? g_state : "PROCESS_STARTED", g_reason,
                  g_life[0] ? g_life : "UNKNOWN",
                  g_foreground ? "true" : "false",
                  g_app_active ? "true" : "false",
@@ -320,20 +356,22 @@ static void write_run_file(const char *state) {
                  (unsigned long long)g_obs_end, g_obs_frames, g_obs_reason,
                  binaries);
     if (n > 0 && (size_t)n < 65536) {
-        int tail;
         size_t env_len = strlen(env);
-        if ((size_t)n + env_len + 128 < 65536) {
+        char suffix[24576];
+        int suffix_len = snprintf(suffix, sizeof(suffix),
+            ",\n  \"environment_start\": %s,\n"
+            "  \"environment_end\": %s,\n"
+            "  \"environment_changed\": %s,\n"
+            "  \"file_size_is_not_identity\": true,\n"
+            "  \"trace_file\": \"%s\",\n"
+            "  \"final_report_file\": \"%s\",\n"
+            "  \"crash_file\": \"%s\"\n}\n",
+            env, env_end, env_changes, TRACE_NAME, FINAL_NAME, CRASH_NAME);
+        if ((size_t)n + env_len + (suffix_len > 0 ? (size_t)suffix_len : 65536u) < 65536u &&
+            suffix_len > 0 && (size_t)suffix_len < sizeof(suffix)) {
             memcpy(body + n, env, env_len);
-            tail = snprintf(body + n + env_len, 65536 - (size_t)n - env_len,
-                            ",\n"
-                            "  \"file_size_is_not_identity\": true,\n"
-                            "  \"trace_file\": \"%s\",\n"
-                            "  \"final_report_file\": \"%s\",\n"
-                            "  \"crash_file\": \"%s\"\n"
-                            "}\n",
-                            TRACE_NAME, FINAL_NAME, CRASH_NAME);
-            if (tail > 0) n = n + (int)env_len + tail;
-            else n = -1;
+            memcpy(body + n + env_len, suffix, (size_t)suffix_len + 1u);
+            n = n + (int)env_len + suffix_len;
         } else {
             n = -1;
         }
@@ -514,7 +552,7 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
                      "\"lock_count\":%u,\"unlock_count\":%u,\"post_count\":%u,"
                      "\"draw_bitmap_count\":%u,\"pixel_change_count\":%u,"
                      "\"counter_before\":%u,\"counter_after\":%u,\"has_counters\":%s,"
-                     "\"created_count\":%u,\"changed_count\":%u}\n",
+                     "\"created_count\":%u,\"changed_count\":%u,\"guest_pc\":%u,\"has_guest_pc\":%s}\n",
                      AGR_PHYSICAL_TRACE_SCHEMA, g_run_id, g_launch_id,
                      (unsigned long long)seq, (unsigned long long)now,
                      name, name, g_commit, g_tree, sample->exec_id,
@@ -528,7 +566,8 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
                      sample->post_count, sample->draw_bitmap_count, sample->pixel_change_count,
                      sample->counter_before, sample->counter_after,
                      sample->has_counters ? "true" : "false",
-                     sample->created_count, sample->changed_count);
+                     sample->created_count, sample->changed_count, sample->guest_pc,
+                     sample->has_guest_pc ? "true" : "false");
     } else {
         n = snprintf(line, sizeof(line),
                      "{\"schema\":\"%s\",\"run_id\":\"%s\",\"process_launch_id\":\"%s\",\"seq\":%llu,\"monotonic_ns\":%llu,"
@@ -540,7 +579,7 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
                      "\"lock_count\":%u,\"unlock_count\":%u,\"post_count\":%u,"
                      "\"draw_bitmap_count\":%u,\"pixel_change_count\":%u,"
                      "\"counter_before\":%u,\"counter_after\":%u,\"has_counters\":%s,"
-                     "\"created_count\":%u,\"changed_count\":%u}\n",
+                     "\"created_count\":%u,\"changed_count\":%u,\"guest_pc\":%u,\"has_guest_pc\":%s}\n",
                      AGR_PHYSICAL_TRACE_SCHEMA, g_run_id, g_launch_id,
                      (unsigned long long)seq, (unsigned long long)now,
                      name, name, g_commit, g_tree,
@@ -554,7 +593,8 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
                      sample->post_count, sample->draw_bitmap_count, sample->pixel_change_count,
                      sample->counter_before, sample->counter_after,
                      sample->has_counters ? "true" : "false",
-                     sample->created_count, sample->changed_count);
+                     sample->created_count, sample->changed_count, sample->guest_pc,
+                     sample->has_guest_pc ? "true" : "false");
     }
     if (n < 0 || (size_t)n >= sizeof(line)) return;
     if (write(g_trace_fd, line, (size_t)n) != n) return;
@@ -609,6 +649,9 @@ static void fill_status(agr_physical_trace_status *out) {
     memset(out, 0, sizeof(*out));
     copy_text(out->run_id, sizeof(out->run_id), g_run_id);
     copy_text(out->process_launch_id, sizeof(out->process_launch_id), g_launch_id);
+    out->pid = (long)g_pid;
+    copy_text(out->process_start_wall_time, sizeof(out->process_start_wall_time), g_process_start_wall);
+    out->process_start_monotonic_ns = g_process_start_mono_ns;
     out->last_seq = g_seq >= SEQ_ORIGIN ? g_seq : 0;
     out->event_count = g_event_count;
     copy_text(out->last_event, sizeof(out->last_event), g_last_event);
@@ -690,8 +733,43 @@ static void install_signals(void) {
     g_signals_installed = 1;
 }
 
+static const char *state_for_sample(const agr_forensic_sample *sample) {
+    switch (sample->phase) {
+    case AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_OK:
+    case AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_PARTIAL: return "ENVIRONMENT_CAPTURED";
+    case AGR_PHYS_PHASE_APK_LOCATE_BEGIN: return "APK_LOCATING";
+    case AGR_PHYS_PHASE_APK_OPEN_OK: return "APK_OPENED";
+    case AGR_PHYS_PHASE_ACTIVITY_STAGE:
+        if (strstr(sample->detail, "RESUMED") || strstr(sample->detail, "resumed"))
+            return "ACTIVITY_RESUMED";
+        break;
+    case AGR_PHYS_PHASE_SURFACE_CHANGED:
+        if (sample->created_count > 0 && sample->changed_count > 0) return "SURFACE_READY";
+        break;
+    case AGR_PHYS_PHASE_THREAD_RUN_ENTER: return "GAME_THREAD_RUNNING";
+    case AGR_PHYS_PHASE_CANVAS_LOCK_BEGIN:
+    case AGR_PHYS_PHASE_CANVAS_LOCK_ACQUIRED: return "DRAW_OBSERVING";
+    case AGR_PHYS_PHASE_DRAW_BITMAP_END:
+    case AGR_PHYS_PHASE_PIXEL_MUTATION: return "CONTENT_PRODUCED";
+    case AGR_PHYS_PHASE_CANVAS_POST_END: return "CONTENT_POSTED";
+    case AGR_PHYS_PHASE_RUNTIME_ERROR: return "RUNTIME_ERROR";
+    case AGR_PHYS_PHASE_WATCHDOG_STALL:
+    case AGR_PHYS_PHASE_WATCHDOG_NO_PROGRESS_8S: return "WATCHDOG_STALL";
+    case AGR_PHYS_PHASE_EVIDENCE_CHANNEL_FAILED: return "EVIDENCE_CHANNEL_FAILED";
+    case AGR_PHYS_PHASE_FINALIZE_END:
+        if (strcmp(sample->detail, "WATCHDOG_STALL") == 0) return "WATCHDOG_STALL";
+        if (strcmp(sample->detail, "RUNTIME_ERROR") == 0) return "RUNTIME_ERROR";
+        if (strcmp(sample->detail, "NATIVE_SIGNAL_CRASH") == 0) return "NATIVE_SIGNAL_CRASH";
+        if (strcmp(sample->detail, "EVIDENCE_CHANNEL_FAILED") == 0) return "EVIDENCE_CHANNEL_FAILED";
+        return "FINALIZED";
+    default: break;
+    }
+    return NULL;
+}
+
 static void note_unlocked(const agr_forensic_sample *sample) {
     agr_forensic_sample clean = *sample;
+    const char *state;
     clean.class_name[sizeof(clean.class_name) - 1] = 0;
     clean.method_name[sizeof(clean.method_name) - 1] = 0;
     clean.detail[sizeof(clean.detail) - 1] = 0;
@@ -700,6 +778,8 @@ static void note_unlocked(const agr_forensic_sample *sample) {
     copy_text(clean.detail, sizeof(clean.detail), sample->detail);
     store_ownership(&clean);
     commit_line_fixed(&clean);
+    state = state_for_sample(&clean);
+    if (state && strcmp(state, g_state) != 0) write_run_file(state);
 }
 
 static void *watchdog_main(void *arg) {
@@ -860,7 +940,9 @@ static int state_in_progress(const char *state) {
     static const char *names[] = {
         "RUNNING", "PROCESS_STARTED", "EVIDENCE_READY", "ENVIRONMENT_CAPTURED",
         "APK_LOCATING", "APK_OPENED", "ACTIVITY_STARTING", "ACTIVITY_RESUMED",
-        "SURFACE_READY", "GAME_THREAD_RUNNING", "DRAW_OBSERVING", "CONTENT_PRODUCED"
+        "SURFACE_READY", "GAME_THREAD_RUNNING", "DRAW_OBSERVING", "CONTENT_PRODUCED",
+        "CONTENT_POSTED", "RUNTIME_ERROR", "WATCHDOG_STALL", "NATIVE_SIGNAL_CRASH",
+        "EVIDENCE_CHANNEL_FAILED"
     };
     size_t i;
     if (!state || !state[0]) return 0;
@@ -1069,6 +1151,11 @@ int agr_physical_trace_begin(const agr_physical_trace_config *config) {
     g_reason[0] = 0;
     g_env_set = 0;
     g_env_json[0] = 0;
+    g_env_end_set = 0;
+    g_env_end_json[0] = 0;
+    g_env_changed = 0;
+    g_env_changes_json[0] = 0;
+    capture_process_identity();
     g_life[0] = 0;
     g_foreground = 0;
     g_app_active = 0;
@@ -1167,7 +1254,13 @@ int agr_physical_trace_finish(const char *termination_reason, agr_physical_trace
         note_unlocked(&sample);
         sample.phase = AGR_PHYS_PHASE_FINALIZE_END;
         note_unlocked(&sample);
-        write_run_file(g_reason);
+        if (strcmp(g_reason, "RUNTIME_ERROR") == 0 ||
+            strcmp(g_reason, "WATCHDOG_STALL") == 0 ||
+            strcmp(g_reason, "NATIVE_SIGNAL_CRASH") == 0 ||
+            strcmp(g_reason, "EVIDENCE_CHANNEL_FAILED") == 0)
+            write_run_file(g_reason);
+        else
+            write_run_file("FINALIZED");
         g_finished = 1;
         g_stop = 1;
         started = g_watchdog_started;
@@ -1196,6 +1289,37 @@ int agr_physical_trace_set_environment_json(const char *json) {
             memcpy(g_env_json, json, n + 1);
             g_env_set = 1;
         }
+    }
+    if (g_active) write_run_file(g_state[0] ? g_state : "ENVIRONMENT_CAPTURED");
+    pthread_mutex_unlock(&g_mu);
+    return rc;
+}
+
+int agr_physical_trace_set_environment_end_json(const char *json, const char *changes_json) {
+    size_t n;
+    size_t changes_n;
+    int rc = 0;
+    pthread_mutex_lock(&g_mu);
+    if (!json || json[0] != '{') {
+        g_env_end_set = 0;
+        g_env_end_json[0] = 0;
+        rc = -1;
+    } else {
+        n = strlen(json);
+        if (n + 1 >= sizeof(g_env_end_json)) rc = -1;
+        else {
+            memcpy(g_env_end_json, json, n + 1);
+            g_env_end_set = 1;
+        }
+    }
+    changes_n = changes_json ? strlen(changes_json) : 0;
+    if (changes_n > 1 && changes_json[0] == '[' && changes_json[changes_n - 1] == ']' &&
+        changes_n < sizeof(g_env_changes_json)) {
+        memcpy(g_env_changes_json, changes_json, changes_n + 1);
+        g_env_changed = strcmp(g_env_changes_json, "[]") != 0;
+    } else {
+        memcpy(g_env_changes_json, "[]", 3);
+        g_env_changed = 0;
     }
     if (g_active) write_run_file(g_state[0] ? g_state : "ENVIRONMENT_CAPTURED");
     pthread_mutex_unlock(&g_mu);
