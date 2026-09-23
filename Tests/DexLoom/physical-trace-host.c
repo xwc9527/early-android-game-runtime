@@ -182,11 +182,13 @@ static void test_stale_archive(const char *script) {
     expect(access(archived, F_OK) == 0, "archived final");
     fp = fopen(archived, "r");
     { char body[512] = {0}; size_t n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
-      if (fp) fclose(fp); expect(strcmp(body, old_final) == 0 && n == strlen(old_final), "archived raw final unchanged"); }
+      if (fp) fclose(fp);
+      expect(strcmp(body, old_final) == 0 && n == strlen(old_final), "archived raw final unchanged"); }
     snprintf(archived, sizeof(archived), "%s/previous/OLDID/agr-prev-run.json", dir);
     fp = fopen(archived, "r");
     { char body[256] = {0}; size_t n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
-      if (fp) fclose(fp); expect(strcmp(body, old_run) == 0 && n == strlen(old_run), "archived raw run unchanged"); }
+      if (fp) fclose(fp);
+      expect(strcmp(body, old_run) == 0 && n == strlen(old_run), "archived raw run unchanged"); }
     snprintf(archived, sizeof(archived), "%s/previous/OLDID/manifest.json", dir);
     expect(access(archived, F_OK) == 0, "archive manifest");
     snprintf(path, sizeof(path), "%s/agr-current-runtime.json", dir);
