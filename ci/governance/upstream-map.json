@@ -38,11 +38,11 @@
           "runNativeActivityApk / ANativeActivity_onCreate guest entry"
         ],
         "source_hashes": {
-          "App/main.m": "1cdf780bdc4b548250e83fb03ece476dc7d4b86a04280fd2fed9c4b83e40c7c1",
+          "App/main.m": "14bb74ab994cecb2b995162e6df46c6bdb566fff27337db157e1e6152cceb6fc",
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b"
         }
       },
-      "verified_at_commit": "0d5126f",
+      "verified_at_commit": "93a0299",
       "status": "UNVERIFIED",
       "dependencies": [],
       "observable_semantics": [
@@ -211,10 +211,10 @@
         ],
         "source_hashes": {
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
-          "App/main.m": "1cdf780bdc4b548250e83fb03ece476dc7d4b86a04280fd2fed9c4b83e40c7c1"
+          "App/main.m": "14bb74ab994cecb2b995162e6df46c6bdb566fff27337db157e1e6152cceb6fc"
         }
       },
-      "verified_at_commit": "0d5126f",
+      "verified_at_commit": "93a0299",
       "status": "UNVERIFIED",
       "dependencies": [
         "nativeactivity.lifecycle",
@@ -770,12 +770,12 @@
           "poc_create"
         ],
         "source_hashes": {
-          "App/main.m": "1cdf780bdc4b548250e83fb03ece476dc7d4b86a04280fd2fed9c4b83e40c7c1",
+          "App/main.m": "14bb74ab994cecb2b995162e6df46c6bdb566fff27337db157e1e6152cceb6fc",
           "Runtime/DexLoom/DEX/dx_dex.c": "6f951201f1aadaed19f572c335c7904bad93a8fa409c2a4b78e85a23bf8789ce",
           "Runtime/DexLoom/poc_host.c": "eb39eb29a76d83f53f0fe060bc4a77ce802aeef8f8d7f7428dec7f3ec0f9868b"
         }
       },
-      "verified_at_commit": "0d5126f",
+      "verified_at_commit": "93a0299",
       "status": "VALID",
       "dependencies": [],
       "observable_semantics": [
@@ -876,10 +876,10 @@
           "Runtime/DexLoom/APK/dx_manifest.c": "17d608e345e27ba2bcf564dd61e7918c79da4b243f32d811e59126996b27519e",
           "Runtime/DexLoom/game_dex_runner.c": "77ea9eb4fa6b2c85f8ebb5bd6e99ca27cf681bcc6d85fdf7d95ad61fbc5291c6",
           "Runtime/DexLoom/VM/dx_vm.c": "ebfb55f49f7825f912bdb1173f6f497e26b0fbcd9058afbc59d4ae51a140c7ee",
-          "App/main.m": "1cdf780bdc4b548250e83fb03ece476dc7d4b86a04280fd2fed9c4b83e40c7c1"
+          "App/main.m": "14bb74ab994cecb2b995162e6df46c6bdb566fff27337db157e1e6152cceb6fc"
         }
       },
-      "verified_at_commit": "0d5126f",
+      "verified_at_commit": "93a0299",
       "status": "VALID",
       "dependencies": [
         "dalvik.dex.parse",
@@ -969,10 +969,10 @@
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
           "Runtime/DexLoom/game_dex_runner.c": "77ea9eb4fa6b2c85f8ebb5bd6e99ca27cf681bcc6d85fdf7d95ad61fbc5291c6",
-          "App/main.m": "1cdf780bdc4b548250e83fb03ece476dc7d4b86a04280fd2fed9c4b83e40c7c1"
+          "App/main.m": "14bb74ab994cecb2b995162e6df46c6bdb566fff27337db157e1e6152cceb6fc"
         }
       },
-      "verified_at_commit": "0d5126f",
+      "verified_at_commit": "93a0299",
       "status": "VALID",
       "dependencies": [
         "framework.activity.launch"
@@ -1079,10 +1079,10 @@
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
           "Runtime/DexLoom/game_dex_runner.c": "77ea9eb4fa6b2c85f8ebb5bd6e99ca27cf681bcc6d85fdf7d95ad61fbc5291c6",
-          "App/main.m": "1cdf780bdc4b548250e83fb03ece476dc7d4b86a04280fd2fed9c4b83e40c7c1"
+          "App/main.m": "14bb74ab994cecb2b995162e6df46c6bdb566fff27337db157e1e6152cceb6fc"
         }
       },
-      "verified_at_commit": "0d5126f",
+      "verified_at_commit": "93a0299",
       "status": "VALID",
       "dependencies": [
         "framework.viewroot.attach"
@@ -1170,10 +1170,10 @@
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
           "Runtime/DexLoom/game_dex_runner.c": "77ea9eb4fa6b2c85f8ebb5bd6e99ca27cf681bcc6d85fdf7d95ad61fbc5291c6",
           "Runtime/DexLoom/game_dex_runner.h": "b38ab2ea758e286e98902a820470c92f2363b7a8c3027b3b381d0c7b4d3eb1c4",
-          "App/main.m": "1cdf780bdc4b548250e83fb03ece476dc7d4b86a04280fd2fed9c4b83e40c7c1"
+          "App/main.m": "14bb74ab994cecb2b995162e6df46c6bdb566fff27337db157e1e6152cceb6fc"
         }
       },
-      "verified_at_commit": "0d5126f",
+      "verified_at_commit": "93a0299",
       "status": "VALID",
       "dependencies": [
         "framework.viewroot.first_traversal"
@@ -1382,10 +1382,10 @@
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
           "Runtime/DexLoom/game_dex_runner.c": "77ea9eb4fa6b2c85f8ebb5bd6e99ca27cf681bcc6d85fdf7d95ad61fbc5291c6",
           "Runtime/DexLoom/game_dex_runner.h": "b38ab2ea758e286e98902a820470c92f2363b7a8c3027b3b381d0c7b4d3eb1c4",
-          "App/main.m": "1cdf780bdc4b548250e83fb03ece476dc7d4b86a04280fd2fed9c4b83e40c7c1"
+          "App/main.m": "14bb74ab994cecb2b995162e6df46c6bdb566fff27337db157e1e6152cceb6fc"
         }
       },
-      "verified_at_commit": "0d5126f",
+      "verified_at_commit": "93a0299",
       "status": "VALID",
       "dependencies": [
         "framework.viewroot.traversal_dispatch",
@@ -2509,10 +2509,10 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/game_dex_runner.c": "77ea9eb4fa6b2c85f8ebb5bd6e99ca27cf681bcc6d85fdf7d95ad61fbc5291c6",
-          "App/main.m": "1cdf780bdc4b548250e83fb03ece476dc7d4b86a04280fd2fed9c4b83e40c7c1"
+          "App/main.m": "14bb74ab994cecb2b995162e6df46c6bdb566fff27337db157e1e6152cceb6fc"
         }
       },
-      "verified_at_commit": "0d5126f",
+      "verified_at_commit": "93a0299",
       "status": "VALID",
       "dependencies": [
         "framework.view.surface_holder_canvas"
