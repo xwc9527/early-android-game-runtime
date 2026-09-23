@@ -160,7 +160,12 @@ def check(condition, label):
 
 def main():
     run, events, final = complete_fixture()
-    check(classify(run, events, final) == "PHYSICAL_PASS", "complete fixture must pass")
+    check(classify(run, events, final) == "CONTENT_POSTED_NO_HOST_CONSUMER",
+          "a completed producer post is not a visible frame")
+    submitted = events + [event("HOST_SURFACE_ACQUIRED"), event("HOST_SURFACE_SUBMITTED")]
+    submitted_final = dict(final, host_surface_submissions=1)
+    check(classify(run, submitted, submitted_final) == "HOST_SUBMITTED_SCREEN_UNVERIFIED",
+          "host submission is distinct from physical screen presentation")
 
     wrong_final = dict(final, tree="different")
     check(classify(run, events, wrong_final) == "STALE_OR_MIXED_EVIDENCE", "final tree mismatch")
@@ -171,7 +176,7 @@ def main():
     wrong_apk = dict(final, apk_sha256="0" * 64)
     check(classify(run, events, wrong_apk) == "APK_IDENTITY_MISMATCH", "APK mismatch distinct")
 
-    # Each missing strict gate must independently prevent PHYSICAL_PASS.
+    # Each missing strict gate must independently prevent a host-submitted result.
     for field, bad_value in (
         ("activity_resumed", False), ("content_surface_valid", False),
         ("content_surface_identity", "11"), ("pending_exception", True),
@@ -179,9 +184,10 @@ def main():
         ("pixel_change_count", 0), ("hash_after", "abcd"),
     ):
         mutated = dict(final, **{field: bad_value})
-        check(classify(run, events, mutated) != "PHYSICAL_PASS", "strict gate " + field)
+        check(classify(run, submitted, dict(submitted_final, **{field: bad_value})) !=
+              "HOST_SUBMITTED_SCREEN_UNVERIFIED", "strict gate " + field)
     no_paint = [e for e in events if e["phase"] != "PENGUIN_SPRITE_PAINT_WITNESS"]
-    check(classify(run, no_paint, final) != "PHYSICAL_PASS", "penguin witness required")
+    check(classify(run, no_paint, final) != "HOST_SUBMITTED_SCREEN_UNVERIFIED", "penguin witness required")
 
     prefix = [event("THREAD_RUN_ENTER", exec_id=2, host_thread_id=200),
               event("CANVAS_LOCK_ACQUIRED"), event("CANVAS_POST_END")]
@@ -212,15 +218,19 @@ def main():
 
     missing = dict(final)
     missing.pop("process_start_monotonic_ns")
-    check(classify(run, events, missing) != "PHYSICAL_PASS", "process identity required")
+    check(classify(run, events, missing) != "HOST_SUBMITTED_SCREEN_UNVERIFIED", "process identity required")
     check(classify(run, events, None) == "ABRUPT_TERMINATION", "missing final report is abrupt termination")
     states = evidence.stage_states(run, events, final, None)
     for key in ("build_identity_confirmed", "current_run_identity_confirmed", "environment_captured",
                 "apk_confirmed", "activity_confirmed", "game_thread_confirmed",
                 "surface_callback_confirmed", "bitmap_preparation_confirmed",
-                "draw_path_confirmed", "content_produced", "content_posted", "screen_presented"):
+                "draw_path_confirmed", "content_produced", "content_posted",
+                "host_surface_acquired", "host_surface_submitted", "screen_presented"):
         check(key in states, "summary stage " + key)
-    check(evidence.boundary_report(events, run, final)[1] == "", "full boundary chain")
+    check(evidence.boundary_report(events, run, final)[1] == "HOST_SURFACE_ACQUIRED",
+          "producer-only trace stops at host acquisition")
+    check(evidence.boundary_report(submitted, run, submitted_final)[1] == "",
+          "host-submitted trace completes the observable host boundary")
     missing_size_enter = [e for e in events if not (e.get("method") == "setSurfaceSize" and
                                                      e.get("phase") == "GUEST_METHOD_ENTER")]
     last_boundary, first_missing = evidence.boundary_report(missing_size_enter, run, final)

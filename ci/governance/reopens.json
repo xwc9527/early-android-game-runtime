@@ -2,6 +2,18 @@
   "schema_version": 1,
   "reopens": [
     {
+      "module": "DEXRuntimeLifecycle",
+      "target": "API19 Surface post to iOS display endpoint",
+      "reason": "The current exact physical trace proves Canvas.drawBitmap mutates a valid child Surface and unlockCanvasAndPost increments post_count, while the iOS window remains an unconnected black UIViewController. The published post has no consumer-owned immutable buffer. Reopening is limited to Surface post ownership and a read-only host-consumer handoff; Bitmap, guest drawing, and SurfaceHolder lock semantics stay unchanged.",
+      "evidence": "Physical run 000168ac811f20380000fd326ab452e5 at cdbaf341, trace/runtime hashes match manifest, CANVAS_POST_END seq 855 then second-frame DRAW_BITMAP_BEGIN seq 875 and harness FINALIZE_BEGIN seq 878. API19 android_view_Surface.cpp nativeUnlockCanvasAndPost calls Surface::unlockAndPost; KitKat Surface.cpp then queues the buffer through IGraphicBufferProducer. AGR has no corresponding consumer handoff."
+    },
+    {
+      "module": "NativeActivityInput",
+      "target": "API19 Surface post to iOS display endpoint",
+      "reason": "The physical observation harness ends and destroys the game after the first content post, during a second guest draw. The iOS endpoint must consume posted Surface buffers without executing guest code, and observation must not terminate an active producer.",
+      "evidence": "Same physical trace seq 855-879; App/main.m pollPhysicalReport finishes on first post and finishPhysicalReport destroys gPhysicalGame. The physical UIKit root is a black UIViewController with no posted-Surface consumer."
+    },
+    {
       "module": "NativeActivityInput",
       "target": "DEX Parser Compatibility Phase 1",
       "reason": "App/main.m contains the generic APK smoke harness whose DEX-stage classifier is the evidenced primary blocker; the change does not alter NativeActivity/Input production semantics.",

@@ -812,6 +812,14 @@ struct agr_content_surface {
     uint32_t created_count;
     uint32_t changed_count;
     void *pixels;
+    size_t pixel_capacity;
+    /* Immutable host-consumer snapshot of the last completed post. This is
+       separate from the Canvas writer buffer and never guest-visible. */
+    void *posted_pixels;
+    size_t posted_capacity;
+    uint32_t posted_width, posted_height, posted_row_bytes;
+    uint32_t posted_generation, posted_count;
+    uint64_t posted_hash;
     /* Host exclusion for the content buffer. Not the Java monitor, and not
        the VM shared lock. Held only around the locked-flag update. */
     pthread_mutex_t mu;
@@ -2595,6 +2603,10 @@ static void release_content_surfaces(agr_dex_game *game) {
         }
         content_pixels_free(game, slot->pixels);
         slot->pixels = NULL;
+        slot->pixel_capacity = 0;
+        free(slot->posted_pixels);
+        slot->posted_pixels = NULL;
+        slot->posted_capacity = 0;
         if (slot->mutex_ready) {
             pthread_cond_destroy(&slot->cv);
             pthread_mutex_destroy(&slot->mu);
@@ -2663,6 +2675,7 @@ static void update_surface_view(DxVM *vm, agr_dex_game *game, DxObject *view,
             return;
         }
         slot->pixels = pixels;
+        slot->pixel_capacity = bytes;
         slot->hash_before_set = 0;
         slot->hash_before_lock = 0;
         slot->hash_after_post = 0;
@@ -3168,9 +3181,29 @@ static DxResult surface_holder_unlock_canvas(DxVM *vm, DxFrame *frame, DxValue *
             vm, "Ljava/lang/IllegalStateException;", "Surface generation changed while locked");
         return DX_ERR_EXCEPTION;
     }
-    slot->hash_after_post = content_buffer_hash(slot->pixels,
-        (size_t)slot->width * (size_t)slot->height * (size_t)AGR_CONTENT_BYTES_PER_PIXEL);
+    size_t post_bytes = (size_t)slot->row_bytes * (size_t)slot->height;
+    if (post_bytes == 0 || post_bytes > slot->pixel_capacity) {
+        content_surface_unlock(slot);
+        return DX_ERR_OUT_OF_MEMORY;
+    }
+    if (slot->posted_capacity < post_bytes) {
+        void *copy = realloc(slot->posted_pixels, post_bytes);
+        if (!copy) {
+            content_surface_unlock(slot);
+            return DX_ERR_OUT_OF_MEMORY;
+        }
+        slot->posted_pixels = copy;
+        slot->posted_capacity = post_bytes;
+    }
+    memcpy(slot->posted_pixels, slot->pixels, post_bytes);
+    slot->hash_after_post = content_buffer_hash(slot->posted_pixels, post_bytes);
     slot->post_count++;
+    slot->posted_width = (uint32_t)slot->width;
+    slot->posted_height = (uint32_t)slot->height;
+    slot->posted_row_bytes = (uint32_t)slot->row_bytes;
+    slot->posted_generation = slot->generation;
+    slot->posted_count = slot->post_count;
+    slot->posted_hash = slot->hash_after_post;
     slot->unlock_count++;
     slot->last_post_generation = slot->generation;
     slot->canvas_locked = 0;
@@ -3192,6 +3225,52 @@ static DxResult surface_holder_unlock_canvas(DxVM *vm, DxFrame *frame, DxValue *
     arm_method_witness(vm, 0);
     framework_event(game, "surface_holder.canvas_posted");
     return DX_OK;
+}
+
+uint32_t agr_dex_game_content_surface_count(const agr_dex_game *game) {
+    return game ? game->content_surface_count : 0;
+}
+
+int agr_dex_game_copy_posted_surface(const agr_dex_game *game, uint32_t index,
+                                    uint32_t after_post_count, agr_dex_posted_surface *out) {
+    struct agr_content_surface *slot;
+    size_t bytes;
+    if (!game || !out || index >= game->content_surface_count) return -1;
+    memset(out, 0, sizeof(*out));
+    slot = (struct agr_content_surface *)&game->content_surfaces[index];
+    content_surface_lock(slot);
+    if (!slot->posted_pixels || slot->posted_count <= after_post_count ||
+        !slot->valid || slot->posted_generation != slot->generation) {
+        content_surface_unlock(slot);
+        return 1;
+    }
+    bytes = (size_t)slot->posted_row_bytes * (size_t)slot->posted_height;
+    if (bytes == 0 || bytes > slot->posted_capacity) {
+        content_surface_unlock(slot);
+        return -1;
+    }
+    out->pixels = malloc(bytes);
+    if (!out->pixels) {
+        content_surface_unlock(slot);
+        return -1;
+    }
+    memcpy(out->pixels, slot->posted_pixels, bytes);
+    out->bytes = bytes;
+    out->width = slot->posted_width;
+    out->height = slot->posted_height;
+    out->row_bytes = slot->posted_row_bytes;
+    out->generation = slot->posted_generation;
+    out->post_count = slot->posted_count;
+    out->surface_identity = (uint64_t)(uintptr_t)slot->surface;
+    out->pixel_hash = slot->posted_hash;
+    content_surface_unlock(slot);
+    return 0;
+}
+
+void agr_dex_posted_surface_release(agr_dex_posted_surface *frame) {
+    if (!frame) return;
+    free(frame->pixels);
+    memset(frame, 0, sizeof(*frame));
 }
 
 static DxResult view_request_layout(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {

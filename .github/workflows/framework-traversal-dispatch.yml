@@ -300,11 +300,24 @@ jobs:
           SIMCTL_CHILD_AGR_HOST_DISPLAY_HEIGHT=2340 \
             xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --physical-runtime-validation
           DOCS="$DATA/Documents"
-          for _ in $(seq 1 30); do
-            [[ -s "$DOCS/agr-current-runtime.json" ]] && break
+          for _ in $(seq 1 60); do
+            if [[ -s "$DOCS/agr-current-runtime.json" && -s "$DOCS/agr-current-manifest.json" ]]; then
+              if python3 - "$DOCS/agr-current-runtime.json" <<'PY'
+          import json, sys
+          try:
+              report = json.load(open(sys.argv[1]))
+              assert report.get("host_surface_submissions", 0) >= 3
+          except (OSError, ValueError, AssertionError, TypeError):
+              sys.exit(1)
+          PY
+              then break; fi
+            fi
             sleep 1
           done
           test -s "$DOCS/agr-current-runtime.json"
+          cp "$DOCS/agr-host-submitted-frame.png" "$ARTIFACTS/host-submitted-frame.png"
+          xcrun simctl io "$DEVICE" screenshot "$ARTIFACTS/simulator-screen.png"
+          swift ci/check-simulator-screen.swift "$ARTIFACTS/simulator-screen.png"
           for name in agr-current-manifest.json agr-current-run.json agr-current-trace.ndjson agr-current-runtime.json agr-current-crash.bin; do
             [[ -f "$DOCS/$name" ]] && cp "$DOCS/$name" "$ARTIFACTS/"
           done
@@ -313,6 +326,12 @@ jobs:
           test -s "$ARTIFACTS/agr-current-trace.ndjson"
           test -s "$ARTIFACTS/agr-current-runtime.json"
           python3 ci/physical-runtime-evidence.py --dir "$ARTIFACTS" --source current --summary "$ARTIFACTS/physical-runtime-summary.json"
+          python3 - "$ARTIFACTS/physical-runtime-summary.json" <<'PY'
+          import json, sys
+          report = json.load(open(sys.argv[1]))
+          assert report.get("host_surface_submitted") is True, report
+          assert report.get("content_posted") is True, report
+          PY
           python3 ci/physical-bitmap-chain-contract.py "$ARTIFACTS/physical-runtime-summary.json" \
             --output "$ARTIFACTS/bitmap-chain.json" --width 1080 --height 2340
       - name: Execute protected explicit first-traversal probe

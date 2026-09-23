@@ -7,6 +7,15 @@ extern "C" {
 #endif
 typedef struct agr_dex_game agr_dex_game;
 typedef struct agr_apk_package agr_apk_package;
+/* A host-owned copy of one completed SurfaceHolder post. The producer keeps
+   drawing in its own buffer; the consumer never reads a live Canvas target. */
+typedef struct {
+    void *pixels;
+    size_t bytes;
+    uint32_t width, height, row_bytes;
+    uint32_t generation, post_count;
+    uint64_t surface_identity, pixel_hash;
+} agr_dex_posted_surface;
 typedef enum {
     AGR_ACTIVITY_LAUNCH_NONE = 0,
     AGR_ACTIVITY_LAUNCH_CLASS_RESOLVED,
@@ -153,6 +162,12 @@ int agr_dex_game_start_activity(agr_dex_game *game);
 void agr_dex_game_enable_diagnostics(agr_dex_game *game, int enabled);
 struct DxVM *agr_dex_game_vm(const agr_dex_game *game);
 int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snapshot *snapshot);
+uint32_t agr_dex_game_content_surface_count(const agr_dex_game *game);
+/* 0: new post copied; 1: no newer post; -1: invalid surface or allocation
+   failure. Caller releases pixels with agr_dex_posted_surface_release. */
+int agr_dex_game_copy_posted_surface(const agr_dex_game *game, uint32_t index,
+                                    uint32_t after_post_count, agr_dex_posted_surface *out);
+void agr_dex_posted_surface_release(agr_dex_posted_surface *frame);
 /* Try the existing content-surface mutex and release it immediately.
    Returns non-zero only when that mutex is already locked. No guest call,
    no draw, and no blocking lock. */

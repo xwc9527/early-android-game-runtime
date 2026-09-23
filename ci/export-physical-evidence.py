@@ -61,10 +61,13 @@ def make_stage(parent):
 
 def remote_pull(bundle, remote, local, udid=None):
     local.parent.mkdir(parents=True, exist_ok=True)
-    cmd = ["pymobiledevice3", "apps", "pull", "--documents"]
+    # House Arrest's Documents-only root differs between afc and pull on
+    # current pymobiledevice3. Container-relative Documents/ is stable for
+    # both current files and previous/<run_id> archives.
+    cmd = ["pymobiledevice3", "apps", "pull"]
     if udid:
         cmd += ["--udid", udid]
-    cmd += [bundle, remote, str(local)]
+    cmd += [bundle, str(pathlib.PurePosixPath("Documents") / remote), str(local)]
     subprocess.run(cmd, check=True)
 
 

@@ -135,6 +135,22 @@ int main(int argc, char **argv) {
            "post without a draw leaves the buffer unchanged");
     expect(snap.exception_class[0] == 0 && snap.content_surface_exception[0] == 0,
            "surfaceCreated did not throw");
+    {
+        agr_dex_posted_surface posted = {0};
+        expect(agr_dex_game_content_surface_count(game) == 1,
+               "one child Surface is available to the host consumer");
+        expect(agr_dex_game_copy_posted_surface(game, 0, 0, &posted) == 0 &&
+               posted.pixels && posted.bytes == 320u * 480u * 4u &&
+               posted.width == 320 && posted.height == 480 &&
+               posted.row_bytes == 320u * 4u &&
+               posted.generation == snap.content_surface_generation &&
+               posted.post_count == snap.canvas_post_count &&
+               posted.surface_identity == snap.content_surface_identity,
+               "host consumer receives an owned completed post with surface identity");
+        agr_dex_posted_surface_release(&posted);
+        expect(agr_dex_game_copy_posted_surface(game, 0, snap.canvas_post_count, &posted) == 1,
+               "consumer does not reacquire an unchanged post");
+    }
 
     int32_t probe = -1;
     int probe_rc = agr_dex_game_invoke_int(game, "probeFailures", "()I", NULL, 0, &probe);

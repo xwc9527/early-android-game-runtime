@@ -289,6 +289,8 @@ const char *agr_physical_phase_name(uint32_t phase) {
     case AGR_PHYS_PHASE_BITMAP_DECODE_WITNESS: return "BITMAP_DECODE_WITNESS";
     case AGR_PHYS_PHASE_BITMAP_REFERENCE_WITNESS: return "BITMAP_REFERENCE_WITNESS";
     case AGR_PHYS_PHASE_BITMAP_FIELD_WITNESS: return "BITMAP_FIELD_WITNESS";
+    case AGR_PHYS_PHASE_HOST_SURFACE_ACQUIRED: return "HOST_SURFACE_ACQUIRED";
+    case AGR_PHYS_PHASE_HOST_SURFACE_SUBMITTED: return "HOST_SURFACE_SUBMITTED";
     default: return "NONE";
     }
 }
@@ -1631,7 +1633,7 @@ int agr_physical_trace_set_environment_json(const char *json) {
             g_env_set = 1;
         }
     }
-    if (g_active) write_run_file(g_state[0] ? g_state : "ENVIRONMENT_CAPTURED");
+    if (g_active && !g_finished) write_run_file(g_state[0] ? g_state : "ENVIRONMENT_CAPTURED");
     pthread_mutex_unlock(&g_mu);
     return rc;
 }
@@ -1684,7 +1686,7 @@ int agr_physical_trace_set_environment_end_json(const char *json, const char *ch
         memcpy(g_env_changes_json, "[]", 3);
         g_env_changed = 0;
     }
-    if (g_active) write_run_file(g_state[0] ? g_state : "ENVIRONMENT_CAPTURED");
+    if (g_active && !g_finished) write_run_file(g_state[0] ? g_state : "ENVIRONMENT_CAPTURED");
     pthread_mutex_unlock(&g_mu);
     return rc;
 }
@@ -1694,14 +1696,14 @@ void agr_physical_trace_set_lifecycle(const char *state, int foreground, int act
     copy_text(g_life, sizeof(g_life), state ? state : "UNKNOWN");
     g_foreground = foreground ? 1 : 0;
     g_app_active = active ? 1 : 0;
-    if (g_active) write_run_file(g_state[0] ? g_state : "EVIDENCE_READY");
+    if (g_active && !g_finished) write_run_file(g_state[0] ? g_state : "EVIDENCE_READY");
     pthread_mutex_unlock(&g_mu);
 }
 
 void agr_physical_trace_set_apk_sha_actual(const char *sha256) {
     pthread_mutex_lock(&g_mu);
     copy_text(g_apk_actual, sizeof(g_apk_actual), sha256 ? sha256 : "");
-    if (g_active) write_run_file(g_state[0] ? g_state : "APK_OPENED");
+    if (g_active && !g_finished) write_run_file(g_state[0] ? g_state : "APK_OPENED");
     pthread_mutex_unlock(&g_mu);
 }
 
@@ -1714,7 +1716,7 @@ void agr_physical_trace_set_observation(uint64_t start_monotonic, uint64_t deadl
     g_obs_end = end_monotonic;
     g_obs_frames = frames;
     copy_text(g_obs_reason, sizeof(g_obs_reason), stop_reason ? stop_reason : "");
-    if (g_active) write_run_file(g_state[0] ? g_state : "DRAW_OBSERVING");
+    if (g_active && !g_finished) write_run_file(g_state[0] ? g_state : "DRAW_OBSERVING");
     pthread_mutex_unlock(&g_mu);
 }
 
@@ -1732,7 +1734,7 @@ void agr_physical_trace_add_binary(const char *role, const char *uuid, const cha
     copy_text(g_bin[i].role, sizeof(g_bin[i].role), role ? role : "");
     copy_text(g_bin[i].uuid, sizeof(g_bin[i].uuid), uuid ? uuid : "");
     copy_text(g_bin[i].sha, sizeof(g_bin[i].sha), sha256 ? sha256 : "");
-    if (g_active) write_run_file(g_state[0] ? g_state : "EVIDENCE_READY");
+    if (g_active && !g_finished) write_run_file(g_state[0] ? g_state : "EVIDENCE_READY");
     pthread_mutex_unlock(&g_mu);
 }
 

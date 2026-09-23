@@ -275,6 +275,7 @@ BOUNDARY_NAMES = [
     "resizeBitmaps ENTER", "resizeBitmaps EXIT", "mImagesReady=true",
     "THREAD_RUN_ENTER", "GameThread.doDraw ENTER", "GameThread.doDraw EXIT",
     "Canvas operation", "DRAW_BITMAP_END", "PIXEL_MUTATION", "CANVAS_POST_END",
+    "HOST_SURFACE_ACQUIRED", "HOST_SURFACE_SUBMITTED",
 ]
 
 
@@ -357,6 +358,9 @@ def stage_states(run, events, final, crash):
                             bool((final or {}).get("hash_before")) and bool((final or {}).get("hash_after")) and
                             (final or {}).get("hash_before") != (final or {}).get("hash_after"),
         "content_posted": int((final or {}).get("post_count") or 0) > 0,
+        "host_surface_acquired": phase_seen(events, "HOST_SURFACE_ACQUIRED"),
+        "host_surface_submitted": phase_seen(events, "HOST_SURFACE_SUBMITTED") and
+                                  int((final or {}).get("host_surface_submissions") or 0) > 0,
         "screen_presented": False,
         "crash_free": not bool(crash and crash.get("signal")),
         "runtime_clean": not bool((final or {}).get("runtime_error")) and
@@ -440,7 +444,8 @@ def classify(events, run, final, crash, states):
             isinstance(final.get("vector_size"), str) and final.get("vector_size") != "" and
             final.get("penguin_sprite_paint") is True and
             phase_seen(events, "PENGUIN_SPRITE_PAINT_WITNESS")):
-        return "PHYSICAL_PASS"
+        return ("HOST_SUBMITTED_SCREEN_UNVERIFIED" if states.get("host_surface_submitted")
+                and states.get("host_surface_acquired") else "CONTENT_POSTED_NO_HOST_CONSUMER")
     if run is None or not events:
         return "EVIDENCE_INCOMPLETE"
     return "EVIDENCE_INCOMPLETE"

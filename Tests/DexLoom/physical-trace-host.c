@@ -509,6 +509,18 @@ static void test_canvas_and_pass(const char *script) {
     note(AGR_PHYS_PHASE_DRAW_BITMAP_END, 1, 1, 7, 99, 1, 1, 0, 0, 1, 8, NULL);
     note(AGR_PHYS_PHASE_CANVAS_POST_END, 1, 1, 7, 99, 0, 1, 1, 1, 1, 8, NULL);
     agr_physical_trace_finish("CONTENT_POSTED", NULL);
+    {
+        char before[16384], after[16384];
+        size_t before_size = 0, after_size = 0;
+        fp = fopen("/tmp/agr-phys-pass/agr-current-run.json", "rb");
+        if (fp) { before_size = fread(before, 1, sizeof(before), fp); fclose(fp); }
+        agr_physical_trace_set_lifecycle("ACTIVE", 1, 1);
+        fp = fopen("/tmp/agr-phys-pass/agr-current-run.json", "rb");
+        if (fp) { after_size = fread(after, 1, sizeof(after), fp); fclose(fp); }
+        expect(before_size > 0 && before_size == after_size &&
+               memcmp(before, after, before_size) == 0,
+               "post-finalize lifecycle cannot invalidate the sealed run manifest");
+    }
     agr_physical_trace_shutdown();
     fp = fopen("/tmp/agr-phys-pass/agr-current-runtime.json", "w");
     fputs("{\"termination_reason\":\"CONTENT_POSTED\",\"content_posted\":\"YES\","

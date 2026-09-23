@@ -1,0 +1,68 @@
+{
+  "schema_version": 2,
+  "classification": "HOST_ADAPTATION_BUG",
+  "subsystem": "API19 Surface post to platform display endpoint",
+  "observed_discontinuity": "The physical game changed the child Surface pixels and completed unlockCanvasAndPost, but the UIKit root remained black. The Runtime had no consumer for a completed post; the observation harness then destroyed the game during its second draw.",
+  "upstream": {
+    "map_entry": "framework.view.surface_holder_canvas",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "core/java/android/view/Surface.java",
+      "core/jni/android_view_Surface.cpp",
+      "frameworks/native/libs/gui/Surface.cpp (KitKat branch)"
+    ],
+    "call_path": [
+      "Surface.unlockCanvasAndPost",
+      "android_view_Surface.nativeUnlockCanvasAndPost",
+      "Surface::unlockAndPost",
+      "IGraphicBufferProducer::queueBuffer",
+      "SurfaceFlinger/device consumer boundary"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "A successful unlockCanvasAndPost publishes a completed child-Surface buffer with stable identity, generation, dimensions, pixels and monotonic post sequence.",
+    "A consumer never reads the Canvas writer buffer while the guest is drawing its next frame.",
+    "The iOS endpoint displays a completed post on its owning main thread without invoking guest code or changing Android Canvas policy.",
+    "A forensic observation ending does not terminate a healthy Android producer or mutate the sealed run record."
+  ],
+  "agr": {
+    "files": ["Runtime/DexLoom/game_dex_runner.c", "App/main.m", "App/agr_physical_trace.c"],
+    "call_path": ["surface_holder_unlock_canvas", "agr_dex_game_copy_posted_surface", "presentPhysicalPostedSurfaces", "UIKit CALayer.contents"]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "AGR's original unlock path advanced post_count but never handed the completed buffer to an iOS display consumer. The new boundary retains a completed-post snapshot and exposes a host-owned copy; UIKit only submits it to the device layer.",
+      "relevance": "The first nonempty physical post cannot reach a screen when the consumer is absent."
+    },
+    {
+      "id": "D2",
+      "description": "The physical forensic harness previously finalized on the first producer post and destroyed the game while the next draw was active. It now observes multiple host submissions and leaves the running game alive after sealing evidence.",
+      "relevance": "The prior stop prevented continuous presentation independently of the missing consumer."
+    }
+  ],
+  "earliest_evidenced_divergence": "After the first successful child-Surface CANVAS_POST_END, no host acquisition or display submission existed. The trace then finalized while the second guest draw was active.",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "Android 4.4.4_r2 android_view_Surface.cpp nativeUnlockCanvasAndPost calls Surface::unlockAndPost; KitKat frameworks/native Surface.cpp calls queueBuffer on its producer. The latter reaches Binder/graphics service and the physical display consumer, which cannot be ported as an in-process iOS system service."
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "Current iPhone launch 000168ac811f20380000fd326ab452e5, cdbaf341, original APK 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569: post seq 855 after 5 drawBitmap calls and 5,284,440 changed pixels; second Canvas draw seq 859-875; observer finalizes seq 878-879. Screen was black. Original App/main.m used an empty black UIViewController and had no completed-Surface consumer. The old run manifest's run-file hash mismatch is retained as an integrity defect; no claim of a fully sealed bundle is made."
+    }
+  ],
+  "remaining_uncertainty": [
+    "The new host consumer and continuous producer have not yet been tested on Simulator or iPhone.",
+    "A host layer submission proves an endpoint call, not physical screen presentation; a screen capture or device observation is required."
+  ],
+  "next_action": "Run focused Surface contract, exact-candidate Simulator screen capture and device build; validate an installed exact candidate on iPhone before closure.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "Portable Android SurfaceHolder/Canvas producer behavior remains in the host-side DEX compatibility layer. The Binder/SurfaceFlinger display consumer is the true platform boundary; a host-owned completed-post snapshot is handed to UIKit CALayer on the main thread."
+}

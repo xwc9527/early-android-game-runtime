@@ -137,6 +137,24 @@ int main(int argc, char **argv) {
     expect(paint, "PenguinSprite.paint reached");
     expect(scaled, "Bitmap.createScaledBitmap reached");
     expect(harness_called_do_traversal == 0 && harness_called_render_api == 0, "harness purity");
+    {
+        agr_dex_posted_surface posted = {0};
+        unsigned char prefix[64] = {0};
+        int acquired = agr_dex_game_copy_posted_surface(game, 0, 0, &posted);
+        expect(acquired == 0 && posted.pixels && posted.bytes == 1080u * 2340u * 4u &&
+               posted.width == 1080 && posted.height == 2340 &&
+               posted.surface_identity == snapshot.content_surface_identity &&
+               posted.generation == snapshot.content_surface_generation &&
+               posted.post_count > 0 && posted.pixel_hash != 0,
+               "host acquires original game completed child-Surface post");
+        if (acquired == 0 && posted.bytes >= sizeof(prefix)) {
+            memcpy(prefix, posted.pixels, sizeof(prefix));
+            usleep(60000);
+            expect(memcmp(prefix, posted.pixels, sizeof(prefix)) == 0,
+                   "owned host post is immutable while the game keeps drawing");
+        }
+        agr_dex_posted_surface_release(&posted);
+    }
     agr_dex_game_destroy(game);
     agr_apk_package_close(package);
     printf("frozen-bubble-1080: %s\n", g_failures ? "FAIL" : "PASS");

@@ -1251,6 +1251,10 @@ static CADisplayLink *gDispatchLink = nil;
 static CADisplayLink *gPhysicalLink = nil;
 static agr_dex_game *gPhysicalGame = NULL;
 static agr_apk_package *gPhysicalPackage = NULL;
+static UIViewController *gPhysicalSurfaceController = nil;
+static uint32_t gPhysicalConsumerPosts[4] = {0};
+static uint32_t gPhysicalHostSubmissions = 0;
+static uint64_t gPhysicalLastSubmittedHash = 0;
 static uint32_t gPhysicalVsync = 0;
 static uint32_t gPhysicalWidth = 0;
 static uint32_t gPhysicalHeight = 0;
@@ -1906,6 +1910,11 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     CGSize displayPixels=UIScreen.mainScreen.nativeBounds.size;
     self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
     UIViewController *controller = (interactive && !physicalRuntime) ? [AGRDebugController new] : [UIViewController new]; controller.view.backgroundColor = UIColor.blackColor;
+    if (physicalRuntime) {
+      gPhysicalSurfaceController = controller;
+      controller.view.layer.contentsGravity = kCAGravityResizeAspect;
+      controller.view.layer.contentsScale = UIScreen.mainScreen.scale;
+    }
     self.window.rootViewController = controller; [self.window makeKeyAndVisible];
     if (physicalRuntime) {
       physicalNote(AGR_PHYS_PHASE_APP_DID_FINISH_LAUNCHING, 1, 0, 0, "NEW_PROCESS");
@@ -2323,7 +2332,6 @@ static void finishPhysicalReport(void) {
     uint32_t i;
     if (gPhysicalFinished) return;
     gPhysicalFinished=YES;
-    if (gPhysicalLink) { [gPhysicalLink invalidate]; gPhysicalLink=nil; }
     environmentEnd=captureEnvironment(TARGET_OS_SIMULATOR ? 0 : 1, gPhysicalDisplayOverride,
                                       gPhysicalWidth, gPhysicalHeight);
     environmentChanges=environmentDifferences(gStartEnvironment ?: gLatestEnvironment ?: @{}, environmentEnd);
@@ -2424,6 +2432,8 @@ static void finishPhysicalReport(void) {
         @"display_height":@(gPhysicalHeight),
         @"content_produced":contentProduced ? @"YES" : @"NO",
         @"content_posted":contentPosted ? @"YES" : @"NO",
+        @"host_surface_submissions":@(gPhysicalHostSubmissions),
+        @"host_last_submitted_hash":[NSString stringWithFormat:@"%016llx", (unsigned long long)gPhysicalLastSubmittedHash],
         @"screen_presented":@"NOT_TESTED",
         @"environment": gStartEnvironment ?: gLatestEnvironment ?: @{},
         @"environment_start": gStartEnvironment ?: gLatestEnvironment ?: @{},
@@ -2441,10 +2451,11 @@ static void finishPhysicalReport(void) {
             (gPhysicalStart != 0 ? "ACTIVITY_START_FAILED" :
              (contentPosted ? "CONTENT_POSTED" : "OBSERVATION_TIMEOUT"));
         const char *stop = gPhysicalError || gPhysicalStart != 0 ? "RUNTIME_ERROR" :
-            (contentProduced ? "CONTENT_PRODUCED" :
+            (gPhysicalHostSubmissions >= 3 ? "HOST_SURFACE_SUBMITTED" :
+             (contentProduced ? "CONTENT_PRODUCED" :
              (contentPosted ? "CONTENT_POSTED" :
               (gPhysicalPolls >= 80 ? "OBSERVATION_DEADLINE" :
-               (gPhysicalVsync >= 4 ? "FRAME_BUDGET" : "OBSERVATION_DEADLINE"))));
+               (gPhysicalVsync >= 4 ? "FRAME_BUDGET" : "OBSERVATION_DEADLINE")))));
         agr_physical_trace_status preStatus;
         memset(&preStatus, 0, sizeof(preStatus));
         if (gPhysicalTraceReady) agr_physical_trace_copy_status(&preStatus);
@@ -2500,10 +2511,15 @@ static void finishPhysicalReport(void) {
     if (gPhysicalTraceReady && agr_physical_trace_refresh_manifest() != 0)
         agr_physical_trace_note_writer_error("MANIFEST_REFRESH_FAILED");
     agr_physical_trace_set_lock_probe(NULL, NULL);
-    if (gPhysicalGame) agr_dex_game_destroy(gPhysicalGame);
-    gPhysicalGame=NULL;
-    if (gPhysicalPackage) agr_apk_package_close(gPhysicalPackage);
-    gPhysicalPackage=NULL;
+    /* The evidence window ends here, not the Android app process. A posted
+       Surface remains live and keeps receiving producer frames after sealing. */
+    if (!contentPosted || gPhysicalHostSubmissions == 0 || gPhysicalError) {
+        if (gPhysicalLink) { [gPhysicalLink invalidate]; gPhysicalLink=nil; }
+        if (gPhysicalGame) agr_dex_game_destroy(gPhysicalGame);
+        gPhysicalGame=NULL;
+        if (gPhysicalPackage) agr_apk_package_close(gPhysicalPackage);
+        gPhysicalPackage=NULL;
+    }
 }
 
 static void pollPhysicalReport(void) {
@@ -2515,13 +2531,60 @@ static void pollPhysicalReport(void) {
     posted=snapshot.canvas_lock_count>0 && snapshot.canvas_draw_bitmap_count>0 &&
         snapshot.canvas_pixel_change_count>0 && snapshot.canvas_post_count>0 &&
         snapshot.canvas_buffer_hash_before!=snapshot.canvas_buffer_hash_after;
-    if (posted || gPhysicalPolls>=80) {
+    /* A producer post is not a visible frame. Observe several distinct host
+       submissions before sealing evidence; never stop the running game here. */
+    if ((posted && gPhysicalHostSubmissions >= 3) || gPhysicalPolls>=80) {
         finishPhysicalReport();
         return;
     }
     gPhysicalPolls++;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1*NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{ pollPhysicalReport(); });
+}
+
+/* UIKit is solely the device endpoint. SurfaceHolder/Canvas state and the
+   completed-post boundary remain in the Android compatibility runtime. */
+static void presentPhysicalPostedSurfaces(void) {
+    uint32_t count;
+    if (!gPhysicalGame || !gPhysicalSurfaceController) return;
+    count = agr_dex_game_content_surface_count(gPhysicalGame);
+    if (count > 4) count = 4;
+    for (uint32_t index = 0; index < count; index++) {
+        agr_dex_posted_surface frame = {0};
+        int result = agr_dex_game_copy_posted_surface(gPhysicalGame, index,
+                                                     gPhysicalConsumerPosts[index], &frame);
+        if (result != 0) continue;
+        char detail[220];
+        snprintf(detail, sizeof(detail), "surface=%llu generation=%u post=%u size=%ux%u hash=%016llx",
+                 (unsigned long long)frame.surface_identity, frame.generation, frame.post_count,
+                 frame.width, frame.height, (unsigned long long)frame.pixel_hash);
+        if (!gPhysicalFinished) physicalNote(AGR_PHYS_PHASE_HOST_SURFACE_ACQUIRED, 1, 0, 0, detail);
+        NSData *rgba = [NSData dataWithBytesNoCopy:frame.pixels length:frame.bytes freeWhenDone:YES];
+        if (rgba) frame.pixels = NULL; /* CGImage provider retains this host-owned post. */
+        CGDataProviderRef provider = rgba ? CGDataProviderCreateWithCFData((__bridge CFDataRef)rgba) : NULL;
+        CGColorSpaceRef color = provider ? CGColorSpaceCreateDeviceRGB() : NULL;
+        CGImageRef image = color ? CGImageCreate(frame.width, frame.height, 8, 32,
+            frame.row_bytes, color, kCGBitmapByteOrder32Big | kCGImageAlphaLast,
+            provider, NULL, false, kCGRenderingIntentDefault) : NULL;
+        if (image) {
+            gPhysicalSurfaceController.view.layer.contents = (__bridge id)image;
+            gPhysicalConsumerPosts[index] = frame.post_count;
+            gPhysicalLastSubmittedHash = frame.pixel_hash;
+            gPhysicalHostSubmissions++;
+            if (!gPhysicalFinished)
+                physicalNote(AGR_PHYS_PHASE_HOST_SURFACE_SUBMITTED, 1, 0, 0, detail);
+            if (gPhysicalHostSubmissions == 1) {
+                NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:
+                    @"Documents/agr-host-submitted-frame.png"];
+                NSData *png = UIImagePNGRepresentation([UIImage imageWithCGImage:image]);
+                [png writeToFile:path atomically:YES];
+            }
+            CGImageRelease(image);
+        }
+        if (color) CGColorSpaceRelease(color);
+        if (provider) CGDataProviderRelease(provider);
+        agr_dex_posted_surface_release(&frame);
+    }
 }
 
 static void armPhysicalRuntime(uint32_t width, uint32_t height) {
@@ -2607,8 +2670,13 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
 }
 
 - (void)hostPhysicalVsync:(CADisplayLink *)link {
-    if (!gPhysicalGame || gPhysicalFinished || gPhysicalContentHold) return;
+    if (!gPhysicalGame) return;
     gPhysicalVsync++;
+    presentPhysicalPostedSurfaces();
+    if (gPhysicalFinished) {
+        (void)agr_dex_game_choreographer_frame(gPhysicalGame);
+        return;
+    }
     {
         NSDictionary *frame=displayLinkRecord(link, &gLinkPrevious);
         if (!gDisplayLinkFrames) gDisplayLinkFrames=[NSMutableArray array];
@@ -2625,11 +2693,11 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
     agr_dex_game_runtime_snapshot(gPhysicalGame, &snapshot);
     physicalObserve(&snapshot, agr_dex_game_vm(gPhysicalGame));
     physicalNote(AGR_PHYS_PHASE_PHYSICAL_FRAME_END, 0, 0, 0, NULL);
-    if (result<0 || gPhysicalVsync>=4) {
+    if (result<0) {
         finishPhysicalReport();
         return;
     }
-    if (snapshot.traversal_count>=2) {
+    if (snapshot.traversal_count>=2 && !gPhysicalContentHold) {
         gPhysicalContentHold=YES;
         pollPhysicalReport();
     }
