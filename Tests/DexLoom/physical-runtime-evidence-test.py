@@ -322,6 +322,13 @@ def main():
                 payloads["trace"] + json.dumps(event("LATER_EVENT")) + "\n", encoding="utf-8")
             check(evidence.manifest_integrity_ok(docs, writing_manifest, evidence.CURRENT_NAMES),
                   "active run and trace may grow without invalidating their identity")
+            writing_manifest["files"]["crash"] = {
+                "name": evidence.CURRENT_NAMES["crash"], "state": "WRITING",
+                "size": 0, "sha256": hashlib.sha256(b"").hexdigest()}
+            (docs / evidence.CURRENT_NAMES["crash"]).write_bytes(b"signal image")
+            check(evidence.manifest_integrity_ok(docs, writing_manifest, evidence.CURRENT_NAMES),
+                  "a crash image written after launch does not invalidate active evidence")
+            (docs / evidence.CURRENT_NAMES["crash"]).unlink()
             writing_manifest["files"]["runtime"]["state"] = "WRITING"
             check(not evidence.manifest_integrity_ok(docs, writing_manifest, evidence.CURRENT_NAMES),
                   "runtime evidence cannot bypass sealed digest validation")
