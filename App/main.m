@@ -2564,7 +2564,7 @@ static void presentPhysicalPostedSurfaces(void) {
         CGDataProviderRef provider = rgba ? CGDataProviderCreateWithCFData((__bridge CFDataRef)rgba) : NULL;
         CGColorSpaceRef color = provider ? CGColorSpaceCreateDeviceRGB() : NULL;
         CGImageRef image = color ? CGImageCreate(frame.width, frame.height, 8, 32,
-            frame.row_bytes, color, kCGBitmapByteOrder32Big | kCGImageAlphaLast,
+            frame.row_bytes, color, kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast,
             provider, NULL, false, kCGRenderingIntentDefault) : NULL;
         if (image) {
             gPhysicalSurfaceController.view.layer.contents = (__bridge id)image;
@@ -2573,12 +2573,6 @@ static void presentPhysicalPostedSurfaces(void) {
             gPhysicalHostSubmissions++;
             if (!gPhysicalFinished)
                 physicalNote(AGR_PHYS_PHASE_HOST_SURFACE_SUBMITTED, 1, 0, 0, detail);
-            if (gPhysicalHostSubmissions == 1) {
-                NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:
-                    @"Documents/agr-host-submitted-frame.png"];
-                NSData *png = UIImagePNGRepresentation([UIImage imageWithCGImage:image]);
-                [png writeToFile:path atomically:YES];
-            }
             CGImageRelease(image);
         }
         if (color) CGColorSpaceRelease(color);

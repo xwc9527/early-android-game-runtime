@@ -316,7 +316,6 @@ jobs:
             sleep 1
           done
           test -s "$DOCS/agr-current-runtime.json"
-          cp "$DOCS/agr-host-submitted-frame.png" "$ARTIFACTS/host-submitted-frame.png"
           xcrun simctl io "$DEVICE" screenshot "$ARTIFACTS/simulator-screen.png"
           swift ci/check-simulator-screen.swift "$ARTIFACTS/simulator-screen.png"
           for name in agr-current-manifest.json agr-current-run.json agr-current-trace.ndjson agr-current-runtime.json agr-current-crash.bin; do
