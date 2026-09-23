@@ -503,7 +503,7 @@ static DxResult bitmap_get_dimension(DxVM *vm, DxFrame *frame, DxValue *args, ui
     }
     publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_REFERENCE_WITNESS,
                            "Landroid/graphics/Bitmap;", method, -1, receiver, NULL,
-                           NULL, DX_OK, 1u, value.i, 0, 0, 0, 0, field);
+                           NULL, DX_OK, 1u, value.i, 0, 0, 0, field);
     frame->result = value;
     frame->has_result = true;
     return DX_OK;
