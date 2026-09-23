@@ -306,7 +306,7 @@ jobs:
           done
           test -s "$DOCS/agr-current-runtime.json"
           for name in agr-current-manifest.json agr-current-run.json agr-current-trace.ndjson agr-current-runtime.json agr-current-crash.bin; do
-            [[ -s "$DOCS/$name" ]] && cp "$DOCS/$name" "$ARTIFACTS/"
+            [[ -f "$DOCS/$name" ]] && cp "$DOCS/$name" "$ARTIFACTS/"
           done
           test -s "$ARTIFACTS/agr-current-manifest.json"
           test -s "$ARTIFACTS/agr-current-run.json"

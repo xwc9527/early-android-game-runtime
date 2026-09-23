@@ -15,7 +15,10 @@ def build_result(summary, width, height):
     decodes = [event for event in events if event.get("phase") == "BITMAP_DECODE_WITNESS"]
     fields = [event for event in events if event.get("phase") == "BITMAP_FIELD_WITNESS"]
     references = [event for event in events if event.get("phase") == "BITMAP_REFERENCE_WITNESS"]
-    scales = [event for event in references if event.get("method") == "createScaledBitmap"]
+    scales = [event for event in references if event.get("method") == "createScaledBitmap"
+              and event.get("detail") == "scale_source"]
+    scale_returns = [event for event in references if event.get("method") == "createScaledBitmap"
+                     and event.get("detail") == "scale_return_new_object"]
     dimensions = [event for event in references if event.get("method") in ("getWidth", "getHeight")]
 
     decoded_ids = sorted({event.get("object_identity") for event in decodes
@@ -24,6 +27,9 @@ def build_result(summary, width, height):
     for event in scales:
         source_id = event.get("object_identity") or 0
         matching_decodes = [item for item in decodes if item.get("object_identity") == source_id]
+        matching_scale_returns = [item for item in scale_returns
+                                  if item.get("object_identity") == source_id
+                                  and int(item.get("seq") or 0) < int(event.get("seq") or 0)]
         matching_fields = [item for item in fields if item.get("related_identity") == source_id]
         matching_dimensions = [item for item in dimensions if item.get("object_identity") == source_id]
         scale_sources.append({
@@ -32,6 +38,8 @@ def build_result(summary, width, height):
             "source_identity": source_id,
             "matches_decode_return": bool(source_id and matching_decodes),
             "matching_decode_sequences": [item.get("seq") for item in matching_decodes],
+            "matches_prior_scale_return": bool(source_id and matching_scale_returns),
+            "matching_scale_return_sequences": [item.get("seq") for item in matching_scale_returns],
             "matches_bitmap_field_value": bool(matching_fields),
             "matching_field_sequences": [item.get("seq") for item in matching_fields],
             "matches_get_width_or_height_receiver": bool(matching_dimensions),
@@ -45,11 +53,8 @@ def build_result(summary, width, height):
         if not item["source_identity"]:
             first_missing = "createScaledBitmap_received_null"
             break
-        if not item["matches_decode_return"]:
-            first_missing = "scale_source_not_identified_as_decode_return"
-            break
-        if not item["matches_bitmap_field_value"]:
-            first_missing = "no_observed_bitmap_field_link_for_scale_source"
+        if not item["matches_decode_return"] and not item["matches_prior_scale_return"]:
+            first_missing = "scale_source_has_no_observed_origin"
             break
     if not scales and decodes:
         first_missing = "no_createScaledBitmap_source_witness"

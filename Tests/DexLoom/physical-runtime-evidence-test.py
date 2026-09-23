@@ -267,6 +267,19 @@ def main():
     check(chain_result["scale_sources"][0]["matches_decode_return"] and
           chain_result["scale_sources"][0]["matches_bitmap_field_value"],
           "decoded object is correlated through field to scaling")
+    derived_summary = json.loads(json.dumps(chain_summary))
+    derived_summary["bitmap_object_chain"].extend([
+        {"phase": "BITMAP_REFERENCE_WITNESS", "seq": 14, "exec_id": 1,
+         "method": "createScaledBitmap", "object_identity": 9,
+         "related_identity": 7, "detail": "scale_return_new_object"},
+        {"phase": "BITMAP_REFERENCE_WITNESS", "seq": 15, "exec_id": 1,
+         "method": "createScaledBitmap", "object_identity": 9,
+         "detail": "scale_source"},
+    ])
+    derived_result = chain_contract.build_result(derived_summary, 1080, 2340)
+    check(derived_result["first_missing_identity_link"] is None and
+          derived_result["scale_sources"][-1]["matches_prior_scale_return"],
+          "scaled Bitmap reused as source has a valid origin without a decode or field witness")
     chain_summary["bitmap_object_chain"][-1]["object_identity"] = 0
     null_chain = chain_contract.build_result(chain_summary, 1080, 2340)
     check(null_chain["first_missing_identity_link"] == "createScaledBitmap_received_null" and
@@ -329,6 +342,17 @@ def main():
             check(evidence.manifest_integrity_ok(docs, writing_manifest, evidence.CURRENT_NAMES),
                   "a crash image written after launch does not invalidate active evidence")
             (docs / evidence.CURRENT_NAMES["crash"]).unlink()
+            empty_crash_manifest = json.loads(json.dumps(manifest))
+            empty_crash_manifest["files"]["crash"] = {
+                "name": evidence.CURRENT_NAMES["crash"], "state": "PRESENT",
+                "size": 0, "sha256": hashlib.sha256(b"").hexdigest()}
+            (docs / evidence.CURRENT_NAMES["crash"]).write_bytes(b"")
+            (docs / evidence.CURRENT_NAMES["trace"]).write_text(payloads["trace"], encoding="utf-8")
+            check(evidence.manifest_integrity_ok(docs, empty_crash_manifest, evidence.CURRENT_NAMES),
+                  "sealed empty crash marker is valid when preserved")
+            (docs / evidence.CURRENT_NAMES["crash"]).unlink()
+            check(not evidence.manifest_integrity_ok(docs, empty_crash_manifest, evidence.CURRENT_NAMES),
+                  "omitting sealed empty crash marker invalidates the manifest")
             writing_manifest["files"]["runtime"]["state"] = "WRITING"
             check(not evidence.manifest_integrity_ok(docs, writing_manifest, evidence.CURRENT_NAMES),
                   "runtime evidence cannot bypass sealed digest validation")
