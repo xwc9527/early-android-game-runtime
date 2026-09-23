@@ -1146,6 +1146,58 @@ static void release_entered_exec(DxExecutionContext **slot) {
 }
 
 extern void agr_forensic_publish(const agr_forensic_sample *) __attribute__((weak));
+extern void agr_forensic_publish_passive(const agr_forensic_sample *) __attribute__((weak));
+
+/* Observe only DEX-declared Bitmap references. This is host-only, bounded,
+   nonblocking evidence; it never reads guest fields or calls guest code. */
+static void publish_bitmap_field_witness(DxVM *vm, DxFrame *frame, DxDexFile *dex, uint32_t pc,
+                                         uint16_t field_idx, DxObject *owner,
+                                         DxValue value, int is_write) {
+    agr_forensic_sample sample;
+    const char *type;
+    DxExecutionContext *exec;
+    if (!vm || !frame || !dex || !agr_forensic_publish_passive) return;
+    type = dx_dex_get_field_type(dex, field_idx);
+    if (!type || strcmp(type, "Landroid/graphics/Bitmap;") != 0) return;
+    memset(&sample, 0, sizeof(sample));
+    sample.phase = AGR_PHYS_PHASE_BITMAP_FIELD_WITNESS;
+    sample.timing_sensitive = 1;
+    sample.object_identity = owner ? owner->diagnostic_identity : 0;
+    sample.related_identity = value.tag == DX_VAL_OBJ && value.obj
+        ? value.obj->diagnostic_identity : 0;
+    /* This event observes a Java field reference only. The backing owner is
+       established separately by the Bitmap host-object witness. */
+    sample.backing_owner_identity = 0;
+    sample.resource_id = field_idx;
+    sample.witness_flags = (owner ? AGR_BITMAP_WITNESS_OWNER_PRESENT : 0u) |
+        ((value.tag == DX_VAL_OBJ && value.obj) ? AGR_BITMAP_WITNESS_VALUE_PRESENT : 0u);
+    sample.witness_status = (uint32_t)value.tag;
+    sample.value0 = is_write ? 1 : 0;
+    sample.value1 = (int32_t)pc;
+    sample.guest_pc = pc;
+    sample.has_guest_pc = 1;
+    if (owner && owner->klass && owner->klass->descriptor)
+        snprintf(sample.class_name, sizeof(sample.class_name), "%s", owner->klass->descriptor);
+    else
+        snprintf(sample.class_name, sizeof(sample.class_name), "%s",
+                 dx_dex_get_field_class(dex, field_idx) ?
+                    dx_dex_get_field_class(dex, field_idx) : "");
+    snprintf(sample.method_name, sizeof(sample.method_name), "%s",
+             dx_dex_get_field_name(dex, field_idx) ? dx_dex_get_field_name(dex, field_idx) : "");
+    snprintf(sample.detail, sizeof(sample.detail), "%s;field_type=%s;field_idx=%u",
+             is_write ? "iput-object" : "iget-object", type, (unsigned)field_idx);
+    exec = dx_vm_current_exec(vm);
+    if (exec) {
+        sample.has_exec = 1;
+        sample.exec_id = exec->id;
+        sample.thread_state = 2;
+        sample.host_thread = exec->has_host_thread
+            ? (uint64_t)(uintptr_t)exec->host_thread : (uint64_t)pthread_self();
+    } else {
+        sample.host_thread = (uint64_t)pthread_self();
+    }
+    agr_forensic_publish_passive(&sample);
+}
 
 /* Generic ENTER/EXIT while a diagnostic window is armed. No package test.
    A zero budget or a missing recorder publishes nothing and does not change
@@ -3010,8 +3062,11 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
             DxResult fr = dx_vm_get_field(obj, fname, &val);
             if (fr == DX_OK) {
                 pinned_regs[dst] = val;
+                publish_bitmap_field_witness(vm, frame, cur_dex, pc, field_idx, obj, val, 0);
             } else {
                 pinned_regs[dst] = (opcode == 0x54) ? DX_NULL_VALUE : DX_INT_VALUE(0);
+                publish_bitmap_field_witness(vm, frame, cur_dex, pc, field_idx, obj,
+                                             pinned_regs[dst], 0);
             }
             pc += 2;
 
@@ -3089,7 +3144,9 @@ DxResult dx_vm_execute_method(DxVM *vm, DxMethod *method, DxValue *args,
             }
 
             const char *fname = dx_dex_get_field_name(cur_dex, field_idx);
-            dx_vm_set_field(obj, fname, pinned_regs[src]);
+            DxValue value = pinned_regs[src];
+            dx_vm_set_field(obj, fname, value);
+            publish_bitmap_field_witness(vm, frame, cur_dex, pc, field_idx, obj, value, 1);
             pc += 2;
             DISPATCH_NEXT;
         }

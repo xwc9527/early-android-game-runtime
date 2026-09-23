@@ -41,6 +41,7 @@ DxVM *dx_vm_create(DxContext *ctx) {
     dx_vm_current_exec(vm)->watchdog_triggered = false;
     vm->young_gen_count = 0;
     vm->young_gen_threshold = 256;
+    vm->next_diagnostic_identity = 1;
     vm->gc_cycle_count = 0;
     DX_INFO(TAG, "VM created (insn limit=%u, watchdog=%ums)", DX_MAX_INSTRUCTIONS, vm->watchdog_timeout_ms);
     return vm;
@@ -5497,6 +5498,8 @@ static DxObject *dx_vm_alloc_object_locked(DxVM *vm, DxClass *cls) {
     obj->klass = cls;
     obj->ref_count = 1;
     obj->heap_idx = vm->heap_count;
+    obj->diagnostic_identity = vm->next_diagnostic_identity++;
+    if (vm->next_diagnostic_identity == 0) vm->next_diagnostic_identity = 1;
     obj->ui_node = NULL;
     obj->string_data = NULL;
     obj->gc_mark = false;
@@ -5572,6 +5575,8 @@ static DxObject *dx_vm_alloc_array_locked(DxVM *vm, uint32_t length) {
     obj->klass = vm->class_object;  // arrays are Object subtype
     obj->ref_count = 1;
     obj->heap_idx = vm->heap_count;
+    obj->diagnostic_identity = vm->next_diagnostic_identity++;
+    if (vm->next_diagnostic_identity == 0) vm->next_diagnostic_identity = 1;
     obj->ui_node = NULL;
     obj->gc_mark = false;
     obj->generation = 0;  // new arrays start in young generation

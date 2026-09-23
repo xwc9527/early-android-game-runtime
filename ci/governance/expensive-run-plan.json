@@ -1,24 +1,24 @@
 {
   "schema_version": 1,
   "enabled": true,
-  "question": "Does the Simulator discovery at runtime_host 1080x2340 record the same environment schema as the physical recorder, including Mach-O UUID and SHA-256 of the executable, libEGL, and libGLESv2, CADisplayLink timestamp/targetTimestamp/duration/maximumFPS/callback delta, and an observation stop reason, while the existing draw contract still passes?",
+  "question": "At a controlled 1080x2340 runtime host, do passive object identities link each BitmapFactory decode result and backing through the actual Bitmap field stores/loads, getWidth/getHeight, and createScaledBitmap source, or is there an identity/backing discontinuity before the scale call?",
   "current_uncertainty": [
-    "Linux and the prior Simulator 1080x2340 path both draw. The physical device posted without a draw. Commit and tree identity do not prove the linked executable and ANGLE frameworks are the same bytes. UIKit CADisplayLink timing, the observation window stop reason, and system interference were not in the previous evidence, so a physical-only gap could still be a different binary, a different schedule, or the test window itself."
+    "The physical run posted an empty Canvas after Bitmap.createScaledBitmap received a null source. Earlier decodeResource calls have no stable Bitmap object identity or pixel-backing witness, so it is unknown whether one decode result was stored and later lost, whether scaleFrom read another Bitmap field, or whether backing was absent. Simulator and Linux at 1080x2340 previously produced content, but their old traces cannot answer the per-object question."
   ],
   "expected_outcome_a": {
-    "result": "discovery stays viewroot_draw_entered at runtime_host 1080x2340 with harness flags false, and the report contains target_type simulator, native display separate from runtime_host, executable/libEGL/libGLESv2 uuid and sha256, at least two display_link_frames, and stop_reason CONTENT_PRODUCED, OBSERVATION_DEADLINE, or FRAME_BUDGET. Requested and actual Simulator runtime identifiers are equal.",
+    "result": "the identity-validated Simulator trace at runtime_host 1080x2340 contains decodeResource object IDs with their resource path, Options values, pixel backing, Bitmap-typed field write/read IDs, getWidth/getHeight receiver IDs, and createScaledBitmap source ID; all relevant events are retained without passive drops, and the first same-object chain boundary is explicit.",
     "excludes": [
-      "treating a source commit match as proof the Simulator and a later device IPA linked the same binaries",
-      "collapsing native bounds and the 1080 runtime host display into one field"
+      "assuming all decodeResource calls produce or return the same Bitmap",
+      "attributing the physical null source to the API19 scale contract without tracing the caller's actual object reference"
     ]
   },
   "expected_outcome_b": {
-    "result": "the discovery draw contract fails, or the environment, binary fingerprint, or display-link fields are missing or the requested runtime differs from the actual runtime",
+    "result": "the trace proves a decoded object's field/reference/backing is missing or changed before scaleFrom, or the event data is incomplete, identity-conflicted, actively written, truncated, or dropped",
     "excludes": [
-      "shipping an IPA whose Simulator evidence cannot be compared with a later physical environment",
-      "a silent Simulator runtime fallback"
+      "treating callback success as proof the decoded Bitmap survived the caller's object-ownership path",
+      "claiming object-loss causality when cross-thread event data cannot establish a same-thread or synchronization-linked sequence"
     ]
   },
-  "why_cheaper_test_is_insufficient": "The Linux host has no Mach-O UUID, no CADisplayLink, and no UIKit lifecycle. The physical recorder schema can be checked on Linux, but the Simulator is the only automated path that links the same frameworks and runs the same UIKit display link as the device build.",
+  "why_cheaper_test_is_insufficient": "A host fixture can validate identity serialization but cannot execute Frozen Bubble's real DEX registers, Bitmap wrapper fields, Activity/Surface callbacks, GC, or CADisplayLink path. Existing Simulator results lack object identities. A controlled 1080x2340 normal UIKit run with passive per-object witnesses is the cheapest run that can distinguish the current caller-reference explanations before another device package is requested.",
   "prior_expensive_runs_without_information_gain": 0
 }

@@ -2,12 +2,22 @@
 """Focused contract tests for physical evidence identity and draw-boundary classification."""
 
 import importlib.util
+import hashlib
+import json
 import pathlib
+import shutil
+import subprocess
+import sys
+import tempfile
 
 SCRIPT = pathlib.Path(__file__).resolve().parents[2] / "ci" / "physical-runtime-evidence.py"
 spec = importlib.util.spec_from_file_location("physical_runtime_evidence", SCRIPT)
 evidence = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(evidence)
+CHAIN_SCRIPT = pathlib.Path(__file__).resolve().parents[2] / "ci" / "physical-bitmap-chain-contract.py"
+chain_spec = importlib.util.spec_from_file_location("physical_bitmap_chain_contract", CHAIN_SCRIPT)
+chain_contract = importlib.util.module_from_spec(chain_spec)
+chain_spec.loader.exec_module(chain_contract)
 
 RUN_ID = "run-001"
 LAUNCH_ID = "launch-001"
@@ -196,6 +206,157 @@ def main():
     last_boundary, first_missing = evidence.boundary_report(missing_size_enter, run, final)
     check(last_boundary == "SURFACE_CHANGED" and first_missing == "GameThread.setSurfaceSize ENTER",
           "first missing causal boundary is retained")
+
+    chain = [event("BITMAP_SCALE_FAIL", seq=40, object_identity=77, detail="src null"),
+             event("SURFACE_CALLBACK_THROW", seq=41, method="surfaceChanged", detail="NullPointerException"),
+             event("THREAD_RUN_ENTER", seq=42, exec_id=2, host_thread_id=200),
+             event("CANVAS_POST_END", seq=43, post_count=3)]
+    report = evidence.failure_chain(chain, run, dict(final, termination_reason="CONTENT_POSTED"))
+    check(report["first_observed_failure"]["phase"] == "BITMAP_SCALE_FAIL",
+          "first observed failure is retained")
+    check(report["first_observed_failure_is_proven_cause"] is False,
+          "first observed failure is not promoted to proven cause")
+    check(report["direct_exception_or_callback_failure"]["method"] == "surfaceChanged",
+          "callback method distinguishes surfaceChanged")
+    check([e["phase"] for e in report["subsequent_guest_execution"]] ==
+          ["THREAD_RUN_ENTER", "CANVAS_POST_END"], "later guest work survives earlier failure")
+    check(report["final_stop_reason"] == "CONTENT_POSTED", "final stop does not overwrite failure chain")
+
+    chain_summary = {
+        "run_id": RUN_ID, "commit": COMMIT, "tree": TREE,
+        "evidence_source": "current", "classification": "CONTENT_POSTED_WITHOUT_DRAW",
+        "manifest_integrity_ok": True, "identity_valid": True, "truncated_final_line": False,
+        "passive_dropped_count": 0,
+        "environment_start": {"target_type": "simulator", "display": {
+            "runtime_host_width": 1080, "runtime_host_height": 2340,
+            "native_width": 1206, "native_height": 2622}},
+        "bitmap_object_chain": [
+            {"phase": "BITMAP_DECODE_WITNESS", "seq": 10, "exec_id": 1,
+             "method": "decodeResource", "object_identity": 7, "resource_id": 100,
+             "witness_flags": 56, "witness_status": 0},
+            {"phase": "BITMAP_FIELD_WITNESS", "seq": 11, "exec_id": 1,
+             "method": "bitmap", "object_identity": 8, "related_identity": 7},
+            {"phase": "BITMAP_REFERENCE_WITNESS", "seq": 12, "exec_id": 1,
+             "method": "getWidth", "object_identity": 7},
+            {"phase": "BITMAP_REFERENCE_WITNESS", "seq": 13, "exec_id": 1,
+             "method": "createScaledBitmap", "object_identity": 7,
+             "witness_flags": 56, "detail": "scale_source"},
+        ]}
+    chain_result = chain_contract.build_result(chain_summary, 1080, 2340)
+    check(chain_result["evidence_collection_valid"], "object-linked Bitmap witness contract")
+    check(chain_result["scale_sources"][0]["matches_decode_return"] and
+          chain_result["scale_sources"][0]["matches_bitmap_field_value"],
+          "decoded object is correlated through field to scaling")
+    chain_summary["bitmap_object_chain"][-1]["object_identity"] = 0
+    null_chain = chain_contract.build_result(chain_summary, 1080, 2340)
+    check(null_chain["first_missing_identity_link"] == "createScaledBitmap_received_null" and
+          null_chain["causality_claimed"] is False,
+          "null scale source remains an observation rather than a root-cause claim")
+
+    # Linux CI exercises filesystem snapshots; the Windows sandbox disallows
+    # creation of nested temporary directories from Python subprocesses.
+    if not sys.platform.startswith("win"):
+        with tempfile.TemporaryDirectory() as temp:
+            root = pathlib.Path(temp)
+            bitmap_contract = pathlib.Path(__file__).resolve().parents[2] / "ci" / "physical-bitmap-chain-contract.py"
+            valid_summary = root / "valid-bitmap-summary.json"
+            valid_summary.write_text(json_dumps(chain_summary), encoding="utf-8")
+            valid_cli = subprocess.run([sys.executable, str(bitmap_contract), str(valid_summary),
+                                        "--output", str(root / "valid-bitmap-result.json"),
+                                        "--width", "1080", "--height", "2340"],
+                                       capture_output=True, text=True)
+            check(valid_cli.returncode == 0, "bitmap witness CLI accepts valid evidence")
+            invalid_summary = dict(chain_summary)
+            invalid_summary["identity_valid"] = False
+            invalid_path = root / "invalid-bitmap-summary.json"
+            invalid_path.write_text(json_dumps(invalid_summary), encoding="utf-8")
+            invalid_cli = subprocess.run([sys.executable, str(bitmap_contract), str(invalid_path),
+                                          "--output", str(root / "invalid-bitmap-result.json"),
+                                          "--width", "1080", "--height", "2340"],
+                                         capture_output=True, text=True)
+            check(invalid_cli.returncode == 1, "bitmap witness CLI rejects invalid evidence")
+
+            docs = root / "documents"
+            docs.mkdir()
+            out = root / "export"
+            payloads = {
+                "run": json.dumps(run, sort_keys=True) + "\n",
+                "trace": json.dumps(event("TRACE_READY")) + "\n",
+                "runtime": json.dumps(final, sort_keys=True) + "\n",
+            }
+            manifest = {"schema": "agr.physical-manifest.v1", "run_id": RUN_ID,
+                        "process_launch_id": LAUNCH_ID, "commit": COMMIT, "tree": TREE,
+                        "archive_state": "CURRENT", "evidence_complete": True, "files": {}}
+            for key, body in payloads.items():
+                name = evidence.CURRENT_NAMES[key]
+                (docs / name).write_text(body, encoding="utf-8")
+                raw = (docs / name).read_bytes()
+                manifest["files"][key] = {"name": name, "state": "PRESENT", "size": len(raw),
+                                          "sha256": hashlib.sha256(raw).hexdigest()}
+            manifest["files"]["crash"] = {"name": evidence.CURRENT_NAMES["crash"],
+                                          "state": "OPTIONAL_ABSENT", "size": 0, "sha256": None}
+            (docs / evidence.CURRENT_MANIFEST).write_text(json.dumps(manifest), encoding="utf-8")
+            exporter = pathlib.Path(__file__).resolve().parents[2] / "ci" / "export-physical-evidence.py"
+            proc = subprocess.run([sys.executable, str(exporter), "--bundle-id", "dev.agr.simulator",
+                                   "--documents", str(docs), "--output", str(out)],
+                                  capture_output=True, text=True)
+            check(proc.returncode == 0, "sealed current evidence export")
+            exported = json.loads((out / "export-manifest.json").read_text(encoding="utf-8"))
+            check(exported["snapshot_state"] == "SEALED_CONSISTENT", "export is sealed and consistent")
+            check(exported["run_id"] == RUN_ID and exported["commit"] == COMMIT,
+                  "export manifest preserves run identity")
+
+            reused = subprocess.run([sys.executable, str(exporter), "--bundle-id", "dev.agr.simulator",
+                                     "--documents", str(docs), "--output", str(out)],
+                                    capture_output=True, text=True)
+            check(reused.returncode != 0 and "refusing to mix" in reused.stderr,
+                  "export refuses stale destination contents")
+
+            mixed_docs = root / "mixed-documents"
+            shutil.copytree(docs, mixed_docs)
+            mixed_manifest_path = mixed_docs / evidence.CURRENT_MANIFEST
+            mixed_manifest = json.loads(mixed_manifest_path.read_text(encoding="utf-8"))
+            mixed_manifest["commit"] = "f" * 40
+            mixed_manifest_path.write_text(json.dumps(mixed_manifest), encoding="utf-8")
+            mixed_out = root / "mixed-export"
+            mixed_proc = subprocess.run([sys.executable, str(exporter), "--bundle-id", "dev.agr.simulator",
+                                         "--documents", str(mixed_docs), "--output", str(mixed_out)],
+                                        capture_output=True, text=True)
+            mixed_export = json.loads((mixed_out / "export-manifest.json").read_text(encoding="utf-8"))
+            check(mixed_proc.returncode == 2 and not mixed_export["consistent"] and
+                  mixed_export["manifest_identity_error"] == "manifest_commit_mismatch",
+                  "manifest and run identity must match")
+
+            old_docs = root / "old-documents"
+            old_history = old_docs / "previous" / RUN_ID
+            old_history.mkdir(parents=True)
+            for key, body in payloads.items():
+                (old_history / evidence.LEGACY_NAMES[key]).write_text(body, encoding="utf-8")
+            old_out = root / "old-export"
+            old_proc = subprocess.run([sys.executable, str(exporter), "--bundle-id", "dev.agr.simulator",
+                                       "--documents", str(old_docs), "--run-id", RUN_ID,
+                                       "--output", str(old_out)], capture_output=True, text=True)
+            old_export = json.loads((old_out / "export-manifest.json").read_text(encoding="utf-8"))
+            check(old_proc.returncode == 2 and old_export["source"] == "legacy" and
+                  old_export["run_id"] == RUN_ID, "legacy history exports without claiming sealed")
+
+            previous_docs = root / "previous-documents"
+            previous_run = previous_docs / "previous" / RUN_ID
+            previous_run.mkdir(parents=True)
+            for key, body in payloads.items():
+                (previous_run / evidence.PREVIOUS_NAMES[key]).write_text(body, encoding="utf-8")
+            _, history_names, _, _ = evidence.evidence_source(previous_docs, "history", RUN_ID)
+            check(history_names == evidence.PREVIOUS_NAMES,
+                  "classifier selects agr-prev naming without requiring archive manifest")
+            previous_out = root / "previous-export"
+            previous_proc = subprocess.run([sys.executable, str(exporter), "--bundle-id", "dev.agr.simulator",
+                                            "--documents", str(previous_docs), "--run-id", RUN_ID,
+                                            "--output", str(previous_out)], capture_output=True, text=True)
+            previous_export = json.loads((previous_out / "export-manifest.json").read_text(encoding="utf-8"))
+            check(previous_proc.returncode == 2 and previous_export["source"] == "previous" and
+                  previous_export["run_id"] == RUN_ID,
+                  "pre-manifest agr-prev history remains readable without sealing")
+
     print("physical-runtime-evidence PASS")
 
 

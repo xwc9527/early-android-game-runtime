@@ -914,6 +914,11 @@ const char *dx_dex_get_field_class(const DxDexFile *dex, uint32_t field_idx) {
     return dx_dex_get_type(dex, dex->field_ids[field_idx].class_idx);
 }
 
+const char *dx_dex_get_field_type(const DxDexFile *dex, uint32_t field_idx) {
+    if (!dex || field_idx >= dex->field_count) return NULL;
+    return dx_dex_get_type(dex, dex->field_ids[field_idx].type_idx);
+}
+
 uint32_t dx_dex_get_method_param_count(const DxDexFile *dex, uint32_t method_idx) {
     if (!dex || method_idx >= dex->method_count) return 0;
     uint16_t proto_idx = dex->method_ids[method_idx].proto_idx;

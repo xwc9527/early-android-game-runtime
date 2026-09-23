@@ -11,10 +11,27 @@
 #include <time.h>
 #include <unistd.h>
 
-#define TRACE_NAME "agr-physical-trace.ndjson"
-#define RUN_NAME "agr-physical-run.json"
-#define FINAL_NAME "agr-physical-runtime.json"
-#define CRASH_NAME "agr-physical-crash.bin"
+/* Implemented by the iOS host with CommonCrypto. Linux contract tests may
+   omit it; their export verifier computes the digest independently. */
+extern int agr_physical_sha256_file(const char *, char *, size_t) __attribute__((weak));
+
+#define TRACE_NAME "agr-current-trace.ndjson"
+#define RUN_NAME "agr-current-run.json"
+#define FINAL_NAME "agr-current-runtime.json"
+#define CRASH_NAME "agr-current-crash.bin"
+#define LEGACY_TRACE_NAME "agr-physical-trace.ndjson"
+#define LEGACY_RUN_NAME "agr-physical-run.json"
+#define LEGACY_FINAL_NAME "agr-physical-runtime.json"
+#define LEGACY_CRASH_NAME "agr-physical-crash.bin"
+#define PREVIOUS_TRACE_NAME "agr-prev-trace.ndjson"
+#define PREVIOUS_RUN_NAME "agr-prev-run.json"
+#define PREVIOUS_FINAL_NAME "agr-prev-runtime.json"
+#define PREVIOUS_CRASH_NAME "agr-prev-crash.bin"
+#define CURRENT_MANIFEST_NAME "agr-current-manifest.json"
+#define ARCHIVE_MANIFEST_NAME "manifest.json"
+#define ARCHIVE_INDEX_NAME "index.jsonl"
+#define ARCHIVE_PENDING_NAME "archive.pending"
+#define PASSIVE_RING_CAP 128u
 #define LINE_CAP 4096
 #define DISK_CAP (2u * 1024u * 1024u)
 #define SEQ_ORIGIN 100ull
@@ -59,7 +76,13 @@ static uint32_t g_heartbeat_count = 0;
 static uint32_t g_no_progress_level = 0;
 static uint32_t g_reported_level = 0;
 static int g_stalled = 0;
-static uint8_t g_phase_synced[96];
+static uint8_t g_phase_synced[128];
+static volatile uint32_t g_passive_dropped = 0;
+static pthread_mutex_t g_passive_mu = PTHREAD_MUTEX_INITIALIZER;
+static agr_forensic_sample g_passive_ring[PASSIVE_RING_CAP];
+static uint32_t g_passive_head = 0, g_passive_tail = 0, g_passive_count = 0;
+static uint64_t g_passive_order = 0;
+static volatile int g_passive_enabled = 0;
 static uint32_t g_sync_count = 0;
 static int g_finished = 0;
 static char g_dir[512];
@@ -263,6 +286,9 @@ const char *agr_physical_phase_name(uint32_t phase) {
     case AGR_PHYS_PHASE_LOW_POWER_CHANGED: return "LOW_POWER_CHANGED";
     case AGR_PHYS_PHASE_PROTECTED_DATA_CHANGED: return "PROTECTED_DATA_CHANGED";
     case AGR_PHYS_PHASE_BINARY_FINGERPRINT: return "BINARY_FINGERPRINT";
+    case AGR_PHYS_PHASE_BITMAP_DECODE_WITNESS: return "BITMAP_DECODE_WITNESS";
+    case AGR_PHYS_PHASE_BITMAP_REFERENCE_WITNESS: return "BITMAP_REFERENCE_WITNESS";
+    case AGR_PHYS_PHASE_BITMAP_FIELD_WITNESS: return "BITMAP_FIELD_WITNESS";
     default: return "NONE";
     }
 }
@@ -565,7 +591,10 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
                      "\"lock_count\":%u,\"unlock_count\":%u,\"post_count\":%u,"
                      "\"draw_bitmap_count\":%u,\"pixel_change_count\":%u,"
                      "\"counter_before\":%u,\"counter_after\":%u,\"has_counters\":%s,"
-                     "\"created_count\":%u,\"changed_count\":%u,\"guest_pc\":%u,\"has_guest_pc\":%s}\n",
+                     "\"created_count\":%u,\"changed_count\":%u,\"guest_pc\":%u,\"has_guest_pc\":%s,"
+                     "\"object_identity\":%llu,\"related_identity\":%llu,\"backing_owner_identity\":%llu,\"backing_identity\":%llu,\"passive_order\":%llu,"
+                     "\"resource_id\":%d,\"width\":%d,\"height\":%d,\"value0\":%d,\"value1\":%d,"
+                     "\"witness_flags\":%u,\"witness_status\":%u,\"timing_sensitive\":%s}\n",
                      AGR_PHYSICAL_TRACE_SCHEMA, g_run_id, g_launch_id,
                      (unsigned long long)seq, (unsigned long long)now,
                      name, name, g_commit, g_tree, sample->exec_id,
@@ -580,7 +609,15 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
                      sample->counter_before, sample->counter_after,
                      sample->has_counters ? "true" : "false",
                      sample->created_count, sample->changed_count, sample->guest_pc,
-                     sample->has_guest_pc ? "true" : "false");
+                     sample->has_guest_pc ? "true" : "false",
+                     (unsigned long long)sample->object_identity,
+                     (unsigned long long)sample->related_identity,
+                     (unsigned long long)sample->backing_owner_identity,
+                     (unsigned long long)sample->backing_identity,
+                     (unsigned long long)sample->passive_order,
+                     sample->resource_id, sample->width, sample->height,
+                     sample->value0, sample->value1, sample->witness_flags,
+                     sample->witness_status, sample->timing_sensitive ? "true" : "false");
     } else {
         n = snprintf(line, sizeof(line),
                      "{\"schema\":\"%s\",\"run_id\":\"%s\",\"process_launch_id\":\"%s\",\"seq\":%llu,\"monotonic_ns\":%llu,"
@@ -592,7 +629,10 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
                      "\"lock_count\":%u,\"unlock_count\":%u,\"post_count\":%u,"
                      "\"draw_bitmap_count\":%u,\"pixel_change_count\":%u,"
                      "\"counter_before\":%u,\"counter_after\":%u,\"has_counters\":%s,"
-                     "\"created_count\":%u,\"changed_count\":%u,\"guest_pc\":%u,\"has_guest_pc\":%s}\n",
+                     "\"created_count\":%u,\"changed_count\":%u,\"guest_pc\":%u,\"has_guest_pc\":%s,"
+                     "\"object_identity\":%llu,\"related_identity\":%llu,\"backing_owner_identity\":%llu,\"backing_identity\":%llu,\"passive_order\":%llu,"
+                     "\"resource_id\":%d,\"width\":%d,\"height\":%d,\"value0\":%d,\"value1\":%d,"
+                     "\"witness_flags\":%u,\"witness_status\":%u,\"timing_sensitive\":%s}\n",
                      AGR_PHYSICAL_TRACE_SCHEMA, g_run_id, g_launch_id,
                      (unsigned long long)seq, (unsigned long long)now,
                      name, name, g_commit, g_tree,
@@ -607,7 +647,15 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
                      sample->counter_before, sample->counter_after,
                      sample->has_counters ? "true" : "false",
                      sample->created_count, sample->changed_count, sample->guest_pc,
-                     sample->has_guest_pc ? "true" : "false");
+                     sample->has_guest_pc ? "true" : "false",
+                     (unsigned long long)sample->object_identity,
+                     (unsigned long long)sample->related_identity,
+                     (unsigned long long)sample->backing_owner_identity,
+                     (unsigned long long)sample->backing_identity,
+                     (unsigned long long)sample->passive_order,
+                     sample->resource_id, sample->width, sample->height,
+                     sample->value0, sample->value1, sample->witness_flags,
+                     sample->witness_status, sample->timing_sensitive ? "true" : "false");
     }
     if (n < 0 || (size_t)n >= sizeof(line)) return;
     if (write(g_trace_fd, line, (size_t)n) != n) return;
@@ -667,6 +715,7 @@ static void fill_status(agr_physical_trace_status *out) {
     out->process_start_monotonic_ns = g_process_start_mono_ns;
     out->last_seq = g_seq >= SEQ_ORIGIN ? g_seq : 0;
     out->event_count = g_event_count;
+    out->passive_dropped_count = __atomic_load_n(&g_passive_dropped, __ATOMIC_RELAXED);
     copy_text(out->last_event, sizeof(out->last_event), g_last_event);
     out->last_phase = g_last_phase;
     out->heartbeat_count = g_heartbeat_count;
@@ -795,6 +844,24 @@ static void note_unlocked(const agr_forensic_sample *sample) {
     if (state && strcmp(state, g_state) != 0) write_run_file(state);
 }
 
+/* Drain the bounded passive queue only on recorder-owned paths. Producers
+   never wait for the main recorder lock and never perform file I/O. */
+static void drain_passive_unlocked(void) {
+    for (;;) {
+        agr_forensic_sample sample;
+        pthread_mutex_lock(&g_passive_mu);
+        if (g_passive_count == 0) {
+            pthread_mutex_unlock(&g_passive_mu);
+            break;
+        }
+        sample = g_passive_ring[g_passive_head];
+        g_passive_head = (g_passive_head + 1u) % PASSIVE_RING_CAP;
+        g_passive_count--;
+        pthread_mutex_unlock(&g_passive_mu);
+        if (g_active && !g_finished) note_unlocked(&sample);
+    }
+}
+
 static void *watchdog_main(void *arg) {
     (void)arg;
     for (;;) {
@@ -808,6 +875,7 @@ static void *watchdog_main(void *arg) {
         void *user;
         struct timespec ts;
         pthread_mutex_lock(&g_mu);
+        drain_passive_unlocked();
         stop = g_stop || !g_active;
         poll = g_poll_ms ? g_poll_ms : AGR_PHYSICAL_WATCHDOG_POLL_MS;
         gap2 = g_gap2_ms;
@@ -949,142 +1017,373 @@ static int crash_marker_valid(const char *path) {
     return memcmp(image.magic, AGR_PHYSICAL_CRASH_MAGIC, 8) == 0 && image.signal_number != 0;
 }
 
-static int state_in_progress(const char *state) {
-    static const char *names[] = {
-        "RUNNING", "PROCESS_STARTED", "EVIDENCE_READY", "ENVIRONMENT_CAPTURED",
-        "APK_LOCATING", "APK_OPENED", "ACTIVITY_STARTING", "ACTIVITY_RESUMED",
-        "SURFACE_READY", "GAME_THREAD_RUNNING", "DRAW_OBSERVING", "CONTENT_PRODUCED",
-        "CONTENT_POSTED", "RUNTIME_ERROR", "WATCHDOG_STALL", "NATIVE_SIGNAL_CRASH",
-        "EVIDENCE_CHANNEL_FAILED"
-    };
-    size_t i;
-    if (!state || !state[0]) return 0;
-    for (i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
-        if (strcmp(state, names[i]) == 0) return 1;
+/* Return the earliest observed public failure in the append-only trace.
+   Later empty posts or finalization state must not erase the first fault. */
+static const char *first_trace_failure(const char *path) {
+    FILE *fp = fopen(path, "rb");
+    char line[LINE_CAP];
+    if (!fp) return NULL;
+    while (fgets(line, sizeof(line), fp)) {
+        const char *phase = strstr(line, "\"phase\":\"");
+        if (!phase) continue;
+        phase += strlen("\"phase\":\"");
+        if (strncmp(phase, "BITMAP_SCALE_FAIL\"", 18) == 0) { fclose(fp); return "BITMAP_SCALE_FAIL"; }
+        if (strncmp(phase, "SURFACE_CALLBACK_THROW\"", 23) == 0) { fclose(fp); return "CALLBACK_THROW"; }
+        if (strncmp(phase, "SURFACE_CALLBACK_EXEC_ERROR\"", 28) == 0) { fclose(fp); return "CALLBACK_EXEC_ERROR"; }
+        if (strncmp(phase, "EVIDENCE_CHANNEL_FAILED\"", 24) == 0) { fclose(fp); return "EVIDENCE_CHANNEL_FAILED"; }
+        if (strncmp(phase, "WATCHDOG_STALL\"", 15) == 0 ||
+            strncmp(phase, "WATCHDOG_NO_PROGRESS_8S\"", 24) == 0) { fclose(fp); return "WATCHDOG_STALL"; }
+        if (strncmp(phase, "RUNTIME_ERROR\"", 14) == 0) { fclose(fp); return "RUNTIME_ERROR"; }
+        if (strncmp(phase, "ARM_FAULT\"", 10) == 0) { fclose(fp); return "ARM_FAULT"; }
+        if (strncmp(phase, "JNI_EXCEPTION\"", 14) == 0) { fclose(fp); return "JNI_EXCEPTION"; }
     }
+    fclose(fp);
+    return NULL;
+}
+
+static int path_exists(const char *path) { return path && access(path, F_OK) == 0; }
+
+static int read_json_string(const char *path, const char *key_name, char *out, size_t cap) {
+    FILE *fp;
+    char buf[65536];
+    char key[96];
+    char *p, *q;
+    size_t n;
+    if (!path || !key_name || !out || cap == 0) return -1;
+    out[0] = 0;
+    fp = fopen(path, "rb");
+    if (!fp) return -1;
+    n = fread(buf, 1, sizeof(buf) - 1, fp);
+    fclose(fp);
+    buf[n] = 0;
+    snprintf(key, sizeof(key), "\"%s\"", key_name);
+    p = strstr(buf, key);
+    if (!p || !(p = strchr(p + strlen(key), ':'))) return -1;
+    while (*++p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') {}
+    if (*p != '"') return -1;
+    q = ++p;
+    while (*q && (*q != '"' || (q > p && q[-1] == '\\'))) q++;
+    if (*q != '"' || (size_t)(q - p) >= cap) return -1;
+    memcpy(out, p, (size_t)(q - p));
+    out[q - p] = 0;
     return 0;
 }
 
-static void reclassify_previous_run(const char *run_path, const char *trace_path, const char *crash_path) {
-    FILE *fp;
-    char *buf;
-    char *key;
-    char *q1;
-    char *q2;
-    char state[64];
-    const char *next;
-    long n;
-    size_t old_len;
-    size_t new_len;
-    if (!run_path) return;
-    fp = fopen(run_path, "rb");
-    if (!fp) return;
-    if (fseek(fp, 0, SEEK_END) != 0) {
-        fclose(fp);
-        return;
+static int safe_archive_id(const char *id) {
+    size_t i;
+    if (!id || !id[0] || strlen(id) >= 80) return 0;
+    for (i = 0; id[i]; i++) {
+        unsigned char c = (unsigned char)id[i];
+        if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+              (c >= '0' && c <= '9') || c == '-' || c == '_')) return 0;
     }
-    n = ftell(fp);
-    if (n < 0 || n > 65536) {
-        fclose(fp);
-        return;
-    }
-    rewind(fp);
-    buf = (char *)malloc((size_t)n + 1);
-    if (!buf) {
-        fclose(fp);
-        return;
-    }
-    if (fread(buf, 1, (size_t)n, fp) != (size_t)n) {
-        free(buf);
-        fclose(fp);
-        return;
-    }
-    fclose(fp);
-    buf[n] = 0;
-    key = strstr(buf, "\"state\"");
-    if (!key) {
-        free(buf);
-        return;
-    }
-    q1 = strchr(key, ':');
-    if (!q1) {
-        free(buf);
-        return;
-    }
-    q1 = strchr(q1, '"');
-    if (!q1) {
-        free(buf);
-        return;
-    }
-    q2 = strchr(q1 + 1, '"');
-    if (!q2 || (size_t)(q2 - q1) >= sizeof(state)) {
-        free(buf);
-        return;
-    }
-    memcpy(state, q1 + 1, (size_t)(q2 - q1 - 1));
-    state[q2 - q1 - 1] = 0;
-    if (!state_in_progress(state)) {
-        free(buf);
-        return;
-    }
-    if (crash_marker_valid(crash_path)) next = "NATIVE_SIGNAL_CRASH";
-    else if (file_contains(trace_path, "WATCHDOG_STALL")) next = "WATCHDOG_STALL";
-    else next = "ABRUPT_TERMINATION";
-    old_len = (size_t)(q2 - q1 - 1);
-    new_len = strlen(next);
-    {
-        char *rewritten = (char *)malloc((size_t)n + new_len + 1);
-        size_t head = (size_t)(q1 + 1 - buf);
-        if (!rewritten) {
-            free(buf);
-            return;
-        }
-        memcpy(rewritten, buf, head);
-        memcpy(rewritten + head, next, new_len);
-        memcpy(rewritten + head + new_len, q2, (size_t)n - (size_t)(q2 - buf));
-        rewritten[head + new_len + (size_t)n - (size_t)(q2 - buf)] = 0;
-        fp = fopen(run_path, "wb");
-        if (fp) {
-            fwrite(rewritten, 1, head + new_len + (size_t)n - (size_t)(q2 - buf), fp);
-            fclose(fp);
-        }
-        free(rewritten);
-    }
-    free(buf);
-    (void)old_len;
+    return 1;
 }
 
-static void archive_previous(void) {
-    char prev[640];
-    char run_path[640];
-    char id[40];
-    char dest[768];
-    static const char *names[] = {RUN_NAME, TRACE_NAME, FINAL_NAME, CRASH_NAME};
+static int write_atomic_text(const char *path, const char *text) {
+    char temp[900];
+    int fd;
+    size_t n = text ? strlen(text) : 0;
+    snprintf(temp, sizeof(temp), "%s.tmp-%d", path, (int)getpid());
+    fd = open(temp, O_CREAT | O_EXCL | O_WRONLY, 0600);
+    if (fd < 0) return -1;
+    if (write(fd, text, n) != (ssize_t)n || fsync(fd) != 0) {
+        close(fd); unlink(temp); return -1;
+    }
+    if (close(fd) != 0 || rename(temp, path) != 0) { unlink(temp); return -1; }
+    return 0;
+}
+
+static int files_equal(const char *a, const char *b) {
+    FILE *fa = fopen(a, "rb"), *fb = fopen(b, "rb");
+    unsigned char ba[8192], bb[8192];
+    int equal = 1;
+    if (!fa || !fb) { if (fa) fclose(fa); if (fb) fclose(fb); return 0; }
+    for (;;) {
+        size_t na = fread(ba, 1, sizeof(ba), fa), nb = fread(bb, 1, sizeof(bb), fb);
+        if (na != nb || memcmp(ba, bb, na) != 0) { equal = 0; break; }
+        if (na == 0) break;
+    }
+    if (ferror(fa) || ferror(fb)) equal = 0;
+    fclose(fa); fclose(fb);
+    return equal;
+}
+
+static int identity_matches_if_present(const char *path, const char *key, const char *expected) {
+    char value[160];
+    if (!expected || !expected[0] || !path_exists(path)) return 1;
+    if (read_json_string(path, key, value, sizeof(value)) != 0) return 1;
+    return strcmp(value, expected) == 0;
+}
+
+static int source_identities_consistent(const char *dir, int current, const char *run_id) {
+    const char *names[4] = {
+        current ? RUN_NAME : LEGACY_RUN_NAME,
+        current ? TRACE_NAME : LEGACY_TRACE_NAME,
+        current ? FINAL_NAME : LEGACY_FINAL_NAME,
+        current ? CRASH_NAME : LEGACY_CRASH_NAME
+    };
+    char paths[4][700];
+    char launch[160] = "", commit[160] = "", tree[160] = "", apk[160] = "";
     size_t i;
+    for (i = 0; i < 4; i++) snprintf(paths[i], sizeof(paths[i]), "%s/%s", dir, names[i]);
+    if (read_json_string(paths[0], "process_launch_id", launch, sizeof(launch)) != 0) launch[0] = 0;
+    if (read_json_string(paths[0], "commit", commit, sizeof(commit)) != 0) commit[0] = 0;
+    if (read_json_string(paths[0], "tree", tree, sizeof(tree)) != 0) tree[0] = 0;
+    if (read_json_string(paths[0], "apk_sha256_expected", apk, sizeof(apk)) != 0) apk[0] = 0;
+    for (i = 0; i < 4; i++) {
+        if (!identity_matches_if_present(paths[i], "run_id", run_id) ||
+            !identity_matches_if_present(paths[i], "process_launch_id", launch) ||
+            !identity_matches_if_present(paths[i], "commit", commit) ||
+            !identity_matches_if_present(paths[i], "tree", tree)) return 0;
+        if (i != 0 && !identity_matches_if_present(paths[i], "apk_sha256", apk) &&
+            !identity_matches_if_present(paths[i], "apk_sha256_expected", apk)) return 0;
+    }
+    return 1;
+}
+
+static int write_archive_manifest(const char *dest, const char *id, const char *family,
+                                  const char *state, const char *classification,
+                                  const char *run_name, const char *trace_name,
+                                  const char *final_name, const char *crash_name) {
+    char path[900], run_path[900], final_path[900], body[4096], run_json[112], termination[96] = "";
+    char termination_json[112];
+    char launch[96] = "", commit[96] = "", tree[96] = "", apk[96] = "";
+    const char *names[4] = {PREVIOUS_RUN_NAME, PREVIOUS_TRACE_NAME, PREVIOUS_FINAL_NAME, PREVIOUS_CRASH_NAME};
+    char states[4][16];
+    char hash_json[4][80];
+    char hash[65];
+    long long sizes[4] = {0, 0, 0, 0};
+    struct stat st;
+    size_t i;
+    (void)trace_name; (void)final_name; (void)crash_name;
+    if (strncmp(id, "unidentified-", 13) == 0) snprintf(run_json, sizeof(run_json), "null");
+    else snprintf(run_json, sizeof(run_json), "\"%s\"", id);
+    snprintf(run_path, sizeof(run_path), "%s/%s", dest, PREVIOUS_RUN_NAME);
+    if (!path_exists(run_path)) snprintf(run_path, sizeof(run_path), "%s/%s", dest, run_name);
+    snprintf(final_path, sizeof(final_path), "%s/%s", dest, PREVIOUS_FINAL_NAME);
+    if (read_json_string(final_path, "termination_reason", termination, sizeof(termination)) != 0 || !termination[0]) {
+        if (read_json_string(run_path, "termination_reason", termination, sizeof(termination)) != 0)
+            termination[0] = 0;
+    }
+    if (termination[0]) snprintf(termination_json, sizeof(termination_json), "\"%s\"", termination);
+    else snprintf(termination_json, sizeof(termination_json), "null");
+    (void)read_json_string(run_path, "process_launch_id", launch, sizeof(launch));
+    (void)read_json_string(run_path, "commit", commit, sizeof(commit));
+    (void)read_json_string(run_path, "tree", tree, sizeof(tree));
+    (void)read_json_string(run_path, "apk_sha256_expected", apk, sizeof(apk));
+    for (i = 0; i < 4; i++) {
+        snprintf(path, sizeof(path), "%s/%s", dest, names[i]);
+        if (stat(path, &st) == 0) {
+            snprintf(states[i], sizeof(states[i]), "present");
+            sizes[i] = (long long)st.st_size;
+            snprintf(hash_json[i], sizeof(hash_json[i]), "null");
+            if (agr_physical_sha256_file && agr_physical_sha256_file(path, hash, sizeof(hash)) == 0)
+                snprintf(hash_json[i], sizeof(hash_json[i]), "\"%s\"", hash);
+        } else {
+            snprintf(states[i], sizeof(states[i]), "missing");
+            snprintf(hash_json[i], sizeof(hash_json[i]), "null");
+        }
+    }
+    snprintf(body, sizeof(body),
+        "{\"schema\":\"agr.physical-manifest.v1\",\"archive_id\":\"%s\",\"run_id\":%s,\"process_launch_id\":\"%s\","
+        "\"commit\":\"%s\",\"tree\":\"%s\",\"apk_sha256\":\"%s\",\"source_family\":\"%s\","
+        "\"archive_state\":\"%s\",\"classification\":\"%s\",\"termination_reason\":%s,\"files\":{"
+        "\"run\":{\"name\":\"%s\",\"state\":\"%s\",\"size\":%lld,\"sha256\":%s},"
+        "\"trace\":{\"name\":\"%s\",\"state\":\"%s\",\"size\":%lld,\"sha256\":%s},"
+        "\"runtime\":{\"name\":\"%s\",\"state\":\"%s\",\"size\":%lld,\"sha256\":%s},"
+        "\"crash\":{\"name\":\"%s\",\"state\":\"%s\",\"size\":%lld,\"sha256\":%s}}}\n",
+        id, run_json, launch, commit, tree, apk, family, state, classification, termination_json,
+        PREVIOUS_RUN_NAME, states[0], sizes[0], hash_json[0],
+        PREVIOUS_TRACE_NAME, states[1], sizes[1], hash_json[1],
+        PREVIOUS_FINAL_NAME, states[2], sizes[2], hash_json[2],
+        PREVIOUS_CRASH_NAME, states[3], sizes[3], hash_json[3]);
+    snprintf(path, sizeof(path), "%s/%s", dest, ARCHIVE_MANIFEST_NAME);
+    return write_atomic_text(path, body);
+}
+
+static int archive_previous(void) {
+    static const char *current_src[] = {RUN_NAME, TRACE_NAME, FINAL_NAME, CRASH_NAME};
+    static const char *legacy_src[] = {LEGACY_RUN_NAME, LEGACY_TRACE_NAME, LEGACY_FINAL_NAME, LEGACY_CRASH_NAME};
+    static const char *dst_names[] = {PREVIOUS_RUN_NAME, PREVIOUS_TRACE_NAME, PREVIOUS_FINAL_NAME, PREVIOUS_CRASH_NAME};
+    char prev[640], pending[640], pending_body[160], id[96] = "", family[16] = "";
+    char run_path[640], dest[800], manifest_path[900], index_path[900], index_line[256];
+    int has_current = 0, has_legacy = 0, use_current, i;
     snprintf(prev, sizeof(prev), "%s/previous", g_dir);
+    snprintf(pending, sizeof(pending), "%s/%s", g_dir, ARCHIVE_PENDING_NAME);
     mkdir(prev, 0755);
-    snprintf(run_path, sizeof(run_path), "%s/%s", g_dir, RUN_NAME);
-    if (read_run_id(run_path, id, sizeof(id)) != 0)
-        snprintf(id, sizeof(id), "unreadable-%d-%llu", (int)getpid(),
-                 (unsigned long long)mono_ns());
+    if (path_exists(pending)) {
+        FILE *fp = fopen(pending, "r");
+        if (!fp || fscanf(fp, "%95s %15s", id, family) != 2) { if (fp) fclose(fp); return -1; }
+        fclose(fp);
+        if (!safe_archive_id(id) || (strcmp(family, "current") && strcmp(family, "legacy"))) return -1;
+        use_current = strcmp(family, "current") == 0;
+    } else {
+        for (i = 0; i < 4; i++) {
+            char p[640];
+            snprintf(p, sizeof(p), "%s/%s", g_dir, current_src[i]); has_current |= path_exists(p);
+            snprintf(p, sizeof(p), "%s/%s", g_dir, legacy_src[i]); has_legacy |= path_exists(p);
+        }
+        {
+            char p[640];
+            snprintf(p, sizeof(p), "%s/%s", g_dir, CURRENT_MANIFEST_NAME);
+            has_current |= path_exists(p);
+        }
+        if (!has_current && !has_legacy) return 0;
+        if (has_current && has_legacy) return -1; /* Never mix generations. */
+        use_current = has_current;
+        snprintf(family, sizeof(family), "%s", use_current ? "current" : "legacy");
+        snprintf(run_path, sizeof(run_path), "%s/%s", g_dir,
+                 use_current ? current_src[0] : legacy_src[0]);
+        if (read_run_id(run_path, id, sizeof(id)) != 0)
+            snprintf(id, sizeof(id), "unidentified-%d-%llu", (int)getpid(),
+                     (unsigned long long)mono_ns());
+        if (!safe_archive_id(id)) return -1;
+        if (!source_identities_consistent(g_dir, use_current, id)) return -1;
+        snprintf(pending_body, sizeof(pending_body), "%s %s\n", id, family);
+        if (write_atomic_text(pending, pending_body) != 0) return -1;
+    }
+    snprintf(family, sizeof(family), "%s", use_current ? "current" : "legacy");
     snprintf(dest, sizeof(dest), "%s/%s", prev, id);
-    if (mkdir(dest, 0755) != 0)
-        snprintf(dest, sizeof(dest), "%s/%s-%llu", prev, id, (unsigned long long)mono_ns());
-    mkdir(dest, 0755);
+    if (!path_exists(dest)) {
+        if (mkdir(dest, 0755) != 0) return -1;
+        if (write_archive_manifest(dest, id, family, "IN_PROGRESS", "UNCLASSIFIED",
+                                   use_current ? current_src[0] : legacy_src[0],
+                                   use_current ? current_src[1] : legacy_src[1],
+                                   use_current ? current_src[2] : legacy_src[2],
+                                   use_current ? current_src[3] : legacy_src[3]) != 0) return -1;
+    } else {
+        snprintf(manifest_path, sizeof(manifest_path), "%s/%s", dest, ARCHIVE_MANIFEST_NAME);
+        if (!path_exists(manifest_path)) return -1;
+        if (file_contains(manifest_path, "\"archive_state\":\"ARCHIVED\"")) {
+            snprintf(index_path, sizeof(index_path), "%s/%s", prev, ARCHIVE_INDEX_NAME);
+            if (!file_contains(index_path, id)) {
+                int fd;
+                if (strncmp(id, "unidentified-", 13) == 0)
+                    snprintf(index_line, sizeof(index_line), "{\"run_id\":null,\"archive_id\":\"%s\",\"state\":\"ARCHIVED\"}\n", id);
+                else
+                    snprintf(index_line, sizeof(index_line), "{\"run_id\":\"%s\",\"archive_id\":\"%s\",\"state\":\"ARCHIVED\"}\n", id, id);
+                fd = open(index_path, O_CREAT | O_APPEND | O_WRONLY, 0600);
+                if (fd < 0) return -1;
+                if (write(fd, index_line, strlen(index_line)) != (ssize_t)strlen(index_line) || fsync(fd) != 0) { close(fd); return -1; }
+                close(fd);
+            }
+            return unlink(pending) == 0 ? 0 : -1;
+        }
+        if (!file_contains(manifest_path, "\"archive_state\":\"IN_PROGRESS\"")) return -1;
+    }
+    for (i = 1; i < 4; i++) { /* Keep the identity-bearing run file until last. */
+        char from[700], to[900];
+        const char *src = use_current ? current_src[i] : legacy_src[i];
+        snprintf(from, sizeof(from), "%s/%s", g_dir, src);
+        snprintf(to, sizeof(to), "%s/%s", dest, dst_names[i]);
+        if (!path_exists(from)) continue;
+        if (path_exists(to)) {
+            if (!files_equal(from, to) || unlink(from) != 0) return -1;
+        } else if (rename(from, to) != 0) return -1;
+    }
     {
-        char trace_path[640];
-        char crash_path[640];
-        snprintf(trace_path, sizeof(trace_path), "%s/%s", g_dir, TRACE_NAME);
-        snprintf(crash_path, sizeof(crash_path), "%s/%s", g_dir, CRASH_NAME);
-        reclassify_previous_run(run_path, trace_path, crash_path);
+        char from[700], to[900];
+        snprintf(from, sizeof(from), "%s/%s", g_dir, use_current ? current_src[0] : legacy_src[0]);
+        snprintf(to, sizeof(to), "%s/%s", dest, dst_names[0]);
+        if (path_exists(from)) {
+            if (path_exists(to)) {
+                if (!files_equal(from, to) || unlink(from) != 0) return -1;
+            } else if (rename(from, to) != 0) return -1;
+        }
     }
-    for (i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
-        char from[640];
-        char to[800];
-        snprintf(from, sizeof(from), "%s/%s", g_dir, names[i]);
-        snprintf(to, sizeof(to), "%s/%s", dest, names[i]);
-        if (access(from, F_OK) == 0) rename(from, to);
+    {
+        char from[700], to[900];
+        snprintf(from, sizeof(from), "%s/%s", g_dir, CURRENT_MANIFEST_NAME);
+        snprintf(to, sizeof(to), "%s/agr-prev-manifest.json", dest);
+        if (path_exists(from)) {
+            if (path_exists(to)) {
+                if (!files_equal(from, to) || unlink(from) != 0) return -1;
+            } else if (rename(from, to) != 0) return -1;
+        }
     }
+    {
+        char trace_path[900], crash_path[900], final_path[900], run_dest[900];
+        char classification[96] = "ABRUPT_TERMINATION", reason[96] = "";
+        const char *first_failure;
+        snprintf(trace_path, sizeof(trace_path), "%s/%s", dest, PREVIOUS_TRACE_NAME);
+        snprintf(crash_path, sizeof(crash_path), "%s/%s", dest, PREVIOUS_CRASH_NAME);
+        snprintf(final_path, sizeof(final_path), "%s/%s", dest, PREVIOUS_FINAL_NAME);
+        snprintf(run_dest, sizeof(run_dest), "%s/%s", dest, PREVIOUS_RUN_NAME);
+        first_failure = first_trace_failure(trace_path);
+        if (first_failure) copy_text(classification, sizeof(classification), first_failure);
+        else if (crash_marker_valid(crash_path)) snprintf(classification, sizeof(classification), "NATIVE_SIGNAL_CRASH");
+        else if (file_contains(trace_path, "WATCHDOG_STALL")) snprintf(classification, sizeof(classification), "WATCHDOG_STALL");
+        else if (read_json_string(final_path, "termination_reason", reason, sizeof(reason)) == 0 && reason[0])
+            copy_text(classification, sizeof(classification), reason);
+        else if (read_json_string(run_dest, "termination_reason", reason, sizeof(reason)) == 0 && reason[0])
+            copy_text(classification, sizeof(classification), reason);
+        if (write_archive_manifest(dest, id, family, "ARCHIVED", classification,
+                                   use_current ? current_src[0] : legacy_src[0],
+                                   use_current ? current_src[1] : legacy_src[1],
+                                   use_current ? current_src[2] : legacy_src[2],
+                                   use_current ? current_src[3] : legacy_src[3]) != 0) return -1;
+    }
+    snprintf(index_path, sizeof(index_path), "%s/%s", prev, ARCHIVE_INDEX_NAME);
+    if (!file_contains(index_path, id)) {
+        int fd;
+        if (strncmp(id, "unidentified-", 13) == 0)
+            snprintf(index_line, sizeof(index_line), "{\"run_id\":null,\"archive_id\":\"%s\",\"state\":\"ARCHIVED\"}\n", id);
+        else
+            snprintf(index_line, sizeof(index_line), "{\"run_id\":\"%s\",\"archive_id\":\"%s\",\"state\":\"ARCHIVED\"}\n", id, id);
+        fd = open(index_path, O_CREAT | O_APPEND | O_WRONLY, 0600);
+        if (fd < 0) return -1;
+        if (write(fd, index_line, strlen(index_line)) != (ssize_t)strlen(index_line) || fsync(fd) != 0) { close(fd); return -1; }
+        close(fd);
+    }
+    if (unlink(pending) != 0) return -1;
+    return 0;
+}
+
+static int write_current_manifest(void) {
+    const char *names[4] = {RUN_NAME, TRACE_NAME, FINAL_NAME, CRASH_NAME};
+    const char *keys[4] = {"run", "trace", "runtime", "crash"};
+    char body[4096], path[800], run_path[800], launch[96] = "";
+    char hashes[4][80], states[4][24], hash[65];
+    long long sizes[4] = {0, 0, 0, 0};
+    struct stat st;
+    size_t i;
+    int n;
+    int complete;
+    snprintf(run_path, sizeof(run_path), "%s/%s", g_dir, RUN_NAME);
+    (void)read_json_string(run_path, "process_launch_id", launch, sizeof(launch));
+    for (i = 0; i < 4; i++) {
+        snprintf(path, sizeof(path), "%s/%s", g_dir, names[i]);
+        hashes[i][0] = 0;
+        if (stat(path, &st) == 0) {
+            sizes[i] = (long long)st.st_size;
+            snprintf(states[i], sizeof(states[i]), i == 1 && g_active && !g_finished ? "WRITING" : "PRESENT");
+            snprintf(hashes[i], sizeof(hashes[i]), "null");
+            if (agr_physical_sha256_file && agr_physical_sha256_file(path, hash, sizeof(hash)) == 0)
+                snprintf(hashes[i], sizeof(hashes[i]), "\"%s\"", hash);
+        } else {
+            snprintf(states[i], sizeof(states[i]), i == 3 ? "OPTIONAL_ABSENT" : "NOT_GENERATED");
+            snprintf(hashes[i], sizeof(hashes[i]), "null");
+        }
+    }
+    complete = strcmp(states[0], "PRESENT") == 0 && strcmp(states[1], "PRESENT") == 0 &&
+               strcmp(states[2], "PRESENT") == 0;
+    n = snprintf(body, sizeof(body),
+        "{\"schema\":\"agr.physical-manifest.v1\",\"run_id\":\"%s\",\"process_launch_id\":\"%s\","
+        "\"commit\":\"%s\",\"tree\":\"%s\",\"apk_sha256\":\"%s\",\"archive_state\":\"CURRENT\",\"evidence_complete\":%s,\"files\":{"
+        "\"%s\":{\"name\":\"%s\",\"state\":\"%s\",\"size\":%lld,\"sha256\":%s},"
+        "\"%s\":{\"name\":\"%s\",\"state\":\"%s\",\"size\":%lld,\"sha256\":%s},"
+        "\"%s\":{\"name\":\"%s\",\"state\":\"%s\",\"size\":%lld,\"sha256\":%s},"
+        "\"%s\":{\"name\":\"%s\",\"state\":\"%s\",\"size\":%lld,\"sha256\":%s}}}\n",
+        g_run_id, launch, g_commit, g_tree, g_apk_actual[0] ? g_apk_actual : g_apk_sha,
+        complete ? "true" : "false",
+        keys[0], names[0], states[0], sizes[0], hashes[0],
+        keys[1], names[1], states[1], sizes[1], hashes[1],
+        keys[2], names[2], states[2], sizes[2], hashes[2],
+        keys[3], names[3], states[3], sizes[3], hashes[3]);
+    if (n < 0 || (size_t)n >= sizeof(body)) return -1;
+    snprintf(path, sizeof(path), "%s/%s", g_dir, CURRENT_MANIFEST_NAME);
+    return write_atomic_text(path, body);
 }
 
 static void make_run_id(void) {
@@ -1138,7 +1437,10 @@ int agr_physical_trace_begin(const agr_physical_trace_config *config) {
     copy_text(g_arch, sizeof(g_arch), config->architecture ? config->architecture : "");
     copy_text(g_apk_sha, sizeof(g_apk_sha), config->apk_sha256_expected ? config->apk_sha256_expected : "");
     mkdir(g_dir, 0755);
-    archive_previous();
+    if (archive_previous() != 0) {
+        pthread_mutex_unlock(&g_mu);
+        return -1;
+    }
     path_join(path, sizeof(path), FINAL_NAME);
     unlink(path);
     make_run_id();
@@ -1147,6 +1449,12 @@ int agr_physical_trace_begin(const agr_physical_trace_config *config) {
     g_last_progress_ns = mono_ns();
     g_max_gap_ns = 0;
     g_event_count = 0;
+    g_passive_dropped = 0;
+    __atomic_store_n(&g_passive_enabled, 0, __ATOMIC_RELEASE);
+    pthread_mutex_lock(&g_passive_mu);
+    g_passive_head = g_passive_tail = g_passive_count = 0;
+    g_passive_order = 0;
+    pthread_mutex_unlock(&g_passive_mu);
     g_bytes = 0;
     g_last_phase = 0;
     g_heartbeat_count = 0;
@@ -1196,6 +1504,7 @@ int agr_physical_trace_begin(const agr_physical_trace_config *config) {
         return -1;
     }
     g_active = 1;
+    __atomic_store_n(&g_passive_enabled, 1, __ATOMIC_RELEASE);
     memset(&launch, 0, sizeof(launch));
     launch.critical = 1;
     launch.host_thread = (uint64_t)pthread_self();
@@ -1214,6 +1523,11 @@ int agr_physical_trace_begin(const agr_physical_trace_config *config) {
     launch.phase = AGR_PHYS_PHASE_TRACE_READY;
     note_unlocked(&launch);
     write_run_file("EVIDENCE_READY");
+    if (write_current_manifest() != 0) {
+        g_active = 0;
+        pthread_mutex_unlock(&g_mu);
+        return -1;
+    }
     pthread_mutex_unlock(&g_mu);
     install_signals();
     if (pthread_create(&g_watchdog, NULL, watchdog_main, NULL) == 0)
@@ -1224,7 +1538,10 @@ int agr_physical_trace_begin(const agr_physical_trace_config *config) {
 void agr_forensic_publish(const agr_forensic_sample *sample) {
     if (!sample) return;
     pthread_mutex_lock(&g_mu);
-    if (g_active && !g_finished) note_unlocked(sample);
+    if (g_active && !g_finished) {
+        drain_passive_unlocked();
+        note_unlocked(sample);
+    }
     pthread_mutex_unlock(&g_mu);
 }
 
@@ -1245,6 +1562,14 @@ void agr_physical_trace_copy_status(agr_physical_trace_status *out) {
     pthread_mutex_unlock(&g_mu);
 }
 
+int agr_physical_trace_refresh_manifest(void) {
+    int rc;
+    pthread_mutex_lock(&g_mu);
+    rc = write_current_manifest();
+    pthread_mutex_unlock(&g_mu);
+    return rc;
+}
+
 int agr_physical_trace_finish(const char *termination_reason, agr_physical_trace_status *out) {
     agr_forensic_sample sample;
     int started = 0;
@@ -1257,6 +1582,8 @@ int agr_physical_trace_finish(const char *termination_reason, agr_physical_trace
         const char *reason = termination_reason && termination_reason[0] ? termination_reason : "RUNTIME_ERROR";
         if (g_stalled && strcmp(reason, "CONTENT_POSTED") != 0)
             reason = "WATCHDOG_STALL";
+        __atomic_store_n(&g_passive_enabled, 0, __ATOMIC_RELEASE);
+        drain_passive_unlocked();
         copy_text(g_reason, sizeof(g_reason), reason);
         memset(&sample, 0, sizeof(sample));
         if (g_has_own) sample = g_own;
@@ -1306,6 +1633,28 @@ int agr_physical_trace_set_environment_json(const char *json) {
     if (g_active) write_run_file(g_state[0] ? g_state : "ENVIRONMENT_CAPTURED");
     pthread_mutex_unlock(&g_mu);
     return rc;
+}
+
+void agr_forensic_publish_passive(const agr_forensic_sample *sample) {
+    agr_forensic_sample queued;
+    if (!sample) return;
+    if (!__atomic_load_n(&g_passive_enabled, __ATOMIC_ACQUIRE)) return;
+    if (pthread_mutex_trylock(&g_passive_mu) != 0) {
+        __atomic_add_fetch(&g_passive_dropped, 1, __ATOMIC_RELAXED);
+        return;
+    }
+    if (!__atomic_load_n(&g_passive_enabled, __ATOMIC_ACQUIRE) ||
+        g_passive_count >= PASSIVE_RING_CAP) {
+        pthread_mutex_unlock(&g_passive_mu);
+        __atomic_add_fetch(&g_passive_dropped, 1, __ATOMIC_RELAXED);
+        return;
+    }
+    queued = *sample;
+    queued.passive_order = ++g_passive_order;
+    g_passive_ring[g_passive_tail] = queued;
+    g_passive_tail = (g_passive_tail + 1u) % PASSIVE_RING_CAP;
+    g_passive_count++;
+    pthread_mutex_unlock(&g_passive_mu);
 }
 
 int agr_physical_trace_set_environment_end_json(const char *json, const char *changes_json) {
@@ -1411,6 +1760,8 @@ void agr_physical_trace_note_writer_error(const char *detail) {
 void agr_physical_trace_shutdown(void) {
     int started;
     pthread_mutex_lock(&g_mu);
+    __atomic_store_n(&g_passive_enabled, 0, __ATOMIC_RELEASE);
+    drain_passive_unlocked();
     g_stop = 1;
     started = g_watchdog_started;
     g_watchdog_started = 0;

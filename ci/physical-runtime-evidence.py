@@ -2,15 +2,27 @@
 """Classify one physical AGR launch from its bounded Documents evidence."""
 
 import argparse
+import hashlib
 import json
 import pathlib
 import struct
 import sys
 
-TRACE_NAME = "agr-physical-trace.ndjson"
-RUN_NAME = "agr-physical-run.json"
-FINAL_NAME = "agr-physical-runtime.json"
-CRASH_NAME = "agr-physical-crash.bin"
+CURRENT_NAMES = {"run": "agr-current-run.json", "trace": "agr-current-trace.ndjson",
+                 "runtime": "agr-current-runtime.json", "crash": "agr-current-crash.bin"}
+LEGACY_NAMES = {"run": "agr-physical-run.json", "trace": "agr-physical-trace.ndjson",
+                "runtime": "agr-physical-runtime.json", "crash": "agr-physical-crash.bin"}
+PREVIOUS_NAMES = {"run": "agr-prev-run.json", "trace": "agr-prev-trace.ndjson",
+                  "runtime": "agr-prev-runtime.json", "crash": "agr-prev-crash.bin"}
+CURRENT_MANIFEST = "agr-current-manifest.json"
+
+
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with pathlib.Path(path).open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 EXPECTED_APK_SHA256 = "57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569"
 EXPECTED_PACKAGE = "org.jfedor.frozenbubble"
 CRASH_MAGIC = b"AGRCRSH1"
@@ -23,6 +35,60 @@ def load_json(path):
         return json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
+
+
+def evidence_source(root, source="auto", run_id=None):
+    root = pathlib.Path(root)
+    if source == "history":
+        if not run_id:
+            raise ValueError("--run-id is required for --source history")
+        history = root / "previous" / run_id
+        manifest = load_json(history / "manifest.json")
+        names = PREVIOUS_NAMES if manifest or any((history / name).exists()
+                                                  for name in PREVIOUS_NAMES.values()) else LEGACY_NAMES
+        return history, names, manifest, False
+    if source == "current":
+        return root, CURRENT_NAMES, load_json(root / CURRENT_MANIFEST), False
+    if source == "legacy":
+        return root, LEGACY_NAMES, None, False
+    has_current = (root / CURRENT_MANIFEST).exists() or any(
+        (root / name).exists() for name in CURRENT_NAMES.values())
+    has_legacy = any((root / name).exists() for name in LEGACY_NAMES.values())
+    if has_current and has_legacy:
+        return root, CURRENT_NAMES, load_json(root / CURRENT_MANIFEST), True
+    if has_current or (root / CURRENT_MANIFEST).exists():
+        return root, CURRENT_NAMES, load_json(root / CURRENT_MANIFEST), False
+    return root, LEGACY_NAMES, None, False
+
+
+def manifest_integrity_ok(root, manifest, names):
+    if not isinstance(manifest, dict):
+        return True
+    files = manifest.get("files")
+    if not isinstance(files, dict):
+        return False
+    if any(key not in files for key in names):
+        return False
+    for key, expected_name in names.items():
+        item = files.get(key)
+        if not isinstance(item, dict):
+            return False
+        name = item.get("name") or expected_name
+        if pathlib.PurePosixPath(str(name)).name != str(name) or name != expected_name:
+            return False
+        state = str(item.get("state", "")).upper()
+        if state in ("MISSING", "NOT_GENERATED", "OPTIONAL_ABSENT"):
+            continue
+        if state not in ("PRESENT", "WRITING"):
+            return False
+        path = pathlib.Path(root) / expected_name
+        if not path.is_file():
+            return False
+        if item.get("size") is not None and path.stat().st_size != item.get("size"):
+            return False
+        if item.get("sha256") and sha256_file(path) != item.get("sha256"):
+            return False
+    return True
 
 
 def load_trace(path):
@@ -375,18 +441,63 @@ def classify(events, run, final, crash, states):
 
 
 def summarize(directory):
-    root = pathlib.Path(directory)
-    run = load_json(root / RUN_NAME)
-    events, truncated = load_trace(root / TRACE_NAME)
-    final = load_json(root / FINAL_NAME)
-    crash = load_crash(root / CRASH_NAME)
+    return summarize_source(directory, "auto", None)
+
+
+def failure_chain(events, run, final):
+    """Keep first observed fault, thrown exception, later work, and final stop distinct."""
+    failure_phases = {
+        "BITMAP_SCALE_FAIL", "SURFACE_CALLBACK_THROW", "SURFACE_CALLBACK_EXEC_ERROR",
+        "RUNTIME_ERROR", "EVIDENCE_CHANNEL_FAILED", "WATCHDOG_STALL",
+        "WATCHDOG_NO_PROGRESS_8S", "ARM_FAULT", "JNI_EXCEPTION",
+    }
+    observed = [(index, event) for index, event in enumerate(events)
+                if event.get("phase") in failure_phases or event.get("event") in failure_phases]
+    first = observed[0][1] if observed else None
+    throw = next((event for _, event in observed if event.get("phase") in
+                  ("SURFACE_CALLBACK_THROW", "SURFACE_CALLBACK_EXEC_ERROR", "JNI_EXCEPTION")), None)
+    start = observed[0][0] if observed else len(events)
+    continuation = [event for event in events[start + 1:] if
+                    event.get("phase") in ("THREAD_RUN_ENTER", "GUEST_METHOD_ENTER", "GUEST_METHOD_EXIT",
+                                            "DRAW_BITMAP_END", "CANVAS_POST_END")]
+    return {
+        "first_observed_failure": first,
+        "first_observed_failure_is_proven_cause": False,
+        "direct_exception_or_callback_failure": throw,
+        "subsequent_guest_execution": continuation,
+        "final_stop_reason": ((final or {}).get("termination_reason") or
+                              (run or {}).get("termination_reason") or
+                              (final or {}).get("final_state")),
+    }
+
+
+def summarize_source(directory, source="auto", run_id=None):
+    root, names, manifest, source_conflict = evidence_source(directory, source, run_id)
+    run = load_json(root / names["run"])
+    events, truncated = load_trace(root / names["trace"])
+    final = load_json(root / names["runtime"])
+    crash = load_crash(root / names["crash"])
+    integrity_ok = manifest_integrity_ok(root, manifest, names)
+    manifest_identity_conflict = False
+    if isinstance(manifest, dict):
+        for key, value in (("run_id", (run or {}).get("run_id")),
+                           ("process_launch_id", (run or {}).get("process_launch_id")),
+                           ("commit", (run or {}).get("commit")),
+                           ("tree", (run or {}).get("tree"))):
+            manifest_value = manifest.get(key)
+            if manifest_value not in (None, "") and value not in (None, "") and manifest_value != value:
+                manifest_identity_conflict = True
+        if source == "history" and manifest.get("run_id") not in (None, run_id):
+            manifest_identity_conflict = True
     seqs = [int(e.get("seq") or 0) for e in events]
     monotonic = all(seqs[i] < seqs[i + 1] for i in range(len(seqs) - 1))
     states = stage_states(run, events, final, crash)
     last_boundary, missing_boundary = boundary_report(events, run, final)
     last = events[-1] if events else {}
     game = last_phase(events, "THREAD_RUN_ENTER") or last_phase(events, "THREAD_START") or last_phase(events, "CANVAS_LOCK_ACQUIRED")
-    classify_as = classify(events, run, final, crash, states)
+    classify_as = ("STALE_OR_MIXED_EVIDENCE" if source_conflict or manifest_identity_conflict else
+                   "EVIDENCE_MANIFEST_INVALID" if not integrity_ok else
+                   classify(events, run, final, crash, states))
     method_witnesses = {}
     for name in ("setSurfaceSize", "resizeBitmaps", "doDraw", "<init>"):
         method_witnesses[name] = {
@@ -413,6 +524,7 @@ def summarize(directory):
         "tree": None if not isinstance(run, dict) else run.get("tree"),
         "architecture": None if not isinstance(run, dict) else run.get("architecture"),
         "device_platform": None if not isinstance(run, dict) else run.get("device_platform"),
+        "passive_dropped_count": (final or {}).get("passive_dropped_count", 0),
         "last_durable_seq": seqs[-1] if seqs else (crash.get("last_seq") if crash else 0),
         "last_event": last.get("event") or last.get("phase") or "",
         "last_phase": last.get("phase") or "",
@@ -438,6 +550,21 @@ def summarize(directory):
         "final_json_present": final is not None,
         "final_json_missing": final is None,
         "classification": classify_as,
+        "evidence_source": ("current" if names == CURRENT_NAMES else
+                            "previous" if names == PREVIOUS_NAMES else "legacy"),
+        "evidence_directory": str(root),
+        "source_conflict": source_conflict,
+        "manifest_integrity_ok": integrity_ok,
+        "failure_chain": failure_chain(events, run, final),
+        "bitmap_object_chain": [event for event in events if event.get("phase") in (
+            "BITMAP_DECODE_WITNESS", "BITMAP_REFERENCE_WITNESS", "BITMAP_FIELD_WITNESS")],
+        "surface_callback_outcomes": [{"seq": event.get("seq"), "method": event.get("method"),
+                                       "phase": event.get("phase"), "detail": event.get("detail"),
+                                       "exec_id": event.get("exec_id"),
+                                       "host_thread_id": event.get("host_thread_id")}
+                                      for event in events if event.get("phase") in (
+                                          "SURFACE_CALLBACK_BEGIN", "SURFACE_CALLBACK_OK",
+                                          "SURFACE_CALLBACK_THROW", "SURFACE_CALLBACK_EXEC_ERROR")],
         "last_confirmed_boundary": last_boundary,
         "first_missing_expected_boundary": missing_boundary,
         "environment_start": (final or {}).get("environment_start") or (run or {}).get("environment_start") or (run or {}).get("environment"),
@@ -459,9 +586,11 @@ def summarize(directory):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", required=True)
+    parser.add_argument("--source", choices=("auto", "current", "history", "legacy"), default="auto")
+    parser.add_argument("--run-id")
     parser.add_argument("--summary")
     args = parser.parse_args()
-    summary = summarize(args.dir)
+    summary = summarize_source(args.dir, args.source, args.run_id)
     text = json.dumps(summary, indent=2, sort_keys=True)
     if args.summary:
         pathlib.Path(args.summary).write_text(text + "\n", encoding="utf-8")

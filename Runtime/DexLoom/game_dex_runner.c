@@ -18,6 +18,7 @@
 #include <GLES2/gl2.h>
 
 extern void agr_forensic_publish(const agr_forensic_sample *) __attribute__((weak));
+extern void agr_forensic_publish_passive(const agr_forensic_sample *) __attribute__((weak));
 
 static void forensic_publish(const agr_forensic_sample *sample) {
     if (agr_forensic_publish) agr_forensic_publish(sample);
@@ -349,12 +350,88 @@ static int encoded_image_size(const uint8_t *data, uint32_t size, int *width, in
     return 0;
 }
 
+static int options_value_int(DxValue *args, uint32_t count, const char *name, int fallback) {
+    DxValue value = DX_NULL_VALUE;
+    if (count < 3 || args[2].tag != DX_VAL_OBJ || !args[2].obj ||
+        dx_vm_get_field(args[2].obj, name, &value) != DX_OK || value.tag != DX_VAL_INT)
+        return fallback;
+    return value.i;
+}
+
 static int options_value_set(DxValue *args, uint32_t count, const char *name) {
     DxValue value = DX_NULL_VALUE;
     if (count < 3 || args[2].tag != DX_VAL_OBJ || !args[2].obj) return 0;
     if (dx_vm_get_field(args[2].obj, name, &value) != DX_OK) return 0;
     if (value.tag == DX_VAL_INT) return value.i != 0;
     return value.tag == DX_VAL_OBJ && value.obj != NULL;
+}
+
+static void options_witness_text(DxValue *args, uint32_t count, char *out, size_t capacity) {
+    DxValue value = DX_NULL_VALUE;
+    uint64_t options_identity = 0;
+    int has_in_bitmap = 0;
+    if (!out || capacity == 0) return;
+    out[0] = '\0';
+    if (count < 3 || args[2].tag != DX_VAL_OBJ || !args[2].obj) {
+        snprintf(out, capacity, "options=null");
+        return;
+    }
+    options_identity = args[2].obj->diagnostic_identity;
+    if (dx_vm_get_field(args[2].obj, "inBitmap", &value) == DX_OK)
+        has_in_bitmap = value.tag == DX_VAL_OBJ && value.obj != NULL;
+    snprintf(out, capacity,
+             "options=id%llu,bounds=%d,sample=%d,scaled=%d,density=%d,target=%d,screen=%d,inBitmap=%d",
+             (unsigned long long)options_identity,
+             options_value_int(args, count, "inJustDecodeBounds", 0),
+             options_value_int(args, count, "inSampleSize", 1),
+             options_value_int(args, count, "inScaled", 1),
+             options_value_int(args, count, "inDensity", 0),
+             options_value_int(args, count, "inTargetDensity", 0),
+             options_value_int(args, count, "inScreenDensity", 0), has_in_bitmap);
+}
+
+static void publish_bitmap_witness(DxVM *vm, uint32_t phase, const char *class_name,
+                                   const char *method, int32_t resource_id,
+                                   DxObject *object, DxObject *related,
+                                   const agr_bitmap *backing, int status,
+                                   uint32_t flags, int width, int height,
+                                   int value0, int value1, const char *path) {
+    agr_forensic_sample sample;
+    if (!agr_forensic_publish_passive) return;
+    memset(&sample, 0, sizeof(sample));
+    sample.phase = phase;
+    sample.timing_sensitive = 1;
+    sample.resource_id = resource_id;
+    sample.object_identity = object ? object->diagnostic_identity : 0;
+    sample.related_identity = related ? related->diagnostic_identity : 0;
+    sample.backing_owner_identity = backing
+        ? (object ? object->diagnostic_identity : (related ? related->diagnostic_identity : 0)) : 0;
+    sample.backing_identity = backing ? (uint64_t)(uintptr_t)agr_bitmap_pixels(backing) : 0;
+    sample.width = width;
+    sample.height = height;
+    sample.value0 = value0;
+    sample.value1 = value1;
+    sample.witness_flags = flags;
+    sample.witness_status = (uint32_t)status;
+    if (vm && dx_vm_current_exec(vm)) {
+        DxExecutionContext *exec = dx_vm_current_exec(vm);
+        sample.has_exec = 1;
+        sample.exec_id = exec->id;
+        sample.thread_state = 2;
+        sample.host_thread = exec->has_host_thread
+            ? (uint64_t)(uintptr_t)exec->host_thread : (uint64_t)pthread_self();
+        if (exec->current_frame) {
+            sample.guest_pc = exec->current_frame->pc;
+            sample.has_guest_pc = 1;
+        }
+    } else {
+        sample.host_thread = (uint64_t)pthread_self();
+    }
+    snprintf(sample.class_name, sizeof(sample.class_name), "%s",
+             class_name ? class_name : "Landroid/graphics/BitmapFactory;");
+    snprintf(sample.method_name, sizeof(sample.method_name), "%s", method ? method : "Bitmap");
+    snprintf(sample.detail, sizeof(sample.detail), "%s", path ? path : "");
+    agr_forensic_publish_passive(&sample);
 }
 
 static const DxResourceEntry *resource_file_entry(const DxResources *resources,
@@ -404,13 +481,29 @@ static struct agr_content_surface *content_slot_for_canvas(agr_dex_game *game, D
 
 static DxResult bitmap_get_dimension(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
     const char *field = "_width";
+    const char *method = "getWidth";
     DxValue value = DX_NULL_VALUE;
-    (void)vm;
-    if (frame->method && frame->method->name && !strcmp(frame->method->name, "getHeight"))
+    DxObject *receiver = count && args[0].tag == DX_VAL_OBJ ? args[0].obj : NULL;
+    if (frame->method && frame->method->name && !strcmp(frame->method->name, "getHeight")) {
         field = "_height";
-    if (count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj) return DX_ERR_NULL_PTR;
-    if (dx_vm_get_field(args[0].obj, field, &value) != DX_OK || value.tag != DX_VAL_INT)
+        method = "getHeight";
+    }
+    if (!receiver) {
+        publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_REFERENCE_WITNESS,
+                               "Landroid/graphics/Bitmap;", method, -1, NULL, NULL,
+                               NULL, DX_ERR_NULL_PTR, 0, 0, 0, 0, 0, "receiver=null");
+        return DX_ERR_NULL_PTR;
+    }
+    if (dx_vm_get_field(receiver, field, &value) != DX_OK || value.tag != DX_VAL_INT) {
+        publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_REFERENCE_WITNESS,
+                               "Landroid/graphics/Bitmap;", method, -1, receiver, NULL,
+                               NULL, DX_ERR_INVALID_FORMAT, 1u, 0, 0, 0, 0,
+                               "field=missing_or_nonint");
         return DX_ERR_INVALID_FORMAT;
+    }
+    publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_REFERENCE_WITNESS,
+                           "Landroid/graphics/Bitmap;", method, -1, receiver, NULL,
+                           NULL, DX_OK, 1u, value.i, 0, 0, 0, 0, field);
     frame->result = value;
     frame->has_result = true;
     return DX_OK;
@@ -1717,6 +1810,12 @@ static DxResult bitmap_create_scaled(DxVM *vm, DxFrame *frame, DxValue *args, ui
     DxValue path = DX_NULL_VALUE;
     int dst_w, dst_h, filter, src_w, src_h;
     if (count < 4 || args[0].tag != DX_VAL_OBJ || !args[0].obj) {
+        publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_REFERENCE_WITNESS,
+                               "Landroid/graphics/Bitmap;", "createScaledBitmap", -1,
+                               NULL, NULL, NULL, DX_ERR_NULL_PTR, 0, 0, 0,
+                               count > 1 && args[1].tag == DX_VAL_INT ? args[1].i : 0,
+                               count > 2 && args[2].tag == DX_VAL_INT ? args[2].i : 0,
+                               "scale_source=null");
         publish_bitmap_scale(vm, AGR_PHYS_PHASE_BITMAP_SCALE_FAIL, "fail=NPE;src=0");
         dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
             vm, "Ljava/lang/NullPointerException;", "bitmap");
@@ -1739,6 +1838,18 @@ static DxResult bitmap_create_scaled(DxVM *vm, DxFrame *frame, DxValue *args, ui
         return DX_ERR_EXCEPTION;
     }
     slot = guest_bitmap_slot(game, source);
+    publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_REFERENCE_WITNESS,
+                           "Landroid/graphics/Bitmap;", "createScaledBitmap", -1,
+                           source, NULL, slot ? slot->host : NULL,
+                           slot && slot->host && !slot->recycled ? DX_OK : DX_ERR_INVALID_FORMAT,
+                           AGR_BITMAP_WITNESS_HAS_OBJECT |
+                               (slot && slot->host ? AGR_BITMAP_WITNESS_HAS_BACKING : 0u) |
+                               (slot && slot->host && agr_bitmap_pixels(slot->host)
+                                    ? AGR_BITMAP_WITNESS_HAS_PIXELS : 0u) |
+                               (slot && slot->recycled ? AGR_BITMAP_WITNESS_RECYCLED : 0u),
+                           slot && slot->host ? (int)agr_bitmap_width(slot->host) : 0,
+                           slot && slot->host ? (int)agr_bitmap_height(slot->host) : 0,
+                           dst_w, dst_h, "scale_source");
     if (!slot || slot->recycled || !slot->host || !agr_bitmap_pixels(slot->host)) {
         publish_bitmap_scale(vm, AGR_PHYS_PHASE_BITMAP_SCALE_FAIL, "fail=RECYCLED;src=0");
         dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
@@ -1760,6 +1871,12 @@ static DxResult bitmap_create_scaled(DxVM *vm, DxFrame *frame, DxValue *args, ui
         publish_bitmap_scale(vm, AGR_PHYS_PHASE_BITMAP_SCALE_END, detail);
         frame->result = DX_OBJ_VALUE(source);
         frame->has_result = true;
+        publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_REFERENCE_WITNESS,
+                               "Landroid/graphics/Bitmap;", "createScaledBitmap", -1,
+                               source, source, slot->host, DX_OK,
+                               AGR_BITMAP_WITNESS_HAS_OBJECT | AGR_BITMAP_WITNESS_HAS_BACKING |
+                                   AGR_BITMAP_WITNESS_HAS_PIXELS,
+                               src_w, src_h, dst_w, dst_h, "scale_return_same_object");
         return DX_OK;
     }
     scaled = agr_bitmap_scale(slot->host, dst_w, dst_h, filter);
@@ -1789,6 +1906,13 @@ static DxResult bitmap_create_scaled(DxVM *vm, DxFrame *frame, DxValue *args, ui
     }
     frame->result = DX_OBJ_VALUE(bitmap);
     frame->has_result = true;
+    publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_REFERENCE_WITNESS,
+                           "Landroid/graphics/Bitmap;", "createScaledBitmap", -1,
+                           bitmap, source, scaled, DX_OK,
+                           AGR_BITMAP_WITNESS_HAS_OBJECT | AGR_BITMAP_WITNESS_HAS_BACKING |
+                               AGR_BITMAP_WITNESS_HAS_PIXELS,
+                           (int)agr_bitmap_width(scaled), (int)agr_bitmap_height(scaled),
+                           dst_w, dst_h, "scale_return_new_object");
     return DX_OK;
 }
 
@@ -1800,22 +1924,50 @@ static DxResult bitmap_decode_resource(DxVM *vm, DxFrame *frame, DxValue *args, 
     uint32_t size = 0;
     int width = 0, height = 0;
     int reuse_bitmap = options_value_set(args, count, "inBitmap");
+    DxObject *options = count > 2 && args[2].tag == DX_VAL_OBJ ? args[2].obj : NULL;
     DxClass *bitmap_class;
     DxObject *bitmap;
     agr_bitmap *host = NULL;
+    int32_t resource_id = count > 1 && args[1].tag == DX_VAL_INT ? args[1].i : -1;
+    uint32_t option_flags = 0;
+    char options_detail[160], decode_detail[256];
+    options_witness_text(args, count, options_detail, sizeof(options_detail));
+    snprintf(decode_detail, sizeof(decode_detail), "resource_path=unresolved;%s", options_detail);
+    if (count > 2 && args[2].tag == DX_VAL_OBJ && args[2].obj)
+        option_flags |= AGR_BITMAP_WITNESS_HAS_OPTIONS;
+    if (options_value_set(args, count, "inJustDecodeBounds"))
+        option_flags |= AGR_BITMAP_WITNESS_BOUNDS_ONLY;
+    if (reuse_bitmap) option_flags |= AGR_BITMAP_WITNESS_IN_BITMAP;
     if (count < 3 || args[1].tag != DX_VAL_INT)
+    {
+        publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_DECODE_WITNESS,
+                               "Landroid/graphics/BitmapFactory;", "decodeResource", resource_id,
+                               NULL, options, NULL, DX_ERR_INVALID_FORMAT, option_flags,
+                               0, 0, 0, 0, decode_detail);
         return bitmap_decode_failed(vm, frame, reuse_bitmap);
+    }
     entry = game ? resource_file_entry(game->resources, game->resource_apk,
                                        (uint32_t)args[1].i) : NULL;
+    if (entry && entry->str_val)
+        snprintf(decode_detail, sizeof(decode_detail), "resource_path=%s;%s",
+                 entry->str_val, options_detail);
     if (!entry || !entry->str_val || !game || !game->resource_apk ||
         dx_apk_find_entry(game->resource_apk, entry->str_val, &zip) != DX_OK ||
         dx_apk_extract_entry(game->resource_apk, zip, &bytes, &size) != DX_OK) {
         dx_free(bytes);
+        publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_DECODE_WITNESS,
+                               "Landroid/graphics/BitmapFactory;", "decodeResource", resource_id,
+                               NULL, options, NULL, DX_ERR_NOT_FOUND, option_flags,
+                               0, 0, 0, 0, decode_detail);
         return bitmap_decode_failed(vm, frame, reuse_bitmap);
     }
     if (options_value_set(args, count, "inJustDecodeBounds")) {
         if (!encoded_image_size(bytes, size, &width, &height)) {
             dx_free(bytes);
+            publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_DECODE_WITNESS,
+                                   "Landroid/graphics/BitmapFactory;", "decodeResource", resource_id,
+                                   NULL, options, NULL, DX_ERR_INVALID_FORMAT, option_flags,
+                                   0, 0, (int)size, 0, decode_detail);
             return bitmap_decode_failed(vm, frame, reuse_bitmap);
         }
         dx_free(bytes);
@@ -1823,25 +1975,49 @@ static DxResult bitmap_decode_resource(DxVM *vm, DxFrame *frame, DxValue *args, 
         dx_vm_set_field(args[2].obj, "outHeight", DX_INT_VALUE(height));
         frame->result = DX_NULL_VALUE;
         frame->has_result = true;
+        publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_DECODE_WITNESS,
+                               "Landroid/graphics/BitmapFactory;", "decodeResource", resource_id,
+                               NULL, options, NULL, DX_OK, option_flags,
+                               width, height, (int)size, 0, decode_detail);
         return DX_OK;
     }
     host = agr_bitmap_decode(bytes, size);
     dx_free(bytes);
-    if (!host) return bitmap_decode_failed(vm, frame, reuse_bitmap);
+    if (!host) {
+        publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_DECODE_WITNESS,
+                               "Landroid/graphics/BitmapFactory;", "decodeResource", resource_id,
+                               NULL, options, NULL, DX_ERR_INVALID_FORMAT, option_flags,
+                               0, 0, (int)size, 0, decode_detail);
+        return bitmap_decode_failed(vm, frame, reuse_bitmap);
+    }
     width = (int)agr_bitmap_width(host);
     height = (int)agr_bitmap_height(host);
     if (width <= 0 || height <= 0 || !agr_bitmap_pixels(host)) {
         agr_bitmap_destroy(host);
+        publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_DECODE_WITNESS,
+                               "Landroid/graphics/BitmapFactory;", "decodeResource", resource_id,
+                               NULL, options, NULL, DX_ERR_INVALID_FORMAT, option_flags,
+                               width, height, (int)size, 0, decode_detail);
         return bitmap_decode_failed(vm, frame, reuse_bitmap);
     }
     bitmap_class = dx_vm_find_class(vm, "Landroid/graphics/Bitmap;");
     bitmap = bitmap_class ? dx_vm_alloc_object(vm, bitmap_class) : NULL;
     if (!bitmap) {
         agr_bitmap_destroy(host);
+        publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_DECODE_WITNESS,
+                               "Landroid/graphics/BitmapFactory;", "decodeResource", resource_id,
+                               NULL, options, NULL, DX_ERR_OUT_OF_MEMORY, option_flags,
+                               width, height, (int)size, 0, decode_detail);
         return bitmap_decode_failed(vm, frame, reuse_bitmap);
     }
-    if (!guest_bitmap_attach(game, bitmap, host))
+    if (!guest_bitmap_attach(game, bitmap, host)) {
+        publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_DECODE_WITNESS,
+                               "Landroid/graphics/BitmapFactory;", "decodeResource", resource_id,
+                               bitmap, options, NULL, DX_ERR_OUT_OF_MEMORY,
+                               option_flags | AGR_BITMAP_WITNESS_HAS_OBJECT,
+                               width, height, (int)size, 0, decode_detail);
         return bitmap_decode_failed(vm, frame, reuse_bitmap);
+    }
     dx_vm_set_field(bitmap, "_assetPath",
                     DX_OBJ_VALUE(dx_vm_create_string(vm, entry->str_val)));
     dx_vm_set_field(bitmap, "_width", DX_INT_VALUE(width));
@@ -1849,6 +2025,12 @@ static DxResult bitmap_decode_resource(DxVM *vm, DxFrame *frame, DxValue *args, 
     dx_vm_set_field(bitmap, "_recycled", DX_INT_VALUE(0));
     frame->result = DX_OBJ_VALUE(bitmap);
     frame->has_result = true;
+    publish_bitmap_witness(vm, AGR_PHYS_PHASE_BITMAP_DECODE_WITNESS,
+                           "Landroid/graphics/BitmapFactory;", "decodeResource", resource_id,
+                           bitmap, options, host, DX_OK,
+                           option_flags | AGR_BITMAP_WITNESS_HAS_OBJECT |
+                               AGR_BITMAP_WITNESS_HAS_BACKING | AGR_BITMAP_WITNESS_HAS_PIXELS,
+                           width, height, (int)size, 0, decode_detail);
     return DX_OK;
 }
 

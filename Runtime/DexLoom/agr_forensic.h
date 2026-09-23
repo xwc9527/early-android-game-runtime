@@ -116,7 +116,22 @@ enum {
     AGR_PHYS_PHASE_THERMAL_CHANGED = 90,
     AGR_PHYS_PHASE_LOW_POWER_CHANGED = 91,
     AGR_PHYS_PHASE_PROTECTED_DATA_CHANGED = 92,
-    AGR_PHYS_PHASE_BINARY_FINGERPRINT = 93
+    AGR_PHYS_PHASE_BINARY_FINGERPRINT = 93,
+    AGR_PHYS_PHASE_BITMAP_DECODE_WITNESS = 94,
+    AGR_PHYS_PHASE_BITMAP_REFERENCE_WITNESS = 95,
+    AGR_PHYS_PHASE_BITMAP_FIELD_WITNESS = 96
+};
+
+enum {
+    AGR_BITMAP_WITNESS_HAS_OPTIONS = 1u << 0,
+    AGR_BITMAP_WITNESS_BOUNDS_ONLY = 1u << 1,
+    AGR_BITMAP_WITNESS_IN_BITMAP = 1u << 2,
+    AGR_BITMAP_WITNESS_HAS_OBJECT = 1u << 3,
+    AGR_BITMAP_WITNESS_HAS_BACKING = 1u << 4,
+    AGR_BITMAP_WITNESS_HAS_PIXELS = 1u << 5,
+    AGR_BITMAP_WITNESS_RECYCLED = 1u << 6,
+    AGR_BITMAP_WITNESS_OWNER_PRESENT = 1u << 7,
+    AGR_BITMAP_WITNESS_VALUE_PRESENT = 1u << 8
 };
 
 /* thread_state: 0 none, 1 STARTING, 2 RUNNING, 3 WAITING, 4 TERMINATED */
@@ -147,11 +162,26 @@ typedef struct agr_forensic_sample {
     char method_name[64];
     char detail[256];
     int critical;
+    /* Bounded host-only forensic fields; identities never enter guest state. */
+    uint64_t object_identity;
+    uint64_t related_identity;
+    uint64_t backing_owner_identity;
+    uint64_t backing_identity;
+    uint64_t passive_order;
+    int32_t resource_id;
+    int32_t width;
+    int32_t height;
+    int32_t value0;
+    int32_t value1;
+    uint32_t witness_flags;
+    uint32_t witness_status;
+    int timing_sensitive;
 } agr_forensic_sample;
 
 /* Strong definition lives in the physical recorder. VM objects declare it
    weak and skip the call when the recorder is not linked. */
 void agr_forensic_publish(const agr_forensic_sample *sample);
+void agr_forensic_publish_passive(const agr_forensic_sample *sample);
 
 typedef struct agr_physical_trace_config {
     const char *directory;
@@ -171,6 +201,7 @@ typedef struct agr_physical_trace_status {
     uint64_t process_start_monotonic_ns;
     uint64_t last_seq;
     uint32_t event_count;
+    uint32_t passive_dropped_count;
     char last_event[64];
     uint32_t last_phase;
     uint32_t heartbeat_count;
@@ -193,6 +224,7 @@ typedef struct agr_physical_trace_status {
 } agr_physical_trace_status;
 
 int agr_physical_trace_begin(const agr_physical_trace_config *config);
+int agr_physical_trace_refresh_manifest(void);
 void agr_physical_trace_event(const agr_forensic_sample *sample);
 void agr_physical_trace_publish_ownership(const agr_forensic_sample *sample);
 void agr_physical_trace_set_watchdog_for_test(uint32_t poll_ms, uint32_t gap2_ms,

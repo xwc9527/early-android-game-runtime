@@ -152,6 +152,8 @@ struct DxObject {
     DxValue   *fields;          // array[klass->instance_field_count]
     uint32_t   ref_count;
     uint32_t   heap_idx;        // index in VM heap
+    /* Monotonic host-only identity for passive forensic correlation. */
+    uint64_t   diagnostic_identity;
     bool       gc_mark;         // used by mark-sweep GC
     uint8_t    generation;      // 0 = young, 1 = old (generational GC)
 
@@ -368,6 +370,7 @@ struct DxVM {
     DxExecutionContext *execs[DX_MAX_EXEC_CONTEXTS];
     uint32_t exec_count;
     uint32_t next_exec_id;
+    uint64_t next_diagnostic_identity;
 
     // Framework classes (pre-registered)
     DxClass   *class_object;        // java/lang/Object

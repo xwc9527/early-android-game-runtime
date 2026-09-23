@@ -55,7 +55,7 @@ static char *trace_text(const char *dir) {
     FILE *fp;
     long length;
     char *text;
-    snprintf(path, sizeof(path), "%s/agr-physical-trace.ndjson", dir);
+    snprintf(path, sizeof(path), "%s/agr-current-trace.ndjson", dir);
     fp = fopen(path, "rb");
     if (!fp) return NULL;
     if (fseek(fp, 0, SEEK_END) != 0) { fclose(fp); return NULL; }

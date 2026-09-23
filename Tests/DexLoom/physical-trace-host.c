@@ -134,7 +134,7 @@ static void test_truncated_and_missing_final(const char *script) {
     expect(agr_physical_trace_begin(&config) == 0, "trunc begin");
     note(AGR_PHYS_PHASE_APK_OPEN_FAIL, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, "apk_open_failed");
     agr_physical_trace_shutdown();
-    snprintf(path, sizeof(path), "%s/agr-physical-trace.ndjson", dir);
+    snprintf(path, sizeof(path), "%s/agr-current-trace.ndjson", dir);
     fp = fopen(path, "a");
     expect(fp != NULL, "append trunc");
     if (fp) {
@@ -162,27 +162,80 @@ static void test_stale_archive(const char *script) {
     agr_physical_trace_config config;
     agr_physical_trace_status status;
     char archived[512];
+    const char *old_run = "{\"run_id\":\"OLDID\",\"commit\":\"old\",\"tree\":\"old\"}\n";
+    const char *old_final = "{\"commit\":\"old\",\"termination_reason\":\"CONTENT_POSTED\",\"content_posted\":\"YES\",\"lock_count\":1,\"unlock_count\":1,\"post_count\":1,\"draw_bitmap_count\":1,\"pixel_change_count\":1}\n";
     mkdir(dir, 0755);
     snprintf(path, sizeof(path), "%s/agr-physical-run.json", dir);
     fp = fopen(path, "w");
-    fputs("{\"run_id\":\"OLDID\",\"commit\":\"old\",\"tree\":\"old\"}\n", fp);
+    fputs(old_run, fp);
     fclose(fp);
     snprintf(path, sizeof(path), "%s/agr-physical-runtime.json", dir);
     fp = fopen(path, "w");
-    fputs("{\"commit\":\"old\",\"termination_reason\":\"CONTENT_POSTED\",\"content_posted\":\"YES\","
-          "\"lock_count\":1,\"unlock_count\":1,\"post_count\":1,\"draw_bitmap_count\":1,\"pixel_change_count\":1}\n", fp);
+    fputs(old_final, fp);
     fclose(fp);
     quiet_watchdog();
     config = config_for(dir);
     expect(agr_physical_trace_begin(&config) == 0, "stale begin");
     agr_physical_trace_copy_status(&status);
     expect(strcmp(status.run_id, "OLDID") != 0, "new run id");
-    snprintf(archived, sizeof(archived), "%s/previous/OLDID/agr-physical-runtime.json", dir);
+    snprintf(archived, sizeof(archived), "%s/previous/OLDID/agr-prev-runtime.json", dir);
     expect(access(archived, F_OK) == 0, "archived final");
-    snprintf(path, sizeof(path), "%s/agr-physical-runtime.json", dir);
+    fp = fopen(archived, "r");
+    { char body[512] = {0}; size_t n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
+      if (fp) fclose(fp); expect(strcmp(body, old_final) == 0 && n == strlen(old_final), "archived raw final unchanged"); }
+    snprintf(archived, sizeof(archived), "%s/previous/OLDID/agr-prev-run.json", dir);
+    fp = fopen(archived, "r");
+    { char body[256] = {0}; size_t n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
+      if (fp) fclose(fp); expect(strcmp(body, old_run) == 0 && n == strlen(old_run), "archived raw run unchanged"); }
+    snprintf(archived, sizeof(archived), "%s/previous/OLDID/manifest.json", dir);
+    expect(access(archived, F_OK) == 0, "archive manifest");
+    snprintf(path, sizeof(path), "%s/agr-current-runtime.json", dir);
     expect(access(path, F_OK) != 0, "current final absent");
     agr_physical_trace_shutdown();
     (void)script;
+}
+
+static void test_archive_keeps_first_failure(void) {
+    const char *dir = "/tmp/agr-phys-first-failure";
+    char path[512];
+    char body[4096] = {0};
+    FILE *fp;
+    agr_physical_trace_config config;
+    mkdir(dir, 0755);
+    snprintf(path, sizeof(path), "%s/agr-current-run.json", dir);
+    fp = fopen(path, "w");
+    expect(fp != NULL, "first failure source run");
+    if (fp) {
+        fputs("{\"run_id\":\"OLDFAIL\",\"process_launch_id\":\"launch-old\",\"commit\":\"abc123\",\"tree\":\"def456\",\"apk_sha256_expected\":\"apk-old\"}\n", fp);
+        fclose(fp);
+    }
+    snprintf(path, sizeof(path), "%s/agr-current-trace.ndjson", dir);
+    fp = fopen(path, "w");
+    expect(fp != NULL, "first failure source trace");
+    if (fp) {
+        fputs("{\"run_id\":\"OLDFAIL\",\"process_launch_id\":\"launch-old\",\"commit\":\"abc123\",\"tree\":\"def456\",\"phase\":\"BITMAP_SCALE_FAIL\"}\n", fp);
+        fputs("{\"run_id\":\"OLDFAIL\",\"process_launch_id\":\"launch-old\",\"commit\":\"abc123\",\"tree\":\"def456\",\"phase\":\"SURFACE_CALLBACK_THROW\",\"method\":\"surfaceChanged\"}\n", fp);
+        fputs("{\"run_id\":\"OLDFAIL\",\"process_launch_id\":\"launch-old\",\"commit\":\"abc123\",\"tree\":\"def456\",\"phase\":\"CANVAS_POST_END\"}\n", fp);
+        fclose(fp);
+    }
+    snprintf(path, sizeof(path), "%s/agr-current-runtime.json", dir);
+    fp = fopen(path, "w");
+    expect(fp != NULL, "first failure source runtime");
+    if (fp) {
+        fputs("{\"run_id\":\"OLDFAIL\",\"process_launch_id\":\"launch-old\",\"commit\":\"abc123\",\"tree\":\"def456\",\"apk_sha256\":\"apk-old\",\"termination_reason\":\"CONTENT_POSTED\"}\n", fp);
+        fclose(fp);
+    }
+    quiet_watchdog();
+    config = config_for(dir);
+    expect(agr_physical_trace_begin(&config) == 0, "first failure archive begins");
+    snprintf(path, sizeof(path), "%s/previous/OLDFAIL/manifest.json", dir);
+    fp = fopen(path, "r");
+    { size_t n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0; if (fp) fclose(fp); body[n] = 0; }
+    expect(strstr(body, "\"classification\":\"BITMAP_SCALE_FAIL\"") != NULL,
+           "archive classification retains earliest failure");
+    expect(strstr(body, "\"termination_reason\":\"CONTENT_POSTED\"") != NULL,
+           "archive separately retains final termination");
+    agr_physical_trace_shutdown();
 }
 
 static void test_watchdog_and_probe(void) {
@@ -204,7 +257,7 @@ static void test_watchdog_and_probe(void) {
     expect(status.no_progress_level == 8, "no progress level");
     expect(status.watchdog_stalled == 1, "stalled");
     agr_physical_trace_shutdown();
-    snprintf(path, sizeof(path), "%s/agr-physical-trace.ndjson", dir);
+    snprintf(path, sizeof(path), "%s/agr-current-trace.ndjson", dir);
     fp = fopen(path, "r");
     n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
     if (fp) fclose(fp);
@@ -334,13 +387,13 @@ static void test_stall_reason_agreement(const char *script) {
     expect(status.watchdog_stalled == 1, "reason stalled");
     expect(agr_physical_trace_finish("OBSERVATION_TIMEOUT", &status) == 0, "reason finish");
     expect(strcmp(status.termination_reason, "WATCHDOG_STALL") == 0, "status reason");
-    snprintf(path, sizeof(path), "%s/agr-physical-run.json", dir);
+    snprintf(path, sizeof(path), "%s/agr-current-run.json", dir);
     fp = fopen(path, "r");
     n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
     if (fp) fclose(fp);
     body[n] = 0;
     expect(strstr(body, "\"state\": \"WATCHDOG_STALL\"") != NULL, "run state");
-    snprintf(path, sizeof(path), "%s/agr-physical-trace.ndjson", dir);
+    snprintf(path, sizeof(path), "%s/agr-current-trace.ndjson", dir);
     fp = fopen(path, "r");
     n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
     if (fp) fclose(fp);
@@ -348,7 +401,7 @@ static void test_stall_reason_agreement(const char *script) {
     expect(line_contains(body, "FINALIZE_BEGIN", "WATCHDOG_STALL"), "finalize begin reason");
     expect(line_contains(body, "FINALIZE_END", "WATCHDOG_STALL"), "finalize end reason");
     expect(strstr(body, "OBSERVATION_TIMEOUT") == NULL, "caller reason absent");
-    snprintf(path, sizeof(path), "%s/agr-physical-runtime.json", dir);
+    snprintf(path, sizeof(path), "%s/agr-current-runtime.json", dir);
     fp = fopen(path, "w");
     expect(fp != NULL, "runtime json");
     if (fp) {
@@ -408,7 +461,7 @@ static void test_posted_without_draw(const char *script) {
     note(AGR_PHYS_PHASE_CANVAS_POST_END, 1, 1, 7, 99, 0, 119, 119, 119, 0, 0, NULL);
     agr_physical_trace_finish("CONTENT_POSTED", NULL);
     agr_physical_trace_shutdown();
-    fp = fopen("/tmp/agr-phys-nodraw/agr-physical-runtime.json", "w");
+    fp = fopen("/tmp/agr-phys-nodraw/agr-current-runtime.json", "w");
     expect(fp != NULL, "nodraw runtime");
     if (fp) {
         fputs("{\"termination_reason\":\"CONTENT_POSTED\",\"content_posted\":\"YES\","
@@ -455,7 +508,7 @@ static void test_canvas_and_pass(const char *script) {
     note(AGR_PHYS_PHASE_CANVAS_POST_END, 1, 1, 7, 99, 0, 1, 1, 1, 1, 8, NULL);
     agr_physical_trace_finish("CONTENT_POSTED", NULL);
     agr_physical_trace_shutdown();
-    fp = fopen("/tmp/agr-phys-pass/agr-physical-runtime.json", "w");
+    fp = fopen("/tmp/agr-phys-pass/agr-current-runtime.json", "w");
     fputs("{\"termination_reason\":\"CONTENT_POSTED\",\"content_posted\":\"YES\","
           "\"lock_count\":1,\"unlock_count\":1,\"post_count\":1,\"draw_bitmap_count\":1,"
           "\"pixel_change_count\":8}\n", fp);
@@ -536,7 +589,7 @@ static void test_current_root_and_environment(const char *script) {
     agr_physical_trace_set_observation(10, 20, 15, 4, "OBSERVATION_DEADLINE");
     agr_physical_trace_set_lifecycle("ACTIVE", 1, 1);
     agr_physical_trace_shutdown();
-    fp = fopen("/tmp/agr-phys-root/agr-physical-run.json", "r");
+    fp = fopen("/tmp/agr-phys-root/agr-current-run.json", "r");
     expect(fp != NULL, "run file");
     n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
     if (fp) fclose(fp);
@@ -548,7 +601,7 @@ static void test_current_root_and_environment(const char *script) {
     expect(strstr(body, "libGLESv2") != NULL, "framework fingerprint");
     expect(strstr(body, "\"stop_reason\": \"OBSERVATION_DEADLINE\"") != NULL, "stop reason");
     expect(strstr(body, "\"file_size_is_not_identity\": true") != NULL, "identity rule");
-    expect(access("/tmp/agr-phys-root/agr-physical-runtime.json", F_OK) != 0, "runtime absent until finalize");
+    expect(access("/tmp/agr-phys-root/agr-current-runtime.json", F_OK) != 0, "runtime absent until finalize");
 
     mkdir(abrupt, 0755);
     fp = fopen("/tmp/agr-phys-abrupt/agr-physical-run.json", "w");
@@ -557,19 +610,24 @@ static void test_current_root_and_environment(const char *script) {
     config = config_for(abrupt);
     expect(agr_physical_trace_begin(&config) == 0, "abrupt begin");
     agr_physical_trace_shutdown();
-    fp = fopen("/tmp/agr-phys-abrupt/previous/KEEPME/agr-physical-run.json", "r");
+    fp = fopen("/tmp/agr-phys-abrupt/previous/KEEPME/agr-prev-run.json", "r");
     expect(fp != NULL, "abrupt archive");
     n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
     if (fp) fclose(fp);
     body[n] = 0;
-    expect(strstr(body, "ABRUPT_TERMINATION") != NULL, "abrupt reclass");
+    expect(strstr(body, "RUNNING") != NULL, "abrupt raw run is unchanged");
+    fp = fopen("/tmp/agr-phys-abrupt/previous/KEEPME/manifest.json", "r");
+    n = fp ? fread(body, 1, sizeof(body) - 1, fp) : 0;
+    if (fp) fclose(fp);
+    body[n] = 0;
+    expect(strstr(body, "ABRUPT_TERMINATION") != NULL, "derived abrupt classification");
 
     mkdir(mixed, 0755);
     fp = fopen("/tmp/agr-phys-mixed/agr-physical-run.json", "w");
     fputs("{\"schema\":\"agr.physical-run.v2\",\"run_id\":\"RUN-A\",\"process_launch_id\":\"L1\","
           "\"commit\":\"abc123\",\"tree\":\"def456\",\"state\":\"FINALIZED\"}\n", fp);
     fclose(fp);
-    fp = fopen("/tmp/agr-phys-mixed/agr-physical-trace.ndjson", "w");
+    fp = fopen("/tmp/agr-phys-mixed/agr-current-trace.ndjson", "w");
     fputs("{\"schema\":\"agr.physical-trace.v2\",\"run_id\":\"RUN-B\",\"process_launch_id\":\"L1\","
           "\"seq\":100,\"commit\":\"abc123\",\"tree\":\"def456\",\"event\":\"TRACE_READY\",\"phase\":\"TRACE_READY\"}\n",
           fp);
@@ -584,6 +642,7 @@ int main(int argc, char **argv) {
     test_sequence_and_identity(script);
     test_truncated_and_missing_final(script);
     test_stale_archive(script);
+    test_archive_keeps_first_failure();
     test_watchdog_and_probe();
     test_frame_sync_policy();
     test_stall_reason_agreement(script);

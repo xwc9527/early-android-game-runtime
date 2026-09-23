@@ -1254,6 +1254,7 @@ static agr_apk_package *gPhysicalPackage = NULL;
 static uint32_t gPhysicalVsync = 0;
 static uint32_t gPhysicalWidth = 0;
 static uint32_t gPhysicalHeight = 0;
+static int gPhysicalDisplayOverride = 0;
 static int gPhysicalStart = -1;
 static BOOL gPhysicalFinished = NO;
 static BOOL gPhysicalContentHold = NO;
@@ -1857,6 +1858,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     BOOL firstTraversalDiscovery=[arguments containsObject:@"--framework-first-traversal-discovery"];
     BOOL traversalDispatch=[arguments containsObject:@"--framework-traversal-dispatch-discovery"];
     BOOL physicalRuntime=NO;
+    BOOL physicalDisplayOverride=NO;
 #if AGR_DEVICE_INTERACTIVE
     physicalRuntime=![arguments containsObject:@"--interactive"];
     if (!physicalRuntime) interactive=YES;
@@ -1869,6 +1871,22 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
          launch delegate, but no app-owned UIKit scene has been initialized. */
       NSString *documents=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
       agr_physical_trace_config traceConfig;
+      uint32_t runtimeWidth=(uint32_t)UIScreen.mainScreen.nativeBounds.size.width;
+      uint32_t runtimeHeight=(uint32_t)UIScreen.mainScreen.nativeBounds.size.height;
+#if TARGET_OS_SIMULATOR
+      const char *forcedWidth=getenv("AGR_HOST_DISPLAY_WIDTH");
+      const char *forcedHeight=getenv("AGR_HOST_DISPLAY_HEIGHT");
+      if (forcedWidth && forcedHeight) {
+        unsigned long parsedWidth=strtoul(forcedWidth, NULL, 10);
+        unsigned long parsedHeight=strtoul(forcedHeight, NULL, 10);
+        if (parsedWidth>0 && parsedWidth<=10000 && parsedHeight>0 && parsedHeight<=10000) {
+          runtimeWidth=(uint32_t)parsedWidth;
+          runtimeHeight=(uint32_t)parsedHeight;
+          physicalDisplayOverride=YES;
+        }
+      }
+#endif
+      gPhysicalDisplayOverride=physicalDisplayOverride ? 1 : 0;
       [[NSFileManager defaultManager] createDirectoryAtPath:documents withIntermediateDirectories:YES attributes:nil error:nil];
       memset(&traceConfig, 0, sizeof(traceConfig));
       traceConfig.directory=documents.UTF8String;
@@ -1891,8 +1909,8 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     self.window.rootViewController = controller; [self.window makeKeyAndVisible];
     if (physicalRuntime) {
       physicalNote(AGR_PHYS_PHASE_APP_DID_FINISH_LAUNCHING, 1, 0, 0, "NEW_PROCESS");
-      publishEnvironment(TARGET_OS_SIMULATOR ? 0 : 1, 0,
-                         (uint32_t)displayPixels.width, (uint32_t)displayPixels.height);
+      publishEnvironment(TARGET_OS_SIMULATOR ? 0 : 1, physicalDisplayOverride ? 1 : 0,
+                         runtimeWidth, runtimeHeight);
       agr_physical_trace_set_lifecycle("LAUNCHING", 1, 0);
       [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrMemoryWarning:) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
       [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrThermal:) name:NSProcessInfoThermalStateDidChangeNotification object:nil];
@@ -1903,8 +1921,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
       [gPhysicalLink addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
       gPhysicalLink.paused=YES;
       physicalNote(AGR_PHYS_PHASE_CADISPLAYLINK_CREATED, 1, 0, 0, NULL);
-      uint32_t width=(uint32_t)displayPixels.width, height=(uint32_t)displayPixels.height;
-      dispatch_async(dispatch_get_main_queue(),^{ @autoreleasepool { armPhysicalRuntime(width,height); } });
+      dispatch_async(dispatch_get_main_queue(),^{ @autoreleasepool { armPhysicalRuntime(runtimeWidth,runtimeHeight); } });
       return YES;
     }
     if(!interactive && traversalDispatch){
@@ -1980,6 +1997,30 @@ static NSString *sha256File(NSString *path) {
     text=[NSMutableString stringWithCapacity:CC_SHA256_DIGEST_LENGTH*2];
     for (int i=0;i<CC_SHA256_DIGEST_LENGTH;i++) [text appendFormat:@"%02x", digest[i]];
     return text;
+}
+
+int agr_physical_sha256_file(const char *rawPath, char *out, size_t outCap) {
+    @autoreleasepool {
+        NSString *path = rawPath ? [NSString stringWithUTF8String:rawPath] : nil;
+        NSInputStream *stream = path ? [NSInputStream inputStreamWithFileAtPath:path] : nil;
+        CC_SHA256_CTX ctx;
+        unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+        unsigned char chunk[32768];
+        NSInteger n;
+        size_t i;
+        if (!stream || !out || outCap < CC_SHA256_DIGEST_LENGTH * 2 + 1) return -1;
+        [stream open];
+        CC_SHA256_Init(&ctx);
+        while ((n = [stream read:chunk maxLength:sizeof(chunk)]) > 0)
+            CC_SHA256_Update(&ctx, chunk, (CC_LONG)n);
+        [stream close];
+        if (n < 0) return -1;
+        CC_SHA256_Final(digest, &ctx);
+        for (i = 0; i < CC_SHA256_DIGEST_LENGTH; i++)
+            snprintf(out + i * 2, outCap - i * 2, "%02x", digest[i]);
+        out[CC_SHA256_DIGEST_LENGTH * 2] = 0;
+        return 0;
+    }
 }
 
 static NSString *sysctlText(const char *name) {
@@ -2283,7 +2324,7 @@ static void finishPhysicalReport(void) {
     if (gPhysicalFinished) return;
     gPhysicalFinished=YES;
     if (gPhysicalLink) { [gPhysicalLink invalidate]; gPhysicalLink=nil; }
-    environmentEnd=captureEnvironment(TARGET_OS_SIMULATOR ? 0 : 1, 0,
+    environmentEnd=captureEnvironment(TARGET_OS_SIMULATOR ? 0 : 1, gPhysicalDisplayOverride,
                                       gPhysicalWidth, gPhysicalHeight);
     environmentChanges=environmentDifferences(gStartEnvironment ?: gLatestEnvironment ?: @{}, environmentEnd);
     environmentEndData=[NSJSONSerialization dataWithJSONObject:environmentEnd options:0 error:nil];
@@ -2440,6 +2481,7 @@ static void finishPhysicalReport(void) {
         full[@"last_trace_event"] = [NSString stringWithUTF8String:traceStatus.last_event];
         full[@"trace_file"] = [NSString stringWithUTF8String:traceStatus.trace_file];
         full[@"trace_event_count"] = @(traceStatus.event_count);
+        full[@"passive_dropped_count"] = @(traceStatus.passive_dropped_count);
         full[@"watchdog_state"] = [NSString stringWithUTF8String:traceStatus.watchdog_state];
         full[@"watchdog_heartbeat_count"] = @(traceStatus.heartbeat_count);
         full[@"watchdog_no_progress_level"] = @(traceStatus.no_progress_level);
@@ -2453,8 +2495,10 @@ static void finishPhysicalReport(void) {
     json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted error:nil];
     documents=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
     [[NSFileManager defaultManager] createDirectoryAtPath:documents withIntermediateDirectories:YES attributes:nil error:nil];
-    if (![json writeToFile:[documents stringByAppendingPathComponent:@"agr-physical-runtime.json"] atomically:YES])
+    if (![json writeToFile:[documents stringByAppendingPathComponent:@"agr-current-runtime.json"] atomically:YES])
         agr_physical_trace_note_writer_error("EVIDENCE_WRITER_ERROR");
+    if (gPhysicalTraceReady && agr_physical_trace_refresh_manifest() != 0)
+        agr_physical_trace_note_writer_error("MANIFEST_REFRESH_FAILED");
     agr_physical_trace_set_lock_probe(NULL, NULL);
     if (gPhysicalGame) agr_dex_game_destroy(gPhysicalGame);
     gPhysicalGame=NULL;
