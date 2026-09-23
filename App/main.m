@@ -1859,6 +1859,8 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     BOOL traversalDispatch=[arguments containsObject:@"--framework-traversal-dispatch-discovery"];
     BOOL physicalRuntime=NO;
     BOOL physicalDisplayOverride=NO;
+    uint32_t runtimeWidth=(uint32_t)UIScreen.mainScreen.nativeBounds.size.width;
+    uint32_t runtimeHeight=(uint32_t)UIScreen.mainScreen.nativeBounds.size.height;
 #if AGR_DEVICE_INTERACTIVE
     physicalRuntime=![arguments containsObject:@"--interactive"];
     if (!physicalRuntime) interactive=YES;
@@ -1871,8 +1873,6 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
          launch delegate, but no app-owned UIKit scene has been initialized. */
       NSString *documents=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
       agr_physical_trace_config traceConfig;
-      uint32_t runtimeWidth=(uint32_t)UIScreen.mainScreen.nativeBounds.size.width;
-      uint32_t runtimeHeight=(uint32_t)UIScreen.mainScreen.nativeBounds.size.height;
 #if TARGET_OS_SIMULATOR
       const char *forcedWidth=getenv("AGR_HOST_DISPLAY_WIDTH");
       const char *forcedHeight=getenv("AGR_HOST_DISPLAY_HEIGHT");
