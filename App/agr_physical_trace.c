@@ -128,6 +128,8 @@ static void capture_process_identity(void) {
     struct timespec wall;
     struct tm utc;
     time_t seconds;
+    size_t timestamp_len;
+    unsigned milliseconds;
     g_pid = getpid();
     g_process_start_mono_ns = mono_ns();
     memset(&wall, 0, sizeof(wall));
@@ -138,10 +140,21 @@ static void capture_process_identity(void) {
     }
     seconds = wall.tv_sec;
     gmtime_r(&seconds, &utc);
-    snprintf(g_process_start_wall, sizeof(g_process_start_wall),
-             "%04d-%02d-%02dT%02d:%02d:%02d.%03ldZ",
-             utc.tm_year + 1900, utc.tm_mon + 1, utc.tm_mday,
-             utc.tm_hour, utc.tm_min, utc.tm_sec, wall.tv_nsec / 1000000L);
+    timestamp_len = strftime(g_process_start_wall, sizeof(g_process_start_wall),
+                              "%Y-%m-%dT%H:%M:%S", &utc);
+    if (timestamp_len == 0 || timestamp_len + 5 >= sizeof(g_process_start_wall)) {
+        g_process_start_wall[0] = 0;
+        return;
+    }
+    milliseconds = wall.tv_nsec >= 0 && wall.tv_nsec < 1000000000L
+                       ? (unsigned)(wall.tv_nsec / 1000000L)
+                       : 0;
+    g_process_start_wall[timestamp_len++] = '.';
+    g_process_start_wall[timestamp_len++] = (char)('0' + milliseconds / 100);
+    g_process_start_wall[timestamp_len++] = (char)('0' + (milliseconds / 10) % 10);
+    g_process_start_wall[timestamp_len++] = (char)('0' + milliseconds % 10);
+    g_process_start_wall[timestamp_len++] = 'Z';
+    g_process_start_wall[timestamp_len] = 0;
 }
 
 static void copy_text(char *dst, size_t cap, const char *src) {
