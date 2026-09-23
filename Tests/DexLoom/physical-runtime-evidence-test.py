@@ -315,6 +315,17 @@ def main():
             manifest["files"]["crash"] = {"name": evidence.CURRENT_NAMES["crash"],
                                           "state": "OPTIONAL_ABSENT", "size": 0, "sha256": None}
             (docs / evidence.CURRENT_MANIFEST).write_text(json.dumps(manifest), encoding="utf-8")
+            writing_manifest = json.loads(json.dumps(manifest))
+            for key in ("run", "trace"):
+                writing_manifest["files"][key]["state"] = "WRITING"
+            (docs / evidence.CURRENT_NAMES["trace"]).write_text(
+                payloads["trace"] + json.dumps(event("LATER_EVENT")) + "\n", encoding="utf-8")
+            check(evidence.manifest_integrity_ok(docs, writing_manifest, evidence.CURRENT_NAMES),
+                  "active run and trace may grow without invalidating their identity")
+            writing_manifest["files"]["runtime"]["state"] = "WRITING"
+            check(not evidence.manifest_integrity_ok(docs, writing_manifest, evidence.CURRENT_NAMES),
+                  "runtime evidence cannot bypass sealed digest validation")
+            (docs / evidence.CURRENT_NAMES["trace"]).write_text(payloads["trace"], encoding="utf-8")
             exporter = pathlib.Path(__file__).resolve().parents[2] / "ci" / "export-physical-evidence.py"
             proc = subprocess.run([sys.executable, str(exporter), "--bundle-id", "dev.agr.simulator",
                                    "--documents", str(docs), "--output", str(out)],

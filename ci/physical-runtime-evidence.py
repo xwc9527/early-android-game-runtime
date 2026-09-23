@@ -84,6 +84,12 @@ def manifest_integrity_ok(root, manifest, names):
         path = pathlib.Path(root) / expected_name
         if not path.is_file():
             return False
+        # An active run/trace is intentionally mutable. Identity is checked
+        # against its events separately; only sealed files have fixed digests.
+        if state == "WRITING":
+            if key not in ("run", "trace"):
+                return False
+            continue
         if item.get("size") is not None and path.stat().st_size != item.get("size"):
             return False
         if item.get("sha256") and sha256_file(path) != item.get("sha256"):

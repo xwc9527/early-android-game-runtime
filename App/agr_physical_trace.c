@@ -1357,7 +1357,7 @@ static int write_current_manifest(void) {
         hashes[i][0] = 0;
         if (stat(path, &st) == 0) {
             sizes[i] = (long long)st.st_size;
-            snprintf(states[i], sizeof(states[i]), i == 1 && g_active && !g_finished ? "WRITING" : "PRESENT");
+            snprintf(states[i], sizeof(states[i]), i <= 1 && g_active && !g_finished ? "WRITING" : "PRESENT");
             snprintf(hashes[i], sizeof(hashes[i]), "null");
             if (agr_physical_sha256_file && agr_physical_sha256_file(path, hash, sizeof(hash)) == 0)
                 snprintf(hashes[i], sizeof(hashes[i]), "\"%s\"", hash);
