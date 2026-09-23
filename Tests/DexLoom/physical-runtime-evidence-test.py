@@ -2,9 +2,11 @@
 """Focused contract tests for physical evidence identity and draw-boundary classification."""
 
 import importlib.util
+import contextlib
 import hashlib
 import json
 import pathlib
+import secrets
 import shutil
 import subprocess
 import sys
@@ -27,6 +29,24 @@ PID = 1234
 START = "2026-09-23T02:00:00.123Z"
 START_MONO = 123456789
 APK = evidence.EXPECTED_APK_SHA256
+
+
+@contextlib.contextmanager
+def temporary_test_directory():
+    if not sys.platform.startswith("win"):
+        with tempfile.TemporaryDirectory() as path:
+            yield path
+        return
+    parent = pathlib.Path(__file__).resolve().parents[2] / "build"
+    parent.mkdir(exist_ok=True)
+    path = parent / ("physical-evidence-test-" + secrets.token_hex(12))
+    path.mkdir()
+    try:
+        yield str(path)
+    finally:
+        if path.resolve().parent != parent.resolve():
+            raise AssertionError("test cleanup escaped workspace build directory")
+        shutil.rmtree(path)
 
 
 def environment():
@@ -253,10 +273,9 @@ def main():
           null_chain["causality_claimed"] is False,
           "null scale source remains an observation rather than a root-cause claim")
 
-    # Linux CI exercises filesystem snapshots; the Windows sandbox disallows
-    # creation of nested temporary directories from Python subprocesses.
-    if not sys.platform.startswith("win"):
-        with tempfile.TemporaryDirectory() as temp:
+    # Exercise current, previous and legacy evidence exports on both hosts.
+    # Windows uses an ACL-inheriting workspace directory for subprocess access.
+    with temporary_test_directory() as temp:
             root = pathlib.Path(temp)
             bitmap_contract = pathlib.Path(__file__).resolve().parents[2] / "ci" / "physical-bitmap-chain-contract.py"
             valid_summary = root / "valid-bitmap-summary.json"

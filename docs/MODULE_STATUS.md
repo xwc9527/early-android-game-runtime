@@ -22,3 +22,5 @@ Status controls modification permission, not total completeness. `stable` means 
 | Product UI/library | experimental | — | — | product phase begins |
 
 Stable modules are readable and diagnosable. Discovery may trace, instrument, or temporarily experiment on them without a formal reopen. A production change carried into closure requires an evidence-backed reopen reason in machine-readable run metadata. Stable means the current contract is protected, not that the module is complete.
+
+The active physical first-frame candidate reopens only the iOS host Bitmap codec **build boundary**, not the already verified API19 BitmapFactory/Skia algorithm: `framework-bitmap-iphoneos-codecs.json` records that `build-iphoneos.sh` lacked JPEG/GIF decoder objects while the original APK first decodes `background.jpg`. The device-codec parity repair is IMPLEMENTED / UNVERIFIED until the exact candidate passes Simulator, iphoneos build and a new physical run. The first observed NPE and empty posts on the old device binary do not promote this candidate to CLOSED.

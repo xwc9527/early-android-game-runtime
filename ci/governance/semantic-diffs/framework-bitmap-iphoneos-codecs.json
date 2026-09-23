@@ -1,0 +1,77 @@
+{
+  "schema_version": 2,
+  "classification": "HOST_ADAPTATION_BUG",
+  "subsystem": "API19 BitmapFactory resource decoding on iphoneos",
+  "observed_discontinuity": "The identity-matched Frozen Bubble device trace reaches the first GameThread.scaleFrom and receives a null source Bitmap. The original APK's first decoded background is a JPEG. The device executable's build inputs contain only the PNG Skia decoder, while Linux and Simulator include JPEG and GIF decoders.",
+  "upstream": {
+    "map_entry": "framework.graphics.bitmap_decode_resource",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "graphics/java/android/graphics/BitmapFactory.java",
+      "Vendor/AOSP/skia/src/images/SkImageDecoder_FactoryDefault.cpp",
+      "Vendor/AOSP/skia/src/images/SkImageDecoder_FactoryRegistrar.cpp"
+    ],
+    "call_path": [
+      "GameThread.<init> BitmapFactory.decodeResource(background.jpg)",
+      "SkImageDecoder::Factory registry",
+      "GameThread.resizeBitmaps/scaleFrom"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "An original APK JPEG or GIF resource decodable on API19 must not become null solely because the iOS device host omits that image codec.",
+    "The same host BitmapFactory decoder surface is compiled and linked into Simulator and iphoneos builds.",
+    "A failed decode still follows API19 null/exception behavior; no game-specific fallback image is created."
+  ],
+  "agr": {
+    "files": [
+      "scripts/build-iphoneos.sh",
+      "scripts/build-and-run-simulator.sh",
+      "scripts/build-ios-image-codecs.sh",
+      "Runtime/Bitmap/agr_bitmap.cpp",
+      "Runtime/DexLoom/game_dex_runner.c"
+    ],
+    "call_path": [
+      "bitmap_decode_resource",
+      "agr_bitmap_decode",
+      "SkImageDecoder::Factory",
+      "guest Bitmap field",
+      "bitmap_create_scaled"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "The previous iphoneos link inputs omitted SkJpegUtility, SkJPEGImageDecoder, SkGIFImageDecoder and their libjpeg/giflib objects. SkImageDecoder::Factory can therefore only select PNG in that executable. The shared iOS codec build and identical Skia decoder source lists remove that device-only omission.",
+      "relevance": "The unchanged APK stores the first decodeResource result in mBackgroundOrig and immediately scales it when the display is 1080x2340. That resource is res/drawable/background.jpg."
+    }
+  ],
+  "earliest_evidenced_divergence": "Device build lacked a JPEG decoder before the APK's first BitmapFactory.decodeResource(background.jpg); the earlier physical trace cannot directly observe that return value, but its first scaleFrom receives null and the exact DEX/data/build path explains why.",
+  "causal_status": "CONTRACT_CONFIRMED",
+  "evidence_level": "CONTRACT_CONFIRMED",
+  "evidence": [
+    {
+      "type": "RUNTIME",
+      "artifact": "Desktop AGR legacy run 00012ea72cdb18b80000cdd96ab359b3, commit 3dc5fb0, APK SHA-256 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569: seq 165 decodeResource first call, seq 292 first scaleFrom, seq 298 fail=NPE;src=0, seq 304 surfaceChanged throw; draw 0."
+    },
+    {
+      "type": "SOURCE",
+      "artifact": "Original APK GameThread.<init> DEX pc 161 decodeResource for 0x7f020001, pc 168 mBackgroundOrig store; resizeBitmaps pc 0-4 reads mBackgroundOrig for first scaleFrom. APK ZIP background.jpg has JPEG signature. Pinned Skia FactoryDefault/FactoryRegistrar selects only compiled registrars."
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Existing Linux agr-bitmap-draw-host decodes background.jpg and GIF; existing Simulator first-content-frame evidence decodes/draws background.jpg. The new iOS source-parity contract asserts JPEG/GIF source and object inclusion in both host builds."
+    }
+  ],
+  "remaining_uncertainty": [
+    "New iphoneos binary has not yet been built by GitHub Actions or run on the physical device; repaired device first-content-frame remains UNVERIFIED.",
+    "Earlier GUEST_METHOD_EXIT records lack return-value identity; new passive Bitmap witnesses must confirm the device decode result and full field/reference chain.",
+    "The older Simulator 1080x2340 result predates the exact current candidate; exact-commit differential is pending."
+  ],
+  "next_action": "Run Linux source/bitmap contracts, exact-candidate 1080x2340 Simulator and iphoneos build; then run the new binary on the device and compare identity-validated decode/field/scale/draw/post witnesses without modifying the APK.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "The existing KitKat SkImageDecoder source and host libjpeg/giflib ports are reused. Only the iOS build target/codec link inputs are unified; BitmapFactory/DEX/Canvas semantics are unchanged."
+}

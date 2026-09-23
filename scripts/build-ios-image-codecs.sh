@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Compile IJG libjpeg and giflib for the iOS Simulator so KitKat SkImageDecoder
-# can decode the same JPEG and GIF resources the Linux host contract decodes.
+# Compile IJG libjpeg and giflib for the selected iOS SDK so KitKat
+# SkImageDecoder exposes the same APK resource formats on Simulator and device.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${1:?output directory}"
@@ -48,7 +48,12 @@ typedef unsigned char boolean;
 #undef RIGHT_SHIFT_IS_UNSIGNED
 #endif
 EOF
-COMMON=(-target "$TARGET" -isysroot "$SDK" -mios-simulator-version-min=15.0 -O2 -w)
+case "$TARGET" in
+  *-apple-ios*-simulator) MIN_VERSION=(-mios-simulator-version-min=15.0) ;;
+  arm64-apple-ios*) MIN_VERSION=(-miphoneos-version-min=15.0) ;;
+  *) echo "unsupported iOS image codec target: $TARGET" >&2; exit 2 ;;
+esac
+COMMON=(-target "$TARGET" -isysroot "$SDK" "${MIN_VERSION[@]}" -O2 -w)
 : > "$OUT/objects.list"
 JPEG_LIB=(
   jaricom.c jcapimin.c jcapistd.c jcarith.c jccoefct.c jccolor.c jcdctmgr.c jchuff.c
@@ -70,4 +75,4 @@ for base in dgif_lib.c egif_lib.c gifalloc.c gif_err.c gif_hash.c openbsd-reallo
 done
 printf '%s\n' "$CACHE/jpeg-9e" > "$OUT/jpeg-include"
 printf '%s\n' "$CACHE/giflib-5.2.2" > "$OUT/gif-include"
-echo "simulator image codecs: $(wc -l < "$OUT/objects.list") objects"
+echo "$TARGET image codecs: $(wc -l < "$OUT/objects.list") objects"

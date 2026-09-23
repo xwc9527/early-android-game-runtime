@@ -20,6 +20,7 @@ on:
       - 'Tests/DexLoom/surface-callback-outcome-host.c'
       - 'Tests/DexLoom/make_surface_callback_outcome_fixture.py'
       - 'Tests/DexLoom/frozen-bubble-1080-host.c'
+      - 'Tests/DexLoom/ios-image-codec-parity.py'
       - 'App/agr_physical_trace.c'
       - 'Runtime/DexLoom/agr_forensic.h'
       - 'ci/physical-runtime-evidence.py'
@@ -38,6 +39,7 @@ on:
       - 'scripts/build-agr-bitmap-host.sh'
       - 'scripts/build-and-run-simulator.sh'
       - 'scripts/build-iphoneos.sh'
+      - 'scripts/build-ios-image-codecs.sh'
       - 'ci/framework-traversal-dispatch-contract.py'
       - 'ci/build-framework-traversal-dispatch-summary.py'
       - 'ci/governance/**'
@@ -69,6 +71,8 @@ jobs:
           key: agr-samples-full-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
       - name: Install GLES headers and image codecs
         run: sudo apt-get update -qq && sudo apt-get install -y -qq libgles2-mesa-dev zlib1g-dev libjpeg-dev libgif-dev g++
+      - name: Verify iOS decoder parity against the original APK resource formats
+        run: python3 Tests/DexLoom/ios-image-codec-parity.py
       - name: Compile and run the host traversal-dispatch contract
         run: |
           set -euo pipefail

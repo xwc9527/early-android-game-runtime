@@ -6,6 +6,8 @@ import hashlib
 import json
 import os
 import pathlib
+import re
+import secrets
 import shutil
 import subprocess
 import sys
@@ -39,6 +41,22 @@ def read_json(path):
         return json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return None
+
+
+def make_stage(parent):
+    # Python's tempfile creates mode 0700 directories. Some Windows device
+    # workstations cannot create children in those directories even as the
+    # creating user. A random exclusive directory inherits the user's ACL.
+    if os.name != "nt":
+        return pathlib.Path(tempfile.mkdtemp(prefix=".agr-physical-export-", dir=parent))
+    for _ in range(16):
+        path = parent / (".agr-physical-export-" + secrets.token_hex(12))
+        try:
+            path.mkdir()
+            return path
+        except FileExistsError:
+            continue
+    raise RuntimeError("cannot allocate an exclusive evidence staging directory")
 
 
 def remote_pull(bundle, remote, local, udid=None):
@@ -125,11 +143,13 @@ def main():
     p.add_argument("--run-id", help="export previous/<run_id>; default exports current")
     p.add_argument("--output", required=True, type=pathlib.Path)
     args = p.parse_args()
+    if args.run_id and not re.fullmatch(r"[A-Za-z0-9_-]{1,79}", args.run_id):
+        p.error("--run-id must be one safe archive directory name")
     out = args.output.resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
     if out.exists() and (not out.is_dir() or any(out.iterdir())):
         raise SystemExit("output must be a new or empty directory; refusing to mix with prior export")
-    stage = pathlib.Path(tempfile.mkdtemp(prefix=".agr-physical-export-", dir=out.parent))
+    stage = make_stage(out.parent)
 
     previous = bool(args.run_id)
     base = pathlib.PurePosixPath("previous") / args.run_id if previous else pathlib.PurePosixPath()
@@ -221,7 +241,8 @@ def main():
         snapshot_state = "HASH_MISMATCH"
     bundle = {
         "schema": "agr.physical-export.v1",
-        "source": "previous" if previous else ("legacy" if legacy else "current"),
+        "source": "legacy" if file_names == LEGACY else ("previous" if previous else "current"),
+        "archive_location": "previous" if previous else "current",
         "requested_run_id": args.run_id,
         "run_id": (run or {}).get("run_id"),
         "process_launch_id": (run or {}).get("process_launch_id"),

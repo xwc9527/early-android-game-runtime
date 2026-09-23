@@ -129,7 +129,7 @@ for SOURCE in "$PNG"/*.c "$ZLIB"/*.c; do
   case "$(basename "$SOURCE")" in example.c|pngtest.c) continue;; esac
   OBJECT="$BUILD/obj/codec-$(basename "$SOURCE" .c).o"; clang "${COMMON[@]}" -w -UMACOS -I"$PNG" -I"$ZLIB" -c "$SOURCE" -o "$OBJECT"; PNG_OBJECTS+=("$OBJECT")
 done
-bash "$ROOT/scripts/build-simulator-image-codecs.sh" "$BUILD/image-codecs" "$SDK" "$TARGET"
+bash "$ROOT/scripts/build-ios-image-codecs.sh" "$BUILD/image-codecs" "$SDK" "$TARGET"
 JPEG_INC="$(cat "$BUILD/image-codecs/jpeg-include")"
 GIF_INC="$(cat "$BUILD/image-codecs/gif-include")"
 CODEC_OBJECTS=()
