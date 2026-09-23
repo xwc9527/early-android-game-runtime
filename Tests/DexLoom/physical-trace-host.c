@@ -107,8 +107,8 @@ static void test_sequence_and_identity(const char *script) {
     agr_physical_trace_shutdown();
     snprintf(summary, sizeof(summary), "%s/summary.json", dir);
     expect(run_parser(script, dir, summary) == 0, "parser seq");
-    expect(strstr(classification_of(summary), "EVIDENCE_INCOMPLETE") != NULL ||
-           strstr(classification_of(summary), "FAIL_") != NULL, "seq class");
+    expect(strcmp(classification_of(summary), "RUNTIME_ERROR") == 0,
+           "runtime error termination class");
     {
         FILE *fp = fopen(summary, "r");
         char body[8192];
@@ -462,7 +462,8 @@ static void test_canvas_and_pass(const char *script) {
     fclose(fp);
     snprintf(summary, sizeof(summary), "%s/summary.json", pass_dir);
     expect(run_parser(script, pass_dir, summary) == 0, "pass parser");
-    expect(strcmp(classification_of(summary), "EVIDENCE_INCOMPLETE") == 0, "strict pass requires full evidence");
+    expect(strcmp(classification_of(summary), "DRAW_NOT_ENTERED") == 0,
+           "strict pass requires a confirmed draw path");
 }
 
 static void test_crash(const char *script) {
