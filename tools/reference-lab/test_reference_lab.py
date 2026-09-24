@@ -6,6 +6,7 @@ from pathlib import Path
 from lab import assert_not_oracle, describe, ensure_layout
 from mapper import build_book, write_book
 from source_closure import close_entry
+from source_index import build_index
 
 EVIDENCE = Path(__file__).with_name("clean_boot_evidence.json")
 
@@ -92,6 +93,28 @@ class ReferenceLabTest(unittest.TestCase):
         }, {"entries": {}})
         self.assertEqual(manifest["status"], "BOUNDARY")
         self.assertEqual(manifest["migration_type"], "SERVICE_HLE")
+
+    def test_jni_table_index_uses_only_listed_symbols(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "Jni.cpp"
+            path.write_text(
+                "static const struct JNINativeInterface gNativeInterface = {\n"
+                "    GetStaticIntField,\n"
+                "    CallIntMethod,\n"
+                "    NULL,\n"
+                "};\n",
+                encoding="utf-8",
+            )
+            document = build_index(path)
+            self.assertIn("GetStaticIntField", document["entries"])
+            self.assertNotIn("PhoneWindow", document["entries"])
+            manifest = close_entry({
+                "dependency_id": "JNI_BINDING:GetStaticIntField",
+                "canonical_name": "GetStaticIntField",
+            }, document)
+            self.assertEqual(manifest["status"], "SOURCE_CLOSED")
+            self.assertEqual(manifest["source_file"], "vm/Jni.cpp")
+            self.assertEqual(manifest["owner_cluster"], "JNI")
 
     def test_clean_boot_evidence_is_not_trace(self):
         evidence = json.loads(EVIDENCE.read_text(encoding="utf-8"))

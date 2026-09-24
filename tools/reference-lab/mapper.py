@@ -52,7 +52,15 @@ def _record(kind, canonical, confidence, **fields):
         "confidence": confidence,
         "migration_status": "UNMAPPED",
         "native": kind in ("NATIVE_SYMBOL", "JNI_BINDING"),
-        "source_revision": "Android 4.4.4_r2",
+        "owner_cluster": fields.get("owner_cluster"),
+        "caller": fields.get("caller"),
+        "callsite": fields.get("callsite"),
+        "lifecycle_phase": fields.get("lifecycle_phase"),
+        "source_repo": "platform/dalvik",
+        "source_revision": "android-4.4.4_r2",
+        "source_module": None,
+        "source_file": None,
+        "source_symbol": None,
     }
     record.update(fields)
     return record

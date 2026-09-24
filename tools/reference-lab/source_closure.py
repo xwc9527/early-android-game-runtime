@@ -43,6 +43,9 @@ def close_entry(entry, index, migration_type="SOURCE_PORT"):
         return manifest
     for name in LIST_FIELDS:
         manifest[name] = list(pinned.get(name) or [])
+    for name in ("owner_cluster", "source_repo", "source_module", "source_file", "source_symbol"):
+        if pinned.get(name):
+            manifest[name] = pinned[name]
     if manifest["source_files"] and manifest["required_symbols"]:
         manifest["status"] = "SOURCE_CLOSED"
     else:

@@ -1,0 +1,25 @@
+{
+  "dependency_id": "JNI_BINDING:GetStaticIntField",
+  "canonical_name": "GetStaticIntField",
+  "migration_type": "SOURCE_PORT",
+  "status": "SOURCE_CLOSED",
+  "source_revision": "Android 4.4.4_r2",
+  "source_files": [
+    "platform/dalvik/vm/Jni.cpp"
+  ],
+  "required_symbols": [
+    "GetStaticIntField"
+  ],
+  "data_structures": [],
+  "init_deps": [],
+  "registration_deps": [],
+  "cross_cluster_deps": [],
+  "excluded_deps": [],
+  "service_boundaries": [],
+  "host_adaptation_points": [],
+  "owner_cluster": "JNI",
+  "source_repo": "platform/dalvik",
+  "source_module": "vm",
+  "source_file": "vm/Jni.cpp",
+  "source_symbol": "GetStaticIntField"
+}
