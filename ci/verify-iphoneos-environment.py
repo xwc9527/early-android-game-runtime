@@ -10,7 +10,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
-APK = ROOT / "samples" / "org.jfedor.frozenbubble_8.apk"
+APK = ROOT / "samples" / "frozen-bubble.apk"
 EXPECTED_SHA = "57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569"
 
 

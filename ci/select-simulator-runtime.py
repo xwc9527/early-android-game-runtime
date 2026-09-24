@@ -12,7 +12,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME_ID = "com.apple.CoreSimulator.SimRuntime.iOS-27-0"
 PRODUCT_VERSION = "27.0"
-APK_NAME = "org.jfedor.frozenbubble_8.apk"
+APK_NAME = "frozen-bubble.apk"
 APK_SHA256 = "57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569"
 
 
