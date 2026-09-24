@@ -408,7 +408,7 @@ static DxMethod *jni_target(jobject receiver, jmethodID mid, int virtual) {
     DxMethod *selected;
     if (jni_exception_pending()) return NULL;
     if (!method || !g_vm) {
-        jni_fail_closed("Ljava/lang/NoSuchMethodError;");
+        jni_fail_closed("Ljava/lang/Exception;");
         return NULL;
     }
     self = dx_jni_unwrap_object(receiver);
@@ -416,7 +416,7 @@ static DxMethod *jni_target(jobject receiver, jmethodID mid, int virtual) {
     else if (virtual) opcode = 0x6e;
     else opcode = 0x70;
     selected = dx_vm_select_invoke(g_vm, opcode, method, self, NULL);
-    if (!selected) jni_fail_closed("Ljava/lang/AbstractMethodError;");
+    if (!selected) jni_fail_closed("Ljava/lang/Exception;");
     return selected;
 }
 
@@ -456,7 +456,7 @@ static DxValue jni_invoke(jobject receiver, jmethodID mid, const jvalue *vals, v
     rc = dx_vm_execute_method(g_vm, method, args, count, &result);
     if (jni_exception_pending()) return (DxValue){0};
     if (rc != DX_OK) {
-        jni_fail_closed("Ljava/lang/InternalError;");
+        jni_fail_closed("Ljava/lang/Exception;");
         return (DxValue){0};
     }
     return result;
@@ -707,7 +707,7 @@ static DxValue *jni_static_slot(jfieldID fid) {
     if (!field || !field->is_static || !field->declaring ||
         field->index >= field->declaring->static_field_count ||
         !field->declaring->static_fields) {
-        jni_fail_closed("Ljava/lang/NoSuchFieldError;");
+        jni_fail_closed("Ljava/lang/Exception;");
         return NULL;
     }
     return &field->declaring->static_fields[field->index];
