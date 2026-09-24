@@ -18,12 +18,15 @@ test -d "$source_root/.repo"
 mkdir -p "$out_dir"
 mkdir -p "$out_dir/host-bin"
 ln -sfn "$(command -v python2)" "$out_dir/host-bin/python"
+ln -sfn "$source_root/prebuilts/misc/linux-x86/bison/bison" \
+    "$out_dir/host-bin/bison"
 
 cd "$source_root"
 export JAVA_HOME="$jdk_root"
 export PATH="$make_root/bin:$out_dir/host-bin:$JAVA_HOME/bin:$PATH"
 export OUT_DIR="$out_dir"
 export ALLOW_OPENJDK6=true
+export BISON_PKGDATADIR="$source_root/external/bison/data"
 
 # The only source difference is the reviewed host build-tool vendor gate.
 repo forall -e -c 'if [ "$REPO_PATH" != build ]; then test -z "$(git status --porcelain)"; fi'
