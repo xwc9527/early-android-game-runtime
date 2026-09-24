@@ -4876,9 +4876,9 @@ static DxResult dx_vm_load_class_locked(DxVM *vm, const char *descriptor, DxClas
     uint32_t initiating_id = initiating ? initiating->id : 0;
     for (int k = 0; k < loading_depth; k++) {
         if (loading_loader[k] == initiating_id && strcmp(loading_stack[k], descriptor) == 0) {
-            DX_WARN(TAG, "Circular class loading detected for %s, using Object", descriptor);
-            if (out) *out = vm->class_object;
-            return DX_OK;
+            DX_WARN(TAG, "Circular class loading detected for %s", descriptor);
+            if (out) *out = NULL;
+            return DX_ERR_CLASS_NOT_FOUND;
         }
     }
     if (loading_depth < 64) {

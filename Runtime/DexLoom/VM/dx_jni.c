@@ -694,11 +694,17 @@ static void JNICALL jni_SetDoubleField(JNIEnv *env, jobject obj, jfieldID fid, j
 // Static method calls
 static jmethodID JNICALL jni_GetStaticMethodID(JNIEnv *env, jclass clazz,
                                                 const char *name, const char *sig) {
-    (void)env; (void)sig;
     DxClass *cls = dx_jni_unwrap_class(clazz);
-    if (!cls || !name) return NULL;
-    DxMethod *m = dx_vm_find_method(cls, name, NULL);
-    return (jmethodID)m;
+    char *shorty;
+    DxMethod *method;
+    (void)env;
+    if (!cls || !name || !sig) return NULL;
+    shorty = jni_sig_to_shorty(sig);
+    if (!shorty) return NULL;
+    method = dx_vm_find_method(cls, name, shorty);
+    dx_free(shorty);
+    if (!method || (method->access_flags & DX_ACC_STATIC) == 0) return NULL;
+    return (jmethodID)method;
 }
 
 // CallStatic<Type>Method — return defaults
