@@ -24,6 +24,19 @@ static const int harness_called_do_traversal = 0;
 static const int harness_called_render_api = 0;
 static int g_failures = 0;
 
+static void print_game_modes(agr_dex_game *game, const char *when) {
+    DxVM *vm = agr_dex_game_vm(game);
+    for (uint32_t i = 0; vm && i < vm->heap_count; i++) {
+        DxObject *obj = vm->heap[i];
+        DxValue mode = DX_NULL_VALUE;
+        if (!obj || !obj->klass || !obj->klass->descriptor ||
+            strcmp(obj->klass->descriptor, "Lorg/jfedor/frozenbubble/GameView$GameThread;") != 0)
+            continue;
+        if (dx_vm_get_field(obj, "mMode", &mode) == DX_OK && mode.tag == DX_VAL_INT)
+            printf("guest_game_mode %s=%d\n", when, mode.i);
+    }
+}
+
 static void expect(int condition, const char *message) {
     if (condition) {
         printf("PASS %s\n", message);
@@ -158,11 +171,18 @@ int main(int argc, char **argv) {
     {
         uint32_t before_posts = snapshot.canvas_post_count;
         uint64_t before_hash = snapshot.canvas_buffer_hash_after;
+        print_game_modes(game, "before_touch");
         int down = agr_dex_game_dispatch_touch(game, 0, 540.0f, 450.0f, 1000);
         int up = agr_dex_game_dispatch_touch(game, 1, 540.0f, 450.0f, 1100);
         expect(down == 1 && up == 1, "original GameView consumes down and up through Activity/Window/View");
         usleep(300000);
         expect(agr_dex_game_runtime_snapshot(game, &snapshot) == 0, "snapshot after touch");
+        print_game_modes(game, "after_touch");
+        for (uint32_t i = 0; i < snapshot.method_event_count; i++)
+            if (strstr(snapshot.method_events[i].method, "onTouchEvent") ||
+                strstr(snapshot.method_events[i].method, "doTouchEvent") ||
+                strstr(snapshot.method_events[i].method, "MotionEvent"))
+                printf("guest_touch_method %s\n", snapshot.method_events[i].method);
         printf("touch down=%d up=%d attached=%d visible=%d dispatched=%u consumed=%u posts=%u->%u hash=%llx->%llx vm_error=%s\n",
                down, up, snapshot.viewroot_attach_completed, snapshot.window_visible,
                snapshot.touch_dispatched, snapshot.touch_consumed,
