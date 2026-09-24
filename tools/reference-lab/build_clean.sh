@@ -37,6 +37,12 @@ test "$(git -C build diff -- core/main.mk | sha256sum | cut -d' ' -f1)" = \
 sha256sum "$(dirname "$0")/api19-openjdk6-build.patch" \
     > "$out_dir/host-build-patch.sha256"
 repo manifest -r -o "$out_dir/source-manifest.xml"
+{
+    "$JAVA_HOME/bin/java" -version
+    "$make_root/bin/make" --version | head -n 1
+    python --version
+    uname -a
+} > "$out_dir/host-toolchain.txt" 2>&1
 
 source build/envsetup.sh >/dev/null
 lunch aosp_x86-eng
