@@ -1,24 +1,24 @@
 {
   "schema_version": 1,
   "enabled": true,
-  "question": "On the exact candidate and unchanged APK at a 1080x2340 Simulator host display, does an API19 SurfaceHolder post cross the generic host consumer boundary and produce nonblack screen pixels over multiple frames?",
+  "question": "On the exact iOS 27.0 Simulator and unchanged Frozen Bubble APK, does the original GameThread continue to post new content after the first three visible submissions during a bounded zero-input observation?",
   "current_uncertainty": [
-    "The identity-matched physical run cdbaf34 mutated and posted one content buffer but displayed black. The producer post had no iOS consumer, and the forensic harness destroyed the game while its second draw was active. No current Simulator screenshot demonstrates actual screen presentation."
+    "The prior Simulator evidence seals after three host submissions and therefore does not show the game's subsequent producer, VM, or presentation state. The iOS 27.0 toolchain/runtime baseline is now validated on the same candidate as the iphoneos build, but there is no fresh physical run for causal comparison."
   ],
   "expected_outcome_a": {
-    "result": "At least three distinct producer posts are acquired and submitted by the generic host consumer, a Simulator screen capture has nonblack central pixels, the manifest is valid, and the same original game continues rather than being destroyed after the first post.",
+    "result": "Post/draw and host submission counts continue advancing through the observation window without a Runtime error.",
     "excludes": [
-      "equating CONTENT_POSTED with visible screen output",
-      "using a game-specific image or harness screenshot as display output"
+      "claiming that the producer stops automatically after the first-content evidence is sealed",
+      "treating the first three submissions as the whole original game loop"
     ]
   },
   "expected_outcome_b": {
-    "result": "The post is not acquired or submitted, the screen remains black despite submission, the guest stops, or the evidence bundle fails identity/integrity validation; the first failed boundary is retained.",
+    "result": "New posts or guest progress cease, or a Runtime failure appears; bounded checkpoints locate the first observed loss of progress without assuming its cause.",
     "excludes": [
-      "claiming a visible frame from a successful layer assignment alone",
-      "claiming physical iPhone presentation from Simulator behavior"
+      "claiming continued game progress solely from a still-running iOS process",
+      "attributing a Simulator observation to a device-specific defect before a same-commit physical run"
     ]
   },
-  "why_cheaper_test_is_insufficient": "The Linux Surface/Canvas contract verifies posted-buffer ownership and post counts, but cannot test CALayer composition or Simulator screen pixels. Exact-candidate Simulator capture is the cheapest test of the host endpoint before producing a new device IPA.",
+  "why_cheaper_test_is_insufficient": "Static source and Linux contracts establish control flow and API behavior but cannot determine whether the actual iOS 27.0 Simulator event loop, GameThread and host presentation continue together after the current evidence cutoff. The existing iOS 27.0 validation stops at the first three submissions.",
   "prior_expensive_runs_without_information_gain": 0
 }

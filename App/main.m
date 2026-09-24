@@ -1261,6 +1261,9 @@ static uint32_t gPhysicalHeight = 0;
 static int gPhysicalDisplayOverride = 0;
 static int gPhysicalStart = -1;
 static BOOL gPhysicalFinished = NO;
+static BOOL gPostFirstFrameDiscovery = NO;
+static NSMutableArray *gPostFirstFrameCheckpoints = nil;
+static uint64_t gNextPostFirstFrameCheckpoint = 0;
 static BOOL gPhysicalContentHold = NO;
 static int gPhysicalPolls = 0;
 static NSString *gPhysicalApkPath = nil;
@@ -1867,6 +1870,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     BOOL frameworkRuntimeContinuation=[arguments containsObject:@"--framework-viewroot-attach-discovery"];
     BOOL firstTraversalDiscovery=[arguments containsObject:@"--framework-first-traversal-discovery"];
     BOOL traversalDispatch=[arguments containsObject:@"--framework-traversal-dispatch-discovery"];
+    gPostFirstFrameDiscovery=[arguments containsObject:@"--post-first-frame-discovery"];
     BOOL physicalRuntime=NO;
     BOOL physicalDisplayOverride=NO;
     uint32_t runtimeWidth=(uint32_t)UIScreen.mainScreen.nativeBounds.size.width;
@@ -1875,7 +1879,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     physicalRuntime=![arguments containsObject:@"--interactive"];
     if (!physicalRuntime) interactive=YES;
 #else
-    physicalRuntime=[arguments containsObject:@"--physical-runtime-validation"];
+    physicalRuntime=[arguments containsObject:@"--physical-runtime-validation"] || gPostFirstFrameDiscovery;
 #endif
     if (physicalRuntime) {
       /* Establish a new Documents current-root before constructing the scene
@@ -2437,6 +2441,8 @@ static void finishPhysicalReport(void) {
         @"content_posted":contentPosted ? @"YES" : @"NO",
         @"host_surface_submissions":@(gPhysicalHostSubmissions),
         @"host_last_submitted_hash":[NSString stringWithFormat:@"%016llx", (unsigned long long)gPhysicalLastSubmittedHash],
+        @"observation_mode":gPostFirstFrameDiscovery ? @"POST_FIRST_FRAME_ZERO_INPUT" : @"FIRST_CONTENT_FRAME",
+        @"post_first_frame_checkpoints":gPostFirstFrameCheckpoints ?: @[],
         @"screen_presented":@"NOT_TESTED",
         @"environment": gStartEnvironment ?: gLatestEnvironment ?: @{},
         @"environment_start": gStartEnvironment ?: gLatestEnvironment ?: @{},
@@ -2452,13 +2458,15 @@ static void finishPhysicalReport(void) {
     {
         const char *reason = gPhysicalError ? "RUNTIME_ERROR" :
             (gPhysicalStart != 0 ? "ACTIVITY_START_FAILED" :
-             (contentPosted ? "CONTENT_POSTED" : "OBSERVATION_TIMEOUT"));
+             (gPostFirstFrameDiscovery ? "POST_FIRST_FRAME_OBSERVED" :
+              (contentPosted ? "CONTENT_POSTED" : "OBSERVATION_TIMEOUT")));
         const char *stop = gPhysicalError || gPhysicalStart != 0 ? "RUNTIME_ERROR" :
-            (gPhysicalHostSubmissions >= 3 ? "HOST_SURFACE_SUBMITTED" :
+            (gPostFirstFrameDiscovery ? "POST_FIRST_FRAME_DEADLINE" :
+             (gPhysicalHostSubmissions >= 3 ? "HOST_SURFACE_SUBMITTED" :
              (contentProduced ? "CONTENT_PRODUCED" :
              (contentPosted ? "CONTENT_POSTED" :
               (gPhysicalPolls >= 80 ? "OBSERVATION_DEADLINE" :
-               (gPhysicalVsync >= 4 ? "FRAME_BUDGET" : "OBSERVATION_DEADLINE")))));
+               (gPhysicalVsync >= 4 ? "FRAME_BUDGET" : "OBSERVATION_DEADLINE"))))));
         agr_physical_trace_status preStatus;
         memset(&preStatus, 0, sizeof(preStatus));
         if (gPhysicalTraceReady) agr_physical_trace_copy_status(&preStatus);
@@ -2516,7 +2524,7 @@ static void finishPhysicalReport(void) {
     agr_physical_trace_set_lock_probe(NULL, NULL);
     /* The evidence window ends here, not the Android app process. A posted
        Surface remains live and keeps receiving producer frames after sealing. */
-    if (!contentPosted || gPhysicalHostSubmissions == 0 || gPhysicalError) {
+    if ((!gPostFirstFrameDiscovery && (!contentPosted || gPhysicalHostSubmissions == 0)) || gPhysicalError) {
         if (gPhysicalLink) { [gPhysicalLink invalidate]; gPhysicalLink=nil; }
         if (gPhysicalGame) agr_dex_game_destroy(gPhysicalGame);
         gPhysicalGame=NULL;
@@ -2536,7 +2544,8 @@ static void pollPhysicalReport(void) {
         snapshot.canvas_buffer_hash_before!=snapshot.canvas_buffer_hash_after;
     /* A producer post is not a visible frame. Observe several distinct host
        submissions before sealing evidence; never stop the running game here. */
-    if ((posted && gPhysicalHostSubmissions >= 3) || gPhysicalPolls>=80) {
+    if ((gPostFirstFrameDiscovery && hostMonoNs() >= gObsDeadline) ||
+        (!gPostFirstFrameDiscovery && ((posted && gPhysicalHostSubmissions >= 3) || gPhysicalPolls>=80))) {
         finishPhysicalReport();
         return;
     }
@@ -2652,11 +2661,19 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
         if (gPhysicalLink) {
             gPhysicalLink.paused=NO;
             gObsStart=hostMonoNs();
-            gObsDeadline=gObsStart + 8000000000ull;
+            gObsDeadline=gObsStart + (gPostFirstFrameDiscovery ? 20000000000ull : 8000000000ull);
             gDisplayLinkFrames=[NSMutableArray array];
+            if (gPostFirstFrameDiscovery) {
+                gPostFirstFrameCheckpoints=[NSMutableArray arrayWithCapacity:12];
+                gNextPostFirstFrameCheckpoint=gObsStart + 2000000000ull;
+            }
             agr_physical_trace_set_observation(gObsStart, gObsDeadline, 0, 0, "");
             physicalNote(AGR_PHYS_PHASE_CADISPLAYLINK_STARTED, 1, 0, 0, NULL);
             physicalNote(AGR_PHYS_PHASE_OBSERVATION_WINDOW, 1, 0, 0, "start");
+            if (gPostFirstFrameDiscovery) {
+                gPhysicalContentHold=YES;
+                pollPhysicalReport();
+            }
         } else {
             finishPhysicalReport();
         }
@@ -2677,7 +2694,8 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
     {
         NSDictionary *frame=displayLinkRecord(link, &gLinkPrevious);
         if (!gDisplayLinkFrames) gDisplayLinkFrames=[NSMutableArray array];
-        [gDisplayLinkFrames addObject:frame];
+        if (!gPostFirstFrameDiscovery || gDisplayLinkFrames.count < 256)
+            [gDisplayLinkFrames addObject:frame];
         physicalNote(AGR_PHYS_PHASE_CADISPLAYLINK_FRAME, 0, 0, 0,
                      [[NSString stringWithFormat:@"timestamp=%@ targetTimestamp=%@ duration=%@ maximumFPS=%@ delta=%@ thread=%@ app=%@",
                        frame[@"timestamp"], frame[@"targetTimestamp"], frame[@"duration"],
@@ -2689,6 +2707,28 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
     agr_dex_runtime_snapshot snapshot={0};
     agr_dex_game_runtime_snapshot(gPhysicalGame, &snapshot);
     physicalObserve(&snapshot, agr_dex_game_vm(gPhysicalGame));
+    if (gPostFirstFrameDiscovery && hostMonoNs() >= gNextPostFirstFrameCheckpoint &&
+        gPostFirstFrameCheckpoints.count < 12) {
+        [gPostFirstFrameCheckpoints addObject:@{
+            @"elapsed_ms":@((hostMonoNs()-gObsStart)/1000000ull),
+            @"host_vsync":@(gPhysicalVsync),
+            @"host_submissions":@(gPhysicalHostSubmissions),
+            @"host_last_hash":[NSString stringWithFormat:@"%016llx", (unsigned long long)gPhysicalLastSubmittedHash],
+            @"traversal":@(snapshot.traversal_count),
+            @"surface_generation":@(snapshot.content_surface_generation),
+            @"surface_valid":@(snapshot.content_surface_valid!=0),
+            @"locks":@(snapshot.canvas_lock_count),
+            @"posts":@(snapshot.canvas_post_count),
+            @"draw_bitmap":@(snapshot.canvas_draw_bitmap_count),
+            @"instructions":@(snapshot.instructions_executed),
+            @"methods":@(snapshot.methods_invoked),
+            @"pending_exception":@(snapshot.pending_exception!=0),
+            @"exception_class":[NSString stringWithUTF8String:snapshot.exception_class],
+            @"last_method":[NSString stringWithUTF8String:snapshot.last_method],
+            @"vm_error":[NSString stringWithUTF8String:snapshot.error]
+        }];
+        gNextPostFirstFrameCheckpoint=hostMonoNs()+2000000000ull;
+    }
     physicalNote(AGR_PHYS_PHASE_PHYSICAL_FRAME_END, 0, 0, 0, NULL);
     if (result<0) {
         finishPhysicalReport();

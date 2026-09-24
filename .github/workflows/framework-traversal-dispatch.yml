@@ -30,6 +30,8 @@ on:
       - 'ci/select-simulator-runtime.py'
       - 'ci/verify-iphoneos-environment.py'
       - 'ci/check-ios27-parity.py'
+      - 'ci/capture-post-first-frame.sh'
+      - 'ci/classify-post-first-frame.py'
       - 'Tests/DexLoom/ios27-environment-test.py'
       - 'Tests/DexLoom/physical-runtime-evidence-test.py'
       - 'Tests/DexLoom/canvas-state-clip-host.c'
@@ -353,6 +355,10 @@ jobs:
           PY
           python3 ci/physical-bitmap-chain-contract.py "$ARTIFACTS/physical-runtime-summary.json" \
             --output "$ARTIFACTS/bitmap-chain.json" --width 1080 --height 2340
+      - name: Observe original APK after the first visible frame without input
+        if: ${{ inputs.run_kind == 'discovery' }}
+        timeout-minutes: 3
+        run: bash ci/capture-post-first-frame.sh
       - name: Execute protected explicit first-traversal probe
         timeout-minutes: 5
         env:
@@ -367,6 +373,7 @@ jobs:
             build/artifacts/framework-traversal-dispatch.json
             build/artifacts/framework-traversal-dispatch.log
             build/artifacts/physical-bitmap/**
+            build/artifacts/post-first-frame/**
             build/artifacts/framework-first-traversal.json
             build/artifacts/framework-first-traversal.log
             build/artifacts/simulator-boot.log
