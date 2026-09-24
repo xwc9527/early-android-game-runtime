@@ -8,8 +8,13 @@ import argparse
 import hashlib
 import json
 import pathlib
+import re
+import struct
 import subprocess
 import time
+import xml.etree.ElementTree as ET
+
+from gameplay_trajectory import EXECUTED_SCHEMA, load_canonical, map_action
 
 
 PACKAGE = "org.jfedor.frozenbubble"
@@ -37,13 +42,91 @@ def capture(out, label):
     payload = local.read_bytes()
     if not payload.startswith(b"\x89PNG\r\n\x1a\n"):
         raise RuntimeError(f"invalid screenshot: {local}")
+    width, height = struct.unpack(">II", payload[16:24])
     return {
         "timestamp_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "screenshot": local.name,
         "screenshot_sha256": hashlib.sha256(payload).hexdigest(),
+        "screenshot_dimensions": {"width": width, "height": height},
         "process": adb("shell", "ps", check=False),
         "activity": adb("shell", "dumpsys", "activity", "activities", timeout=60, check=False),
     }
+
+
+def measure_root_viewport(out, label):
+    """Measure the actual APK root view; never substitute raw screen pixels."""
+    remote = "/sdcard/agr-api19-window.xml"
+    dump_result = adb("shell", "uiautomator", "dump", remote, timeout=45, check=False)
+    payload = adb("shell", "cat", remote, timeout=30, check=False)
+    if not payload.lstrip().startswith("<?xml"):
+        raise RuntimeError(f"unable to measure Android root view: {dump_result}")
+    (out / f"{label}-hierarchy.xml").write_text(payload, encoding="utf-8")
+    root = ET.fromstring(payload)
+    bounds = []
+    for node in root.iter("node"):
+        if node.attrib.get("package") != PACKAGE:
+            continue
+        match = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", node.attrib.get("bounds", ""))
+        if match:
+            x0, y0, x1, y1 = map(int, match.groups())
+            if x1 > x0 and y1 > y0:
+                bounds.append((x0, y0, x1 - x0, y1 - y0))
+    if not bounds:
+        raise RuntimeError("exact APK root view absent from UI hierarchy")
+    x, y, width, height = max(bounds, key=lambda b: b[2] * b[3])
+    return {"coordinate_space": "normalized_root_view", "x": x, "y": y,
+            "width": width, "height": height, "measurement_source": f"{label}-hierarchy.xml"}
+
+
+def execute_action(action, actual):
+    if action is None:
+        return None
+    if action["type"] == "tap":
+        return adb("shell", "input", "tap", str(actual["x"]), str(actual["y"]))
+    if action["type"] == "long_press":
+        return adb("shell", "input", "swipe", str(actual["x"]), str(actual["y"]),
+                   str(actual["x"]), str(actual["y"]), str(actual.get("duration_ms", 600)))
+    if action["type"] == "swipe":
+        return adb("shell", "input", "swipe", *(str(actual[key]) for key in
+                   ("x0", "y0", "x1", "y1", "duration_ms")))
+    if action["type"] == "keyevent":
+        return adb("shell", "input", "keyevent", str(actual["keycode"]))
+    raise ValueError(f"unsupported action: {action['type']}")
+
+
+def run_executed_trajectory(apk, out, plan, run_number, environment):
+    prefix = f"replay-{run_number}"
+    launch = fresh_launch(apk)
+    steps = []
+    for index, specification in enumerate(plan["steps"]):
+        label = f"{prefix}-step-{index:02d}"
+        before = capture(out, label + "-before")
+        viewport = measure_root_viewport(out, label) if specification.get("action") else None
+        requested = specification.get("action")
+        actual = map_action(requested, viewport) if requested else None
+        adb("logcat", "-c")
+        injected_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        result = execute_action(requested, actual)
+        time.sleep(specification["wait_ms"] / 1000)
+        after = capture(out, label + "-after")
+        if viewport:
+            after["content_bounds"] = {k: viewport[k] for k in ("x", "y", "width", "height")}
+        log_name = label + "-logcat.txt"
+        (out / log_name).write_text(adb("logcat", "-d", "-v", "threadtime", timeout=90), encoding="utf-8")
+        steps.append({"id": specification["id"], "action_requested": requested,
+                      "action_actual": actual,
+                      "before": {**before, "state": {"observable_state": None}},
+                      "input": {"injection_accepted": result is not None if requested else None,
+                                "delivered": None, "consumed": None,
+                                "injected_at_utc": injected_at, "adb_result": result},
+                      "after": {**after, "state": {"observable_state": None}},
+                      "runtime_failure": None, "logcat": log_name})
+    executed = {"schema": EXECUTED_SCHEMA, "platform": "android-api19",
+                "identity": {**environment, "apk_sha256": APK_SHA256,
+                             "run_number": run_number, "launch_result": launch}, "steps": steps}
+    filename = f"android-api19-executed-trajectory-run{run_number}.json"
+    (out / filename).write_text(json.dumps(executed, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return executed
 
 
 def fresh_launch(apk):
@@ -103,29 +186,15 @@ def main():
     (args.out / "cold-logcat.txt").write_text(adb("logcat", "-d", "-v", "threadtime", timeout=90), encoding="utf-8")
     (args.out / "package-dump.txt").write_text(adb("shell", "dumpsys", "package", PACKAGE, timeout=60), encoding="utf-8")
     if args.replay:
-        plan = json.loads(args.replay.read_text(encoding="utf-8"))
-        reference["replay_launch_result"] = fresh_launch(args.apk)
-        time.sleep(15)
-        reference["normal_user_trajectory"].append({"state": "pre_input", "input": None,
-            **capture(args.out, "replay-initial")})
-        for index, step in enumerate(plan["steps"]):
-            before = capture(args.out, f"step-{index:02d}-before")
-            action = step["input"]
-            if action["type"] == "tap":
-                adb("shell", "input", "tap", str(action["x"]), str(action["y"]))
-            elif action["type"] == "keyevent":
-                adb("shell", "input", "keyevent", str(action["keycode"]))
-            elif action["type"] == "swipe":
-                adb("shell", "input", "swipe", *(str(action[key]) for key in
-                    ("x0", "y0", "x1", "y1", "duration_ms")))
-            else:
-                raise RuntimeError(f"unsupported reference input: {action['type']}")
-            time.sleep(step.get("wait_seconds", 2))
-            after = capture(args.out, f"step-{index:02d}-after")
-            reference["normal_user_trajectory"].append({
-                "state": step.get("state", "UNCLASSIFIED"), "input": action,
-                "before": before, "after": after})
-        (args.out / "replay-logcat.txt").write_text(adb("logcat", "-d", "-v", "threadtime", timeout=90), encoding="utf-8")
+        plan = load_canonical(args.replay)
+        reference["canonical_trajectory_sha256"] = hashlib.sha256(args.replay.read_bytes()).hexdigest()
+        environment = {"android_api": 19, "android_release": release,
+                       "android_fingerprint": reference["android_reference"]["fingerprint"]}
+        for run_number in (1, 2):
+            execute = run_executed_trajectory(args.apk, args.out, plan, run_number, environment)
+            reference["normal_user_trajectory"].append({"run_number": run_number,
+                "executed_file": f"android-api19-executed-trajectory-run{run_number}.json",
+                "step_count": len(execute["steps"]), "stability": "VISUAL_REVIEW_REQUIRED"})
     (args.out / "android-api19-reference-trajectory.json").write_text(
         json.dumps(reference, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"API19 reference captured: {len(reference['cold_start']['states'])} cold states, "

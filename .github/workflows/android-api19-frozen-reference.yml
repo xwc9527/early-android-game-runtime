@@ -62,14 +62,13 @@ jobs:
           export PATH="$ANDROID_HOME/platform-tools:$PATH"
           ISO="$RUNNER_TEMP/android-x86-4.4-r5.iso"
           adb start-server
-          qemu-system-x86_64 -machine pc -accel tcg -cpu qemu64 -smp 2 -m 2048 \
+          nohup qemu-system-x86_64 -machine pc -accel tcg -cpu qemu64 -smp 2 -m 2048 \
             -cdrom "$ISO" -boot d -vga std -display none -monitor none \
             -serial file:build/artifacts/android-444-image-probe/serial.log \
             -netdev user,id=net0,hostfwd=tcp:127.0.0.1:5555-:5555 \
             -device e1000,netdev=net0 \
             > build/artifacts/android-444-image-probe/qemu.log 2>&1 &
           QEMU_PID=$!
-          trap 'kill "$QEMU_PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 150); do
             adb connect 127.0.0.1:5555 >/dev/null 2>&1 || true
             if adb -s 127.0.0.1:5555 shell getprop sys.boot_completed 2>/dev/null \
@@ -87,12 +86,35 @@ jobs:
             | tr -d '\r' | grep -qx 19
           adb -s 127.0.0.1:5555 shell getprop ro.build.fingerprint \
             | tr -d '\r' > build/artifacts/android-444-image-probe/live-fingerprint.txt
+      - name: Capture exact Frozen Bubble APK zero-input reference
+        timeout-minutes: 8
+        env:
+          ANDROID_SERIAL: 127.0.0.1:5555
+        run: |
+          set -euo pipefail
+          export PATH="$ANDROID_HOME/platform-tools:$PATH"
+          python3 tools/fetch_fdroid_samples.py --profile focused-framework --inputs-only
+          printf '%s  %s\n' \
+            57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569 \
+            samples/frozen-bubble.apk | sha256sum -c -
+          if [[ '${{ inputs.replay }}' == 'true' ]]; then
+            python3 ci/run-android-api19-frozen-reference.py \
+              --apk samples/frozen-bubble.apk \
+              --out build/artifacts/android-api19-reference \
+              --replay Tests/Android44Reference/frozen-bubble-replay.json
+          else
+            python3 ci/run-android-api19-frozen-reference.py \
+              --apk samples/frozen-bubble.apk \
+              --out build/artifacts/android-api19-reference
+          fi
       - name: Preserve image provenance
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: android-444-image-probe-${{ github.sha }}
-          path: build/artifacts/android-444-image-probe/**
+          path: |
+            build/artifacts/android-444-image-probe/**
+            build/artifacts/android-api19-reference/**
           if-no-files-found: warn
 
   api19-original-apk:
