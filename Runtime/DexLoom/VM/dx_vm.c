@@ -49,6 +49,9 @@ DxVM *dx_vm_create(DxContext *ctx) {
     vm->young_gen_threshold = 256;
     vm->next_diagnostic_identity = 1;
     vm->gc_cycle_count = 0;
+    vm->boot_loader = dx_vm_create_loader(vm, NULL);
+    if (vm->boot_loader) vm->boot_loader->boot = 1;
+    vm->app_loader = dx_vm_create_loader(vm, vm->boot_loader);
     DX_INFO(TAG, "VM created (insn limit=%u, watchdog=%ums)", DX_MAX_INSTRUCTIONS, vm->watchdog_timeout_ms);
     return vm;
 }
@@ -103,10 +106,18 @@ void dx_vm_destroy(DxVM *vm) {
         }
     }
 
-    // Free per-DEX class_def caches
+    // Free per-DEX class_def caches and the dynamic classpath.
     for (uint32_t d = 0; d < vm->dex_count; d++) {
         dx_free(vm->class_def_cache[d]);
     }
+    dx_free(vm->class_def_cache);
+    dx_free(vm->class_def_cache_size);
+    dx_free(vm->dex_files);
+    for (uint32_t i = 0; i < vm->loader_count; i++) {
+        if (vm->loaders[i]) dx_free(vm->loaders[i]->dex_indexes);
+        dx_free(vm->loaders[i]);
+    }
+    dx_free(vm->loaders);
 
     // Free the caller context's pooled frames. Worker pools were released at shutdown.
     if (dx_vm_current_exec(vm)) {
@@ -144,25 +155,88 @@ void dx_vm_free_frame(DxVM *vm, DxFrame *frame) {
     }
 }
 
+static DxResult dx_vm_append_dex(DxVM *vm, DxDexFile *dex, uint32_t *out_index) {
+    if (vm->dex_count == vm->dex_capacity) {
+        uint32_t capacity = vm->dex_capacity ? vm->dex_capacity * 2 : 4;
+        DxDexFile **files = (DxDexFile **)realloc(vm->dex_files, capacity * sizeof(*files));
+        if (!files) return DX_ERR_OUT_OF_MEMORY;
+        vm->dex_files = files;
+        DxClass ***cache = (DxClass ***)realloc(vm->class_def_cache, capacity * sizeof(*cache));
+        if (!cache) return DX_ERR_OUT_OF_MEMORY;
+        vm->class_def_cache = cache;
+        uint32_t *sizes = (uint32_t *)realloc(vm->class_def_cache_size, capacity * sizeof(*sizes));
+        if (!sizes) return DX_ERR_OUT_OF_MEMORY;
+        vm->class_def_cache_size = sizes;
+        for (uint32_t i = vm->dex_capacity; i < capacity; i++) {
+            cache[i] = NULL;
+            sizes[i] = 0;
+        }
+        vm->dex_capacity = capacity;
+    }
+    uint32_t idx = vm->dex_count;
+    vm->dex_files[idx] = dex;
+    if (dex->class_count > 0) {
+        vm->class_def_cache[idx] = (DxClass **)calloc(dex->class_count, sizeof(DxClass *));
+        vm->class_def_cache_size[idx] = dex->class_count;
+    }
+    vm->dex_count++;
+    if (!vm->dex) vm->dex = dex;
+    if (out_index) *out_index = idx;
+    return DX_OK;
+}
+
+static DxResult dx_vm_loader_add_index(DxClassLoader *loader, uint32_t index) {
+    if (loader->dex_count == loader->dex_capacity) {
+        uint32_t capacity = loader->dex_capacity ? loader->dex_capacity * 2 : 4;
+        uint32_t *indexes = (uint32_t *)realloc(loader->dex_indexes, capacity * sizeof(*indexes));
+        if (!indexes) return DX_ERR_OUT_OF_MEMORY;
+        loader->dex_indexes = indexes;
+        loader->dex_capacity = capacity;
+    }
+    loader->dex_indexes[loader->dex_count++] = index;
+    return DX_OK;
+}
+
+DxClassLoader *dx_vm_boot_loader(DxVM *vm) {
+    return vm ? vm->boot_loader : NULL;
+}
+
+DxClassLoader *dx_vm_application_loader(DxVM *vm) {
+    return vm ? vm->app_loader : NULL;
+}
+
+DxClassLoader *dx_vm_create_loader(DxVM *vm, DxClassLoader *parent) {
+    if (!vm) return NULL;
+    if (vm->loader_count == vm->loader_capacity) {
+        uint32_t capacity = vm->loader_capacity ? vm->loader_capacity * 2 : 4;
+        DxClassLoader **loaders = (DxClassLoader **)realloc(vm->loaders, capacity * sizeof(*loaders));
+        if (!loaders) return NULL;
+        vm->loaders = loaders;
+        vm->loader_capacity = capacity;
+    }
+    DxClassLoader *loader = (DxClassLoader *)calloc(1, sizeof(*loader));
+    if (!loader) return NULL;
+    loader->id = vm->loader_count;
+    loader->parent = parent;
+    vm->loaders[vm->loader_count++] = loader;
+    return loader;
+}
+
+DxResult dx_vm_load_dex_on_loader(DxVM *vm, DxClassLoader *loader, DxDexFile *dex) {
+    if (!vm || !loader || !dex) return DX_ERR_NULL_PTR;
+    uint32_t index = 0;
+    DxResult result = dx_vm_append_dex(vm, dex, &index);
+    if (result != DX_OK) return result;
+    result = dx_vm_loader_add_index(loader, index);
+    if (result != DX_OK) return result;
+    DX_INFO(TAG, "DEX %u loaded on loader %u: %u classes", index, loader->id, dex->class_count);
+    return DX_OK;
+}
+
 DxResult dx_vm_load_dex(DxVM *vm, DxDexFile *dex) {
     if (!vm || !dex) return DX_ERR_NULL_PTR;
-    if (!vm->dex) {
-        vm->dex = dex;  // first DEX becomes primary
-    }
-    if (vm->dex_count < DX_MAX_DEX_FILES) {
-        uint32_t idx = vm->dex_count;
-        vm->dex_files[idx] = dex;
-        // Allocate class_def cache for O(1) lookup by class_def_index
-        if (dex->class_count > 0) {
-            vm->class_def_cache[idx] = (DxClass **)calloc(dex->class_count, sizeof(DxClass *));
-            vm->class_def_cache_size[idx] = dex->class_count;
-        }
-        vm->dex_count++;
-        DX_INFO(TAG, "DEX %u loaded into VM: %u classes", vm->dex_count, dex->class_count);
-    } else {
-        DX_WARN(TAG, "Too many DEX files (max %d), skipping", DX_MAX_DEX_FILES);
-    }
-    return DX_OK;
+    if (!vm->app_loader) return DX_ERR_INTERNAL;
+    return dx_vm_load_dex_on_loader(vm, vm->app_loader, dex);
 }
 
 // FNV-1a hash for class descriptor strings
@@ -178,16 +252,19 @@ static uint32_t class_hash_fn(const char *s) {
 // Insert a class into the hash table (also called from dx_android_framework.c)
 void dx_vm_class_hash_insert(DxVM *vm, DxClass *cls) {
     if (!cls || !cls->descriptor) return;
+    uint32_t loader_id = cls->defining_loader ? cls->defining_loader->id : 0;
     uint32_t idx = class_hash_fn(cls->descriptor);
     for (uint32_t i = 0; i < DX_CLASS_HASH_SIZE; i++) {
         uint32_t slot = (idx + i) & (DX_CLASS_HASH_SIZE - 1);
         if (!vm->class_hash[slot].descriptor) {
             vm->class_hash[slot].descriptor = cls->descriptor;
+            vm->class_hash[slot].loader_id = loader_id;
             vm->class_hash[slot].cls = cls;
             return;
         }
-        if (strcmp(vm->class_hash[slot].descriptor, cls->descriptor) == 0) {
-            vm->class_hash[slot].cls = cls;  // update existing
+        if (vm->class_hash[slot].loader_id == loader_id &&
+            strcmp(vm->class_hash[slot].descriptor, cls->descriptor) == 0) {
+            vm->class_hash[slot].cls = cls;
             return;
         }
     }
@@ -207,6 +284,7 @@ static DxClass *create_class(DxVM *vm, const char *descriptor, DxClass *super, b
     cls->status = DX_CLASS_LOADED;
     cls->is_framework = is_framework;
     cls->owns_descriptor = false;
+    cls->defining_loader = vm->pending_defining_loader ? vm->pending_defining_loader : vm->boot_loader;
 
     vm->classes[vm->class_count++] = cls;
     dx_vm_class_hash_insert(vm, cls);
@@ -4530,6 +4608,28 @@ DxResult dx_register_java_lang(DxVM *vm) {
     return DX_OK;
 }
 
+static DxClass *dx_vm_find_defined_locked(DxVM *vm, DxClassLoader *loader, const char *descriptor) {
+    if (!vm || !loader || !descriptor) return NULL;
+    uint32_t idx = class_hash_fn(descriptor);
+    for (uint32_t i = 0; i < DX_CLASS_HASH_SIZE; i++) {
+        uint32_t slot = (idx + i) & (DX_CLASS_HASH_SIZE - 1);
+        if (!vm->class_hash[slot].descriptor) break;
+        if (vm->class_hash[slot].loader_id == loader->id &&
+            strcmp(vm->class_hash[slot].descriptor, descriptor) == 0) {
+            return vm->class_hash[slot].cls;
+        }
+    }
+    return NULL;
+}
+
+DxClass *dx_vm_find_defined_class(DxVM *vm, DxClassLoader *loader, const char *descriptor) {
+    if (!vm || !loader || !descriptor) return NULL;
+    dx_vm_shared_lock(vm);
+    DxClass *found = dx_vm_find_defined_locked(vm, loader, descriptor);
+    dx_vm_shared_unlock(vm);
+    return found;
+}
+
 DxClass *dx_vm_find_class(DxVM *vm, const char *descriptor) {
     if (!vm || !descriptor) return NULL;
     dx_vm_shared_lock(vm);
@@ -4539,8 +4639,9 @@ DxClass *dx_vm_find_class(DxVM *vm, const char *descriptor) {
         uint32_t slot = (idx + i) & (DX_CLASS_HASH_SIZE - 1);
         if (!vm->class_hash[slot].descriptor) break;
         if (strcmp(vm->class_hash[slot].descriptor, descriptor) == 0) {
-            found = vm->class_hash[slot].cls;
-            break;
+            DxClass *candidate = vm->class_hash[slot].cls;
+            if (!found || vm->class_hash[slot].loader_id < (found->defining_loader ? found->defining_loader->id : 0))
+                found = candidate;
         }
     }
     dx_vm_shared_unlock(vm);
@@ -4582,7 +4683,8 @@ DxResult dx_vm_unload_class(DxVM *vm, const char *descriptor) {
         for (uint32_t i = 0; i < DX_CLASS_HASH_SIZE; i++) {
             uint32_t slot = (h + i) & (DX_CLASS_HASH_SIZE - 1);
             if (!vm->class_hash[slot].descriptor) break;
-            if (strcmp(vm->class_hash[slot].descriptor, descriptor) == 0) {
+            if (vm->class_hash[slot].loader_id == (cls->defining_loader ? cls->defining_loader->id : 0) &&
+                strcmp(vm->class_hash[slot].descriptor, descriptor) == 0) {
                 idx = slot;
                 found = true;
                 break;
@@ -4693,108 +4795,97 @@ const DxAnnotationEntry *dx_method_get_annotation(DxMethod *method, const char *
 
 static DxResult dx_vm_load_class_locked(DxVM *vm, const char *descriptor, DxClass **out);
 
-DxResult dx_vm_load_class(DxVM *vm, const char *descriptor, DxClass **out) {
-    if (!vm) return DX_ERR_NULL_PTR;
+DxResult dx_vm_resolve_class(DxVM *vm, DxClassLoader *initiating, const char *descriptor, DxClass **out) {
+    if (!vm || !initiating) return DX_ERR_NULL_PTR;
     dx_vm_shared_lock(vm);
+    DxClassLoader *saved = vm->pending_resolve_loader;
+    vm->pending_resolve_loader = initiating;
     DxResult result = dx_vm_load_class_locked(vm, descriptor, out);
+    vm->pending_resolve_loader = saved;
     dx_vm_shared_unlock(vm);
     return result;
 }
 
+DxResult dx_vm_load_class(DxVM *vm, const char *descriptor, DxClass **out) {
+    if (!vm) return DX_ERR_NULL_PTR;
+    dx_vm_shared_lock(vm);
+    DxClassLoader *saved = vm->pending_resolve_loader;
+    if (!vm->pending_resolve_loader) vm->pending_resolve_loader = vm->app_loader ? vm->app_loader : vm->boot_loader;
+    DxResult result = dx_vm_load_class_locked(vm, descriptor, out);
+    vm->pending_resolve_loader = saved;
+    dx_vm_shared_unlock(vm);
+    return result;
+}
+
+static int dx_loader_defines_descriptor(DxVM *vm, DxClassLoader *loader, const char *descriptor,
+                                        DxDexFile **found_dex, int32_t *found_idx, uint32_t *found_dex_idx) {
+    *found_dex = NULL;
+    *found_idx = -1;
+    *found_dex_idx = 0;
+    for (uint32_t n = 0; n < loader->dex_count; n++) {
+        uint32_t d = loader->dex_indexes[n];
+        DxDexFile *dex = vm->dex_files[d];
+        for (uint32_t i = 0; i < dex->class_count; i++) {
+            const char *type = dx_dex_get_type(dex, dex->class_defs[i].class_idx);
+            if (type && strcmp(type, descriptor) == 0) {
+                if (*found_idx < 0) {
+                    *found_dex = dex;
+                    *found_idx = (int32_t)i;
+                    *found_dex_idx = d;
+                } else {
+                    DX_WARN(TAG, "Duplicate class %s on loader %u; keeping DEX %u",
+                            descriptor, loader->id, *found_dex_idx);
+                }
+                break;
+            }
+        }
+    }
+    return *found_idx >= 0;
+}
+
 static DxResult dx_vm_load_class_locked(DxVM *vm, const char *descriptor, DxClass **out) {
     if (!vm || !descriptor) return DX_ERR_NULL_PTR;
+    DxClassLoader *initiating = vm->pending_resolve_loader ? vm->pending_resolve_loader : vm->app_loader;
+    if (!initiating) initiating = vm->boot_loader;
 
-    // Check if already loaded
-    DxClass *cls = dx_vm_find_class(vm, descriptor);
+    DxClass *cls = dx_vm_find_defined_locked(vm, initiating, descriptor);
     if (cls) {
         if (out) *out = cls;
         return DX_OK;
     }
+    if (initiating && initiating->parent) {
+        DxClassLoader *saved = vm->pending_resolve_loader;
+        vm->pending_resolve_loader = initiating->parent;
+        DxClass *parent_cls = NULL;
+        DxResult parent_result = dx_vm_load_class_locked(vm, descriptor, &parent_cls);
+        vm->pending_resolve_loader = saved;
+        if (parent_result == DX_OK && parent_cls) {
+            if (out) *out = parent_cls;
+            return DX_OK;
+        }
+    }
 
-    // Recursion guard: check if this class is currently being loaded
-    // (prevents infinite recursion from circular superclass chains)
     static __thread const char *loading_stack[64];
+    static __thread uint32_t loading_loader[64];
     static __thread int loading_depth = 0;
+    uint32_t initiating_id = initiating ? initiating->id : 0;
     for (int k = 0; k < loading_depth; k++) {
-        if (strcmp(loading_stack[k], descriptor) == 0) {
+        if (loading_loader[k] == initiating_id && strcmp(loading_stack[k], descriptor) == 0) {
             DX_WARN(TAG, "Circular class loading detected for %s, using Object", descriptor);
             if (out) *out = vm->class_object;
             return DX_OK;
         }
     }
     if (loading_depth < 64) {
-        loading_stack[loading_depth++] = descriptor;
+        loading_stack[loading_depth] = descriptor;
+        loading_loader[loading_depth] = initiating_id;
+        loading_depth++;
     }
 
-    // Look up across all loaded DEX files
-    if (vm->dex_count == 0) {
-        DX_ERROR(TAG, "No DEX loaded, cannot find class %s", descriptor);
-        loading_depth--;
-        return DX_ERR_CLASS_NOT_FOUND;
-    }
-
-    // Search all DEX files for exact match, detecting conflicts
     DxDexFile *found_dex = NULL;
     int32_t found_idx = -1;
     uint32_t found_dex_idx = 0;
-    for (uint32_t d = 0; d < vm->dex_count; d++) {
-        DxDexFile *dex = vm->dex_files[d];
-        for (uint32_t i = 0; i < dex->class_count; i++) {
-            const char *type = dx_dex_get_type(dex, dex->class_defs[i].class_idx);
-            if (type && strcmp(type, descriptor) == 0) {
-                if (found_idx < 0) {
-                    // First occurrence wins
-                    found_dex = dex;
-                    found_idx = (int32_t)i;
-                    found_dex_idx = d;
-                } else {
-                    // Conflict: same class in multiple DEX files
-                    DX_WARN(TAG, "Class conflict: %s found in DEX %u and DEX %u",
-                            descriptor, found_dex_idx, d);
-                }
-                break;
-            }
-        }
-    }
-
-    // If not found, try suffix match across all DEX files
-    if (found_idx < 0) {
-        const char *simple_name = strrchr(descriptor, '/');
-        if (simple_name) {
-            simple_name++;
-            size_t slen = strlen(simple_name);
-            if (slen > 1 && simple_name[slen - 1] == ';') slen--;
-            for (uint32_t d = 0; d < vm->dex_count && found_idx < 0; d++) {
-                DxDexFile *dex = vm->dex_files[d];
-                for (uint32_t i = 0; i < dex->class_count; i++) {
-                    const char *type = dx_dex_get_type(dex, dex->class_defs[i].class_idx);
-                    if (!type) continue;
-                    const char *t_simple = strrchr(type, '/');
-                    if (t_simple) {
-                        t_simple++;
-                        if (strncmp(t_simple, simple_name, slen) == 0 &&
-                            t_simple[slen] == ';') {
-                            DX_INFO(TAG, "Class %s not found, using suffix match: %s", descriptor, type);
-                            found_dex = dex;
-                            found_idx = (int32_t)i;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // If still not found, log for debugging
-    if (found_idx < 0) {
-        uint32_t total = 0;
-        for (uint32_t d = 0; d < vm->dex_count; d++) total += vm->dex_files[d]->class_count;
-        DX_ERROR(TAG, "Class not found: %s (%u classes across %u DEX files)",
-                descriptor, total, vm->dex_count);
-        // Track as missing feature for diagnostics
-        char feat_buf[160];
-        snprintf(feat_buf, sizeof(feat_buf), "Class not found: %s", descriptor);
-        dx_vm_report_missing_feature(vm, feat_buf);
+    if (!initiating || !dx_loader_defines_descriptor(vm, initiating, descriptor, &found_dex, &found_idx, &found_dex_idx)) {
         if (out) *out = NULL;
         loading_depth--;
         return DX_ERR_CLASS_NOT_FOUND;
@@ -4828,12 +4919,7 @@ static DxResult dx_vm_load_class_locked(DxVM *vm, const char *descriptor, DxClas
             if (super_idx != 0xFFFFFFFF) {
                 const char *super_desc = dx_dex_get_type(found_dex, super_idx);
                 if (super_desc) {
-                    // First check framework classes
-                    super = dx_vm_find_class(vm, super_desc);
-                    if (!super) {
-                        // Try loading from DEX
-                        dx_vm_load_class(vm, super_desc, &super);
-                    }
+                    dx_vm_load_class_locked(vm, super_desc, &super);
                     if (!super) {
                         DX_ERROR(TAG, "Superclass not found: %s while loading %s", super_desc, type);
                         vm->dex = prev_dex;
@@ -4843,7 +4929,10 @@ static DxResult dx_vm_load_class_locked(DxVM *vm, const char *descriptor, DxClas
                 }
             }
 
+            DxClassLoader *saved_defining = vm->pending_defining_loader;
+            vm->pending_defining_loader = initiating;
             cls = create_class(vm, type, super ? super : vm->class_object, false);
+            vm->pending_defining_loader = saved_defining;
             if (!cls) { vm->dex = prev_dex; loading_depth--; return DX_ERR_OUT_OF_MEMORY; }
 
             cls->access_flags = found_dex->class_defs[i].access_flags;

@@ -70,7 +70,8 @@ struct DxClass {
     // DEX origin
     DxDexFile       *dex_file;          // which DEX file this class came from
     uint32_t         dex_class_def_idx;
-    uint8_t          source_dex_idx;    // index into vm->dex_files[] this class came from
+    uint32_t         source_dex_idx;    // index into vm->dex_files[] this class came from
+    struct DxClassLoader *defining_loader;
     bool             is_framework;      // true for built-in Android stubs
     bool             owns_descriptor;   // true when descriptor was allocated for a synthetic type
 };
@@ -315,8 +316,15 @@ typedef struct DxExecutionContext {
     uint32_t frame_pool_count;
 } DxExecutionContext;
 
-// VM state
-#define DX_MAX_DEX_FILES 8
+// Classpath is a dynamic container. A fixed DEX count is not a capability boundary.
+typedef struct DxClassLoader {
+    uint32_t id;
+    struct DxClassLoader *parent;
+    int boot;
+    uint32_t *dex_indexes;
+    uint32_t dex_count;
+    uint32_t dex_capacity;
+} DxClassLoader;
 
 // Forward declaration for missing feature tracker (full definition below)
 #define DX_MAX_MISSING_FEATURES 32
@@ -328,8 +336,16 @@ typedef struct {
 struct DxVM {
     DxContext  *ctx;
     DxDexFile *dex;              // primary DEX (for backwards compat)
-    DxDexFile *dex_files[DX_MAX_DEX_FILES];
+    DxDexFile **dex_files;
     uint32_t   dex_count;
+    uint32_t   dex_capacity;
+    DxClassLoader *boot_loader;
+    DxClassLoader *app_loader;
+    DxClassLoader **loaders;
+    uint32_t loader_count;
+    uint32_t loader_capacity;
+    DxClassLoader *pending_defining_loader;
+    DxClassLoader *pending_resolve_loader;
     /* Host runtime boundary used only when a DEX-declared native method has
        no framework-native implementation inside DexLoom. */
     DxUnboundNativeMethodFn unbound_native_fn;
@@ -341,8 +357,8 @@ struct DxVM {
 
     // Per-DEX class cache: maps class_def_index -> already-loaded DxClass*
     // Avoids re-parsing the same class_def on repeated load_class calls
-    DxClass  **class_def_cache[DX_MAX_DEX_FILES];  // lazily allocated per DEX
-    uint32_t   class_def_cache_size[DX_MAX_DEX_FILES];
+    DxClass  ***class_def_cache;  // lazily allocated per DEX
+    uint32_t   *class_def_cache_size;
 
     // Class table
     DxClass   *classes[DX_MAX_CLASSES];
@@ -352,6 +368,7 @@ struct DxVM {
     #define DX_CLASS_HASH_SIZE 4096
     struct {
         const char *descriptor;  // key (points to DxClass->descriptor)
+        uint32_t    loader_id;
         DxClass    *cls;         // value
     } class_hash[DX_CLASS_HASH_SIZE];
 
@@ -534,12 +551,18 @@ struct DxVM {
 DxVM    *dx_vm_create(DxContext *ctx);
 void     dx_vm_destroy(DxVM *vm);
 DxResult dx_vm_load_dex(DxVM *vm, DxDexFile *dex);
+DxResult dx_vm_load_dex_on_loader(DxVM *vm, DxClassLoader *loader, DxDexFile *dex);
+DxClassLoader *dx_vm_boot_loader(DxVM *vm);
+DxClassLoader *dx_vm_application_loader(DxVM *vm);
+DxClassLoader *dx_vm_create_loader(DxVM *vm, DxClassLoader *parent);
+DxResult dx_vm_resolve_class(DxVM *vm, DxClassLoader *initiating, const char *descriptor, DxClass **out);
 DxResult dx_vm_register_framework_classes(DxVM *vm);
 
 // Class operations
 DxResult dx_vm_load_class(DxVM *vm, const char *descriptor, DxClass **out);
 DxResult dx_vm_init_class(DxVM *vm, DxClass *cls);
 DxClass *dx_vm_find_class(DxVM *vm, const char *descriptor);
+DxClass *dx_vm_find_defined_class(DxVM *vm, DxClassLoader *loader, const char *descriptor);
 void     dx_vm_class_hash_insert(DxVM *vm, DxClass *cls);
 DxResult dx_vm_unload_class(DxVM *vm, const char *descriptor);
 
