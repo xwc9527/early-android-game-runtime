@@ -1,0 +1,38 @@
+{
+  "schema_version": 2,
+  "classification": "ANDROID_SEMANTIC_BUG",
+  "subsystem": "API19 AssetManager.open and AssetInputStream",
+  "observed_discontinuity": "The unchanged APK invokes InputStream.available and read(byte[]) while constructing its game thread, but the production DEX host registered only AssetManager.open with a path-only stream object and a no-op close. The game later reaches a no-post loop in bubble selection; a causal connection awaits the unchanged-APK rerun.",
+  "upstream": {
+    "map_entry": "androidfw.assets_resources",
+    "map_status": "UNVERIFIED",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": ["core/java/android/content/res/AssetManager.java"],
+    "call_path": ["AssetManager.open", "AssetInputStream.available", "AssetInputStream.read", "AssetInputStream.close"]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "open returns a stream over the named APK asset or throws FileNotFoundException",
+    "available returns remaining bytes and read advances the stream cursor, returning -1 at EOF",
+    "close releases the stream asset and is idempotent"
+  ],
+  "agr": {
+    "files": ["Runtime/DexLoom/game_dex_runner.c"],
+    "call_path": ["asset_open", "asset_stream_available", "asset_stream_read", "asset_stream_close"]
+  },
+  "differences": [
+    {"id": "D1", "description": "The previous DEX host did not expose the APK bytes through available/read and returned only a path-carrying object.", "relevance": "The original game constructor loads its level table through these calls before creating its game state."}
+  ],
+  "earliest_evidenced_divergence": "Original GameThread construction invokes AssetManager.open then InputStream.available/read; AGR previously left the latter methods unresolved.",
+  "causal_status": "PLAUSIBLE",
+  "evidence_level": "RUNTIME_OBSERVED",
+  "evidence": [
+    {"type": "SOURCE", "artifact": "Pinned frameworks/base android-4.4.4_r2 AssetManager.java open and AssetInputStream methods, lines 260-305 and 508-547."},
+    {"type": "RUNTIME", "artifact": "Exact APK DEX invoke scan: GameThread constructor PCs 1251,1257,1261,1271,1274 enter getAssets/open/available/read/close; previous production registration lacked available/read."}
+  ],
+  "remaining_uncertainty": ["Contract execution and unchanged APK rerun must establish whether populated levels allow the second touch to complete and post a changed frame."],
+  "next_action": "Run the focused AssetInputStream contract, then the unchanged APK two-touch path and classify the next observed boundary.",
+  "needs_experiment": false,
+  "experimental": false
+}

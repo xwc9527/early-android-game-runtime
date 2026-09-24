@@ -262,15 +262,140 @@ static DxResult soundpool_play(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t
     frame->result = DX_INT_VALUE(g_next_sound++); frame->has_result = true; return DX_OK;
 }
 
+static const DxApkFile *asset_apk(DxVM *vm);
+
+static DxResult asset_stream_throw(DxVM *vm, const char *type, const char *message) {
+    DxExecutionContext *exec = dx_vm_current_exec(vm);
+    if (!exec) return DX_ERR_INVALID_FORMAT;
+    exec->pending_exception = dx_vm_create_exception(vm, type, message);
+    return exec->pending_exception ? DX_ERR_EXCEPTION : DX_ERR_OUT_OF_MEMORY;
+}
+
+/* API19 AssetManager.open owns a stream over APK assets. Keep the extracted
+ * bytes in the DEX heap so stream data follows the Java object lifetime and
+ * never exposes a host pointer through a guest-visible field. */
 static DxResult asset_open(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
-    if (count < 2 || args[1].tag != DX_VAL_OBJ || !args[1].obj) return DX_ERR_NULL_PTR;
-    const char *path = dx_vm_get_string_value(args[1].obj);
-    snprintf(g_opened_asset, sizeof(g_opened_asset), "%s", path ? path : "");
-    DxClass *cls = dx_vm_find_class(vm, "Ljava/io/InputStream;");
-    DxObject *stream = dx_vm_alloc_object(vm, cls);
-    dx_vm_set_field(stream, "_assetPath", DX_OBJ_VALUE(dx_vm_create_string(vm, g_opened_asset)));
-    frame->result = DX_OBJ_VALUE(stream);
+    const DxApkFile *apk = asset_apk(vm);
+    const DxZipEntry *entry = NULL;
+    const char *path;
+    char name[512];
+    uint8_t *bytes = NULL;
+    uint32_t size = 0;
+    DxObject *data, *stream, *path_obj;
+    DxClass *cls;
+    if (!vm || !frame || count < 2 || args[1].tag != DX_VAL_OBJ || !args[1].obj)
+        return asset_stream_throw(vm, "Ljava/lang/NullPointerException;", "asset name");
+    path = dx_vm_get_string_value(args[1].obj);
+    if (!path) return asset_stream_throw(vm, "Ljava/lang/NullPointerException;", "asset name");
+    snprintf(g_opened_asset, sizeof(g_opened_asset), "%s", path);
+    if (!apk) {
+        /* The standalone DEX fixture has no APK. It only checks the image
+         * path forwarding contract; a real APK launch always has asset_apk. */
+        cls = dx_vm_find_class(vm, "Ljava/io/InputStream;");
+        stream = cls ? dx_vm_alloc_object(vm, cls) : NULL;
+        if (!stream) return DX_ERR_OUT_OF_MEMORY;
+        path_obj = dx_vm_create_string(vm, path);
+        if (!path_obj) return DX_ERR_OUT_OF_MEMORY;
+        dx_vm_set_field(stream, "_assetPath", DX_OBJ_VALUE(path_obj));
+        frame->result = DX_OBJ_VALUE(stream);
+        frame->has_result = true;
+        return DX_OK;
+    }
+    if (snprintf(name, sizeof(name), "assets/%s", path) >= (int)sizeof(name) ||
+        dx_apk_find_entry(apk, name, &entry) != DX_OK || !entry ||
+        dx_apk_extract_entry(apk, entry, &bytes, &size) != DX_OK)
+        return asset_stream_throw(vm, "Ljava/io/FileNotFoundException;", path);
+    data = dx_vm_alloc_array(vm, size);
+    if (!data) { dx_free(bytes); return DX_ERR_OUT_OF_MEMORY; }
+    for (uint32_t i = 0; i < size; i++)
+        data->array_elements[i] = DX_INT_VALUE((int8_t)bytes[i]);
+    dx_free(bytes);
+    /* Protect data from a GC triggered by the following allocations. */
+    frame->result = DX_OBJ_VALUE(data);
     frame->has_result = true;
+    cls = dx_vm_find_class(vm, "Ljava/io/InputStream;");
+    stream = cls ? dx_vm_alloc_object(vm, cls) : NULL;
+    if (!stream) return DX_ERR_OUT_OF_MEMORY;
+    dx_vm_set_field(stream, "_assetData", DX_OBJ_VALUE(data));
+    dx_vm_set_field(stream, "_assetPosition", DX_INT_VALUE(0));
+    dx_vm_set_field(stream, "_assetClosed", DX_INT_VALUE(0));
+    frame->result = DX_OBJ_VALUE(stream);
+    path_obj = dx_vm_create_string(vm, path);
+    if (!path_obj) return DX_ERR_OUT_OF_MEMORY;
+    dx_vm_set_field(stream, "_assetPath", DX_OBJ_VALUE(path_obj));
+    frame->result = DX_OBJ_VALUE(stream);
+    return DX_OK;
+}
+
+static DxResult asset_stream_read(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    DxValue data = DX_NULL_VALUE, pos = DX_NULL_VALUE, closed = DX_NULL_VALUE;
+    DxObject *stream, *target = NULL;
+    uint32_t offset = 0, length = 1;
+    if (!vm || !frame || count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return asset_stream_throw(vm, "Ljava/lang/NullPointerException;", "InputStream");
+    stream = args[0].obj;
+    dx_vm_get_field(stream, "_assetData", &data);
+    dx_vm_get_field(stream, "_assetPosition", &pos);
+    dx_vm_get_field(stream, "_assetClosed", &closed);
+    if (closed.tag == DX_VAL_INT && closed.i)
+        return asset_stream_throw(vm, "Ljava/io/IOException;", "Stream closed");
+    if (data.tag != DX_VAL_OBJ || !data.obj || !data.obj->is_array)
+        return asset_stream_throw(vm, "Ljava/io/IOException;", "Asset data unavailable");
+    if (count > 1) {
+        if (args[1].tag != DX_VAL_OBJ || !args[1].obj)
+            return asset_stream_throw(vm, "Ljava/lang/NullPointerException;", "read buffer");
+        target = args[1].obj;
+        if (!target->is_array) return DX_ERR_INVALID_FORMAT;
+        length = target->array_length;
+        if (count >= 4) {
+            if (args[2].tag != DX_VAL_INT || args[3].tag != DX_VAL_INT ||
+                args[2].i < 0 || args[3].i < 0 ||
+                (uint32_t)args[2].i > target->array_length ||
+                (uint32_t)args[3].i > target->array_length - (uint32_t)args[2].i)
+                return asset_stream_throw(vm, "Ljava/lang/IndexOutOfBoundsException;", "read range");
+            offset = (uint32_t)args[2].i;
+            length = (uint32_t)args[3].i;
+        }
+    }
+    if (length == 0) { frame->result = DX_INT_VALUE(0); frame->has_result = true; return DX_OK; }
+    uint32_t cursor = pos.tag == DX_VAL_INT && pos.i >= 0 ? (uint32_t)pos.i : 0;
+    uint32_t available = cursor < data.obj->array_length ? data.obj->array_length - cursor : 0;
+    if (!available) { frame->result = DX_INT_VALUE(-1); frame->has_result = true; return DX_OK; }
+    if (length > available) length = available;
+    if (target) {
+        for (uint32_t i = 0; i < length; i++)
+            target->array_elements[offset+i] = data.obj->array_elements[cursor+i];
+        frame->result = DX_INT_VALUE((int32_t)length);
+    } else {
+        frame->result = DX_INT_VALUE(data.obj->array_elements[cursor].i & 0xff);
+    }
+    dx_vm_set_field(stream, "_assetPosition", DX_INT_VALUE((int32_t)(cursor + length)));
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult asset_stream_available(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    DxValue data = DX_NULL_VALUE, pos = DX_NULL_VALUE, closed = DX_NULL_VALUE;
+    if (!vm || !frame || count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return asset_stream_throw(vm, "Ljava/lang/NullPointerException;", "InputStream");
+    dx_vm_get_field(args[0].obj, "_assetData", &data);
+    dx_vm_get_field(args[0].obj, "_assetPosition", &pos);
+    dx_vm_get_field(args[0].obj, "_assetClosed", &closed);
+    if (closed.tag == DX_VAL_INT && closed.i)
+        return asset_stream_throw(vm, "Ljava/io/IOException;", "Stream closed");
+    uint32_t size = data.tag == DX_VAL_OBJ && data.obj && data.obj->is_array
+        ? data.obj->array_length : 0;
+    uint32_t cursor = pos.tag == DX_VAL_INT && pos.i >= 0 ? (uint32_t)pos.i : 0;
+    frame->result = DX_INT_VALUE((int32_t)(cursor < size ? size - cursor : 0));
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult asset_stream_close(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    (void)vm; (void)frame;
+    if (count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj) return DX_ERR_NULL_PTR;
+    dx_vm_set_field(args[0].obj, "_assetClosed", DX_INT_VALUE(1));
+    dx_vm_set_field(args[0].obj, "_assetData", DX_NULL_VALUE);
     return DX_OK;
 }
 
@@ -788,8 +913,19 @@ static DxResult register_game_framework(DxVM *vm) {
     DxClass *asset_manager = reg_class(vm, "Landroid/content/res/AssetManager;", obj);
     add_method(asset_manager, "open", "LL", DX_ACC_PUBLIC, asset_open, 0);
     DxClass *input = reg_class(vm, "Ljava/io/InputStream;", obj);
-    one_field(input, "_assetPath", "Ljava/lang/String;");
-    add_method(input, "close", "V", DX_ACC_PUBLIC, noop, 0);
+    const char *stream_names[] = { "_assetPath", "_assetData", "_assetPosition", "_assetClosed" };
+    const char *stream_types[] = { "Ljava/lang/String;", "[B", "I", "Z" };
+    own_fields(input, 4, stream_names, stream_types);
+    add_method(input, "available", "I", DX_ACC_PUBLIC, asset_stream_available, 0);
+    add_method(input, "read", "I", DX_ACC_PUBLIC, asset_stream_read, 0);
+    add_method(input, "read", "IL", DX_ACC_PUBLIC, asset_stream_read, 0);
+    add_method(input, "read", "ILII", DX_ACC_PUBLIC, asset_stream_read, 0);
+    add_method(input, "close", "V", DX_ACC_PUBLIC, asset_stream_close, 0);
+    DxClass *exception = dx_vm_find_class(vm, "Ljava/lang/Exception;");
+    DxClass *io_exception = reg_class(vm, "Ljava/io/IOException;", exception);
+    own_fields(io_exception, 0, NULL, NULL);
+    DxClass *file_not_found = reg_class(vm, "Ljava/io/FileNotFoundException;", io_exception);
+    own_fields(file_not_found, 0, NULL, NULL);
     DxClass *resources = reg_class(vm, "Landroid/content/res/Resources;", obj);
     add_method(resources, "getIdentifier", "ILLL", DX_ACC_PUBLIC, resources_get_identifier, 0);
 
@@ -1753,6 +1889,11 @@ const void *agr_apk_native_library_bytes(const agr_apk_package *p,uint32_t i,uin
 
 static agr_dex_game *game_from_vm(DxVM *vm) {
     return vm ? (agr_dex_game *)vm->framework_user : NULL;
+}
+
+static const DxApkFile *asset_apk(DxVM *vm) {
+    agr_dex_game *game = game_from_vm(vm);
+    return game ? game->resource_apk : NULL;
 }
 
 /* API19 BitmapFactory.decodeResource(Resources, int, Options) opens the raw
@@ -4099,6 +4240,7 @@ static void load_apk_layouts(agr_dex_game *game, const agr_apk_package *package)
     uint32_t table_size = 0;
     DxResources *resources = NULL;
     if (!game || !package || !package->apk) return;
+    game->resource_apk = package->apk;
     if (dx_apk_find_entry(package->apk, "resources.arsc", &entry) != DX_OK ||
         dx_apk_extract_entry(package->apk, entry, &table, &table_size) != DX_OK)
         return;
@@ -4118,7 +4260,6 @@ static void load_apk_layouts(agr_dex_game *game, const agr_apk_package *package)
         agr_dex_game_provide_layout(game, resources->layout_entries[i].id, xml, xml_size);
         dx_free(xml);
     }
-    game->resource_apk = package->apk;
     game->resources = resources;
 }
 

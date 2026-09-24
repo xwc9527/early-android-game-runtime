@@ -21,6 +21,7 @@ on:
       - 'Tests/DexLoom/make_surface_callback_outcome_fixture.py'
       - 'Tests/DexLoom/frozen-bubble-1080-host.c'
       - 'Tests/DexLoom/java-random-math-host.c'
+      - 'Tests/DexLoom/asset-input-stream-host.c'
       - 'Tests/DexLoom/ios-image-codec-parity.py'
       - 'App/agr_physical_trace.c'
       - 'Runtime/DexLoom/agr_forensic.h'
@@ -113,6 +114,16 @@ jobs:
             -o /tmp/agr-dispatch-obj/framework_viewroot.o
           cc "${COMMON[@]}" -Wall -Wextra -pthread -c "$DEX/game_dex_runner.c" \
             -o /tmp/agr-dispatch-obj/game_dex_runner.o
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/asset-input-stream-host.c \
+            -o /tmp/asset-input-stream-host.o
+          g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
+            /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
+            /tmp/asset-input-stream-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/asset-input-stream-host
+          /tmp/asset-input-stream-host samples/frozen-bubble.apk
           cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/framework-traversal-dispatch-host.c \
             -o /tmp/agr-dispatch-obj/framework-traversal-dispatch-host.o
           g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/*.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/agr-dispatch-host
