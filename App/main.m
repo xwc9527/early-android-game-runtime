@@ -1262,6 +1262,7 @@ static int gPhysicalDisplayOverride = 0;
 static int gPhysicalStart = -1;
 static BOOL gPhysicalFinished = NO;
 static BOOL gPostFirstFrameDiscovery = NO;
+static BOOL gGameplayTrajectoryMode = NO;
 static NSMutableArray *gPostFirstFrameCheckpoints = nil;
 static uint64_t gNextPostFirstFrameCheckpoint = 0;
 static BOOL gPhysicalContentHold = NO;
@@ -1932,6 +1933,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     BOOL firstTraversalDiscovery=[arguments containsObject:@"--framework-first-traversal-discovery"];
     BOOL traversalDispatch=[arguments containsObject:@"--framework-traversal-dispatch-discovery"];
     gPostFirstFrameDiscovery=[arguments containsObject:@"--post-first-frame-discovery"];
+    gGameplayTrajectoryMode=[arguments containsObject:@"--gameplay-trajectory"];
     BOOL physicalRuntime=NO;
     BOOL physicalDisplayOverride=NO;
     uint32_t runtimeWidth=(uint32_t)UIScreen.mainScreen.nativeBounds.size.width;
@@ -1940,7 +1942,8 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     physicalRuntime=![arguments containsObject:@"--interactive"];
     if (!physicalRuntime) interactive=YES;
 #else
-    physicalRuntime=[arguments containsObject:@"--physical-runtime-validation"] || gPostFirstFrameDiscovery;
+    physicalRuntime=[arguments containsObject:@"--physical-runtime-validation"] ||
+        gPostFirstFrameDiscovery || gGameplayTrajectoryMode;
 #endif
     if (physicalRuntime) {
       /* Establish a new Documents current-root before constructing the scene
@@ -2730,7 +2733,8 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
         if (gPhysicalLink) {
             gPhysicalLink.paused=NO;
             gObsStart=hostMonoNs();
-            gObsDeadline=gObsStart + (gPostFirstFrameDiscovery ? 20000000000ull : 8000000000ull);
+            gObsDeadline=gObsStart + (gGameplayTrajectoryMode ? 600000000000ull :
+                (gPostFirstFrameDiscovery ? 20000000000ull : 8000000000ull));
             gDisplayLinkFrames=[NSMutableArray array];
             if (gPostFirstFrameDiscovery) {
                 gPostFirstFrameCheckpoints=[NSMutableArray arrayWithCapacity:12];
@@ -2752,6 +2756,52 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
     }
 }
 
+- (void)publishGameplayTrajectoryState:(const agr_dex_runtime_snapshot *)snapshot {
+    if (!gGameplayTrajectoryMode || !snapshot) return;
+    agr_physical_trace_status status;
+    memset(&status, 0, sizeof(status));
+    if (gPhysicalTraceReady) agr_physical_trace_copy_status(&status);
+    NSDictionary *state=@{
+        @"schema":@"agr.gameplay-host-checkpoint.v1",
+        @"commit":@AGR_BUILD_COMMIT, @"tree":@AGR_BUILD_TREE,
+        @"apk_sha256":gPhysicalSha ?: @"",
+        @"run_id":[NSString stringWithUTF8String:status.run_id],
+        @"pid":@(getpid()), @"host_vsync":@(gPhysicalVsync),
+        @"monotonic_ns":@(hostMonoNs()),
+        @"environment":gStartEnvironment ?: gLatestEnvironment ?: @{},
+        @"ui_touch_view_bounds":@{@"x":@0, @"y":@0,
+                                   @"width":@(gPhysicalSurfaceController.view.bounds.size.width),
+                                   @"height":@(gPhysicalSurfaceController.view.bounds.size.height)},
+        @"activity_stage":launchStageName(gPhysicalGame ? agr_dex_game_launch_stage(gPhysicalGame) : AGR_ACTIVITY_LAUNCH_NONE),
+        @"root_execution_context":@(dx_vm_current_exec(agr_dex_game_vm(gPhysicalGame)) ?
+                                     dx_vm_current_exec(agr_dex_game_vm(gPhysicalGame))->id : 0),
+        @"draw_execution_context":@(snapshot->canvas_lock_owner_exec),
+        @"instructions":@(snapshot->instructions_executed),
+        @"methods":@(snapshot->methods_invoked),
+        @"pending_exception":@(snapshot->pending_exception!=0),
+        @"exception_class":[NSString stringWithUTF8String:snapshot->exception_class],
+        @"vm_error":[NSString stringWithUTF8String:snapshot->error],
+        @"surface":@{@"identity":@(snapshot->content_surface_identity),
+                      @"generation":@(snapshot->content_surface_generation),
+                      @"valid":@(snapshot->content_surface_valid!=0),
+                      @"width":@(snapshot->content_surface_width),
+                      @"height":@(snapshot->content_surface_height),
+                      @"locks":@(snapshot->canvas_lock_count),
+                      @"posts":@(snapshot->canvas_post_count),
+                      @"draws":@(snapshot->canvas_draw_bitmap_count),
+                      @"hash_after":@(snapshot->canvas_buffer_hash_after)},
+        @"host_surface_submissions":@(gPhysicalHostSubmissions),
+        @"host_last_submitted_hash":@(gPhysicalLastSubmittedHash),
+        @"input_dispatched":@(snapshot->touch_dispatched),
+        @"input_consumed":@(snapshot->touch_consumed),
+        @"last_touch":gPhysicalInputTrace.lastObject ?: @{},
+        @"input_trace_count":@(gPhysicalInputTrace.count),
+        @"runtime_failure":gPhysicalError ?: @""
+    };
+    NSData *data=[NSJSONSerialization dataWithJSONObject:state options:0 error:nil];
+    [data writeToFile:[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/agr-gameplay-state.json"] atomically:YES];
+}
+
 - (void)hostPhysicalVsync:(CADisplayLink *)link {
     if (!gPhysicalGame) return;
     gPhysicalVsync++;
@@ -2763,7 +2813,7 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
     {
         NSDictionary *frame=displayLinkRecord(link, &gLinkPrevious);
         if (!gDisplayLinkFrames) gDisplayLinkFrames=[NSMutableArray array];
-        if (!gPostFirstFrameDiscovery || gDisplayLinkFrames.count < 256)
+        if ((!gPostFirstFrameDiscovery && !gGameplayTrajectoryMode) || gDisplayLinkFrames.count < 256)
             [gDisplayLinkFrames addObject:frame];
         physicalNote(AGR_PHYS_PHASE_CADISPLAYLINK_FRAME, 0, 0, 0,
                      [[NSString stringWithFormat:@"timestamp=%@ targetTimestamp=%@ duration=%@ maximumFPS=%@ delta=%@ thread=%@ app=%@",
@@ -2801,6 +2851,16 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
     physicalNote(AGR_PHYS_PHASE_PHYSICAL_FRAME_END, 0, 0, 0, NULL);
     if (result<0) {
         finishPhysicalReport();
+        return;
+    }
+    if (gGameplayTrajectoryMode) {
+        if (gPhysicalVsync == 1 || gPhysicalVsync % 15 == 0) [self publishGameplayTrajectoryState:&snapshot];
+        NSString *finalize=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/agr-gameplay-finalize.flag"];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:finalize]) {
+            [[NSFileManager defaultManager] removeItemAtPath:finalize error:nil];
+            [self publishGameplayTrajectoryState:&snapshot];
+            finishPhysicalReport();
+        }
         return;
     }
     if (snapshot.traversal_count>=2 && !gPhysicalContentHold) {
