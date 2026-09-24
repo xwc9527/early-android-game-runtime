@@ -45,4 +45,9 @@ assert mod.compare(canonical, android, agr)["trajectory_result"] == "ENVIRONMENT
 agr["identity"]["ios_product_version"] = "27.0"
 agr["steps"][2]["after"]["state"].pop("observable_state")
 assert mod.compare(canonical, android, agr)["trajectory_result"] == "INSUFFICIENT_EVIDENCE"
+agr["steps"].pop()
+agr["execution_error"] = "host checkpoint stopped advancing"
+partial = mod.compare(canonical, android, agr)
+assert partial["first_divergent_step"] == "fire", partial
+assert partial["classification"] == "RUNTIME_FAILURE", partial
 print("gameplay trajectory comparator contract PASS")

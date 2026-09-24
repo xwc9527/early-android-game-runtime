@@ -96,7 +96,7 @@ def execute_action(action, actual):
 
 def run_executed_trajectory(apk, out, plan, run_number, environment):
     prefix = f"replay-{run_number}"
-    launch = fresh_launch(apk)
+    launch = fresh_launch(apk, out)
     steps = []
     for index, specification in enumerate(plan["steps"]):
         label = f"{prefix}-step-{index:02d}"
@@ -129,10 +129,28 @@ def run_executed_trajectory(apk, out, plan, run_number, environment):
     return executed
 
 
-def fresh_launch(apk):
+def fresh_launch(apk, out):
     adb("shell", "am", "force-stop", PACKAGE, check=False)
     adb("uninstall", PACKAGE, check=False)
-    adb("install", str(apk), timeout=180)
+    try:
+        install = adb("install", "--no-streaming", str(apk), timeout=90)
+    except (RuntimeError, subprocess.TimeoutExpired) as exc:
+        diagnostics = {"install_error": str(exc)}
+        for name, args in {
+            "devices": ("devices", "-l"),
+            "boot": ("shell", "getprop", "sys.boot_completed"),
+            "package_service": ("shell", "service", "check", "package"),
+            "data_space": ("shell", "df", "/data"),
+            "mounts": ("shell", "mount"),
+            "logcat": ("logcat", "-d", "-t", "300"),
+        }.items():
+            try:
+                diagnostics[name] = adb(*args, timeout=10, check=False)
+            except (OSError, subprocess.TimeoutExpired) as probe_error:
+                diagnostics[name] = f"PROBE_FAILED: {probe_error}"
+        (out / "install-diagnostics.json").write_text(json.dumps(diagnostics, indent=2) + "\n")
+        raise
+    (out / "install-result.txt").write_text(install + "\n", encoding="utf-8")
     adb("shell", "pm", "clear", PACKAGE, timeout=60)
     adb("shell", "am", "force-stop", PACKAGE, check=False)
     adb("logcat", "-c")
@@ -140,7 +158,7 @@ def fresh_launch(apk):
 
 
 def run_cold_start(apk, out, prefix):
-    launch = fresh_launch(apk)
+    launch = fresh_launch(apk, out)
     started = time.monotonic()
     states = []
     for label, delay in (("t0", 0.4), ("t1", 2.0), ("t2", 6.0), ("tfinal", 15.0)):

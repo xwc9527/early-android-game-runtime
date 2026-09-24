@@ -49,8 +49,9 @@ def compare(canonical, android, agr, android_dir=None, agr_dir=None):
         identity = record.get("identity", {})
         if identity.get("apk_sha256") != APK_SHA256:
             raise ValueError("executed APK SHA mismatch")
-        if [s.get("id") for s in record.get("steps", [])] != expected_ids:
-            raise ValueError("executed steps do not match the canonical trajectory")
+        actual_ids = [s.get("id") for s in record.get("steps", [])]
+        if actual_ids != expected_ids[:len(actual_ids)]:
+            raise ValueError("executed steps are not an ordered canonical prefix")
     env_ok = (android["identity"].get("android_release") == "4.4.4"
               and android["identity"].get("android_api") == 19
               and agr["identity"].get("ios_product_version") == "27.0"
@@ -62,13 +63,19 @@ def compare(canonical, android, agr, android_dir=None, agr_dir=None):
     rows = []
     last_match = None
     first_divergence = None
-    for specification, a, b in zip(canonical["steps"], android["steps"], agr["steps"]):
+    for index, specification in enumerate(canonical["steps"]):
+        a = android["steps"][index] if index < len(android["steps"]) else {}
+        b = agr["steps"][index] if index < len(agr["steps"]) else {}
         observations = []
         classification = "MATCH"
         a_before, a_after = observed(a, "before"), observed(a, "after")
         b_before, b_after = observed(b, "before"), observed(b, "after")
         a_state, b_state = state_label(a, "after"), state_label(b, "after")
-        if a.get("runtime_failure"):
+        if not a:
+            classification = "REFERENCE_FAILURE" if android.get("execution_error") else "INSUFFICIENT_EVIDENCE"
+        elif not b:
+            classification = "RUNTIME_FAILURE" if agr.get("execution_error") else "INSUFFICIENT_EVIDENCE"
+        elif a.get("runtime_failure"):
             classification = "REFERENCE_FAILURE"
         elif b.get("runtime_failure"):
             classification = "RUNTIME_FAILURE"

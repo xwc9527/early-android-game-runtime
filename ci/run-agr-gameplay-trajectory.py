@@ -82,6 +82,37 @@ def snapshot(device, docs, out, label, previous_vsync):
             "host_checkpoint": f"{label}-state.json", "_state": state}
 
 
+def execute_step(index, specification, device, docs, out):
+    label = f"step-{index:02d}"
+    before = snapshot(device, docs, out, label + "-before", 1)
+    state_before = before.pop("_state")
+    (out / f"{label}-before-state.json").write_text(json.dumps(state_before, indent=2) + "\n")
+    requested = specification.get("action")
+    viewport = mapped_viewport(state_before, requested)
+    actual = map_action(requested, viewport) if requested else None
+    result = inject(device, actual)
+    time.sleep(specification["wait_ms"] / 1000)
+    after = snapshot(device, docs, out, label + "-after", state_before["host_vsync"] + 1)
+    state_after = after.pop("_state")
+    (out / f"{label}-after-state.json").write_text(json.dumps(state_after, indent=2) + "\n")
+    scale = state_after["environment"]["display"]["native_scale"]
+    if viewport:
+        after["content_bounds"] = {"x": round(viewport["x"] * scale),
+                                   "y": round(viewport["y"] * scale),
+                                   "width": round(viewport["width"] * scale),
+                                   "height": round(viewport["height"] * scale)}
+    dispatched = state_after["input_dispatched"] - state_before["input_dispatched"]
+    consumed = state_after["input_consumed"] - state_before["input_consumed"]
+    return {"id": specification["id"], "action_requested": requested,
+            "action_actual": actual, "before": before, "after": after,
+            "input": {"host_injection_accepted": result is not None if requested else None,
+                      "delivered": dispatched > 0 if requested else None,
+                      "consumed": consumed > 0 if requested else None,
+                      "dispatch_delta": dispatched, "consume_delta": consumed,
+                      "last_touch": state_after.get("last_touch")},
+            "runtime_failure": state_after.get("runtime_failure") or state_after.get("vm_error") or None}
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--device", required=True)
@@ -112,35 +143,12 @@ def main():
     executed = {"schema": EXECUTED_SCHEMA, "platform": "agr-ios-simulator",
                 "identity": identity, "steps": []}
     for index, specification in enumerate(canonical["steps"]):
-        label = f"step-{index:02d}"
-        before = snapshot(args.device, docs, args.out, label + "-before", 1)
-        state_before = before.pop("_state")
-        (args.out / f"{label}-before-state.json").write_text(json.dumps(state_before, indent=2) + "\n")
-        requested = specification.get("action")
-        viewport = mapped_viewport(state_before, requested)
-        actual = map_action(requested, viewport) if requested else None
-        result = inject(args.device, actual)
-        time.sleep(specification["wait_ms"] / 1000)
-        after = snapshot(args.device, docs, args.out, label + "-after",
-                         state_before["host_vsync"] + 1)
-        state_after = after.pop("_state")
-        (args.out / f"{label}-after-state.json").write_text(json.dumps(state_after, indent=2) + "\n")
-        scale = state_after["environment"]["display"]["native_scale"]
-        if viewport:
-            after["content_bounds"] = {"x": round(viewport["x"] * scale),
-                                       "y": round(viewport["y"] * scale),
-                                       "width": round(viewport["width"] * scale),
-                                       "height": round(viewport["height"] * scale)}
-        dispatched = state_after["input_dispatched"] - state_before["input_dispatched"]
-        consumed = state_after["input_consumed"] - state_before["input_consumed"]
-        row = {"id": specification["id"], "action_requested": requested,
-               "action_actual": actual, "before": before, "after": after,
-               "input": {"host_injection_accepted": result is not None if requested else None,
-                         "delivered": dispatched > 0 if requested else None,
-                         "consumed": consumed > 0 if requested else None,
-                         "dispatch_delta": dispatched, "consume_delta": consumed,
-                         "last_touch": state_after.get("last_touch")},
-               "runtime_failure": state_after.get("runtime_failure") or state_after.get("vm_error") or None}
+        try:
+            row = execute_step(index, specification, args.device, docs, args.out)
+        except (OSError, RuntimeError, ValueError, subprocess.TimeoutExpired) as exc:
+            executed["execution_error"] = {"step_id": specification["id"], "error": str(exc)}
+            (args.out / "agr-executed-trajectory.json").write_text(json.dumps(executed, indent=2) + "\n")
+            break
         executed["steps"].append(row)
         (args.out / "agr-executed-trajectory.json").write_text(json.dumps(executed, indent=2) + "\n")
         if row["runtime_failure"]:
