@@ -36,7 +36,7 @@ test -s "$ARTIFACTS/agr-current-manifest.json"
 test -s "$ARTIFACTS/agr-current-run.json"
 test -s "$ARTIFACTS/agr-current-trace.ndjson"
 python3 ci/physical-runtime-evidence.py --dir "$ARTIFACTS" --source current \
-  --summary "$ARTIFACTS/runtime-evidence.json"
+  --summary "$ARTIFACTS/runtime-evidence.json" > /dev/null
 python3 ci/classify-post-first-frame.py "$ARTIFACTS/agr-current-runtime.json" \
   --output "$ARTIFACTS/observation.json"
 xcrun simctl io "$DEVICE" screenshot "$ARTIFACTS/simulator-screen.png"
