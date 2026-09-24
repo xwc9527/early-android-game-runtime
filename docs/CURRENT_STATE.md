@@ -43,6 +43,6 @@ None for Phase 3. `API19_REFERENCE_DIFFERENTIAL` was not executed and is not cla
 
 ## Next architecture milestone
 
-Phase 3 is CLOSED. The next target is R0, the Local Android Reference Lab, then R1 Game Dependency Mapper, R2 Migration Book, R3 API19 Source Closure, R4 Cluster Source Port, R5 CLEAN differential, and R6 corpus union. The plan is `docs/AGR_REFERENCE_MIGRATION_PLAN.zh-CN.md`.
+Phase 3 is CLOSED. R0 has started as the local pipeline in `tools/reference-lab/`: CLEAN and TRACE stay separate, the mapper writes a Migration Book, and source closure uses only a supplied API19 index. Emulator images and the AOSP tree are not provisioned. R1 through R6 remain the later order. The plan is `docs/AGR_REFERENCE_MIGRATION_PLAN.zh-CN.md`.
 
-Reference Lab is the next implementation. No Android-visible API, module, class, or symbol is pre-declared as a migration target.
+No Android-visible API, module, class, or symbol is pre-declared as a migration target.

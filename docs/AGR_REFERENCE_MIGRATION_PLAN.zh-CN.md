@@ -1,6 +1,6 @@
 # AGR 新架构与工程方案
 
-`REFERENCE_MIGRATION_RULES.md` 仍是 Android-visible source ownership 的最高规则。本文是 Phase 3 CLOSED 之后的工程方案。当前工作仍是 Phase 3 final gate。本文不授权现在实现 Reference Lab、Game Dependency Mapper 或新的 Framework/HLE。
+`REFERENCE_MIGRATION_RULES.md` 仍是 Android-visible source ownership 的最高规则。本文是 Phase 3 CLOSED 之后的工程方案。Phase 3 已 CLOSED。当前实现是本地 Reference Lab 流水线：CLEAN 与 TRACE 分离、Migration Book、以及由调用方提供的 API19 source index 做 Source Closure。模拟器镜像和 AOSP 树还没有在本仓库置备。本文不授权原创 Android 语义、游戏缺口补丁或新的 Framework/HLE。
 
 已闭合或稳定的底座保持不动：ARM interpreter、linker/libdl、Bionic、pthread/TLS/futex、EHABI、allocator、APK bootstrap、ClassLoader、JNI、method/field resolution、class init、exception/native binding、GC root/lifetime、HostServices。要改变的是后续 Android Runtime / Framework 能力的发现、裁剪、迁移和修复方式。
 
