@@ -58,3 +58,17 @@ The pinned Frozen Bubble APK probe
 currently fails at `adb install -r` after 180 seconds; the record is
 `evidence/frozen-bubble-clean-probe-failed.json`. This CLEAN candidate has
 boot evidence but does not yet have a successful sample launch.
+
+The second CLEAN probe separated transfer from package installation. Transfer
+succeeded, but `adb shell pm install -r` timed out after 120 seconds. Its
+record is `evidence/frozen-bubble-clean-probe-package-install-failed.json`.
+Neither probe establishes a successful launch.
+
+The local source workbench uses the official `android-4.4.4_r2` manifest. A
+local manifest copy must replace its relative `fetch=".."` with
+`fetch="https://android.googlesource.com/"` when `repo init -u file://...`
+is used. This changes the transport base, not the pinned tag or projects.
+`transport_manifest.py --transport official` performs that rewrite.
+Its `--transport github` mode generates a GitHub fallback, but the aosp-mirror
+organization does not contain every project in this release; it cannot
+currently sync the full checkout alone.
