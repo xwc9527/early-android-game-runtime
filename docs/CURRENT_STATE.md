@@ -38,7 +38,7 @@ Phase 3 Dalvik semantics closure, specifically the Phase 3 final gate.
 
 ## Current blocker
 
-JNI static field getters and several JNI Call variants still return a default. Those stubs must not report fake success. `API19_REFERENCE_DIFFERENTIAL` has not been executed for this phase.
+The Phase 3 final-gate host contract passes: JNI Call variants invoke the selected method, and static field getters read the static slot. A zero return with no pending exception is a real result. A call or field access that does not run leaves a pending exception. `API19_REFERENCE_DIFFERENTIAL` has not been executed. Phase 3 is not CLOSED.
 
 ## Next architecture milestone
 

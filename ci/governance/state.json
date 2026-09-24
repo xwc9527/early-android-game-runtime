@@ -9,7 +9,7 @@
     "target": "Phase 3 Dalvik semantics closure",
     "branch": "recovery/phase3-dalvik-semantics",
     "lifecycle": "IMPLEMENTED",
-    "observed_discontinuity": "Remaining JNI static field getters and Call variants still return a default and can report fake success.",
+    "observed_discontinuity": "Phase 3 final-gate host contract passes for JNI Call variants and static field getters. API19 reference differential has not been executed.",
     "android_subsystem": "API19 Dalvik JNI Call and GetStaticField",
     "upstream_path": [
       "platform/dalvik@android-4.4.4_r2:vm/Jni.cpp"
@@ -18,19 +18,16 @@
       "Runtime/DexLoom/VM/dx_jni.c",
       "Runtime/DexLoom/VM/dx_vm.c"
     ],
-    "active_explanations": [
-      "a JNI static field getter still returns a default",
-      "a JNI Call variant still returns a default instead of failing closed"
-    ],
-    "earliest_evidenced_divergence": "JNI static field getters and Call variants still return a default instead of the API19 result.",
+    "active_explanations": [],
+    "earliest_evidenced_divergence": "Host contract matches the API19 JNI call and static-field result. Reference differential is not yet executed.",
     "semantic_class": "PUBLIC_OBSERVABLE",
     "causal_status": "OBSERVED",
     "evidence_level": "OBSERVED",
     "classification": "AGR_INTERNAL_BUG",
-    "next_validation": "Phase 3 final gate. Remaining JNI Call and GetField stubs must not report fake success. Do not start a new Android-visible migration.",
-    "primary_blocker": "JNI static field getters and several Call variants still return a default",
-    "first_broken_boundary": "JNI static field getter and Call default return",
-    "first_broken_boundary_evidence": "Phase 3 final gate. Closed Phase 3D lifetime evidence is not this boundary."
+    "next_validation": "Phase 3 closure evidence. Do not start Reference Lab before Phase 3 is CLOSED.",
+    "primary_blocker": "Phase 3 is not CLOSED. API19_REFERENCE_DIFFERENTIAL has not been executed.",
+    "first_broken_boundary": "none on the JNI Call and GetStaticField host contract",
+    "first_broken_boundary_evidence": "Tests/DexLoom/jni-call-host.c"
   },
   "ci_budget": {
     "valid_closure_runs": 1,

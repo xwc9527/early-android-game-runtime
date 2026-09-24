@@ -387,39 +387,48 @@ static jmethodID JNICALL jni_GetMethodID(JNIEnv *env, jclass clazz,
     return (jmethodID)method;
 }
 
-// Call<Type>Method stubs — these call through to DexLoom's VM
-static jobject JNICALL jni_CallObjectMethod(JNIEnv *env, jobject obj, jmethodID methodID, ...) {
-    (void)env;
-    DxMethod *m = (DxMethod *)methodID;
-    DxObject *dobj = dx_jni_unwrap_object(obj);
-    if (!m || !g_vm) return NULL;
-    DxValue args[1] = { {.tag = DX_VAL_OBJ, .obj = dobj} };
-    DxValue result = {0};
-    dx_vm_current_exec(g_vm)->insn_count = 0;
-    dx_vm_execute_method(g_vm, m, args, 1, &result);
-    if (result.tag == DX_VAL_OBJ) return dx_jni_wrap_object(result.obj);
-    return NULL;
-}
-
-static jobject JNICALL jni_CallObjectMethodV(JNIEnv *env, jobject obj, jmethodID methodID, va_list args) {
-    (void)args;
-    return jni_CallObjectMethod(env, obj, methodID);
-}
-
-static jobject JNICALL jni_CallObjectMethodA(JNIEnv *env, jobject obj, jmethodID methodID, const jvalue *args) {
-    (void)args;
-    return jni_CallObjectMethod(env, obj, methodID);
-}
-
 // Helper: dispatch a JNI Call*Method and return the DxValue result
-static DxValue jni_invoke(jobject receiver, jmethodID mid, const jvalue *vals, va_list *ap) {
+static int jni_exception_pending(void) {
+    DxExecutionContext *exec = jni_exec();
+    return exec && exec->pending_exception;
+}
+
+/* API19 returns zero when a JNI call cannot run. A zero result is success
+ * only when the callee ran and no exception is pending. */
+static void jni_fail_closed(const char *descriptor) {
+    DxExecutionContext *exec = jni_exec();
+    if (!g_vm || !exec || exec->pending_exception) return;
+    exec->pending_exception = dx_vm_create_exception(g_vm, descriptor, "JNI");
+}
+
+static DxMethod *jni_target(jobject receiver, jmethodID mid, int virtual) {
+    DxMethod *method = (DxMethod *)mid;
+    DxObject *self;
+    uint8_t opcode;
+    DxMethod *selected;
+    if (jni_exception_pending()) return NULL;
+    if (!method || !g_vm) {
+        jni_fail_closed("Ljava/lang/NoSuchMethodError;");
+        return NULL;
+    }
+    self = dx_jni_unwrap_object(receiver);
+    if ((method->access_flags & DX_ACC_STATIC) != 0) opcode = 0x71;
+    else if (virtual) opcode = 0x6e;
+    else opcode = 0x70;
+    selected = dx_vm_select_invoke(g_vm, opcode, method, self, NULL);
+    if (!selected) jni_fail_closed("Ljava/lang/AbstractMethodError;");
+    return selected;
+}
+
+static DxValue jni_invoke(jobject receiver, jmethodID mid, const jvalue *vals, va_list *ap, int virtual) {
     DxValue result = {0};
     DxValue args[DX_MAX_REGISTERS];
-    DxMethod *method = (DxMethod *)mid;
+    DxMethod *method = jni_target(receiver, mid, virtual);
     uint32_t count = 0;
     const char *shorty;
     uint32_t extra = 0;
-    if (!method || !g_vm) return result;
+    DxResult rc;
+    if (!method) return result;
     memset(args, 0, sizeof(args));
     shorty = method->shorty ? method->shorty : "V";
     if ((method->access_flags & DX_ACC_STATIC) == 0 && count < DX_MAX_REGISTERS)
@@ -444,172 +453,74 @@ static DxValue jni_invoke(jobject receiver, jmethodID mid, const jvalue *vals, v
         count++;
     }
     dx_vm_current_exec(g_vm)->insn_count = 0;
-    dx_vm_execute_method(g_vm, method, args, count, &result);
+    rc = dx_vm_execute_method(g_vm, method, args, count, &result);
+    if (jni_exception_pending()) return (DxValue){0};
+    if (rc != DX_OK) {
+        jni_fail_closed("Ljava/lang/InternalError;");
+        return (DxValue){0};
+    }
     return result;
 }
 
-static DxValue jni_dispatch_method(jobject obj, jmethodID mid) {
-    return jni_invoke(obj, mid, NULL, NULL);
+static jobject jni_ret_object(DxValue r) {
+    return r.tag == DX_VAL_OBJ ? dx_jni_wrap_object(r.obj) : NULL;
 }
+static jboolean jni_ret_boolean(DxValue r) {
+    return (r.tag == DX_VAL_INT && r.i) ? JNI_TRUE : JNI_FALSE;
+}
+static jbyte jni_ret_byte(DxValue r) { return r.tag == DX_VAL_INT ? (jbyte)r.i : 0; }
+static jchar jni_ret_char(DxValue r) { return r.tag == DX_VAL_INT ? (jchar)r.i : 0; }
+static jshort jni_ret_short(DxValue r) { return r.tag == DX_VAL_INT ? (jshort)r.i : 0; }
+static jint jni_ret_int(DxValue r) { return r.tag == DX_VAL_INT ? (jint)r.i : 0; }
+static jlong jni_ret_long(DxValue r) { return r.tag == DX_VAL_LONG ? (jlong)r.l : 0; }
+static jfloat jni_ret_float(DxValue r) { return r.tag == DX_VAL_FLOAT ? r.f : 0.0f; }
+static jdouble jni_ret_double(DxValue r) { return r.tag == DX_VAL_DOUBLE ? r.d : 0.0; }
 
-// Boolean
-static jboolean JNICALL jni_CallBooleanMethod(JNIEnv *env, jobject obj, jmethodID mid, ...) {
-    (void)env;
-    DxValue r = jni_dispatch_method(obj, mid);
-    return (r.tag == DX_VAL_INT) ? (jboolean)(r.i != 0) : JNI_FALSE;
-}
-static jboolean JNICALL jni_CallBooleanMethodV(JNIEnv *env, jobject obj, jmethodID mid, va_list a) {
-    (void)env; (void)a;
-    DxValue r = jni_dispatch_method(obj, mid);
-    return (r.tag == DX_VAL_INT) ? (jboolean)(r.i != 0) : JNI_FALSE;
-}
-static jboolean JNICALL jni_CallBooleanMethodA(JNIEnv *env, jobject obj, jmethodID mid, const jvalue *a) {
-    (void)env; (void)a;
-    DxValue r = jni_dispatch_method(obj, mid);
-    return (r.tag == DX_VAL_INT) ? (jboolean)(r.i != 0) : JNI_FALSE;
-}
+#define JNI_CALL_INSTANCE(Kind, jtype, ret) \
+static jtype JNICALL jni_Call##Kind##Method(JNIEnv *env, jobject obj, jmethodID mid, ...) { \
+    va_list args; DxValue r; (void)env; \
+    va_start(args, mid); r = jni_invoke(obj, mid, NULL, &args, 1); va_end(args); return ret(r); } \
+static jtype JNICALL jni_Call##Kind##MethodV(JNIEnv *env, jobject obj, jmethodID mid, va_list a) { \
+    (void)env; return ret(jni_invoke(obj, mid, NULL, &a, 1)); } \
+static jtype JNICALL jni_Call##Kind##MethodA(JNIEnv *env, jobject obj, jmethodID mid, const jvalue *a) { \
+    (void)env; return ret(jni_invoke(obj, mid, a, NULL, 1)); } \
+static jtype JNICALL jni_CallNonvirtual##Kind##Method(JNIEnv *env, jobject obj, jclass c, jmethodID mid, ...) { \
+    va_list args; DxValue r; (void)env; (void)c; \
+    va_start(args, mid); r = jni_invoke(obj, mid, NULL, &args, 0); va_end(args); return ret(r); } \
+static jtype JNICALL jni_CallNonvirtual##Kind##MethodV(JNIEnv *env, jobject obj, jclass c, jmethodID mid, va_list a) { \
+    (void)env; (void)c; return ret(jni_invoke(obj, mid, NULL, &a, 0)); } \
+static jtype JNICALL jni_CallNonvirtual##Kind##MethodA(JNIEnv *env, jobject obj, jclass c, jmethodID mid, const jvalue *a) { \
+    (void)env; (void)c; return ret(jni_invoke(obj, mid, a, NULL, 0)); }
 
-// Byte
-static jbyte JNICALL jni_CallByteMethod(JNIEnv *env, jobject obj, jmethodID mid, ...) {
-    (void)env; (void)obj; (void)mid; return 0;
-}
-static jbyte JNICALL jni_CallByteMethodV(JNIEnv *env, jobject obj, jmethodID mid, va_list a) {
-    (void)env; (void)obj; (void)mid; (void)a; return 0;
-}
-static jbyte JNICALL jni_CallByteMethodA(JNIEnv *env, jobject obj, jmethodID mid, const jvalue *a) {
-    (void)env; (void)obj; (void)mid; (void)a; return 0;
-}
+JNI_CALL_INSTANCE(Object, jobject, jni_ret_object)
+JNI_CALL_INSTANCE(Boolean, jboolean, jni_ret_boolean)
+JNI_CALL_INSTANCE(Byte, jbyte, jni_ret_byte)
+JNI_CALL_INSTANCE(Char, jchar, jni_ret_char)
+JNI_CALL_INSTANCE(Short, jshort, jni_ret_short)
+JNI_CALL_INSTANCE(Int, jint, jni_ret_int)
+JNI_CALL_INSTANCE(Long, jlong, jni_ret_long)
+JNI_CALL_INSTANCE(Float, jfloat, jni_ret_float)
+JNI_CALL_INSTANCE(Double, jdouble, jni_ret_double)
 
-// Char
-static jchar JNICALL jni_CallCharMethod(JNIEnv *env, jobject obj, jmethodID mid, ...) {
-    (void)env; (void)obj; (void)mid; return 0;
-}
-static jchar JNICALL jni_CallCharMethodV(JNIEnv *env, jobject obj, jmethodID mid, va_list a) {
-    (void)env; (void)obj; (void)mid; (void)a; return 0;
-}
-static jchar JNICALL jni_CallCharMethodA(JNIEnv *env, jobject obj, jmethodID mid, const jvalue *a) {
-    (void)env; (void)obj; (void)mid; (void)a; return 0;
-}
-
-// Short
-static jshort JNICALL jni_CallShortMethod(JNIEnv *env, jobject obj, jmethodID mid, ...) {
-    (void)env; (void)obj; (void)mid; return 0;
-}
-static jshort JNICALL jni_CallShortMethodV(JNIEnv *env, jobject obj, jmethodID mid, va_list a) {
-    (void)env; (void)obj; (void)mid; (void)a; return 0;
-}
-static jshort JNICALL jni_CallShortMethodA(JNIEnv *env, jobject obj, jmethodID mid, const jvalue *a) {
-    (void)env; (void)obj; (void)mid; (void)a; return 0;
-}
-
-// Int
-static jint JNICALL jni_CallIntMethod(JNIEnv *env, jobject obj, jmethodID mid, ...) {
-    va_list args;
-    DxValue r;
-    (void)env;
-    va_start(args, mid);
-    r = jni_invoke(obj, mid, NULL, &args);
-    va_end(args);
-    return (r.tag == DX_VAL_INT) ? (jint)r.i : 0;
-}
-static jint JNICALL jni_CallIntMethodV(JNIEnv *env, jobject obj, jmethodID mid, va_list a) {
-    DxValue r;
-    (void)env;
-    r = jni_invoke(obj, mid, NULL, &a);
-    return (r.tag == DX_VAL_INT) ? (jint)r.i : 0;
-}
-static jint JNICALL jni_CallIntMethodA(JNIEnv *env, jobject obj, jmethodID mid, const jvalue *a) {
-    DxValue r;
-    (void)env;
-    r = jni_invoke(obj, mid, a, NULL);
-    return (r.tag == DX_VAL_INT) ? (jint)r.i : 0;
-}
-
-// Long
-static jlong JNICALL jni_CallLongMethod(JNIEnv *env, jobject obj, jmethodID mid, ...) {
-    (void)env;
-    DxValue r = jni_dispatch_method(obj, mid);
-    return (r.tag == DX_VAL_LONG) ? (jlong)r.l : 0;
-}
-static jlong JNICALL jni_CallLongMethodV(JNIEnv *env, jobject obj, jmethodID mid, va_list a) {
-    (void)env; (void)a;
-    DxValue r = jni_dispatch_method(obj, mid);
-    return (r.tag == DX_VAL_LONG) ? (jlong)r.l : 0;
-}
-static jlong JNICALL jni_CallLongMethodA(JNIEnv *env, jobject obj, jmethodID mid, const jvalue *a) {
-    (void)env; (void)a;
-    DxValue r = jni_dispatch_method(obj, mid);
-    return (r.tag == DX_VAL_LONG) ? (jlong)r.l : 0;
-}
-
-// Float
-static jfloat JNICALL jni_CallFloatMethod(JNIEnv *env, jobject obj, jmethodID mid, ...) {
-    (void)env; (void)obj; (void)mid; return 0.0f;
-}
-static jfloat JNICALL jni_CallFloatMethodV(JNIEnv *env, jobject obj, jmethodID mid, va_list a) {
-    (void)env; (void)obj; (void)mid; (void)a; return 0.0f;
-}
-static jfloat JNICALL jni_CallFloatMethodA(JNIEnv *env, jobject obj, jmethodID mid, const jvalue *a) {
-    (void)env; (void)obj; (void)mid; (void)a; return 0.0f;
-}
-
-// Double
-static jdouble JNICALL jni_CallDoubleMethod(JNIEnv *env, jobject obj, jmethodID mid, ...) {
-    (void)env; (void)obj; (void)mid; return 0.0;
-}
-static jdouble JNICALL jni_CallDoubleMethodV(JNIEnv *env, jobject obj, jmethodID mid, va_list a) {
-    (void)env; (void)obj; (void)mid; (void)a; return 0.0;
-}
-static jdouble JNICALL jni_CallDoubleMethodA(JNIEnv *env, jobject obj, jmethodID mid, const jvalue *a) {
-    (void)env; (void)obj; (void)mid; (void)a; return 0.0;
-}
-
-// Void
-static void JNICALL jni_CallVoidMethod(JNIEnv *env, jobject obj, jmethodID methodID, ...) {
-    (void)env;
-    DxMethod *m = (DxMethod *)methodID;
-    DxObject *dobj = dx_jni_unwrap_object(obj);
-    if (!m || !g_vm) return;
-    DxValue args[1] = { {.tag = DX_VAL_OBJ, .obj = dobj} };
-    dx_vm_current_exec(g_vm)->insn_count = 0;
-    dx_vm_execute_method(g_vm, m, args, 1, NULL);
+static void JNICALL jni_CallVoidMethod(JNIEnv *env, jobject obj, jmethodID mid, ...) {
+    va_list args; (void)env;
+    va_start(args, mid); jni_invoke(obj, mid, NULL, &args, 1); va_end(args);
 }
 static void JNICALL jni_CallVoidMethodV(JNIEnv *env, jobject obj, jmethodID mid, va_list a) {
-    (void)a;
-    jni_CallVoidMethod(env, obj, mid);
+    (void)env; jni_invoke(obj, mid, NULL, &a, 1);
 }
 static void JNICALL jni_CallVoidMethodA(JNIEnv *env, jobject obj, jmethodID mid, const jvalue *a) {
-    (void)a;
-    jni_CallVoidMethod(env, obj, mid);
+    (void)env; jni_invoke(obj, mid, a, NULL, 1);
 }
-
-// CallNonvirtual — all return defaults
-#define JNI_NONVIRTUAL_STUB(Type, type, default_val) \
-static type JNICALL jni_CallNonvirtual##Type##Method(JNIEnv *env, jobject obj, jclass c, jmethodID m, ...) { \
-    (void)env; (void)obj; (void)c; (void)m; return default_val; } \
-static type JNICALL jni_CallNonvirtual##Type##MethodV(JNIEnv *env, jobject obj, jclass c, jmethodID m, va_list a) { \
-    (void)env; (void)obj; (void)c; (void)m; (void)a; return default_val; } \
-static type JNICALL jni_CallNonvirtual##Type##MethodA(JNIEnv *env, jobject obj, jclass c, jmethodID m, const jvalue *a) { \
-    (void)env; (void)obj; (void)c; (void)m; (void)a; return default_val; }
-
-JNI_NONVIRTUAL_STUB(Object, jobject, NULL)
-JNI_NONVIRTUAL_STUB(Boolean, jboolean, JNI_FALSE)
-JNI_NONVIRTUAL_STUB(Byte, jbyte, 0)
-JNI_NONVIRTUAL_STUB(Char, jchar, 0)
-JNI_NONVIRTUAL_STUB(Short, jshort, 0)
-JNI_NONVIRTUAL_STUB(Int, jint, 0)
-JNI_NONVIRTUAL_STUB(Long, jlong, 0)
-JNI_NONVIRTUAL_STUB(Float, jfloat, 0.0f)
-JNI_NONVIRTUAL_STUB(Double, jdouble, 0.0)
-
-static void JNICALL jni_CallNonvirtualVoidMethod(JNIEnv *env, jobject obj, jclass c, jmethodID m, ...) {
-    (void)env; (void)obj; (void)c; (void)m;
+static void JNICALL jni_CallNonvirtualVoidMethod(JNIEnv *env, jobject obj, jclass c, jmethodID mid, ...) {
+    va_list args; (void)env; (void)c;
+    va_start(args, mid); jni_invoke(obj, mid, NULL, &args, 0); va_end(args);
 }
-static void JNICALL jni_CallNonvirtualVoidMethodV(JNIEnv *env, jobject obj, jclass c, jmethodID m, va_list a) {
-    (void)env; (void)obj; (void)c; (void)m; (void)a;
+static void JNICALL jni_CallNonvirtualVoidMethodV(JNIEnv *env, jobject obj, jclass c, jmethodID mid, va_list a) {
+    (void)env; (void)c; jni_invoke(obj, mid, NULL, &a, 0);
 }
-static void JNICALL jni_CallNonvirtualVoidMethodA(JNIEnv *env, jobject obj, jclass c, jmethodID m, const jvalue *a) {
-    (void)env; (void)obj; (void)c; (void)m; (void)a;
+static void JNICALL jni_CallNonvirtualVoidMethodA(JNIEnv *env, jobject obj, jclass c, jmethodID mid, const jvalue *a) {
+    (void)env; (void)c; jni_invoke(obj, mid, a, NULL, 0);
 }
 
 static const char *jni_field_name(jfieldID fid) {
@@ -742,53 +653,34 @@ static jmethodID JNICALL jni_GetStaticMethodID(JNIEnv *env, jclass clazz,
     return (jmethodID)method;
 }
 
-// CallStatic<Type>Method — return defaults
-#define JNI_CALL_STATIC_STUB(Type, type, default_val) \
-static type JNICALL jni_CallStatic##Type##Method(JNIEnv *env, jclass c, jmethodID m, ...) { \
-    (void)env; (void)c; (void)m; return default_val; } \
-static type JNICALL jni_CallStatic##Type##MethodV(JNIEnv *env, jclass c, jmethodID m, va_list a) { \
-    (void)env; (void)c; (void)m; (void)a; return default_val; } \
-static type JNICALL jni_CallStatic##Type##MethodA(JNIEnv *env, jclass c, jmethodID m, const jvalue *a) { \
-    (void)env; (void)c; (void)m; (void)a; return default_val; }
+#define JNI_CALL_STATIC(Kind, jtype, ret) \
+static jtype JNICALL jni_CallStatic##Kind##Method(JNIEnv *env, jclass c, jmethodID mid, ...) { \
+    va_list args; DxValue r; (void)env; (void)c; \
+    va_start(args, mid); r = jni_invoke(NULL, mid, NULL, &args, 0); va_end(args); return ret(r); } \
+static jtype JNICALL jni_CallStatic##Kind##MethodV(JNIEnv *env, jclass c, jmethodID mid, va_list a) { \
+    (void)env; (void)c; return ret(jni_invoke(NULL, mid, NULL, &a, 0)); } \
+static jtype JNICALL jni_CallStatic##Kind##MethodA(JNIEnv *env, jclass c, jmethodID mid, const jvalue *a) { \
+    (void)env; (void)c; return ret(jni_invoke(NULL, mid, a, NULL, 0)); }
 
-JNI_CALL_STATIC_STUB(Object, jobject, NULL)
-JNI_CALL_STATIC_STUB(Boolean, jboolean, JNI_FALSE)
-JNI_CALL_STATIC_STUB(Byte, jbyte, 0)
-JNI_CALL_STATIC_STUB(Char, jchar, 0)
-JNI_CALL_STATIC_STUB(Short, jshort, 0)
-static jint JNICALL jni_CallStaticIntMethod(JNIEnv *env, jclass c, jmethodID m, ...) {
-    va_list args;
-    DxValue r;
-    (void)env; (void)c;
-    va_start(args, m);
-    r = jni_invoke(NULL, m, NULL, &args);
-    va_end(args);
-    return (r.tag == DX_VAL_INT) ? (jint)r.i : 0;
-}
-static jint JNICALL jni_CallStaticIntMethodV(JNIEnv *env, jclass c, jmethodID m, va_list a) {
-    DxValue r;
-    (void)env; (void)c;
-    r = jni_invoke(NULL, m, NULL, &a);
-    return (r.tag == DX_VAL_INT) ? (jint)r.i : 0;
-}
-static jint JNICALL jni_CallStaticIntMethodA(JNIEnv *env, jclass c, jmethodID m, const jvalue *a) {
-    DxValue r;
-    (void)env; (void)c;
-    r = jni_invoke(NULL, m, a, NULL);
-    return (r.tag == DX_VAL_INT) ? (jint)r.i : 0;
-}
-JNI_CALL_STATIC_STUB(Long, jlong, 0)
-JNI_CALL_STATIC_STUB(Float, jfloat, 0.0f)
-JNI_CALL_STATIC_STUB(Double, jdouble, 0.0)
+JNI_CALL_STATIC(Object, jobject, jni_ret_object)
+JNI_CALL_STATIC(Boolean, jboolean, jni_ret_boolean)
+JNI_CALL_STATIC(Byte, jbyte, jni_ret_byte)
+JNI_CALL_STATIC(Char, jchar, jni_ret_char)
+JNI_CALL_STATIC(Short, jshort, jni_ret_short)
+JNI_CALL_STATIC(Int, jint, jni_ret_int)
+JNI_CALL_STATIC(Long, jlong, jni_ret_long)
+JNI_CALL_STATIC(Float, jfloat, jni_ret_float)
+JNI_CALL_STATIC(Double, jdouble, jni_ret_double)
 
-static void JNICALL jni_CallStaticVoidMethod(JNIEnv *env, jclass c, jmethodID m, ...) {
-    (void)env; (void)c; (void)m;
+static void JNICALL jni_CallStaticVoidMethod(JNIEnv *env, jclass c, jmethodID mid, ...) {
+    va_list args; (void)env; (void)c;
+    va_start(args, mid); jni_invoke(NULL, mid, NULL, &args, 0); va_end(args);
 }
-static void JNICALL jni_CallStaticVoidMethodV(JNIEnv *env, jclass c, jmethodID m, va_list a) {
-    (void)env; (void)c; (void)m; (void)a;
+static void JNICALL jni_CallStaticVoidMethodV(JNIEnv *env, jclass c, jmethodID mid, va_list a) {
+    (void)env; (void)c; jni_invoke(NULL, mid, NULL, &a, 0);
 }
-static void JNICALL jni_CallStaticVoidMethodA(JNIEnv *env, jclass c, jmethodID m, const jvalue *a) {
-    (void)env; (void)c; (void)m; (void)a;
+static void JNICALL jni_CallStaticVoidMethodA(JNIEnv *env, jclass c, jmethodID mid, const jvalue *a) {
+    (void)env; (void)c; jni_invoke(NULL, mid, a, NULL, 0);
 }
 
 // Static field access
@@ -809,61 +701,90 @@ static jfieldID JNICALL jni_GetStaticFieldID(JNIEnv *env, jclass clazz,
     return NULL;
 }
 
-#define JNI_GET_STATIC_FIELD_STUB(Type, type, default_val) \
-static type JNICALL jni_GetStatic##Type##Field(JNIEnv *env, jclass c, jfieldID fid) { \
-    (void)env; (void)c; (void)fid; return default_val; }
+static DxValue *jni_static_slot(jfieldID fid) {
+    DxFieldId *field = (DxFieldId *)fid;
+    if (jni_exception_pending()) return NULL;
+    if (!field || !field->is_static || !field->declaring ||
+        field->index >= field->declaring->static_field_count ||
+        !field->declaring->static_fields) {
+        jni_fail_closed("Ljava/lang/NoSuchFieldError;");
+        return NULL;
+    }
+    return &field->declaring->static_fields[field->index];
+}
 
 static jobject JNICALL jni_GetStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID) {
-    (void)env;
-    DxClass *cls = dx_jni_unwrap_class(clazz);
-    const char *name = jni_field_name(fieldID);
-    if (!cls || !name) return NULL;
-    for (uint32_t i = 0; i < cls->static_field_count; i++) {
-        if ((cls->field_defs[i].flags & DX_ACC_STATIC) &&
-            strcmp(cls->field_defs[i].name, name) == 0) {
-            DxValue val = cls->static_fields[i];
-            if (val.tag == DX_VAL_OBJ) {
-                return dx_jni_wrap_object(val.obj);
-            }
-            return NULL;
-        }
-    }
-    return NULL;
+    DxValue *slot;
+    (void)env; (void)clazz;
+    slot = jni_static_slot(fieldID);
+    if (!slot) return NULL;
+    return jni_ret_object(*slot);
 }
-JNI_GET_STATIC_FIELD_STUB(Boolean, jboolean, JNI_FALSE)
-JNI_GET_STATIC_FIELD_STUB(Byte, jbyte, 0)
-JNI_GET_STATIC_FIELD_STUB(Char, jchar, 0)
-JNI_GET_STATIC_FIELD_STUB(Short, jshort, 0)
-JNI_GET_STATIC_FIELD_STUB(Int, jint, 0)
-JNI_GET_STATIC_FIELD_STUB(Long, jlong, 0)
-JNI_GET_STATIC_FIELD_STUB(Float, jfloat, 0.0f)
-JNI_GET_STATIC_FIELD_STUB(Double, jdouble, 0.0)
+static jboolean JNICALL jni_GetStaticBooleanField(JNIEnv *env, jclass c, jfieldID fid) {
+    DxValue *slot; (void)env; (void)c; slot = jni_static_slot(fid);
+    return slot ? jni_ret_boolean(*slot) : JNI_FALSE;
+}
+static jbyte JNICALL jni_GetStaticByteField(JNIEnv *env, jclass c, jfieldID fid) {
+    DxValue *slot; (void)env; (void)c; slot = jni_static_slot(fid);
+    return slot ? jni_ret_byte(*slot) : 0;
+}
+static jchar JNICALL jni_GetStaticCharField(JNIEnv *env, jclass c, jfieldID fid) {
+    DxValue *slot; (void)env; (void)c; slot = jni_static_slot(fid);
+    return slot ? jni_ret_char(*slot) : 0;
+}
+static jshort JNICALL jni_GetStaticShortField(JNIEnv *env, jclass c, jfieldID fid) {
+    DxValue *slot; (void)env; (void)c; slot = jni_static_slot(fid);
+    return slot ? jni_ret_short(*slot) : 0;
+}
+static jint JNICALL jni_GetStaticIntField(JNIEnv *env, jclass c, jfieldID fid) {
+    DxValue *slot; (void)env; (void)c; slot = jni_static_slot(fid);
+    return slot ? jni_ret_int(*slot) : 0;
+}
+static jlong JNICALL jni_GetStaticLongField(JNIEnv *env, jclass c, jfieldID fid) {
+    DxValue *slot; (void)env; (void)c; slot = jni_static_slot(fid);
+    return slot ? jni_ret_long(*slot) : 0;
+}
+static jfloat JNICALL jni_GetStaticFloatField(JNIEnv *env, jclass c, jfieldID fid) {
+    DxValue *slot; (void)env; (void)c; slot = jni_static_slot(fid);
+    return slot ? jni_ret_float(*slot) : 0.0f;
+}
+static jdouble JNICALL jni_GetStaticDoubleField(JNIEnv *env, jclass c, jfieldID fid) {
+    DxValue *slot; (void)env; (void)c; slot = jni_static_slot(fid);
+    return slot ? jni_ret_double(*slot) : 0.0;
+}
 
-#define JNI_SET_STATIC_FIELD_STUB(Type, type) \
-static void JNICALL jni_SetStatic##Type##Field(JNIEnv *env, jclass c, jfieldID fid, type val) { \
-    (void)env; (void)c; (void)fid; (void)val; }
-
+static void jni_set_static(jfieldID fid, DxValue value) {
+    DxValue *slot = jni_static_slot(fid);
+    if (slot) *slot = value;
+}
 static void JNICALL jni_SetStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID, jobject val) {
-    (void)env;
-    DxClass *cls = dx_jni_unwrap_class(clazz);
-    const char *name = jni_field_name(fieldID);
-    if (!cls || !name) return;
-    for (uint32_t i = 0; i < cls->static_field_count; i++) {
-        if ((cls->field_defs[i].flags & DX_ACC_STATIC) &&
-            strcmp(cls->field_defs[i].name, name) == 0) {
-            cls->static_fields[i] = DX_OBJ_VALUE(dx_jni_unwrap_object(val));
-            return;
-        }
-    }
+    (void)env; (void)clazz;
+    jni_set_static(fieldID, DX_OBJ_VALUE(dx_jni_unwrap_object(val)));
 }
-JNI_SET_STATIC_FIELD_STUB(Boolean, jboolean)
-JNI_SET_STATIC_FIELD_STUB(Byte, jbyte)
-JNI_SET_STATIC_FIELD_STUB(Char, jchar)
-JNI_SET_STATIC_FIELD_STUB(Short, jshort)
-JNI_SET_STATIC_FIELD_STUB(Int, jint)
-JNI_SET_STATIC_FIELD_STUB(Long, jlong)
-JNI_SET_STATIC_FIELD_STUB(Float, jfloat)
-JNI_SET_STATIC_FIELD_STUB(Double, jdouble)
+static void JNICALL jni_SetStaticBooleanField(JNIEnv *env, jclass c, jfieldID fid, jboolean val) {
+    (void)env; (void)c; jni_set_static(fid, DX_INT_VALUE(val ? 1 : 0));
+}
+static void JNICALL jni_SetStaticByteField(JNIEnv *env, jclass c, jfieldID fid, jbyte val) {
+    (void)env; (void)c; jni_set_static(fid, DX_INT_VALUE(val));
+}
+static void JNICALL jni_SetStaticCharField(JNIEnv *env, jclass c, jfieldID fid, jchar val) {
+    (void)env; (void)c; jni_set_static(fid, DX_INT_VALUE(val));
+}
+static void JNICALL jni_SetStaticShortField(JNIEnv *env, jclass c, jfieldID fid, jshort val) {
+    (void)env; (void)c; jni_set_static(fid, DX_INT_VALUE(val));
+}
+static void JNICALL jni_SetStaticIntField(JNIEnv *env, jclass c, jfieldID fid, jint val) {
+    (void)env; (void)c; jni_set_static(fid, DX_INT_VALUE(val));
+}
+static void JNICALL jni_SetStaticLongField(JNIEnv *env, jclass c, jfieldID fid, jlong val) {
+    (void)env; (void)c; jni_set_static(fid, (DxValue){.tag = DX_VAL_LONG, .l = val});
+}
+static void JNICALL jni_SetStaticFloatField(JNIEnv *env, jclass c, jfieldID fid, jfloat val) {
+    (void)env; (void)c; jni_set_static(fid, (DxValue){.tag = DX_VAL_FLOAT, .f = val});
+}
+static void JNICALL jni_SetStaticDoubleField(JNIEnv *env, jclass c, jfieldID fid, jdouble val) {
+    (void)env; (void)c; jni_set_static(fid, (DxValue){.tag = DX_VAL_DOUBLE, .d = val});
+}
 
 // ============================================================================
 // String operations — these are the most commonly used JNI functions
