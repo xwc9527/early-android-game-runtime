@@ -26,6 +26,7 @@ jobs:
           python3 ci/upstream-map.py --verify-upstream --require-valid dalvik.nativeactivity.activity_root --output build/artifacts/upstream-map-report.json
           python3 ci/validate-governance.py --mode discovery
           python3 ci/check-java-architecture-freeze.py
+          python3 ci/check-java-owners.py
       - name: Validate committed semantic differentials
         run: |
           for file in ci/governance/semantic-diffs/*.json; do
