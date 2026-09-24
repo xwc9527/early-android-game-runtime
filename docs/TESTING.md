@@ -27,7 +27,7 @@ Passive diagnostics are always available and bounded. Intrusive diagnostics are 
 
 For a compatibility failure, identify the owning Android public path before changing Runtime behavior. Consult `ci/governance/upstream-map.json`; if it is incomplete, inspect the pinned Android 4.4.4/API19 source and extend the map. Extract guest-visible semantics and required invariants, then compare the AGR path in `semantic-diff.json`.
 
-The comparison concerns behavior, not implementation shape. Host mechanisms such as Darwin condition variables, pipes, UIKit, or ANGLE may replace Linux/Android internals when return values, errors, ordering, ownership, wake behavior, lifecycle, object lifetime, and visibility remain equivalent.
+The comparison concerns behavior, not implementation shape. Semantic equivalence does not authorize an original AGR implementation when an API19/AOSP source owner exists. A different host mechanism is allowed only at an explicitly declared kernel, service, device, or HostServices boundary.
 
 Where an Android 4.4 ARM reference can execute the contract, run the same input on the reference and AGR. Canonicalize addresses and host timing while comparing results, errno, callback/event sequence, thread semantics, lifetime, state transitions, duration class, and error behavior.
 

@@ -2,13 +2,15 @@
 
 Updated: 2026-09-24
 
-## Current branch / HEAD
+## Identity
 
-Phase branch: `recovery/phase3-dalvik-semantics`  
-Baseline HEAD: `a8ff40ef9debfaa132861bc0655bb72871157ded`  
-Context-reset branch: `cursor/context-reset-reference-migration-5e64`
+Current working branch: `cursor/context-reset-reference-migration-5e64`
 
-Formal `main` baseline remains `3e3db84a53ad0957e9217f804b6f718a942b9a11`. This document does not reopen that baseline.
+Current HEAD: `a26f50b139b74585641340c21f1a1ea9724ae072`
+
+Phase base: `recovery/phase3-dalvik-semantics` @ `a8ff40ef9debfaa132861bc0655bb72871157ded`
+
+Formal `main` baseline remains `3e3db84a53ad0957e9217f804b6f718a942b9a11`. This document does not reopen that baseline. The phase base is not the current HEAD.
 
 ## Current phase
 

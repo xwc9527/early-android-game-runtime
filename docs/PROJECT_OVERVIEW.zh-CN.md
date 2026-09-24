@@ -1,6 +1,6 @@
 # Early Android Game Runtime 项目说明
 
-后续 Framework migration 的最高优先级规则是 [`REFERENCE_MIGRATION_RULES.md`](../REFERENCE_MIGRATION_RULES.md)。真实游戏只产生 dependency evidence 和 regression evidence。Runtime gap 本身不授权新增 Android implementation。
+[`REFERENCE_MIGRATION_RULES.md`](../REFERENCE_MIGRATION_RULES.md) 是所有 Android-visible semantics 的最高优先级迁移规则。真实游戏只产生 dependency evidence 和 regression evidence。Runtime gap 本身不授权新增 Android implementation。语义等价不授权原创实现。
 
 ## 项目定位
 

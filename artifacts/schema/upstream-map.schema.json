@@ -6,6 +6,7 @@
     "schema_version": {"const": 2},
     "android_baseline": {"const": "Android 4.4.4_r2"},
     "role": {"const": "NAVIGATION_CACHE_NOT_ORACLE"},
+    "legacy_navigation_policy": {"type": "string"},
     "entries": {
       "type": "array",
       "items": {
@@ -13,6 +14,8 @@
         "required": ["id", "subsystem", "android_api", "upstream", "agr", "verified_at_commit", "status", "dependencies", "observable_semantics", "internal_invariants", "execution_placement", "host_substitutions", "known_deviations", "contracts"],
         "properties": {
           "status": {"enum": ["VALID", "STALE", "UNVERIFIED", "INVALID"]},
+          "legacy_navigation_only": {"type": "boolean"},
+          "migration_authority": {"type": "boolean"},
           "upstream": {"type": "object", "required": ["revision", "repository", "paths", "symbols", "source_hashes"]},
           "agr": {"type": "object", "required": ["paths", "symbols", "source_hashes"]}
         }

@@ -906,7 +906,9 @@
         "synthetic activity-launch DEX",
         "Pixel Dungeon Activity launch probe",
         "Frozen Bubble Activity launch probe"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.viewroot.attach",
@@ -996,7 +998,9 @@
       ],
       "contracts": [
         "framework.viewroot.attach"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.viewroot.first_traversal",
@@ -1108,7 +1112,9 @@
       "contracts": [
         "framework.first_traversal.synthetic",
         "frozen-bubble.first_traversal"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.viewroot.traversal_dispatch",
@@ -1201,7 +1207,9 @@
       "contracts": [
         "framework.traversal_dispatch.host",
         "frozen-bubble.traversal_dispatch"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.window.set_content_view",
@@ -1308,7 +1316,9 @@
       ],
       "contracts": [
         "framework.traversal_dispatch.host"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.view.surface_view",
@@ -1420,7 +1430,9 @@
       "contracts": [
         "framework.traversal_dispatch.host",
         "frozen-bubble.traversal_dispatch"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.view.surface_holder_canvas",
@@ -1534,7 +1546,9 @@
       ],
       "contracts": [
         "framework.surface_holder_canvas.host"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.graphics.bitmap_decode_resource",
@@ -1625,7 +1639,9 @@
       ],
       "contracts": [
         "frozen-bubble.bitmap_decode_resource"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.graphics.canvas_bitmap",
@@ -1736,7 +1752,9 @@
       "contracts": [
         "framework.canvas_bitmap.host",
         "frozen-bubble.first_content_frame"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "dalvik.vm.vtable",
@@ -1807,7 +1825,9 @@
       ],
       "contracts": [
         "dex.vtable_inheritance"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "dalvik.thread.start",
@@ -1890,7 +1910,9 @@
       ],
       "contracts": [
         "dex.thread_start"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "dalvik.vm.monitor",
@@ -1956,7 +1978,9 @@
       ],
       "contracts": [
         "dex.monitor"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.graphics.bitmap_create_scaled",
@@ -2033,7 +2057,9 @@
       ],
       "contracts": [
         "frozen-bubble.bitmap_decode_resource"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "java.util.random.math.gameplay",
@@ -2109,7 +2135,9 @@
       ],
       "contracts": [
         "dex.random_math_gameplay"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "java.lang.character.for_digit",
@@ -2171,7 +2199,9 @@
       ],
       "contracts": [
         "dex.character_fordigit"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.graphics.canvas_state_clip",
@@ -2276,7 +2306,9 @@
       ],
       "contracts": [
         "framework.canvas_state_clip.host"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "java.util.vector.core",
@@ -2359,7 +2391,9 @@
       ],
       "contracts": [
         "dex.vector_core"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "android.app.activity.request_window_feature",
@@ -2460,7 +2494,9 @@
       ],
       "contracts": [
         "framework.request_window_feature.host"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "android.app.activity.get_intent",
@@ -2529,7 +2565,9 @@
       ],
       "contracts": [
         "framework.activity_get_intent.host"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.view.surface_post_display",
@@ -2614,7 +2652,9 @@
         "surface canvas host consumer snapshot",
         "1080x2340 real APK post and Simulator screen capture",
         "exact-candidate iPhone physical visible frame"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "java.lang.string.byte_constructor",
@@ -2672,7 +2712,9 @@
       ],
       "contracts": [
         "asset-input-stream-host String(byte[]) receiver assignment"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "dalvik.classpath.loader",
@@ -2748,5 +2790,6 @@
         "Tests/DexLoom/classpath-host.c"
       ]
     }
-  ]
+  ],
+  "legacy_navigation_policy": "Entries with legacy_navigation_only true and migration_authority false are historical source navigation and regression evidence only. They cannot authorize continued HLE, authorize a source port, choose the next migration target, or replace a Migration Book or API19 Source Closure."
 }

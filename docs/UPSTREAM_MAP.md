@@ -1,6 +1,8 @@
 # Android 4.4.4 to AGR Upstream Map
 
-This is the human-readable index for `ci/governance/upstream-map.json`. It is a navigation cache, not an oracle, and not a Framework migration surface. A recorded encounter does not authorize the next Android API or HLE. Pinned Android 4.4.4/API19 source remains authoritative. Framework work follows `REFERENCE_MIGRATION_RULES.md`.
+This is the human-readable index for `ci/governance/upstream-map.json`. It is a navigation cache, not an oracle. Pinned Android 4.4.4/API19 source remains authoritative. Android-visible source ownership follows `REFERENCE_MIGRATION_RULES.md`.
+
+Pre-reference Framework, libcore, and game-driven entries carry `legacy_navigation_only: true` and `migration_authority: false`. Those entries are historical source navigation and regression evidence only. They cannot authorize continued HLE, authorize a source port, choose the next migration target, or replace a Migration Book or API19 Source Closure.
 
 Each machine entry records pinned source paths/hashes, AGR paths/hashes, dependencies, verification commit, and `VALID`, `STALE`, `UNVERIFIED`, or `INVALID` status. `ci/upstream-map.py` recomputes AGR hashes. A changed AGR path, baseline revision, dependency, or missing path invalidates cached authority. `STALE` means recheck source; it does not mean the cached statement is false. Normal cache maintenance needs no ADR.
 
@@ -37,4 +39,4 @@ Each machine entry records pinned source paths/hashes, AGR paths/hashes, depende
 
 Each new public path adds or updates one machine-readable entry. A problem report references the map entry, then supplies a compact `semantic-diff.json`; it does not duplicate the upstream map in prose.
 
-Semantic comparison covers guest-observable behavior and required invariants: return/error behavior, callback and state ordering, ownership, thread affinity, blocking/wakeup, lifetime, and memory visibility. Host mechanisms may differ when these semantics remain equivalent.
+Semantic comparison covers guest-observable behavior and required invariants: return/error behavior, callback and state ordering, ownership, thread affinity, blocking/wakeup, lifetime, and memory visibility. Semantic equivalence does not authorize an original implementation. Host mechanisms may differ only at an explicitly excluded kernel, service, device, or HostServices boundary.

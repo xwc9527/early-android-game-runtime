@@ -38,14 +38,14 @@ Read `docs/ARCHITECTURE.md` when ownership, execution placement, or a locked bou
 - No per-game behavior in Runtime code.
 - Test harnesses may identify a game, replay a game-specific trajectory, and assert its observable results.
 - Do not boot or recreate a complete Android OS/userspace.
-- Android 4.4.4/API19 is the behavior oracle. Its internal mechanism may be replaced when guest-visible semantics and required invariants remain equivalent.
+- Android 4.4.4/API19 is the behavior oracle. Android-visible semantics must originate from the pinned API19/AOSP source owner whenever such source exists. Semantic equivalence alone does not authorize an original AGR implementation. Different host mechanisms are allowed only at an explicitly declared kernel/service/device/host boundary.
 - Evidence priority is pinned source, runtime evidence, validated contract, upstream map, then inference. The upstream map is a navigation cache, never an oracle.
 - Original ARMv7 native code and GCC exception runtime execute as GUEST-ARM.
 - DEX remains host-side.
 - The formal linker is the sole ELF owner.
 - UIKit is a host endpoint, not an Android policy owner.
 - Real games produce dependency evidence and regression evidence. A Runtime gap does not authorize a new Android implementation or HLE.
-- Framework migration follows `REFERENCE_MIGRATION_RULES.md`. That file outranks this document for Framework owner selection, source port, and HLE termination.
+- `REFERENCE_MIGRATION_RULES.md` outranks this document for every Android-visible source ownership decision, including Dalvik, libcore, Framework, JNI semantics, Bionic, and Android native userspace. An upstream-map entry with `migration_authority: false` is historical navigation only.
 - Do not infer a cause from the last marker or first error line.
 - Nonblocking technical debt is not current work.
 

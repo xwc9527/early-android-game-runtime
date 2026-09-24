@@ -133,9 +133,26 @@ def evaluate(document, verify_upstream=False, verify_only=None):
             elif agr.get("source_hashes", {}).get(path) != current:
                 if effective != "INVALID": effective = "STALE"
                 reasons.append(f"AGR source hash changed: {path}")
+        legacy = bool(entry.get("legacy_navigation_only"))
+        authority = entry.get("migration_authority")
+        pre_reference = (
+            entry_id.startswith("framework.")
+            or entry_id.startswith("java.")
+            or entry_id.startswith("android.app.")
+            or entry_id in {"dalvik.vm.vtable", "dalvik.thread.start", "dalvik.vm.monitor"}
+        )
+        if pre_reference and not (legacy and authority is False):
+            errors.append(
+                f"{entry_id}: pre-reference Framework/libcore entry must be "
+                "legacy_navigation_only with migration_authority false"
+            )
+        if legacy and authority is not False:
+            errors.append(f"{entry_id}: legacy navigation entry must set migration_authority false")
         entries[entry_id] = {"declared_status": declared, "effective_status": effective,
                              "reasons": reasons, "current_agr_hashes": current_hashes,
-                             "dependencies": entry.get("dependencies", [])}
+                             "dependencies": entry.get("dependencies", []),
+                             "legacy_navigation_only": legacy,
+                             "migration_authority": authority}
     # Dependency invalidation is evaluated after all entries exist.
     changed = True
     while changed:

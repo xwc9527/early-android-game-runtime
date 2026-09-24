@@ -1,10 +1,12 @@
 # Android 4.4.4 game runtime migration plan
 
 [`REFERENCE_MIGRATION_RULES.md`](../REFERENCE_MIGRATION_RULES.md) is the
-highest-priority rule for later Framework migration. This plan keeps the locked
-execution placement, guest ABI, HostServices boundary, and AOSP ownership below.
-It does not pre-declare Framework classes, and it does not let a real-game gap
-choose the next Android API.
+highest-priority rule for every Android-visible semantic that has an API19/AOSP
+source owner, including Dalvik, libcore, Framework, JNI semantics, Bionic, and
+Android native userspace. This plan keeps the locked execution placement, guest
+ABI, HostServices boundary, and AOSP ownership below. It does not pre-declare
+Framework classes, and it does not let a real-game gap or semantic equivalence
+choose an original implementation.
 
 ## Highest decision rule
 

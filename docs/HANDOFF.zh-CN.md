@@ -1,6 +1,6 @@
 # Early Android Game Runtime 工程交接文档
 
-后续 Framework migration 的最高优先级规则是 [`REFERENCE_MIGRATION_RULES.md`](../REFERENCE_MIGRATION_RULES.md)。本文档服从该文件。真实游戏只产生 dependency evidence 和 regression evidence。Runtime gap 本身不授权新增 Android implementation 或 HLE。
+[`REFERENCE_MIGRATION_RULES.md`](../REFERENCE_MIGRATION_RULES.md) 是所有 Android-visible semantics 的最高优先级迁移规则，覆盖 Dalvik、libcore、Framework、JNI semantics、Bionic 和 Android native userspace。本文档服从该文件。真实游戏只产生 dependency evidence 和 regression evidence。Runtime gap 本身不授权新增 Android implementation 或 HLE。只要 API19/AOSP 存在源码 owner，不得仅凭语义等价自行重写。
 
 ## 交接状态
 

@@ -46,7 +46,7 @@ See `THIRD_PARTY_NOTICES.md` for component licenses.
 
 ## Documentation
 
-Framework migration follows [REFERENCE_MIGRATION_RULES.md](REFERENCE_MIGRATION_RULES.md). That file is the highest-priority rule for later Framework work.
+[REFERENCE_MIGRATION_RULES.md](REFERENCE_MIGRATION_RULES.md) is the highest-priority migration rule for every Android-visible semantic that has an API19/AOSP source owner.
 
 - [中文项目说明](docs/PROJECT_OVERVIEW.zh-CN.md)
 - [中文工程交接文档](docs/HANDOFF.zh-CN.md)
