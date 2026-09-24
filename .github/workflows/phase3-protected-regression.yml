@@ -1,0 +1,22 @@
+name: Phase 3 protected regression
+
+on:
+  pull_request:
+  push:
+    branches: ['recovery/**', main]
+
+jobs:
+  protected-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Protected stable native contracts
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y clang python3
+          bash scripts/test-guest-vma.sh
+          bash scripts/test-nativecore-allocator.sh
+          bash scripts/test-aosp-linker.sh
+          bash scripts/test-bionic-futex-host.sh

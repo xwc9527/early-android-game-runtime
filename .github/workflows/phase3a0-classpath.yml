@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: API19 classpath differential
+      - name: AGR classpath host contract
         run: |
           set -euo pipefail
           DIR=/tmp/classpath-fixtures

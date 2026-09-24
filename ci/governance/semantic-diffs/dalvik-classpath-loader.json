@@ -5,9 +5,9 @@
   "observed_discontinuity": "Class lookup searched every loaded DEX by descriptor, kept the first hit, and if that missed guessed a class with the same simple name.",
   "upstream": {
     "map_entry": "dalvik.classpath.loader",
-    "map_status": "UNVERIFIED",
+    "map_status": "VALID",
     "revision": "Android 4.4.4_r2",
-    "source_verified": false,
+    "source_verified": true,
     "files": [
       "libcore/libdvm/src/main/java/java/lang/ClassLoader.java",
       "dalvik/vm/oo/Class.cpp"
@@ -64,15 +64,31 @@
   "evidence": [
     {
       "type": "SOURCE",
-      "artifact": "Runtime/DexLoom/VM/dx_vm.c"
+      "artifact": "libcore/libdvm/src/main/java/java/lang/ClassLoader.java",
+      "evidence_kind": "PINNED_SOURCE_CONTRACT",
+      "source_hash": "9a5bc7ab53ebbd7460de695b79368e6e46d04e7eefd592da87df2f0ee4562148",
+      "revision": "android-4.4.4_r2"
+    },
+    {
+      "type": "SOURCE",
+      "artifact": "dalvik/vm/oo/Class.cpp",
+      "evidence_kind": "PINNED_SOURCE_CONTRACT",
+      "source_hash": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5",
+      "revision": "android-4.4.4_r2"
     },
     {
       "type": "CONTRACT",
-      "artifact": "Tests/DexLoom/classpath-host.c"
+      "artifact": "Tests/DexLoom/classpath-host.c",
+      "evidence_kind": "AGR_HOST_CONTRACT"
     }
   ],
+  "evidence_separation": {
+    "AGR_HOST_CONTRACT": "Tests/DexLoom/classpath-host.c executed on the host DxVM. This is not an Android process.",
+    "API19_REFERENCE_DIFFERENTIAL": "NOT_EXECUTED. This environment has no Android 4.4.4 system image, adb, or emulator, so the same DEX fixtures cannot be loaded by a reference ClassLoader. No reference PASS is recorded.",
+    "PINNED_SOURCE_CONTRACT": "android-4.4.4_r2 ClassLoader.loadClass and dvmDefineClass, hash-verified from googlesource TEXT."
+  },
   "remaining_uncertainty": [
-    "The executable Android 4.4.4 reference image was not booted for this contract in this environment."
+    "API19_REFERENCE_DIFFERENTIAL was not executed: no Android 4.4.4 system image or emulator is available, so an identical fixture cannot run on the reference ClassLoader."
   ],
   "next_action": "Phase 3A indirect references and JNI thread state. Do not start Framework migration.",
   "needs_experiment": false,

@@ -2,7 +2,7 @@
 
 Updated: 2026-09-24
 
-Phase 3A0 Boot ClassPath / ClassLoader identity has a passing host contract on recovery branch `recovery/phase3-dalvik-semantics` at `64023dae8b9a06bb93cfa34669193448f3820149`. Governance lifecycle stays `IMPLEMENTED` because this environment did not boot the Android 4.4.4 reference image, so the phase is not a formal closure attempt. Class identity is the defining loader plus the descriptor. The boot loader wins over an application DEX, missing classes are not found, suffix lookup is gone, and the classpath is a growable list. The host contract is `Tests/DexLoom/classpath-host.c`. The executable Android 4.4.4 reference image was not booted for this contract. JNI reference migration and Framework migration are not started.
+Phase 3A0 Boot ClassPath / ClassLoader identity is source-verified against Android 4.4.4_r2. `dalvik.classpath.loader` pins `ClassLoader.java` `9a5bc7ab53ebbd7460de695b79368e6e46d04e7eefd592da87df2f0ee4562148` and `Class.cpp` `162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5`. The host contract `Tests/DexLoom/classpath-host.c` is `AGR_HOST_CONTRACT`. `API19_REFERENCE_DIFFERENTIAL` was not executed: this environment has no Android 4.4.4 system image, so the same fixtures cannot run on a reference ClassLoader, and no reference PASS is recorded. The pinned source contract is the substitute. Class identity is the defining loader plus the descriptor. Formal `CLOSED` waits for the GitHub run of this verification commit.
 
 `game_dex_runner.c` is `LEGACY_BOOTSTRAP`. `dx_android_framework.c` is `LEGACY_REFERENCE` and is not a production source. Owner ledgers are `ci/governance/java-legacy-migration.json` and `ci/governance/java-public-owner.json`.
 
