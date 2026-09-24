@@ -93,6 +93,30 @@ static void print_bubble_selection_state(agr_dex_game *game) {
     }
 }
 
+static void print_launch_failure_context(agr_dex_game *game) {
+    DxVM *vm = agr_dex_game_vm(game);
+    if (!vm) return;
+    for (uint32_t i = 0; i < vm->exec_count; i++) {
+        DxExecutionContext *exec = vm->execs[i];
+        if (!exec) continue;
+        printf("launch_exec id=%u state=%d depth=%u error=%s exception=%s last=%s\n",
+               exec->id, (int)exec->state, exec->stack_depth, exec->error_msg,
+               exec->pending_exception && exec->pending_exception->klass
+                   ? exec->pending_exception->klass->descriptor : "-",
+               exec->diagnostic_last_method);
+        uint32_t count = exec->diagnostic_method_event_count;
+        uint64_t start = exec->diagnostic_method_sequence > count
+            ? exec->diagnostic_method_sequence - count : 0;
+        for (uint32_t j = 0; j < count; j++) {
+            const DxDiagnosticMethodEvent *event =
+                &exec->diagnostic_method_events[(start + j) % DX_DIAGNOSTIC_METHOD_EVENTS];
+            printf("launch_method id=%u seq=%llu depth=%u native=%u method=%s\n",
+                   exec->id, (unsigned long long)event->sequence,
+                   event->depth, event->is_native, event->method);
+        }
+    }
+}
+
 static void expect(int condition, const char *message) {
     if (condition) {
         printf("PASS %s\n", message);
@@ -151,6 +175,8 @@ int main(int argc, char **argv) {
     memset(&snapshot, 0, sizeof(snapshot));
     expect(agr_dex_game_runtime_snapshot(game, &snapshot) == 0, "snapshot");
     vm = agr_dex_game_vm(game);
+    if (snapshot.content_surface_created_count == 0)
+        print_launch_failure_context(game);
     n = vm ? dx_vm_vector_trace_count(vm) : 0;
     for (i = 0; i < n; i++) {
         DxVectorTrace trace;
