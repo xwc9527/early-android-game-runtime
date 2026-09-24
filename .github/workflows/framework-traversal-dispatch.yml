@@ -99,7 +99,7 @@ jobs:
           for source in \
             "$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" \
             "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" \
-            "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" "$DEX/VM/dx_exec.c" \
+            "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" "$DEX/VM/dx_exec.c" "$DEX/VM/dx_indirect_ref.c" \
             "$DEX/APK/dx_apk.c" "$DEX/APK/dx_manifest.c" "$DEX/APK/dx_resources.c" "$DEX/poc_host.c"
           do
             cc "${COMMON[@]}" -w -pthread -c "$source" -o "/tmp/agr-dispatch-obj/$(basename "${source%.c}").o"
@@ -109,7 +109,7 @@ jobs:
           cc -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
             /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
             /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
-            /tmp/agr-dispatch-obj/dx_exec.o /tmp/java-random-math-host.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_indirect_ref.o /tmp/java-random-math-host.o \
             -lz -lm -o /tmp/java-random-math-host
           /tmp/java-random-math-host
           cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c "$DEX/AndroidMini/framework_viewroot.c" \
@@ -121,7 +121,7 @@ jobs:
           g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
             /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
             /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
-            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_indirect_ref.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
             /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
             /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
             /tmp/asset-input-stream-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/asset-input-stream-host
@@ -137,7 +137,7 @@ jobs:
           cc -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
             /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
             /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
-            /tmp/agr-dispatch-obj/dx_exec.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_indirect_ref.o \
             /tmp/vtable-inheritance-host.o -lz -lm -o /tmp/vtable-inheritance-host
           /tmp/vtable-inheritance-host /tmp/vtable-inheritance.dex
           python3 Tests/DexLoom/make_thread_start_fixture.py /tmp/thread-start.dex
@@ -146,7 +146,7 @@ jobs:
           cc -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
             /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
             /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
-            /tmp/agr-dispatch-obj/dx_exec.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_indirect_ref.o \
             /tmp/thread-start-host.o -lz -lm -o /tmp/thread-start-host
           /tmp/thread-start-host /tmp/thread-start.dex
           cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/character-fordigit-host.c \
@@ -154,7 +154,7 @@ jobs:
           cc -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
             /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
             /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
-            /tmp/agr-dispatch-obj/dx_exec.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_indirect_ref.o \
             /tmp/character-fordigit-host.o -lz -lm -o /tmp/character-fordigit-host
           /tmp/character-fordigit-host
           cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/vector-core-host.c \
@@ -162,7 +162,7 @@ jobs:
           cc -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
             /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
             /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
-            /tmp/agr-dispatch-obj/dx_exec.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_indirect_ref.o \
             /tmp/vector-core-host.o -lz -lm -o /tmp/vector-core-host
           /tmp/vector-core-host
           cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/unresolved-context-host.c \
@@ -170,7 +170,7 @@ jobs:
           cc -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
             /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
             /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
-            /tmp/agr-dispatch-obj/dx_exec.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_indirect_ref.o \
             /tmp/unresolved-context-host.o -lz -lm -o /tmp/unresolved-context-host
           /tmp/unresolved-context-host
           cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/request-window-feature-host.c \
@@ -178,7 +178,7 @@ jobs:
           g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
             /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
             /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
-            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_indirect_ref.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
             /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
             /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
             /tmp/request-window-feature-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/request-window-feature-host
@@ -188,7 +188,7 @@ jobs:
           g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
             /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
             /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
-            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_indirect_ref.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
             /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
             /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
             /tmp/get-intent-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/get-intent-host
@@ -199,7 +199,7 @@ jobs:
           g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
             /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
             /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
-            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_indirect_ref.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
             /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
             /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
             /tmp/canvas-state-clip-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/canvas-state-clip-host
@@ -210,7 +210,7 @@ jobs:
           g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
             /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
             /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
-            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_indirect_ref.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
             /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
             /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
             /tmp/surface-canvas-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/surface-canvas-host
@@ -234,7 +234,7 @@ jobs:
           g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
             /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
             /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
-            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_indirect_ref.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
             /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
             /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
             /tmp/agr_physical_trace.o /tmp/surface-callback-outcome-host.o "${BITMAP_OBJS[@]}" \
@@ -246,7 +246,7 @@ jobs:
           g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
             /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
             /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
-            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_indirect_ref.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
             /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
             /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
             /tmp/frozen-bubble-1080-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/frozen-bubble-1080-host

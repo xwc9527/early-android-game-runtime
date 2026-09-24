@@ -159,6 +159,8 @@ agr_dex_game *agr_dex_game_create_from_apk(const agr_apk_package *package);
 void agr_dex_game_destroy(agr_dex_game *game);
 const char *agr_dex_game_activity_descriptor(const agr_dex_game *game);
 int agr_dex_game_resolve_class(agr_dex_game *game, const char *descriptor);
+uint32_t agr_dex_game_class_ref(agr_dex_game *game, const char *descriptor);
+uint32_t agr_dex_game_string_ref(agr_dex_game *game, const char *text);
 int agr_dex_game_resolve_method(agr_dex_game *game, const char *class_descriptor,
                                 const char *name, const char *signature, int is_static);
 int agr_dex_game_start_activity(agr_dex_game *game);

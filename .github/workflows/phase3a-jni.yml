@@ -1,0 +1,38 @@
+name: Phase 3A JNI references
+
+on:
+  pull_request:
+  push:
+    branches: ['recovery/**', main]
+    paths:
+      - 'Runtime/DexLoom/VM/**'
+      - 'Runtime/DexLoom/Include/dx_vm.h'
+      - 'Runtime/DexLoom/Include/dx_indirect_ref.h'
+      - 'Runtime/DexLoom/Include/dx_jni.h'
+      - 'Tests/DexLoom/jni-ref-host.c'
+      - '.github/workflows/phase3a-jni.yml'
+
+jobs:
+  jni-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: AGR JNI reference host contract
+        run: |
+          set -euo pipefail
+          DEX=Runtime/DexLoom
+          OBJ=/tmp/jni-ref-obj
+          mkdir -p "$OBJ"
+          COMMON=(-std=gnu11 -O1 -I "$DEX/Include" -I "$DEX" -w -pthread)
+          for source in \
+            "$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" \
+            "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" \
+            "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" \
+            "$DEX/VM/dx_exec.c" "$DEX/VM/dx_indirect_ref.c"
+          do
+            cc "${COMMON[@]}" -c "$source" -o "$OBJ/$(basename "${source%.c}").o"
+          done
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/jni-ref-host.c -o "$OBJ/jni-ref-host.o"
+          cc -pthread "$OBJ"/*.o -lz -lm -o /tmp/jni-ref-host
+          /tmp/jni-ref-host

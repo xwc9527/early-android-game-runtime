@@ -193,6 +193,7 @@ static DxExecutionContext *exec_create(DxVM *vm, DxObject *java_thread, uint64_t
     exec->insn_limit = insn_limit;
     pthread_mutex_init(&exec->life_mu, NULL);
     pthread_cond_init(&exec->done_cv, NULL);
+    dx_iref_init(&exec->local_refs, 16, 512, DX_IREF_LOCAL);
     vm->execs[vm->exec_count++] = exec;
     return exec;
 }
@@ -212,6 +213,7 @@ void dx_exec_vm_init(DxVM *vm) {
         set_state(vm->root_exec, DX_JAVA_THREAD_RUNNING);
         vm->root_exec->host_thread = pthread_self();
         vm->root_exec->has_host_thread = 1;
+        vm->root_exec->jni_attached = 1;
         dx_tls_exec = vm->root_exec;
     }
 }
@@ -289,6 +291,17 @@ DxResult dx_vm_exec_poll(DxVM *vm) {
         safepoint_wait(exec);
     if (exec->stop_requested) return DX_ERR_CANCELLED;
     return DX_OK;
+}
+
+DxExecutionContext *dx_exec_create_attached(DxVM *vm) {
+    DxExecutionContext *exec = exec_create(vm, NULL, 0);
+    if (!exec) return NULL;
+    exec->host_thread = pthread_self();
+    exec->has_host_thread = 1;
+    exec->jni_attached = 1;
+    set_state(exec, DX_JAVA_THREAD_RUNNING);
+    dx_tls_exec = exec;
+    return exec;
 }
 
 void dx_exec_enter(DxExecutionContext *exec) {
@@ -660,6 +673,7 @@ void dx_exec_vm_shutdown(DxVM *vm) {
         exec->frame_pool_count = 0;
         pthread_mutex_destroy(&exec->life_mu);
         pthread_cond_destroy(&exec->done_cv);
+        dx_iref_destroy(&exec->local_refs);
         if (dx_tls_exec == exec) dx_tls_exec = vm->root_exec;
         dx_free(exec);
         vm->execs[i] = NULL;
@@ -682,6 +696,7 @@ void dx_exec_vm_fini(DxVM *vm) {
         vm->root_exec->frame_pool_count = 0;
         pthread_mutex_destroy(&vm->root_exec->life_mu);
         pthread_cond_destroy(&vm->root_exec->done_cv);
+        dx_iref_destroy(&vm->root_exec->local_refs);
         if (dx_tls_exec == vm->root_exec) dx_tls_exec = NULL;
         dx_free(vm->root_exec);
         vm->root_exec = NULL;

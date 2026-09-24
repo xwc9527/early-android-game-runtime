@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "target": "Phase 3A0 Boot ClassPath / ClassLoader identity",
+  "target": "Phase 3A Dalvik JNI references",
   "state": "IMPLEMENTED",
   "closure_tested_commit": null,
   "closure_tested_tree": null,

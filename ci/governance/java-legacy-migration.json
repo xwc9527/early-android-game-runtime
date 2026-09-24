@@ -198,9 +198,10 @@
     },
     {
       "symbol": "Landroid/app/NotificationChannel;",
-      "disposition": "MIGRATE_AOSP_JAVA",
+      "disposition": "DELETE_AFTER_PARITY",
       "current_implementation": "Runtime/DexLoom",
-      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Landroid/app/NotificationManager;",
@@ -228,27 +229,31 @@
     },
     {
       "symbol": "Landroid/app/job/JobInfo$Builder;",
-      "disposition": "MIGRATE_AOSP_JAVA",
+      "disposition": "DELETE_AFTER_PARITY",
       "current_implementation": "Runtime/DexLoom",
-      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Landroid/app/job/JobInfo;",
-      "disposition": "MIGRATE_AOSP_JAVA",
+      "disposition": "DELETE_AFTER_PARITY",
       "current_implementation": "Runtime/DexLoom",
-      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Landroid/app/job/JobScheduler;",
-      "disposition": "MIGRATE_AOSP_JAVA",
+      "disposition": "DELETE_AFTER_PARITY",
       "current_implementation": "Runtime/DexLoom",
-      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Landroid/app/job/JobService;",
-      "disposition": "MIGRATE_AOSP_JAVA",
+      "disposition": "DELETE_AFTER_PARITY",
       "current_implementation": "Runtime/DexLoom",
-      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Landroid/content/BroadcastReceiver;",
@@ -1950,15 +1955,17 @@
     },
     {
       "symbol": "Ljava/lang/invoke/MethodHandle;",
-      "disposition": "MIGRATE_AOSP_JAVA",
+      "disposition": "DELETE_AFTER_PARITY",
       "current_implementation": "Runtime/DexLoom",
-      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Ljava/lang/invoke/MethodType;",
-      "disposition": "MIGRATE_AOSP_JAVA",
+      "disposition": "DELETE_AFTER_PARITY",
       "current_implementation": "Runtime/DexLoom",
-      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Ljava/lang/ref/Reference;",
@@ -2400,9 +2407,10 @@
     },
     {
       "symbol": "Ljava/util/concurrent/CompletableFuture;",
-      "disposition": "MIGRATE_AOSP_JAVA",
+      "disposition": "DELETE_AFTER_PARITY",
       "current_implementation": "Runtime/DexLoom",
-      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Ljava/util/concurrent/ConcurrentHashMap;",
@@ -2526,27 +2534,31 @@
     },
     {
       "symbol": "Ljavax/inject/Inject;",
-      "disposition": "MIGRATE_AOSP_JAVA",
+      "disposition": "DELETE_AFTER_PARITY",
       "current_implementation": "Runtime/DexLoom",
-      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Ljavax/inject/Named;",
-      "disposition": "MIGRATE_AOSP_JAVA",
+      "disposition": "DELETE_AFTER_PARITY",
       "current_implementation": "Runtime/DexLoom",
-      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Ljavax/inject/Provider;",
-      "disposition": "MIGRATE_AOSP_JAVA",
+      "disposition": "DELETE_AFTER_PARITY",
       "current_implementation": "Runtime/DexLoom",
-      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Ljavax/inject/Singleton;",
-      "disposition": "MIGRATE_AOSP_JAVA",
+      "disposition": "DELETE_AFTER_PARITY",
       "current_implementation": "Runtime/DexLoom",
-      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Ljavax/net/ssl/HttpsURLConnection;",

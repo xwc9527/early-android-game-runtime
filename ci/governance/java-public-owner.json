@@ -197,9 +197,10 @@
     },
     {
       "symbol": "Landroid/app/NotificationChannel;",
-      "owner": "AOSP_JAVA",
-      "production": true,
-      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Landroid/app/NotificationManager;",
@@ -227,27 +228,31 @@
     },
     {
       "symbol": "Landroid/app/job/JobInfo$Builder;",
-      "owner": "AOSP_JAVA",
-      "production": true,
-      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Landroid/app/job/JobInfo;",
-      "owner": "AOSP_JAVA",
-      "production": true,
-      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Landroid/app/job/JobScheduler;",
-      "owner": "AOSP_JAVA",
-      "production": true,
-      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Landroid/app/job/JobService;",
-      "owner": "AOSP_JAVA",
-      "production": true,
-      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Landroid/content/BroadcastReceiver;",
@@ -1956,15 +1961,17 @@
     },
     {
       "symbol": "Ljava/lang/invoke/MethodHandle;",
-      "owner": "AOSP_JAVA",
-      "production": true,
-      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Ljava/lang/invoke/MethodType;",
-      "owner": "AOSP_JAVA",
-      "production": true,
-      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Ljava/lang/ref/Reference;",
@@ -2406,9 +2413,10 @@
     },
     {
       "symbol": "Ljava/util/concurrent/CompletableFuture;",
-      "owner": "AOSP_JAVA",
-      "production": true,
-      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Ljava/util/concurrent/ConcurrentHashMap;",
@@ -2532,27 +2540,31 @@
     },
     {
       "symbol": "Ljavax/inject/Inject;",
-      "owner": "AOSP_JAVA",
-      "production": true,
-      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Ljavax/inject/Named;",
-      "owner": "AOSP_JAVA",
-      "production": true,
-      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Ljavax/inject/Provider;",
-      "owner": "AOSP_JAVA",
-      "production": true,
-      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Ljavax/inject/Singleton;",
-      "owner": "AOSP_JAVA",
-      "production": true,
-      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
     },
     {
       "symbol": "Ljavax/net/ssl/HttpsURLConnection;",

@@ -3,6 +3,7 @@
 
 #include "dx_types.h"
 #include "dx_dex.h"
+#include "dx_indirect_ref.h"
 #include <pthread.h>
 
 // Release vs Debug build configuration
@@ -102,6 +103,14 @@ typedef struct {
 typedef struct {
     DxICSlot slots[DX_IC_TABLE_SIZE];
 } DxICTable;
+
+typedef struct DxFieldId {
+    DxClass *declaring;
+    const char *name;
+    const char *type;
+    int is_static;
+    uint32_t index;
+} DxFieldId;
 
 // Native method implementation signature
 typedef DxResult (*DxNativeMethodFn)(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count);
@@ -314,6 +323,14 @@ typedef struct DxExecutionContext {
 
     DxFrame *frame_pool[DX_FRAME_POOL_SIZE];
     uint32_t frame_pool_count;
+
+    DxIRefTable local_refs;
+    uint32_t local_bottom;
+    uint32_t local_frame_state[32];
+    uint32_t local_frame_bottom[32];
+    uint32_t local_frame_depth;
+    const void *jni_functions;
+    int jni_attached;
 } DxExecutionContext;
 
 // Classpath is a dynamic container. A fixed DEX count is not a capability boundary.
@@ -346,6 +363,9 @@ struct DxVM {
     uint32_t loader_capacity;
     DxClassLoader *pending_defining_loader;
     DxClassLoader *pending_resolve_loader;
+    DxIRefTable global_refs;
+    DxIRefTable weak_refs;
+    int jni_refs_ready;
     /* Host runtime boundary used only when a DEX-declared native method has
        no framework-native implementation inside DexLoom. */
     DxUnboundNativeMethodFn unbound_native_fn;
@@ -620,6 +640,7 @@ void dx_exec_vm_fini(DxVM *vm);
 DxResult dx_vm_monitor_enter(DxVM *vm, DxObject *obj);
 DxResult dx_vm_monitor_exit(DxVM *vm, DxObject *obj);
 DxResult dx_vm_exec_poll(DxVM *vm);
+DxExecutionContext *dx_exec_create_attached(DxVM *vm);
 void dx_exec_enter(DxExecutionContext *exec);
 void dx_exec_leave(DxExecutionContext *exec);
 void dx_exec_gc_begin(DxVM *vm);

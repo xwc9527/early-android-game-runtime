@@ -404,7 +404,8 @@ static uint32_t jni_class_handle(agr_guest *g,const char *descriptor) {
         if(!grown)return 0;g->classes=grown;g->class_capacity=next;
     }
     char *copy=copy_string(descriptor);if(!copy)return 0;
-    uint32_t handle=0x64000000u+g->class_count*4u;
+    uint32_t handle=g->dex_game?agr_dex_game_class_ref(g->dex_game,descriptor):0;
+    if(!handle){free(copy);return 0;}
     g->classes[g->class_count++]=(jni_class){handle,copy};return handle;
 }
 static const char *jni_class_descriptor(agr_guest *g,uint32_t handle) {
@@ -419,7 +420,8 @@ static uint32_t jni_string_handle(agr_guest *g,const char *text) {
         if(!grown)return 0;g->strings=grown;g->string_capacity=next;
     }
     char *copy=copy_string(text);if(!copy)return 0;
-    uint32_t handle=0x66000000u+g->string_count*4u;
+    uint32_t handle=g->dex_game?agr_dex_game_string_ref(g->dex_game,text):0;
+    if(!handle){free(copy);return 0;}
     g->strings[g->string_count++]=(jni_string){handle,copy};return handle;
 }
 static const char *jni_string_text(agr_guest *g,uint32_t handle) {
@@ -472,7 +474,12 @@ static int32_t dex_native_bridge(void *user,const char *class_descriptor,
     agr_guest *g=(agr_guest *)user;
     uint32_t target=resolve_native_method(g,class_descriptor,method_name,signature);
     if(!target){snprintf(g->error,sizeof(g->error),"missing native binding %.80s",method_name);return -1;}
-    uint32_t argv[18]={JNI_ENV_PTR,is_static?jni_class_handle(g,class_descriptor):0x60001000u};
+    uint32_t receiver=0;
+    if(!is_static){
+        if(argument_count&&arguments[0].kind==AGR_DEX_ARG_OBJECT)receiver=arguments[0].value.object;
+        if(!receiver)return -1;
+    }
+    uint32_t argv[18]={JNI_ENV_PTR,is_static?jni_class_handle(g,class_descriptor):receiver};
     if(argument_count>16)return -1;
     uint32_t start=is_static?0:1;
     for(uint32_t i=start;i<argument_count;i++) {

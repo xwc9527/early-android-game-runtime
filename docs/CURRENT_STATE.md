@@ -2,7 +2,7 @@
 
 Updated: 2026-09-24
 
-Phase 3A0 Boot ClassPath / ClassLoader identity is source-verified against Android 4.4.4_r2. `dalvik.classpath.loader` pins `ClassLoader.java` `9a5bc7ab53ebbd7460de695b79368e6e46d04e7eefd592da87df2f0ee4562148` and `Class.cpp` `162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5`. The host contract `Tests/DexLoom/classpath-host.c` is `AGR_HOST_CONTRACT`. `API19_REFERENCE_DIFFERENTIAL` was not executed: this environment has no Android 4.4.4 system image, so the same fixtures cannot run on a reference ClassLoader, and no reference PASS is recorded. The pinned source contract is the substitute. Class identity is the defining loader plus the descriptor. Formal `CLOSED` waits for the GitHub run of this verification commit.
+Phase 3A0 Boot ClassPath / ClassLoader identity is CLOSED at `ccccca77b9a1dd11880907ef1fb3da3f83e739ab` / tree `5392048daa8d5b96995406b51610afa17decc7da`. CI: classpath `36019018497`, governance `36019009849` and `36019018340`, protected regression `36019009689` and `36019018232`. `dalvik.classpath.loader` is VALID. Evidence kinds stay separate: `AGR_HOST_CONTRACT`, `PINNED_SOURCE_CONTRACT`, and `API19_REFERENCE_DIFFERENTIAL` not executed. Active target is now Phase 3A Dalvik JNI references.
 
 `game_dex_runner.c` is `LEGACY_BOOTSTRAP`. `dx_android_framework.c` is `LEGACY_REFERENCE` and is not a production source. Owner ledgers are `ci/governance/java-legacy-migration.json` and `ci/governance/java-public-owner.json`.
 

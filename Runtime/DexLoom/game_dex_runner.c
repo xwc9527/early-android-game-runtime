@@ -3697,14 +3697,15 @@ static char *method_signature(const agr_dex_game *game, const DxMethod *method) 
 }
 
 static uint32_t object_handle(agr_dex_game *game, DxObject *object) {
-    if(!game||!object)return 0;
+    if(!game||!object||!game->vm)return 0;
     for(uint32_t i=0;i<game->object_count;i++)if(game->objects[i].object==object)return game->objects[i].handle;
     if(game->object_count==game->object_capacity) {
         uint32_t next=game->object_capacity?game->object_capacity*2:16;
         void *grown=realloc(game->objects,(size_t)next*sizeof(*game->objects));
         if(!grown)return 0;game->objects=grown;game->object_capacity=next;
     }
-    uint32_t handle=0x67000000u+game->object_count*4u;
+    uint32_t handle=dx_iref_add(&game->vm->global_refs, 0, object);
+    if(!handle)return 0;
     game->objects[game->object_count++]=(typeof(*game->objects)){handle,object};
     return handle;
 }
@@ -4447,6 +4448,19 @@ static DxMethod *find_exact_method(agr_dex_game *game, DxClass *cls,
 int agr_dex_game_resolve_class(agr_dex_game *game, const char *descriptor) {
     DxClass *cls=NULL;
     return game&&descriptor&&dx_vm_load_class(game->vm,descriptor,&cls)==DX_OK&&cls?0:-1;
+}
+uint32_t agr_dex_game_class_ref(agr_dex_game *game, const char *descriptor) {
+    DxClass *cls=NULL;
+    DxObject *obj;
+    if(!game||!game->vm||!descriptor||dx_vm_load_class(game->vm,descriptor,&cls)!=DX_OK||!cls)return 0;
+    obj=dx_vm_alloc_object(game->vm, cls);
+    return obj?dx_iref_add(&game->vm->global_refs, 0, obj):0;
+}
+uint32_t agr_dex_game_string_ref(agr_dex_game *game, const char *text) {
+    DxObject *obj;
+    if(!game||!game->vm||!text)return 0;
+    obj=dx_vm_create_string(game->vm, text);
+    return obj?dx_iref_add(&game->vm->global_refs, 0, obj):0;
 }
 int agr_dex_game_resolve_method(agr_dex_game *game, const char *class_descriptor,
                                 const char *name, const char *signature, int is_static) {

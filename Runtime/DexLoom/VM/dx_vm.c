@@ -49,6 +49,9 @@ DxVM *dx_vm_create(DxContext *ctx) {
     vm->young_gen_threshold = 256;
     vm->next_diagnostic_identity = 1;
     vm->gc_cycle_count = 0;
+    dx_iref_init(&vm->global_refs, 16, 1024, DX_IREF_GLOBAL);
+    dx_iref_init(&vm->weak_refs, 8, 1024, DX_IREF_WEAK);
+    vm->jni_refs_ready = 1;
     vm->boot_loader = dx_vm_create_loader(vm, NULL);
     if (vm->boot_loader) vm->boot_loader->boot = 1;
     vm->app_loader = dx_vm_create_loader(vm, vm->boot_loader);
@@ -118,6 +121,8 @@ void dx_vm_destroy(DxVM *vm) {
         dx_free(vm->loaders[i]);
     }
     dx_free(vm->loaders);
+    dx_iref_destroy(&vm->global_refs);
+    dx_iref_destroy(&vm->weak_refs);
 
     // Free the caller context's pooled frames. Worker pools were released at shutdown.
     if (dx_vm_current_exec(vm)) {
@@ -5254,6 +5259,11 @@ static void gc_mark_object(DxObject *obj) {
     }
 }
 
+static void gc_mark_jni_root(void *obj, void *user) {
+    (void)user;
+    gc_mark_object((DxObject *)obj);
+}
+
 // Forward declarations for incremental GC
 static void gc_clear_weak_refs(DxVM *vm);
 static void gc_mark_ui_tree(DxUINode *node);
@@ -5603,6 +5613,19 @@ static DxResult dx_vm_gc_locked(DxVM *vm) {
     // Root 4: UI tree nodes
     if (vm->ctx && vm->ctx->ui_root) {
         gc_mark_ui_tree(vm->ctx->ui_root);
+    }
+
+    dx_iref_visit(&vm->global_refs, gc_mark_jni_root, NULL);
+    for (uint32_t jni_index = 0; jni_index < vm->exec_count; jni_index++) {
+        DxExecutionContext *jni_exec = vm->execs[jni_index];
+        if (jni_exec) dx_iref_visit(&jni_exec->local_refs, gc_mark_jni_root, NULL);
+    }
+    if (vm->weak_refs.slots) {
+        for (uint32_t weak_index = 0; weak_index < vm->weak_refs.top_index; weak_index++) {
+            DxObject *weak_obj = (DxObject *)vm->weak_refs.slots[weak_index].obj;
+            if (weak_obj && weak_obj != (DxObject *)DX_IREF_CLEARED && !weak_obj->gc_mark)
+                vm->weak_refs.slots[weak_index].obj = DX_IREF_CLEARED;
+        }
     }
 
     // Root 5: interned strings
@@ -6076,39 +6099,23 @@ DxMethod *dx_vm_resolve_method(DxVM *vm, uint32_t dex_method_idx) {
 DxMethod *dx_vm_find_method(DxClass *cls, const char *name, const char *shorty) {
     if (!cls || !name) return NULL;
 
-    // For framework native methods, match by name only (shorty may differ
-    // between our stub and the DEX reference due to overloads or generics)
-    bool lenient = cls->is_framework;
-
-    // Search direct methods
-    DxMethod *name_match = NULL;
     for (uint32_t i = 0; i < cls->direct_method_count; i++) {
         if (strcmp(cls->direct_methods[i].name, name) == 0) {
             if (!shorty || !cls->direct_methods[i].shorty ||
                 strcmp(cls->direct_methods[i].shorty, shorty) == 0) {
                 return &cls->direct_methods[i];
             }
-            if (lenient && cls->direct_methods[i].is_native) {
-                name_match = &cls->direct_methods[i];
-            }
         }
     }
 
-    // Search virtual methods
     for (uint32_t i = 0; i < cls->virtual_method_count; i++) {
         if (strcmp(cls->virtual_methods[i].name, name) == 0) {
             if (!shorty || !cls->virtual_methods[i].shorty ||
                 strcmp(cls->virtual_methods[i].shorty, shorty) == 0) {
                 return &cls->virtual_methods[i];
             }
-            if (lenient && cls->virtual_methods[i].is_native) {
-                name_match = &cls->virtual_methods[i];
-            }
         }
     }
-
-    // Return lenient name match for native framework methods
-    if (name_match) return name_match;
 
     // Search superclass
     if (cls->super_class) {

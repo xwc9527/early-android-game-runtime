@@ -42,12 +42,12 @@ jobs:
           for source in \
             "$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" \
             "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" \
-            "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" "$DEX/VM/dx_exec.c"
+            "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" "$DEX/VM/dx_exec.c" "$DEX/VM/dx_indirect_ref.c"
           do
             cc "${COMMON[@]}" -c "$source" -o "$OBJ/$(basename "${source%.c}").o"
           done
           cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/classpath-host.c -o "$OBJ/classpath-host.o"
           cc -pthread "$OBJ"/dx_log.o "$OBJ"/dx_memory.o "$OBJ"/dx_arena.o "$OBJ"/dx_dex.o "$OBJ"/dx_opcode.o \
-            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "$OBJ"/dx_exec.o \
+            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "$OBJ"/dx_exec.o "$OBJ"/dx_indirect_ref.o \
             "$OBJ"/classpath-host.o -lz -lm -o /tmp/classpath-host
           /tmp/classpath-host "$DIR"

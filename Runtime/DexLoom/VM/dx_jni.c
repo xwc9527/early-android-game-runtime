@@ -8,22 +8,73 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <pthread.h>
 
 #define TAG "JNI"
 
 #include "../Include/dx_memory.h"
+
+static DxVM *g_vm = NULL;
+extern __thread DxExecutionContext *dx_tls_exec;
 
 // ============================================================================
 // JNI <-> DexLoom object mapping
 // We cast DxObject* directly to/from jobject (both are opaque pointers).
 // ============================================================================
 
+static jobject jni_from_ref(uint32_t ref) {
+    return (jobject)(uintptr_t)ref;
+}
+
+static uint32_t jni_to_ref(jobject ref) {
+    return (uint32_t)(uintptr_t)ref;
+}
+
+static DxExecutionContext *jni_exec(void) {
+    return g_vm ? dx_vm_current_exec(g_vm) : NULL;
+}
+
+static int thread_owns(const DxExecutionContext *exec) {
+    return exec && exec->jni_attached && exec->has_host_thread &&
+           pthread_equal(exec->host_thread, pthread_self());
+}
+
+static DxExecutionContext *exec_from_env(JNIEnv *env) {
+    if (!g_vm || !env) return NULL;
+    for (uint32_t i = 0; i < g_vm->exec_count; i++) {
+        DxExecutionContext *exec = g_vm->execs[i];
+        if (exec && (JNIEnv *)&exec->jni_functions == env) return exec;
+    }
+    return NULL;
+}
+
+static DxExecutionContext *jni_env_exec(JNIEnv *env) {
+    DxExecutionContext *exec = exec_from_env(env);
+    return thread_owns(exec) ? exec : NULL;
+}
+
 jobject dx_jni_wrap_object(DxObject *obj) {
-    return (jobject)obj;
+    DxExecutionContext *exec = jni_exec();
+    if (!obj || !exec || !exec->local_refs.slots) return NULL;
+    return jni_from_ref(dx_iref_add(&exec->local_refs, exec->local_bottom, obj));
 }
 
 DxObject *dx_jni_unwrap_object(jobject ref) {
-    return (DxObject *)ref;
+    uint32_t iref = jni_to_ref(ref);
+    int status = DX_IREF_INVALID;
+    void *obj = NULL;
+    DxExecutionContext *exec;
+    if (!g_vm || !iref) return NULL;
+    if ((iref & 3u) == DX_IREF_LOCAL) {
+        exec = jni_exec();
+        if (!exec) return NULL;
+        obj = dx_iref_get(&exec->local_refs, iref, &status);
+    } else if ((iref & 3u) == DX_IREF_GLOBAL) {
+        obj = dx_iref_get(&g_vm->global_refs, iref, &status);
+    } else if ((iref & 3u) == DX_IREF_WEAK) {
+        obj = dx_iref_get(&g_vm->weak_refs, iref, &status);
+    }
+    return status == DX_IREF_OK ? (DxObject *)obj : NULL;
 }
 
 jclass dx_jni_wrap_class(DxClass *cls) {
@@ -33,12 +84,6 @@ jclass dx_jni_wrap_class(DxClass *cls) {
 DxClass *dx_jni_unwrap_class(jclass ref) {
     return (DxClass *)ref;
 }
-
-// ============================================================================
-// We store DxVM* in a static so JNI functions can access it.
-// This is fine since DexLoom is single-threaded.
-// ============================================================================
-static DxVM *g_vm = NULL;
 
 // ============================================================================
 // Helper: convert JNI class name ("java/lang/String") to descriptor ("Ljava/lang/String;")
@@ -180,40 +225,61 @@ static void JNICALL jni_FatalError(JNIEnv *env, const char *msg) {
 }
 
 static jint JNICALL jni_PushLocalFrame(JNIEnv *env, jint capacity) {
-    (void)env; (void)capacity;
-    return 0; // Success
+    DxExecutionContext *exec = jni_env_exec(env);
+    if (!exec || exec->local_frame_depth >= 32) return -1;
+    if (capacity > 0 && exec->local_refs.top_index + (uint32_t)capacity > exec->local_refs.max_count)
+        return -1;
+    exec->local_frame_state[exec->local_frame_depth] = dx_iref_segment(&exec->local_refs);
+    exec->local_frame_bottom[exec->local_frame_depth] = exec->local_bottom;
+    exec->local_bottom = dx_iref_segment(&exec->local_refs);
+    exec->local_frame_depth++;
+    return 0;
 }
 
 static jobject JNICALL jni_PopLocalFrame(JNIEnv *env, jobject result) {
-    (void)env;
-    return result;
+    DxExecutionContext *exec = jni_env_exec(env);
+    DxObject *kept;
+    if (!exec || exec->local_frame_depth == 0) return NULL;
+    kept = dx_jni_unwrap_object(result);
+    exec->local_frame_depth--;
+    dx_iref_restore(&exec->local_refs, exec->local_frame_state[exec->local_frame_depth]);
+    exec->local_bottom = exec->local_frame_bottom[exec->local_frame_depth];
+    return kept ? dx_jni_wrap_object(kept) : NULL;
 }
 
 static jobject JNICALL jni_NewGlobalRef(JNIEnv *env, jobject lobj) {
+    DxObject *obj = dx_jni_unwrap_object(lobj);
     (void)env;
-    return lobj; // No ref tracking — just pass through
+    if (!obj || !g_vm) return NULL;
+    return jni_from_ref(dx_iref_add(&g_vm->global_refs, 0, obj));
 }
 
 static void JNICALL jni_DeleteGlobalRef(JNIEnv *env, jobject gref) {
-    (void)env; (void)gref;
+    (void)env;
+    if (g_vm) dx_iref_remove(&g_vm->global_refs, 0, jni_to_ref(gref));
 }
 
 static void JNICALL jni_DeleteLocalRef(JNIEnv *env, jobject obj) {
-    (void)env; (void)obj;
+    DxExecutionContext *exec = jni_env_exec(env);
+    if (exec) dx_iref_remove(&exec->local_refs, exec->local_bottom, jni_to_ref(obj));
 }
 
 static jboolean JNICALL jni_IsSameObject(JNIEnv *env, jobject obj1, jobject obj2) {
     (void)env;
-    return obj1 == obj2 ? JNI_TRUE : JNI_FALSE;
+    return dx_jni_unwrap_object(obj1) == dx_jni_unwrap_object(obj2) ? JNI_TRUE : JNI_FALSE;
 }
 
 static jobject JNICALL jni_NewLocalRef(JNIEnv *env, jobject ref) {
-    (void)env;
-    return ref;
+    DxObject *obj;
+    if (!jni_env_exec(env)) return NULL;
+    obj = dx_jni_unwrap_object(ref);
+    return obj ? dx_jni_wrap_object(obj) : NULL;
 }
 
 static jint JNICALL jni_EnsureLocalCapacity(JNIEnv *env, jint capacity) {
-    (void)env; (void)capacity;
+    DxExecutionContext *exec = jni_env_exec(env);
+    if (!exec || capacity < 0) return -1;
+    if (exec->local_refs.top_index + (uint32_t)capacity > exec->local_refs.max_count) return -1;
     return 0;
 }
 
@@ -275,13 +341,50 @@ static jboolean JNICALL jni_IsInstanceOf(JNIEnv *env, jobject obj, jclass clazz)
     return JNI_FALSE;
 }
 
+static char *jni_sig_to_shorty(const char *sig) {
+    const char *end;
+    const char *cursor;
+    char *shorty;
+    int count = 0;
+    if (!sig || sig[0] != '(') return NULL;
+    end = strchr(sig, ')');
+    if (!end) return NULL;
+    shorty = (char *)dx_malloc(strlen(sig) + 2);
+    if (!shorty) return NULL;
+    cursor = end + 1;
+    if (*cursor == '[') shorty[count++] = '[';
+    else if (*cursor == 'L') shorty[count++] = 'L';
+    else if (*cursor) shorty[count++] = *cursor;
+    for (cursor = sig + 1; cursor < end; ) {
+        if (*cursor == '[') {
+            shorty[count++] = '[';
+            while (*cursor == '[') cursor++;
+            if (*cursor == 'L') { while (*cursor && *cursor != ';') cursor++; if (*cursor == ';') cursor++; }
+            else if (*cursor) cursor++;
+        } else if (*cursor == 'L') {
+            shorty[count++] = 'L';
+            while (*cursor && *cursor != ';') cursor++;
+            if (*cursor == ';') cursor++;
+        } else {
+            shorty[count++] = *cursor++;
+        }
+    }
+    shorty[count] = '\0';
+    return shorty;
+}
+
 static jmethodID JNICALL jni_GetMethodID(JNIEnv *env, jclass clazz,
                                           const char *name, const char *sig) {
-    (void)env; (void)sig;
     DxClass *cls = dx_jni_unwrap_class(clazz);
-    if (!cls || !name) return NULL;
-    DxMethod *m = dx_vm_find_method(cls, name, NULL);
-    return (jmethodID)m;
+    char *shorty;
+    DxMethod *method;
+    (void)env;
+    if (!cls || !name || !sig) return NULL;
+    shorty = jni_sig_to_shorty(sig);
+    if (!shorty) return NULL;
+    method = dx_vm_find_method(cls, name, shorty);
+    dx_free(shorty);
+    return (jmethodID)method;
 }
 
 // Call<Type>Method stubs — these call through to DexLoom's VM
@@ -474,19 +577,51 @@ static void JNICALL jni_CallNonvirtualVoidMethodA(JNIEnv *env, jobject obj, jcla
     (void)env; (void)obj; (void)c; (void)m; (void)a;
 }
 
-// Field access — return defaults, set is no-op
+static const char *jni_field_name(jfieldID fid) {
+    DxFieldId *field = (DxFieldId *)fid;
+    return field ? field->name : NULL;
+}
+
+static jfieldID jni_make_field_id(DxClass *decl, const char *name, const char *type,
+                                  int is_static, uint32_t index) {
+    DxFieldId *id = (DxFieldId *)dx_malloc(sizeof(*id));
+    if (!id) return NULL;
+    id->declaring = decl;
+    id->name = name;
+    id->type = type;
+    id->is_static = is_static;
+    id->index = index;
+    return (jfieldID)id;
+}
+
+static jfieldID jni_resolve_instance_field(DxClass *cls, const char *name, const char *sig) {
+    while (cls) {
+        uint32_t super_count = cls->super_class ? cls->super_class->instance_field_count : 0;
+        uint32_t own_count = cls->instance_field_count - super_count;
+        if (cls->field_defs) {
+            for (uint32_t i = 0; i < own_count; i++) {
+                if (!cls->field_defs[i].name || strcmp(cls->field_defs[i].name, name) != 0) continue;
+                if (sig && cls->field_defs[i].type && strcmp(cls->field_defs[i].type, sig) != 0) continue;
+                return jni_make_field_id(cls, cls->field_defs[i].name, cls->field_defs[i].type, 0,
+                                         cls->field_defs[i].slot_index);
+            }
+        }
+        cls = cls->super_class;
+    }
+    return NULL;
+}
+
 static jfieldID JNICALL jni_GetFieldID(JNIEnv *env, jclass clazz, const char *name, const char *sig) {
-    (void)env; (void)sig;
+    (void)env;
     DxClass *cls = dx_jni_unwrap_class(clazz);
     if (!cls || !name) return NULL;
-    // Encode field name as the fieldID (we'll look it up by name)
-    return (jfieldID)dx_strdup(name);
+    return jni_resolve_instance_field(cls, name, sig);
 }
 
 static jobject JNICALL jni_GetObjectField(JNIEnv *env, jobject obj, jfieldID fieldID) {
     (void)env;
     DxObject *dobj = dx_jni_unwrap_object(obj);
-    const char *name = (const char *)fieldID;
+    const char *name = jni_field_name(fieldID);
     if (!dobj || !name) return NULL;
     DxValue val = {0};
     dx_vm_get_field(dobj, name, &val);
@@ -498,7 +633,7 @@ static jobject JNICALL jni_GetObjectField(JNIEnv *env, jobject obj, jfieldID fie
 static type JNICALL jni_Get##Type##Field(JNIEnv *env, jobject obj, jfieldID fid) { \
     (void)env; \
     DxObject *dobj = dx_jni_unwrap_object(obj); \
-    const char *name = (const char *)fid; \
+    const char *name = jni_field_name(fid); \
     if (!dobj || !name) return default_val; \
     DxValue val = {0}; \
     dx_vm_get_field(dobj, name, &val); \
@@ -516,7 +651,7 @@ JNI_GET_FIELD_IMPL(Double, jdouble, DX_VAL_DOUBLE, d, 0.0)
 static void JNICALL jni_SetObjectField(JNIEnv *env, jobject obj, jfieldID fieldID, jobject val) {
     (void)env;
     DxObject *dobj = dx_jni_unwrap_object(obj);
-    const char *name = (const char *)fieldID;
+    const char *name = jni_field_name(fieldID);
     if (!dobj || !name) return;
     DxValue v = {.tag = DX_VAL_OBJ, .obj = dx_jni_unwrap_object(val)};
     dx_vm_set_field(dobj, name, v);
@@ -524,35 +659,35 @@ static void JNICALL jni_SetObjectField(JNIEnv *env, jobject obj, jfieldID fieldI
 
 // Primitive field setters — look up by name, set appropriate value
 static void JNICALL jni_SetBooleanField(JNIEnv *env, jobject obj, jfieldID fid, jboolean val) {
-    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = (const char *)fid;
+    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = jni_field_name(fid);
     if (d && n) { DxValue v = {.tag = DX_VAL_INT, .i = val ? 1 : 0}; dx_vm_set_field(d, n, v); }
 }
 static void JNICALL jni_SetByteField(JNIEnv *env, jobject obj, jfieldID fid, jbyte val) {
-    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = (const char *)fid;
+    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = jni_field_name(fid);
     if (d && n) { DxValue v = {.tag = DX_VAL_INT, .i = val}; dx_vm_set_field(d, n, v); }
 }
 static void JNICALL jni_SetCharField(JNIEnv *env, jobject obj, jfieldID fid, jchar val) {
-    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = (const char *)fid;
+    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = jni_field_name(fid);
     if (d && n) { DxValue v = {.tag = DX_VAL_INT, .i = val}; dx_vm_set_field(d, n, v); }
 }
 static void JNICALL jni_SetShortField(JNIEnv *env, jobject obj, jfieldID fid, jshort val) {
-    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = (const char *)fid;
+    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = jni_field_name(fid);
     if (d && n) { DxValue v = {.tag = DX_VAL_INT, .i = val}; dx_vm_set_field(d, n, v); }
 }
 static void JNICALL jni_SetIntField(JNIEnv *env, jobject obj, jfieldID fid, jint val) {
-    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = (const char *)fid;
+    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = jni_field_name(fid);
     if (d && n) { DxValue v = {.tag = DX_VAL_INT, .i = val}; dx_vm_set_field(d, n, v); }
 }
 static void JNICALL jni_SetLongField(JNIEnv *env, jobject obj, jfieldID fid, jlong val) {
-    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = (const char *)fid;
+    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = jni_field_name(fid);
     if (d && n) { DxValue v = {.tag = DX_VAL_LONG, .l = val}; dx_vm_set_field(d, n, v); }
 }
 static void JNICALL jni_SetFloatField(JNIEnv *env, jobject obj, jfieldID fid, jfloat val) {
-    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = (const char *)fid;
+    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = jni_field_name(fid);
     if (d && n) { DxValue v = {.tag = DX_VAL_FLOAT, .f = val}; dx_vm_set_field(d, n, v); }
 }
 static void JNICALL jni_SetDoubleField(JNIEnv *env, jobject obj, jfieldID fid, jdouble val) {
-    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = (const char *)fid;
+    (void)env; DxObject *d = dx_jni_unwrap_object(obj); const char *n = jni_field_name(fid);
     if (d && n) { DxValue v = {.tag = DX_VAL_DOUBLE, .d = val}; dx_vm_set_field(d, n, v); }
 }
 
@@ -605,7 +740,7 @@ static jfieldID JNICALL jni_GetStaticFieldID(JNIEnv *env, jclass clazz,
     for (uint32_t i = 0; i < cls->static_field_count; i++) {
         if (cls->field_defs[i].flags & DX_ACC_STATIC) {
             if (strcmp(cls->field_defs[i].name, name) == 0) {
-                return (jfieldID)cls->field_defs[i].name;
+                return jni_make_field_id(cls, cls->field_defs[i].name, cls->field_defs[i].type, 1, i);
             }
         }
     }
@@ -619,7 +754,7 @@ static type JNICALL jni_GetStatic##Type##Field(JNIEnv *env, jclass c, jfieldID f
 static jobject JNICALL jni_GetStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID) {
     (void)env;
     DxClass *cls = dx_jni_unwrap_class(clazz);
-    const char *name = (const char *)fieldID;
+    const char *name = jni_field_name(fieldID);
     if (!cls || !name) return NULL;
     for (uint32_t i = 0; i < cls->static_field_count; i++) {
         if ((cls->field_defs[i].flags & DX_ACC_STATIC) &&
@@ -649,7 +784,7 @@ static void JNICALL jni_SetStatic##Type##Field(JNIEnv *env, jclass c, jfieldID f
 static void JNICALL jni_SetStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID, jobject val) {
     (void)env;
     DxClass *cls = dx_jni_unwrap_class(clazz);
-    const char *name = (const char *)fieldID;
+    const char *name = jni_field_name(fieldID);
     if (!cls || !name) return;
     for (uint32_t i = 0; i < cls->static_field_count; i++) {
         if ((cls->field_defs[i].flags & DX_ACC_STATIC) &&
@@ -968,10 +1103,12 @@ static jint JNICALL jni_MonitorExit(JNIEnv *env, jobject obj) {
     return 0;
 }
 
+static JavaVM *process_java_vm(void);
+
 static jint JNICALL jni_GetJavaVM(JNIEnv *env, JavaVM **vm) {
     (void)env;
-    if (vm) *vm = NULL; // We don't have a JavaVM struct yet
-    return 0;
+    if (vm) *vm = process_java_vm();
+    return JNI_OK;
 }
 
 static void JNICALL jni_GetStringRegion(JNIEnv *env, jstring str, jsize start, jsize len, jchar *buf) {
@@ -1024,12 +1161,15 @@ static void JNICALL jni_ReleaseStringCritical(JNIEnv *env, jstring string, const
 }
 
 static jweak JNICALL jni_NewWeakGlobalRef(JNIEnv *env, jobject obj) {
+    DxObject *target = dx_jni_unwrap_object(obj);
     (void)env;
-    return obj;
+    if (!target || !g_vm) return NULL;
+    return (jweak)jni_from_ref(dx_iref_add(&g_vm->weak_refs, 0, target));
 }
 
 static void JNICALL jni_DeleteWeakGlobalRef(JNIEnv *env, jweak ref) {
-    (void)env; (void)ref;
+    (void)env;
+    if (g_vm) dx_iref_remove(&g_vm->weak_refs, 0, jni_to_ref((jobject)ref));
 }
 
 static jboolean JNICALL jni_ExceptionCheck(JNIEnv *env) {
@@ -1053,8 +1193,13 @@ static jlong JNICALL jni_GetDirectBufferCapacity(JNIEnv *env, jobject buf) {
 }
 
 static jobjectRefType JNICALL jni_GetObjectRefType(JNIEnv *env, jobject obj) {
-    (void)env; (void)obj;
-    return JNILocalRefType;
+    uint32_t iref = jni_to_ref(obj);
+    (void)env;
+    if (!dx_jni_unwrap_object(obj) && iref) return JNIInvalidRefType;
+    if ((iref & 3u) == DX_IREF_GLOBAL) return JNIGlobalRefType;
+    if ((iref & 3u) == DX_IREF_WEAK) return JNIWeakGlobalRefType;
+    if ((iref & 3u) == DX_IREF_LOCAL) return JNILocalRefType;
+    return JNIInvalidRefType;
 }
 
 // ============================================================================
@@ -1473,17 +1618,111 @@ static const struct JNINativeInterface_ *g_env_ptr = &g_jni_functions;
 // Public API
 // ============================================================================
 
+static struct {
+    const struct JNIInvokeInterface_ *functions;
+} g_java_vm;
+
+static void bind_env(DxExecutionContext *exec) {
+    if (exec) exec->jni_functions = &g_jni_functions;
+}
+
+static DxExecutionContext *attached_self(void) {
+    if (!g_vm) return NULL;
+    for (uint32_t i = 0; i < g_vm->exec_count; i++) {
+        DxExecutionContext *exec = g_vm->execs[i];
+        if (thread_owns(exec)) return exec;
+    }
+    return NULL;
+}
+
+static jint JNICALL vm_DestroyJavaVM(JavaVM *vm) {
+    (void)vm;
+    return JNI_ERR;
+}
+
+static jint JNICALL vm_AttachCurrentThread(JavaVM *vm, void **penv, void *args) {
+    DxExecutionContext *exec;
+    (void)vm;
+    (void)args;
+    if (!g_vm || !penv) return JNI_ERR;
+    exec = attached_self();
+    if (!exec) {
+        exec = dx_exec_create_attached(g_vm);
+        if (!exec) return JNI_ERR;
+    }
+    bind_env(exec);
+    *penv = (JNIEnv *)&exec->jni_functions;
+    return JNI_OK;
+}
+
+static jint JNICALL vm_DetachCurrentThread(JavaVM *vm) {
+    DxExecutionContext *exec = attached_self();
+    (void)vm;
+    if (!exec) return JNI_EDETACHED;
+    if (g_vm && exec == g_vm->root_exec) return JNI_ERR;
+    dx_iref_restore(&exec->local_refs, 0);
+    exec->local_bottom = 0;
+    exec->local_frame_depth = 0;
+    exec->jni_attached = 0;
+    exec->pending_exception = NULL;
+    if (dx_vm_current_exec(g_vm) == exec) dx_tls_exec = g_vm->root_exec;
+    return JNI_OK;
+}
+
+static jint JNICALL vm_GetEnv(JavaVM *vm, void **penv, jint version) {
+    DxExecutionContext *exec;
+    (void)vm;
+    if (!penv) return JNI_ERR;
+    if (version != JNI_VERSION_1_4 && version != JNI_VERSION_1_6) return JNI_EVERSION;
+    exec = attached_self();
+    if (!exec) {
+        *penv = NULL;
+        return JNI_EDETACHED;
+    }
+    bind_env(exec);
+    *penv = (JNIEnv *)&exec->jni_functions;
+    return JNI_OK;
+}
+
+static jint JNICALL vm_AttachAsDaemon(JavaVM *vm, void **penv, void *args) {
+    return vm_AttachCurrentThread(vm, penv, args);
+}
+
+static const struct JNIInvokeInterface_ g_invoke = {
+    NULL, NULL, NULL,
+    vm_DestroyJavaVM,
+    vm_AttachCurrentThread,
+    vm_DetachCurrentThread,
+    vm_GetEnv,
+    vm_AttachAsDaemon,
+};
+
+static JavaVM *process_java_vm(void) {
+    g_java_vm.functions = &g_invoke;
+    return (JavaVM *)&g_java_vm;
+}
+
 DxResult dx_jni_init(DxVM *vm) {
     if (!vm) return DX_ERR_NULL_PTR;
     g_vm = vm;
+    g_java_vm.functions = &g_invoke;
+    if (vm->root_exec) {
+        vm->root_exec->jni_attached = 1;
+        vm->root_exec->has_host_thread = 1;
+        vm->root_exec->host_thread = pthread_self();
+        bind_env(vm->root_exec);
+    }
     DX_INFO(TAG, "JNI environment initialized (JNI 1.6, %zu functions)",
             sizeof(g_jni_functions) / sizeof(void *));
     return DX_OK;
 }
 
 JNIEnv *dx_jni_get_env(DxVM *vm) {
+    DxExecutionContext *exec = attached_self();
     (void)vm;
-    return (JNIEnv *)&g_env_ptr;
+    if (!exec) return NULL;
+    bind_env(exec);
+    return (JNIEnv *)&exec->jni_functions;
 }
 
 void dx_jni_destroy(DxVM *vm) {

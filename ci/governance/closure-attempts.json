@@ -140,7 +140,17 @@
       "classification": "VALID_PASS",
       "reason": "linux-source-contract, focused Simulator, protected Runtime contracts, bounded smoke, protected regressions, iphoneos and exact-commit closure evidence all passed",
       "consumes_budget": true
+    },
+    {
+      "target": "Phase 3A0 Boot ClassPath / ClassLoader identity",
+      "target_evidence": "commit ccccca77b9a1dd11880907ef1fb3da3f83e739ab tree 5392048daa8d5b96995406b51610afa17decc7da. Push governance 36019009849 and protected regression 36019009689 passed. Pull request classpath 36019018497, governance 36019018340, and protected regression 36019018232 passed. dalvik.classpath.loader upstream hashes are pinned. API19_REFERENCE_DIFFERENTIAL was not executed.",
+      "run_id": "36019018497",
+      "tested_commit": "ccccca77b9a1dd11880907ef1fb3da3f83e739ab",
+      "tested_tree": "5392048daa8d5b96995406b51610afa17decc7da",
+      "classification": "VALID_PASS",
+      "reason": "AGR host contract, pinned API19 source, architecture freeze, governance, and Linux protected regression passed. No reference PASS was claimed.",
+      "consumes_budget": true
     }
   ],
-  "active_target": "Phase 3A0 Boot ClassPath / ClassLoader identity"
+  "active_target": "Phase 3A Dalvik JNI references"
 }

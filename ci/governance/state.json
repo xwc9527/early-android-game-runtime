@@ -6,7 +6,7 @@
     "last_known_good": "3e3db84a53ad0957e9217f804b6f718a942b9a11"
   },
   "active": {
-    "target": "Phase 3A0 Boot ClassPath / ClassLoader identity",
+    "target": "Phase 3A Dalvik JNI references",
     "branch": "recovery/phase3-dalvik-semantics",
     "lifecycle": "IMPLEMENTED",
     "observed_discontinuity": "Class lookup used one global descriptor table, kept the first DEX hit, and guessed a class by simple-name suffix.",
