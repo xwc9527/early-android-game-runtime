@@ -1,0 +1,24 @@
+diff --git a/core/main.mk b/core/main.mk
+index d424b25b..fcf09dac 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -141,6 +141,7 @@ $(error Directory names containing spaces not supported)
+ endif
+ 
+ # Check for the corrent jdk
++ifneq ($(ALLOW_OPENJDK6),true)
+ ifneq ($(shell java -version 2>&1 | grep -i openjdk),)
+ $(info ************************************************************)
+ $(info You are attempting to build with an unsupported JDK.)
+@@ -151,9 +152,10 @@ $(info $(space)$(space)$(space)$(space)https://source.android.com/source/downloa
+ $(info ************************************************************)
+ $(error stop)
+ endif
++endif
+ 
+ # Check for the correct version of java
+-java_version := $(shell java -version 2>&1 | head -n 1 | grep '^java .*[ "]1\.6[\. "$$]')
++java_version := $(shell java -version 2>&1 | head -n 1 | grep -E '^(java|openjdk) .*[ "]1\.6[\. "$$]')
+ ifeq ($(strip $(java_version)),)
+ $(info ************************************************************)
+ $(info You are attempting to build with the incorrect version)

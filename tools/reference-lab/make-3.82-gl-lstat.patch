@@ -1,0 +1,28 @@
+--- a/dir.c
++++ b/dir.c
+@@ -1206,6 +1206,15 @@ local_stat (const char *path, struct stat *buf)
+ }
+ #endif
+ 
++static int
++local_lstat (const char *path, struct stat *buf)
++{
++  int e;
++
++  EINTRLOOP (e, lstat (path, buf));
++  return e;
++}
++
+ void
+ dir_setup_glob (glob_t *gl)
+ {
+@@ -1212,9 +1221,8 @@ dir_setup_glob (glob_t *gl)
+   gl->gl_readdir = read_dirstream;
+   gl->gl_closedir = ansi_free;
+   gl->gl_stat = local_stat;
+-  /* We don't bother setting gl_lstat, since glob never calls it.
+-     The slot is only there for compatibility with 4.4 BSD.  */
++  gl->gl_lstat = local_lstat;
+ }
+ 
+ void

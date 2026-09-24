@@ -74,7 +74,13 @@ organization does not contain every project in this release; it cannot
 currently sync the full checkout alone.
 
 Once the official checkout is fully synced, `build_clean.sh AOSP_ROOT
-JDK6_ROOT OUT_DIR` builds `aosp_x86-eng` from a clean source tree. It writes
+JDK6_ROOT MAKE382_ROOT OUT_DIR` builds `aosp_x86-eng` from a clean source tree. It writes
 the resolved source manifest and the CLEAN `system.img` hash to a separate
 output directory. The driver requires Python 2 and JDK6 in the local build
-environment and refuses dirty source projects.
+environment, uses GNU Make 3.82, and refuses dirty source projects.
+The GNU Make 3.82 release archive was verified with the published MD5
+`7f7c000e3b30c6840f2e9cf86b254fac`. Its local toolchain build uses libc
+glob and `make-3.82-gl-lstat.patch` for current glibc. The AOSP checkout has
+one build-only difference, `api19-openjdk6-build.patch`, which permits the
+installed Zulu OpenJDK6. The CLEAN build driver verifies the exact diff and
+records the patch SHA-256. Neither patch changes Android guest runtime code.
