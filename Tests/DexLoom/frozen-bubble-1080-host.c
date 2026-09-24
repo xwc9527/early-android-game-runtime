@@ -49,6 +49,50 @@ static int print_game_modes(agr_dex_game *game, const char *when) {
     return ready;
 }
 
+static void print_bubble_selection_state(agr_dex_game *game) {
+    DxVM *vm = agr_dex_game_vm(game);
+    for (uint32_t i = 0; vm && i < vm->heap_count; i++) {
+        DxObject *obj = vm->heap[i];
+        DxValue counts = DX_NULL_VALUE, images = DX_NULL_VALUE, left = DX_NULL_VALUE;
+        if (obj && obj->klass && obj->klass->descriptor &&
+            strcmp(obj->klass->descriptor, "Lorg/jfedor/frozenbubble/LevelManager;") == 0) {
+            DxValue levels = DX_NULL_VALUE, current = DX_NULL_VALUE, count = DX_NULL_VALUE;
+            dx_vm_get_field(obj, "levelList", &levels);
+            dx_vm_get_field(obj, "currentLevel", &current);
+            if (levels.tag == DX_VAL_OBJ && levels.obj)
+                dx_vm_get_field(levels.obj, "elementCount", &count);
+            printf("level_manager identity=%llu current=%d level_list=%llu level_count=%d\n",
+                   (unsigned long long)obj->diagnostic_identity,
+                   current.tag == DX_VAL_INT ? current.i : -1,
+                   (unsigned long long)(levels.tag == DX_VAL_OBJ && levels.obj
+                       ? levels.obj->diagnostic_identity : 0),
+                   count.tag == DX_VAL_INT ? count.i : -1);
+        }
+        if (!obj || !obj->klass || !obj->klass->descriptor ||
+            strcmp(obj->klass->descriptor, "Lorg/jfedor/frozenbubble/BubbleManager;") != 0)
+            continue;
+        dx_vm_get_field(obj, "countBubbles", &counts);
+        dx_vm_get_field(obj, "bubbles", &images);
+        dx_vm_get_field(obj, "bubblesLeft", &left);
+        printf("bubble_manager identity=%llu left=%d count_len=%u image_len=%u counts=",
+               (unsigned long long)obj->diagnostic_identity,
+               left.tag == DX_VAL_INT ? left.i : -1,
+               counts.tag == DX_VAL_OBJ && counts.obj ? counts.obj->array_length : 0,
+               images.tag == DX_VAL_OBJ && images.obj ? images.obj->array_length : 0);
+        if (counts.tag == DX_VAL_OBJ && counts.obj && counts.obj->array_elements)
+            for (uint32_t j = 0; j < counts.obj->array_length && j < 16; j++)
+                printf("%s%d", j ? "," : "", counts.obj->array_elements[j].i);
+        printf("\n");
+    }
+    for (uint32_t i = 0; vm && i < vm->exec_count; i++) {
+        DxExecutionContext *exec = vm->execs[i];
+        if (!exec || !exec->current_frame || !exec->current_frame->method) continue;
+        printf("guest_exec id=%u method=%s pc=%u insns=%llu\n", exec->id,
+               exec->current_frame->method->name ? exec->current_frame->method->name : "-",
+               exec->current_frame->pc, (unsigned long long)exec->insn_count);
+    }
+}
+
 static void expect(int condition, const char *message) {
     if (condition) {
         printf("PASS %s\n", message);
@@ -199,6 +243,7 @@ int main(int argc, char **argv) {
         }
         int ready = print_game_modes(game, "after_touch");
         if (ready == 1) {
+            print_bubble_selection_state(game);
             int down2 = agr_dex_game_dispatch_touch(game, 0, 540.0f, 450.0f, 4000);
             int up2 = agr_dex_game_dispatch_touch(game, 1, 540.0f, 450.0f, 4100);
             printf("second_touch down=%d up=%d\n", down2, up2);
@@ -233,6 +278,8 @@ int main(int argc, char **argv) {
         expect(snapshot.canvas_post_count > before_posts, "GameThread continues after touch");
         expect(snapshot.canvas_buffer_hash_after != before_hash,
                "original game touch changes a later completed frame");
+        if (snapshot.canvas_buffer_hash_after == before_hash)
+            print_bubble_selection_state(game);
     }
     agr_dex_game_destroy(game);
     agr_apk_package_close(package);
