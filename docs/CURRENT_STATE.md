@@ -4,13 +4,18 @@ Updated: 2026-09-24
 
 ## Identity
 
-Current working branch: `cursor/context-reset-reference-migration-5e64`
+Working branch and HEAD are resolved from Git at execution time:
 
-Current HEAD: `d5fc7815b9255ea7f9a8c03184aa28bdbbe305a5`
+```text
+git branch --show-current
+git rev-parse HEAD
+```
+
+Active phase branch and target are defined by `ci/governance/state.json`.
 
 Phase base: `recovery/phase3-dalvik-semantics` @ `a8ff40ef9debfaa132861bc0655bb72871157ded`
 
-Formal `main` baseline remains `3e3db84a53ad0957e9217f804b6f718a942b9a11`. This document does not reopen that baseline. The phase base is not the current HEAD.
+Formal `main` baseline remains `3e3db84a53ad0957e9217f804b6f718a942b9a11`. This document does not reopen that baseline.
 
 ## Current phase
 
@@ -37,8 +42,8 @@ JNI static field getters and several JNI Call variants still return a default. T
 
 ## Next architecture milestone
 
-Finish Phase 3 closure. The following milestone is a Local Android Reference Lab. It is not started. Framework owner selection is not started and is not pre-declared.
+Finish the Phase 3 final gate, then close Phase 3. Context reset is finished. The fixed order after that is:
 
-Subsequent Framework work follows `REFERENCE_MIGRATION_RULES.md`:
+Phase 3 final gate → Phase 3 CLOSED → Local Android Reference Lab → API19 CLEAN + TRACE → Game Dependency Mapper → Migration Book → API19 Source Closure → Cluster Source Port → Differential
 
-Phase 3 closure → Local Android Reference Lab → Game Dependency Mapper → Migration Book → API19 Source Closure → Cluster Source Port → Differential
+Reference Lab is not started. No Android-visible API, module, class, or symbol is pre-declared as a migration target.

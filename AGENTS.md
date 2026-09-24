@@ -25,11 +25,15 @@ Make original target Android APK, DEX, and ARMv7 binaries actually run and remai
 ## Required Read Order
 
 1. `AGENTS.md`
-2. `docs/CURRENT_STATE.md`
-3. latest `run-summary.json`
-4. matching entry in `docs/UPSTREAM_MAP.md` and `ci/governance/upstream-map.json`, when VALID
-5. pinned Android 4.4.4/API19 source whenever the map is absent, stale, insufficient, or worth bypassing
-6. AGR source implementing the same observable contract
+2. `REFERENCE_MIGRATION_RULES.md`
+3. `docs/CURRENT_STATE.md`
+4. `ci/governance/state.json`
+5. latest `run-summary.json` whose target matches `state.active.target`
+6. matching upstream-map entry when useful
+7. pinned API19 source
+8. AGR implementation
+
+Do not read the newest run-summary without checking its target. A newer Frozen Bubble, Framework, or physical-device run is not the current task.
 
 Read `docs/ARCHITECTURE.md` when ownership, execution placement, or a locked boundary is involved. Read `docs/DECISIONS.md` when an existing decision may be changed or reopened. Do not scan unrelated repository areas by default.
 
@@ -45,13 +49,44 @@ Read `docs/ARCHITECTURE.md` when ownership, execution placement, or a locked bou
 - The formal linker is the sole ELF owner.
 - UIKit is a host endpoint, not an Android policy owner.
 - Real games produce dependency evidence and regression evidence. A Runtime gap does not authorize a new Android implementation or HLE.
-- `REFERENCE_MIGRATION_RULES.md` outranks this document for every Android-visible source ownership decision, including Dalvik, libcore, Framework, JNI semantics, Bionic, and Android native userspace. An upstream-map entry with `migration_authority: false` is historical navigation only.
+- `REFERENCE_MIGRATION_RULES.md` outranks this document for every Android-visible source ownership decision, including Dalvik, libcore, Framework, JNI semantics, Bionic, and Android native userspace. Every upstream-map entry has `migration_authority: false`.
 - Do not infer a cause from the last marker or first error line.
 - Nonblocking technical debt is not current work.
 
-## Default Discovery Workflow
+## Workflows
 
-`observe -> map Android subsystem -> inspect or bypass upstream map -> read API19 source -> extract semantics/invariants -> map AGR path -> semantic differential -> earliest evidenced divergence -> discriminating experiment if needed -> focused validation -> public fix -> contract -> real APK confirmation`
+A Runtime gap does not enter production implementation.
+
+### A. New migration discovery
+
+```text
+GAME
+→ LOCAL API19 TRACE
+→ GAME DEPENDENCY MAPPER
+→ MIGRATION BOOK
+→ API19 SOURCE CLOSURE
+→ CLUSTER SOURCE MANIFEST
+→ SOURCE PORT / HOST BOUNDARY
+→ DIFFERENTIAL
+→ CLOSE
+```
+
+API19 TRACE is the default local input for dependency mapping. It records what the game reaches. It is not the semantic oracle and it does not authorize an original implementation.
+
+### B. Existing migrated-cluster diagnosis
+
+Use this only for a module that already has a Migration Book, a Source Manifest, or an existing CLOSED or migrated owner:
+
+```text
+divergence
+→ pinned source
+→ CLEAN reference when needed
+→ locate earliest divergence
+→ repair source port / declared host adapter / runtime engine
+→ focused differential
+→ regression
+→ close
+```
 
 Source inspection precedes open-ended hypotheses whenever Android has an authoritative counterpart. Compare return/error behavior, callback ordering, ownership, blocking and wake behavior, lifecycle, object lifetime, state mutation, memory visibility, and resource visibility. Source-code shape alone is not evidence of a semantic defect.
 
@@ -65,7 +100,7 @@ Use `ci/semantic-diff.py` and `artifacts/schema/semantic-diff.schema.json`. Evid
 
 During Discovery, stable modules may be read, traced, instrumented, or temporarily altered for a marked counterfactual experiment without formal reopen. Experiments may cross adjacent modules but may not change locked ownership or architecture. They are not production fixes and cannot enter closure evidence.
 
-When evidence selects a stable module for the permanent public fix, record its `stable_modules_touched` entry and reopen reason before Closure. Closure rejects unexplained stable-module changes and any remaining experimental or behavior-changing diagnostic code.
+When evidence selects a stable module for a repair of its source port, declared host adapter, or runtime engine, record its `stable_modules_touched` entry and reopen reason before Closure. Closure rejects unexplained stable-module changes and any remaining experimental or behavior-changing diagnostic code.
 
 ## Diagnostics and Experiments
 
@@ -73,7 +108,7 @@ Passive diagnostics must use bounded memory, never wait, never call guest code, 
 
 Discovery may use intrusive diagnostics or temporary counterfactual behavior when source and passive runtime evidence cannot discriminate the remaining explanations. Register it in `ci/experiments.json`, enable it through `AGR_EXPERIMENTAL_<NAME>` or a test-only path, record its two-sided expected outcomes, and remove it before Closure. An experimental patch is never promoted directly into the production fix. Diagnostic cut points are test interfaces, never production compatibility shortcuts.
 
-Differential has three levels: source-derived semantic model by default; executable API19 reference only for unresolved observable ambiguity; targeted runtime trace only for race, timing, cross-thread, callback, or lifecycle ordering. Reference traces are on-demand, not default CI.
+Semantic differential has three levels: source-derived semantic model by default; an uninstrumented API19 CLEAN reference only for unresolved observable ambiguity; a path-scoped runtime trace only for race, timing, cross-thread, callback, or lifecycle ordering. CLEAN reference execution is selective for semantic differential. It is not the default for Game Dependency Mapper. API19 TRACE builds are the default, high-frequency local input for dependency mapping and are not the final semantic oracle.
 
 Trace boundary events such as enqueue, wake, poll, dequeue, callback enter/exit, finish, lifecycle transition, EGL ownership, JNI crossing, and guest/host crossing. Do not trace every helper, allocation, or instruction unless the active question requires it. Use a fixed-capacity ring buffer with fixed-size records; never wait, allocate unbounded memory, call guest code, or change scheduling. Mark potentially perturbing traces `TIMING_SENSITIVE`; they cannot alone establish causality.
 

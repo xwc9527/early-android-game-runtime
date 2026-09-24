@@ -18,9 +18,9 @@
 
 ```text
 NO GAME-DRIVEN IMPLEMENTATION.
+NO NEW ANDROID-VISIBLE MIGRATION WITHOUT MIGRATION BOOK.
 NO ORIGINAL ANDROID SEMANTICS.
-NO FRAMEWORK WORK WITHOUT MIGRATION BOOK.
-NO SOURCE PORT WITHOUT API19 SOURCE OWNER.
+NO SOURCE PORT WITHOUT MIGRATION BOOK + API19 SOURCE OWNER + SOURCE CLOSURE.
 
 GAME
 → REFERENCE MAP
@@ -49,7 +49,7 @@ Semantic equivalence alone does not authorize an original AGR implementation.
 
 A real game produces dependency evidence and regression evidence. A Runtime gap does not authorize a new Android implementation or HLE.
 
-No Framework class is pre-declared as a migration target. The owner of a Framework class is produced only by:
+No Android-visible API, module, class, or symbol is pre-declared as a new migration target. This covers Dalvik, libcore, Framework, JNI semantics, Bionic, Android native userspace, and any other Android-visible behavior that has an API19/AOSP source owner. Existing CLOSED Runtime is not reopened by this rule. New production migration authority comes only from:
 
 Migration Book → API19 Source Closure → Cluster Source Manifest
 

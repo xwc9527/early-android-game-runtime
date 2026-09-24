@@ -9,29 +9,28 @@
     "target": "Phase 3 Dalvik semantics closure",
     "branch": "recovery/phase3-dalvik-semantics",
     "lifecycle": "IMPLEMENTED",
-    "observed_discontinuity": "Native frames were not GC roots, and DeleteLocalRef could not delete a local from an earlier frame.",
-    "android_subsystem": "API19 mark-sweep roots and JNI local lifetime",
+    "observed_discontinuity": "Remaining JNI static field getters and Call variants still return a default and can report fake success.",
+    "android_subsystem": "API19 Dalvik JNI Call and GetStaticField",
     "upstream_path": [
-      "platform/dalvik@android-4.4.4_r2:vm/alloc/MarkSweep.cpp",
-      "platform/dalvik@android-4.4.4_r2:vm/Jni.cpp:DeleteLocalRef"
+      "platform/dalvik@android-4.4.4_r2:vm/Jni.cpp"
     ],
     "agr_path": [
-      "Runtime/DexLoom/VM/dx_vm.c:dx_vm_gc",
-      "Runtime/DexLoom/VM/dx_jni.c:jni_DeleteLocalRef"
+      "Runtime/DexLoom/VM/dx_jni.c",
+      "Runtime/DexLoom/VM/dx_vm.c"
     ],
     "active_explanations": [
-      "frame registers, statics, class mirrors, and JNI globals are strong roots",
-      "a weak global is cleared when its referent is unmarked"
+      "a JNI static field getter still returns a default",
+      "a JNI Call variant still returns a default instead of failing closed"
     ],
-    "earliest_evidenced_divergence": "Full GC marked registers only when the method had bytecode, so a native argument was not a root.",
-    "semantic_class": "SEMANTIC_INVARIANT",
-    "causal_status": "CONTRACT_CONFIRMED",
-    "evidence_level": "CONTRACT_CONFIRMED",
+    "earliest_evidenced_divergence": "JNI static field getters and Call variants still return a default instead of the API19 result.",
+    "semantic_class": "PUBLIC_OBSERVABLE",
+    "causal_status": "OBSERVED",
+    "evidence_level": "OBSERVED",
     "classification": "AGR_INTERNAL_BUG",
-    "next_validation": "Phase 3 final gate. Remaining JNI Call and GetField stubs must not report fake success. Do not start Framework migration.",
+    "next_validation": "Phase 3 final gate. Remaining JNI Call and GetField stubs must not report fake success. Do not start a new Android-visible migration.",
     "primary_blocker": "JNI static field getters and several Call variants still return a default",
-    "first_broken_boundary": "native frame root",
-    "first_broken_boundary_evidence": "Tests/DexLoom/lifetime-host.c native frame register"
+    "first_broken_boundary": "JNI static field getter and Call default return",
+    "first_broken_boundary_evidence": "Phase 3 final gate. Closed Phase 3D lifetime evidence is not this boundary."
   },
   "ci_budget": {
     "valid_closure_runs": 1,

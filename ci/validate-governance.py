@@ -110,6 +110,12 @@ def main() -> int:
     errors.extend(map_errors)
     files = changed_files(state["baseline"]["commit"])
     touched = module_changes(files, registry["modules"])
+    allowed_status = {"stable", "active", "experimental", "not_started"}
+    for module in registry["modules"]:
+        if module.get("status") not in allowed_status:
+            errors.append(f"unknown module status: {module.get('name')}")
+        if module.get("status") == "not_started" and module.get("gate"):
+            errors.append(f"not_started module must not carry a production migration gate: {module.get('name')}")
     stable = [m for m in touched if m["status"] == "stable"]
     active_target=state["active"]["target"]
     explained={r["module"] for r in reopens if r.get("target")==active_target and r.get("reason") and r.get("evidence")}

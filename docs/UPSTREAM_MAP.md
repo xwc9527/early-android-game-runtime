@@ -4,7 +4,7 @@ This is the human-readable index for `ci/governance/upstream-map.json`. It is a 
 
 Every entry declares `legacy_navigation_only` and `migration_authority: false`. The map never grants migration authority. It may keep source paths, hashes, and historical differential or regression evidence, and it may point at API19 source. It cannot authorize a new migration target, continued legacy HLE, a source port, or production source ownership, and it cannot replace a Migration Book or API19 Source Closure. `legacy_navigation_only: true` is pre-reference history. `legacy_navigation_only: false` is still-current source navigation and still has no migration authority.
 
-Each machine entry records pinned source paths/hashes, AGR paths/hashes, dependencies, verification commit, and `VALID`, `STALE`, `UNVERIFIED`, or `INVALID` status. `ci/upstream-map.py` recomputes AGR hashes. A changed AGR path, baseline revision, dependency, or missing path invalidates cached authority. `STALE` means recheck source; it does not mean the cached statement is false. Normal cache maintenance needs no ADR.
+Each machine entry records pinned source paths/hashes, AGR paths/hashes, dependencies, verification commit, and `VALID`, `STALE`, `UNVERIFIED`, or `INVALID` status. `ci/upstream-map.py` recomputes AGR hashes. A changed AGR path, baseline revision, dependency, or missing path invalidates cached validity. `STALE` means recheck source; it does not mean the cached statement is false. Normal cache maintenance needs no ADR.
 
 | Subsystem | API19 source path | AGR path | Placement | Contract focus |
 |---|---|---|---|---|

@@ -83,7 +83,7 @@
     },
     {
       "name": "Framework",
-      "status": "experimental",
+      "status": "not_started",
       "paths": [
         "Runtime/DexLoom/AndroidMini/"
       ],
@@ -92,7 +92,7 @@
     },
     {
       "name": "Audio",
-      "status": "experimental",
+      "status": "not_started",
       "paths": [
         "Runtime/Audio/"
       ],

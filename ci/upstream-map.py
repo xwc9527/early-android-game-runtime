@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the encounter-driven Android 4.4.4 to AGR navigation cache."""
+"""Validate the Android 4.4.4 to AGR source-navigation cache."""
 
 import argparse
 import base64

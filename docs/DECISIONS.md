@@ -65,3 +65,19 @@ Discovery may use marked, temporary counterfactual experiments. Closure excludes
 Reopen only if authoritative evidence proves the pinned source/reference cannot define a required observable behavior. A real-game gap does not itself authorize a Framework API or HLE. Framework migration follows `REFERENCE_MIGRATION_RULES.md`.
 
 The former “Physical Surface post/display boundary (active candidate)” text is history in `docs/history/PRE_REFERENCE_RECOVERY_STATE.md`. It is not an active decision.
+
+## D009 — Local Reference Mapping and CLEAN/TRACE Separation
+
+Status: LOCKED
+
+API19 TRACE is the default local dependency-mapping environment.
+
+API19 CLEAN remains the uninstrumented semantic oracle.
+
+TRACE determines what the game reaches. Pinned source determines implementation. CLEAN differential verifies semantics.
+
+TRACE evidence never authorizes an original AGR implementation.
+
+Dependency mapping and semantic differential are separate workflows.
+
+For the new migration workflow, D009 decides when reference execution is used. That decision outranks D008's older limit that executable API19 reference runs only for unresolved observable ambiguity. D008 remains the locked rule for source-first semantic differential. It is not rewritten by this decision.

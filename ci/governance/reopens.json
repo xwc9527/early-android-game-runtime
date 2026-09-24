@@ -12,30 +12,6 @@
       "target": "Phase 3 Dalvik semantics closure",
       "reason": "game_dex_runner.c still publishes references through the VM indirect-ref tables that Phase 3D marks as roots.",
       "evidence": "Phase 3A VALID_PASS a2e07eb37f645f39c9a968b78808e88cdc25c6e3. Class mirrors use the VM global ref table."
-    },
-    {
-      "module": "NativeActivityInput",
-      "target": "Phase 3C Dalvik exceptions and native binding",
-      "reason": "The Phase 3A guest JNI owner change remains in this branch. NativeActivityInput stays open for that indirect-ref owner; this phase does not add a second JNI table.",
-      "evidence": "Phase 3A VALID_PASS a2e07eb37f645f39c9a968b78808e88cdc25c6e3. agr_guest_runtime.c class and string handles are Dalvik indirect refs."
-    },
-    {
-      "module": "DEXRuntimeLifecycle",
-      "target": "Phase 3C Dalvik exceptions and native binding",
-      "reason": "game_dex_runner.c still publishes class and string values through the VM indirect-ref tables. The Phase 3C exception work uses that same owner.",
-      "evidence": "Phase 3A VALID_PASS a2e07eb37f645f39c9a968b78808e88cdc25c6e3. agr_dex_game_class_ref returns the Class mirror global ref."
-    },
-    {
-      "module": "NativeActivityInput",
-      "target": "Phase 3A Dalvik JNI references",
-      "reason": "Guest ARM JNI minted class handles at 0x64000000, string handles at 0x66000000, and the instance receiver 0x60001000. Those values bypass Dalvik indirect references. FindClass, NewStringUTF, and the native receiver now use the same global indirect-ref table as HOST-DEX.",
-      "evidence": "API19 IndirectRefTable encodes kind in the low 2 bits and rejects a stale serial. agr_guest_runtime.c previously returned 0x64000000+index and passed 0x60001000 as the jobject. Tests/DexLoom/jni-ref-host.c shows a global ref kind of 2 and rejects a deleted handle."
-    },
-    {
-      "module": "DEXRuntimeLifecycle",
-      "target": "Phase 3A Dalvik JNI references",
-      "reason": "game_dex_runner.c object_handle minted 0x67000000 synthetic ids. Native arguments now publish a Dalvik global indirect ref from the VM table.",
-      "evidence": "The same IndirectRefTable owner used by dx_jni.c NewGlobalRef. A raw 0x67000000 value is not a Dalvik reference kind."
     }
   ]
 }

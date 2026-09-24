@@ -11,7 +11,9 @@ VAGUE = ("run again", "try again", "see what happens", "more logs", "再跑一�
 def main():
     parser = argparse.ArgumentParser(); parser.add_argument("plan"); args = parser.parse_args()
     doc = json.loads(pathlib.Path(args.plan).read_text(encoding="utf-8")); errors = []
-    if not doc.get("enabled"): errors.append("expensive discovery plan is not enabled")
+    if not doc.get("enabled"):
+        print("expensive discovery plan is disabled")
+        return 1
     question = doc.get("question", "").strip()
     if not question: errors.append("QUESTION is empty")
     if any(value in question.lower() for value in VAGUE): errors.append("QUESTION is non-discriminating")
