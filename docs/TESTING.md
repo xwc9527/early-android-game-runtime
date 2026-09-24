@@ -27,11 +27,11 @@ Passive diagnostics are always available and bounded. Intrusive diagnostics are 
 
 For a compatibility failure, identify the owning Android public path before changing Runtime behavior. Consult `ci/governance/upstream-map.json`; if it is incomplete, inspect the pinned Android 4.4.4/API19 source and extend the map. Extract guest-visible semantics and required invariants, then compare the AGR path in `semantic-diff.json`.
 
-The comparison concerns behavior, not implementation shape. Host mechanisms such as Darwin condition variables, pipes, UIKit, or ANGLE may replace Linux/Android internals when return values, errors, ordering, ownership, wake behavior, lifecycle, object lifetime, and visibility remain equivalent.
+The comparison concerns behavior, not implementation shape. Semantic equivalence does not authorize an original AGR implementation when an API19/AOSP source owner exists. A different host mechanism is allowed only at an explicitly declared kernel, service, device, or HostServices boundary.
 
 Where an Android 4.4 ARM reference can execute the contract, run the same input on the reference and AGR. Canonicalize addresses and host timing while comparing results, errno, callback/event sequence, thread semantics, lifetime, state transitions, duration class, and error behavior.
 
-Differential validation has three levels. Level 1 is the default source-derived semantic model. Level 2 executes a minimum Android 4.4 ARM reference contract only when source cannot uniquely determine observable behavior. Level 3 is a path-scoped runtime trace only for races, timing, cross-thread interaction, callback ordering, or lifecycle sequencing. Reference traces are on-demand and are reduced to stable observable assertions after the contract closes.
+Semantic differential has three levels. Level 1 is the default source-derived semantic model. Level 2 executes an uninstrumented API19 CLEAN reference only when source cannot uniquely determine observable behavior. Level 3 is a path-scoped runtime trace only for races, timing, cross-thread interaction, callback ordering, or lifecycle sequencing. For semantic differential, CLEAN reference traces are on-demand and are reduced to stable observable assertions after the contract closes. That on-demand limit does not apply to Game Dependency Mapper.
 
 Trace records use `seq`, `time_ns`, `host_thread`, `guest_thread`, `guest_pc`, `boundary`, `operation`, `object`, and `result`, with input/output state and frame/swap only when relevant. Trace boundary events, not every function. Storage is a bounded fixed-record ring that does not wait, call guest code, allocate without bound, wake threads, or mutate lifecycle/EGL state. A `TIMING_SENSITIVE` trace cannot alone prove causality.
 
@@ -39,11 +39,19 @@ Test-only cut points are registered in `ci/governance/diagnostic-cutpoints.json`
 
 ## Current Target
 
-The active target contract is machine-readable at `ci/targets/PVS1.json`. CI success and target closure are separate: a workflow may finish green while a target remains active, but closure CI must reject an unmet target requirement.
+The active target is defined by `ci/governance/state.json`, `ci/governance/closure.json`, and `ci/governance/closure-attempts.json`. `ci/targets/PVS1.json` remains a historical stable regression contract. It is not the current active target. CI success and target closure are separate: a workflow may finish green while a target remains active, but closure CI must reject an unmet target requirement.
+
+## Dependency Mapping
+
+API19 TRACE is the default local dependency-mapping environment. It is the default high-frequency input to the Game Dependency Mapper. TRACE records what a game reaches. It is not the final semantic oracle.
+
+API19 CLEAN is the uninstrumented semantic oracle. It is used selectively for differential and divergence verification. A CLEAN build does not carry Mapper instrumentation.
+
+TRACE is default for dependency mapping. CLEAN reference execution is selective for semantic differential. TRACE evidence does not authorize an original AGR implementation. Pinned source determines implementation. CLEAN differential verifies semantics.
 
 ## Real Games
 
-Runtime code cannot branch on game/package identity. Test harnesses may select a game, trajectory, timing, and expected observable. When a game reveals a public defect, reproduce it as a focused contract before declaring closure.
+Runtime code cannot branch on game/package identity. Test harnesses may select a game, trajectory, timing, and expected observable. A real game supplies dependency evidence and regression evidence. That evidence does not authorize a new Android API or HLE.
 
 ## Discovery and Closure
 

@@ -58,13 +58,26 @@ Reopen only if the source control platform cannot preserve or verify commit/tree
 
 Status: LOCKED
 
-Decision: pinned Android 4.4.4/API19 source, supplemented by the minimum Android 4.4 ARM reference execution needed to resolve ambiguity, defines the observable compatibility contract. AGR begins diagnosis by mapping that upstream path, extracting behavior and invariants, and locating the earliest evidenced divergence. AGR may use different host mechanisms when they preserve those semantics. `UPSTREAM_MAP` is a disposable navigation cache and does not create architectural authority.
+Decision: pinned Android 4.4.4/API19 source, supplemented by the minimum Android 4.4 ARM reference execution needed to resolve ambiguity, defines the observable compatibility contract. AGR begins diagnosis by mapping that upstream path, extracting behavior and invariants, and locating the earliest evidenced divergence. Different host mechanisms are allowed only at an explicitly declared kernel, service, device, or HostServices boundary. Semantic equivalence does not authorize an original implementation when an API19/AOSP source owner exists. `REFERENCE_MIGRATION_RULES.md` outranks this decision for Android-visible source ownership. `UPSTREAM_MAP` is a disposable navigation cache and does not create architectural authority.
 
 Discovery may use marked, temporary counterfactual experiments. Closure excludes them and requires a public fix, focused contract, real-APK confirmation where applicable, and exact commit/tree evidence.
 
-Reopen only if authoritative evidence proves the pinned source/reference cannot define a required observable behavior.
-# Physical Surface post/display boundary (active candidate, not closed)
+Reopen only if authoritative evidence proves the pinned source/reference cannot define a required observable behavior. A real-game gap does not itself authorize a Framework API or HLE. Framework migration follows `REFERENCE_MIGRATION_RULES.md`.
 
-The exact current iPhone run `000168ac811f20380000fd326ab452e5` on `cdbaf341` reached a changed child-Surface post, but the UIKit root stayed black. API19 `Surface.unlockCanvasAndPost` calls the native `Surface::unlockAndPost`, whose KitKat implementation queues the buffer to `IGraphicBufferProducer`; the Binder/SurfaceFlinger consumer and device display are not portable in-process services. AGR keeps its existing Android-visible SurfaceHolder/Canvas producer. A bounded completed-post snapshot, keyed by Surface identity/generation/post count, is handed to UIKit on the main thread at that genuine platform boundary. UIKit does not run guest code or choose Android state. This is `HOST_ADAPTATION_BUG` / host-endpoint HLE, rather than a Bitmap or Canvas rewrite.
+The former “Physical Surface post/display boundary (active candidate)” text is history in `docs/history/PRE_REFERENCE_RECOVERY_STATE.md`. It is not an active decision.
 
-The physical observer also finalized and destroyed the process while the second game draw was active. That is a separate `HARNESS_BUG`: ending a forensic window must not end a healthy game process. The candidate keeps the producer alive after sealing and distinguishes producer post, host acquisition, host submission, and verified screen presentation. The historical physical run's `agr-current-run.json` does not match its manifest hash because a later lifecycle update rewrote it; current/previous files and that integrity defect remain historical evidence. The post-seal write guard is part of this candidate. Simulator and iPhone visible output remain **UNVERIFIED** until exact-candidate evidence is collected.
+## D009 — Local Reference Mapping and CLEAN/TRACE Separation
+
+Status: LOCKED
+
+API19 TRACE is the default local dependency-mapping environment.
+
+API19 CLEAN remains the uninstrumented semantic oracle.
+
+TRACE determines what the game reaches. Pinned source determines implementation. CLEAN differential verifies semantics.
+
+TRACE evidence never authorizes an original AGR implementation.
+
+Dependency mapping and semantic differential are separate workflows.
+
+For the new migration workflow, D009 decides when reference execution is used. That decision outranks D008's older limit that executable API19 reference runs only for unresolved observable ambiguity. D008 remains the locked rule for source-first semantic differential. It is not rewritten by this decision.

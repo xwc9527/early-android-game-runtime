@@ -8,6 +8,7 @@ on:
       - 'AGENTS.md'
       - 'docs/**'
       - 'ci/**'
+      - 'tools/reference-lab/**'
       - 'artifacts/schema/**'
       - '.github/workflows/**'
 
@@ -26,7 +27,10 @@ jobs:
           key: agr-upstream-source-${{ hashFiles('ci/governance/upstream-map.json') }}
           restore-keys: agr-upstream-source-
       - name: Compile governance tools
-        run: python3 -m py_compile ci/*.py
+        run: |
+          python3 -m py_compile ci/*.py
+          python3 -m py_compile tools/reference-lab/*.py
+          python3 tools/reference-lab/test_reference_lab.py
       - name: Validate discovery governance and upstream mapping
         run: |
           python3 ci/upstream-map.py --verify-upstream --require-valid dalvik.nativeactivity.activity_root --output build/artifacts/upstream-map-report.json

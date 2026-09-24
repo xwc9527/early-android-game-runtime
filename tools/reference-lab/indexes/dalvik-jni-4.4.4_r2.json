@@ -1,0 +1,3214 @@
+{
+  "schema_version": 1,
+  "baseline": "Android 4.4.4_r2",
+  "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+  "source": "platform/dalvik/vm/Jni.cpp",
+  "entries": {
+    "GetVersion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetVersion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetVersion"
+      ]
+    },
+    "DefineClass": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "DefineClass",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "DefineClass"
+      ]
+    },
+    "FindClass": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "FindClass",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "FindClass"
+      ]
+    },
+    "FromReflectedMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "FromReflectedMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "FromReflectedMethod"
+      ]
+    },
+    "FromReflectedField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "FromReflectedField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "FromReflectedField"
+      ]
+    },
+    "ToReflectedMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ToReflectedMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ToReflectedMethod"
+      ]
+    },
+    "GetSuperclass": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetSuperclass",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetSuperclass"
+      ]
+    },
+    "IsAssignableFrom": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "IsAssignableFrom",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "IsAssignableFrom"
+      ]
+    },
+    "ToReflectedField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ToReflectedField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ToReflectedField"
+      ]
+    },
+    "Throw": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "Throw",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "Throw"
+      ]
+    },
+    "ThrowNew": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ThrowNew",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ThrowNew"
+      ]
+    },
+    "ExceptionOccurred": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ExceptionOccurred",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ExceptionOccurred"
+      ]
+    },
+    "ExceptionDescribe": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ExceptionDescribe",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ExceptionDescribe"
+      ]
+    },
+    "ExceptionClear": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ExceptionClear",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ExceptionClear"
+      ]
+    },
+    "FatalError": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "FatalError",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "FatalError"
+      ]
+    },
+    "PushLocalFrame": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "PushLocalFrame",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "PushLocalFrame"
+      ]
+    },
+    "PopLocalFrame": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "PopLocalFrame",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "PopLocalFrame"
+      ]
+    },
+    "NewGlobalRef": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewGlobalRef",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewGlobalRef"
+      ]
+    },
+    "DeleteGlobalRef": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "DeleteGlobalRef",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "DeleteGlobalRef"
+      ]
+    },
+    "DeleteLocalRef": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "DeleteLocalRef",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "DeleteLocalRef"
+      ]
+    },
+    "IsSameObject": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "IsSameObject",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "IsSameObject"
+      ]
+    },
+    "NewLocalRef": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewLocalRef",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewLocalRef"
+      ]
+    },
+    "EnsureLocalCapacity": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "EnsureLocalCapacity",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "EnsureLocalCapacity"
+      ]
+    },
+    "AllocObject": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "AllocObject",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "AllocObject"
+      ]
+    },
+    "NewObject": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewObject",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewObject"
+      ]
+    },
+    "NewObjectV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewObjectV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewObjectV"
+      ]
+    },
+    "NewObjectA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewObjectA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewObjectA"
+      ]
+    },
+    "GetObjectClass": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetObjectClass",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetObjectClass"
+      ]
+    },
+    "IsInstanceOf": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "IsInstanceOf",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "IsInstanceOf"
+      ]
+    },
+    "GetMethodID": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetMethodID",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetMethodID"
+      ]
+    },
+    "CallObjectMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallObjectMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallObjectMethod"
+      ]
+    },
+    "CallObjectMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallObjectMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallObjectMethodV"
+      ]
+    },
+    "CallObjectMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallObjectMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallObjectMethodA"
+      ]
+    },
+    "CallBooleanMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallBooleanMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallBooleanMethod"
+      ]
+    },
+    "CallBooleanMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallBooleanMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallBooleanMethodV"
+      ]
+    },
+    "CallBooleanMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallBooleanMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallBooleanMethodA"
+      ]
+    },
+    "CallByteMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallByteMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallByteMethod"
+      ]
+    },
+    "CallByteMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallByteMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallByteMethodV"
+      ]
+    },
+    "CallByteMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallByteMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallByteMethodA"
+      ]
+    },
+    "CallCharMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallCharMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallCharMethod"
+      ]
+    },
+    "CallCharMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallCharMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallCharMethodV"
+      ]
+    },
+    "CallCharMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallCharMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallCharMethodA"
+      ]
+    },
+    "CallShortMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallShortMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallShortMethod"
+      ]
+    },
+    "CallShortMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallShortMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallShortMethodV"
+      ]
+    },
+    "CallShortMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallShortMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallShortMethodA"
+      ]
+    },
+    "CallIntMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallIntMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallIntMethod"
+      ]
+    },
+    "CallIntMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallIntMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallIntMethodV"
+      ]
+    },
+    "CallIntMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallIntMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallIntMethodA"
+      ]
+    },
+    "CallLongMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallLongMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallLongMethod"
+      ]
+    },
+    "CallLongMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallLongMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallLongMethodV"
+      ]
+    },
+    "CallLongMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallLongMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallLongMethodA"
+      ]
+    },
+    "CallFloatMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallFloatMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallFloatMethod"
+      ]
+    },
+    "CallFloatMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallFloatMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallFloatMethodV"
+      ]
+    },
+    "CallFloatMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallFloatMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallFloatMethodA"
+      ]
+    },
+    "CallDoubleMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallDoubleMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallDoubleMethod"
+      ]
+    },
+    "CallDoubleMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallDoubleMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallDoubleMethodV"
+      ]
+    },
+    "CallDoubleMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallDoubleMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallDoubleMethodA"
+      ]
+    },
+    "CallVoidMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallVoidMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallVoidMethod"
+      ]
+    },
+    "CallVoidMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallVoidMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallVoidMethodV"
+      ]
+    },
+    "CallVoidMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallVoidMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallVoidMethodA"
+      ]
+    },
+    "CallNonvirtualObjectMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualObjectMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualObjectMethod"
+      ]
+    },
+    "CallNonvirtualObjectMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualObjectMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualObjectMethodV"
+      ]
+    },
+    "CallNonvirtualObjectMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualObjectMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualObjectMethodA"
+      ]
+    },
+    "CallNonvirtualBooleanMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualBooleanMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualBooleanMethod"
+      ]
+    },
+    "CallNonvirtualBooleanMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualBooleanMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualBooleanMethodV"
+      ]
+    },
+    "CallNonvirtualBooleanMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualBooleanMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualBooleanMethodA"
+      ]
+    },
+    "CallNonvirtualByteMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualByteMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualByteMethod"
+      ]
+    },
+    "CallNonvirtualByteMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualByteMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualByteMethodV"
+      ]
+    },
+    "CallNonvirtualByteMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualByteMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualByteMethodA"
+      ]
+    },
+    "CallNonvirtualCharMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualCharMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualCharMethod"
+      ]
+    },
+    "CallNonvirtualCharMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualCharMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualCharMethodV"
+      ]
+    },
+    "CallNonvirtualCharMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualCharMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualCharMethodA"
+      ]
+    },
+    "CallNonvirtualShortMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualShortMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualShortMethod"
+      ]
+    },
+    "CallNonvirtualShortMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualShortMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualShortMethodV"
+      ]
+    },
+    "CallNonvirtualShortMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualShortMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualShortMethodA"
+      ]
+    },
+    "CallNonvirtualIntMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualIntMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualIntMethod"
+      ]
+    },
+    "CallNonvirtualIntMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualIntMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualIntMethodV"
+      ]
+    },
+    "CallNonvirtualIntMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualIntMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualIntMethodA"
+      ]
+    },
+    "CallNonvirtualLongMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualLongMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualLongMethod"
+      ]
+    },
+    "CallNonvirtualLongMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualLongMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualLongMethodV"
+      ]
+    },
+    "CallNonvirtualLongMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualLongMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualLongMethodA"
+      ]
+    },
+    "CallNonvirtualFloatMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualFloatMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualFloatMethod"
+      ]
+    },
+    "CallNonvirtualFloatMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualFloatMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualFloatMethodV"
+      ]
+    },
+    "CallNonvirtualFloatMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualFloatMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualFloatMethodA"
+      ]
+    },
+    "CallNonvirtualDoubleMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualDoubleMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualDoubleMethod"
+      ]
+    },
+    "CallNonvirtualDoubleMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualDoubleMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualDoubleMethodV"
+      ]
+    },
+    "CallNonvirtualDoubleMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualDoubleMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualDoubleMethodA"
+      ]
+    },
+    "CallNonvirtualVoidMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualVoidMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualVoidMethod"
+      ]
+    },
+    "CallNonvirtualVoidMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualVoidMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualVoidMethodV"
+      ]
+    },
+    "CallNonvirtualVoidMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallNonvirtualVoidMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallNonvirtualVoidMethodA"
+      ]
+    },
+    "GetFieldID": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetFieldID",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetFieldID"
+      ]
+    },
+    "GetObjectField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetObjectField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetObjectField"
+      ]
+    },
+    "GetBooleanField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetBooleanField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetBooleanField"
+      ]
+    },
+    "GetByteField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetByteField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetByteField"
+      ]
+    },
+    "GetCharField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetCharField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetCharField"
+      ]
+    },
+    "GetShortField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetShortField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetShortField"
+      ]
+    },
+    "GetIntField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetIntField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetIntField"
+      ]
+    },
+    "GetLongField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetLongField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetLongField"
+      ]
+    },
+    "GetFloatField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetFloatField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetFloatField"
+      ]
+    },
+    "GetDoubleField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetDoubleField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetDoubleField"
+      ]
+    },
+    "SetObjectField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetObjectField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetObjectField"
+      ]
+    },
+    "SetBooleanField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetBooleanField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetBooleanField"
+      ]
+    },
+    "SetByteField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetByteField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetByteField"
+      ]
+    },
+    "SetCharField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetCharField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetCharField"
+      ]
+    },
+    "SetShortField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetShortField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetShortField"
+      ]
+    },
+    "SetIntField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetIntField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetIntField"
+      ]
+    },
+    "SetLongField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetLongField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetLongField"
+      ]
+    },
+    "SetFloatField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetFloatField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetFloatField"
+      ]
+    },
+    "SetDoubleField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetDoubleField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetDoubleField"
+      ]
+    },
+    "GetStaticMethodID": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStaticMethodID",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStaticMethodID"
+      ]
+    },
+    "CallStaticObjectMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticObjectMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticObjectMethod"
+      ]
+    },
+    "CallStaticObjectMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticObjectMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticObjectMethodV"
+      ]
+    },
+    "CallStaticObjectMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticObjectMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticObjectMethodA"
+      ]
+    },
+    "CallStaticBooleanMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticBooleanMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticBooleanMethod"
+      ]
+    },
+    "CallStaticBooleanMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticBooleanMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticBooleanMethodV"
+      ]
+    },
+    "CallStaticBooleanMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticBooleanMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticBooleanMethodA"
+      ]
+    },
+    "CallStaticByteMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticByteMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticByteMethod"
+      ]
+    },
+    "CallStaticByteMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticByteMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticByteMethodV"
+      ]
+    },
+    "CallStaticByteMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticByteMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticByteMethodA"
+      ]
+    },
+    "CallStaticCharMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticCharMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticCharMethod"
+      ]
+    },
+    "CallStaticCharMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticCharMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticCharMethodV"
+      ]
+    },
+    "CallStaticCharMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticCharMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticCharMethodA"
+      ]
+    },
+    "CallStaticShortMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticShortMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticShortMethod"
+      ]
+    },
+    "CallStaticShortMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticShortMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticShortMethodV"
+      ]
+    },
+    "CallStaticShortMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticShortMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticShortMethodA"
+      ]
+    },
+    "CallStaticIntMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticIntMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticIntMethod"
+      ]
+    },
+    "CallStaticIntMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticIntMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticIntMethodV"
+      ]
+    },
+    "CallStaticIntMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticIntMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticIntMethodA"
+      ]
+    },
+    "CallStaticLongMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticLongMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticLongMethod"
+      ]
+    },
+    "CallStaticLongMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticLongMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticLongMethodV"
+      ]
+    },
+    "CallStaticLongMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticLongMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticLongMethodA"
+      ]
+    },
+    "CallStaticFloatMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticFloatMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticFloatMethod"
+      ]
+    },
+    "CallStaticFloatMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticFloatMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticFloatMethodV"
+      ]
+    },
+    "CallStaticFloatMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticFloatMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticFloatMethodA"
+      ]
+    },
+    "CallStaticDoubleMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticDoubleMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticDoubleMethod"
+      ]
+    },
+    "CallStaticDoubleMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticDoubleMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticDoubleMethodV"
+      ]
+    },
+    "CallStaticDoubleMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticDoubleMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticDoubleMethodA"
+      ]
+    },
+    "CallStaticVoidMethod": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticVoidMethod",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticVoidMethod"
+      ]
+    },
+    "CallStaticVoidMethodV": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticVoidMethodV",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticVoidMethodV"
+      ]
+    },
+    "CallStaticVoidMethodA": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "CallStaticVoidMethodA",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "CallStaticVoidMethodA"
+      ]
+    },
+    "GetStaticFieldID": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStaticFieldID",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStaticFieldID"
+      ]
+    },
+    "GetStaticObjectField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStaticObjectField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStaticObjectField"
+      ]
+    },
+    "GetStaticBooleanField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStaticBooleanField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStaticBooleanField"
+      ]
+    },
+    "GetStaticByteField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStaticByteField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStaticByteField"
+      ]
+    },
+    "GetStaticCharField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStaticCharField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStaticCharField"
+      ]
+    },
+    "GetStaticShortField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStaticShortField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStaticShortField"
+      ]
+    },
+    "GetStaticIntField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStaticIntField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStaticIntField"
+      ]
+    },
+    "GetStaticLongField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStaticLongField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStaticLongField"
+      ]
+    },
+    "GetStaticFloatField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStaticFloatField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStaticFloatField"
+      ]
+    },
+    "GetStaticDoubleField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStaticDoubleField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStaticDoubleField"
+      ]
+    },
+    "SetStaticObjectField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetStaticObjectField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetStaticObjectField"
+      ]
+    },
+    "SetStaticBooleanField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetStaticBooleanField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetStaticBooleanField"
+      ]
+    },
+    "SetStaticByteField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetStaticByteField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetStaticByteField"
+      ]
+    },
+    "SetStaticCharField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetStaticCharField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetStaticCharField"
+      ]
+    },
+    "SetStaticShortField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetStaticShortField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetStaticShortField"
+      ]
+    },
+    "SetStaticIntField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetStaticIntField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetStaticIntField"
+      ]
+    },
+    "SetStaticLongField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetStaticLongField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetStaticLongField"
+      ]
+    },
+    "SetStaticFloatField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetStaticFloatField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetStaticFloatField"
+      ]
+    },
+    "SetStaticDoubleField": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetStaticDoubleField",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetStaticDoubleField"
+      ]
+    },
+    "NewString": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewString",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewString"
+      ]
+    },
+    "GetStringLength": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStringLength",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStringLength"
+      ]
+    },
+    "GetStringChars": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStringChars",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStringChars"
+      ]
+    },
+    "ReleaseStringChars": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ReleaseStringChars",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ReleaseStringChars"
+      ]
+    },
+    "NewStringUTF": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewStringUTF",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewStringUTF"
+      ]
+    },
+    "GetStringUTFLength": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStringUTFLength",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStringUTFLength"
+      ]
+    },
+    "GetStringUTFChars": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStringUTFChars",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStringUTFChars"
+      ]
+    },
+    "ReleaseStringUTFChars": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ReleaseStringUTFChars",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ReleaseStringUTFChars"
+      ]
+    },
+    "GetArrayLength": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetArrayLength",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetArrayLength"
+      ]
+    },
+    "NewObjectArray": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewObjectArray",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewObjectArray"
+      ]
+    },
+    "GetObjectArrayElement": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetObjectArrayElement",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetObjectArrayElement"
+      ]
+    },
+    "SetObjectArrayElement": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetObjectArrayElement",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetObjectArrayElement"
+      ]
+    },
+    "NewBooleanArray": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewBooleanArray",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewBooleanArray"
+      ]
+    },
+    "NewByteArray": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewByteArray",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewByteArray"
+      ]
+    },
+    "NewCharArray": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewCharArray",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewCharArray"
+      ]
+    },
+    "NewShortArray": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewShortArray",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewShortArray"
+      ]
+    },
+    "NewIntArray": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewIntArray",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewIntArray"
+      ]
+    },
+    "NewLongArray": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewLongArray",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewLongArray"
+      ]
+    },
+    "NewFloatArray": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewFloatArray",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewFloatArray"
+      ]
+    },
+    "NewDoubleArray": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewDoubleArray",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewDoubleArray"
+      ]
+    },
+    "GetBooleanArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetBooleanArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetBooleanArrayElements"
+      ]
+    },
+    "GetByteArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetByteArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetByteArrayElements"
+      ]
+    },
+    "GetCharArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetCharArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetCharArrayElements"
+      ]
+    },
+    "GetShortArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetShortArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetShortArrayElements"
+      ]
+    },
+    "GetIntArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetIntArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetIntArrayElements"
+      ]
+    },
+    "GetLongArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetLongArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetLongArrayElements"
+      ]
+    },
+    "GetFloatArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetFloatArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetFloatArrayElements"
+      ]
+    },
+    "GetDoubleArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetDoubleArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetDoubleArrayElements"
+      ]
+    },
+    "ReleaseBooleanArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ReleaseBooleanArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ReleaseBooleanArrayElements"
+      ]
+    },
+    "ReleaseByteArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ReleaseByteArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ReleaseByteArrayElements"
+      ]
+    },
+    "ReleaseCharArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ReleaseCharArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ReleaseCharArrayElements"
+      ]
+    },
+    "ReleaseShortArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ReleaseShortArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ReleaseShortArrayElements"
+      ]
+    },
+    "ReleaseIntArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ReleaseIntArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ReleaseIntArrayElements"
+      ]
+    },
+    "ReleaseLongArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ReleaseLongArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ReleaseLongArrayElements"
+      ]
+    },
+    "ReleaseFloatArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ReleaseFloatArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ReleaseFloatArrayElements"
+      ]
+    },
+    "ReleaseDoubleArrayElements": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ReleaseDoubleArrayElements",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ReleaseDoubleArrayElements"
+      ]
+    },
+    "GetBooleanArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetBooleanArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetBooleanArrayRegion"
+      ]
+    },
+    "GetByteArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetByteArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetByteArrayRegion"
+      ]
+    },
+    "GetCharArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetCharArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetCharArrayRegion"
+      ]
+    },
+    "GetShortArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetShortArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetShortArrayRegion"
+      ]
+    },
+    "GetIntArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetIntArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetIntArrayRegion"
+      ]
+    },
+    "GetLongArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetLongArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetLongArrayRegion"
+      ]
+    },
+    "GetFloatArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetFloatArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetFloatArrayRegion"
+      ]
+    },
+    "GetDoubleArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetDoubleArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetDoubleArrayRegion"
+      ]
+    },
+    "SetBooleanArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetBooleanArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetBooleanArrayRegion"
+      ]
+    },
+    "SetByteArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetByteArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetByteArrayRegion"
+      ]
+    },
+    "SetCharArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetCharArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetCharArrayRegion"
+      ]
+    },
+    "SetShortArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetShortArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetShortArrayRegion"
+      ]
+    },
+    "SetIntArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetIntArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetIntArrayRegion"
+      ]
+    },
+    "SetLongArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetLongArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetLongArrayRegion"
+      ]
+    },
+    "SetFloatArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetFloatArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetFloatArrayRegion"
+      ]
+    },
+    "SetDoubleArrayRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "SetDoubleArrayRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "SetDoubleArrayRegion"
+      ]
+    },
+    "RegisterNatives": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "RegisterNatives",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "RegisterNatives"
+      ]
+    },
+    "UnregisterNatives": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "UnregisterNatives",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "UnregisterNatives"
+      ]
+    },
+    "MonitorEnter": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "MonitorEnter",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "MonitorEnter"
+      ]
+    },
+    "MonitorExit": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "MonitorExit",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "MonitorExit"
+      ]
+    },
+    "GetJavaVM": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetJavaVM",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetJavaVM"
+      ]
+    },
+    "GetStringRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStringRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStringRegion"
+      ]
+    },
+    "GetStringUTFRegion": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStringUTFRegion",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStringUTFRegion"
+      ]
+    },
+    "GetPrimitiveArrayCritical": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetPrimitiveArrayCritical",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetPrimitiveArrayCritical"
+      ]
+    },
+    "ReleasePrimitiveArrayCritical": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ReleasePrimitiveArrayCritical",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ReleasePrimitiveArrayCritical"
+      ]
+    },
+    "GetStringCritical": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetStringCritical",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetStringCritical"
+      ]
+    },
+    "ReleaseStringCritical": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ReleaseStringCritical",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ReleaseStringCritical"
+      ]
+    },
+    "NewWeakGlobalRef": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewWeakGlobalRef",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewWeakGlobalRef"
+      ]
+    },
+    "DeleteWeakGlobalRef": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "DeleteWeakGlobalRef",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "DeleteWeakGlobalRef"
+      ]
+    },
+    "ExceptionCheck": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "ExceptionCheck",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "ExceptionCheck"
+      ]
+    },
+    "NewDirectByteBuffer": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "NewDirectByteBuffer",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "NewDirectByteBuffer"
+      ]
+    },
+    "GetDirectBufferAddress": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetDirectBufferAddress",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetDirectBufferAddress"
+      ]
+    },
+    "GetDirectBufferCapacity": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetDirectBufferCapacity",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetDirectBufferCapacity"
+      ]
+    },
+    "GetObjectRefType": {
+      "owner_cluster": "JNI",
+      "source_repo": "platform/dalvik",
+      "source_revision": "android-4.4.4_r2",
+      "source_module": "vm",
+      "source_file": "vm/Jni.cpp",
+      "source_symbol": "GetObjectRefType",
+      "source_files": [
+        "platform/dalvik/vm/Jni.cpp"
+      ],
+      "required_symbols": [
+        "GetObjectRefType"
+      ]
+    }
+  }
+}

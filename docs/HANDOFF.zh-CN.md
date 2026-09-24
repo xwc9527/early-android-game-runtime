@@ -1,5 +1,7 @@
 # Early Android Game Runtime 工程交接文档
 
+[`REFERENCE_MIGRATION_RULES.md`](../REFERENCE_MIGRATION_RULES.md) 是所有 Android-visible semantics 的最高优先级迁移规则，覆盖 Dalvik、libcore、Framework、JNI semantics、Bionic 和 Android native userspace。本文档服从该文件。真实游戏只产生 dependency evidence 和 regression evidence。Runtime gap 本身不授权新增 Android implementation 或 HLE。只要 API19/AOSP 存在源码 owner，不得仅凭语义等价自行重写。
+
 ## 交接状态
 
 交接基线是 GitHub `main`。接手时先执行：
@@ -14,7 +16,7 @@ git rev-parse HEAD
 
 `git status --short` 必须为空。不要从本机 `build/`、`artifacts/`、`.tools/`、`.tmp/` 或 `App/Resources` 中复制生成物来补仓库；这些目录包含缓存、设备证据或外部游戏输入。干净 checkout 的可重建性由构建脚本和 CI 负责。
 
-当前工程阶段应定义为“部分正式化 Runtime”。AOSP linker/libdl、guest VMA、Bionic pthread/TLS/futex、线程模型以及 GCC 4.8 ARM EHABI Phase 1/2A/2B 已完成 production closure；DEX/Dalvik、JNI lifecycle、完整 libc/libm、其余 C++ 标准库表面、Framework、NativeActivity/Input 和 Audio 尚未整体闭合。接手后不能恢复“真实游戏撞到一个调用就补一个 shim”的开发方式。
+当前工程阶段是 Phase 3 Dalvik semantics。3A0、3A、3B、3C、3D 已 CLOSED，Phase 3 整体尚未 CLOSED。AOSP linker/libdl、guest VMA、Bionic pthread/TLS/futex、线程模型以及 GCC 4.8 ARM EHABI Phase 1/2A/2B 已完成 production closure。Framework 迁移尚未开始，也没有预先声明的 Framework 类清单。
 
 ## 开发环境
 
@@ -140,30 +142,22 @@ python tools/observe_iphone.py --bundle-id dev.agr.simulator
 
 1. `ProcessRuntime + GuestThreadContext + service-specific execution affinity` 是冻结的线程模型。
 2. 一个 guest pthread 对应一个 Darwin pthread；不得退回 cooperative scheduler，也不得用全局 Runtime 锁把整个进程串行化。
-3. Android-visible policy 来自固定的 Android 4.4.4 AOSP source port 或明确 HLE；HostServices 只提供 Darwin primitive。
+3. Android-visible policy 来自固定的 Android 4.4.4 AOSP source port。HLE 不是 Android semantics 的实现方式；只有调用链最终到达明确排除的 Linux kernel、Binder/system_server、SurfaceFlinger、AudioFlinger 或真实 device/service boundary 时才允许终止为 HLE。HostServices 只提供 Darwin primitive。
 4. AOSP linker 是唯一 production segment/dynamic owner；不得恢复 custom ELF policy。
 5. guest pointer、`size_t`、fd、pthread 和 struct 均保持 32 位 Android ABI，禁止泄露 host arm64/Darwin layout。
 6. Python 只用于构建、测试、审计和设备采集，不进入正式 Runtime 执行链。
 
-## 已知技术债与优先顺序
+## 开发顺序
 
-接手后的首要工作是继续 Runtime closure，而不是扩大 APK 数量或继续针对 Kung Foo 补洞。
+新开发顺序固定为：
 
-正式依赖顺序保持：
+Phase 3 closure → Local Android Reference Lab → Game Dependency Mapper → Migration Book → API19 Source Closure → Cluster Source Port → Differential
 
-`Native Android userspace` → `C++ ABI / ARM EHABI` → `剩余 Bionic native environment` → `Dalvik / GC` → `JNI / JavaVM` → `Framework`
+不要从真实游戏缺口直接补 Android API 或 HLE。不要预先声明某个 Framework 类应该迁移。Framework owner 只由 Migration Book → API19 Source Closure → Cluster Source Manifest 产生。
 
-ARM C++ ABI / EHABI 的既定 Phase 1、2A、2B 已完成；后续工作包从剩余 Bionic native environment 中单独定义，不得把已闭合的 guest GCC exception ownership 改回 host HLE。
+ARM C++ ABI / EHABI 的既定 Phase 1、2A、2B 已完成。不得把已闭合的 guest GCC exception ownership 改回 host HLE。
 
-Native Android userspace 剩余基础闭合后，再进入 DEX/Dalvik、GC 与 JNI/JavaVM 正式化。
-
-当前 JNI string / array / trap fixed tables 属于明确技术债，但不得在正式 JNI 迁移前通过扩表、局部 shim 或真实游戏补丁处理。当前 `agr_guest_runtime.c` 的 64 项 string handle 和其他固定容量明确属于未闭合实现。
-
-当前 native 公共环境剩余主体：便携 Bionic libc/libm/stdio、文件和路径语义、真实时钟、signals/fault delivery、API19 allocator source port。当前 free-list allocator 已解决历史分配耗尽，但还不是 Bionic dlmalloc 的正式迁移结果。
-
-再之后是 Framework 与设备边界：把 AndroidMini 中的 stub/固定成功行为替换为可声明、可测试的 API19 HLE；随后闭合 NativeActivity/Looper/Input/Window、Bitmap lifecycle 和 Audio/OpenSL ES。未知 API 不得伪造成功。
-
-完成公共模块的契约与 differential 后，真实游戏只承担集成回归、coverage 和 failure signature 发现，不再作为逐调用设计 Runtime 的依据。
+已 CLOSED 的 Runtime semantics 保持不动。Reference Lab 尚未开始。
 
 ## 接手验收清单
 

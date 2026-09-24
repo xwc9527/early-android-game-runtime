@@ -17,6 +17,7 @@ on:
       - 'Tests/DexLoom/dispatch-host.c'
       - 'Tests/DexLoom/exception-host.c'
       - 'Tests/DexLoom/lifetime-host.c'
+      - 'Tests/DexLoom/jni-call-host.c'
       - '.github/workflows/phase3a-jni.yml'
 
 jobs:
@@ -63,3 +64,8 @@ jobs:
             "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "$OBJ"/dx_exec.o \
             "$OBJ"/dx_indirect_ref.o "$OBJ"/lifetime-host.o -lz -lm -o /tmp/lifetime-host
           /tmp/lifetime-host
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/jni-call-host.c -o "$OBJ/jni-call-host.o"
+          cc -pthread "$OBJ"/dx_log.o "$OBJ"/dx_memory.o "$OBJ"/dx_arena.o "$OBJ"/dx_dex.o "$OBJ"/dx_opcode.o \
+            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "$OBJ"/dx_exec.o \
+            "$OBJ"/dx_indirect_ref.o "$OBJ"/jni-call-host.o -lz -lm -o /tmp/jni-call-host
+          /tmp/jni-call-host

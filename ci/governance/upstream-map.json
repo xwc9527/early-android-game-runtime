@@ -64,7 +64,9 @@
       "contracts": [
         "nativeactivity.lifecycle.window",
         "PVS1 lifecycle trace"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "nativeactivity.native_app_glue",
@@ -120,7 +122,9 @@
       "known_deviations": [],
       "contracts": [
         "PVS1 native_app_glue command trace"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "looper.poll",
@@ -177,7 +181,9 @@
       "known_deviations": [],
       "contracts": [
         "PVS1 Looper trace"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "nativeactivity.input_queue",
@@ -238,7 +244,9 @@
       ],
       "contracts": [
         "input_queue.concurrent_ordered"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "egl.lifecycle",
@@ -289,7 +297,9 @@
       "contracts": [
         "egl.gles.draw.readback",
         "Gloomy renderer regression"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "dalvik.jni.binding",
@@ -352,7 +362,9 @@
       "contracts": [
         "dex.jni.roundtrip",
         "activity GC-root contract"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "androidfw.assets_resources",
@@ -406,7 +418,9 @@
       "contracts": [
         "asset.apk.resources_table",
         "Bitmap texture regression"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "bionic.pthread_tls_futex",
@@ -462,7 +476,9 @@
       "known_deviations": [],
       "contracts": [
         "Bionic pthread/futex contracts"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "bionic.linker_libdl",
@@ -515,7 +531,9 @@
       "known_deviations": [],
       "contracts": [
         "API19 linker/libdl differential"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "ehabi.unwind_cpp",
@@ -574,7 +592,9 @@
       "known_deviations": [],
       "contracts": [
         "EHABI Phase 1/2A/2B differential"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "bionic.allocator",
@@ -632,7 +652,9 @@
       "known_deviations": [],
       "contracts": [
         "API19 allocator differential and stress"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "dalvik.nativeactivity.activity_root",
@@ -708,7 +730,9 @@
       "contracts": [
         "activity_gc_root_contract",
         "PVS1 real-APK regression"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "dalvik.dex.parse",
@@ -796,7 +820,9 @@
         "dex-parser no-Bridge fixture",
         "Pixel Dungeon classes.dex parse",
         "Frozen Bubble classes.dex parse"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "framework.activity.launch",
@@ -906,7 +932,9 @@
         "synthetic activity-launch DEX",
         "Pixel Dungeon Activity launch probe",
         "Frozen Bubble Activity launch probe"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.viewroot.attach",
@@ -996,7 +1024,9 @@
       ],
       "contracts": [
         "framework.viewroot.attach"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.viewroot.first_traversal",
@@ -1108,7 +1138,9 @@
       "contracts": [
         "framework.first_traversal.synthetic",
         "frozen-bubble.first_traversal"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.viewroot.traversal_dispatch",
@@ -1201,7 +1233,9 @@
       "contracts": [
         "framework.traversal_dispatch.host",
         "frozen-bubble.traversal_dispatch"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.window.set_content_view",
@@ -1308,7 +1342,9 @@
       ],
       "contracts": [
         "framework.traversal_dispatch.host"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.view.surface_view",
@@ -1420,7 +1456,9 @@
       "contracts": [
         "framework.traversal_dispatch.host",
         "frozen-bubble.traversal_dispatch"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.view.surface_holder_canvas",
@@ -1534,7 +1572,9 @@
       ],
       "contracts": [
         "framework.surface_holder_canvas.host"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.graphics.bitmap_decode_resource",
@@ -1625,7 +1665,9 @@
       ],
       "contracts": [
         "frozen-bubble.bitmap_decode_resource"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.graphics.canvas_bitmap",
@@ -1736,7 +1778,9 @@
       "contracts": [
         "framework.canvas_bitmap.host",
         "frozen-bubble.first_content_frame"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "dalvik.vm.vtable",
@@ -1807,7 +1851,9 @@
       ],
       "contracts": [
         "dex.vtable_inheritance"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "dalvik.thread.start",
@@ -1890,7 +1936,9 @@
       ],
       "contracts": [
         "dex.thread_start"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "dalvik.vm.monitor",
@@ -1956,7 +2004,9 @@
       ],
       "contracts": [
         "dex.monitor"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.graphics.bitmap_create_scaled",
@@ -2033,7 +2083,9 @@
       ],
       "contracts": [
         "frozen-bubble.bitmap_decode_resource"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "java.util.random.math.gameplay",
@@ -2109,7 +2161,9 @@
       ],
       "contracts": [
         "dex.random_math_gameplay"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "java.lang.character.for_digit",
@@ -2171,7 +2225,9 @@
       ],
       "contracts": [
         "dex.character_fordigit"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.graphics.canvas_state_clip",
@@ -2276,7 +2332,9 @@
       ],
       "contracts": [
         "framework.canvas_state_clip.host"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "java.util.vector.core",
@@ -2359,7 +2417,9 @@
       ],
       "contracts": [
         "dex.vector_core"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "android.app.activity.request_window_feature",
@@ -2460,7 +2520,9 @@
       ],
       "contracts": [
         "framework.request_window_feature.host"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "android.app.activity.get_intent",
@@ -2529,7 +2591,9 @@
       ],
       "contracts": [
         "framework.activity_get_intent.host"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "framework.view.surface_post_display",
@@ -2614,7 +2678,9 @@
         "surface canvas host consumer snapshot",
         "1080x2340 real APK post and Simulator screen capture",
         "exact-candidate iPhone physical visible frame"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "java.lang.string.byte_constructor",
@@ -2672,7 +2738,9 @@
       ],
       "contracts": [
         "asset-input-stream-host String(byte[]) receiver assignment"
-      ]
+      ],
+      "legacy_navigation_only": true,
+      "migration_authority": false
     },
     {
       "id": "dalvik.classpath.loader",
@@ -2746,7 +2814,10 @@
       ],
       "contracts": [
         "Tests/DexLoom/classpath-host.c"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     }
-  ]
+  ],
+  "legacy_navigation_policy": "Every entry declares legacy_navigation_only and migration_authority false. UPSTREAM_MAP is NAVIGATION_CACHE_NOT_ORACLE. It may store source paths, source hashes, and historical differential or regression evidence, and it may help locate API19 source. It cannot authorize a new migration target, continued legacy HLE, a source port, a Migration Book, API19 Source Closure, or production source ownership. legacy_navigation_only true is pre-reference history. false is current source-navigation evidence with no migration authority."
 }

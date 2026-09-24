@@ -1,24 +1,6 @@
 {
   "schema_version": 1,
-  "enabled": true,
-  "question": "After API19 asset-stream and String(byte[]) integration passes Linux contracts, does the unchanged Frozen Bubble APK on iOS 27.0 parse nonempty levels and produce a new presented frame after the original second touch?",
-  "current_uncertainty": [
-    "Linux discovery 35973026898 consumed the second original touch at readyToFire=1, then stopped posting while the worker remained in BubbleManager.nextBubbleIndex. Static exact-DEX review found unresolved AssetInputStream.available/read and String(byte[]) before LevelManager could populate bubble counts. The new public behavior has a focused Linux contract, but there is no iOS 27.0 evidence for the amended guest state and display chain."
-  ],
-  "expected_outcome_a": {
-    "result": "The original APK has nonempty level and bubble counts, the second touch is consumed, and a later changed buffer is posted and presented without Runtime failure.",
-    "excludes": [
-      "an empty-level bubble-selection loop as the remaining primary blocker",
-      "a path-only AssetManager.open as sufficient for gameplay"
-    ]
-  },
-  "expected_outcome_b": {
-    "result": "Level or bubble counts remain empty, or changed posts still stop; bounded guest state and call evidence locate the next public divergence.",
-    "excludes": [
-      "classifying the new asset and String contracts as real-game confirmed",
-      "attributing this run to a device-specific defect without same-commit physical evidence"
-    ]
-  },
-  "why_cheaper_test_is_insufficient": "The Linux host test can show parsed guest levels and a changed post, but cannot prove that the iOS 27.0 event loop submits that later buffer after touch through UIKit. Simulator runs only after Linux source and gameplay contracts pass.",
-  "prior_expensive_runs_without_information_gain": 0
+  "enabled": false,
+  "active_target": "Phase 3 Dalvik semantics closure",
+  "reason": "No expensive gameplay/reference migration run is authorized before Phase 3 closure."
 }

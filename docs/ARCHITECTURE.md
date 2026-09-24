@@ -50,10 +50,10 @@ Input follows `UIKit raw event -> Android InputQueue semantics -> Android Looper
 1. Port exact API19 AOSP/Bionic source when portable.
 2. Preserve upstream algorithms and observable state while replacing only the OS boundary.
 3. Use HLE only at real kernel, service, device, or platform boundaries.
-4. Use a self-written replacement only when direct source reuse is unsuitable and record the justification in `DECISIONS.md`.
+4. Where an API19/AOSP source owner exists, do not write an original or approximate replacement. A different host mechanism is allowed only at an explicitly excluded Linux kernel, Binder/system_server, SurfaceFlinger, AudioFlinger, real device/service boundary, or pure HostServices primitive. `REFERENCE_MIGRATION_RULES.md` owns that decision.
 
 Python is restricted to build, audit, test, CI, and device observation. Production Runtime remains native C/C++, Rust for the existing ARM interpreter, and necessary iOS host code.
 
 ## Technical Debt Policy
 
-Architecture debt must be resolved. Implementation debt remains outside the active target unless it blocks gameplay, a public Android contract, cross-game compatibility, future module construction, stability, or a locked architecture.
+Architecture debt must be resolved. Implementation debt remains outside the active target unless it blocks a closed public Android contract, stability, or a locked architecture. A missing call observed in a real game does not by itself open that debt. `REFERENCE_MIGRATION_RULES.md` governs every Android-visible source ownership decision.

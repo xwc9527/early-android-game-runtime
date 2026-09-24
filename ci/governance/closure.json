@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "target": "Phase 3 Dalvik semantics closure",
-  "state": "IMPLEMENTED",
-  "closure_tested_commit": null,
-  "closure_tested_tree": null,
+  "state": "CLOSED",
+  "closure_tested_commit": "851a025a14a75429c975da43853269f9d98ed8ef",
+  "closure_tested_tree": "9ece3c2b0f1bea5d8275bde75f13d91b5b3e63d6",
   "closure_base_commit": "6e47ce9ab6da32483f049731ac04f2a8356a4b67",
   "eligible_for_merge": false,
   "merged_commit": null,

@@ -26,9 +26,9 @@ and tests every APK assigned to that shard. No third-party APK is committed to
 this repository.
 
 The current five-sample seed corpus contains Kung Foo Barracuda, Gloomy
-Dungeons 2, Pixel Dungeon, Frozen Bubble, and Vector Pinball. The two established
-native regressions must reach a visible framebuffer. Other samples run through
-the generic APK/DEX/ELF probe until success or the first normalized Runtime gap.
+Dungeons 2, Pixel Dungeon, Frozen Bubble, and Vector Pinball. Real games
+produce dependency evidence and regression evidence. A Runtime gap does not
+authorize a new Android implementation.
 
 Artifacts include:
 
@@ -45,6 +45,8 @@ reuses its Simulator process for all assigned APKs.
 See `THIRD_PARTY_NOTICES.md` for component licenses.
 
 ## Documentation
+
+[REFERENCE_MIGRATION_RULES.md](REFERENCE_MIGRATION_RULES.md) is the highest-priority migration rule for every Android-visible semantic that has an API19/AOSP source owner. The engineering plan after Phase 3 closure is [docs/AGR_REFERENCE_MIGRATION_PLAN.zh-CN.md](docs/AGR_REFERENCE_MIGRATION_PLAN.zh-CN.md).
 
 - [中文项目说明](docs/PROJECT_OVERVIEW.zh-CN.md)
 - [中文工程交接文档](docs/HANDOFF.zh-CN.md)

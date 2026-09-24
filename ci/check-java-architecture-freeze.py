@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Fail when production Runtime grows Android Java/Framework HLE outside the freeze."""
+"""Fail when production Runtime grows Android Java/Framework surface outside the freeze.
+
+The retired public-owner ledger is not an authorization source. A new public
+Java symbol is rejected until a later Migration Book names an API19 owner.
+"""
 
 import argparse
 import json
@@ -9,8 +13,11 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 BASELINE_PATH = ROOT / "ci/governance/java-architecture-baseline.json"
-OWNER_PATH = ROOT / "ci/governance/java-public-owner.json"
 ROLES_PATH = ROOT / "ci/governance/java-component-roles.json"
+RETIRED_LEDGERS = (
+    ROOT / "ci/governance/java-public-owner.json",
+    ROOT / "ci/governance/java-legacy-migration.json",
+)
 
 SCAN_ROOTS = (
     ROOT / "Runtime/DexLoom",
@@ -103,18 +110,6 @@ def load_baseline():
     }
 
 
-def owner_symbols():
-    if not OWNER_PATH.is_file():
-        return set()
-    document = json.loads(OWNER_PATH.read_text(encoding="utf-8"))
-    symbols = set()
-    for entry in document.get("symbols", []):
-        symbol = entry.get("symbol")
-        if symbol:
-            symbols.add(symbol)
-    return symbols
-
-
 def check_roles(errors):
     if not ROLES_PATH.is_file():
         errors.append("missing java-component-roles.json")
@@ -142,10 +137,13 @@ def check_roles(errors):
 def check(snapshot, baseline):
     errors = []
     check_roles(errors)
-    owned = owner_symbols()
+    for path in RETIRED_LEDGERS:
+        if path.is_file():
+            errors.append(f"retired migration ledger is active: {rel(path)}")
     for item in sorted(snapshot["public_descriptors"] - baseline["public_descriptors"]):
-        if item[1] not in owned:
-            errors.append(f"new public Java symbol without owner: {item[1]} in {item[0]}")
+        errors.append(
+            f"new public Java symbol is not a migration authorization: {item[1]} in {item[0]}"
+        )
     for item in sorted(snapshot["app_packages"] - baseline["app_packages"]):
         errors.append(f"new application-package Runtime descriptor: {item[1]} in {item[0]}")
     for item in sorted(snapshot["game_lines"] - baseline["game_lines"]):

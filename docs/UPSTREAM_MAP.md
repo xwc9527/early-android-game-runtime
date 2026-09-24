@@ -1,8 +1,10 @@
 # Android 4.4.4 to AGR Upstream Map
 
-This is the human-readable index for `ci/governance/upstream-map.json`. It is an encounter-driven navigation index and semantic cache, not an oracle. Pinned Android 4.4.4/API19 source and necessary reference execution remain authoritative; an agent may bypass this map at any time.
+This is the human-readable index for `ci/governance/upstream-map.json`. It is a navigation cache, not an oracle. Pinned Android 4.4.4/API19 source remains authoritative. Android-visible source ownership follows `REFERENCE_MIGRATION_RULES.md`.
 
-Each machine entry records pinned source paths/hashes, AGR paths/hashes, dependencies, verification commit, and `VALID`, `STALE`, `UNVERIFIED`, or `INVALID` status. `ci/upstream-map.py` recomputes AGR hashes. A changed AGR path, baseline revision, dependency, or missing path invalidates cached authority. `STALE` means recheck source; it does not mean the cached statement is false. Normal cache maintenance needs no ADR.
+Every entry declares `legacy_navigation_only` and `migration_authority: false`. The map never grants migration authority. It may keep source paths, hashes, and historical differential or regression evidence, and it may point at API19 source. It cannot authorize a new migration target, continued legacy HLE, a source port, or production source ownership, and it cannot replace a Migration Book or API19 Source Closure. `legacy_navigation_only: true` is pre-reference history. `legacy_navigation_only: false` is still-current source navigation and still has no migration authority.
+
+Each machine entry records pinned source paths/hashes, AGR paths/hashes, dependencies, verification commit, and `VALID`, `STALE`, `UNVERIFIED`, or `INVALID` status. `ci/upstream-map.py` recomputes AGR hashes. A changed AGR path, baseline revision, dependency, or missing path invalidates cached validity. `STALE` means recheck source; it does not mean the cached statement is false. Normal cache maintenance needs no ADR.
 
 | Subsystem | API19 source path | AGR path | Placement | Contract focus |
 |---|---|---|---|---|
@@ -37,4 +39,4 @@ Each machine entry records pinned source paths/hashes, AGR paths/hashes, depende
 
 Each new public path adds or updates one machine-readable entry. A problem report references the map entry, then supplies a compact `semantic-diff.json`; it does not duplicate the upstream map in prose.
 
-Semantic comparison covers guest-observable behavior and required invariants: return/error behavior, callback and state ordering, ownership, thread affinity, blocking/wakeup, lifetime, and memory visibility. Host mechanisms may differ when these semantics remain equivalent.
+Semantic comparison covers guest-observable behavior and required invariants: return/error behavior, callback and state ordering, ownership, thread affinity, blocking/wakeup, lifetime, and memory visibility. Semantic equivalence does not authorize an original implementation. Host mechanisms may differ only at an explicitly excluded kernel, service, device, or HostServices boundary.

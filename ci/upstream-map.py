@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the encounter-driven Android 4.4.4 to AGR navigation cache."""
+"""Validate the Android 4.4.4 to AGR source-navigation cache."""
 
 import argparse
 import base64
@@ -70,7 +70,8 @@ def evaluate(document, verify_upstream=False, verify_only=None):
     tracked = tracked_files()
     required = {"id", "subsystem", "android_api", "upstream", "agr", "verified_at_commit", "status",
                 "dependencies", "observable_semantics", "internal_invariants", "execution_placement",
-                "host_substitutions", "known_deviations", "contracts"}
+                "host_substitutions", "known_deviations", "contracts",
+                "legacy_navigation_only", "migration_authority"}
     for index, entry in enumerate(document.get("entries", [])):
         missing = sorted(required - set(entry))
         if missing:
@@ -133,9 +134,17 @@ def evaluate(document, verify_upstream=False, verify_only=None):
             elif agr.get("source_hashes", {}).get(path) != current:
                 if effective != "INVALID": effective = "STALE"
                 reasons.append(f"AGR source hash changed: {path}")
+        legacy = entry.get("legacy_navigation_only")
+        authority = entry.get("migration_authority")
+        if not isinstance(legacy, bool):
+            errors.append(f"{entry_id}: legacy_navigation_only must be a boolean")
+        if authority is not False:
+            errors.append(f"{entry_id}: migration_authority must be false")
         entries[entry_id] = {"declared_status": declared, "effective_status": effective,
                              "reasons": reasons, "current_agr_hashes": current_hashes,
-                             "dependencies": entry.get("dependencies", [])}
+                             "dependencies": entry.get("dependencies", []),
+                             "legacy_navigation_only": legacy,
+                             "migration_authority": authority}
     # Dependency invalidation is evaluated after all entries exist.
     changed = True
     while changed:
