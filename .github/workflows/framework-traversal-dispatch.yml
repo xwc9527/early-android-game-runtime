@@ -41,6 +41,7 @@ on:
       - 'scripts/build-iphoneos.sh'
       - 'scripts/build-ios-image-codecs.sh'
       - 'ci/framework-traversal-dispatch-contract.py'
+      - 'ci/check-simulator-screen.swift'
       - 'ci/build-framework-traversal-dispatch-summary.py'
       - 'ci/governance/**'
       - '.github/workflows/framework-traversal-dispatch.yml'
