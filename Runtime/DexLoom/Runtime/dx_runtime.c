@@ -550,15 +550,15 @@ DxResult dx_vm_run_main_activity(DxVM *vm, const char *activity_class) {
     // Call <init> — minor errors are non-fatal, stack overflow is fatal
     DxMethod *init = dx_vm_find_method(cls, "<init>", NULL);
     if (init) {
-        vm->insn_count = 0;  // Reset per-call instruction budget
-        vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0;  // Reset per-call instruction budget
+        dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue init_args[1] = { DX_OBJ_VALUE(activity) };
         res = dx_vm_execute_method(vm, init, init_args, 1, NULL);
         if (res == DX_ERR_EXCEPTION) {
-            const char *exc_desc = vm->pending_exception && vm->pending_exception->klass
-                ? vm->pending_exception->klass->descriptor : "unknown";
+            const char *exc_desc = dx_vm_current_exec(vm)->pending_exception && dx_vm_current_exec(vm)->pending_exception->klass
+                ? dx_vm_current_exec(vm)->pending_exception->klass->descriptor : "unknown";
             DX_WARN("Activity", "Activity.<init> threw uncaught %s (absorbed)", exc_desc);
-            vm->pending_exception = NULL;
+            dx_vm_current_exec(vm)->pending_exception = NULL;
             res = DX_OK;
         } else if (res == DX_ERR_STACK_OVERFLOW || res == DX_ERR_INTERNAL || res == DX_ERR_BUDGET_EXHAUSTED || res == DX_ERR_SIGNAL) {
             DX_ERROR("Activity", "Activity.<init> failed fatally: %s", dx_result_string(res));
@@ -572,15 +572,15 @@ DxResult dx_vm_run_main_activity(DxVM *vm, const char *activity_class) {
     // Call onCreate(null) — minor errors are non-fatal, stack overflow/limit is fatal
     DxMethod *on_create = dx_vm_find_method(cls, "onCreate", NULL);
     if (on_create) {
-        vm->insn_count = 0;  // Reset per-call instruction budget
-        vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0;  // Reset per-call instruction budget
+        dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue args[2] = { DX_OBJ_VALUE(activity), DX_NULL_VALUE };
         res = dx_vm_execute_method(vm, on_create, args, 2, NULL);
         if (res == DX_ERR_EXCEPTION) {
-            const char *exc_desc = vm->pending_exception && vm->pending_exception->klass
-                ? vm->pending_exception->klass->descriptor : "unknown";
+            const char *exc_desc = dx_vm_current_exec(vm)->pending_exception && dx_vm_current_exec(vm)->pending_exception->klass
+                ? dx_vm_current_exec(vm)->pending_exception->klass->descriptor : "unknown";
             DX_WARN("Activity", "onCreate threw uncaught %s (absorbed)", exc_desc);
-            vm->pending_exception = NULL;
+            dx_vm_current_exec(vm)->pending_exception = NULL;
             res = DX_OK;
         } else if (res == DX_ERR_STACK_OVERFLOW || res == DX_ERR_INTERNAL || res == DX_ERR_BUDGET_EXHAUSTED || res == DX_ERR_SIGNAL) {
             DX_ERROR("Activity", "onCreate failed fatally: %s", dx_result_string(res));
@@ -596,15 +596,15 @@ DxResult dx_vm_run_main_activity(DxVM *vm, const char *activity_class) {
     // --- Activity lifecycle: onPostCreate(Bundle) ---
     DxMethod *on_post_create = dx_vm_find_method(cls, "onPostCreate", NULL);
     if (on_post_create) {
-        vm->insn_count = 0;
-        vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0;
+        dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue pc_args[2] = { DX_OBJ_VALUE(activity), DX_NULL_VALUE };
         res = dx_vm_execute_method(vm, on_post_create, pc_args, 2, NULL);
         if (res == DX_ERR_EXCEPTION) {
             DX_WARN("Activity", "onPostCreate threw %s (absorbed)",
-                    vm->pending_exception && vm->pending_exception->klass
-                    ? vm->pending_exception->klass->descriptor : "unknown");
-            vm->pending_exception = NULL;
+                    dx_vm_current_exec(vm)->pending_exception && dx_vm_current_exec(vm)->pending_exception->klass
+                    ? dx_vm_current_exec(vm)->pending_exception->klass->descriptor : "unknown");
+            dx_vm_current_exec(vm)->pending_exception = NULL;
             res = DX_OK;
         } else if (res == DX_ERR_STACK_OVERFLOW || res == DX_ERR_INTERNAL || res == DX_ERR_BUDGET_EXHAUSTED || res == DX_ERR_SIGNAL) {
             DX_ERROR("Activity", "onPostCreate failed fatally: %s", dx_result_string(res));
@@ -616,15 +616,15 @@ DxResult dx_vm_run_main_activity(DxVM *vm, const char *activity_class) {
     DxMethod *on_start = dx_vm_find_method(cls, "onStart", "V");
     if (on_start) {
         DX_INFO("Activity", "Calling onStart()");
-        vm->insn_count = 0;
-        vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0;
+        dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue start_args[1] = { DX_OBJ_VALUE(activity) };
         res = dx_vm_execute_method(vm, on_start, start_args, 1, NULL);
         if (res == DX_ERR_EXCEPTION) {
             DX_WARN("Activity", "onStart threw %s (absorbed)",
-                    vm->pending_exception && vm->pending_exception->klass
-                    ? vm->pending_exception->klass->descriptor : "unknown");
-            vm->pending_exception = NULL;
+                    dx_vm_current_exec(vm)->pending_exception && dx_vm_current_exec(vm)->pending_exception->klass
+                    ? dx_vm_current_exec(vm)->pending_exception->klass->descriptor : "unknown");
+            dx_vm_current_exec(vm)->pending_exception = NULL;
             res = DX_OK;
         } else if (res == DX_ERR_STACK_OVERFLOW || res == DX_ERR_INTERNAL || res == DX_ERR_BUDGET_EXHAUSTED || res == DX_ERR_SIGNAL) {
             DX_ERROR("Activity", "onStart failed fatally: %s", dx_result_string(res));
@@ -636,15 +636,15 @@ DxResult dx_vm_run_main_activity(DxVM *vm, const char *activity_class) {
     DxMethod *on_resume = dx_vm_find_method(cls, "onResume", "V");
     if (on_resume) {
         DX_INFO("Activity", "Calling onResume()");
-        vm->insn_count = 0;
-        vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0;
+        dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue resume_args[1] = { DX_OBJ_VALUE(activity) };
         res = dx_vm_execute_method(vm, on_resume, resume_args, 1, NULL);
         if (res == DX_ERR_EXCEPTION) {
             DX_WARN("Activity", "onResume threw %s (absorbed)",
-                    vm->pending_exception && vm->pending_exception->klass
-                    ? vm->pending_exception->klass->descriptor : "unknown");
-            vm->pending_exception = NULL;
+                    dx_vm_current_exec(vm)->pending_exception && dx_vm_current_exec(vm)->pending_exception->klass
+                    ? dx_vm_current_exec(vm)->pending_exception->klass->descriptor : "unknown");
+            dx_vm_current_exec(vm)->pending_exception = NULL;
             res = DX_OK;
         } else if (res == DX_ERR_STACK_OVERFLOW || res == DX_ERR_INTERNAL || res == DX_ERR_BUDGET_EXHAUSTED || res == DX_ERR_SIGNAL) {
             DX_ERROR("Activity", "onResume failed fatally: %s", dx_result_string(res));
@@ -655,15 +655,15 @@ DxResult dx_vm_run_main_activity(DxVM *vm, const char *activity_class) {
     // --- Activity lifecycle: onPostResume() ---
     DxMethod *on_post_resume = dx_vm_find_method(cls, "onPostResume", "V");
     if (on_post_resume) {
-        vm->insn_count = 0;
-        vm->pending_exception = NULL;
+        dx_vm_current_exec(vm)->insn_count = 0;
+        dx_vm_current_exec(vm)->pending_exception = NULL;
         DxValue pr_args[1] = { DX_OBJ_VALUE(activity) };
         res = dx_vm_execute_method(vm, on_post_resume, pr_args, 1, NULL);
         if (res == DX_ERR_EXCEPTION) {
             DX_WARN("Activity", "onPostResume threw %s (absorbed)",
-                    vm->pending_exception && vm->pending_exception->klass
-                    ? vm->pending_exception->klass->descriptor : "unknown");
-            vm->pending_exception = NULL;
+                    dx_vm_current_exec(vm)->pending_exception && dx_vm_current_exec(vm)->pending_exception->klass
+                    ? dx_vm_current_exec(vm)->pending_exception->klass->descriptor : "unknown");
+            dx_vm_current_exec(vm)->pending_exception = NULL;
             res = DX_OK;
         } else if (res == DX_ERR_STACK_OVERFLOW || res == DX_ERR_INTERNAL || res == DX_ERR_BUDGET_EXHAUSTED || res == DX_ERR_SIGNAL) {
             DX_ERROR("Activity", "onPostResume failed fatally: %s", dx_result_string(res));
@@ -757,11 +757,11 @@ DxResult dx_vm_run_main_activity(DxVM *vm, const char *activity_class) {
             // Call <init>
             DxMethod *frag_init = dx_vm_find_method(fcls, "<init>", NULL);
             if (frag_init) {
-                vm->insn_count = 0;
-                vm->pending_exception = NULL;
+                dx_vm_current_exec(vm)->insn_count = 0;
+                dx_vm_current_exec(vm)->pending_exception = NULL;
                 DxValue init_args[1] = { DX_OBJ_VALUE(frag_obj) };
                 res = dx_vm_execute_method(vm, frag_init, init_args, 1, NULL);
-                if (res == DX_ERR_EXCEPTION) { vm->pending_exception = NULL; }
+                if (res == DX_ERR_EXCEPTION) { dx_vm_current_exec(vm)->pending_exception = NULL; }
             }
 
             // Create a LayoutInflater argument
@@ -778,10 +778,10 @@ DxResult dx_vm_run_main_activity(DxVM *vm, const char *activity_class) {
                 DX_NULL_VALUE
             };
             DxValue ocv_result = {0};
-            vm->insn_count = 0;
-            vm->pending_exception = NULL;
+            dx_vm_current_exec(vm)->insn_count = 0;
+            dx_vm_current_exec(vm)->pending_exception = NULL;
             res = dx_vm_execute_method(vm, ocv, ocv_args, 4, &ocv_result);
-            if (res == DX_ERR_EXCEPTION) { vm->pending_exception = NULL; res = DX_OK; }
+            if (res == DX_ERR_EXCEPTION) { dx_vm_current_exec(vm)->pending_exception = NULL; res = DX_OK; }
 
             if (res == DX_OK && ocv_result.tag == DX_VAL_OBJ && ocv_result.obj &&
                 ocv_result.obj->ui_node) {
@@ -804,10 +804,10 @@ DxResult dx_vm_run_main_activity(DxVM *vm, const char *activity_class) {
                         ocv_result,
                         DX_NULL_VALUE
                     };
-                    vm->insn_count = 0;
-                    vm->pending_exception = NULL;
+                    dx_vm_current_exec(vm)->insn_count = 0;
+                    dx_vm_current_exec(vm)->pending_exception = NULL;
                     DxResult ovc_res = dx_vm_execute_method(vm, ovc, ovc_args, 3, NULL);
-                    if (ovc_res == DX_ERR_EXCEPTION) { vm->pending_exception = NULL; }
+                    if (ovc_res == DX_ERR_EXCEPTION) { dx_vm_current_exec(vm)->pending_exception = NULL; }
                     DX_INFO("Activity", "Fragment.onViewCreated called");
                 }
 
@@ -815,20 +815,20 @@ DxResult dx_vm_run_main_activity(DxVM *vm, const char *activity_class) {
                 DxMethod *fon_start = dx_vm_find_method(fcls, "onStart", NULL);
                 if (fon_start && fon_start->has_code) {
                     DxValue start_args[1] = { DX_OBJ_VALUE(frag_obj) };
-                    vm->insn_count = 0;
-                    vm->pending_exception = NULL;
+                    dx_vm_current_exec(vm)->insn_count = 0;
+                    dx_vm_current_exec(vm)->pending_exception = NULL;
                     dx_vm_execute_method(vm, fon_start, start_args, 1, NULL);
-                    if (vm->pending_exception) { vm->pending_exception = NULL; }
+                    if (dx_vm_current_exec(vm)->pending_exception) { dx_vm_current_exec(vm)->pending_exception = NULL; }
                 }
 
                 // Call onResume()
                 DxMethod *fon_resume = dx_vm_find_method(fcls, "onResume", NULL);
                 if (fon_resume && fon_resume->has_code) {
                     DxValue resume_args[1] = { DX_OBJ_VALUE(frag_obj) };
-                    vm->insn_count = 0;
-                    vm->pending_exception = NULL;
+                    dx_vm_current_exec(vm)->insn_count = 0;
+                    dx_vm_current_exec(vm)->pending_exception = NULL;
                     dx_vm_execute_method(vm, fon_resume, resume_args, 1, NULL);
-                    if (vm->pending_exception) { vm->pending_exception = NULL; }
+                    if (dx_vm_current_exec(vm)->pending_exception) { dx_vm_current_exec(vm)->pending_exception = NULL; }
                     DX_INFO("Activity", "Fragment.onResume called");
                 }
             } else if (res != DX_OK) {
@@ -1283,16 +1283,16 @@ DxResult dx_runtime_dispatch_click(DxContext *ctx, uint32_t view_id) {
     }
 
     // Call onClick(view)
-    ctx->vm->insn_count = 0;
-    ctx->vm->pending_exception = NULL;
+    dx_vm_current_exec(ctx->vm)->insn_count = 0;
+    dx_vm_current_exec(ctx->vm)->pending_exception = NULL;
     DxObject *view_obj = node->runtime_obj;
     DxValue args[2] = { DX_OBJ_VALUE(listener), DX_OBJ_VALUE(view_obj) };
     DxResult click_res = dx_vm_execute_method(ctx->vm, on_click, args, 2, NULL);
     if (click_res == DX_ERR_EXCEPTION) {
-        const char *exc_desc = ctx->vm->pending_exception && ctx->vm->pending_exception->klass
-            ? ctx->vm->pending_exception->klass->descriptor : "unknown";
+        const char *exc_desc = dx_vm_current_exec(ctx->vm)->pending_exception && dx_vm_current_exec(ctx->vm)->pending_exception->klass
+            ? dx_vm_current_exec(ctx->vm)->pending_exception->klass->descriptor : "unknown";
         DX_WARN(TAG, "onClick threw uncaught %s (absorbed)", exc_desc);
-        ctx->vm->pending_exception = NULL;
+        dx_vm_current_exec(ctx->vm)->pending_exception = NULL;
         click_res = DX_OK;
     }
     return click_res;
@@ -1322,16 +1322,16 @@ DxResult dx_runtime_dispatch_long_click(DxContext *ctx, uint32_t view_id) {
         return DX_ERR_METHOD_NOT_FOUND;
     }
 
-    ctx->vm->insn_count = 0;
-    ctx->vm->pending_exception = NULL;
+    dx_vm_current_exec(ctx->vm)->insn_count = 0;
+    dx_vm_current_exec(ctx->vm)->pending_exception = NULL;
     DxObject *view_obj = node->runtime_obj;
     DxValue args[2] = { DX_OBJ_VALUE(listener), DX_OBJ_VALUE(view_obj) };
     DxResult res = dx_vm_execute_method(ctx->vm, on_long_click, args, 2, NULL);
     if (res == DX_ERR_EXCEPTION) {
-        const char *exc_desc = ctx->vm->pending_exception && ctx->vm->pending_exception->klass
-            ? ctx->vm->pending_exception->klass->descriptor : "unknown";
+        const char *exc_desc = dx_vm_current_exec(ctx->vm)->pending_exception && dx_vm_current_exec(ctx->vm)->pending_exception->klass
+            ? dx_vm_current_exec(ctx->vm)->pending_exception->klass->descriptor : "unknown";
         DX_WARN(TAG, "onLongClick threw uncaught %s (absorbed)", exc_desc);
-        ctx->vm->pending_exception = NULL;
+        dx_vm_current_exec(ctx->vm)->pending_exception = NULL;
         res = DX_OK;
     }
     return res;
@@ -1361,15 +1361,15 @@ DxResult dx_runtime_dispatch_refresh(DxContext *ctx, uint32_t view_id) {
         return DX_ERR_METHOD_NOT_FOUND;
     }
 
-    ctx->vm->insn_count = 0;
-    ctx->vm->pending_exception = NULL;
+    dx_vm_current_exec(ctx->vm)->insn_count = 0;
+    dx_vm_current_exec(ctx->vm)->pending_exception = NULL;
     DxValue args[1] = { DX_OBJ_VALUE(listener) };
     DxResult res = dx_vm_execute_method(ctx->vm, on_refresh, args, 1, NULL);
     if (res == DX_ERR_EXCEPTION) {
-        const char *exc_desc = ctx->vm->pending_exception && ctx->vm->pending_exception->klass
-            ? ctx->vm->pending_exception->klass->descriptor : "unknown";
+        const char *exc_desc = dx_vm_current_exec(ctx->vm)->pending_exception && dx_vm_current_exec(ctx->vm)->pending_exception->klass
+            ? dx_vm_current_exec(ctx->vm)->pending_exception->klass->descriptor : "unknown";
         DX_WARN(TAG, "onRefresh threw uncaught %s (absorbed)", exc_desc);
-        ctx->vm->pending_exception = NULL;
+        dx_vm_current_exec(ctx->vm)->pending_exception = NULL;
         res = DX_OK;
     }
     return res;
@@ -1408,12 +1408,12 @@ DxResult dx_runtime_dispatch_back(DxContext *ctx) {
         DxMethod *on_back = dx_vm_find_method(activity->klass, "onBackPressed", NULL);
         if (on_back && on_back->has_code) {
             DX_INFO(TAG, "Dispatching onBackPressed to %s", activity->klass->descriptor);
-            vm->insn_count = 0;
-            vm->pending_exception = NULL;
+            dx_vm_current_exec(vm)->insn_count = 0;
+            dx_vm_current_exec(vm)->pending_exception = NULL;
             DxValue args[1] = { DX_OBJ_VALUE(activity) };
             DxResult res = dx_vm_execute_method(vm, on_back, args, 1, NULL);
             if (res == DX_ERR_EXCEPTION) {
-                vm->pending_exception = NULL;
+                dx_vm_current_exec(vm)->pending_exception = NULL;
             }
             return DX_OK;
         }

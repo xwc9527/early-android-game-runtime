@@ -1,0 +1,558 @@
+name: Framework traversal dispatch discovery
+
+on:
+  push:
+    branches: ['cursor/runtime-traversal-dispatch-1-0353']
+    paths:
+      - 'Runtime/DexLoom/**'
+      - 'App/main.m'
+      - 'Tests/DexLoom/framework-traversal-dispatch-host.c'
+      - 'Tests/DexLoom/make_surface_callback_fixture.py'
+      - 'Tests/DexLoom/vtable-inheritance-host.c'
+      - 'Tests/DexLoom/make_vtable_inheritance_fixture.py'
+      - 'Tests/DexLoom/thread-start-host.c'
+      - 'Tests/DexLoom/character-fordigit-host.c'
+      - 'Tests/DexLoom/vector-core-host.c'
+      - 'Tests/DexLoom/request-window-feature-host.c'
+      - 'Tests/DexLoom/unresolved-context-host.c'
+      - 'Tests/DexLoom/get-intent-host.c'
+      - 'Tests/DexLoom/physical-trace-host.c'
+      - 'Tests/DexLoom/surface-callback-outcome-host.c'
+      - 'Tests/DexLoom/make_surface_callback_outcome_fixture.py'
+      - 'Tests/DexLoom/frozen-bubble-1080-host.c'
+      - 'Tests/DexLoom/java-random-math-host.c'
+      - 'Tests/DexLoom/asset-input-stream-host.c'
+      - 'ci/governance/semantic-diffs/framework-asset-input-stream.json'
+      - 'ci/governance/semantic-diffs/java-string-byte-constructor.json'
+      - 'Tests/DexLoom/ios-image-codec-parity.py'
+      - 'App/agr_physical_trace.c'
+      - 'Runtime/DexLoom/agr_forensic.h'
+      - 'ci/physical-runtime-evidence.py'
+      - 'ci/physical-bitmap-chain-contract.py'
+      - 'ci/export-physical-evidence.py'
+      - 'ci/physical-environment-diff.py'
+      - 'ci/select-simulator-runtime.py'
+      - 'ci/verify-iphoneos-environment.py'
+      - 'ci/check-ios27-parity.py'
+      - 'ci/capture-post-first-frame.sh'
+      - 'ci/classify-post-first-frame.py'
+      - 'Tests/DexLoom/ios27-environment-test.py'
+      - 'Tests/DexLoom/physical-runtime-evidence-test.py'
+      - 'Tests/DexLoom/canvas-state-clip-host.c'
+      - 'Tests/DexLoom/make_thread_start_fixture.py'
+      - 'Tests/DexLoom/surface-canvas-host.c'
+      - 'Tests/DexLoom/make_surface_canvas_fixture.py'
+      - 'Tests/DexLoom/agr-bitmap-draw-host.c'
+      - 'Tests/DexLoom/fixtures/**'
+      - 'Runtime/Bitmap/**'
+      - 'scripts/build-agr-bitmap-host.sh'
+      - 'scripts/build-and-run-simulator.sh'
+      - 'scripts/build-iphoneos.sh'
+      - 'scripts/build-ios-image-codecs.sh'
+      - 'ci/framework-traversal-dispatch-contract.py'
+      - 'ci/check-simulator-screen.swift'
+      - 'ci/build-framework-traversal-dispatch-summary.py'
+      - 'ci/governance/**'
+      - '.github/workflows/framework-traversal-dispatch.yml'
+  workflow_dispatch:
+    inputs:
+      run_kind:
+        description: Evidence intent
+        type: choice
+        options: [discovery, validation, closure]
+        default: discovery
+
+permissions:
+  contents: read
+
+jobs:
+  linux-source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify exact iOS 27 environment selection contract
+        run: python3 Tests/DexLoom/ios27-environment-test.py
+      - name: Restore pinned APK inputs
+        uses: actions/cache/restore@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-full-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Install GLES headers and image codecs
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libgles2-mesa-dev zlib1g-dev libjpeg-dev libgif-dev g++
+      - name: Verify iOS decoder parity against the original APK resource formats
+        run: python3 Tests/DexLoom/ios-image-codec-parity.py
+      - name: Compile and run the host traversal-dispatch contract
+        run: |
+          set -euo pipefail
+          python3 Tests/DexLoom/make_activity_launch_fixture.py /tmp/activity-launch-fixture.dex
+          python3 Tests/DexLoom/make_surface_callback_fixture.py /tmp/surface-callback-fixture.dex /tmp/surface-layouts
+          mkdir -p /tmp/agr-dispatch-obj /tmp/agr-bitmap-host
+          bash scripts/build-agr-bitmap-host.sh /tmp/agr-bitmap-host
+          mapfile -t BITMAP_OBJS < /tmp/agr-bitmap-host/objects.list
+          DEX=Runtime/DexLoom
+          BITMAP=Runtime/Bitmap
+          COMMON=(-std=gnu11 -O1 -I "$DEX/Include" -I "$DEX" -I "$BITMAP" -I Vendor/ANGLE-Headers -DGL_GLES_PROTOTYPES=1)
+          for source in \
+            "$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" \
+            "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" \
+            "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" "$DEX/VM/dx_exec.c" \
+            "$DEX/APK/dx_apk.c" "$DEX/APK/dx_manifest.c" "$DEX/APK/dx_resources.c" "$DEX/poc_host.c"
+          do
+            cc "${COMMON[@]}" -w -pthread -c "$source" -o "/tmp/agr-dispatch-obj/$(basename "${source%.c}").o"
+          done
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/java-random-math-host.c \
+            -o /tmp/java-random-math-host.o
+          cc -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/java-random-math-host.o \
+            -lz -lm -o /tmp/java-random-math-host
+          /tmp/java-random-math-host
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c "$DEX/AndroidMini/framework_viewroot.c" \
+            -o /tmp/agr-dispatch-obj/framework_viewroot.o
+          cc "${COMMON[@]}" -Wall -Wextra -pthread -c "$DEX/game_dex_runner.c" \
+            -o /tmp/agr-dispatch-obj/game_dex_runner.o
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/asset-input-stream-host.c \
+            -o /tmp/asset-input-stream-host.o
+          g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
+            /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
+            /tmp/asset-input-stream-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/asset-input-stream-host
+          /tmp/asset-input-stream-host samples/frozen-bubble.apk
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/framework-traversal-dispatch-host.c \
+            -o /tmp/agr-dispatch-obj/framework-traversal-dispatch-host.o
+          g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/*.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/agr-dispatch-host
+          /tmp/agr-dispatch-host /tmp/activity-launch-fixture.dex /tmp/traversal-dispatch-host.json /tmp/surface-callback-fixture.dex /tmp/surface-layouts
+          python3 ci/framework-traversal-dispatch-contract.py /tmp/traversal-dispatch-host.json
+          python3 Tests/DexLoom/make_vtable_inheritance_fixture.py /tmp/vtable-inheritance.dex
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/vtable-inheritance-host.c \
+            -o /tmp/vtable-inheritance-host.o
+          cc -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o \
+            /tmp/vtable-inheritance-host.o -lz -lm -o /tmp/vtable-inheritance-host
+          /tmp/vtable-inheritance-host /tmp/vtable-inheritance.dex
+          python3 Tests/DexLoom/make_thread_start_fixture.py /tmp/thread-start.dex
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/thread-start-host.c \
+            -o /tmp/thread-start-host.o
+          cc -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o \
+            /tmp/thread-start-host.o -lz -lm -o /tmp/thread-start-host
+          /tmp/thread-start-host /tmp/thread-start.dex
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/character-fordigit-host.c \
+            -o /tmp/character-fordigit-host.o
+          cc -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o \
+            /tmp/character-fordigit-host.o -lz -lm -o /tmp/character-fordigit-host
+          /tmp/character-fordigit-host
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/vector-core-host.c \
+            -o /tmp/vector-core-host.o
+          cc -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o \
+            /tmp/vector-core-host.o -lz -lm -o /tmp/vector-core-host
+          /tmp/vector-core-host
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/unresolved-context-host.c \
+            -o /tmp/unresolved-context-host.o
+          cc -pthread /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o \
+            /tmp/unresolved-context-host.o -lz -lm -o /tmp/unresolved-context-host
+          /tmp/unresolved-context-host
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/request-window-feature-host.c \
+            -o /tmp/request-window-feature-host.o
+          g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
+            /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
+            /tmp/request-window-feature-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/request-window-feature-host
+          /tmp/request-window-feature-host /tmp/activity-launch-fixture.dex
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/get-intent-host.c \
+            -o /tmp/get-intent-host.o
+          g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
+            /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
+            /tmp/get-intent-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/get-intent-host
+          /tmp/get-intent-host /tmp/activity-launch-fixture.dex
+          python3 Tests/DexLoom/make_surface_canvas_fixture.py /tmp/surface-canvas.dex /tmp/surface-canvas-layouts
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/canvas-state-clip-host.c \
+            -o /tmp/canvas-state-clip-host.o
+          g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
+            /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
+            /tmp/canvas-state-clip-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/canvas-state-clip-host
+          /tmp/canvas-state-clip-host /tmp/surface-canvas.dex /tmp/surface-canvas-layouts/canvas.xml \
+            Tests/DexLoom/fixtures/fixture-2x2.png
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/surface-canvas-host.c \
+            -o /tmp/surface-canvas-host.o
+          g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
+            /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
+            /tmp/surface-canvas-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/surface-canvas-host
+          /tmp/surface-canvas-host /tmp/surface-canvas.dex /tmp/surface-canvas-layouts/canvas.xml
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/agr-bitmap-draw-host.c \
+            -o /tmp/agr-bitmap-draw-host.o
+          g++ -Wl,--gc-sections /tmp/agr-bitmap-draw-host.o "${BITMAP_OBJS[@]}" \
+            -ljpeg -lgif -lz -lm -lpthread -o /tmp/agr-bitmap-draw-host
+          /tmp/agr-bitmap-draw-host Tests/DexLoom/fixtures/fixture-2x2.png \
+            Tests/DexLoom/fixtures/fb-background.jpg Tests/DexLoom/fixtures/fb-bubble.gif
+          cc -std=gnu11 -Wall -Wextra -Werror -pthread -I Runtime/DexLoom \
+            -c App/agr_physical_trace.c -o /tmp/agr_physical_trace.o
+          cc -std=gnu11 -Wall -Wextra -Werror -pthread -I Runtime/DexLoom \
+            -c Tests/DexLoom/physical-trace-host.c -o /tmp/physical-trace-host.o
+          cc -pthread /tmp/agr_physical_trace.o /tmp/physical-trace-host.o -o /tmp/physical-trace-host
+          /tmp/physical-trace-host ci/physical-runtime-evidence.py
+          python3 Tests/DexLoom/physical-runtime-evidence-test.py
+          python3 Tests/DexLoom/make_surface_callback_outcome_fixture.py /tmp/surface-callback-outcome.dex /tmp/surface-callback-outcome-layouts
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/surface-callback-outcome-host.c \
+            -o /tmp/surface-callback-outcome-host.o
+          g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
+            /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
+            /tmp/agr_physical_trace.o /tmp/surface-callback-outcome-host.o "${BITMAP_OBJS[@]}" \
+            -ljpeg -lgif -lz -lm -o /tmp/surface-callback-outcome-host
+          /tmp/surface-callback-outcome-host /tmp/surface-callback-outcome.dex /tmp/surface-callback-outcome-layouts
+          test -f samples/frozen-bubble.apk
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -pthread -c Tests/DexLoom/frozen-bubble-1080-host.c \
+            -o /tmp/frozen-bubble-1080-host.o
+          g++ -pthread -Wl,--gc-sections /tmp/agr-dispatch-obj/dx_log.o /tmp/agr-dispatch-obj/dx_memory.o /tmp/agr-dispatch-obj/dx_arena.o \
+            /tmp/agr-dispatch-obj/dx_dex.o /tmp/agr-dispatch-obj/dx_opcode.o /tmp/agr-dispatch-obj/dx_verifier.o \
+            /tmp/agr-dispatch-obj/dx_vm.o /tmp/agr-dispatch-obj/dx_interpreter.o /tmp/agr-dispatch-obj/dx_jni.o \
+            /tmp/agr-dispatch-obj/dx_exec.o /tmp/agr-dispatch-obj/dx_apk.o /tmp/agr-dispatch-obj/dx_manifest.o \
+            /tmp/agr-dispatch-obj/dx_resources.o /tmp/agr-dispatch-obj/poc_host.o \
+            /tmp/agr-dispatch-obj/framework_viewroot.o /tmp/agr-dispatch-obj/game_dex_runner.o \
+            /tmp/frozen-bubble-1080-host.o "${BITMAP_OBJS[@]}" -ljpeg -lgif -lz -lm -o /tmp/frozen-bubble-1080-host
+          /tmp/frozen-bubble-1080-host samples/frozen-bubble.apk
+      - name: Verify API19 source, semantic differential and governance
+        run: |
+          python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --require-valid framework.window.set_content_view --require-valid framework.view.surface_view --require-valid framework.view.surface_holder_canvas --require-valid framework.view.surface_post_display --require-valid framework.graphics.bitmap_decode_resource --require-valid framework.graphics.canvas_bitmap --require-valid framework.graphics.bitmap_create_scaled --require-valid dalvik.vm.vtable --require-valid dalvik.thread.start --require-valid java.lang.character.for_digit --require-valid framework.graphics.canvas_state_clip --require-valid java.util.vector.core --require-valid android.app.activity.request_window_feature --require-valid android.app.activity.get_intent --verify-upstream --verify-only framework.viewroot.traversal_dispatch --verify-only framework.window.set_content_view --verify-only framework.view.surface_view --verify-only framework.view.surface_holder_canvas --verify-only framework.view.surface_post_display --verify-only framework.graphics.bitmap_decode_resource --verify-only framework.graphics.canvas_bitmap --verify-only framework.graphics.bitmap_create_scaled --verify-only dalvik.vm.vtable --verify-only dalvik.thread.start --verify-only java.lang.character.for_digit --verify-only framework.graphics.canvas_state_clip --verify-only java.util.vector.core --verify-only android.app.activity.request_window_feature --verify-only android.app.activity.get_intent --output build/artifacts/traversal-dispatch-upstream-map.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-traversal-dispatch.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-asset-input-stream.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/java-string-byte-constructor.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-surface-view.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-surface-holder-canvas.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-surface-post-display.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-bitmap-decode-resource.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-canvas-bitmap.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-bitmap-create-scaled.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-dex-virtual-dispatch.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-thread-start.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-character-fordigit.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-canvas-state-clip.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-vector-core.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-request-window-feature.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-activity-get-intent.json
+          python3 ci/validate-governance.py --mode discovery
+          python3 ci/test-closure-attempt-ledger.py
+          python3 ci/test-post-merge-evidence.py
+
+  simulator-focused:
+    needs: linux-source-contract
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, 'Dispatch the planned SurfaceView Simulator discovery'))
+    runs-on: xcode-27
+    timeout-minutes: 90
+    env:
+      AGR_SIMULATOR_PROFILE: ${{ (inputs.run_kind == 'validation' || inputs.run_kind == 'closure') && 'full' || 'focused-framework' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Admit a new discovery simulator
+        if: ${{ inputs.run_kind == 'discovery' || (github.event_name == 'push' && contains(github.event.head_commit.message, 'Dispatch the planned SurfaceView Simulator discovery')) }}
+        run: python3 ci/validate-expensive-run.py ci/governance/expensive-run-plan.json
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Restore pinned APK inputs
+        uses: actions/cache/restore@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-${{ (inputs.run_kind == 'validation' || inputs.run_kind == 'closure') && 'full' || 'focused-framework' }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Enforce exact iOS 27 Simulator baseline before build
+        run: |
+          set -euo pipefail
+          python3 tools/fetch_fdroid_samples.py --profile "$AGR_SIMULATOR_PROFILE"
+          mkdir -p build/artifacts
+          python3 ci/select-simulator-runtime.py build/artifacts/ci-environment.json > build/artifacts/simulator-device.txt
+      - name: Publish Simulator environment baseline
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agr-ios27-simulator-baseline
+          path: build/artifacts/ci-environment.json
+          if-no-files-found: warn
+      - name: Restore ANGLE Simulator slice
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            build/angle-v2.1.28252
+            build/angle-xcframeworks-v2.1.28252.zip
+          key: agr-angle-ios-simulator-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Restore Rust interpreter build
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            Runtime/ArmInterpreter/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
+      - name: Prepare samples, build, boot and install
+        timeout-minutes: 30
+        run: bash scripts/prepare-run-simulator.sh "$AGR_SIMULATOR_PROFILE"
+      - name: Execute normal-path traversal dispatch
+        timeout-minutes: 5
+        env:
+          FRAMEWORK_TRAVERSAL_DISPATCH_DISCOVERY: '1'
+          AGR_HOST_DISPLAY_WIDTH: '1080'
+          AGR_HOST_DISPLAY_HEIGHT: '2340'
+        run: bash scripts/build-and-run-simulator.sh run
+      - name: Capture object-linked Bitmap path at 1080x2340
+        timeout-minutes: 2
+        env:
+          AGR_HOST_DISPLAY_WIDTH: '1080'
+          AGR_HOST_DISPLAY_HEIGHT: '2340'
+        run: |
+          set -euo pipefail
+          ARTIFACTS=build/artifacts/physical-bitmap
+          mkdir -p "$ARTIFACTS"
+          DEVICE="$(cat build/artifacts/simulator-device.txt)"
+          DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
+          SIMCTL_CHILD_AGR_HOST_DISPLAY_WIDTH=1080 \
+          SIMCTL_CHILD_AGR_HOST_DISPLAY_HEIGHT=2340 \
+            xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --physical-runtime-validation
+          DOCS="$DATA/Documents"
+          for _ in $(seq 1 60); do
+            if [[ -s "$DOCS/agr-current-runtime.json" && -s "$DOCS/agr-current-manifest.json" ]]; then
+              if python3 - "$DOCS/agr-current-runtime.json" <<'PY'
+          import json, sys
+          try:
+              report = json.load(open(sys.argv[1]))
+              assert report.get("host_surface_submissions", 0) >= 3
+          except (OSError, ValueError, AssertionError, TypeError):
+              sys.exit(1)
+          PY
+              then break; fi
+            fi
+            sleep 1
+          done
+          test -s "$DOCS/agr-current-runtime.json"
+          xcrun simctl io "$DEVICE" screenshot "$ARTIFACTS/simulator-screen.png"
+          swift ci/check-simulator-screen.swift "$ARTIFACTS/simulator-screen.png"
+          for name in agr-current-manifest.json agr-current-run.json agr-current-trace.ndjson agr-current-runtime.json agr-current-crash.bin; do
+            [[ -f "$DOCS/$name" ]] && cp "$DOCS/$name" "$ARTIFACTS/"
+          done
+          test -s "$ARTIFACTS/agr-current-manifest.json"
+          test -s "$ARTIFACTS/agr-current-run.json"
+          test -s "$ARTIFACTS/agr-current-trace.ndjson"
+          test -s "$ARTIFACTS/agr-current-runtime.json"
+          python3 ci/physical-runtime-evidence.py --dir "$ARTIFACTS" --source current --summary "$ARTIFACTS/physical-runtime-summary.json"
+          python3 - "$ARTIFACTS/physical-runtime-summary.json" <<'PY'
+          import json, sys
+          report = json.load(open(sys.argv[1]))
+          assert report.get("host_surface_submitted") is True, report
+          assert report.get("content_posted") is True, report
+          PY
+          python3 ci/physical-bitmap-chain-contract.py "$ARTIFACTS/physical-runtime-summary.json" \
+            --output "$ARTIFACTS/bitmap-chain.json" --width 1080 --height 2340
+      - name: Observe original APK after the first visible frame without input
+        if: ${{ inputs.run_kind == 'discovery' }}
+        timeout-minutes: 3
+        run: bash ci/capture-post-first-frame.sh
+      - name: Execute protected explicit first-traversal probe
+        timeout-minutes: 5
+        env:
+          FRAMEWORK_FIRST_TRAVERSAL_DISCOVERY: '1'
+        run: bash scripts/build-and-run-simulator.sh run
+      - name: Publish focused evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-traversal-dispatch-focused
+          path: |
+            build/artifacts/framework-traversal-dispatch.json
+            build/artifacts/framework-traversal-dispatch.log
+            build/artifacts/physical-bitmap/**
+            build/artifacts/post-first-frame/**
+            build/artifacts/framework-first-traversal.json
+            build/artifacts/framework-first-traversal.log
+            build/artifacts/simulator-boot.log
+            build/artifacts/ci-stage-timings.jsonl
+          if-no-files-found: warn
+      - name: Protected Runtime contracts
+        id: contracts
+        if: ${{ inputs.run_kind == 'validation' || inputs.run_kind == 'closure' }}
+        timeout-minutes: 12
+        continue-on-error: true
+        run: bash ci/run-contracts.sh
+      - name: Bounded Simulator Runtime smoke
+        id: smoke
+        if: ${{ inputs.run_kind == 'validation' || inputs.run_kind == 'closure' }}
+        timeout-minutes: 16
+        continue-on-error: true
+        run: python3 scripts/run-simulator-smoke-bounded.py --mode run --timeout-seconds 900
+      - name: Protected Runtime and real-game regressions
+        id: regressions
+        if: ${{ inputs.run_kind == 'validation' || inputs.run_kind == 'closure' }}
+        timeout-minutes: 18
+        continue-on-error: true
+        run: bash ci/run-regressions.sh
+      - name: Publish protected evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-traversal-dispatch-protected
+          path: build/artifacts
+          if-no-files-found: warn
+      - name: Enforce protected stage outcomes
+        if: ${{ always() && (inputs.run_kind == 'validation' || inputs.run_kind == 'closure') }}
+        run: |
+          test '${{ steps.contracts.outcome }}' = success
+          test '${{ steps.smoke.outcome }}' = success
+          test '${{ steps.regressions.outcome }}' = success
+
+  iphoneos:
+    if: ${{ github.event_name == 'push' || inputs.run_kind == 'validation' || inputs.run_kind == 'closure' }}
+    needs: linux-source-contract
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Restore sample input cache
+        uses: actions/cache@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-full-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Enforce exact iOS 27 device build baseline before build
+        run: |
+          set -euo pipefail
+          python3 tools/fetch_fdroid_samples.py
+          python3 ci/verify-iphoneos-environment.py build/iphoneos/prebuild-environment.json
+      - name: Publish iphoneos environment baseline
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agr-ios27-iphoneos-baseline
+          path: build/iphoneos/prebuild-environment.json
+          if-no-files-found: warn
+      - name: Restore ANGLE device slice
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/iphoneos/angle-v2.1.28252
+            build/iphoneos/angle-xcframeworks-v2.1.28252.zip
+          key: agr-angle-iphoneos-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Restore Rust interpreter build
+        uses: actions/cache@v4
+        with:
+          path: |
+            Runtime/ArmInterpreter/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-iphoneos-aarch64-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
+      - name: Build arm64 iphoneos Runtime
+        run: bash scripts/build-iphoneos.sh
+      - name: Upload signable iphoneos artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agr-iphoneos-arm64-unsigned
+          path: |
+            build/iphoneos/AGRDevice-unsigned.ipa
+            build/iphoneos/build-identity.txt
+            build/iphoneos/build-environment.json
+            build/iphoneos/prebuild-environment.json
+          if-no-files-found: error
+
+  environment-parity:
+    needs: [simulator-focused, iphoneos]
+    if: ${{ needs.simulator-focused.result == 'success' && needs.iphoneos.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: agr-ios27-simulator-baseline
+          path: build/parity/simulator
+      - uses: actions/download-artifact@v4
+        with:
+          name: agr-ios27-iphoneos-baseline
+          path: build/parity/iphoneos
+      - name: Enforce exact Simulator and device build identity
+        run: |
+          python3 ci/check-ios27-parity.py \
+            --simulator build/parity/simulator/ci-environment.json \
+            --iphoneos build/parity/iphoneos/prebuild-environment.json \
+            --output build/artifacts/ios27-environment-parity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agr-ios27-environment-parity
+          path: build/artifacts/ios27-environment-parity.json
+          if-no-files-found: warn
+
+  closure-evidence:
+    if: ${{ always() && inputs.run_kind == 'closure' }}
+    needs: [linux-source-contract, simulator-focused, iphoneos, environment-parity]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download traversal-dispatch focused evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: framework-traversal-dispatch-focused
+          path: build/closure-input
+      - name: Build exact-commit closure evidence
+        if: ${{ needs.linux-source-contract.result == 'success' && needs.simulator-focused.result == 'success' && needs.iphoneos.result == 'success' }}
+        run: |
+          python3 ci/build-framework-traversal-dispatch-summary.py --result build/closure-input/framework-traversal-dispatch.json
+          python3 ci/validate-governance.py --mode closure --summary build/artifacts/framework-traversal-dispatch-run-summary.json
+      - name: Publish closure summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: framework-traversal-dispatch-closure-summary
+          path: build/artifacts/framework-traversal-dispatch-run-summary.json
+          if-no-files-found: warn
+      - name: Enforce required closure stages
+        if: always()
+        run: |
+          test '${{ needs.linux-source-contract.result }}' = success
+          test '${{ needs.simulator-focused.result }}' = success
+          test '${{ needs.iphoneos.result }}' = success
+          test '${{ needs.environment-parity.result }}' = success
+          test -s build/artifacts/framework-traversal-dispatch-run-summary.json
+
+  gameplay-trajectory-preflight:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_kind == 'discovery' && github.ref_name == 'cursor/runtime-traversal-dispatch-1-0353' }}
+    uses: ./.github/workflows/gameplay-trajectory-simulator.yml

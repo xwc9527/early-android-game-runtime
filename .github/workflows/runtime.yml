@@ -59,7 +59,7 @@ jobs:
   simulator-runtime:
     needs: discovery-admission
     if: needs.discovery-admission.outputs.admitted == 'true' && github.ref_name != 'phase/ci-execution-composition-1' && github.ref_name != 'phase/framework-runtime-continuation-1'
-    runs-on: macos-15
+    runs-on: xcode-27
     timeout-minutes: 20
     strategy:
       fail-fast: false

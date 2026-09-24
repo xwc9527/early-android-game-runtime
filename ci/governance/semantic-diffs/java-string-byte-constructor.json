@@ -1,0 +1,37 @@
+{
+  "schema_version": 2,
+  "classification": "ANDROID_SEMANTIC_BUG",
+  "subsystem": "API19 java.lang.String(byte[]) in the host DEX runtime",
+  "observed_discontinuity": "The unchanged APK's LevelManager constructor invokes String(byte[]) after reading its asset, but the host DEX String class has no constructor; its lenient framework lookup can fall through to Object.<init>, leaving the String receiver without text.",
+  "upstream": {
+    "map_entry": "java.lang.string.byte_constructor",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": ["libdvm/src/main/java/java/lang/String.java"],
+    "call_path": ["String(byte[])", "Charset.defaultCharset", "StringCoding.decode"]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "String(byte[]) decodes bytes using Android's default UTF-8 charset into the allocated String receiver",
+    "The resulting receiver is a distinct Java String object, not an interned replacement"
+  ],
+  "agr": {
+    "files": ["Runtime/DexLoom/VM/dx_vm.c"],
+    "call_path": ["dx_register_java_lang", "native_string_init_bytes"]
+  },
+  "differences": [
+    {"id": "D1", "description": "The host DEX String class had no byte-array constructor, so the original LevelManager's text decoding did not mutate its new String receiver.", "relevance": "LevelManager parses the level list from this receiver before FrozenGame initializes bubble counts."}
+  ],
+  "earliest_evidenced_divergence": "The exact original DEX method table contains String.<init>([B)V and LevelManager invokes it, while the prior host String class registered no constructor.",
+  "causal_status": "PLAUSIBLE",
+  "evidence_level": "RUNTIME_OBSERVED",
+  "evidence": [
+    {"type": "SOURCE", "artifact": "Android 4.4.4_r2 libcore libdvm/src/main/java/java/lang/String.java SHA-256 2e0da5edeafb72560624f7014bc6e4161bbd0d83844e7ed6fd47dc2301b662a8: String(byte[] data) delegates to this(data, 0, data.length)."},
+    {"type": "RUNTIME", "artifact": "Original APK classes.dex method id 91 is java.lang.String.<init>([B)V; current VM registration lacks that method and LevelManager's constructor consumes its result."}
+  ],
+  "remaining_uncertainty": ["The VM currently stores UTF-8 as C strings; embedded NUL, malformed UTF-8 replacement, and non-ASCII UTF-16 indexing remain outside this focused ASCII level-text contract.", "Unchanged-APK rerun must show nonempty parsed level state and continued draws after input."],
+  "next_action": "Run constructor/asset contract and unchanged Frozen Bubble regression, then inspect parsed level count and bubble counts.",
+  "needs_experiment": false,
+  "experimental": false
+}

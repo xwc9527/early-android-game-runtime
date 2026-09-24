@@ -1,0 +1,79 @@
+{
+  "schema_version": 2,
+  "classification": "AGR_INTERNAL_BUG",
+  "subsystem": "java.util.Vector core",
+  "observed_discontinuity": "Frozen Bubble GameScreen.paint calls Vector.size and then Vector.elementAt. The game VM had no Ljava/util/Vector;, so new-instance fell back to Object and the invokes were skipped. Earlier Vector.<init>, addElement, and removeElement on the same startup were also skipped, so a fabricated empty size would hide the sprites.",
+  "upstream": {
+    "map_entry": "java.util.vector.core",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "luni/src/main/java/java/util/Vector.java"
+    ],
+    "call_path": [
+      "Vector.Vector",
+      "Vector.addElement",
+      "Vector.removeElement",
+      "Vector.size",
+      "Vector.elementAt"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "Vector() allocates elementData with length DEFAULT_SIZE 10, elementCount 0, and capacityIncrement 0. The constructor is not synchronized.",
+    "size returns elementCount.",
+    "addElement appends the object and grows by doubling when capacityIncrement is 0 and the array is full.",
+    "elementAt returns the stored object at a valid index.",
+    "elementAt throws ArrayIndexOutOfBoundsException when the index is outside 0 inclusive through size exclusive.",
+    "removeElement removes the first element for which equals is true, shifts the later elements down, and returns true. A missing element returns false.",
+    "size, addElement, elementAt, and removeElement synchronize on the Vector."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/VM/dx_vm.c",
+      "Runtime/DexLoom/VM/dx_interpreter.c"
+    ],
+    "call_path": [
+      "native_vector_init",
+      "native_vector_add_element",
+      "native_vector_remove_element",
+      "native_vector_size",
+      "native_vector_element_at"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "Ljava/util/Vector; was not a guest class. Construction fell back to Object, and size, addElement, removeElement, and elementAt were unresolved.",
+      "relevance": "GameScreen.paint reads sprites.size and sprites.elementAt. Those reads depend on the earlier Vector.<init>, removeElement, and addElement calls that build the same Vector."
+    }
+  ],
+  "earliest_evidenced_divergence": "API19 Vector stores guest objects in elementData and size returns elementCount. AGR skipped every Vector invoke, so GameScreen.paint never received the stored Sprite.",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "android-4.4.4_r2 libcore luni java.util.Vector. DEFAULT_SIZE is 10. Vector() calls Vector(10, 0) and is not synchronized. size returns elementCount. addElement appends and calls growByOne when full. growByOne doubles the array when capacityIncrement is 0. elementAt returns elementData[location] when location < elementCount, otherwise arrayIndexOutOfBoundsException(location, elementCount), which throws ArrayIndexOutOfBoundsException(size, index). removeElement uses indexOf, which uses equals or null identity, then removeElementAt shifts the tail and clears the vacated slot."
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Linux vector-core-host PASS. Vector() size is 0. addElement A then B then C yields size 3 and elementAt identity A, B, C. elementAt(size) and elementAt(-1) throw Ljava/lang/ArrayIndexOutOfBoundsException; and size stays 3. removeElement B returns true, size becomes 2, and elementAt(1) is C. A missing remove returns false. Null is stored, returned, and removed. Twelve further appends grow past 10 and elementAt(13) is the same object."
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "Local unchanged Frozen Bubble APK org.jfedor.frozenbubble_8 sha256 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569, Linux host 320x480, diagnostics enabled. After three host frames and 300ms: surfaceCreated 1, surfaceChanged 1, lock 6, unlock 6, post 6, draw_bitmap 24, pixel_change 1007400, hash_before 4f2d9f141eeda325, hash_after 2c8b0c801b36f84a, format 4, 320x480, generation 1, owner execution context 1. Vector calls, all resolved: <init> V 5, size I 54, addElement VL 41, removeElement ZL 1, elementAt LI 6. insertElementAt was not called. GameScreen.<init> pc 5 opcode 0x70 method_idx 111 constructed the sprite Vector. GameScreen.addSprite pc 2 opcode 0x6e method_idx 115 removeElement shorty ZL returned 0, then pc 7 opcode 0x6e method_idx 112 addElement shorty VL stored the same PenguinSprite. On execution context 1, GameScreen.paint pc 3 opcode 0x6e method_idx 116 size shorty I returned 1 for that Vector. paint pc 11 opcode 0x6e method_idx 113 elementAt shorty LI index 0 returned that same PenguinSprite. The next guest invoke is GameScreen.paint pc 21 opcode 0x74 invoke-virtual/range method_idx 329 PenguinSprite.paint shorty VLDII, resolved, receiver the same PenguinSprite. No unresolved invoke occurred after that elementAt. This probe is not a new Simulator run."
+    }
+  ],
+  "remaining_uncertainty": [
+    "elementAt of a negative index throws ArrayIndexOutOfBoundsException with the helper message length and index. API19 reaches the array when the index is negative and elementCount is positive, so the exception class matches and the message can differ.",
+    "equals falls back to reference identity unless the key class defines an equals method other than Object.equals.",
+    "modCount is not stored. Enumeration, iterator, insertElementAt, and the rest of Vector are not registered.",
+    "Activity.requestWindowFeature is outside this Vector contract. It is resolved separately and was not a proven blocker."
+  ],
+  "next_action": "java.util.Vector core stays REAL_GAME_CONFIRMED for Vector(), size, addElement, removeElement, and elementAt. Do not reopen Vector. Do not rerun the content-frame Simulator.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "Vector is a guest class extending Object, with elementData, elementCount, and capacityIncrement. elementData is a guest object array, so the existing GC field and array walk keeps the elements alive. Public methods take the Vector monitor. This is not ArrayList."
+}

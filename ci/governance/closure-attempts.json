@@ -7,8 +7,8 @@
     "second_run_after_valid_fail_requires_approval": true
   },
   "budget": {
-    "valid_attempts_used": 1,
-    "valid_attempts_remaining": 0
+    "valid_attempts_used": 0,
+    "valid_attempts_remaining": 1
   },
   "attempts": [
     {
@@ -142,5 +142,5 @@
       "consumes_budget": true
     }
   ],
-  "active_target": "Android Framework First Traversal / Relayout / Surface Acquisition Phase 1"
+  "active_target": "Android Framework Runtime Traversal Dispatch / Surface Draw Consumer Phase 1"
 }

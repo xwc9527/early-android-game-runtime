@@ -4,6 +4,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"; BUILD="$ROOT/build/iphoneos"; APP="$BU
 SDK="$(xcrun --sdk iphoneos --show-sdk-path)"; TARGET="arm64-apple-ios15.0"
 mkdir -p "$BUILD/obj" "$APP"
 python3 "$ROOT/tools/fetch_fdroid_samples.py"
+python3 "$ROOT/ci/verify-iphoneos-environment.py" "$BUILD/prebuild-environment.json"
 python3 "$ROOT/tools/scan_apks.py" --shard-index "${SHARD_INDEX:-0}" --shard-count "${SHARD_COUNT:-1}"
 ANGLE_VERSION="v2.1.28252"
 ANGLE_SHA256="59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be"
@@ -62,17 +63,81 @@ for SOURCE in "$PNG"/*.c "$ZLIB"/*.c; do
   case "$(basename "$SOURCE")" in example.c|pngtest.c) continue;; esac
   OBJECT="$BUILD/obj/codec-$(basename "$SOURCE" .c).o"; clang "${COMMON[@]}" -w -UMACOS -I"$PNG" -I"$ZLIB" -c "$SOURCE" -o "$OBJECT"; PNG_OBJECTS+=("$OBJECT")
 done
-SKIA_INCLUDES=(-I"$BITMAP" -I"$SKIA/include/core" -I"$SKIA/include/images" -I"$SKIA/include/utils" -I"$SKIA/src/core" -I"$SKIA/src/image" -I"$SKIA/src/images" -I"$SKIA/src/utils" -I"$PNG" -I"$ZLIB")
-SKIA_SOURCES=("$BITMAP/agr_bitmap.cpp" "$SKIA/src/core/Sk64.cpp" "$SKIA/src/core/SkBitmap.cpp" "$SKIA/src/core/SkColor.cpp" "$SKIA/src/core/SkColorTable.cpp" "$SKIA/src/core/SkDebug.cpp" "$SKIA/src/core/SkDither.cpp" "$SKIA/src/core/SkError.cpp" "$SKIA/src/core/SkFlattenable.cpp" "$SKIA/src/core/SkImageInfo.cpp" "$SKIA/src/core/SkMallocPixelRef.cpp" "$SKIA/src/core/SkMath.cpp" "$SKIA/src/core/SkPixelRef.cpp" "$SKIA/src/core/SkStream.cpp" "$SKIA/src/core/SkString.cpp" "$SKIA/src/core/SkTLS.cpp" "$SKIA/src/core/SkTSearch.cpp" "$SKIA/src/core/SkUnPreMultiply.cpp" "$SKIA/src/core/SkUtils.cpp" "$SKIA/src/images/SkImageDecoder.cpp" "$SKIA/src/images/SkImageDecoder_FactoryDefault.cpp" "$SKIA/src/images/SkImageDecoder_FactoryRegistrar.cpp" "$SKIA/src/images/SkImageDecoder_libpng.cpp" "$SKIA/src/images/SkImageEncoder.cpp" "$SKIA/src/images/SkImageEncoder_Factory.cpp" "$SKIA/src/images/SkScaledBitmapSampler.cpp" "$SKIA/src/ports/SkDebug_stdio.cpp" "$SKIA/src/ports/SkMemory_malloc.cpp" "$SKIA/src/ports/SkThread_pthread.cpp" "$SKIA/src/ports/SkTLS_pthread.cpp")
+bash "$ROOT/scripts/build-ios-image-codecs.sh" "$BUILD/image-codecs" "$SDK" "$TARGET"
+JPEG_INC="$(cat "$BUILD/image-codecs/jpeg-include")"
+GIF_INC="$(cat "$BUILD/image-codecs/gif-include")"
+CODEC_OBJECTS=()
+while IFS= read -r codec_object; do CODEC_OBJECTS+=("$codec_object"); done < "$BUILD/image-codecs/objects.list"
+SKIA_INCLUDES=(-I"$BITMAP" -I"$SKIA/include/core" -I"$SKIA/include/images" -I"$SKIA/include/utils" -I"$SKIA/src/core" -I"$SKIA/src/image" -I"$SKIA/src/images" -I"$SKIA/src/utils" -I"$PNG" -I"$ZLIB" -I"$JPEG_INC" -I"$GIF_INC")
+SKIA_SOURCES=("$BITMAP/agr_bitmap.cpp" "$SKIA/src/core/Sk64.cpp" "$SKIA/src/core/SkBitmap.cpp" "$SKIA/src/core/SkColor.cpp" "$SKIA/src/core/SkColorTable.cpp" "$SKIA/src/core/SkDebug.cpp" "$SKIA/src/core/SkDither.cpp" "$SKIA/src/core/SkError.cpp" "$SKIA/src/core/SkFlattenable.cpp" "$SKIA/src/core/SkImageInfo.cpp" "$SKIA/src/core/SkMallocPixelRef.cpp" "$SKIA/src/core/SkMath.cpp" "$SKIA/src/core/SkPixelRef.cpp" "$SKIA/src/core/SkStream.cpp" "$SKIA/src/core/SkString.cpp" "$SKIA/src/core/SkTLS.cpp" "$SKIA/src/core/SkTSearch.cpp" "$SKIA/src/core/SkUnPreMultiply.cpp" "$SKIA/src/core/SkUtils.cpp" "$SKIA/src/images/SkImageDecoder.cpp" "$SKIA/src/images/SkImageDecoder_FactoryDefault.cpp" "$SKIA/src/images/SkImageDecoder_FactoryRegistrar.cpp" "$SKIA/src/images/SkImageDecoder_libpng.cpp" "$SKIA/src/images/SkJpegUtility.cpp" "$BITMAP/host/SkImageDecoder_libjpeg_host.cpp" "$BITMAP/host/SkImageDecoder_libgif_host.cpp" "$SKIA/src/images/SkImageEncoder.cpp" "$SKIA/src/images/SkImageEncoder_Factory.cpp" "$SKIA/src/images/SkScaledBitmapSampler.cpp" "$SKIA/src/opts/SkUtils_opts_none.cpp" "$SKIA/src/ports/SkDebug_stdio.cpp" "$SKIA/src/ports/SkMemory_malloc.cpp" "$SKIA/src/ports/SkThread_pthread.cpp" "$SKIA/src/ports/SkTLS_pthread.cpp")
 INDEX=0; SKIA_OBJECTS=()
 for SOURCE in "${SKIA_SOURCES[@]}"; do OBJECT="$BUILD/obj/skia-$INDEX.o"; clang++ "${COMMON[@]}" -std=gnu++98 -nostdinc++ -I"$AFW/compat/include" -w -fno-exceptions -fno-rtti -ffunction-sections -fdata-sections -include "$BITMAP/host_skia_config.h" "${SKIA_INCLUDES[@]}" -c "$SOURCE" -o "$OBJECT"; SKIA_OBJECTS+=("$OBJECT"); INDEX=$((INDEX+1)); done
+COMMIT="$(git -C "$ROOT" rev-parse HEAD)"
+TREE="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"
+BRANCH="$(git -C "$ROOT" rev-parse --abbrev-ref HEAD)"
+cat > "$BUILD/obj/agr_build_identity.h" <<EOF
+#define AGR_BUILD_COMMIT "$COMMIT"
+#define AGR_BUILD_TREE "$TREE"
+#define AGR_BUILD_BRANCH "$BRANCH"
+EOF
+printf '%s\n%s\n%s\n' "$BRANCH" "$COMMIT" "$TREE" > "$BUILD/build-identity.txt"
+XCODE_VERSION="$(xcodebuild -version 2>/dev/null | tr '\n' ' ' || true)"
+SDK_VERSION="$(xcrun --sdk iphoneos --show-sdk-version 2>/dev/null || true)"
+RUSTC_VERSION="$(rustc -V 2>/dev/null || true)"
+python3 - "$BUILD/build-environment.json" "$BUILD/prebuild-environment.json" "$BRANCH" "$COMMIT" "$TREE" "$XCODE_VERSION" "$SDK_VERSION" "$RUSTC_VERSION" <<'PY'
+import json, os, sys
+path, prebuild_path, branch, commit, tree, xcode, sdk, rustc = sys.argv[1:]
+prebuild = json.load(open(prebuild_path))
+assert prebuild["commit"] == commit and prebuild["tree"] == tree
+assert prebuild["sdk_version"] == sdk and prebuild["xcode_version"] in xcode
+data = {
+    "schema": "agr.iphoneos-build-environment.v1",
+    "branch": branch,
+    "commit": commit,
+    "tree": tree,
+    "deployment_target": "15.0",
+    "sdk_name": "iphoneos",
+    "sdk_version": sdk,
+    "xcode": xcode,
+    "angle_version": "v2.1.28252",
+    "angle_identity": "59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be",
+    "angle_sha256": "59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be",
+    "interpreter": "aarch64-apple-ios",
+    "interpreter_build_identity": "touchhle-arm-interpreter:aarch64-apple-ios:release",
+    "rustc": rustc,
+    "runner_os": os.uname().sysname,
+    "runner_arch": os.uname().machine,
+}
+data.update({key: prebuild[key] for key in ("runner_image", "runner_image_version",
+    "macos_version", "xcode_build", "apk_sha256")})
+json.dump(data, open(path, "w"), indent=2)
+print()
+PY
 DEX="$ROOT/Runtime/DexLoom"; DEX_INCLUDE="$DEX/Include"
-DEX_SOURCES=("$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" "$DEX/VM/dx_verifier.c" "$DEX/APK/dx_apk.c" "$DEX/APK/dx_manifest.c" "$DEX/AndroidMini/framework_viewroot.c" "$DEX/poc_host.c" "$DEX/game_dex_runner.c")
+DEX_SOURCES=("$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" "$DEX/VM/dx_exec.c" "$DEX/VM/dx_verifier.c" "$DEX/APK/dx_apk.c" "$DEX/APK/dx_manifest.c" "$DEX/APK/dx_resources.c" "$DEX/AndroidMini/framework_viewroot.c" "$DEX/poc_host.c" "$DEX/game_dex_runner.c")
 INDEX=0; DEX_OBJECTS=()
-for SOURCE in "${DEX_SOURCES[@]}"; do OBJECT="$BUILD/obj/dex-$INDEX.o"; clang "${COMMON[@]}" -std=gnu11 -DGL_GLES_PROTOTYPES=1 -I"$ROOT/Vendor/ANGLE-Headers" -I"$DEX_INCLUDE" -c "$SOURCE" -o "$OBJECT"; DEX_OBJECTS+=("$OBJECT"); INDEX=$((INDEX+1)); done
-clang "${COMMON[@]}" -fobjc-arc -DAGR_DEVICE_INTERACTIVE=1 -I"$ROOT/Vendor/ANGLE-Headers" -I"$ROOT/Runtime/NativeCore" -I"$ROOT/Runtime/GuestRuntime" -I"$DEX" -I"$DEX_INCLUDE" -I"$AFW" -I"$BITMAP" -c "$ROOT/App/main.m" -o "$BUILD/obj/main.o"
-clang++ "${COMMON[@]}" -Wl,-dead_strip -Wl,-rpath,@executable_path/Frameworks -F"$ANGLE_FRAMEWORKS" "$BUILD/obj/main.o" "$BUILD/obj/agr_runtime.o" "$BUILD/obj/agr_bionic_allocator.o" "$BUILD/obj/agr_guest_vma.o" "$BUILD/obj/agr_host_services_darwin.o" "$BUILD/obj/agr_bionic_thread_attr.o" "$BUILD/obj/agr_futex_host.o" "$BUILD/obj/agr_bionic_sync.o" "$BUILD/obj/agr_bionic_tls.o" "$BUILD/obj/agr_bionic_errno_host.o" "$BUILD/obj/agr_bionic_thread_lifecycle.o" "$BUILD/obj/agr_bionic_mmap.o" "$BUILD/obj/agr_aosp_linker.o" "$BUILD/obj/agr_aosp_dynamic.o" "$BUILD/obj/agr_ehabi.o" "$BUILD/obj/agr_contracts.o" "$BUILD/obj/agr_guest_runtime.o" "$BUILD/obj/agr_thread_context.o" "$BUILD/obj/agr_service_dispatch.o" "$BUILD/obj/agr_jni_methods.o" "${DEX_OBJECTS[@]}" "${AFW_OBJECTS[@]}" "${SKIA_OBJECTS[@]}" "${PNG_OBJECTS[@]}" "$ROOT/Runtime/ArmInterpreter/target/aarch64-apple-ios/release/libtouchhle_arm_interpreter.a" -lz -framework UIKit -framework Foundation -framework CoreGraphics -framework Security -framework Metal -framework QuartzCore -framework libEGL -framework libGLESv2 -o "$APP/AGRSimulator"
+for SOURCE in "${DEX_SOURCES[@]}"; do OBJECT="$BUILD/obj/dex-$INDEX.o"; clang "${COMMON[@]}" -std=gnu11 -DGL_GLES_PROTOTYPES=1 -I"$ROOT/Vendor/ANGLE-Headers" -I"$DEX_INCLUDE" -I"$BITMAP" -c "$SOURCE" -o "$OBJECT"; DEX_OBJECTS+=("$OBJECT"); INDEX=$((INDEX+1)); done
+clang "${COMMON[@]}" -fobjc-arc -DAGR_DEVICE_INTERACTIVE=1 -I"$BUILD/obj" -I"$ROOT/Vendor/ANGLE-Headers" -I"$ROOT/Runtime/NativeCore" -I"$ROOT/Runtime/GuestRuntime" -I"$DEX" -I"$DEX_INCLUDE" -I"$AFW" -I"$BITMAP" -c "$ROOT/App/main.m" -o "$BUILD/obj/main.o"
+clang "${COMMON[@]}" -std=gnu11 -I"$DEX" -c "$ROOT/App/agr_physical_trace.c" -o "$BUILD/obj/agr_physical_trace.o"
+clang++ "${COMMON[@]}" -Wl,-dead_strip -Wl,-rpath,@executable_path/Frameworks -F"$ANGLE_FRAMEWORKS" "$BUILD/obj/main.o" "$BUILD/obj/agr_physical_trace.o" "$BUILD/obj/agr_runtime.o" "$BUILD/obj/agr_bionic_allocator.o" "$BUILD/obj/agr_guest_vma.o" "$BUILD/obj/agr_host_services_darwin.o" "$BUILD/obj/agr_bionic_thread_attr.o" "$BUILD/obj/agr_futex_host.o" "$BUILD/obj/agr_bionic_sync.o" "$BUILD/obj/agr_bionic_tls.o" "$BUILD/obj/agr_bionic_errno_host.o" "$BUILD/obj/agr_bionic_thread_lifecycle.o" "$BUILD/obj/agr_bionic_mmap.o" "$BUILD/obj/agr_aosp_linker.o" "$BUILD/obj/agr_aosp_dynamic.o" "$BUILD/obj/agr_ehabi.o" "$BUILD/obj/agr_contracts.o" "$BUILD/obj/agr_guest_runtime.o" "$BUILD/obj/agr_thread_context.o" "$BUILD/obj/agr_service_dispatch.o" "$BUILD/obj/agr_jni_methods.o" "${DEX_OBJECTS[@]}" "${AFW_OBJECTS[@]}" "${SKIA_OBJECTS[@]}" "${PNG_OBJECTS[@]}" "${CODEC_OBJECTS[@]}" "$ROOT/Runtime/ArmInterpreter/target/aarch64-apple-ios/release/libtouchhle_arm_interpreter.a" -lz -framework UIKit -framework Foundation -framework CoreGraphics -framework Security -framework Metal -framework QuartzCore -framework libEGL -framework libGLESv2 -o "$APP/AGRSimulator"
 cp "$ROOT/App/Info.plist" "$APP/Info.plist"; cp "$ROOT/App/Resources/"* "$APP/"
+cp "$BUILD/build-identity.txt" "$APP/agr-build-identity.txt"
+cp "$BUILD/build-environment.json" "$APP/agr-build-environment.json"
+nm -gU "$APP/AGRSimulator" > "$BUILD/nm-symbols.txt"
+missing=0
+for symbol in agr_dex_game_create_from_apk agr_dex_game_start_activity agr_dex_game_choreographer_frame agr_dex_game_runtime_snapshot dx_vm_execute_method dx_vm_current_exec agr_bitmap_decode agr_bitmap_draw agr_physical_trace_begin agr_forensic_publish; do
+  if ! grep -q "$symbol" "$BUILD/nm-symbols.txt"; then
+    echo "iphoneos runtime coverage missing symbol $symbol"
+    missing=1
+  fi
+done
+for text in 'Ljava/util/Vector;' 'Ljava/lang/Thread;' lockCanvas drawBitmap SurfaceHolder; do
+  if ! grep -a -F -q "$text" "$APP/AGRSimulator"; then
+    echo "iphoneos runtime coverage missing text $text"
+    missing=1
+  fi
+done
+test "$missing" = 0
 /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier ${IOS_BUNDLE_ID:-dev.agr.simulator}" "$APP/Info.plist"
 /usr/libexec/PlistBuddy -c 'Add :UIFileSharingEnabled bool true' "$APP/Info.plist"
 /usr/libexec/PlistBuddy -c 'Add :LSSupportsOpeningDocumentsInPlace bool true' "$APP/Info.plist"

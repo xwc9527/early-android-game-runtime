@@ -38,11 +38,11 @@
           "runNativeActivityApk / ANativeActivity_onCreate guest entry"
         ],
         "source_hashes": {
-          "App/main.m": "0821cc51d40a66d8c84fff0d8d3d66ba2eb57dc20109e7b7ae487f5cb7428465",
+          "App/main.m": "4a95e06fd863b78903e7647eee0ee4f75cfae805464ee3857a61ce7186728b30",
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b"
         }
       },
-      "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
+      "verified_at_commit": "93a0299",
       "status": "UNVERIFIED",
       "dependencies": [],
       "observable_semantics": [
@@ -211,10 +211,10 @@
         ],
         "source_hashes": {
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
-          "App/main.m": "0821cc51d40a66d8c84fff0d8d3d66ba2eb57dc20109e7b7ae487f5cb7428465"
+          "App/main.m": "4a95e06fd863b78903e7647eee0ee4f75cfae805464ee3857a61ce7186728b30"
         }
       },
-      "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
+      "verified_at_commit": "93a0299",
       "status": "UNVERIFIED",
       "dependencies": [
         "nativeactivity.lifecycle",
@@ -327,10 +327,10 @@
         "source_hashes": {
           "Runtime/GuestRuntime/agr_jni_methods.c": "8bdc5b524175bb6066c696fa347162d43dc494d31a1b6a2b47914a6418f07d3d",
           "Runtime/GuestRuntime/agr_guest_runtime.c": "bb672a7e7ad091c24f0f1d4dedb705831f3d0ef040e7d800260b1db4fdac253b",
-          "Runtime/DexLoom/game_dex_runner.c": "cfd294c68bd7bbe88bbb8ca45a91809f02177ce6dc9ceab63fc63c134bc1968f"
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d"
         }
       },
-      "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
+      "verified_at_commit": "0d5126f",
       "status": "UNVERIFIED",
       "dependencies": [],
       "observable_semantics": [
@@ -684,11 +684,11 @@
           "gc_mark_roots"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/game_dex_runner.c": "889f838e955464f187ddb85ab1c6786f519fb9191fa4f2a7eaa831fd121e8b70",
-          "Runtime/DexLoom/VM/dx_vm.c": "cfa35bbe1b40de76c8c399b16d53a03fcd199b010bfed3538068c8cc7877abc7"
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d",
+          "Runtime/DexLoom/VM/dx_vm.c": "32763075d020aeafab1a066bdffd6816b0f25061ac62466fcd11a3ea7d866216"
         }
       },
-      "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
+      "verified_at_commit": "0d5126f",
       "status": "VALID",
       "dependencies": [],
       "observable_semantics": [
@@ -770,12 +770,12 @@
           "poc_create"
         ],
         "source_hashes": {
-          "App/main.m": "97e5b0ca83160c25068e76477efea42c978780a4995c8f30e94a57c4c0c83d07",
-          "Runtime/DexLoom/DEX/dx_dex.c": "94cc603e0b985213fddec8b4b3935e5074603fe31f85032963384794da1eb4f8",
-          "Runtime/DexLoom/poc_host.c": "7844c264f4ab1533ac91d4f35af71c07a60cb4ef15c8d6bfab3db5c28f982de1"
+          "App/main.m": "4a95e06fd863b78903e7647eee0ee4f75cfae805464ee3857a61ce7186728b30",
+          "Runtime/DexLoom/DEX/dx_dex.c": "6f951201f1aadaed19f572c335c7904bad93a8fa409c2a4b78e85a23bf8789ce",
+          "Runtime/DexLoom/poc_host.c": "eb39eb29a76d83f53f0fe060bc4a77ce802aeef8f8d7f7428dec7f3ec0f9868b"
         }
       },
-      "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
+      "verified_at_commit": "93a0299",
       "status": "VALID",
       "dependencies": [],
       "observable_semantics": [
@@ -874,12 +874,12 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/APK/dx_manifest.c": "17d608e345e27ba2bcf564dd61e7918c79da4b243f32d811e59126996b27519e",
-          "Runtime/DexLoom/game_dex_runner.c": "889f838e955464f187ddb85ab1c6786f519fb9191fa4f2a7eaa831fd121e8b70",
-          "Runtime/DexLoom/VM/dx_vm.c": "cfa35bbe1b40de76c8c399b16d53a03fcd199b010bfed3538068c8cc7877abc7",
-          "App/main.m": "97e5b0ca83160c25068e76477efea42c978780a4995c8f30e94a57c4c0c83d07"
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d",
+          "Runtime/DexLoom/VM/dx_vm.c": "32763075d020aeafab1a066bdffd6816b0f25061ac62466fcd11a3ea7d866216",
+          "App/main.m": "4a95e06fd863b78903e7647eee0ee4f75cfae805464ee3857a61ce7186728b30"
         }
       },
-      "verified_at_commit": "6ea0baba717a73b4f6f3c2ca8e50ef1a07d40c5d",
+      "verified_at_commit": "93a0299",
       "status": "VALID",
       "dependencies": [
         "dalvik.dex.parse",
@@ -966,13 +966,13 @@
           "handoff.viewroot_traversal"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "b31a4d66c3fd1b4ca755524cbd4156c51de56a40eb1de78fb074d84ea4208195",
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "57626034f3c1162554b66a9d4a0b97ff09b78be624b03e62f67b2c7ee8015f3f",
-          "Runtime/DexLoom/game_dex_runner.c": "889f838e955464f187ddb85ab1c6786f519fb9191fa4f2a7eaa831fd121e8b70",
-          "App/main.m": "97e5b0ca83160c25068e76477efea42c978780a4995c8f30e94a57c4c0c83d07"
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d",
+          "App/main.m": "4a95e06fd863b78903e7647eee0ee4f75cfae805464ee3857a61ce7186728b30"
         }
       },
-      "verified_at_commit": "32efd58",
+      "verified_at_commit": "93a0299",
       "status": "VALID",
       "dependencies": [
         "framework.activity.launch"
@@ -1076,13 +1076,13 @@
           "handoff.viewroot_surface_ready"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "b31a4d66c3fd1b4ca755524cbd4156c51de56a40eb1de78fb074d84ea4208195",
-          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "57626034f3c1162554b66a9d4a0b97ff09b78be624b03e62f67b2c7ee8015f3f",
-          "Runtime/DexLoom/game_dex_runner.c": "889f838e955464f187ddb85ab1c6786f519fb9191fa4f2a7eaa831fd121e8b70",
-          "App/main.m": "97e5b0ca83160c25068e76477efea42c978780a4995c8f30e94a57c4c0c83d07"
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d",
+          "App/main.m": "4a95e06fd863b78903e7647eee0ee4f75cfae805464ee3857a61ce7186728b30"
         }
       },
-      "verified_at_commit": "d9939736aa787aa717013932a777d0fda3fea55a",
+      "verified_at_commit": "93a0299",
       "status": "VALID",
       "dependencies": [
         "framework.viewroot.attach"
@@ -1103,12 +1103,1522 @@
         "UIKit reports display dimensions; in-process WindowSession replaces Binder/system_server"
       ],
       "known_deviations": [
-        "ViewGroup child propagation is not yet exercised by the current simple Decor; draw/Canvas/GLSurfaceView are downstream"
+        "ViewGroup child propagation is not yet exercised by the current simple Decor; the closed first pass still ends at handoff.viewroot_surface_ready. A later traversal may enter performDraw. Canvas and SurfaceView remain downstream of this contract"
       ],
       "contracts": [
         "framework.first_traversal.synthetic",
         "frozen-bubble.first_traversal"
       ]
+    },
+    {
+      "id": "framework.viewroot.traversal_dispatch",
+      "subsystem": "Runtime traversal dispatch and root draw consumer",
+      "android_api": "API19 Choreographer CALLBACK_TRAVERSAL and ViewRootImpl.performDraw",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "core/java/android/view/ViewRootImpl.java",
+          "core/java/android/view/Choreographer.java"
+        ],
+        "symbols": [
+          "ViewRootImpl.scheduleTraversals",
+          "ViewRootImpl.doTraversal",
+          "ViewRootImpl.performDraw",
+          "Choreographer.doFrame",
+          "Choreographer.doCallbacks"
+        ],
+        "source_hashes": {
+          "core/java/android/view/ViewRootImpl.java": "340519423463b22b9afe192052e809936ba2523dda4abcb40cda7659c5ab779d",
+          "core/java/android/view/Choreographer.java": "3736ccd09034763a3292fd262416539450627b650dd47af4907061aa7a90b641"
+        },
+        "source_urls": {
+          "core/java/android/view/ViewRootImpl.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/ViewRootImpl.java",
+          "core/java/android/view/Choreographer.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/Choreographer.java"
+        },
+        "symbols_by_path": {
+          "core/java/android/view/ViewRootImpl.java": [
+            "void scheduleTraversals()",
+            "void doTraversal()",
+            "private void performDraw()"
+          ],
+          "core/java/android/view/Choreographer.java": [
+            "public void postCallback(int callbackType, Runnable action, Object token)",
+            "void doFrame(long frameTimeNanos, int frame)",
+            "void doCallbacks(int callbackType, long frameTimeNanos)",
+            "public CallbackRecord extractDueCallbacksLocked(long now)"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h",
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/DexLoom/game_dex_runner.h",
+          "App/main.m"
+        ],
+        "symbols": [
+          "agr_viewroot_choreographer_frame",
+          "agr_dex_game_choreographer_frame",
+          "agr_dex_game_set_host_display",
+          "viewroot.perform_draw"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d",
+          "Runtime/DexLoom/game_dex_runner.h": "064ed96663f6b47f11edc9c74b2b0322f5dc1b3c1b08ea92a2665d0b9bf30c48",
+          "App/main.m": "4a95e06fd863b78903e7647eee0ee4f75cfae805464ee3857a61ce7186728b30"
+        }
+      },
+      "verified_at_commit": "93a0299",
+      "status": "VALID",
+      "dependencies": [
+        "framework.viewroot.first_traversal"
+      ],
+      "observable_semantics": [
+        "Activity resume schedules a traversal and does not execute it",
+        "one host frame consumes at most one posted traversal callback",
+        "a newly valid Surface reschedules and that same frame does not draw",
+        "the next host frame consumes the reschedule, keeps the Surface backing, and enters performDraw"
+      ],
+      "internal_invariants": [
+        "schedule and execute remain distinct calls",
+        "the closed first explicit traversal still ends at handoff.viewroot_surface_ready with draw_count 0",
+        "relayout rejection leaves the callback scheduled and the Surface invalid"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "UIKit CADisplayLink is the vsync endpoint in place of DisplayEventReceiver",
+        "no Looper sync barrier; the host frame function is not re-entered"
+      ],
+      "known_deviations": [
+        "performDraw records View.draw of the host Decor and does not claim a first frame",
+        "setContentView(View) is a separate window contract and does not draw"
+      ],
+      "contracts": [
+        "framework.traversal_dispatch.host",
+        "frozen-bubble.traversal_dispatch"
+      ]
+    },
+    {
+      "id": "framework.window.set_content_view",
+      "subsystem": "Activity and PhoneWindow setContentView",
+      "android_api": "API19 Activity.setContentView(View) and PhoneWindow content installation",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "core/java/android/app/Activity.java",
+          "policy/src/com/android/internal/policy/impl/PhoneWindow.java"
+        ],
+        "symbols": [
+          "Activity.setContentView",
+          "PhoneWindow.setContentView",
+          "Window.Callback.onContentChanged"
+        ],
+        "source_hashes": {
+          "core/java/android/app/Activity.java": "03874ea13f230ff2b92bc6d99522011f63a3076e9101655aa0249addc590cc4b",
+          "policy/src/com/android/internal/policy/impl/PhoneWindow.java": "72e77092b444c068108763a7bc5a059b0097a620e2249d70274e9443af0851cf"
+        },
+        "source_urls": {
+          "core/java/android/app/Activity.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/app/Activity.java",
+          "policy/src/com/android/internal/policy/impl/PhoneWindow.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/policy/src/com/android/internal/policy/impl/PhoneWindow.java"
+        },
+        "symbols_by_path": {
+          "core/java/android/app/Activity.java": [
+            "public void setContentView(int layoutResID)",
+            "public void setContentView(View view)",
+            "public void setContentView(View view, ViewGroup.LayoutParams params)",
+            "public void onContentChanged()"
+          ],
+          "policy/src/com/android/internal/policy/impl/PhoneWindow.java": [
+            "public void setContentView(int layoutResID)",
+            "public void setContentView(View view)",
+            "public void setContentView(View view, ViewGroup.LayoutParams params)",
+            "cb.onContentChanged()"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/DexLoom/game_dex_runner.h",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h",
+          "Runtime/DexLoom/APK/dx_resources.c",
+          "Runtime/DexLoom/VM/dx_vm.c",
+          "Runtime/DexLoom/VM/dx_interpreter.c"
+        ],
+        "symbols": [
+          "activity_set_content_view",
+          "activity_set_content_layout",
+          "window_set_content_view",
+          "window_set_content_layout",
+          "inflate_layout",
+          "install_content_view",
+          "agr_viewroot_request_layout",
+          "window.set_content_view"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d",
+          "Runtime/DexLoom/game_dex_runner.h": "064ed96663f6b47f11edc9c74b2b0322f5dc1b3c1b08ea92a2665d0b9bf30c48",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
+          "Runtime/DexLoom/APK/dx_resources.c": "d1ccd60b46850517bb9905db8505f81222d8658b4af9b675547208f1eb07a0e2",
+          "Runtime/DexLoom/VM/dx_vm.c": "32763075d020aeafab1a066bdffd6816b0f25061ac62466fcd11a3ea7d866216",
+          "Runtime/DexLoom/VM/dx_interpreter.c": "9a53e5d9cf038efb2871c43af09b581a57f8898935669ad9f7703b0d5638048b"
+        }
+      },
+      "verified_at_commit": "0d5126f",
+      "status": "VALID",
+      "dependencies": [
+        "framework.viewroot.attach"
+      ],
+      "observable_semantics": [
+        "Activity.setContentView(View) delegates to Window.setContentView",
+        "Activity.setContentView(int) inflates the addressed layout into the content parent",
+        "the existing decor gains one content child and keeps that child's layout width and height",
+        "MATCH_PARENT remains -1",
+        "the ViewRoot decor identity does not change",
+        "a window that is not yet added does not schedule a traversal",
+        "an already attached window posts scheduleTraversals and does not execute it",
+        "onContentChanged runs after the child is installed",
+        "Array.newInstance(Class, int[]) returns an array whose class descriptor is the requested rank"
+      ],
+      "internal_invariants": [
+        "a null view is rejected",
+        "the decor is not installed as its own content child",
+        "a posted traversal remains the host frame's job"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "the decor's single content child stands in for DecorView's content parent",
+        "binary layout XML is inflated by the window owner instead of the APK LayoutInflater class",
+        "no ActionBar is created",
+        "const-class boxes the DEX type, and Array.newInstance uses that type as the component"
+      ],
+      "known_deviations": [
+        "SurfaceView child-surface lifecycle belongs to framework.view.surface_view",
+        "a view constructor that throws does not install a placeholder",
+        "Array.newInstance dimensions above 16 are truncated"
+      ],
+      "contracts": [
+        "framework.traversal_dispatch.host"
+      ]
+    },
+    {
+      "id": "framework.view.surface_view",
+      "subsystem": "SurfaceView child Surface and SurfaceHolder callbacks",
+      "android_api": "API19 SurfaceView.updateWindow and SurfaceHolder.Callback",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "core/java/android/view/SurfaceView.java",
+          "core/java/android/view/SurfaceHolder.java",
+          "graphics/java/android/graphics/PixelFormat.java"
+        ],
+        "symbols": [
+          "SurfaceView.getHolder",
+          "SurfaceView.updateWindow",
+          "SurfaceHolder.addCallback",
+          "SurfaceHolder.Callback.surfaceCreated",
+          "SurfaceHolder.Callback.surfaceChanged"
+        ],
+        "source_hashes": {
+          "core/java/android/view/SurfaceView.java": "9a012731b9681aa825b73624c0822f2e528451b0e6eb1427c9361953c0e88940",
+          "core/java/android/view/SurfaceHolder.java": "26809a5e2913c0ab8e956f6578904d8c7703722e9466aa0f0fb38b1c7b6c0516",
+          "graphics/java/android/graphics/PixelFormat.java": "c88054e6eae43fd1be69d2fc288477682896a5e46c8e960ffc0b8a9f071766c0"
+        },
+        "source_urls": {
+          "core/java/android/view/SurfaceView.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/SurfaceView.java",
+          "core/java/android/view/SurfaceHolder.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/SurfaceHolder.java",
+          "graphics/java/android/graphics/PixelFormat.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/graphics/java/android/graphics/PixelFormat.java"
+        },
+        "symbols_by_path": {
+          "core/java/android/view/SurfaceView.java": [
+            "public SurfaceHolder getHolder()",
+            "private void updateWindow(boolean force, boolean redrawNeeded)",
+            "mHaveFrame = getWidth() > 0 && getHeight() > 0",
+            "c.surfaceCreated(mSurfaceHolder)",
+            "c.surfaceChanged(mSurfaceHolder, mFormat, myWidth, myHeight)"
+          ],
+          "core/java/android/view/SurfaceHolder.java": [
+            "public void addCallback(Callback callback);",
+            "public void removeCallback(Callback callback);",
+            "public Surface getSurface();",
+            "public Rect getSurfaceFrame();",
+            "public void surfaceCreated(SurfaceHolder holder);",
+            "public void surfaceChanged(SurfaceHolder holder, int format, int width,"
+          ],
+          "graphics/java/android/graphics/PixelFormat.java": [
+            "public static final int RGB_565     = 4;"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h",
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/DexLoom/game_dex_runner.h",
+          "App/main.m"
+        ],
+        "symbols": [
+          "content_surface_pre_draw",
+          "surface_holder.callback_added",
+          "surface_view.child_surface_created",
+          "surface_holder.surface_created",
+          "surface_holder.surface_changed",
+          "surface_view.allocation_failed"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
+          "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d",
+          "Runtime/DexLoom/game_dex_runner.h": "064ed96663f6b47f11edc9c74b2b0322f5dc1b3c1b08ea92a2665d0b9bf30c48",
+          "App/main.m": "4a95e06fd863b78903e7647eee0ee4f75cfae805464ee3857a61ce7186728b30"
+        }
+      },
+      "verified_at_commit": "93a0299",
+      "status": "VALID",
+      "dependencies": [
+        "framework.viewroot.traversal_dispatch",
+        "framework.window.set_content_view"
+      ],
+      "observable_semantics": [
+        "getHolder returns a holder whose Surface is not the ViewRoot window Surface",
+        "addCallback stores the callback and does not fire surfaceCreated",
+        "a visible view with a positive frame creates one child Surface on the draw traversal",
+        "surfaceCreated runs once and surfaceChanged follows with the view size and RGB_565",
+        "the same size and format do not repeat either callback",
+        "a hidden view or a non-positive frame does not create a Surface",
+        "allocation failure leaves the holder invalid and the root Surface valid"
+      ],
+      "internal_invariants": [
+        "the child Surface generation increases only when a new buffer is created",
+        "callback registration happens on the guest constructor path",
+        "the first Surface traversal still reschedules without performDraw",
+        "a null pre_draw hook leaves the closed root-surface traversal unchanged"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "the child Surface is an in-process buffer owned by the SurfaceView holder",
+        "IWindowSession.addToDisplayWithoutInputChannel is not a separate process"
+      ],
+      "known_deviations": [
+        "a callback exception is recorded and does not abort host Decor performDraw",
+        "surfaceDestroyed, recreation, and pause/resume surface recreation are not this contract",
+        "lockCanvas ownership is framework.view.surface_holder_canvas",
+        "BitmapFactory.decodeResource belongs to framework.graphics.bitmap_decode_resource"
+      ],
+      "contracts": [
+        "framework.traversal_dispatch.host",
+        "frozen-bubble.traversal_dispatch"
+      ]
+    },
+    {
+      "id": "framework.view.surface_holder_canvas",
+      "subsystem": "SurfaceHolder lockCanvas and unlockCanvasAndPost",
+      "android_api": "API19 SurfaceView.SurfaceHolder.lockCanvas and Surface.lockCanvas",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "core/java/android/view/SurfaceView.java",
+          "core/java/android/view/Surface.java",
+          "core/java/android/view/SurfaceHolder.java"
+        ],
+        "symbols": [
+          "SurfaceView.internalLockCanvas",
+          "Surface.lockCanvas",
+          "Surface.unlockCanvasAndPost",
+          "SurfaceHolder.lockCanvas",
+          "SurfaceHolder.unlockCanvasAndPost"
+        ],
+        "source_hashes": {
+          "core/java/android/view/SurfaceView.java": "9a012731b9681aa825b73624c0822f2e528451b0e6eb1427c9361953c0e88940",
+          "core/java/android/view/Surface.java": "a7f42c04f8968368171552f147488407a4f1561c7065008a233fe392548294e2",
+          "core/java/android/view/SurfaceHolder.java": "26809a5e2913c0ab8e956f6578904d8c7703722e9466aa0f0fb38b1c7b6c0516"
+        },
+        "source_urls": {
+          "core/java/android/view/SurfaceView.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/SurfaceView.java",
+          "core/java/android/view/Surface.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/Surface.java",
+          "core/java/android/view/SurfaceHolder.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/java/android/view/SurfaceHolder.java"
+        },
+        "symbols_by_path": {
+          "core/java/android/view/SurfaceView.java": [
+            "private final Canvas internalLockCanvas(Rect dirty)",
+            "public Canvas lockCanvas(Rect inOutDirty)",
+            "public void unlockCanvasAndPost(Canvas canvas)",
+            "mSurfaceLock.lock()",
+            "mLastLockTime + 100"
+          ],
+          "core/java/android/view/Surface.java": [
+            "public Canvas lockCanvas(Rect inOutDirty)",
+            "public void unlockCanvasAndPost(Canvas canvas)",
+            "Surface was already locked",
+            "canvas object must be the same instance that ",
+            "Surface was not locked",
+            "return mCanvas;"
+          ],
+          "core/java/android/view/SurfaceHolder.java": [
+            "public Canvas lockCanvas();",
+            "public Canvas lockCanvas(Rect dirty);",
+            "public void unlockCanvasAndPost(Canvas canvas);"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/DexLoom/game_dex_runner.h"
+        ],
+        "symbols": [
+          "surface_holder_lock_canvas",
+          "surface_holder_unlock_canvas",
+          "AGR_CONTENT_BYTES_PER_PIXEL",
+          "surface_holder.canvas_locked",
+          "surface_holder.canvas_posted"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d",
+          "Runtime/DexLoom/game_dex_runner.h": "064ed96663f6b47f11edc9c74b2b0322f5dc1b3c1b08ea92a2665d0b9bf30c48"
+        }
+      },
+      "verified_at_commit": "0d5126f",
+      "status": "VALID",
+      "dependencies": [
+        "framework.view.surface_view"
+      ],
+      "observable_semantics": [
+        "lockCanvas() and lockCanvas(Rect) on a valid created surface return one Canvas bound to that surface",
+        "the Canvas width, height, and generation match the child content Surface",
+        "a null dirty rect covers the full surface and an invalid dirty rect returns null",
+        "a surface that is not created, or a same-context second lock, returns null",
+        "another execution context does not obtain write ownership while the lock is held",
+        "unlockCanvasAndPost of a different Canvas throws IllegalArgumentException",
+        "unlockCanvasAndPost when the surface is not locked throws IllegalStateException",
+        "unlockCanvasAndPost of the locked Canvas releases the lock and increments post_count",
+        "the next lock succeeds",
+        "a post with no draw leaves the buffer hash unchanged"
+      ],
+      "internal_invariants": [
+        "one holder has one writer",
+        "the Canvas target is the SurfaceView child buffer, not the ViewRoot root Surface",
+        "the host mutex is held only around the locked-flag update",
+        "the host mutex is not held across guest bytecode or the VM shared lock",
+        "workers are joined before the content pixels are freed",
+        "surface replacement waits while a Canvas lock is held",
+        "the guest Canvas is reused by object identity and stores no host pointer"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "the child Surface remains an in-process buffer",
+        "guest-visible format stays PixelFormat.RGB_565 (4) while the backing is 4 bytes per pixel",
+        "row bytes are width times 4",
+        "a pthread mutex and condition stand in for SurfaceView.mSurfaceLock around the locked flag only"
+      ],
+      "known_deviations": [
+        "SurfaceFlinger, BufferQueue IPC, and Binder graphics are not implemented",
+        "a successful lock does not arm the 100ms failure throttle",
+        "pixels are kept across a null-rect post; API19 does not guarantee preservation",
+        "a generation mismatch throws IllegalStateException instead of posting onto a replaced buffer",
+        "Canvas.drawBitmap ownership is framework.graphics.canvas_bitmap"
+      ],
+      "contracts": [
+        "framework.surface_holder_canvas.host"
+      ]
+    },
+    {
+      "id": "framework.graphics.bitmap_decode_resource",
+      "subsystem": "BitmapFactory.decodeResource",
+      "android_api": "API19 BitmapFactory.decodeResource(Resources, int, Options)",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "graphics/java/android/graphics/BitmapFactory.java",
+          "graphics/java/android/graphics/Bitmap.java"
+        ],
+        "symbols": [
+          "BitmapFactory.decodeResource",
+          "Bitmap.getWidth",
+          "Bitmap.getHeight"
+        ],
+        "source_hashes": {
+          "graphics/java/android/graphics/BitmapFactory.java": "e8a6d88ed9b331ccce0012496e5d4fde4b5d700fc011bf8e3e6df9a2b02ac31d",
+          "graphics/java/android/graphics/Bitmap.java": "9437b6a00eb5cb4d12487d2244e6e2aa41ed62bd80295d9876646d8c25bb41c9"
+        },
+        "source_urls": {
+          "graphics/java/android/graphics/BitmapFactory.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/graphics/java/android/graphics/BitmapFactory.java",
+          "graphics/java/android/graphics/Bitmap.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/graphics/java/android/graphics/Bitmap.java"
+        },
+        "symbols_by_path": {
+          "graphics/java/android/graphics/BitmapFactory.java": [
+            "public static Bitmap decodeResource(Resources res, int id, Options opts)",
+            "is = res.openRawResource(id, value);",
+            "throw new IllegalArgumentException(\"Problem decoding into existing bitmap\");"
+          ],
+          "graphics/java/android/graphics/Bitmap.java": [
+            "public final int getWidth()",
+            "public final int getHeight()"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/Bitmap/agr_bitmap.cpp",
+          "Runtime/Bitmap/agr_bitmap.h",
+          "Runtime/Bitmap/host/SkImageDecoder_libjpeg_host.cpp",
+          "Runtime/Bitmap/host/SkImageDecoder_libgif_host.cpp"
+        ],
+        "symbols": [
+          "bitmap_decode_resource",
+          "guest_bitmap_attach",
+          "agr_bitmap_decode",
+          "bitmap_recycle"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d",
+          "Runtime/Bitmap/agr_bitmap.cpp": "43ab7c39bf2a0773bf4e3fe7da2672189e9d2f2d8ae3189b86d2b1dc72b8993a",
+          "Runtime/Bitmap/agr_bitmap.h": "1762dac4ba053ef9bde49dd972d081d1edf86cf22b9ffcf4ed505737a6d80ade",
+          "Runtime/Bitmap/host/SkImageDecoder_libjpeg_host.cpp": "355144e0333a2fbb65e5a30667d43d4578c1b115466443f6c79085aee82be0ad",
+          "Runtime/Bitmap/host/SkImageDecoder_libgif_host.cpp": "bb75991c6a05f58a606142678c30436748d686effdd8f05275c1aab48a956c85"
+        }
+      },
+      "verified_at_commit": "0d5126f",
+      "status": "VALID",
+      "dependencies": [],
+      "observable_semantics": [
+        "decodeResource(Resources, int, Options) returns a Bitmap for a decodable PNG, JPEG, or GIF resource",
+        "the Bitmap width and height are the decoded pixel dimensions",
+        "the Bitmap retains host pixel backing through agr_bitmap",
+        "an unknown id or undecodable payload returns null",
+        "Options.inBitmap set on a failed decode throws IllegalArgumentException",
+        "Options.inJustDecodeBounds returns null and writes outWidth and outHeight without decoding pixels",
+        "getWidth and getHeight return the stored dimensions",
+        "recycle releases the host pixel backing"
+      ],
+      "internal_invariants": [
+        "the Bitmap is not the ViewRoot Surface and not the SurfaceView content Surface",
+        "the package APK must stay open while the game reads resources",
+        "inJustDecodeBounds does not allocate pixel backing"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "KitKat SkImageDecoder through agr_bitmap stands in for BitmapFactory native decode",
+        "guest Bitmap identity maps to a host agr_bitmap without storing a host pointer in a guest field"
+      ],
+      "known_deviations": [
+        "density scaling is not applied",
+        "createScaledBitmap is not this contract",
+        "Canvas.drawBitmap ownership is framework.graphics.canvas_bitmap"
+      ],
+      "contracts": [
+        "frozen-bubble.bitmap_decode_resource"
+      ]
+    },
+    {
+      "id": "framework.graphics.canvas_bitmap",
+      "subsystem": "Canvas.drawBitmap onto SurfaceHolder content",
+      "android_api": "API19 Canvas.drawBitmap(Bitmap,float,float,Paint)",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "graphics/java/android/graphics/Canvas.java",
+          "core/jni/android/graphics/Canvas.cpp",
+          "graphics/java/android/graphics/BitmapFactory.java",
+          "graphics/java/android/graphics/Bitmap.java"
+        ],
+        "symbols": [
+          "Canvas.drawBitmap",
+          "native_drawBitmap",
+          "BitmapFactory.decodeResource",
+          "Bitmap.recycle"
+        ],
+        "source_hashes": {
+          "graphics/java/android/graphics/Canvas.java": "a933fccbec67fb0eaff9d527974c0ba16f652453aed8d991aa14429623b4514c",
+          "core/jni/android/graphics/Canvas.cpp": "3f9f621a284282fcfa8cb018181a0a4bc30781beb80607d9d4e842ecb2abb2e2",
+          "graphics/java/android/graphics/BitmapFactory.java": "e8a6d88ed9b331ccce0012496e5d4fde4b5d700fc011bf8e3e6df9a2b02ac31d",
+          "graphics/java/android/graphics/Bitmap.java": "9437b6a00eb5cb4d12487d2244e6e2aa41ed62bd80295d9876646d8c25bb41c9"
+        },
+        "source_urls": {
+          "graphics/java/android/graphics/Canvas.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/graphics/java/android/graphics/Canvas.java",
+          "core/jni/android/graphics/Canvas.cpp": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/jni/android/graphics/Canvas.cpp",
+          "graphics/java/android/graphics/BitmapFactory.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/graphics/java/android/graphics/BitmapFactory.java",
+          "graphics/java/android/graphics/Bitmap.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/graphics/java/android/graphics/Bitmap.java"
+        },
+        "symbols_by_path": {
+          "graphics/java/android/graphics/Canvas.java": [
+            "public void drawBitmap(Bitmap bitmap, float left, float top, Paint paint)"
+          ],
+          "core/jni/android/graphics/Canvas.cpp": [
+            "drawBitmap__BitmapFFPaint",
+            "canvas->drawBitmap(*bitmap, left_, top_, paint)"
+          ],
+          "graphics/java/android/graphics/BitmapFactory.java": [
+            "public static Bitmap decodeResource(Resources res, int id, Options opts)"
+          ],
+          "graphics/java/android/graphics/Bitmap.java": [
+            "public void recycle()"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/DexLoom/game_dex_runner.h",
+          "Runtime/Bitmap/agr_bitmap.cpp",
+          "Runtime/Bitmap/agr_bitmap.h",
+          "Runtime/Bitmap/host_skia_config.h",
+          "Runtime/Bitmap/host/SkImageDecoder_libjpeg_host.cpp",
+          "Runtime/Bitmap/host/SkImageDecoder_libgif_host.cpp"
+        ],
+        "symbols": [
+          "canvas_draw_bitmap",
+          "agr_bitmap_draw",
+          "agr_bitmap_decode",
+          "guest_bitmap_attach",
+          "bitmap_recycle"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d",
+          "Runtime/DexLoom/game_dex_runner.h": "064ed96663f6b47f11edc9c74b2b0322f5dc1b3c1b08ea92a2665d0b9bf30c48",
+          "Runtime/Bitmap/agr_bitmap.cpp": "43ab7c39bf2a0773bf4e3fe7da2672189e9d2f2d8ae3189b86d2b1dc72b8993a",
+          "Runtime/Bitmap/agr_bitmap.h": "1762dac4ba053ef9bde49dd972d081d1edf86cf22b9ffcf4ed505737a6d80ade",
+          "Runtime/Bitmap/host_skia_config.h": "17e0c2e73003e49c748bd4a700307006b1be61c9ff4f33f9962406127579ae9c",
+          "Runtime/Bitmap/host/SkImageDecoder_libjpeg_host.cpp": "355144e0333a2fbb65e5a30667d43d4578c1b115466443f6c79085aee82be0ad",
+          "Runtime/Bitmap/host/SkImageDecoder_libgif_host.cpp": "bb75991c6a05f58a606142678c30436748d686effdd8f05275c1aab48a956c85"
+        }
+      },
+      "verified_at_commit": "0d5126f",
+      "status": "VALID",
+      "dependencies": [
+        "framework.view.surface_holder_canvas",
+        "framework.graphics.bitmap_decode_resource"
+      ],
+      "observable_semantics": [
+        "drawBitmap(Bitmap,float,float,null) writes source pixels into the locked content Surface",
+        "float left/top use floor placement on the pixel grid",
+        "destination clipping prevents out-of-bounds writes",
+        "a fully off-screen draw writes nothing",
+        "pixel_change_count increases when destination bytes change",
+        "unlockCanvasAndPost after a mutating draw posts the changed buffer",
+        "the Canvas target remains the SurfaceView child content Surface"
+      ],
+      "internal_invariants": [
+        "guest Bitmap identity maps to host agr_bitmap without a host pointer in a guest field",
+        "drawBitmap requires an active canvas lock on the current generation",
+        "host surface mutex is not held across guest bytecode",
+        "workers are joined before guest bitmaps and content pixels are freed"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "agr_bitmap_draw performs clipped SRC_OVER instead of linking full SkCanvas for this overload",
+        "destination backing remains host RGBA8888 while guest-visible format stays RGB_565"
+      ],
+      "known_deviations": [
+        "non-null Paint attributes are not applied",
+        "createScaledBitmap is framework.graphics.bitmap_create_scaled. save, clipRect, and restore are framework.graphics.canvas_state_clip. drawRGB and non-null Paint attributes are not this contract",
+        "UIKit/Metal presentation is not this contract"
+      ],
+      "contracts": [
+        "framework.canvas_bitmap.host",
+        "frozen-bubble.first_content_frame"
+      ]
+    },
+    {
+      "id": "dalvik.vm.vtable",
+      "subsystem": "Dalvik virtual dispatch",
+      "android_api": "API19 invoke-virtual vtable slot identity",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/dalvik",
+        "paths": [
+          "vm/oo/Class.cpp"
+        ],
+        "symbols": [
+          "createVtable",
+          "methodIndex"
+        ],
+        "source_hashes": {
+          "vm/oo/Class.cpp": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5"
+        },
+        "source_urls": {
+          "vm/oo/Class.cpp": "https://raw.githubusercontent.com/android/platform_dalvik/android-4.4.4_r2/vm/oo/Class.cpp"
+        },
+        "symbols_by_path": {
+          "vm/oo/Class.cpp": [
+            "static bool createVtable(ClassObject* clazz)",
+            "memcpy(clazz->vtable, clazz->super->vtable,",
+            "localMeth->methodIndex = (u2) si;",
+            "/* not an override, add to end */"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/VM/dx_vm.c",
+          "Runtime/DexLoom/VM/dx_interpreter.c"
+        ],
+        "symbols": [
+          "dx_class_build_vtable",
+          "handle_invoke",
+          "dx_vm_trace_virtual_invoke"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/VM/dx_vm.c": "32763075d020aeafab1a066bdffd6816b0f25061ac62466fcd11a3ea7d866216",
+          "Runtime/DexLoom/VM/dx_interpreter.c": "9a53e5d9cf038efb2871c43af09b581a57f8898935669ad9f7703b0d5638048b"
+        }
+      },
+      "verified_at_commit": "5fec6a8777cf4e06f627b699cb19b75947ce4421",
+      "status": "VALID",
+      "dependencies": [],
+      "observable_semantics": [
+        "invoke-virtual selects the method at the resolved method's vtable index in the receiver class",
+        "a superclass virtual slot keeps the same index in every subclass",
+        "an override with the same name and shorty replaces that inherited slot",
+        "a new virtual method is appended after the inherited slots"
+      ],
+      "internal_invariants": [
+        "framework HLE classes and guest DEX classes use one flattened slot index",
+        "interface methods are not class-vtable slots",
+        "the VDISPATCH trace does not select the callee"
+      ],
+      "execution_placement": "HOST-DEX",
+      "host_substitutions": [
+        "AGR builds the flattened table in dx_class_build_vtable instead of dvmLinearAlloc"
+      ],
+      "known_deviations": [
+        "the HLE virtual set is the methods AGR registered, not the full libcore method list",
+        "override access and final-method checks are not enforced"
+      ],
+      "contracts": [
+        "dex.vtable_inheritance"
+      ]
+    },
+    {
+      "id": "dalvik.thread.start",
+      "subsystem": "java.lang.Thread.start",
+      "android_api": "API19 Thread.start execution ownership",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/libcore",
+        "paths": [
+          "libdvm/src/main/java/java/lang/Thread.java"
+        ],
+        "symbols": [
+          "Thread.start",
+          "VMThread.create"
+        ],
+        "source_hashes": {
+          "libdvm/src/main/java/java/lang/Thread.java": "56e6392397459d4f7beab86ae5a6d481f77f7f4223aa15c918b724074fc87090"
+        },
+        "source_urls": {
+          "libdvm/src/main/java/java/lang/Thread.java": "https://android.googlesource.com/platform/libcore/+/android-4.4.4_r2/libdvm/src/main/java/java/lang/Thread.java?format=TEXT"
+        },
+        "symbols_by_path": {
+          "libdvm/src/main/java/java/lang/Thread.java": [
+            "public synchronized void start()",
+            "VMThread.create(this, stackSize);",
+            "public void run()"
+          ]
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/VM/dx_vm.c",
+          "Runtime/DexLoom/VM/dx_exec.c",
+          "Runtime/DexLoom/VM/dx_interpreter.c"
+        ],
+        "symbols": [
+          "native_thread_start",
+          "java_worker_main",
+          "dx_vm_execute_method"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/VM/dx_vm.c": "32763075d020aeafab1a066bdffd6816b0f25061ac62466fcd11a3ea7d866216",
+          "Runtime/DexLoom/VM/dx_exec.c": "ed287b0b7172da6e5f4a98d0f8036a05c86e9b157d31343fc796344aa6a313f2",
+          "Runtime/DexLoom/VM/dx_interpreter.c": "9a53e5d9cf038efb2871c43af09b581a57f8898935669ad9f7703b0d5638048b"
+        }
+      },
+      "verified_at_commit": "5fec6a8777cf4e06f627b699cb19b75947ce4421",
+      "status": "VALID",
+      "dependencies": [
+        "dalvik.vm.vtable",
+        "dalvik.vm.monitor"
+      ],
+      "observable_semantics": [
+        "Thread.start returns to the caller after the receiver's run has been started on another thread",
+        "run proceeds independently of the caller",
+        "the caller of start is not inside run",
+        "a second start throws IllegalThreadStateException",
+        "isAlive is true from the start attempt until the receiver terminates",
+        "join waits while the receiver is starting or running",
+        "sleep suspends only the current Java execution context"
+      ],
+      "internal_invariants": [
+        "one guest pthread remains one Darwin pthread",
+        "a Java Thread execution context is not a guest pthread",
+        "two host threads do not write one current_frame",
+        "the shared VM lock is not held across Thread.run",
+        "start failure leaves the receiver terminated and throws"
+      ],
+      "execution_placement": "HOST-DEX",
+      "host_substitutions": [
+        "native_thread_start creates one joinable host worker and returns",
+        "run executes on that worker's DxExecutionContext",
+        "the Dalvik scheduler and VMThread object are not copied"
+      ],
+      "known_deviations": [
+        "Object.wait, notify, and notifyAll are not implemented",
+        "currentTimeMillis uses the host wall clock in milliseconds; exact API19 clock adjustments remain unverified",
+        "each top-level context uses the 10000 ms process watchdog",
+        "the HLE Thread vtable is the methods AGR registered, not the full libcore list"
+      ],
+      "contracts": [
+        "dex.thread_start"
+      ]
+    },
+    {
+      "id": "dalvik.vm.monitor",
+      "subsystem": "Dalvik object monitor",
+      "android_api": "API19 monitor-enter and monitor-exit",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/dalvik",
+        "paths": [
+          "vm/Sync.cpp"
+        ],
+        "symbols": [
+          "dvmLockObject",
+          "dvmUnlockObject"
+        ],
+        "source_hashes": {
+          "vm/Sync.cpp": "8b100ff9e5037fcc8c7bfbbc152a924b31e22e925b03847765d007db42f91b5d"
+        },
+        "source_urls": {
+          "vm/Sync.cpp": "https://raw.githubusercontent.com/android/platform_dalvik/android-4.4.4_r2/vm/Sync.cpp"
+        },
+        "symbols_by_path": {
+          "vm/Sync.cpp": [
+            "void dvmLockObject(Thread* self, Object *obj)",
+            "bool dvmUnlockObject(Thread* self, Object *obj)"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/VM/dx_exec.c",
+          "Runtime/DexLoom/VM/dx_interpreter.c"
+        ],
+        "symbols": [
+          "dx_vm_monitor_enter",
+          "dx_vm_monitor_exit"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/VM/dx_exec.c": "ed287b0b7172da6e5f4a98d0f8036a05c86e9b157d31343fc796344aa6a313f2",
+          "Runtime/DexLoom/VM/dx_interpreter.c": "9a53e5d9cf038efb2871c43af09b581a57f8898935669ad9f7703b0d5638048b"
+        }
+      },
+      "verified_at_commit": "5fec6a8777cf4e06f627b699cb19b75947ce4421",
+      "status": "VALID",
+      "dependencies": [],
+      "observable_semantics": [
+        "monitor-enter on a non-null object excludes other execution contexts until monitor-exit",
+        "the owning execution context may enter the same monitor again",
+        "monitor-exit by a non-owner throws IllegalMonitorStateException",
+        "monitor-enter of null throws NullPointerException"
+      ],
+      "internal_invariants": [
+        "the monitor owner is a DxExecutionContext, not a guest pthread",
+        "the VM shared lock is not held while waiting for a monitor"
+      ],
+      "execution_placement": "HOST-DEX",
+      "host_substitutions": [
+        "AGR uses a per-object mutex and condition variable instead of Dalvik thin locks"
+      ],
+      "known_deviations": [
+        "Object.wait, notify, and notifyAll are not implemented"
+      ],
+      "contracts": [
+        "dex.monitor"
+      ]
+    },
+    {
+      "id": "framework.graphics.bitmap_create_scaled",
+      "subsystem": "Bitmap.createScaledBitmap",
+      "android_api": "API19 Bitmap.createScaledBitmap(Bitmap, int, int, boolean)",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "graphics/java/android/graphics/Bitmap.java"
+        ],
+        "symbols": [
+          "Bitmap.createScaledBitmap"
+        ],
+        "source_hashes": {
+          "graphics/java/android/graphics/Bitmap.java": "9437b6a00eb5cb4d12487d2244e6e2aa41ed62bd80295d9876646d8c25bb41c9"
+        },
+        "source_urls": {
+          "graphics/java/android/graphics/Bitmap.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/graphics/java/android/graphics/Bitmap.java"
+        },
+        "symbols_by_path": {
+          "graphics/java/android/graphics/Bitmap.java": [
+            "public static Bitmap createScaledBitmap(Bitmap src, int dstWidth, int dstHeight,",
+            "throw new IllegalArgumentException(\"width must be > 0\");"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/Bitmap/agr_bitmap.cpp",
+          "Runtime/Bitmap/agr_bitmap.h"
+        ],
+        "symbols": [
+          "bitmap_create_scaled",
+          "agr_bitmap_scale"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d",
+          "Runtime/Bitmap/agr_bitmap.cpp": "43ab7c39bf2a0773bf4e3fe7da2672189e9d2f2d8ae3189b86d2b1dc72b8993a",
+          "Runtime/Bitmap/agr_bitmap.h": "1762dac4ba053ef9bde49dd972d081d1edf86cf22b9ffcf4ed505737a6d80ade"
+        }
+      },
+      "verified_at_commit": "0d5126f",
+      "status": "VALID",
+      "dependencies": [
+        "framework.graphics.bitmap_decode_resource"
+      ],
+      "observable_semantics": [
+        "createScaledBitmap(src, dstWidth, dstHeight, filter) returns a Bitmap of the requested positive size",
+        "equal source and destination dimensions return the same Bitmap object",
+        "a different positive size returns a new Bitmap with scaled host pixels",
+        "filter true samples bilinearly and filter false samples nearest",
+        "a null source throws NullPointerException",
+        "a non-positive width or height throws IllegalArgumentException",
+        "a recycled source throws IllegalStateException",
+        "getWidth and getHeight of the result are the scaled dimensions"
+      ],
+      "internal_invariants": [
+        "the scaled buffer uses the same host RGBA / SkPMColor byte order as agr_bitmap_decode",
+        "the source Bitmap pixels are not mutated",
+        "the new Bitmap is not the SurfaceView content Surface"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "agr_bitmap_scale samples the decoded ARGB_8888 buffer directly",
+        "Matrix, Canvas, and Paint are not allocated for this call"
+      ],
+      "known_deviations": [
+        "output size is the requested dstWidth and dstHeight; API19 rounds the mapped rectangle and can differ by one pixel",
+        "same-size returns the source even if a future mutable Bitmap would be copied",
+        "density is not copied"
+      ],
+      "contracts": [
+        "frozen-bubble.bitmap_decode_resource"
+      ]
+    },
+    {
+      "id": "java.util.random.math.gameplay",
+      "subsystem": "API19 Random, Math, and wall clock gameplay primitives",
+      "android_api": "Random constructors/setSeed/nextInt/nextDouble, Math.sin/cos, System.currentTimeMillis",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/libcore",
+        "paths": [
+          "luni/src/main/java/java/util/Random.java",
+          "luni/src/main/native/java_lang_Math.cpp",
+          "luni/src/main/java/java/lang/System.java"
+        ],
+        "symbols": ["Random.setSeed", "Random.next", "Random.nextInt", "Math_sin", "Math_cos", "System.currentTimeMillis"],
+        "source_hashes": {
+          "luni/src/main/java/java/util/Random.java": "afea1f8fcb6dd07d21ff8d7625b2fb2b8c8ea40e21eb1f4c36260965dcf62323",
+          "luni/src/main/native/java_lang_Math.cpp": "2f6ef8b9e7507e3aecae6c68b8dc234e8e2212754806ec4fd4bfe20ad449e7ae",
+          "luni/src/main/java/java/lang/System.java": "e33317ed3f12f510c35884a42df4feb34c38854e3aeb096e3ff8138e61f9e80a"
+        },
+        "source_urls": {
+          "luni/src/main/java/java/util/Random.java": "https://android.googlesource.com/platform/libcore/+/android-4.4.4_r2/luni/src/main/java/java/util/Random.java?format=TEXT",
+          "luni/src/main/native/java_lang_Math.cpp": "https://android.googlesource.com/platform/libcore/+/android-4.4.4_r2/luni/src/main/native/java_lang_Math.cpp?format=TEXT",
+          "luni/src/main/java/java/lang/System.java": "https://android.googlesource.com/platform/libcore/+/android-4.4.4_r2/luni/src/main/java/java/lang/System.java?format=TEXT"
+        }
+      },
+      "agr": {
+        "paths": ["Runtime/DexLoom/VM/dx_vm.c"],
+        "symbols": ["native_random_init", "native_random_next_int", "native_random_next_double", "native_math_sin", "native_math_cos", "native_system_currenttimemillis"],
+        "source_hashes": {"Runtime/DexLoom/VM/dx_vm.c": "32763075d020aeafab1a066bdffd6816b0f25061ac62466fcd11a3ea7d866216"}
+      },
+      "verified_at_commit": "c67b5f20add10b1659826db4e90cfb413e798a2b",
+      "status": "VALID",
+      "dependencies": ["dalvik.vm.monitor"],
+      "observable_semantics": [
+        "Random maintains a per-object 48-bit LCG seed and clears its Gaussian cache on setSeed",
+        "nextInt and bounded nextInt use the API19 bit and rejection algorithms",
+        "Math.sin and Math.cos map double arguments through native libm",
+        "System.currentTimeMillis returns wall-clock milliseconds rather than a constant"
+      ],
+      "internal_invariants": ["Random instance seed remains in the guest DEX object heap", "Random.next updates seed while holding its object monitor"],
+      "execution_placement": "HOST-DEX",
+      "host_substitutions": ["C guest-object-field adapter for libcore Random", "host libm for API19 native Math", "host wall clock for System.currentTimeMillis"],
+      "known_deviations": ["Random nextGaussian and other Random methods remain outside this focused contract", "exact API19 wall-clock adjustment behavior is not yet differential-tested"],
+      "contracts": ["dex.random_math_gameplay"]
+    },
+    {
+      "id": "java.lang.character.for_digit",
+      "subsystem": "java.lang.Character.forDigit",
+      "android_api": "API19 Character.forDigit(int, int)",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/libcore",
+        "paths": [
+          "luni/src/main/java/java/lang/Character.java"
+        ],
+        "symbols": [
+          "Character.forDigit"
+        ],
+        "source_hashes": {
+          "luni/src/main/java/java/lang/Character.java": "d33c2c814071f304f8a6f5331614489d9f337f296be5d027d2812baacd15ab38"
+        },
+        "source_urls": {
+          "luni/src/main/java/java/lang/Character.java": "https://android.googlesource.com/platform/libcore/+/android-4.4.4_r2/luni/src/main/java/java/lang/Character.java?format=TEXT"
+        },
+        "symbols_by_path": {
+          "luni/src/main/java/java/lang/Character.java": [
+            "public static final int MIN_RADIX = 2;",
+            "public static final int MAX_RADIX = 36;",
+            "public static char forDigit(int digit, int radix)"
+          ]
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/VM/dx_vm.c"
+        ],
+        "symbols": [
+          "native_character_fordigit"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/VM/dx_vm.c": "32763075d020aeafab1a066bdffd6816b0f25061ac62466fcd11a3ea7d866216"
+        }
+      },
+      "verified_at_commit": "5fec6a8777cf4e06f627b699cb19b75947ce4421",
+      "status": "VALID",
+      "dependencies": [],
+      "observable_semantics": [
+        "forDigit returns 0 when radix is below 2 or above 36",
+        "forDigit returns 0 when digit is negative or digit is not smaller than radix",
+        "a digit below 10 returns the character '0' plus that digit",
+        "a digit of 10 or more returns the character 'a' plus digit minus 10"
+      ],
+      "internal_invariants": [
+        "the return is a Dalvik char stored in an int register",
+        "the method is static and does not allocate a Character object"
+      ],
+      "execution_placement": "HOST-DEX",
+      "host_substitutions": [
+        "native_character_fordigit evaluates the API19 range checks directly"
+      ],
+      "known_deviations": [
+        "other Character methods and the MIN_RADIX and MAX_RADIX fields are not registered"
+      ],
+      "contracts": [
+        "dex.character_fordigit"
+      ]
+    },
+    {
+      "id": "framework.graphics.canvas_state_clip",
+      "subsystem": "Canvas save, clipRect REPLACE, and restore",
+      "android_api": "API19 Canvas.save(int), clipRect(float,float,float,float,Region.Op), restore",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "graphics/java/android/graphics/Canvas.java",
+          "core/jni/android/graphics/Canvas.cpp",
+          "graphics/java/android/graphics/Region.java"
+        ],
+        "symbols": [
+          "Canvas.save",
+          "Canvas.clipRect",
+          "Canvas.restore",
+          "Region.Op.REPLACE"
+        ],
+        "source_hashes": {
+          "graphics/java/android/graphics/Canvas.java": "a933fccbec67fb0eaff9d527974c0ba16f652453aed8d991aa14429623b4514c",
+          "core/jni/android/graphics/Canvas.cpp": "3f9f621a284282fcfa8cb018181a0a4bc30781beb80607d9d4e842ecb2abb2e2",
+          "graphics/java/android/graphics/Region.java": "3a6b1e879823f392147a03bf8992d8269fd139cfb5d37739609806b0d95c4a3e"
+        },
+        "source_urls": {
+          "graphics/java/android/graphics/Canvas.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/graphics/java/android/graphics/Canvas.java",
+          "core/jni/android/graphics/Canvas.cpp": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/core/jni/android/graphics/Canvas.cpp",
+          "graphics/java/android/graphics/Region.java": "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-4.4.4_r2/graphics/java/android/graphics/Region.java"
+        },
+        "symbols_by_path": {
+          "graphics/java/android/graphics/Canvas.java": [
+            "public static final int CLIP_SAVE_FLAG = 0x02;",
+            "public native int save(int saveFlags);",
+            "public boolean clipRect(float left, float top, float right, float bottom, Region.Op op)",
+            "public native void restore();"
+          ],
+          "core/jni/android/graphics/Canvas.cpp": [
+            "return canvas->clipRect(rect, (SkRegion::Op)op);",
+            "if (canvas->getSaveCount() <= 1)"
+          ],
+          "graphics/java/android/graphics/Region.java": [
+            "REPLACE(5);",
+            "public final int nativeInt;"
+          ]
+        },
+        "source_encoding": "raw"
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/DexLoom/game_dex_runner.h",
+          "Runtime/DexLoom/VM/dx_interpreter.c"
+        ],
+        "symbols": [
+          "canvas_save",
+          "canvas_clip_rect",
+          "canvas_restore",
+          "publish_region_op_replace",
+          "find_static_field_idx"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d",
+          "Runtime/DexLoom/game_dex_runner.h": "064ed96663f6b47f11edc9c74b2b0322f5dc1b3c1b08ea92a2665d0b9bf30c48",
+          "Runtime/DexLoom/VM/dx_interpreter.c": "9a53e5d9cf038efb2871c43af09b581a57f8898935669ad9f7703b0d5638048b"
+        }
+      },
+      "verified_at_commit": "0d5126f",
+      "status": "VALID",
+      "dependencies": [
+        "framework.view.surface_holder_canvas",
+        "framework.graphics.canvas_bitmap"
+      ],
+      "observable_semantics": [
+        "save(int) returns the save count before the push",
+        "CLIP_SAVE_FLAG copies the current clip into the new stack level",
+        "a save without CLIP_SAVE_FLAG shares the clip, so restore does not roll it back",
+        "clipRect REPLACE sets the current clip to the rounded rectangle constrained to the device",
+        "clipRect returns true only when the resulting clip is non-empty",
+        "a null Region.Op throws NullPointerException and does not modify the clip",
+        "restore pops the previous state and restores a clip saved with CLIP_SAVE_FLAG",
+        "drawBitmap consumes the current clip",
+        "the next lockCanvas starts from the full surface and an empty save stack"
+      ],
+      "internal_invariants": [
+        "the clip stack is bound to the locked content Surface and its generation",
+        "a generation mismatch does not read or write the previous backing",
+        "the stack depth above the base lock is bounded at 16",
+        "Region.Op.REPLACE is the framework static Landroid/graphics/Region$Op;.REPLACE with nativeInt 5"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "the clip stack is stored on the content Surface and passed to agr_bitmap_draw",
+        "float edges use SkFloatToIntRound, matching SkRect::round",
+        "REPLACE intersects the rounded rectangle with the device so an off-device rect is empty"
+      ],
+      "known_deviations": [
+        "there is no Matrix stack",
+        "save without arguments, saveLayer, saveLayerAlpha, and restoreToCount are not registered",
+        "Region.Op values other than REPLACE throw UnsupportedOperationException and do not modify the clip",
+        "a non-empty rectangle that lies entirely outside the device returns false; API19 Skia can retain that region and return true",
+        "UIKit/Metal presentation is not this contract"
+      ],
+      "contracts": [
+        "framework.canvas_state_clip.host"
+      ]
+    },
+    {
+      "id": "java.util.vector.core",
+      "subsystem": "java.util.Vector core",
+      "android_api": "API19 Vector(), addElement, removeElement, size, elementAt",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/libcore",
+        "paths": [
+          "luni/src/main/java/java/util/Vector.java"
+        ],
+        "symbols": [
+          "Vector.Vector",
+          "Vector.addElement",
+          "Vector.removeElement",
+          "Vector.size",
+          "Vector.elementAt"
+        ],
+        "source_hashes": {
+          "luni/src/main/java/java/util/Vector.java": "ac5c467e1db5b76f2e3fb86d156c40b664df79e10965fbe809daa2b89d533e05"
+        },
+        "source_urls": {
+          "luni/src/main/java/java/util/Vector.java": "https://android.googlesource.com/platform/libcore/+/android-4.4.4_r2/luni/src/main/java/java/util/Vector.java?format=TEXT"
+        },
+        "symbols_by_path": {
+          "luni/src/main/java/java/util/Vector.java": [
+            "private static final int DEFAULT_SIZE = 10;",
+            "public Vector()",
+            "public synchronized void addElement(E object)",
+            "public synchronized boolean removeElement(Object object)",
+            "public synchronized int size()",
+            "public synchronized E elementAt(int location)"
+          ]
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/VM/dx_vm.c",
+          "Runtime/DexLoom/VM/dx_interpreter.c"
+        ],
+        "symbols": [
+          "native_vector_init",
+          "native_vector_add_element",
+          "native_vector_remove_element",
+          "native_vector_size",
+          "native_vector_element_at"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/VM/dx_vm.c": "32763075d020aeafab1a066bdffd6816b0f25061ac62466fcd11a3ea7d866216",
+          "Runtime/DexLoom/VM/dx_interpreter.c": "9a53e5d9cf038efb2871c43af09b581a57f8898935669ad9f7703b0d5638048b"
+        }
+      },
+      "verified_at_commit": "5fec6a8777cf4e06f627b699cb19b75947ce4421",
+      "status": "VALID",
+      "dependencies": [],
+      "observable_semantics": [
+        "Vector() starts empty with elementData length 10 and capacityIncrement 0",
+        "size returns the current element count",
+        "addElement appends the same guest object",
+        "elementAt returns that stored object",
+        "an index outside 0 inclusive through size exclusive throws ArrayIndexOutOfBoundsException",
+        "removeElement removes the first equals match, shifts the tail, and returns true, or returns false when the object is absent"
+      ],
+      "internal_invariants": [
+        "elementData is a guest object array reachable from the Vector field",
+        "size, addElement, elementAt, and removeElement enter the Vector monitor",
+        "Vector() does not enter the monitor",
+        "growth with capacityIncrement 0 doubles the array"
+      ],
+      "execution_placement": "HOST-DEX",
+      "host_substitutions": [
+        "native Vector methods update one guest elementData array",
+        "synchronization uses dx_vm_monitor_enter and dx_vm_monitor_exit"
+      ],
+      "known_deviations": [
+        "Enumeration, iterator, insertElementAt, setElementAt, removeElementAt, and the other Vector methods are not registered",
+        "a negative elementAt index throws ArrayIndexOutOfBoundsException with the helper length and index message",
+        "equals uses reference identity unless the key class defines an equals method other than Object.equals",
+        "modCount is not stored"
+      ],
+      "contracts": [
+        "dex.vector_core"
+      ]
+    },
+    {
+      "id": "android.app.activity.request_window_feature",
+      "subsystem": "Activity.requestWindowFeature",
+      "android_api": "API19 Activity.requestWindowFeature(int) / PhoneWindow.requestFeature(int)",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "core/java/android/app/Activity.java",
+          "core/java/android/view/Window.java",
+          "policy/src/com/android/internal/policy/impl/PhoneWindow.java"
+        ],
+        "symbols": [
+          "Activity.requestWindowFeature",
+          "Window.requestFeature",
+          "Window.FEATURE_NO_TITLE",
+          "PhoneWindow.requestFeature"
+        ],
+        "source_hashes": {
+          "core/java/android/app/Activity.java": "03874ea13f230ff2b92bc6d99522011f63a3076e9101655aa0249addc590cc4b",
+          "core/java/android/view/Window.java": "783bcaa039a6e9303bf73989a93ee15a318279b2baf961a36a6d3cf090f1d499",
+          "policy/src/com/android/internal/policy/impl/PhoneWindow.java": "72e77092b444c068108763a7bc5a059b0097a620e2249d70274e9443af0851cf"
+        },
+        "source_urls": {
+          "core/java/android/app/Activity.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/app/Activity.java?format=TEXT",
+          "core/java/android/view/Window.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/view/Window.java?format=TEXT",
+          "policy/src/com/android/internal/policy/impl/PhoneWindow.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/policy/src/com/android/internal/policy/impl/PhoneWindow.java?format=TEXT"
+        },
+        "symbols_by_path": {
+          "core/java/android/app/Activity.java": [
+            "public final boolean requestWindowFeature(int featureId)"
+          ],
+          "core/java/android/view/Window.java": [
+            "public static final int FEATURE_NO_TITLE = 1;",
+            "public static final int FEATURE_CUSTOM_TITLE = 7;",
+            "public static final int FEATURE_ACTION_BAR = 8;",
+            "public static final int FEATURE_ACTION_MODE_OVERLAY = 10;",
+            "protected static final int DEFAULT_FEATURES = (1 << FEATURE_OPTIONS_PANEL) |",
+            "public boolean requestFeature(int featureId)",
+            "protected void removeFeature(int featureId)"
+          ],
+          "policy/src/com/android/internal/policy/impl/PhoneWindow.java": [
+            "public boolean requestFeature(int featureId)",
+            "throw new AndroidRuntimeException(\"requestFeature() must be called before adding content\");",
+            "throw new AndroidRuntimeException(\"You cannot combine custom titles with other title features\");",
+            "return false; // Ignore. No title dominates.",
+            "removeFeature(FEATURE_ACTION_BAR);"
+          ]
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/DexLoom/game_dex_runner.h",
+          "Tests/DexLoom/request-window-feature-host.c"
+        ],
+        "symbols": [
+          "activity_request_window_feature",
+          "window_request_feature"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d",
+          "Runtime/DexLoom/game_dex_runner.h": "064ed96663f6b47f11edc9c74b2b0322f5dc1b3c1b08ea92a2665d0b9bf30c48",
+          "Tests/DexLoom/request-window-feature-host.c": "a638466bad011f2761fbc6b9ae842e30f1ec6bd9eba9a84f5aad5556356cc2f7"
+        }
+      },
+      "verified_at_commit": "0d5126f",
+      "status": "VALID",
+      "dependencies": [],
+      "observable_semantics": [
+        "Activity.requestWindowFeature forwards to the Window object stored on that Activity",
+        "PhoneWindow.requestFeature(FEATURE_NO_TITLE) before content returns true and sets the FEATURE_NO_TITLE bit",
+        "default features are (1<<FEATURE_OPTIONS_PANEL)|(1<<FEATURE_CONTEXT_MENU), so the stored value becomes 67",
+        "a repeat request before content returns true and keeps that bit",
+        "FEATURE_NO_TITLE already set and FEATURE_ACTION_BAR requested returns false and does not set ACTION_BAR",
+        "FEATURE_ACTION_BAR already set and FEATURE_NO_TITLE requested clears ACTION_BAR, sets NO_TITLE, and returns true",
+        "FEATURE_CUSTOM_TITLE already set and FEATURE_NO_TITLE requested throws AndroidRuntimeException and does not set NO_TITLE",
+        "after content is installed, requestFeature throws AndroidRuntimeException and does not change the bits"
+      ],
+      "internal_invariants": [
+        "feature bits live on the Activity window fields _features and _localFeatures",
+        "mContainer is null, so local features stay equal to features",
+        "content installation sets _contentParent on that same window",
+        "setContentView continues to use that window"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "PhoneWindow.requestFeature runs as Window.requestFeature on the existing Landroid/view/Window; object",
+        "the AGR host window is already title-less, so FEATURE_NO_TITLE does not generate a title view"
+      ],
+      "known_deviations": [
+        "the guest class remains Landroid/view/Window; rather than PhoneWindow",
+        "no title view, ActionBar, menu, fullscreen, orientation, or input policy is implemented",
+        "theme windowNoTitle is not parsed",
+        "features other than the FEATURE_NO_TITLE conflict rules in PhoneWindow.requestFeature are not given visual behavior",
+        "guest-visible FEATURE_NO_TITLE state is preserved; downstream visible effect is currently absorbed by the AGR host window shape"
+      ],
+      "contracts": [
+        "framework.request_window_feature.host"
+      ]
+    },
+    {
+      "id": "android.app.activity.get_intent",
+      "subsystem": "Activity.getIntent",
+      "android_api": "API19 Activity.getIntent()",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base",
+        "paths": [
+          "core/java/android/app/Activity.java"
+        ],
+        "symbols": [
+          "Activity.getIntent"
+        ],
+        "source_hashes": {
+          "core/java/android/app/Activity.java": "03874ea13f230ff2b92bc6d99522011f63a3076e9101655aa0249addc590cc4b"
+        },
+        "source_urls": {
+          "core/java/android/app/Activity.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/app/Activity.java?format=TEXT"
+        },
+        "symbols_by_path": {
+          "core/java/android/app/Activity.java": [
+            "public Intent getIntent()",
+            "return mIntent;"
+          ]
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/game_dex_runner.c",
+          "Runtime/DexLoom/game_dex_runner.h",
+          "Tests/DexLoom/get-intent-host.c"
+        ],
+        "symbols": [
+          "activity_get_intent"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d",
+          "Runtime/DexLoom/game_dex_runner.h": "064ed96663f6b47f11edc9c74b2b0322f5dc1b3c1b08ea92a2665d0b9bf30c48",
+          "Tests/DexLoom/get-intent-host.c": "1a3e668a7b4f457e33f24eebc41a620fff661de4866e1ed33fb6c48c936ff4ce"
+        }
+      },
+      "verified_at_commit": "0d5126f",
+      "status": "VALID",
+      "dependencies": [],
+      "observable_semantics": [
+        "Activity.getIntent returns the current mIntent reference",
+        "the returned object is the Intent identity stored on the Activity",
+        "a repeated call returns that same identity",
+        "a null mIntent returns null and does not allocate an Intent",
+        "the getter does not modify the Intent, the Activity, or the launch lifecycle"
+      ],
+      "internal_invariants": [
+        "AGR stores the launch Intent in Activity._intent before onCreate",
+        "getIntent reads _intent and does not consult a separate cached return value"
+      ],
+      "execution_placement": "HOST-DEX_HLE",
+      "host_substitutions": [
+        "Activity.mIntent is the existing guest field _intent",
+        "no new Intent is constructed by the getter"
+      ],
+      "known_deviations": [
+        "Activity.setIntent is not implemented",
+        "Intent.getExtras, Bundle, and editor-level Intent fields are not implemented",
+        "getIntent() is an Activity launch-state accessor and returns the current mIntent identity without copying the object"
+      ],
+      "contracts": [
+        "framework.activity_get_intent.host"
+      ]
+    },
+    {
+      "id": "framework.view.surface_post_display",
+      "subsystem": "Surface/host display boundary",
+      "android_api": "Surface.unlockCanvasAndPost to display consumer",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/frameworks/base + platform/frameworks/native kitkat-release",
+        "paths": [
+          "core/java/android/view/Surface.java",
+          "core/jni/android_view_Surface.cpp",
+          "libs/gui/Surface.cpp"
+        ],
+        "symbols": [
+          "Surface.unlockCanvasAndPost",
+          "nativeUnlockCanvasAndPost",
+          "Surface::unlockAndPost",
+          "Surface::queueBuffer"
+        ],
+        "symbols_by_path": {
+          "core/java/android/view/Surface.java": [
+            "unlockCanvasAndPost"
+          ],
+          "core/jni/android_view_Surface.cpp": [
+            "nativeUnlockCanvasAndPost",
+            "unlockAndPost"
+          ],
+          "libs/gui/Surface.cpp": [
+            "Surface::unlockAndPost",
+            "queueBuffer"
+          ]
+        },
+        "source_hashes": {
+          "core/java/android/view/Surface.java": "a7f42c04f8968368171552f147488407a4f1561c7065008a233fe392548294e2",
+          "core/jni/android_view_Surface.cpp": "df6982ecea2e57e8e5eecc2f63f932306b51c8a8197136d7006996f0d454f3dd",
+          "libs/gui/Surface.cpp": "25c84c3116fc0d5d89a425429aafb42923b2df74ce61527977b92938b85b0975"
+        },
+        "source_urls": {
+          "core/java/android/view/Surface.java": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/java/android/view/Surface.java?format=TEXT",
+          "core/jni/android_view_Surface.cpp": "https://android.googlesource.com/platform/frameworks/base/+/android-4.4.4_r2/core/jni/android_view_Surface.cpp?format=TEXT",
+          "libs/gui/Surface.cpp": "https://android.googlesource.com/platform/frameworks/native/+/kitkat-release/libs/gui/Surface.cpp?format=TEXT"
+        }
+      },
+      "agr": {
+        "paths": [
+          "Runtime/DexLoom/game_dex_runner.c",
+          "App/main.m"
+        ],
+        "symbols": [
+          "surface_holder_unlock_canvas",
+          "agr_dex_game_copy_posted_surface",
+          "presentPhysicalPostedSurfaces"
+        ],
+        "source_hashes": {
+          "Runtime/DexLoom/game_dex_runner.c": "ef555f1f57a27d8b6bb78425007126b3231d3176b491ff9fffd8ee568ae52e4d",
+          "App/main.m": "4a95e06fd863b78903e7647eee0ee4f75cfae805464ee3857a61ce7186728b30"
+        }
+      },
+      "verified_at_commit": "93a0299",
+      "status": "VALID",
+      "dependencies": [
+        "framework.view.surface_holder_canvas"
+      ],
+      "observable_semantics": [
+        "unlockCanvasAndPost publishes a complete child-Surface buffer",
+        "consumer reads a completed generation without racing the next Canvas writer",
+        "iOS endpoint submits it on the UIKit owner thread"
+      ],
+      "internal_invariants": [
+        "Surface identity/generation/post count distinguish producer state",
+        "forensic observation does not destroy a healthy producer"
+      ],
+      "execution_placement": "HOST-DEX_HLE_TO_HOST_ADAPTER",
+      "host_substitutions": [
+        "UIKit CALayer replaces Binder/SurfaceFlinger/device endpoint"
+      ],
+      "known_deviations": [
+        "KitKat native Surface source is pinned by content SHA from kitkat-release; this does not claim a separately tagged android-4.4.4_r2 native tree",
+        "full BufferQueue multi-surface composition is outside current first-visible-frame contract"
+      ],
+      "contracts": [
+        "surface canvas host consumer snapshot",
+        "1080x2340 real APK post and Simulator screen capture",
+        "exact-candidate iPhone physical visible frame"
+      ]
+    },
+    {
+      "id": "java.lang.string.byte_constructor",
+      "subsystem": "java.lang.String(byte[])",
+      "android_api": "API19 String(byte[]) default-charset constructor",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/libcore",
+        "paths": ["libdvm/src/main/java/java/lang/String.java"],
+        "symbols": ["String(byte[])", "String(byte[], int, int)"],
+        "source_hashes": {
+          "libdvm/src/main/java/java/lang/String.java": "2e0da5edeafb72560624f7014bc6e4161bbd0d83844e7ed6fd47dc2301b662a8"
+        },
+        "source_urls": {
+          "libdvm/src/main/java/java/lang/String.java": "https://android.googlesource.com/platform/libcore/+/android-4.4.4_r2/libdvm/src/main/java/java/lang/String.java?format=TEXT"
+        },
+        "symbols_by_path": {
+          "libdvm/src/main/java/java/lang/String.java": ["public String(byte[] data)", "this(data, 0, data.length);"]
+        }
+      },
+      "agr": {
+        "paths": ["Runtime/DexLoom/VM/dx_vm.c"],
+        "symbols": ["native_string_init_bytes"],
+        "source_hashes": {
+          "Runtime/DexLoom/VM/dx_vm.c": "32763075d020aeafab1a066bdffd6816b0f25061ac62466fcd11a3ea7d866216"
+        }
+      },
+      "verified_at_commit": "a1953cb36c53dcaa307afc33e489cedbbee8e8aa",
+      "status": "VALID",
+      "dependencies": [],
+      "observable_semantics": ["String(byte[]) decodes through the platform default charset into the allocated receiver"],
+      "internal_invariants": ["The String receiver remains a distinct Java object"],
+      "execution_placement": "HOST-DEX",
+      "host_substitutions": ["C byte-array to host DEX String conversion"],
+      "known_deviations": ["Focused contract covers valid UTF-8; malformed sequences and full UTF-16 indexing remain outside this implementation"],
+      "contracts": ["asset-input-stream-host String(byte[]) receiver assignment"]
     }
   ]
 }

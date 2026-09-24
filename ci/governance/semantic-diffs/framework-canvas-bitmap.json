@@ -1,0 +1,90 @@
+{
+  "schema_version": 2,
+  "classification": "AGR_INTERNAL_BUG",
+  "subsystem": "Canvas.drawBitmap content Surface blit",
+  "observed_discontinuity": "Unchanged Frozen Bubble Sprite.drawImage invokes Canvas.drawBitmap(Bitmap,float,float,Paint) with a null Paint on a Canvas already locked to the valid SurfaceView content Surface. API19 draws Bitmap pixels into that Canvas. AGR had no drawBitmap implementation and BitmapFactory.decodeResource stored no pixels, so the invoke was skipped and posted buffers stayed unchanged.",
+  "upstream": {
+    "map_entry": "framework.graphics.canvas_bitmap",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "graphics/java/android/graphics/Canvas.java",
+      "core/jni/android/graphics/Canvas.cpp",
+      "graphics/java/android/graphics/BitmapFactory.java",
+      "graphics/java/android/graphics/Bitmap.java"
+    ],
+    "call_path": [
+      "Canvas.drawBitmap(Bitmap,float,float,Paint)",
+      "native_drawBitmap",
+      "SkCanvas::drawBitmap",
+      "BitmapFactory.decodeResource"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "decodeResource returns a Bitmap with host pixel backing for PNG, JPEG, and GIF resources.",
+    "inJustDecodeBounds still returns null after writing outWidth and outHeight and does not decode pixels.",
+    "Canvas.drawBitmap(Bitmap,float,float,null) writes source pixels into the locked content Surface backing.",
+    "Float left/top placement uses the integer pixel grid (floor).",
+    "Destination clipping prevents out-of-bounds writes.",
+    "A fully off-screen draw writes nothing.",
+    "Null Paint uses default SRC_OVER with source alpha.",
+    "unlockCanvasAndPost after a mutating draw posts a changed buffer.",
+    "Bitmap.recycle releases host pixels."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/game_dex_runner.c",
+      "Runtime/DexLoom/game_dex_runner.h",
+      "Runtime/Bitmap/agr_bitmap.cpp",
+      "Runtime/Bitmap/agr_bitmap.h"
+    ],
+    "call_path": [
+      "bitmap_decode_resource",
+      "canvas_draw_bitmap",
+      "agr_bitmap_decode",
+      "agr_bitmap_draw"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "AGR had no Canvas.drawBitmap and decodeResource allocated no pixels.",
+      "relevance": "Frozen Bubble Sprite.drawImage pc 13 is invoke-virtual method_idx 31 Canvas.drawBitmap shorty VLFFL with Paint register set to null by const/4. Without pixels and without drawBitmap the posted content buffer stayed zero."
+    },
+    {
+      "id": "D2",
+      "description": "Destination content Surface stays guest-visible format RGB_565 (4) with host RGBA8888 / SkPMColor backing (R,G,B,A byte order, row bytes width*4).",
+      "relevance": "agr_bitmap_draw writes the same host layout. Guest code does not read Canvas row bytes. surfaceChanged still publishes format 4."
+    }
+  ],
+  "earliest_evidenced_divergence": "Frozen Bubble Sprite.drawImage invokes Canvas.drawBitmap(Bitmap,float,float,null) on a Canvas locked to the SurfaceView content Surface. API19 draws Bitmap pixels into that Canvas. AGR skipped the unresolved invoke and posted an unchanged buffer.",
+  "causal_status": "CONTRACT_CONFIRMED",
+  "evidence_level": "CONTRACT_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "android-4.4.4_r2 Canvas.drawBitmap(Bitmap,float,float,Paint) calls native_drawBitmap. With matching densities and a null Paint, SkCanvasGlue draws with canvas->drawBitmap(*bitmap, left, top, paint). BitmapFactory.decodeResource opens the raw resource and decodes pixels. SurfaceHolder.lockCanvas returns a Canvas bound to the holder Surface."
+    },
+    {
+      "type": "RUNTIME",
+      "artifact": "Local unchanged Frozen Bubble probe. Harness did not call lockCanvas, drawBitmap, or unlockCanvasAndPost. After three host frames and 300ms: surfaceCreated 1, surfaceChanged 1, content Surface distinct from root, format 4, 320x480, generation 1, row bytes 1280. lock_count 6, unlock_count 6, post_count 6, draw_bitmap_count 12, pixel_change_count 1006080, lock owner execution context 1. Buffer hash after post 1cf638b96fa0056 differs from the empty-buffer hash 4f2d9f141eeda325. First resource drawn is res/drawable/background.jpg (JPEG 640x480). Paint argument is null. LOCK_ACQUIRED, BITMAP_PIXELS_READY, DRAW_MUTATED, POSTED, and FIRST_CONTENT_FRAME all hold. Visual completeness is partial: Character.forDigit is the next unresolved public API. This is not a Simulator run."
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Linux agr-bitmap-draw contract PASS: 2x2 PNG channel layout RGBA, draw at (1,1), off-screen no corruption, partial clip, JPEG background.jpg and GIF bubble_1.gif decode to ARGB_8888. Surface canvas lock/post contract still PASS. Protected traversal, vtable, and Java Thread contracts still PASS with the bitmap-linked runner."
+    }
+  ],
+  "remaining_uncertainty": [
+    "The Frozen Bubble probe is a local Linux host run. It is not Simulator discovery and not a device run.",
+    "Character.forDigit is now a separate host contract. Level-number drawing was not re-probed. Visual completeness stays partial.",
+    "Semi-transparent PNG samples from Skia may store unpremultiplied-looking blue with a premultiplied alpha type tag. Opaque JPEG paths force opaque SRC copy.",
+    "Discovery 35711118165 confirmed the UIKit content frame after createScaledBitmap. Canvas save, clipRect, and restore are framework.graphics.canvas_state_clip. Non-null Paint attributes are not this contract.",
+    "UIKit/Metal presentation of the posted content buffer is not this contract."
+  ],
+  "next_action": "The Linux null-Paint blit contract stands. Discovery 35711118165 confirms the UIKit content frame. The current clip consumed by drawBitmap is framework.graphics.canvas_state_clip. Do not claim visual completeness.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "DEX Bitmap objects map to host agr_bitmap instances by object identity. Pixels are KitKat SkImageDecoder output in SkPMColor RGBA byte order. Index8 GIF frames expand to ARGB_8888 without linking SkCanvas. JPEG fill_below_level writes white rows without SkCanvas. agr_bitmap_draw performs clipped SRC_OVER onto the locked content Surface backing. The host surface mutex is not held across the blit beyond the existing canvas_locked ownership."
+}

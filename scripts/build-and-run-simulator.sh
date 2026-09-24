@@ -39,6 +39,54 @@ fi
 if [[ "$MODE" == "build" || "$MODE" == "all" ]]; then
   SDK="$(xcrun --sdk iphonesimulator --show-sdk-path)"
   TARGET="arm64-apple-ios15.0-simulator"
+  BRANCH="$(git -C "$ROOT" rev-parse --abbrev-ref HEAD)"
+  COMMIT="$(git -C "$ROOT" rev-parse HEAD)"
+  TREE="$(git -C "$ROOT" rev-parse 'HEAD^{tree}')"
+  XCODE_VERSION="$(xcodebuild -version 2>/dev/null | tr '\n' ' ' || true)"
+  SDK_VERSION="$(xcrun --sdk iphonesimulator --show-sdk-version 2>/dev/null || true)"
+  mkdir -p "$BUILD/obj"
+  cat > "$BUILD/obj/agr_build_identity.h" <<EOF
+#define AGR_BUILD_COMMIT "$COMMIT"
+#define AGR_BUILD_TREE "$TREE"
+#define AGR_BUILD_BRANCH "$BRANCH"
+EOF
+  if [[ ! -s "$ARTIFACTS/ci-environment.json" ]]; then
+    python3 "$ROOT/ci/select-simulator-runtime.py" "$ARTIFACTS/ci-environment.json" > "$ARTIFACTS/simulator-device.txt"
+  fi
+  python3 - "$BUILD/build-environment.json" "$ARTIFACTS/ci-environment.json" "$BRANCH" "$COMMIT" "$TREE" "$XCODE_VERSION" "$SDK_VERSION" <<'PY'
+import json, sys
+out_path, sim_path, branch, commit, tree, xcode, sdk = sys.argv[1:]
+try:
+    sim = json.load(open(sim_path, encoding="utf-8"))
+except (OSError, json.JSONDecodeError):
+    sim = {}
+data = {
+    "schema": "agr.iphonesimulator-build-environment.v1",
+    "branch": branch, "commit": commit, "tree": tree,
+    "xcode": xcode, "sdk_name": "iphonesimulator", "sdk_version": sdk,
+    "deployment_target": "15.0",
+    "angle_version": "v2.1.28252",
+    "angle_identity": "59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be",
+    "angle_sha256": "59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be",
+    "interpreter_build_identity": "touchhle-arm-interpreter:aarch64-apple-ios-sim:release",
+    "physical_target_os": sim.get("physical_target_os"),
+    "simulator_runtime_requested": sim.get("simulator_runtime_requested"),
+    "simulator_runtime_actual": sim.get("simulator_runtime_actual"),
+    "simulator_runtime_version": sim.get("simulator_runtime_version"),
+    "simulator_runtime_build": sim.get("simulator_runtime_build"),
+    "os_version_parity": sim.get("os_version_parity"),
+    "simulator_device_type": sim.get("simulator_device_type_actual"),
+    "runner_image": sim.get("runner_image"),
+    "runner_image_version": sim.get("runner_image_version"),
+    "runner_arch": sim.get("runner_arch"),
+    "macos_version": sim.get("macos_version"),
+    "xcode_build": sim.get("xcode_build"),
+    "apk_sha256": sim.get("apk_sha256"),
+}
+with open(out_path, "w", encoding="utf-8") as f:
+    json.dump(data, f, indent=2)
+    f.write("\n")
+PY
   ANGLE_ROOT="$BUILD/angle-v2.1.28252"
   test -d "$ANGLE_ROOT/dist/EGL.xcframework"
   rustup target list --installed | grep -qx aarch64-apple-ios-sim
@@ -88,17 +136,24 @@ for SOURCE in "$PNG"/*.c "$ZLIB"/*.c; do
   case "$(basename "$SOURCE")" in example.c|pngtest.c) continue;; esac
   OBJECT="$BUILD/obj/codec-$(basename "$SOURCE" .c).o"; clang "${COMMON[@]}" -w -UMACOS -I"$PNG" -I"$ZLIB" -c "$SOURCE" -o "$OBJECT"; PNG_OBJECTS+=("$OBJECT")
 done
-SKIA_INCLUDES=(-I"$BITMAP" -I"$SKIA/include/core" -I"$SKIA/include/images" -I"$SKIA/include/utils" -I"$SKIA/src/core" -I"$SKIA/src/image" -I"$SKIA/src/images" -I"$SKIA/src/utils" -I"$PNG" -I"$ZLIB")
-SKIA_SOURCES=("$BITMAP/agr_bitmap.cpp" "$SKIA/src/core/Sk64.cpp" "$SKIA/src/core/SkBitmap.cpp" "$SKIA/src/core/SkColor.cpp" "$SKIA/src/core/SkColorTable.cpp" "$SKIA/src/core/SkDebug.cpp" "$SKIA/src/core/SkDither.cpp" "$SKIA/src/core/SkError.cpp" "$SKIA/src/core/SkFlattenable.cpp" "$SKIA/src/core/SkImageInfo.cpp" "$SKIA/src/core/SkMallocPixelRef.cpp" "$SKIA/src/core/SkMath.cpp" "$SKIA/src/core/SkPixelRef.cpp" "$SKIA/src/core/SkStream.cpp" "$SKIA/src/core/SkString.cpp" "$SKIA/src/core/SkTLS.cpp" "$SKIA/src/core/SkTSearch.cpp" "$SKIA/src/core/SkUnPreMultiply.cpp" "$SKIA/src/core/SkUtils.cpp" "$SKIA/src/images/SkImageDecoder.cpp" "$SKIA/src/images/SkImageDecoder_FactoryDefault.cpp" "$SKIA/src/images/SkImageDecoder_FactoryRegistrar.cpp" "$SKIA/src/images/SkImageDecoder_libpng.cpp" "$SKIA/src/images/SkImageEncoder.cpp" "$SKIA/src/images/SkImageEncoder_Factory.cpp" "$SKIA/src/images/SkScaledBitmapSampler.cpp" "$SKIA/src/ports/SkDebug_stdio.cpp" "$SKIA/src/ports/SkMemory_malloc.cpp" "$SKIA/src/ports/SkThread_pthread.cpp" "$SKIA/src/ports/SkTLS_pthread.cpp")
+bash "$ROOT/scripts/build-ios-image-codecs.sh" "$BUILD/image-codecs" "$SDK" "$TARGET"
+JPEG_INC="$(cat "$BUILD/image-codecs/jpeg-include")"
+GIF_INC="$(cat "$BUILD/image-codecs/gif-include")"
+CODEC_OBJECTS=()
+while IFS= read -r codec_object; do CODEC_OBJECTS+=("$codec_object"); done < "$BUILD/image-codecs/objects.list"
+SKIA_INCLUDES=(-I"$BITMAP" -I"$SKIA/include/core" -I"$SKIA/include/images" -I"$SKIA/include/utils" -I"$SKIA/src/core" -I"$SKIA/src/image" -I"$SKIA/src/images" -I"$SKIA/src/utils" -I"$PNG" -I"$ZLIB" -I"$JPEG_INC" -I"$GIF_INC")
+SKIA_SOURCES=("$BITMAP/agr_bitmap.cpp" "$SKIA/src/core/Sk64.cpp" "$SKIA/src/core/SkBitmap.cpp" "$SKIA/src/core/SkColor.cpp" "$SKIA/src/core/SkColorTable.cpp" "$SKIA/src/core/SkDebug.cpp" "$SKIA/src/core/SkDither.cpp" "$SKIA/src/core/SkError.cpp" "$SKIA/src/core/SkFlattenable.cpp" "$SKIA/src/core/SkImageInfo.cpp" "$SKIA/src/core/SkMallocPixelRef.cpp" "$SKIA/src/core/SkMath.cpp" "$SKIA/src/core/SkPixelRef.cpp" "$SKIA/src/core/SkStream.cpp" "$SKIA/src/core/SkString.cpp" "$SKIA/src/core/SkTLS.cpp" "$SKIA/src/core/SkTSearch.cpp" "$SKIA/src/core/SkUnPreMultiply.cpp" "$SKIA/src/core/SkUtils.cpp" "$SKIA/src/images/SkImageDecoder.cpp" "$SKIA/src/images/SkImageDecoder_FactoryDefault.cpp" "$SKIA/src/images/SkImageDecoder_FactoryRegistrar.cpp" "$SKIA/src/images/SkImageDecoder_libpng.cpp" "$SKIA/src/images/SkJpegUtility.cpp" "$BITMAP/host/SkImageDecoder_libjpeg_host.cpp" "$BITMAP/host/SkImageDecoder_libgif_host.cpp" "$SKIA/src/images/SkImageEncoder.cpp" "$SKIA/src/images/SkImageEncoder_Factory.cpp" "$SKIA/src/images/SkScaledBitmapSampler.cpp" "$SKIA/src/opts/SkUtils_opts_none.cpp" "$SKIA/src/ports/SkDebug_stdio.cpp" "$SKIA/src/ports/SkMemory_malloc.cpp" "$SKIA/src/ports/SkThread_pthread.cpp" "$SKIA/src/ports/SkTLS_pthread.cpp")
 INDEX=0; SKIA_OBJECTS=()
 for SOURCE in "${SKIA_SOURCES[@]}"; do OBJECT="$BUILD/obj/skia-$INDEX.o"; clang++ "${COMMON[@]}" -std=gnu++98 -nostdinc++ -I"$AFW/compat/include" -w -fno-exceptions -fno-rtti -ffunction-sections -fdata-sections -include "$BITMAP/host_skia_config.h" "${SKIA_INCLUDES[@]}" -c "$SOURCE" -o "$OBJECT"; SKIA_OBJECTS+=("$OBJECT"); INDEX=$((INDEX+1)); done
 DEX="$ROOT/Runtime/DexLoom"; DEX_INCLUDE="$DEX/Include"
-DEX_SOURCES=("$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" "$DEX/VM/dx_verifier.c" "$DEX/APK/dx_apk.c" "$DEX/APK/dx_manifest.c" "$DEX/AndroidMini/framework_viewroot.c" "$DEX/poc_host.c" "$DEX/game_dex_runner.c")
+DEX_SOURCES=("$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" "$DEX/VM/dx_exec.c" "$DEX/VM/dx_verifier.c" "$DEX/APK/dx_apk.c" "$DEX/APK/dx_manifest.c" "$DEX/APK/dx_resources.c" "$DEX/AndroidMini/framework_viewroot.c" "$DEX/poc_host.c" "$DEX/game_dex_runner.c")
 INDEX=0; DEX_OBJECTS=()
-for SOURCE in "${DEX_SOURCES[@]}"; do OBJECT="$BUILD/obj/dex-$INDEX.o"; clang "${COMMON[@]}" -std=gnu11 -DGL_GLES_PROTOTYPES=1 -I"$ROOT/Vendor/ANGLE-Headers" -I"$DEX_INCLUDE" -c "$SOURCE" -o "$OBJECT"; DEX_OBJECTS+=("$OBJECT"); INDEX=$((INDEX+1)); done
-clang "${COMMON[@]}" -fobjc-arc -I"$ROOT/Vendor/ANGLE-Headers" -I"$ROOT/Runtime/NativeCore" -I"$ROOT/Runtime/GuestRuntime" -I"$DEX" -I"$DEX_INCLUDE" -I"$AFW" -I"$BITMAP" -c "$ROOT/App/main.m" -o "$BUILD/obj/main.o"
-clang++ "${COMMON[@]}" -Wl,-dead_strip -Wl,-rpath,@executable_path/Frameworks -F"$ANGLE_FRAMEWORKS" "$BUILD/obj/main.o" "$BUILD/obj/agr_runtime.o" "$BUILD/obj/agr_bionic_allocator.o" "$BUILD/obj/agr_guest_vma.o" "$BUILD/obj/agr_host_services_darwin.o" "$BUILD/obj/agr_bionic_thread_attr.o" "$BUILD/obj/agr_futex_host.o" "$BUILD/obj/agr_bionic_sync.o" "$BUILD/obj/agr_bionic_tls.o" "$BUILD/obj/agr_bionic_errno_host.o" "$BUILD/obj/agr_bionic_thread_lifecycle.o" "$BUILD/obj/agr_bionic_mmap.o" "$BUILD/obj/agr_aosp_linker.o" "$BUILD/obj/agr_aosp_dynamic.o" "$BUILD/obj/agr_ehabi.o" "$BUILD/obj/agr_contracts.o" "$BUILD/obj/agr_guest_runtime.o" "$BUILD/obj/agr_thread_context.o" "$BUILD/obj/agr_service_dispatch.o" "$BUILD/obj/agr_jni_methods.o" "${DEX_OBJECTS[@]}" "${AFW_OBJECTS[@]}" "${SKIA_OBJECTS[@]}" "${PNG_OBJECTS[@]}" "$ROOT/Runtime/ArmInterpreter/target/aarch64-apple-ios-sim/release/libtouchhle_arm_interpreter.a" -lz -framework UIKit -framework Foundation -framework CoreGraphics -framework Security -framework Metal -framework QuartzCore -framework libEGL -framework libGLESv2 -o "$APP/AGRSimulator"
+for SOURCE in "${DEX_SOURCES[@]}"; do OBJECT="$BUILD/obj/dex-$INDEX.o"; clang "${COMMON[@]}" -std=gnu11 -DGL_GLES_PROTOTYPES=1 -I"$ROOT/Vendor/ANGLE-Headers" -I"$DEX_INCLUDE" -I"$BITMAP" -c "$SOURCE" -o "$OBJECT"; DEX_OBJECTS+=("$OBJECT"); INDEX=$((INDEX+1)); done
+clang "${COMMON[@]}" -fobjc-arc -I"$BUILD/obj" -I"$ROOT/Vendor/ANGLE-Headers" -I"$ROOT/Runtime/NativeCore" -I"$ROOT/Runtime/GuestRuntime" -I"$DEX" -I"$DEX_INCLUDE" -I"$AFW" -I"$BITMAP" -c "$ROOT/App/main.m" -o "$BUILD/obj/main.o"
+clang "${COMMON[@]}" -std=gnu11 -I"$DEX" -c "$ROOT/App/agr_physical_trace.c" -o "$BUILD/obj/agr_physical_trace.o"
+clang++ "${COMMON[@]}" -Wl,-dead_strip -Wl,-rpath,@executable_path/Frameworks -F"$ANGLE_FRAMEWORKS" "$BUILD/obj/main.o" "$BUILD/obj/agr_physical_trace.o" "$BUILD/obj/agr_runtime.o" "$BUILD/obj/agr_bionic_allocator.o" "$BUILD/obj/agr_guest_vma.o" "$BUILD/obj/agr_host_services_darwin.o" "$BUILD/obj/agr_bionic_thread_attr.o" "$BUILD/obj/agr_futex_host.o" "$BUILD/obj/agr_bionic_sync.o" "$BUILD/obj/agr_bionic_tls.o" "$BUILD/obj/agr_bionic_errno_host.o" "$BUILD/obj/agr_bionic_thread_lifecycle.o" "$BUILD/obj/agr_bionic_mmap.o" "$BUILD/obj/agr_aosp_linker.o" "$BUILD/obj/agr_aosp_dynamic.o" "$BUILD/obj/agr_ehabi.o" "$BUILD/obj/agr_contracts.o" "$BUILD/obj/agr_guest_runtime.o" "$BUILD/obj/agr_thread_context.o" "$BUILD/obj/agr_service_dispatch.o" "$BUILD/obj/agr_jni_methods.o" "${DEX_OBJECTS[@]}" "${AFW_OBJECTS[@]}" "${SKIA_OBJECTS[@]}" "${PNG_OBJECTS[@]}" "${CODEC_OBJECTS[@]}" "$ROOT/Runtime/ArmInterpreter/target/aarch64-apple-ios-sim/release/libtouchhle_arm_interpreter.a" -lz -framework UIKit -framework Foundation -framework CoreGraphics -framework Security -framework Metal -framework QuartzCore -framework libEGL -framework libGLESv2 -o "$APP/AGRSimulator"
 cp "$ROOT/App/Info.plist" "$APP/Info.plist"; cp "$ROOT/App/Resources/"* "$APP/"
+cp "$BUILD/build-environment.json" "$APP/agr-build-environment.json"
 cp "$ROOT/Tests/Trajectories/kungfoo-barracuda.json" "$APP/"
 mkdir -p "$APP/Frameworks"; ditto "$ANGLE_FRAMEWORKS/libEGL.framework" "$APP/Frameworks/libEGL.framework"; ditto "$ANGLE_FRAMEWORKS/libGLESv2.framework" "$APP/Frameworks/libGLESv2.framework"
 codesign --force --sign - "$APP/Frameworks/libEGL.framework"; codesign --force --sign - "$APP/Frameworks/libGLESv2.framework"; codesign --force --sign - "$APP"
@@ -107,8 +162,47 @@ fi
 [[ "$MODE" == "build" ]] && exit 0
 
 if [[ "$MODE" == "boot" || "$MODE" == "all" ]]; then
-DEVICE="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["udid"] for xs in d.values() for x in xs if x["name"]=="iPhone 16 Pro"))')"
-printf '%s\n' "$DEVICE" > "$ARTIFACTS/simulator-device.txt"
+mkdir -p "$ARTIFACTS"
+if ! python3 "$ROOT/ci/select-simulator-runtime.py" "$ARTIFACTS/ci-environment.json" > "$ARTIFACTS/simulator-device.txt"; then
+  echo "SIMULATOR_RUNTIME_UNAVAILABLE" >&2
+  exit 3
+fi
+if grep -q '^SIMULATOR_RUNTIME_UNAVAILABLE' "$ARTIFACTS/ci-environment.json" 2>/dev/null; then
+  echo "SIMULATOR_RUNTIME_UNAVAILABLE" >&2
+  exit 3
+fi
+if grep -q '^CREATE$' "$ARTIFACTS/simulator-device.txt"; then
+  RUNTIME_ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["simulator_runtime_actual"])' "$ARTIFACTS/ci-environment.json")"
+  DEVICE_TYPE="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["simulator_device_type_actual"])' "$ARTIFACTS/ci-environment.json")"
+  DEVICE_NAME="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["simulator_device_type_name"])' "$ARTIFACTS/ci-environment.json")"
+  DEVICE="$(xcrun simctl create "$DEVICE_NAME" "$DEVICE_TYPE" "$RUNTIME_ID")"
+  python3 -c 'import json,sys; p=sys.argv[1]; d=json.load(open(p)); d["udid"]=sys.argv[2]; d["create_device"]=False; json.dump(d, open(p,"w"), indent=2)' "$ARTIFACTS/ci-environment.json" "$DEVICE"
+  printf '%s\n' "$DEVICE" > "$ARTIFACTS/simulator-device.txt"
+fi
+DEVICE="$(tr -d '[:space:]' < "$ARTIFACTS/simulator-device.txt")"
+test -n "$DEVICE"
+{
+  python3 - "$ARTIFACTS/ci-environment.json" <<'PY'
+import json, os, subprocess, sys
+path = sys.argv[1]
+data = json.load(open(path))
+def out(*args):
+    try:
+        return subprocess.check_output(args, text=True).strip()
+    except Exception:
+        return ""
+xcode = out("xcodebuild", "-version")
+lines = xcode.splitlines()
+data["runner_os"] = os.uname().sysname
+data["runner_arch"] = os.uname().machine
+data["xcode_version"] = lines[0] if lines else ""
+data["xcode_build"] = lines[1] if len(lines) > 1 else ""
+data["sdk_name"] = "iphonesimulator"
+data["sdk_version"] = out("xcrun", "--sdk", "iphonesimulator", "--show-sdk-version")
+json.dump(data, open(path, "w"), indent=2)
+print()
+PY
+}
 phase "boot Simulator $DEVICE"
 phase "simulator boot requested $DEVICE"
 xcrun simctl boot "$DEVICE" 2>/dev/null || true; xcrun simctl bootstatus "$DEVICE" -b
@@ -252,6 +346,45 @@ if [[ "${FRAMEWORK_FIRST_TRAVERSAL_DISCOVERY:-0}" == "1" ]]; then
   cp "$RESULT_PATH" "$ARTIFACTS/framework-first-traversal.json"
   python3 ci/framework-first-traversal-contract.py "$RESULT_PATH"
   phase "Framework first traversal evidence captured"
+  exit 0
+fi
+if [[ "${FRAMEWORK_TRAVERSAL_DISPATCH_DISCOVERY:-0}" == "1" ]]; then
+  ARTIFACTS="$BUILD/artifacts"; mkdir -p "$ARTIFACTS"
+  DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
+  RESULT_PATH="$DATA/Documents/framework-traversal-dispatch.json"
+  rm -f "$RESULT_PATH"
+  phase "launch normal-path traversal dispatch probe"
+  # simctl does not inherit the runner environment. SIMCTL_CHILD_ is the
+  # prefix that reaches getenv inside the Simulator process.
+  if [[ -n "${AGR_HOST_DISPLAY_WIDTH:-}" && -n "${AGR_HOST_DISPLAY_HEIGHT:-}" ]]; then
+    SIMCTL_CHILD_AGR_HOST_DISPLAY_WIDTH="$AGR_HOST_DISPLAY_WIDTH" \
+    SIMCTL_CHILD_AGR_HOST_DISPLAY_HEIGHT="$AGR_HOST_DISPLAY_HEIGHT" \
+      xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --framework-traversal-dispatch-discovery
+  else
+    xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args --framework-traversal-dispatch-discovery
+  fi
+  for _ in $(seq 1 90); do [[ -s "$RESULT_PATH" ]] && break; sleep 1; done
+  xcrun simctl spawn "$DEVICE" log show --last 3m --style compact \
+    --predicate 'process == "AGRSimulator"' > "$ARTIFACTS/framework-traversal-dispatch.log" 2>&1 || true
+  if [[ ! -s "$RESULT_PATH" ]]; then
+    echo "Framework traversal dispatch result was not produced within 90 seconds" >&2
+    exit 124
+  fi
+  cp "$RESULT_PATH" "$ARTIFACTS/framework-traversal-dispatch.json"
+  python3 - "$ARTIFACTS/framework-traversal-dispatch.json" "$ARTIFACTS/ci-environment.json" <<'PY'
+import json, sys
+report_path, ci_path = sys.argv[1], sys.argv[2]
+report = json.load(open(report_path))
+try:
+    ci = json.load(open(ci_path))
+except FileNotFoundError:
+    ci = {}
+report["ci_environment"] = ci
+json.dump(report, open(report_path, "w"), indent=2)
+print()
+PY
+  python3 ci/framework-traversal-dispatch-contract.py "$ARTIFACTS/framework-traversal-dispatch.json"
+  phase "Framework traversal dispatch evidence captured"
   exit 0
 fi
 if [[ "${ZERO_INPUT_AB:-0}" == "1" ]]; then

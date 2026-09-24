@@ -243,6 +243,7 @@ const char *dx_dex_get_field_name(const DxDexFile *dex, uint32_t field_idx);
 
 // Get field's class descriptor
 const char *dx_dex_get_field_class(const DxDexFile *dex, uint32_t field_idx);
+const char *dx_dex_get_field_type(const DxDexFile *dex, uint32_t field_idx);
 
 // Get method parameter count
 uint32_t dx_dex_get_method_param_count(const DxDexFile *dex, uint32_t method_idx);

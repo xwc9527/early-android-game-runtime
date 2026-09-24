@@ -1,0 +1,70 @@
+{
+  "schema_version": 2,
+  "classification": "AGR_INTERNAL_BUG",
+  "subsystem": "Activity.getIntent",
+  "observed_discontinuity": "FrozenBubble.onCreate pc 11 invokes Activity.getIntent(). The game VM had no method, so the invoke was skipped and the following null check treated the result as null. The same run still reached the game thread and PenguinSprite.paint, so the missing call is the first unresolved public invoke directly observed on execution context 0 and not a proven blocker.",
+  "upstream": {
+    "map_entry": "android.app.activity.get_intent",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "core/java/android/app/Activity.java"
+    ],
+    "call_path": [
+      "Activity.getIntent",
+      "Activity.mIntent"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "Activity.getIntent returns the current mIntent reference.",
+    "The returned object is the same Intent identity stored on the Activity.",
+    "A repeated call returns that same identity.",
+    "When mIntent is null, getIntent returns null and does not allocate an Intent.",
+    "The getter does not modify the Intent, the Activity, or the launch lifecycle."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/game_dex_runner.c",
+      "Runtime/DexLoom/game_dex_runner.h"
+    ],
+    "call_path": [
+      "activity_get_intent",
+      "Activity._intent"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "Activity.getIntent was unresolved, so FrozenBubble.onCreate did not receive the launch Intent already stored in _intent.",
+      "relevance": "The call is the Activity launch-state accessor. Skipping it made the following getExtras check see a null Intent. It did not stop later painting."
+    }
+  ],
+  "earliest_evidenced_divergence": "API19 Activity.getIntent returns the current mIntent identity. AGR skipped the invoke.",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "android-4.4.4_r2 Activity.java public Intent getIntent() returns mIntent. setIntent assigns mIntent and is not part of this encounter."
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Linux get-intent-host PASS. After start, Activity _intent is the launch Intent. getIntent returns that object. A second call returns the same object and does not allocate. Replacing _intent with a distinct Intent B makes getIntent return B while the original launch Intent stays in place. Clearing _intent makes getIntent return null without allocating. The window identity and feature state stay unchanged."
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "Local unchanged Frozen Bubble APK org.jfedor.frozenbubble_8 sha256 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569, Linux host 320x480. Pre-fix witness: UNRESOLVED exec=0 caller=Lorg/jfedor/frozenbubble/FrozenBubble;.onCreate pc=11 opcode=0x6e method_idx=171 resolved=0 class=Lorg/jfedor/frozenbubble/FrozenBubble; method=getIntent shorty=L. Post-fix witness: INTENT get a=94599168163488 field=94599168165184 ret=94599168165184 launch=94599168165184 e=0 p=11 o=110 m=171; who Lorg/jfedor/frozenbubble/FrozenBubble;.onCreate. Activity identity 94599168163488 is the FrozenBubble receiver. The _intent field, the returned Intent, and the launch Intent are one object, 94599168165184. The invoke is absent from the unresolved trace and throws no exception. requestWindowFeature still records features 65 to 67 on window 94599168165344, and setContentView keeps that window. after_wait: created 1, changed 1, lock 6, unlock 6, post 6, draw_bitmap 24, pixels 1007400, hash_before 4f2d9f141eeda325, hash_after 2c8b0c801b36f84a, format 4, 320x480. GameScreen.paint size returns 1 and elementAt returns the PenguinSprite, then PenguinSprite.paint runs. Character.forDigit count is 6. Canvas save/clipRect(REPLACE)/restore still runs. UNRESOLVED_CONTEXT exec=0 count=14 dropped=0. UNRESOLVED_CONTEXT exec=1 count=0 dropped=0. Execution context 1 recorded zero unresolved invokes during this observation window. The first unresolved public invoke directly observed on execution context 0 is now FrozenBubble.onCreate pc 17 opcode 0x6e method_idx 15 Intent.getExtras shorty L on the same Intent. That is the next candidate encounter, not a proven blocker. This probe is not a Simulator run. getIntent() is an Activity launch-state accessor and returns the current mIntent identity without copying the object."
+    }
+  ],
+  "remaining_uncertainty": [
+    "Intent.getExtras, Bundle, and the editor-level path were not executed as resolved calls. getExtras is now the first unresolved public invoke directly observed on execution context 0.",
+    "Activity.setIntent is present in API19 and is not implemented here.",
+    "The two unresolved traces are separate context-owned buffers and are not a cross-thread program order."
+  ],
+  "next_action": "Activity.getIntent stays REAL_GAME_CONFIRMED for this encounter. Do not treat it as a proven blocker. Do not implement Intent.getExtras or Activity.setIntent from this result. Do not rerun the content-frame Simulator.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "The existing Activity _intent field holds the launch Intent installed before onCreate. getIntent reads that field and returns the same guest object."
+}

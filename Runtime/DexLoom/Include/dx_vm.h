@@ -3,6 +3,7 @@
 
 #include "dx_types.h"
 #include "dx_dex.h"
+#include <pthread.h>
 
 // Release vs Debug build configuration
 #ifdef NDEBUG
@@ -71,6 +72,7 @@ struct DxClass {
     uint32_t         dex_class_def_idx;
     uint8_t          source_dex_idx;    // index into vm->dex_files[] this class came from
     bool             is_framework;      // true for built-in Android stubs
+    bool             owns_descriptor;   // true when descriptor was allocated for a synthetic type
 };
 
 // Inline cache for monomorphic/polymorphic call site optimization
@@ -150,11 +152,15 @@ struct DxObject {
     DxValue   *fields;          // array[klass->instance_field_count]
     uint32_t   ref_count;
     uint32_t   heap_idx;        // index in VM heap
+    /* Monotonic host-only identity for passive forensic correlation. */
+    uint64_t   diagnostic_identity;
     bool       gc_mark;         // used by mark-sweep GC
     uint8_t    generation;      // 0 = young, 1 = old (generational GC)
 
     // For View objects: link to UI node
     DxUINode  *ui_node;
+    /* Lazily created Java monitor. Owned by the VM, not by guest code. */
+    void      *monitor;
 
     // String storage (owned; freed with object)
     char      *string_data;     // UTF-8 C string for java.lang.String / StringBuilder buf
@@ -186,10 +192,68 @@ typedef struct {
     uint32_t classes_loaded;
     uint32_t exceptions_thrown;
     bool     telemetry_enabled;
+    /* Bounded guest-method witness. Armed only while a diagnostic window
+       is open. Zero means the publisher stays silent. */
+    int      draw_witness_armed;
+    uint32_t draw_witness_remaining;
 } DxTelemetry;
 
 #define DX_DIAGNOSTIC_METHOD_TEXT 160
 #define DX_DIAGNOSTIC_METHOD_EVENTS 64
+
+/* One guest invoke observed while telemetry is enabled. */
+typedef struct DxInvokeWitness {
+    uint32_t exec_id;
+    uint32_t pc;
+    uint32_t method_idx;
+    uint8_t opcode;
+    uint8_t resolved;
+    uint8_t argc;
+    uint8_t ret_tag;
+    uint8_t has_ret;
+    int32_t arg_i[8];
+    uint8_t arg_tag[8];
+    int32_t ret_i;
+    uint64_t recv_obj;
+    char caller[96];
+    char target_class[96];
+    char target_name[48];
+    char shorty[24];
+    char recv_class[80];
+} DxInvokeWitness;
+
+#define DX_VECTOR_TRACE_CAP 512
+#define DX_VECTOR_TALLY_CAP 24
+
+/* One Ljava/util/Vector; invoke. Telemetry only. */
+typedef struct DxVectorTrace {
+    uint32_t exec_id;
+    uint32_t pc;
+    uint32_t method_idx;
+    uint8_t opcode;
+    uint8_t resolved;
+    uint8_t argc;
+    uint8_t has_ret;
+    uint8_t ret_tag;
+    char caller[80];
+    char method[32];
+    char shorty[12];
+    char recv_class[80];
+    char ret_class[80];
+    uint64_t receiver;
+    uint64_t arg_obj;
+    int32_t arg_int;
+    int32_t arg2_int;
+    int32_t ret_i;
+    uint64_t ret_obj;
+} DxVectorTrace;
+
+typedef struct DxVectorTally {
+    char method[32];
+    char shorty[12];
+    uint32_t count;
+    uint8_t resolved;
+} DxVectorTally;
 
 typedef struct {
     uint64_t sequence;
@@ -197,6 +261,59 @@ typedef struct {
     uint8_t is_native;
     char method[DX_DIAGNOSTIC_METHOD_TEXT];
 } DxDiagnosticMethodEvent;
+
+#define DX_FRAME_POOL_SIZE 64
+#define DX_MAX_EXEC_CONTEXTS 8
+#define DX_UNRESOLVED_TRACE_CAP 16
+
+typedef enum {
+    DX_JAVA_THREAD_NEW = 0,
+    DX_JAVA_THREAD_STARTING = 1,
+    DX_JAVA_THREAD_RUNNING = 2,
+    DX_JAVA_THREAD_TERMINATED = 3
+} DxJavaThreadState;
+
+/* One HOST-DEX execution context. This is not a guest pthread. */
+typedef struct DxExecutionContext {
+    uint32_t id;
+    struct DxVM *vm;
+    pthread_t host_thread;
+    int has_host_thread;
+    int joinable;
+    DxObject *java_thread;
+    DxJavaThreadState state;
+    volatile int stop_requested;
+    volatile int at_safepoint;
+    volatile int waiting_for_vm_lock;
+    int in_vm;
+    int vm_lock_depth;
+    pthread_mutex_t life_mu;
+    pthread_cond_t done_cv;
+
+    DxFrame *current_frame;
+    uint32_t stack_depth;
+    DxObject *pending_exception;
+    uint64_t insn_count;
+    uint64_t insn_limit;
+    uint64_t watchdog_start_time;
+    int watchdog_triggered;
+    char error_msg[256];
+    int trace_depth;
+
+    char diagnostic_last_method[DX_DIAGNOSTIC_METHOD_TEXT];
+    DxDiagnosticMethodEvent diagnostic_method_events[DX_DIAGNOSTIC_METHOD_EVENTS];
+    uint64_t diagnostic_method_sequence;
+    uint32_t diagnostic_method_event_count;
+
+    /* Unresolved-invoke diagnostics for this context only. The owning thread
+       publishes count with a release store after the slot is complete. */
+    DxInvokeWitness unresolved_trace[DX_UNRESOLVED_TRACE_CAP];
+    uint32_t unresolved_count;
+    uint32_t unresolved_dropped;
+
+    DxFrame *frame_pool[DX_FRAME_POOL_SIZE];
+    uint32_t frame_pool_count;
+} DxExecutionContext;
 
 // VM state
 #define DX_MAX_DEX_FILES 8
@@ -242,18 +359,18 @@ struct DxVM {
     DxObject  *heap[DX_MAX_HEAP_OBJECTS];
     uint32_t   heap_count;
 
-    // Call stack
-    DxFrame   *current_frame;
-    uint32_t   stack_depth;
-    /* Passive, bounded execution evidence. Populated only while telemetry is
-       enabled; it never participates in dispatch or exception semantics. */
-    char       diagnostic_last_method[DX_DIAGNOSTIC_METHOD_TEXT];
-    /* Passive ring of actual guest/framework method entries.  This is
-       discovery evidence only: bounded storage, no guest calls, no waits and
-       no participation in dispatch. */
-    DxDiagnosticMethodEvent diagnostic_method_events[DX_DIAGNOSTIC_METHOD_EVENTS];
-    uint64_t   diagnostic_method_sequence;
-    uint32_t   diagnostic_method_event_count;
+    /* Process-global shared-state lock. Never held across a Java thread's run. */
+    pthread_mutex_t shared_mu;
+    int shared_ready;
+    pthread_mutex_t safepoint_mu;
+    pthread_cond_t safepoint_cv;
+    volatile int safepoint_requested;
+    int safepoint_depth;
+    DxExecutionContext *root_exec;
+    DxExecutionContext *execs[DX_MAX_EXEC_CONTEXTS];
+    uint32_t exec_count;
+    uint32_t next_exec_id;
+    uint64_t next_diagnostic_identity;
 
     // Framework classes (pre-registered)
     DxClass   *class_object;        // java/lang/Object
@@ -308,26 +425,12 @@ struct DxVM {
     struct { char *value; DxObject *obj; } interned_strings[DX_MAX_INTERNED_STRINGS];
     uint32_t   interned_count;
 
-    // Execution state
+    // Execution state. Instruction count, frames, and exceptions live on
+    // DxExecutionContext. insn_total is process-wide statistics.
     bool       running;
     DxResult   last_error;
-    char       error_msg[256];
-    uint64_t   insn_count;      // Instructions executed in current top-level call
-    uint64_t   insn_total;      // Lifetime total instructions (for stats)
-    uint64_t   insn_limit;      // Max instructions per top-level call (0 = unlimited)
-
-    // Frame pool for interpreter performance
-    #define DX_FRAME_POOL_SIZE 64
-    DxFrame  *frame_pool[DX_FRAME_POOL_SIZE];
-    uint32_t  frame_pool_count;
-
-    // Pending exception for cross-method unwinding
-    DxObject  *pending_exception;
-
-    // Watchdog: detect stuck interpreter (wall-clock timeout)
-    uint64_t watchdog_start_time;   // mach_absolute_time() when top-level execute began
-    uint32_t watchdog_timeout_ms;   // 0 = disabled, default 10000 (10 s)
-    bool     watchdog_triggered;
+    uint64_t   insn_total;
+    uint32_t   watchdog_timeout_ms;   // policy copied into each top-level call
 
     // Cancellation: set from another thread to stop execution gracefully
     volatile bool cancel_requested; // checked every 10000 instructions alongside watchdog
@@ -395,6 +498,36 @@ struct DxVM {
 
     // ── Telemetry (opt-in counters) ──
     DxTelemetry telemetry;
+
+    /* Opt-in invoke witness. Written only while telemetry is enabled.
+       Fixed capacity. Does not change guest-visible results. */
+    DxInvokeWitness witness_fordigit[8];
+    uint32_t witness_fordigit_count;
+    DxInvokeWitness witness_continuation;
+    int witness_continuation_set;
+    DxInvokeWitness witness_unresolved_after[6];
+    uint32_t witness_unresolved_after_count;
+    int witness_want_continuation;
+    /* Invoke site of the native call currently running. Telemetry only. */
+    uint32_t invoke_site_pc;
+    uint8_t invoke_site_opcode;
+    uint32_t invoke_site_method_idx;
+    int invoke_site_valid;
+
+    /* Opt-in Ljava/util/Vector; invoke trace. Does not change guest results. */
+    DxVectorTrace *vector_trace;
+    uint32_t vector_trace_count;
+    uint32_t vector_trace_dropped;
+    uint32_t vector_addelement_stored;
+    DxVectorTally vector_tally[DX_VECTOR_TALLY_CAP];
+    uint32_t vector_tally_count;
+    /* Next guest invoke after a Vector.elementAt that returned an object. */
+    DxInvokeWitness vector_after_element[8];
+    uint32_t vector_after_element_count;
+    int vector_after_element_armed;
+    int vector_seen_element_at;
+    DxInvokeWitness vector_next_unresolved;
+    int vector_next_unresolved_set;
 };
 
 // VM lifecycle
@@ -422,6 +555,11 @@ void      dx_vm_gc_step(DxVM *vm);   // incremental GC step (processes up to 256
 // Object operations
 DxObject *dx_vm_alloc_object(DxVM *vm, DxClass *cls);
 DxObject *dx_vm_alloc_array(DxVM *vm, uint32_t length);
+/* Resolve a class, array, or primitive descriptor. Array classes are created
+   on demand so check-cast can match their descriptor. */
+DxClass  *dx_vm_resolve_type(DxVM *vm, const char *descriptor);
+/* Class object whose klass is the resolved type (same convention as Class.forName). */
+DxObject *dx_vm_box_class(DxVM *vm, const char *descriptor);
 void      dx_vm_release_object(DxVM *vm, DxObject *obj);
 DxResult  dx_vm_set_field(DxObject *obj, const char *name, DxValue value);
 DxResult  dx_vm_get_field(DxObject *obj, const char *name, DxValue *out);
@@ -437,11 +575,53 @@ const char *dx_vm_get_string_value(DxObject *str_obj);
 // Method resolution
 DxMethod *dx_vm_resolve_method(DxVM *vm, uint32_t dex_method_idx);
 DxMethod *dx_vm_find_method(DxClass *cls, const char *name, const char *shorty);
+/* Passive discovery record. It does not select the callee. */
+void dx_vm_trace_virtual_invoke(DxFrame *frame, uint32_t pc, uint8_t opcode,
+                                uint32_t method_idx, DxMethod *resolved,
+                                DxClass *receiver, DxMethod *slot);
 DxMethod *dx_vm_find_interface_method(DxVM *vm, DxClass *cls, const char *name, const char *shorty);
 
 // Frame pool
 DxFrame *dx_vm_alloc_frame(DxVM *vm);
 void     dx_vm_free_frame(DxVM *vm, DxFrame *frame);
+
+/* Active DEX execution context for this host thread. */
+DxExecutionContext *dx_vm_current_exec(DxVM *vm);
+void dx_vm_shared_lock(DxVM *vm);
+void dx_vm_shared_unlock(DxVM *vm);
+void dx_vm_shared_lock_current(void);
+void dx_vm_shared_unlock_current(void);
+void dx_exec_vm_init(DxVM *vm);
+void dx_exec_vm_shutdown(DxVM *vm);
+void dx_exec_vm_fini(DxVM *vm);
+DxResult dx_vm_monitor_enter(DxVM *vm, DxObject *obj);
+DxResult dx_vm_monitor_exit(DxVM *vm, DxObject *obj);
+DxResult dx_vm_exec_poll(DxVM *vm);
+void dx_exec_enter(DxExecutionContext *exec);
+void dx_exec_leave(DxExecutionContext *exec);
+void dx_exec_gc_begin(DxVM *vm);
+void dx_exec_gc_end(DxVM *vm);
+
+typedef struct DxExecSnapshot {
+    uint32_t id;
+    uint32_t stack_depth;
+    uint64_t insn_count;
+    uint64_t insn_limit;
+    int32_t state;
+    int alive;
+    int has_exception;
+    unsigned long host_thread;
+    char method[128];
+} DxExecSnapshot;
+
+uint32_t dx_vm_exec_snapshot_count(DxVM *vm);
+int dx_vm_copy_exec_snapshot(DxVM *vm, uint32_t index, DxExecSnapshot *out);
+
+DxResult native_thread_start(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count);
+DxResult native_thread_join(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count);
+DxResult native_thread_isalive(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count);
+DxResult native_thread_current(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count);
+DxResult native_thread_sleep(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count);
 
 // Bytecode verification (called automatically before first execution)
 DxResult dx_verify_method(DxDexFile *dex, DxMethod *method);
@@ -510,5 +690,52 @@ DxTelemetry dx_vm_get_telemetry(DxVM *vm);
 
 /// Enable or disable telemetry collection.
 void dx_vm_set_telemetry_enabled(DxVM *vm, bool enabled);
+/* budget 0 disarms. A positive budget arms a fixed number of ENTER/EXIT
+   publishes. This does not change method results. */
+void dx_vm_set_draw_witness(DxVM *vm, uint32_t budget);
+/* Read-only guest control-flow snapshot. Does not take a monitor lock,
+   clear a pending exception, or change the method result. */
+void dx_vm_forensic_exec_snapshot(DxVM *vm, const char *when);
+void dx_vm_witness_unresolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                              uint32_t method_idx, const DxValue *args, uint8_t argc);
+void dx_vm_witness_resolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                            uint32_t method_idx, DxMethod *target, const DxValue *args,
+                            uint8_t argc, const DxValue *result, int has_result);
+uint32_t dx_vm_witness_fordigit_count(const DxVM *vm);
+int dx_vm_copy_witness_fordigit(const DxVM *vm, uint32_t index, DxInvokeWitness *out);
+int dx_vm_copy_witness_continuation(const DxVM *vm, DxInvokeWitness *out);
+uint32_t dx_vm_witness_unresolved_after_count(const DxVM *vm);
+int dx_vm_copy_witness_unresolved_after(const DxVM *vm, uint32_t index, DxInvokeWitness *out);
+void dx_vm_note_vector(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                       uint32_t method_idx, const char *name, const char *shorty,
+                       const DxValue *args, uint8_t argc, int resolved,
+                       const DxValue *result, int has_result);
+uint32_t dx_vm_vector_trace_count(const DxVM *vm);
+uint32_t dx_vm_vector_trace_dropped(const DxVM *vm);
+int dx_vm_copy_vector_trace(const DxVM *vm, uint32_t index, DxVectorTrace *out);
+uint32_t dx_vm_vector_tally_count(const DxVM *vm);
+int dx_vm_copy_vector_tally(const DxVM *vm, uint32_t index, DxVectorTally *out);
+void dx_vm_note_vector_follow(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                              uint32_t method_idx, const char *cls, const char *name,
+                              const char *shorty, const DxValue *args, uint8_t argc,
+                              int resolved, const DxValue *result, int has_result);
+uint32_t dx_vm_vector_after_element_count(const DxVM *vm);
+int dx_vm_copy_vector_after_element(const DxVM *vm, uint32_t index, DxInvokeWitness *out);
+int dx_vm_copy_vector_next_unresolved(const DxVM *vm, DxInvokeWitness *out);
+void dx_vm_note_post_vector_unresolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                                       uint32_t method_idx, const char *cls, const char *name,
+                                       const char *shorty, const DxValue *args, uint8_t argc);
+void dx_vm_note_unresolved_seen(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                                uint32_t method_idx, const char *cls, const char *name,
+                                const char *shorty, const DxValue *args, uint8_t argc);
+typedef struct DxUnresolvedContextInfo {
+    uint32_t exec_id;
+    uint32_t count;
+    uint32_t dropped;
+} DxUnresolvedContextInfo;
+uint32_t dx_vm_unresolved_context_count(const DxVM *vm);
+int dx_vm_copy_unresolved_context(const DxVM *vm, uint32_t index, DxUnresolvedContextInfo *out);
+int dx_vm_copy_unresolved_event(const DxVM *vm, uint32_t context_index, uint32_t event_index,
+                                DxInvokeWitness *out);
 
 #endif // DX_VM_H

@@ -6,10 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
+#include <time.h>
 #ifdef __APPLE__
 #include <mach/mach_time.h>
-#else
-#include <time.h>
 #endif
 
 #define TAG "VM"
@@ -29,17 +29,25 @@ static uint64_t dx_vm_time_ns(void) {
 #endif
 }
 
+static int64_t dx_vm_wall_millis(void) {
+    struct timespec ts;
+    timespec_get(&ts, TIME_UTC);
+    return (int64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
 DxVM *dx_vm_create(DxContext *ctx) {
     DxVM *vm = (DxVM *)dx_malloc(sizeof(DxVM));
     if (!vm) return NULL;
     memset(vm, 0, sizeof(DxVM));
     vm->ctx = ctx;
-    vm->insn_limit = DX_MAX_INSTRUCTIONS;
+    dx_exec_vm_init(vm);
+    dx_vm_current_exec(vm)->insn_limit = DX_MAX_INSTRUCTIONS;
     vm->watchdog_timeout_ms = 10000;  // 10 seconds default
-    vm->watchdog_start_time = 0;
-    vm->watchdog_triggered = false;
+    dx_vm_current_exec(vm)->watchdog_start_time = 0;
+    dx_vm_current_exec(vm)->watchdog_triggered = false;
     vm->young_gen_count = 0;
     vm->young_gen_threshold = 256;
+    vm->next_diagnostic_identity = 1;
     vm->gc_cycle_count = 0;
     DX_INFO(TAG, "VM created (insn limit=%u, watchdog=%ums)", DX_MAX_INSTRUCTIONS, vm->watchdog_timeout_ms);
     return vm;
@@ -47,6 +55,7 @@ DxVM *dx_vm_create(DxContext *ctx) {
 
 void dx_vm_destroy(DxVM *vm) {
     if (!vm) return;
+    dx_exec_vm_shutdown(vm);
 
     // Clear intern table (values alias string object fields, freed with heap)
     vm->interned_count = 0;
@@ -87,6 +96,9 @@ void dx_vm_destroy(DxVM *vm) {
             }
             dx_free(vm->classes[i]->interfaces);
             dx_free(vm->classes[i]->annotations);
+            if (vm->classes[i]->owns_descriptor) {
+                dx_free((void *)vm->classes[i]->descriptor);
+            }
             dx_free(vm->classes[i]);
         }
     }
@@ -96,11 +108,16 @@ void dx_vm_destroy(DxVM *vm) {
         dx_free(vm->class_def_cache[d]);
     }
 
-    // Free pooled frames
-    for (uint32_t i = 0; i < vm->frame_pool_count; i++) {
-        dx_free(vm->frame_pool[i]);
+    // Free the caller context's pooled frames. Worker pools were released at shutdown.
+    if (dx_vm_current_exec(vm)) {
+        for (uint32_t i = 0; i < dx_vm_current_exec(vm)->frame_pool_count; i++) {
+            dx_free(dx_vm_current_exec(vm)->frame_pool[i]);
+        }
+        dx_vm_current_exec(vm)->frame_pool_count = 0;
     }
 
+    dx_free(vm->vector_trace);
+    dx_exec_vm_fini(vm);
     dx_free(vm);
     DX_INFO(TAG, "VM destroyed");
 }
@@ -110,8 +127,8 @@ void dx_vm_destroy(DxVM *vm) {
 // --------------------------------------------------------------------------
 
 DxFrame *dx_vm_alloc_frame(DxVM *vm) {
-    if (vm->frame_pool_count > 0) {
-        DxFrame *f = vm->frame_pool[--vm->frame_pool_count];
+    if (dx_vm_current_exec(vm)->frame_pool_count > 0) {
+        DxFrame *f = dx_vm_current_exec(vm)->frame_pool[--dx_vm_current_exec(vm)->frame_pool_count];
         memset(f, 0, sizeof(DxFrame));
         return f;
     }
@@ -120,8 +137,8 @@ DxFrame *dx_vm_alloc_frame(DxVM *vm) {
 
 void dx_vm_free_frame(DxVM *vm, DxFrame *frame) {
     if (!frame) return;
-    if (vm->frame_pool_count < DX_FRAME_POOL_SIZE) {
-        vm->frame_pool[vm->frame_pool_count++] = frame;
+    if (dx_vm_current_exec(vm)->frame_pool_count < DX_FRAME_POOL_SIZE) {
+        dx_vm_current_exec(vm)->frame_pool[dx_vm_current_exec(vm)->frame_pool_count++] = frame;
     } else {
         dx_free(frame);
     }
@@ -185,10 +202,11 @@ static DxClass *create_class(DxVM *vm, const char *descriptor, DxClass *super, b
     DxClass *cls = (DxClass *)dx_malloc(sizeof(DxClass));
     if (!cls) return NULL;
 
-    cls->descriptor = descriptor;  // owned by DEX or static string
+    cls->descriptor = descriptor;  // owned by DEX, a static string, or this class
     cls->super_class = super;
     cls->status = DX_CLASS_LOADED;
     cls->is_framework = is_framework;
+    cls->owns_descriptor = false;
 
     vm->classes[vm->class_count++] = cls;
     dx_vm_class_hash_insert(vm, cls);
@@ -231,7 +249,10 @@ static void add_native_method(DxClass *cls, const char *name, const char *shorty
     new_methods[idx].access_flags = access_flags;
     new_methods[idx].native_fn = fn;
     new_methods[idx].is_native = true;
-    new_methods[idx].vtable_idx = is_direct ? -1 : (int32_t)idx;
+    /* The flattened slot is assigned by dx_class_build_vtable. A local
+       index here is not a vtable index: Object virtual 0 and Thread.start
+       would name the same slot. */
+    new_methods[idx].vtable_idx = -1;
 
     if (is_direct) {
         cls->direct_methods = new_methods;
@@ -239,6 +260,97 @@ static void add_native_method(DxClass *cls, const char *name, const char *shorty
         cls->virtual_methods = new_methods;
     }
     *count = new_count;
+}
+
+/* One slot contract for framework HLE classes and guest DEX classes:
+   inherited slots keep their index, an override (same name and shorty)
+   replaces that slot, and a new virtual method is appended. Interface
+   methods stay off this table; invoke-interface uses the itable. */
+static int vtable_incomplete(const DxClass *cls) {
+    uint32_t super_size = (cls->super_class) ? cls->super_class->vtable_size : 0;
+    if (cls->vtable_size < super_size) return 1;
+    if (cls->virtual_method_count > 0 && cls->vtable == NULL) return 1;
+    for (uint32_t i = 0; i < cls->virtual_method_count; i++) {
+        if (cls->virtual_methods[i].vtable_idx < 0) return 1;
+    }
+    return 0;
+}
+
+static void dx_class_build_vtable(DxClass *cls) {
+    if (!cls) return;
+    if (cls->super_class) dx_class_build_vtable(cls->super_class);
+
+    if (cls->access_flags & DX_ACC_INTERFACE) {
+        int dirty = cls->vtable != NULL || cls->vtable_size != 0;
+        for (uint32_t i = 0; i < cls->virtual_method_count; i++) {
+            if (cls->virtual_methods[i].vtable_idx != -1) dirty = 1;
+        }
+        if (!dirty) return;
+        for (uint32_t i = 0; i < cls->virtual_method_count; i++)
+            cls->virtual_methods[i].vtable_idx = -1;
+        dx_free(cls->vtable);
+        cls->vtable = NULL;
+        cls->vtable_size = 0;
+        return;
+    }
+
+    if (!vtable_incomplete(cls)) return;
+
+    uint32_t super_size = cls->super_class ? cls->super_class->vtable_size : 0;
+    uint32_t n = cls->virtual_method_count;
+    int32_t *assigned = NULL;
+    if (n > 0) {
+        assigned = (int32_t *)dx_malloc(sizeof(int32_t) * n);
+        if (!assigned) return;
+    }
+    uint32_t append = 0;
+    for (uint32_t m = 0; m < n; m++) {
+        DxMethod *method = &cls->virtual_methods[m];
+        assigned[m] = -1;
+        if (!method->name || !method->shorty || super_size == 0 ||
+            !cls->super_class || !cls->super_class->vtable) {
+            append++;
+            continue;
+        }
+        for (uint32_t v = 0; v < super_size; v++) {
+            DxMethod *super_method = cls->super_class->vtable[v];
+            if (!super_method || !super_method->name || !super_method->shorty) continue;
+            if (strcmp(super_method->name, method->name) == 0 &&
+                strcmp(super_method->shorty, method->shorty) == 0) {
+                assigned[m] = (int32_t)v;
+                break;
+            }
+        }
+        if (assigned[m] < 0) append++;
+    }
+
+    uint32_t size = super_size + append;
+    DxMethod **vt = NULL;
+    if (size > 0) {
+        vt = (DxMethod **)dx_malloc(sizeof(DxMethod *) * size);
+        if (!vt) {
+            dx_free(assigned);
+            return;
+        }
+        for (uint32_t v = 0; v < super_size; v++)
+            vt[v] = cls->super_class->vtable[v];
+    }
+    uint32_t next = super_size;
+    for (uint32_t m = 0; m < n; m++) {
+        DxMethod *method = &cls->virtual_methods[m];
+        if (assigned[m] >= 0) {
+            vt[assigned[m]] = method;
+            method->vtable_idx = assigned[m];
+        } else {
+            vt[next] = method;
+            method->vtable_idx = (int32_t)next;
+            next++;
+        }
+    }
+    dx_free(cls->vtable);
+    cls->vtable = vt;
+    cls->vtable_size = size;
+    dx_free(assigned);
 }
 
 // --- java.lang.Object native methods ---
@@ -304,6 +416,33 @@ static DxResult native_object_getclass(DxVM *vm, DxFrame *frame, DxValue *args, 
 }
 
 // --- java.lang.String native methods ---
+
+/* API19 String(byte[]) decodes the platform default charset (UTF-8 on
+ * Android). The VM keeps valid UTF-8 in string_data; the constructor must
+ * populate the allocated receiver, not return a different interned String. */
+static DxResult native_string_init_bytes(DxVM *vm, DxFrame *frame,
+                                         DxValue *args, uint32_t arg_count) {
+    (void)frame;
+    if (!vm || arg_count < 2 || args[0].tag != DX_VAL_OBJ || !args[0].obj ||
+        args[1].tag != DX_VAL_OBJ || !args[1].obj) {
+        DxExecutionContext *exec = vm ? dx_vm_current_exec(vm) : NULL;
+        if (exec) exec->pending_exception = dx_vm_create_exception(
+            vm, "Ljava/lang/NullPointerException;", "String bytes");
+        return exec && exec->pending_exception ? DX_ERR_EXCEPTION : DX_ERR_NULL_PTR;
+    }
+    DxObject *self = args[0].obj;
+    DxObject *bytes = args[1].obj;
+    if (!bytes->is_array) return DX_ERR_INVALID_FORMAT;
+    size_t length = bytes->array_length;
+    char *text = (char *)dx_malloc(length + 1);
+    if (!text) return DX_ERR_OUT_OF_MEMORY;
+    for (size_t i = 0; i < length; i++)
+        text[i] = (char)(bytes->array_elements[i].i & 0xff);
+    text[length] = '\0';
+    dx_free(self->string_data);
+    self->string_data = text;
+    return DX_OK;
+}
 
 static DxResult native_string_equals(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
     (void)vm; (void)arg_count;
@@ -1223,7 +1362,136 @@ static DxResult native_kotlin_check_not_null(DxVM *vm, DxFrame *frame, DxValue *
 static DxResult native_system_currenttimemillis(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
     (void)vm; (void)args; (void)arg_count;
     frame->result.tag = DX_VAL_LONG;
-    frame->result.l = 0; // Stub - could use real time but not necessary
+    frame->result.l = dx_vm_wall_millis();
+    frame->has_result = true;
+    return DX_OK;
+}
+
+/* Android 4.4.4 libcore/luni/src/main/java/java/util/Random.java uses a
+ * 48-bit LCG. The seed is an instance field in the DEX heap, not a host-only
+ * table; next(int) is synchronized on the Random instance. */
+#define DX_RANDOM_MULTIPLIER UINT64_C(0x5deece66d)
+#define DX_RANDOM_MASK ((UINT64_C(1) << 48) - 1)
+
+static DxResult random_set_seed(DxVM *vm, DxObject *self, int64_t seed) {
+    DxResult rc;
+    if (!vm || !self) return DX_ERR_NULL_PTR;
+    rc = dx_vm_monitor_enter(vm, self);
+    if (rc != DX_OK) return rc;
+    rc = dx_vm_set_field(self, "seed", (DxValue){.tag=DX_VAL_LONG,
+                           .l=(int64_t)(((uint64_t)seed ^ DX_RANDOM_MULTIPLIER) & DX_RANDOM_MASK)});
+    if (rc == DX_OK)
+        rc = dx_vm_set_field(self, "haveNextNextGaussian", DX_INT_VALUE(0));
+    dx_vm_monitor_exit(vm, self);
+    return rc;
+}
+
+static DxResult random_next_bits(DxVM *vm, DxObject *self, int bits, uint32_t *out) {
+    DxValue value = DX_NULL_VALUE;
+    DxResult rc;
+    uint64_t seed;
+    if (!vm || !self || !out || bits < 0 || bits > 32) return DX_ERR_INVALID_FORMAT;
+    rc = dx_vm_monitor_enter(vm, self);
+    if (rc != DX_OK) return rc;
+    rc = dx_vm_get_field(self, "seed", &value);
+    if (rc != DX_OK || value.tag != DX_VAL_LONG) {
+        dx_vm_monitor_exit(vm, self);
+        return DX_ERR_INVALID_FORMAT;
+    }
+    seed = ((uint64_t)value.l * DX_RANDOM_MULTIPLIER + UINT64_C(0xb)) & DX_RANDOM_MASK;
+    rc = dx_vm_set_field(self, "seed", (DxValue){.tag=DX_VAL_LONG,.l=(int64_t)seed});
+    if (rc == DX_OK) *out = (uint32_t)(seed >> (48 - bits));
+    dx_vm_monitor_exit(vm, self);
+    return rc;
+}
+
+static DxResult native_random_init(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    int64_t seed;
+    (void)frame;
+    if (count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return DX_ERR_NULL_PTR;
+    seed = count > 1 && args[1].tag == DX_VAL_LONG ? args[1].l :
+        dx_vm_wall_millis() + (int32_t)(uintptr_t)args[0].obj;
+    return random_set_seed(vm, args[0].obj, seed);
+}
+
+static DxResult native_random_set_seed(DxVM *vm, DxFrame *frame, DxValue *args,
+                                        uint32_t count) {
+    (void)frame;
+    if (count < 2 || args[0].tag != DX_VAL_OBJ || args[1].tag != DX_VAL_LONG)
+        return DX_ERR_INVALID_FORMAT;
+    return random_set_seed(vm, args[0].obj, args[1].l);
+}
+
+static DxResult native_random_next_int(DxVM *vm, DxFrame *frame, DxValue *args,
+                                        uint32_t count) {
+    uint32_t bits;
+    DxResult rc;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return DX_ERR_NULL_PTR;
+    if (count == 1) {
+        rc = random_next_bits(vm, args[0].obj, 32, &bits);
+        if (rc != DX_OK) return rc;
+        frame->result = DX_INT_VALUE((int32_t)bits);
+    } else {
+        int32_t n;
+        uint32_t value;
+        if (args[1].tag != DX_VAL_INT) return DX_ERR_INVALID_FORMAT;
+        n = args[1].i;
+        if (n <= 0) {
+            dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+                vm, "Ljava/lang/IllegalArgumentException;", "n <= 0");
+            return DX_ERR_EXCEPTION;
+        }
+        if ((n & -n) == n) {
+            rc = random_next_bits(vm, args[0].obj, 31, &bits);
+            if (rc != DX_OK) return rc;
+            value = (uint32_t)(((uint64_t)(uint32_t)n * bits) >> 31);
+        } else {
+            do {
+                rc = random_next_bits(vm, args[0].obj, 31, &bits);
+                if (rc != DX_OK) return rc;
+                value = bits % (uint32_t)n;
+            } while ((int32_t)(bits - value + (uint32_t)(n - 1)) < 0);
+        }
+        frame->result = DX_INT_VALUE((int32_t)value);
+    }
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult native_random_next_double(DxVM *vm, DxFrame *frame, DxValue *args,
+                                           uint32_t count) {
+    uint32_t hi, lo;
+    DxResult rc;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return DX_ERR_NULL_PTR;
+    rc = random_next_bits(vm, args[0].obj, 26, &hi);
+    if (rc != DX_OK) return rc;
+    rc = random_next_bits(vm, args[0].obj, 27, &lo);
+    if (rc != DX_OK) return rc;
+    frame->result = (DxValue){.tag=DX_VAL_DOUBLE,
+                              .d=(double)(((uint64_t)hi << 27) + lo) / 9007199254740992.0};
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult native_math_sin(DxVM *vm, DxFrame *frame, DxValue *args,
+                                 uint32_t count) {
+    (void)vm;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_DOUBLE)
+        return DX_ERR_INVALID_FORMAT;
+    frame->result = (DxValue){.tag=DX_VAL_DOUBLE,.d=sin(args[0].d)};
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult native_math_cos(DxVM *vm, DxFrame *frame, DxValue *args,
+                                 uint32_t count) {
+    (void)vm;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_DOUBLE)
+        return DX_ERR_INVALID_FORMAT;
+    frame->result = (DxValue){.tag=DX_VAL_DOUBLE,.d=cos(args[0].d)};
     frame->has_result = true;
     return DX_OK;
 }
@@ -1565,6 +1833,196 @@ static DxResult native_arraylist_toarray(DxVM *vm, DxFrame *frame, DxValue *args
     }
     frame->result = result ? DX_OBJ_VALUE(result) : DX_NULL_VALUE;
     frame->has_result = true;
+    return DX_OK;
+}
+
+// ============================================================
+// java.util.Vector (API19). Guest array field elementData is a GC root.
+// ============================================================
+
+static DxObject *vector_elements(DxObject *self) {
+    DxValue value;
+    if (dx_vm_get_field(self, "elementData", &value) == DX_OK &&
+        value.tag == DX_VAL_OBJ && value.obj && value.obj->is_array) {
+        return value.obj;
+    }
+    return NULL;
+}
+
+static int32_t vector_count(DxObject *self) {
+    DxValue value;
+    if (dx_vm_get_field(self, "elementCount", &value) == DX_OK && value.tag == DX_VAL_INT)
+        return value.i;
+    return 0;
+}
+
+static int32_t vector_increment(DxObject *self) {
+    DxValue value;
+    if (dx_vm_get_field(self, "capacityIncrement", &value) == DX_OK && value.tag == DX_VAL_INT)
+        return value.i;
+    return 0;
+}
+
+static void vector_set_count(DxObject *self, int32_t count) {
+    dx_vm_set_field(self, "elementCount", DX_INT_VALUE(count));
+}
+
+static DxResult vector_throw_bounds(DxVM *vm, int32_t index, int32_t size) {
+    char message[64];
+    snprintf(message, sizeof(message), "length=%d; index=%d", size, index);
+    dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+        vm, "Ljava/lang/ArrayIndexOutOfBoundsException;", message);
+    return DX_ERR_EXCEPTION;
+}
+
+static DxResult vector_lock(DxVM *vm, DxObject *self) {
+    if (!self) {
+        dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+            vm, "Ljava/lang/NullPointerException;", "Vector");
+        return DX_ERR_EXCEPTION;
+    }
+    return dx_vm_monitor_enter(vm, self);
+}
+
+/* API19 indexOf uses object.equals. Object.equals is reference identity. */
+static int vector_same(DxVM *vm, DxValue key, DxValue element) {
+    DxMethod *equals;
+    DxValue args[2];
+    DxValue result;
+    if (key.tag != DX_VAL_OBJ || element.tag != DX_VAL_OBJ) return 0;
+    if (key.obj == element.obj) return 1;
+    if (!key.obj || !element.obj || !key.obj->klass) return 0;
+    equals = dx_vm_find_method(key.obj->klass, "equals", "ZL");
+    if (!equals || equals->native_fn == native_object_equals) return 0;
+    args[0] = key;
+    args[1] = element;
+    result = DX_NULL_VALUE;
+    if (dx_vm_execute_method(vm, equals, args, 2, &result) != DX_OK) return 0;
+    return result.tag == DX_VAL_INT && result.i != 0;
+}
+
+static int vector_grow_by_one(DxVM *vm, DxObject *self) {
+    DxObject *data = vector_elements(self);
+    int32_t length = data ? (int32_t)data->array_length : 0;
+    int32_t adding = vector_increment(self);
+    int32_t count = vector_count(self);
+    DxObject *fresh;
+    int32_t i;
+    if (adding <= 0) adding = length == 0 ? 1 : length;
+    fresh = dx_vm_alloc_array(vm, (uint32_t)(length + adding));
+    if (!fresh) return 0;
+    if (data && data->array_elements && fresh->array_elements) {
+        for (i = 0; i < count && i < length; i++)
+            fresh->array_elements[i] = data->array_elements[i];
+    }
+    dx_vm_set_field(self, "elementData", DX_OBJ_VALUE(fresh));
+    return 1;
+}
+
+/* Vector() uses DEFAULT_SIZE 10 and capacityIncrement 0. Not synchronized. */
+static DxResult native_vector_init(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    DxObject *self;
+    DxObject *data;
+    (void)frame;
+    (void)arg_count;
+    self = args[0].obj;
+    if (!self) return DX_OK;
+    data = dx_vm_alloc_array(vm, 10);
+    if (!data) return DX_ERR_OUT_OF_MEMORY;
+    dx_vm_set_field(self, "elementData", DX_OBJ_VALUE(data));
+    vector_set_count(self, 0);
+    dx_vm_set_field(self, "capacityIncrement", DX_INT_VALUE(0));
+    return DX_OK;
+}
+
+static DxResult native_vector_size(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    DxObject *self = arg_count > 0 ? args[0].obj : NULL;
+    DxResult lock = vector_lock(vm, self);
+    (void)arg_count;
+    if (lock != DX_OK) return lock;
+    frame->result = DX_INT_VALUE(vector_count(self));
+    frame->has_result = true;
+    dx_vm_monitor_exit(vm, self);
+    return DX_OK;
+}
+
+static DxResult native_vector_add_element(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    DxObject *self = arg_count > 0 ? args[0].obj : NULL;
+    DxObject *data;
+    int32_t count;
+    DxResult lock = vector_lock(vm, self);
+    (void)frame;
+    if (lock != DX_OK) return lock;
+    count = vector_count(self);
+    data = vector_elements(self);
+    if (!data || count == (int32_t)data->array_length) {
+        if (!vector_grow_by_one(vm, self)) {
+            dx_vm_monitor_exit(vm, self);
+            return DX_ERR_OUT_OF_MEMORY;
+        }
+        data = vector_elements(self);
+    }
+    if (data && data->array_elements && count >= 0 && (uint32_t)count < data->array_length) {
+        data->array_elements[count] = arg_count > 1 ? args[1] : DX_NULL_VALUE;
+        vector_set_count(self, count + 1);
+    }
+    dx_vm_monitor_exit(vm, self);
+    return DX_OK;
+}
+
+static DxResult native_vector_element_at(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    DxObject *self = arg_count > 0 ? args[0].obj : NULL;
+    int32_t index = arg_count > 1 ? args[1].i : 0;
+    int32_t count;
+    DxObject *data;
+    DxResult lock = vector_lock(vm, self);
+    if (lock != DX_OK) return lock;
+    count = vector_count(self);
+    if (index < 0 || index >= count) {
+        dx_vm_monitor_exit(vm, self);
+        return vector_throw_bounds(vm, index, count);
+    }
+    data = vector_elements(self);
+    frame->result = (data && data->array_elements) ? data->array_elements[index] : DX_NULL_VALUE;
+    frame->has_result = true;
+    dx_vm_monitor_exit(vm, self);
+    return DX_OK;
+}
+
+static DxResult native_vector_remove_element(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    DxObject *self = arg_count > 0 ? args[0].obj : NULL;
+    DxValue key = arg_count > 1 ? args[1] : DX_NULL_VALUE;
+    DxObject *data;
+    int32_t count;
+    int32_t index = -1;
+    int32_t i;
+    DxResult lock = vector_lock(vm, self);
+    if (lock != DX_OK) return lock;
+    count = vector_count(self);
+    data = vector_elements(self);
+    if (data && data->array_elements) {
+        for (i = 0; i < count; i++) {
+            if (vector_same(vm, key, data->array_elements[i])) {
+                index = i;
+                break;
+            }
+        }
+    }
+    if (index < 0) {
+        frame->result = DX_INT_VALUE(0);
+        frame->has_result = true;
+        dx_vm_monitor_exit(vm, self);
+        return DX_OK;
+    }
+    if (data && data->array_elements) {
+        for (i = index; i < count - 1; i++)
+            data->array_elements[i] = data->array_elements[i + 1];
+        data->array_elements[count - 1] = DX_NULL_VALUE;
+    }
+    vector_set_count(self, count - 1);
+    frame->result = DX_INT_VALUE(1);
+    frame->has_result = true;
+    dx_vm_monitor_exit(vm, self);
     return DX_OK;
 }
 
@@ -2160,39 +2618,7 @@ static DxResult native_class_getsimplename(DxVM *vm, DxFrame *frame, DxValue *ar
     return DX_OK;
 }
 
-// --- Thread.start() -> synchronous run() ---
-
-static DxResult native_thread_start(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
-    (void)frame; (void)arg_count;
-    // Get `this` (the Thread object) from args[0]
-    DxObject *self = args[0].obj;
-    if (!self || !self->klass) {
-        DX_TRACE(TAG, "Thread.start: null thread object");
-        return DX_OK;
-    }
-
-    // Find run() on the actual class (may be overridden in a subclass)
-    DxMethod *run_method = dx_vm_find_method(self->klass, "run", "V");
-    if (!run_method) {
-        DX_TRACE(TAG, "Thread.start: no run() method found on %s", self->klass->descriptor);
-        return DX_OK;
-    }
-
-    DX_INFO(TAG, "Thread.start: running %s.run() synchronously", self->klass->descriptor);
-    DxValue run_args[1];
-    run_args[0] = args[0];  // pass `this`
-    dx_vm_execute_method(vm, run_method, run_args, 1, NULL);
-    return DX_OK;
-}
-
-static DxResult native_thread_isalive(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
-    (void)vm; (void)args; (void)arg_count;
-    // Single-threaded: thread is never alive after start() returns synchronously
-    frame->result.tag = DX_VAL_INT;
-    frame->result.i = 0;  // false
-    frame->has_result = true;
-    return DX_OK;
-}
+// Thread.start, join, sleep, isAlive, and currentThread live in dx_exec.c.
 
 // --- Array.clone() ---
 
@@ -2641,10 +3067,10 @@ static DxResult native_constructor_newinstance(DxVM *vm, DxFrame *frame, DxValue
     }
 
     DxValue result = {0};
-    vm->insn_count = 0;
+    dx_vm_current_exec(vm)->insn_count = 0;
     DxResult res = dx_vm_execute_method(vm, init_method, call_args, call_count, &result);
-    if (res != DX_OK && vm->pending_exception) {
-        vm->pending_exception = NULL;
+    if (res != DX_OK && dx_vm_current_exec(vm)->pending_exception) {
+        dx_vm_current_exec(vm)->pending_exception = NULL;
     }
 
     frame->result = DX_OBJ_VALUE(obj);
@@ -2656,13 +3082,145 @@ static DxResult native_constructor_newinstance(DxVM *vm, DxFrame *frame, DxValue
 // Reflection: Array.newInstance
 // ============================================================
 
-static DxResult native_array_newinstance(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
-    (void)arg_count;
-    // args[0] = Class componentType, args[1] = int length
-    int32_t length = (arg_count > 1 && args[1].tag == DX_VAL_INT) ? args[1].i : 0;
-    if (length < 0) length = 0;
+static const char *stable_type_descriptor(DxVM *vm, const char *descriptor, bool *owned) {
+    *owned = false;
+    if (!descriptor) return NULL;
+    for (uint32_t d = 0; d < vm->dex_count; d++) {
+        DxDexFile *dex = vm->dex_files[d];
+        if (!dex) continue;
+        for (uint32_t i = 0; i < dex->type_count; i++) {
+            const char *type = dx_dex_get_type(dex, i);
+            if (type && strcmp(type, descriptor) == 0) return type;
+        }
+    }
+    size_t length = strlen(descriptor);
+    char *copy = (char *)dx_malloc(length + 1);
+    if (!copy) return NULL;
+    memcpy(copy, descriptor, length + 1);
+    *owned = true;
+    return copy;
+}
 
-    DxObject *arr = dx_vm_alloc_array(vm, (uint32_t)length);
+static bool primitive_descriptor(const char *descriptor) {
+    return descriptor && descriptor[0] && descriptor[1] == '\0' &&
+           strchr("VZBSCIJFD", descriptor[0]) != NULL;
+}
+
+DxClass *dx_vm_resolve_type(DxVM *vm, const char *descriptor) {
+    if (!vm || !descriptor || !descriptor[0]) return NULL;
+    DxClass *existing = dx_vm_find_class(vm, descriptor);
+    if (existing) return existing;
+    if (descriptor[0] == '[' || primitive_descriptor(descriptor)) {
+        bool owned = false;
+        const char *stable = stable_type_descriptor(vm, descriptor, &owned);
+        if (!stable) return NULL;
+        DxClass *cls = create_class(vm, stable, vm->class_object, true);
+        if (!cls) {
+            if (owned) dx_free((void *)stable);
+            return NULL;
+        }
+        cls->owns_descriptor = owned;
+        cls->status = DX_CLASS_INITIALIZED;
+        return cls;
+    }
+    DxClass *loaded = NULL;
+    if (dx_vm_load_class(vm, descriptor, &loaded) != DX_OK) return NULL;
+    return loaded;
+}
+
+DxObject *dx_vm_box_class(DxVM *vm, const char *descriptor) {
+    DxClass *represented = dx_vm_resolve_type(vm, descriptor);
+    if (!represented) return NULL;
+    DxClass *class_cls = dx_vm_find_class(vm, "Ljava/lang/Class;");
+    DxObject *class_obj = dx_vm_alloc_object(vm, class_cls ? class_cls : represented);
+    if (class_obj) {
+        /* Class.forName stores the represented type in klass. */
+        class_obj->klass = represented;
+    }
+    return class_obj;
+}
+
+static const char *class_argument_descriptor(DxValue arg) {
+    if (arg.tag != DX_VAL_OBJ || !arg.obj || !arg.obj->klass) return NULL;
+    return arg.obj->klass->descriptor;
+}
+
+static bool array_type_descriptor(const char *component, uint32_t dimensions,
+                                  char *out, size_t cap) {
+    size_t component_len;
+    if (!component || !out || dimensions == 0 || dimensions > 255) return false;
+    component_len = strlen(component);
+    if (dimensions + component_len + 1 > cap) return false;
+    for (uint32_t i = 0; i < dimensions; i++) out[i] = '[';
+    memcpy(out + dimensions, component, component_len + 1);
+    return true;
+}
+
+static DxObject *alloc_typed_array(DxVM *vm, const char *array_descriptor, uint32_t length) {
+    DxClass *cls = dx_vm_resolve_type(vm, array_descriptor);
+    DxObject *arr = dx_vm_alloc_array(vm, length);
+    if (arr && cls) arr->klass = cls;
+    return arr;
+}
+
+static DxObject *alloc_dimensional_array(DxVM *vm, const char *component,
+                                         const int32_t *dimensions, uint32_t count,
+                                         uint32_t index) {
+    char descriptor[768];
+    uint32_t remaining = count - index;
+    int32_t length;
+    DxObject *arr;
+    if (!array_type_descriptor(component, remaining, descriptor, sizeof(descriptor))) {
+        return NULL;
+    }
+    length = dimensions[index];
+    if (length < 0) length = 0;
+    arr = alloc_typed_array(vm, descriptor, (uint32_t)length);
+    if (!arr || index + 1 >= count) return arr;
+    for (uint32_t i = 0; i < arr->array_length; i++) {
+        DxObject *inner = alloc_dimensional_array(vm, component, dimensions, count, index + 1);
+        arr->array_elements[i] = inner ? DX_OBJ_VALUE(inner) : DX_NULL_VALUE;
+    }
+    return arr;
+}
+
+static DxResult native_array_newinstance(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    const char *component = (arg_count > 0) ? class_argument_descriptor(args[0]) : NULL;
+    int32_t length = (arg_count > 1 && args[1].tag == DX_VAL_INT) ? args[1].i : 0;
+    char descriptor[768];
+    DxObject *arr = NULL;
+    if (length < 0) length = 0;
+    if (component && array_type_descriptor(component, 1, descriptor, sizeof(descriptor))) {
+        arr = alloc_typed_array(vm, descriptor, (uint32_t)length);
+    }
+    frame->result = arr ? DX_OBJ_VALUE(arr) : DX_NULL_VALUE;
+    frame->has_result = true;
+    return DX_OK;
+}
+
+/* Array.newInstance(Class componentType, int[] dimensions). */
+static DxResult native_array_newinstance_dims(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    const char *component = (arg_count > 0) ? class_argument_descriptor(args[0]) : NULL;
+    DxObject *dims = (arg_count > 1 && args[1].tag == DX_VAL_OBJ) ? args[1].obj : NULL;
+    int32_t values[16];
+    uint32_t count = 0;
+    DxObject *arr = NULL;
+    if (component && dims && dims->is_array && dims->array_elements) {
+        count = dims->array_length;
+        if (count > 16) count = 16;
+        for (uint32_t i = 0; i < count; i++) {
+            values[i] = (dims->array_elements[i].tag == DX_VAL_INT)
+                ? dims->array_elements[i].i : 0;
+        }
+        if (count > 0) {
+            arr = alloc_dimensional_array(vm, component, values, count, 0);
+        }
+    }
+    if (!arr) {
+        DX_WARN(TAG, "Array.newInstance failed: component=%s dimensions=%u first=%d argument=%u",
+                component ? component : "(null)", count,
+                count ? values[0] : -1, arg_count);
+    }
     frame->result = arr ? DX_OBJ_VALUE(arr) : DX_NULL_VALUE;
     frame->has_result = true;
     return DX_OK;
@@ -2771,13 +3329,13 @@ static DxResult native_proxy_dispatch(DxVM *vm, DxFrame *frame, DxValue *args, u
     invoke_args[3] = args_arr ? DX_OBJ_VALUE(args_arr) : DX_NULL_VALUE;      // args
 
     DxValue result = {0};
-    vm->insn_count = 0;
+    dx_vm_current_exec(vm)->insn_count = 0;
     DxResult res = dx_vm_execute_method(vm, invoke_method, invoke_args, 4, &result);
     if (res == DX_OK) {
         frame->result = result;
     } else {
         frame->result = DX_NULL_VALUE;
-        if (vm->pending_exception) vm->pending_exception = NULL;
+        if (dx_vm_current_exec(vm)->pending_exception) dx_vm_current_exec(vm)->pending_exception = NULL;
     }
     frame->has_result = true;
     return DX_OK;
@@ -2845,12 +3403,13 @@ static DxResult native_proxy_newproxyinstance(DxVM *vm, DxFrame *frame, DxValue 
                 new_methods[idx].access_flags = DX_ACC_PUBLIC;
                 new_methods[idx].native_fn = native_proxy_dispatch;
                 new_methods[idx].is_native = true;
-                new_methods[idx].vtable_idx = (int32_t)idx;
+                new_methods[idx].vtable_idx = -1;
                 proxy_cls->virtual_methods = new_methods;
                 proxy_cls->virtual_method_count = idx + 1;
             }
         }
     }
+    dx_class_build_vtable(proxy_cls);
 
     // Register in VM
     if (vm->class_count < DX_MAX_CLASSES) {
@@ -3032,6 +3591,25 @@ static DxResult native_field_getname(DxVM *vm, DxFrame *frame, DxValue *args, ui
 
 // --- Register java.lang classes ---
 
+/* API19 Character.forDigit: radix in [MIN_RADIX, MAX_RADIX] and
+   0 <= digit < radix returns '0'+digit or 'a'-10+digit. Otherwise 0.
+   Dalvik stores the char in an int register. */
+static DxResult native_character_fordigit(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    int32_t digit;
+    int32_t radix;
+    int32_t ch = 0;
+    (void)vm;
+    if (!frame) return DX_ERR_NULL_PTR;
+    digit = (arg_count >= 1 && args) ? args[0].i : 0;
+    radix = (arg_count >= 2 && args) ? args[1].i : 0;
+    if (radix >= 2 && radix <= 36 && digit >= 0 && digit < radix) {
+        ch = digit < 10 ? digit + '0' : digit + 'a' - 10;
+    }
+    frame->result = DX_INT_VALUE(ch);
+    frame->has_result = true;
+    return DX_OK;
+}
+
 DxResult dx_register_java_lang(DxVM *vm) {
     // java.lang.Object
     DxClass *obj_cls = create_class(vm, "Ljava/lang/Object;", NULL, true);
@@ -3072,6 +3650,8 @@ DxResult dx_register_java_lang(DxVM *vm) {
         str_cls->field_defs[0].type = "[C";
         str_cls->field_defs[0].flags = DX_ACC_PRIVATE;
     }
+    add_native_method(str_cls, "<init>", "VL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR,
+                      native_string_init_bytes, true);
     add_native_method(str_cls, "equals", "ZL", DX_ACC_PUBLIC,
                       native_string_equals, false);
     add_native_method(str_cls, "hashCode", "I", DX_ACC_PUBLIC,
@@ -3372,6 +3952,8 @@ DxResult dx_register_java_lang(DxVM *vm) {
     DxClass *array_cls = create_class(vm, "Ljava/lang/reflect/Array;", obj_cls, true);
     add_native_method(array_cls, "newInstance", "LLI", DX_ACC_PUBLIC | DX_ACC_STATIC,
                       native_array_newinstance, true);
+    add_native_method(array_cls, "newInstance", "LLL", DX_ACC_PUBLIC | DX_ACC_STATIC,
+                      native_array_newinstance_dims, true);
     add_native_method(array_cls, "getLength", "IL", DX_ACC_PUBLIC | DX_ACC_STATIC,
                       native_array_getlength, true);
     add_native_method(array_cls, "get", "LLI", DX_ACC_PUBLIC | DX_ACC_STATIC,
@@ -3409,7 +3991,41 @@ DxResult dx_register_java_lang(DxVM *vm) {
 
     // java.lang.Math
     DxClass *math_cls = create_class(vm, "Ljava/lang/Math;", obj_cls, true);
+    add_native_method(math_cls, "sin", "DD", DX_ACC_PUBLIC | DX_ACC_STATIC,
+                      native_math_sin, true);
+    add_native_method(math_cls, "cos", "DD", DX_ACC_PUBLIC | DX_ACC_STATIC,
+                      native_math_cos, true);
     math_cls->status = DX_CLASS_INITIALIZED;
+
+    // API19 libcore java.util.Random: seed and Gaussian cache live with the
+    // Java object, so GC and distinct Random instances keep correct identity.
+    DxClass *random_cls = create_class(vm, "Ljava/util/Random;", obj_cls, true);
+    random_cls->instance_field_count = 3;
+    random_cls->field_defs = dx_malloc(sizeof(*random_cls->field_defs) * 3);
+    if (!random_cls->field_defs) return DX_ERR_OUT_OF_MEMORY;
+    memset(random_cls->field_defs, 0, sizeof(*random_cls->field_defs) * 3);
+    random_cls->field_defs[0].name = "haveNextNextGaussian";
+    random_cls->field_defs[0].type = "Z";
+    random_cls->field_defs[0].slot_index = 0;
+    random_cls->field_defs[1].name = "seed";
+    random_cls->field_defs[1].type = "J";
+    random_cls->field_defs[1].slot_index = 1;
+    random_cls->field_defs[2].name = "nextNextGaussian";
+    random_cls->field_defs[2].type = "D";
+    random_cls->field_defs[2].slot_index = 2;
+    add_native_method(random_cls, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR,
+                      native_random_init, true);
+    add_native_method(random_cls, "<init>", "VJ", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR,
+                      native_random_init, true);
+    add_native_method(random_cls, "setSeed", "VJ", DX_ACC_PUBLIC,
+                      native_random_set_seed, false);
+    add_native_method(random_cls, "nextInt", "I", DX_ACC_PUBLIC,
+                      native_random_next_int, false);
+    add_native_method(random_cls, "nextInt", "II", DX_ACC_PUBLIC,
+                      native_random_next_int, false);
+    add_native_method(random_cls, "nextDouble", "D", DX_ACC_PUBLIC,
+                      native_random_next_double, false);
+    random_cls->status = DX_CLASS_INITIALIZED;
 
     // java.lang.Number (abstract parent of Integer, Long, Float, Double)
     DxClass *number_cls = create_class(vm, "Ljava/lang/Number;", obj_cls, true);
@@ -3464,7 +4080,10 @@ DxResult dx_register_java_lang(DxVM *vm) {
     create_class(vm, "Ljava/lang/Short;", number_cls, true)->status = DX_CLASS_INITIALIZED;
 
     // java.lang.Character
-    create_class(vm, "Ljava/lang/Character;", obj_cls, true)->status = DX_CLASS_INITIALIZED;
+    DxClass *char_cls = create_class(vm, "Ljava/lang/Character;", obj_cls, true);
+    add_native_method(char_cls, "forDigit", "CII", DX_ACC_PUBLIC | DX_ACC_STATIC,
+                      native_character_fordigit, true);
+    char_cls->status = DX_CLASS_INITIALIZED;
 
     // java.lang.Void
     create_class(vm, "Ljava/lang/Void;", obj_cls, true)->status = DX_CLASS_INITIALIZED;
@@ -3500,22 +4119,30 @@ DxResult dx_register_java_lang(DxVM *vm) {
     // java.lang.Thread
     DxClass *thread_cls = create_class(vm, "Ljava/lang/Thread;", obj_cls, true);
     add_native_method(thread_cls, "start", "V", DX_ACC_PUBLIC,
-                      native_thread_start, false);  // synchronous run()
+                      native_thread_start, false);
     add_native_method(thread_cls, "join", "V", DX_ACC_PUBLIC,
-                      native_object_init, false);  // no-op (already finished)
+                      native_thread_join, false);
     add_native_method(thread_cls, "join", "VJ", DX_ACC_PUBLIC,
-                      native_object_init, false);  // no-op with timeout
+                      native_thread_join, false);
     add_native_method(thread_cls, "isAlive", "Z", DX_ACC_PUBLIC,
-                      native_thread_isalive, false);  // always false
+                      native_thread_isalive, false);
+    add_native_method(thread_cls, "sleep", "VJ", DX_ACC_PUBLIC | DX_ACC_STATIC,
+                      native_thread_sleep, true);
+    add_native_method(thread_cls, "sleep", "VJI", DX_ACC_PUBLIC | DX_ACC_STATIC,
+                      native_thread_sleep, true);
     add_native_method(thread_cls, "setDaemon", "VZ", DX_ACC_PUBLIC,
                       native_object_init, false);  // no-op
     add_native_method(thread_cls, "currentThread", "L", DX_ACC_PUBLIC | DX_ACC_STATIC,
-                      native_object_init, true);  // returns null, absorbed
+                      native_thread_current, true);
+    add_native_method(thread_cls, "run", "V", DX_ACC_PUBLIC,
+                      native_object_init, false);
     add_native_method(thread_cls, "getId", "J", DX_ACC_PUBLIC,
                       native_system_currenttimemillis, false);  // returns 0L
     add_native_method(thread_cls, "getName", "L", DX_ACC_PUBLIC,
                       native_object_init, false);
     thread_cls->status = DX_CLASS_INITIALIZED;
+    create_class(vm, "Ljava/lang/IllegalThreadStateException;", iae_cls, true)->status = DX_CLASS_INITIALIZED;
+    create_class(vm, "Ljava/lang/IllegalMonitorStateException;", rte_cls, true)->status = DX_CLASS_INITIALIZED;
 
     // java.io.PrintStream (for System.out.println)
     DxClass *ps_cls = create_class(vm, "Ljava/io/PrintStream;", obj_cls, true);
@@ -3631,6 +4258,43 @@ DxResult dx_register_java_lang(DxVM *vm) {
         arraylist_cls->interfaces[2] = "Ljava/lang/Iterable;";
     }
     arraylist_cls->status = DX_CLASS_INITIALIZED;
+
+    /* API19 Vector is its own synchronized list. It does not share ArrayList methods. */
+    {
+        DxClass *vector_cls = create_class(vm, "Ljava/util/Vector;", obj_cls, true);
+        const char *names[] = { "elementData", "elementCount", "capacityIncrement" };
+        const char *types[] = { "[Ljava/lang/Object;", "I", "I" };
+        uint32_t f;
+        vector_cls->instance_field_count = 3;
+        vector_cls->field_defs = (typeof(vector_cls->field_defs))dx_malloc(sizeof(*vector_cls->field_defs) * 3);
+        if (vector_cls->field_defs) {
+            memset(vector_cls->field_defs, 0, sizeof(*vector_cls->field_defs) * 3);
+            for (f = 0; f < 3; f++) {
+                vector_cls->field_defs[f].name = names[f];
+                vector_cls->field_defs[f].type = types[f];
+                vector_cls->field_defs[f].flags = DX_ACC_PROTECTED;
+                vector_cls->field_defs[f].slot_index = f;
+            }
+        }
+        add_native_method(vector_cls, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR,
+                          native_vector_init, true);
+        add_native_method(vector_cls, "size", "I", DX_ACC_PUBLIC,
+                          native_vector_size, false);
+        add_native_method(vector_cls, "addElement", "VL", DX_ACC_PUBLIC,
+                          native_vector_add_element, false);
+        add_native_method(vector_cls, "elementAt", "LI", DX_ACC_PUBLIC,
+                          native_vector_element_at, false);
+        add_native_method(vector_cls, "removeElement", "ZL", DX_ACC_PUBLIC,
+                          native_vector_remove_element, false);
+        vector_cls->interface_count = 3;
+        vector_cls->interfaces = (const char **)dx_malloc(sizeof(const char *) * 3);
+        if (vector_cls->interfaces) {
+            vector_cls->interfaces[0] = "Ljava/util/List;";
+            vector_cls->interfaces[1] = "Ljava/util/Collection;";
+            vector_cls->interfaces[2] = "Ljava/lang/Iterable;";
+        }
+        vector_cls->status = DX_CLASS_INITIALIZED;
+    }
 
     // java.util.HashMap with actual storage
     DxClass *hashmap_cls = create_class(vm, "Ljava/util/HashMap;", obj_cls, true);
@@ -3859,20 +4523,28 @@ DxResult dx_register_java_lang(DxVM *vm) {
     create_class(vm, "Lkotlin/jvm/functions/Function0;", obj_cls, true)->status = DX_CLASS_INITIALIZED;
     create_class(vm, "Lkotlin/jvm/functions/Function1;", obj_cls, true)->status = DX_CLASS_INITIALIZED;
 
+    for (uint32_t i = 0; i < vm->class_count; i++)
+        dx_class_build_vtable(vm->classes[i]);
+
     DX_INFO(TAG, "Registered java.lang + kotlin runtime classes");
     return DX_OK;
 }
 
 DxClass *dx_vm_find_class(DxVM *vm, const char *descriptor) {
     if (!vm || !descriptor) return NULL;
+    dx_vm_shared_lock(vm);
+    DxClass *found = NULL;
     uint32_t idx = class_hash_fn(descriptor);
     for (uint32_t i = 0; i < DX_CLASS_HASH_SIZE; i++) {
         uint32_t slot = (idx + i) & (DX_CLASS_HASH_SIZE - 1);
-        if (!vm->class_hash[slot].descriptor) return NULL;
-        if (strcmp(vm->class_hash[slot].descriptor, descriptor) == 0)
-            return vm->class_hash[slot].cls;
+        if (!vm->class_hash[slot].descriptor) break;
+        if (strcmp(vm->class_hash[slot].descriptor, descriptor) == 0) {
+            found = vm->class_hash[slot].cls;
+            break;
+        }
     }
-    return NULL;
+    dx_vm_shared_unlock(vm);
+    return found;
 }
 
 // ─── Class unloading (for hot-reload or memory pressure) ───
@@ -4019,7 +4691,17 @@ const DxAnnotationEntry *dx_method_get_annotation(DxMethod *method, const char *
     return NULL;
 }
 
+static DxResult dx_vm_load_class_locked(DxVM *vm, const char *descriptor, DxClass **out);
+
 DxResult dx_vm_load_class(DxVM *vm, const char *descriptor, DxClass **out) {
+    if (!vm) return DX_ERR_NULL_PTR;
+    dx_vm_shared_lock(vm);
+    DxResult result = dx_vm_load_class_locked(vm, descriptor, out);
+    dx_vm_shared_unlock(vm);
+    return result;
+}
+
+static DxResult dx_vm_load_class_locked(DxVM *vm, const char *descriptor, DxClass **out) {
     if (!vm || !descriptor) return DX_ERR_NULL_PTR;
 
     // Check if already loaded
@@ -4276,7 +4958,7 @@ DxResult dx_vm_load_class(DxVM *vm, const char *descriptor, DxClass **out) {
                     method->declaring_class = cls;
                     method->access_flags = cd->virtual_methods[m].access_flags;
                     method->dex_method_idx = midx;
-                    method->vtable_idx = (int32_t)m;
+                    method->vtable_idx = -1;
 
                     if (cd->virtual_methods[m].code_off != 0) {
                         DxResult cr = dx_dex_parse_code_item(vm->dex,
@@ -4289,52 +4971,7 @@ DxResult dx_vm_load_class(DxVM *vm, const char *descriptor, DxClass **out) {
                 }
             }
 
-            // Build vtable: inherit super vtable, apply overrides, append new methods
-            uint32_t super_vtable_size = super ? super->vtable_size : 0;
-            cls->vtable_size = super_vtable_size + cls->virtual_method_count;
-            if (cls->vtable_size > 0) {
-                cls->vtable = (DxMethod **)dx_malloc(sizeof(DxMethod *) * cls->vtable_size);
-                // Copy super vtable
-                for (uint32_t v = 0; v < super_vtable_size; v++) {
-                    cls->vtable[v] = super->vtable[v];
-                }
-                // Check for overrides, then append
-                for (uint32_t m = 0; m < cls->virtual_method_count; m++) {
-                    DxMethod *method = &cls->virtual_methods[m];
-                    bool overridden = false;
-                    for (uint32_t v = 0; v < super_vtable_size; v++) {
-                        if (cls->vtable[v] &&
-                            strcmp(cls->vtable[v]->name, method->name) == 0) {
-                            // Name matches — verify shorty (signature) also matches before overriding
-                            if (cls->vtable[v]->shorty && method->shorty &&
-                                strcmp(cls->vtable[v]->shorty, method->shorty) == 0) {
-                                cls->vtable[v] = method;
-                                method->vtable_idx = (int32_t)v;
-                                overridden = true;
-                                break;
-                            } else {
-                                // Name matches but signature differs — not a valid override.
-                                // Log warning for potential DEX inconsistency or method overload
-                                // that should not replace the vtable slot.
-                                DX_WARN(TAG, "vtable[%u] signature mismatch during override: "
-                                        "%s.%s (shorty=%s) vs %s.%s (shorty=%s)",
-                                        v,
-                                        cls->vtable[v]->declaring_class ?
-                                            cls->vtable[v]->declaring_class->descriptor : "?",
-                                        cls->vtable[v]->name,
-                                        cls->vtable[v]->shorty ? cls->vtable[v]->shorty : "null",
-                                        cls->descriptor ? cls->descriptor : "?",
-                                        method->name,
-                                        method->shorty ? method->shorty : "null");
-                            }
-                        }
-                    }
-                    if (!overridden) {
-                        method->vtable_idx = (int32_t)(super_vtable_size + m);
-                        cls->vtable[super_vtable_size + m] = method;
-                    }
-                }
-            }
+            dx_class_build_vtable(cls);
 
             // Build itable: for each implemented interface, map interface methods to class methods
             if (cls->interface_count > 0) {
@@ -4581,25 +5218,31 @@ static void gc_push_roots(DxVM *vm) {
     gc_mark_stack_push(vm, vm->activity_context);
     gc_mark_stack_push(vm, vm->launch_intent);
 
-    // Root 2: all registers in the current frame chain
-    DxFrame *frame = vm->current_frame;
-    while (frame) {
-        if (frame->method && frame->method->has_code) {
-            uint32_t reg_count = frame->method->code.registers_size;
-            if (reg_count > DX_MAX_REGISTERS) reg_count = DX_MAX_REGISTERS;
-            for (uint32_t r = 0; r < reg_count; r++) {
-                if (frame->registers[r].tag == DX_VAL_OBJ && frame->registers[r].obj) {
-                    gc_mark_stack_push(vm, frame->registers[r].obj);
+    // Root 2: registers, exceptions, and Java thread objects of every execution context
+    for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+        DxExecutionContext *exec = vm->execs[exec_index];
+        if (!exec) continue;
+        gc_mark_stack_push(vm, exec->java_thread);
+        gc_mark_stack_push(vm, exec->pending_exception);
+        DxFrame *frame = exec->current_frame;
+        while (frame) {
+            if (frame->method && frame->method->has_code) {
+                uint32_t reg_count = frame->method->code.registers_size;
+                if (reg_count > DX_MAX_REGISTERS) reg_count = DX_MAX_REGISTERS;
+                for (uint32_t r = 0; r < reg_count; r++) {
+                    if (frame->registers[r].tag == DX_VAL_OBJ && frame->registers[r].obj) {
+                        gc_mark_stack_push(vm, frame->registers[r].obj);
+                    }
                 }
             }
+            if (frame->result.tag == DX_VAL_OBJ && frame->result.obj) {
+                gc_mark_stack_push(vm, frame->result.obj);
+            }
+            if (frame->exception) {
+                gc_mark_stack_push(vm, frame->exception);
+            }
+            frame = frame->caller;
         }
-        if (frame->result.tag == DX_VAL_OBJ && frame->result.obj) {
-            gc_mark_stack_push(vm, frame->result.obj);
-        }
-        if (frame->exception) {
-            gc_mark_stack_push(vm, frame->exception);
-        }
-        frame = frame->caller;
     }
 
     // Root 3: static fields of all loaded classes
@@ -4695,7 +5338,12 @@ static void gc_incremental_step(DxVM *vm, int max_objects) {
 
             // Post-sweep dangling pointer scrub for incremental GC
             // Scrub frame registers
-            DxFrame *sf = vm->current_frame;
+            for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+            DxExecutionContext *scrub_exec = vm->execs[exec_index];
+            if (!scrub_exec) continue;
+            if (scrub_exec->pending_exception && !scrub_exec->pending_exception->gc_mark)
+                scrub_exec->pending_exception = NULL;
+            DxFrame *sf = scrub_exec->current_frame;
             while (sf) {
                 if (sf->method && sf->method->has_code) {
                     uint32_t rc = sf->method->code.registers_size;
@@ -4718,6 +5366,7 @@ static void gc_incremental_step(DxVM *vm, int max_objects) {
                 }
                 sf = sf->caller;
             }
+            }
             // Scrub static fields
             for (uint32_t ci = 0; ci < vm->class_count; ci++) {
                 DxClass *cls = vm->classes[ci];
@@ -4734,8 +5383,10 @@ static void gc_incremental_step(DxVM *vm, int max_objects) {
             if (vm->activity_instance && !vm->activity_instance->gc_mark) {
                 vm->activity_instance = NULL;
             }
-            if (vm->pending_exception && !vm->pending_exception->gc_mark) {
-                vm->pending_exception = NULL;
+            for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+                DxExecutionContext *pend = vm->execs[exec_index];
+                if (pend && pend->pending_exception && !pend->pending_exception->gc_mark)
+                    pend->pending_exception = NULL;
             }
 
             vm->gc_phase = DX_GC_IDLE;
@@ -4785,7 +5436,19 @@ static void gc_mark_ui_tree(DxUINode *node) {
     }
 }
 
+static DxResult dx_vm_gc_locked(DxVM *vm);
+
 DxResult dx_vm_gc(DxVM *vm) {
+    if (!vm) return DX_ERR_NULL_PTR;
+    dx_exec_gc_begin(vm);
+    dx_vm_shared_lock(vm);
+    DxResult result = dx_vm_gc_locked(vm);
+    dx_vm_shared_unlock(vm);
+    dx_exec_gc_end(vm);
+    return result;
+}
+
+static DxResult dx_vm_gc_locked(DxVM *vm) {
     if (!vm) return DX_ERR_NULL_PTR;
 
     uint64_t gc_start_ns = 0;
@@ -4810,26 +5473,31 @@ DxResult dx_vm_gc(DxVM *vm) {
     gc_mark_object(vm->activity_context);
     gc_mark_object(vm->launch_intent);
 
-    // Root 2: all registers in the current frame chain
-    DxFrame *frame = vm->current_frame;
-    while (frame) {
-        if (frame->method && frame->method->has_code) {
-            uint32_t reg_count = frame->method->code.registers_size;
-            if (reg_count > DX_MAX_REGISTERS) reg_count = DX_MAX_REGISTERS;
-            for (uint32_t r = 0; r < reg_count; r++) {
-                if (frame->registers[r].tag == DX_VAL_OBJ && frame->registers[r].obj) {
-                    gc_mark_object(frame->registers[r].obj);
+    // Root 2: registers, exceptions, and Java thread objects of every execution context
+    for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+        DxExecutionContext *exec = vm->execs[exec_index];
+        if (!exec) continue;
+        gc_mark_object(exec->java_thread);
+        gc_mark_object(exec->pending_exception);
+        DxFrame *frame = exec->current_frame;
+        while (frame) {
+            if (frame->method && frame->method->has_code) {
+                uint32_t reg_count = frame->method->code.registers_size;
+                if (reg_count > DX_MAX_REGISTERS) reg_count = DX_MAX_REGISTERS;
+                for (uint32_t r = 0; r < reg_count; r++) {
+                    if (frame->registers[r].tag == DX_VAL_OBJ && frame->registers[r].obj) {
+                        gc_mark_object(frame->registers[r].obj);
+                    }
                 }
             }
+            if (frame->result.tag == DX_VAL_OBJ && frame->result.obj) {
+                gc_mark_object(frame->result.obj);
+            }
+            if (frame->exception) {
+                gc_mark_object(frame->exception);
+            }
+            frame = frame->caller;
         }
-        // Also mark the result and exception
-        if (frame->result.tag == DX_VAL_OBJ && frame->result.obj) {
-            gc_mark_object(frame->result.obj);
-        }
-        if (frame->exception) {
-            gc_mark_object(frame->exception);
-        }
-        frame = frame->caller;
     }
 
     // Root 3: static fields of all loaded classes
@@ -4890,8 +5558,11 @@ DxResult dx_vm_gc(DxVM *vm) {
     // and the UI tree still point to surviving (marked) heap objects.
     // This guards against corruption if a reference was missed during marking.
 
-    // Scrub frame registers in the active call chain
-    DxFrame *scrub_frame = vm->current_frame;
+    // Scrub frame registers in every execution context
+    for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+    DxExecutionContext *scrub_exec = vm->execs[exec_index];
+    if (!scrub_exec) continue;
+    DxFrame *scrub_frame = scrub_exec->current_frame;
     while (scrub_frame) {
         if (scrub_frame->method && scrub_frame->method->has_code) {
             uint32_t reg_count = scrub_frame->method->code.registers_size;
@@ -4921,6 +5592,7 @@ DxResult dx_vm_gc(DxVM *vm) {
         }
         scrub_frame = scrub_frame->caller;
     }
+    }
 
     // Scrub static fields of all loaded classes
     for (uint32_t c = 0; c < vm->class_count; c++) {
@@ -4947,10 +5619,12 @@ DxResult dx_vm_gc(DxVM *vm) {
     if (vm->activity_context && !vm->activity_context->gc_mark) vm->activity_context = NULL;
     if (vm->launch_intent && !vm->launch_intent->gc_mark) vm->launch_intent = NULL;
 
-    // Scrub pending exception
-    if (vm->pending_exception && !vm->pending_exception->gc_mark) {
-        DX_WARN(TAG, "GC: nulling dangling pending_exception");
-        vm->pending_exception = NULL;
+    for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+        DxExecutionContext *pend = vm->execs[exec_index];
+        if (pend && pend->pending_exception && !pend->pending_exception->gc_mark) {
+            DX_WARN(TAG, "GC: nulling dangling pending_exception");
+            pend->pending_exception = NULL;
+        }
     }
 
     // Reset young generation count: all survivors in a major GC become old
@@ -4976,7 +5650,17 @@ DxResult dx_vm_gc(DxVM *vm) {
     return DX_OK;
 }
 
+static DxObject *dx_vm_alloc_object_locked(DxVM *vm, DxClass *cls);
+
 DxObject *dx_vm_alloc_object(DxVM *vm, DxClass *cls) {
+    if (!vm || !cls) return NULL;
+    dx_vm_shared_lock(vm);
+    DxObject *obj = dx_vm_alloc_object_locked(vm, cls);
+    dx_vm_shared_unlock(vm);
+    return obj;
+}
+
+static DxObject *dx_vm_alloc_object_locked(DxVM *vm, DxClass *cls) {
     if (!vm || !cls) return NULL;
 
     // Trigger minor GC when young generation exceeds threshold
@@ -4991,11 +5675,11 @@ DxObject *dx_vm_alloc_object(DxVM *vm, DxClass *cls) {
 
     if (vm->heap_count >= DX_MAX_HEAP_OBJECTS) {
         DX_ERROR(TAG, "Heap full (%u objects) even after GC — OutOfMemoryError", DX_MAX_HEAP_OBJECTS);
-        snprintf(vm->error_msg, sizeof(vm->error_msg),
+        snprintf(dx_vm_current_exec(vm)->error_msg, sizeof(dx_vm_current_exec(vm)->error_msg),
                  "OutOfMemoryError: heap exhausted (%u/%u objects) allocating %s",
                  vm->heap_count, DX_MAX_HEAP_OBJECTS, cls->descriptor);
         // Set pending exception so the interpreter can unwind properly
-        if (!vm->pending_exception) {
+        if (!dx_vm_current_exec(vm)->pending_exception) {
             // Avoid recursive alloc: only create exception if we have headroom
             // (the exception itself would need a heap slot, so skip if truly full)
             DX_ERROR(TAG, "Cannot allocate OutOfMemoryError object (heap full)");
@@ -5009,7 +5693,7 @@ DxObject *dx_vm_alloc_object(DxVM *vm, DxClass *cls) {
 
     DxObject *obj = (DxObject *)dx_malloc(sizeof(DxObject));
     if (!obj) {
-        snprintf(vm->error_msg, sizeof(vm->error_msg),
+        snprintf(dx_vm_current_exec(vm)->error_msg, sizeof(dx_vm_current_exec(vm)->error_msg),
                  "OutOfMemoryError: malloc failed allocating %s", cls->descriptor);
         return NULL;
     }
@@ -5017,6 +5701,8 @@ DxObject *dx_vm_alloc_object(DxVM *vm, DxClass *cls) {
     obj->klass = cls;
     obj->ref_count = 1;
     obj->heap_idx = vm->heap_count;
+    obj->diagnostic_identity = vm->next_diagnostic_identity++;
+    if (vm->next_diagnostic_identity == 0) vm->next_diagnostic_identity = 1;
     obj->ui_node = NULL;
     obj->string_data = NULL;
     obj->gc_mark = false;
@@ -5024,6 +5710,7 @@ DxObject *dx_vm_alloc_object(DxVM *vm, DxClass *cls) {
     obj->is_array = false;
     obj->array_length = 0;
     obj->array_elements = NULL;
+    obj->monitor = NULL;
 
     if (cls->instance_field_count > 0) {
         obj->fields = (DxValue *)dx_malloc(sizeof(DxValue) * cls->instance_field_count);
@@ -5049,7 +5736,17 @@ DxObject *dx_vm_alloc_object(DxVM *vm, DxClass *cls) {
     return obj;
 }
 
+static DxObject *dx_vm_alloc_array_locked(DxVM *vm, uint32_t length);
+
 DxObject *dx_vm_alloc_array(DxVM *vm, uint32_t length) {
+    if (!vm) return NULL;
+    dx_vm_shared_lock(vm);
+    DxObject *obj = dx_vm_alloc_array_locked(vm, length);
+    dx_vm_shared_unlock(vm);
+    return obj;
+}
+
+static DxObject *dx_vm_alloc_array_locked(DxVM *vm, uint32_t length) {
     if (!vm) return NULL;
 
     // Trigger minor GC when young generation exceeds threshold
@@ -5065,7 +5762,7 @@ DxObject *dx_vm_alloc_array(DxVM *vm, uint32_t length) {
     if (vm->heap_count >= DX_MAX_HEAP_OBJECTS) {
         DX_ERROR(TAG, "Heap full (%u objects) even after GC — OutOfMemoryError (array[%u])",
                  DX_MAX_HEAP_OBJECTS, length);
-        snprintf(vm->error_msg, sizeof(vm->error_msg),
+        snprintf(dx_vm_current_exec(vm)->error_msg, sizeof(dx_vm_current_exec(vm)->error_msg),
                  "OutOfMemoryError: heap exhausted (%u/%u objects) allocating array[%u]",
                  vm->heap_count, DX_MAX_HEAP_OBJECTS, length);
         return NULL;
@@ -5073,7 +5770,7 @@ DxObject *dx_vm_alloc_array(DxVM *vm, uint32_t length) {
 
     DxObject *obj = (DxObject *)dx_malloc(sizeof(DxObject));
     if (!obj) {
-        snprintf(vm->error_msg, sizeof(vm->error_msg),
+        snprintf(dx_vm_current_exec(vm)->error_msg, sizeof(dx_vm_current_exec(vm)->error_msg),
                  "OutOfMemoryError: malloc failed allocating array[%u]", length);
         return NULL;
     }
@@ -5081,12 +5778,16 @@ DxObject *dx_vm_alloc_array(DxVM *vm, uint32_t length) {
     obj->klass = vm->class_object;  // arrays are Object subtype
     obj->ref_count = 1;
     obj->heap_idx = vm->heap_count;
+    obj->diagnostic_identity = vm->next_diagnostic_identity++;
+    if (vm->next_diagnostic_identity == 0) vm->next_diagnostic_identity = 1;
     obj->ui_node = NULL;
     obj->gc_mark = false;
     obj->generation = 0;  // new arrays start in young generation
     obj->fields = NULL;
     obj->is_array = true;
     obj->array_length = length;
+    obj->monitor = NULL;
+    obj->string_data = NULL;
 
     if (length > 0) {
         obj->array_elements = (DxValue *)dx_malloc(sizeof(DxValue) * length);
@@ -5191,7 +5892,17 @@ DxResult dx_vm_get_field(DxObject *obj, const char *name, DxValue *out) {
     return DX_OK;
 }
 
+static DxObject *dx_vm_create_string_locked(DxVM *vm, const char *utf8);
+
 DxObject *dx_vm_create_string(DxVM *vm, const char *utf8) {
+    if (!vm || !utf8) return NULL;
+    dx_vm_shared_lock(vm);
+    DxObject *obj = dx_vm_create_string_locked(vm, utf8);
+    dx_vm_shared_unlock(vm);
+    return obj;
+}
+
+static DxObject *dx_vm_create_string_locked(DxVM *vm, const char *utf8) {
     if (!vm || !utf8) return NULL;
 
     // Check intern table first - return existing object for duplicate strings
@@ -5242,10 +5953,10 @@ DxMethod *dx_vm_resolve_method(DxVM *vm, uint32_t dex_method_idx) {
 
     // Use the current frame's class DEX file if available, else primary
     DxDexFile *dex = vm->dex;
-    if (vm->current_frame && vm->current_frame->method &&
-        vm->current_frame->method->declaring_class &&
-        vm->current_frame->method->declaring_class->dex_file) {
-        dex = vm->current_frame->method->declaring_class->dex_file;
+    if (dx_vm_current_exec(vm)->current_frame && dx_vm_current_exec(vm)->current_frame->method &&
+        dx_vm_current_exec(vm)->current_frame->method->declaring_class &&
+        dx_vm_current_exec(vm)->current_frame->method->declaring_class->dex_file) {
+        dex = dx_vm_current_exec(vm)->current_frame->method->declaring_class->dex_file;
     }
     if (!dex) return NULL;
     if (dex_method_idx >= dex->method_count) return NULL;
@@ -5316,6 +6027,52 @@ DxMethod *dx_vm_find_method(DxClass *cls, const char *name, const char *shorty) 
     }
 
     return NULL;
+}
+
+void dx_vm_trace_virtual_invoke(DxFrame *frame, uint32_t pc, uint8_t opcode,
+                                uint32_t method_idx, DxMethod *resolved,
+                                DxClass *receiver, DxMethod *slot) {
+    const char *rname = (resolved && resolved->name) ? resolved->name : NULL;
+    const char *sname = (slot && slot->name) ? slot->name : NULL;
+    if (!rname) return;
+    int named = strcmp(rname, "start") == 0 || strcmp(rname, "setRunning") == 0 ||
+                strcmp(rname, "cleanUp") == 0 ||
+                (sname && (strcmp(sname, "start") == 0 || strcmp(sname, "setRunning") == 0 ||
+                           strcmp(sname, "cleanUp") == 0));
+    int mismatch = sname && strcmp(rname, sname) != 0;
+    if (!named && !mismatch) return;
+    static uint32_t named_lines;
+    static uint32_t mismatch_lines;
+    if (named) {
+        if (named_lines >= 32) return;
+        named_lines++;
+    } else {
+        if (mismatch_lines >= 16) return;
+        mismatch_lines++;
+    }
+    const char *caller_cls = "?";
+    const char *caller_name = "?";
+    if (frame && frame->method) {
+        if (frame->method->declaring_class && frame->method->declaring_class->descriptor)
+            caller_cls = frame->method->declaring_class->descriptor;
+        if (frame->method->name) caller_name = frame->method->name;
+    }
+    fprintf(stderr,
+            "VDISPATCH caller=%s.%s pc=%u op=0x%02x method_idx=%u "
+            "resolved=%s.%s shorty=%s vtable_idx=%d "
+            "receiver=%s vtable_size=%u slot=%s.%s shorty=%s\n",
+            caller_cls, caller_name, pc, opcode, method_idx,
+            (resolved->declaring_class && resolved->declaring_class->descriptor)
+                ? resolved->declaring_class->descriptor : "?",
+            rname,
+            resolved->shorty ? resolved->shorty : "?",
+            resolved->vtable_idx,
+            (receiver && receiver->descriptor) ? receiver->descriptor : "?",
+            receiver ? receiver->vtable_size : 0,
+            (slot && slot->declaring_class && slot->declaring_class->descriptor)
+                ? slot->declaring_class->descriptor : "?",
+            sname ? sname : "?",
+            (slot && slot->shorty) ? slot->shorty : "?");
 }
 
 // Search implemented interfaces for a default (non-abstract) method.
@@ -5598,11 +6355,11 @@ char *dx_vm_get_last_error_detail(DxVM *vm) {
     }
 
     // Pending exception info
-    if (vm->pending_exception && vm->pending_exception->klass) {
-        const char *exc_desc = vm->pending_exception->klass->descriptor;
+    if (dx_vm_current_exec(vm)->pending_exception && dx_vm_current_exec(vm)->pending_exception->klass) {
+        const char *exc_desc = dx_vm_current_exec(vm)->pending_exception->klass->descriptor;
         DxValue msg_val;
         const char *msg = "";
-        if (dx_vm_get_field(vm->pending_exception, "detailMessage", &msg_val) == DX_OK &&
+        if (dx_vm_get_field(dx_vm_current_exec(vm)->pending_exception, "detailMessage", &msg_val) == DX_OK &&
             msg_val.tag == DX_VAL_OBJ && msg_val.obj) {
             msg = dx_vm_get_string_value(msg_val.obj);
             if (!msg) msg = "";
@@ -5828,7 +6585,7 @@ DxResult dx_vm_invoke_custom(DxVM *vm, DxFrame *frame, uint32_t call_site_idx,
         lambda_cls->virtual_methods[0].access_flags = DX_ACC_PUBLIC;
         lambda_cls->virtual_methods[0].native_fn = native_lambda_dispatch;
         lambda_cls->virtual_methods[0].is_native = true;
-        lambda_cls->virtual_methods[0].vtable_idx = 0;
+        lambda_cls->virtual_methods[0].vtable_idx = -1;
 
         // Get shorty from erased proto
         if (cs->proto_idx < dex->proto_count) {
@@ -5838,6 +6595,7 @@ DxResult dx_vm_invoke_custom(DxVM *vm, DxFrame *frame, uint32_t call_site_idx,
 
         lambda_cls->virtual_method_count = 1;
     }
+    dx_class_build_vtable(lambda_cls);
 
     // Register in VM
     if (vm->class_count < DX_MAX_CLASSES) {
@@ -5902,10 +6660,10 @@ DxResult dx_vm_invoke_method_handle(DxVM *vm, DxObject *handle_obj, DxValue *arg
         dex = (DxDexFile *)(uintptr_t)handle_obj->fields[2].l;
     }
     if (!dex) {
-        if (vm->current_frame && vm->current_frame->method &&
-            vm->current_frame->method->declaring_class &&
-            vm->current_frame->method->declaring_class->dex_file) {
-            dex = vm->current_frame->method->declaring_class->dex_file;
+        if (dx_vm_current_exec(vm)->current_frame && dx_vm_current_exec(vm)->current_frame->method &&
+            dx_vm_current_exec(vm)->current_frame->method->declaring_class &&
+            dx_vm_current_exec(vm)->current_frame->method->declaring_class->dex_file) {
+            dex = dx_vm_current_exec(vm)->current_frame->method->declaring_class->dex_file;
         }
         if (!dex) dex = vm->dex;
     }
@@ -6095,7 +6853,19 @@ static void gc_scan_old_to_young(DxVM *vm) {
     }
 }
 
+static DxResult dx_vm_gc_minor_locked(DxVM *vm);
+
 DxResult dx_vm_gc_minor(DxVM *vm) {
+    if (!vm) return DX_ERR_NULL_PTR;
+    dx_exec_gc_begin(vm);
+    dx_vm_shared_lock(vm);
+    DxResult result = dx_vm_gc_minor_locked(vm);
+    dx_vm_shared_unlock(vm);
+    dx_exec_gc_end(vm);
+    return result;
+}
+
+static DxResult dx_vm_gc_minor_locked(DxVM *vm) {
     if (!vm) return DX_ERR_NULL_PTR;
 
     uint64_t gc_start_ns = 0;
@@ -6130,8 +6900,13 @@ DxResult dx_vm_gc_minor(DxVM *vm) {
     if (vm->activity_context) gc_mark_object_young(vm->activity_context);
     if (vm->launch_intent) gc_mark_object_young(vm->launch_intent);
 
-    // Root 2: frame registers
-    DxFrame *frame = vm->current_frame;
+    // Root 2: frame registers of every execution context
+    for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+    DxExecutionContext *young_exec = vm->execs[exec_index];
+    if (!young_exec) continue;
+    if (young_exec->java_thread) gc_mark_object_young(young_exec->java_thread);
+    if (young_exec->pending_exception) gc_mark_object_young(young_exec->pending_exception);
+    DxFrame *frame = young_exec->current_frame;
     while (frame) {
         if (frame->method && frame->method->has_code) {
             uint32_t reg_count = frame->method->code.registers_size;
@@ -6147,6 +6922,7 @@ DxResult dx_vm_gc_minor(DxVM *vm) {
         }
         if (frame->exception) gc_mark_object_young(frame->exception);
         frame = frame->caller;
+    }
     }
 
     // Root 3: static fields
@@ -6205,7 +6981,13 @@ DxResult dx_vm_gc_minor(DxVM *vm) {
     vm->heap_count = write;
 
     // Post-sweep dangling pointer scrub for frame registers
-    DxFrame *sf = vm->current_frame;
+    for (uint32_t exec_index = 0; exec_index < vm->exec_count; exec_index++) {
+    DxExecutionContext *scrub_exec = vm->execs[exec_index];
+    if (!scrub_exec) continue;
+    if (scrub_exec->pending_exception && scrub_exec->pending_exception->generation == 0 &&
+        !scrub_exec->pending_exception->gc_mark)
+        scrub_exec->pending_exception = NULL;
+    DxFrame *sf = scrub_exec->current_frame;
     while (sf) {
         if (sf->method && sf->method->has_code) {
             uint32_t reg_count = sf->method->code.registers_size;
@@ -6227,6 +7009,7 @@ DxResult dx_vm_gc_minor(DxVM *vm) {
             sf->exception = NULL;
         }
         sf = sf->caller;
+    }
     }
 
     DX_INFO(TAG, "Minor GC completed: %u -> %u objects (%u freed, %u promoted)",
@@ -6321,11 +7104,15 @@ void dx_vm_set_trace_filter(DxVM *vm, const char *method_filter) {
 // Uses a simple open-addressing hash table keyed by PC offset.
 DxInlineCache *dx_vm_ic_get(DxMethod *method, uint32_t pc) {
     if (!method) return NULL;
+    dx_vm_shared_lock_current();
 
     // Lazily allocate the IC table on first use
     if (!method->ic_table) {
         method->ic_table = (DxICTable *)dx_malloc(sizeof(DxICTable));
-        if (!method->ic_table) return NULL;
+        if (!method->ic_table) {
+            dx_vm_shared_unlock_current();
+            return NULL;
+        }
         memset(method->ic_table, 0, sizeof(DxICTable));
     }
 
@@ -6338,42 +7125,51 @@ DxInlineCache *dx_vm_ic_get(DxMethod *method, uint32_t pc) {
     for (uint32_t i = 0; i < DX_IC_TABLE_SIZE; i++) {
         uint32_t slot = (idx + i) % DX_IC_TABLE_SIZE;
         if (table->slots[slot].pc == key) {
-            return &table->slots[slot].ic;
+            DxInlineCache *found = &table->slots[slot].ic;
+            dx_vm_shared_unlock_current();
+            return found;
         }
         if (table->slots[slot].pc == 0) {
             // Empty slot — claim it for this PC
             table->slots[slot].pc = key;
-            return &table->slots[slot].ic;
+            DxInlineCache *found = &table->slots[slot].ic;
+            dx_vm_shared_unlock_current();
+            return found;
         }
     }
 
     // Table full (shouldn't happen with 32 slots for typical methods)
+    dx_vm_shared_unlock_current();
     return NULL;
 }
 
 // Look up a cached method for the given receiver class. Returns NULL on miss.
 DxMethod *dx_vm_ic_lookup(DxInlineCache *ic, DxClass *receiver_class) {
     if (!ic || !receiver_class) return NULL;
-
+    dx_vm_shared_lock_current();
+    DxMethod *found = NULL;
     for (uint8_t i = 0; i < ic->count; i++) {
         if (ic->entries[i].receiver_class == receiver_class) {
             ic->hits++;
-            return ic->entries[i].resolved_method;
+            found = ic->entries[i].resolved_method;
+            break;
         }
     }
-
-    ic->misses++;
-    return NULL;
+    if (!found) ic->misses++;
+    dx_vm_shared_unlock_current();
+    return found;
 }
 
 // Insert a resolved method into the inline cache for a receiver class.
 void dx_vm_ic_insert(DxInlineCache *ic, DxClass *receiver_class, DxMethod *resolved) {
     if (!ic || !receiver_class || !resolved) return;
+    dx_vm_shared_lock_current();
 
     // Check if already present (avoid duplicates)
     for (uint8_t i = 0; i < ic->count; i++) {
         if (ic->entries[i].receiver_class == receiver_class) {
             ic->entries[i].resolved_method = resolved;
+            dx_vm_shared_unlock_current();
             return;
         }
     }
@@ -6391,6 +7187,7 @@ void dx_vm_ic_insert(DxInlineCache *ic, DxClass *receiver_class, DxMethod *resol
         ic->entries[DX_IC_SIZE - 1].receiver_class = receiver_class;
         ic->entries[DX_IC_SIZE - 1].resolved_method = resolved;
     }
+    dx_vm_shared_unlock_current();
 }
 
 // Log aggregate inline cache statistics across all loaded methods.
@@ -6570,4 +7367,405 @@ DxTelemetry dx_vm_get_telemetry(DxVM *vm) {
 void dx_vm_set_telemetry_enabled(DxVM *vm, bool enabled) {
     if (!vm) return;
     vm->telemetry.telemetry_enabled = enabled;
+}
+
+void dx_vm_set_draw_witness(DxVM *vm, uint32_t budget) {
+    if (!vm) return;
+    if (budget == 0) {
+        __atomic_store_n(&vm->telemetry.draw_witness_armed, 0, __ATOMIC_RELEASE);
+        __atomic_store_n(&vm->telemetry.draw_witness_remaining, 0, __ATOMIC_RELEASE);
+        return;
+    }
+    __atomic_store_n(&vm->telemetry.draw_witness_remaining, budget, __ATOMIC_RELEASE);
+    __atomic_store_n(&vm->telemetry.draw_witness_armed, 1, __ATOMIC_RELEASE);
+}
+
+static void witness_fill(DxInvokeWitness *w, DxVM *vm, DxFrame *frame, uint32_t pc,
+                         uint8_t opcode, uint32_t method_idx, const DxValue *args, uint8_t argc) {
+    const char *caller_cls = "?";
+    const char *caller_name = "?";
+    uint8_t n;
+    memset(w, 0, sizeof(*w));
+    w->exec_id = dx_vm_current_exec(vm) ? dx_vm_current_exec(vm)->id : 0;
+    w->pc = pc;
+    w->opcode = opcode;
+    w->method_idx = method_idx;
+    n = argc > 8 ? 8 : argc;
+    w->argc = n;
+    for (uint8_t i = 0; i < n; i++) {
+        w->arg_tag[i] = args ? (uint8_t)args[i].tag : 0;
+        w->arg_i[i] = args ? args[i].i : 0;
+    }
+    if (n > 0 && args && args[0].tag == DX_VAL_OBJ && args[0].obj) {
+        w->recv_obj = (uint64_t)(uintptr_t)args[0].obj;
+        if (args[0].obj->klass && args[0].obj->klass->descriptor)
+            snprintf(w->recv_class, sizeof(w->recv_class), "%s", args[0].obj->klass->descriptor);
+    }
+    if (frame && frame->method) {
+        if (frame->method->declaring_class && frame->method->declaring_class->descriptor)
+            caller_cls = frame->method->declaring_class->descriptor;
+        if (frame->method->name) caller_name = frame->method->name;
+    }
+    snprintf(w->caller, sizeof(w->caller), "%s.%s", caller_cls, caller_name);
+}
+
+static void witness_target_from_dex(DxInvokeWitness *w, DxFrame *frame, uint32_t method_idx) {
+    DxDexFile *dex = NULL;
+    const char *cls = NULL;
+    const char *name = NULL;
+    const char *shorty = NULL;
+    if (frame && frame->method && frame->method->declaring_class)
+        dex = frame->method->declaring_class->dex_file;
+    if (!dex) return;
+    cls = dx_dex_get_method_class(dex, method_idx);
+    name = dx_dex_get_method_name(dex, method_idx);
+    shorty = dx_dex_get_method_shorty(dex, method_idx);
+    snprintf(w->target_class, sizeof(w->target_class), "%s", cls ? cls : "?");
+    snprintf(w->target_name, sizeof(w->target_name), "%s", name ? name : "?");
+    snprintf(w->shorty, sizeof(w->shorty), "%s", shorty ? shorty : "?");
+}
+
+static int witness_is_fordigit(const DxMethod *target) {
+    if (!target || !target->name || strcmp(target->name, "forDigit") != 0) return 0;
+    if (!target->declaring_class || !target->declaring_class->descriptor) return 0;
+    return strcmp(target->declaring_class->descriptor, "Ljava/lang/Character;") == 0;
+}
+
+void dx_vm_witness_unresolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                              uint32_t method_idx, const DxValue *args, uint8_t argc) {
+    DxInvokeWitness *slot;
+    if (!vm || !vm->telemetry.telemetry_enabled) return;
+    if (vm->witness_fordigit_count == 0) return;
+    if (vm->witness_unresolved_after_count >= 6) {
+        if (vm->witness_want_continuation) vm->witness_want_continuation = 0;
+        return;
+    }
+    slot = &vm->witness_unresolved_after[vm->witness_unresolved_after_count++];
+    witness_fill(slot, vm, frame, pc, opcode, method_idx, args, argc);
+    slot->resolved = 0;
+    witness_target_from_dex(slot, frame, method_idx);
+    if (vm->witness_want_continuation && !vm->witness_continuation_set) {
+        vm->witness_continuation = *slot;
+        vm->witness_continuation_set = 1;
+        vm->witness_want_continuation = 0;
+    }
+}
+
+void dx_vm_note_vector_follow(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                              uint32_t method_idx, const char *cls, const char *name,
+                              const char *shorty, const DxValue *args, uint8_t argc,
+                              int resolved, const DxValue *result, int has_result) {
+    DxInvokeWitness *slot;
+    if (!vm || !vm->telemetry.telemetry_enabled || !vm->vector_after_element_armed) return;
+    vm->vector_after_element_armed = 0;
+    if (vm->vector_after_element_count >= 8) return;
+    slot = &vm->vector_after_element[vm->vector_after_element_count++];
+    witness_fill(slot, vm, frame, pc, opcode, method_idx, args, argc);
+    slot->resolved = resolved ? 1 : 0;
+    snprintf(slot->target_class, sizeof(slot->target_class), "%s", cls ? cls : "?");
+    snprintf(slot->target_name, sizeof(slot->target_name), "%s", name ? name : "?");
+    snprintf(slot->shorty, sizeof(slot->shorty), "%s", shorty ? shorty : "?");
+    if (has_result && result) {
+        slot->has_ret = 1;
+        slot->ret_tag = (uint8_t)result->tag;
+        slot->ret_i = result->i;
+    }
+}
+
+uint32_t dx_vm_vector_after_element_count(const DxVM *vm) {
+    return vm ? vm->vector_after_element_count : 0;
+}
+
+int dx_vm_copy_vector_after_element(const DxVM *vm, uint32_t index, DxInvokeWitness *out) {
+    if (!vm || !out || index >= vm->vector_after_element_count) return -1;
+    *out = vm->vector_after_element[index];
+    return 0;
+}
+
+int dx_vm_copy_vector_next_unresolved(const DxVM *vm, DxInvokeWitness *out) {
+    if (!vm || !out || !vm->vector_next_unresolved_set) return -1;
+    *out = vm->vector_next_unresolved;
+    return 0;
+}
+
+/* First unresolved invoke after a Vector.elementAt that returned an object. */
+void dx_vm_note_post_vector_unresolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                                       uint32_t method_idx, const char *cls, const char *name,
+                                       const char *shorty, const DxValue *args, uint8_t argc) {
+    if (!vm || !vm->telemetry.telemetry_enabled || !vm->vector_seen_element_at) return;
+    if (vm->vector_next_unresolved_set) return;
+    witness_fill(&vm->vector_next_unresolved, vm, frame, pc, opcode, method_idx, args, argc);
+    vm->vector_next_unresolved.resolved = 0;
+    snprintf(vm->vector_next_unresolved.target_class, sizeof(vm->vector_next_unresolved.target_class),
+             "%s", cls ? cls : "?");
+    snprintf(vm->vector_next_unresolved.target_name, sizeof(vm->vector_next_unresolved.target_name),
+             "%s", name ? name : "?");
+    snprintf(vm->vector_next_unresolved.shorty, sizeof(vm->vector_next_unresolved.shorty),
+             "%s", shorty ? shorty : "?");
+    vm->vector_next_unresolved_set = 1;
+}
+
+void dx_vm_note_unresolved_seen(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                                uint32_t method_idx, const char *cls, const char *name,
+                                const char *shorty, const DxValue *args, uint8_t argc) {
+    DxExecutionContext *exec;
+    uint32_t count;
+    DxInvokeWitness *slot;
+    if (!vm || !vm->telemetry.telemetry_enabled) return;
+    exec = dx_vm_current_exec(vm);
+    if (!exec) return;
+    count = __atomic_load_n(&exec->unresolved_count, __ATOMIC_RELAXED);
+    if (count >= DX_UNRESOLVED_TRACE_CAP) {
+        __atomic_fetch_add(&exec->unresolved_dropped, 1, __ATOMIC_RELEASE);
+        return;
+    }
+    slot = &exec->unresolved_trace[count];
+    witness_fill(slot, vm, frame, pc, opcode, method_idx, args, argc);
+    slot->resolved = 0;
+    snprintf(slot->target_class, sizeof(slot->target_class), "%s", cls ? cls : "?");
+    snprintf(slot->target_name, sizeof(slot->target_name), "%s", name ? name : "?");
+    snprintf(slot->shorty, sizeof(slot->shorty), "%s", shorty ? shorty : "?");
+    __atomic_store_n(&exec->unresolved_count, count + 1, __ATOMIC_RELEASE);
+}
+
+/* Registry publication is vm->shared_mu, the same lock exec_create holds.
+   The trace slot itself stays single-writer and is not taken under that lock.
+   The snapshot is copied before the lock is released, so a later shutdown
+   free cannot invalidate the pointer the caller reads. */
+uint32_t dx_vm_unresolved_context_count(const DxVM *vm) {
+    uint32_t count;
+    if (!vm) return 0;
+    dx_vm_shared_lock((DxVM *)vm);
+    count = vm->exec_count;
+    dx_vm_shared_unlock((DxVM *)vm);
+    return count;
+}
+
+int dx_vm_copy_unresolved_context(const DxVM *vm, uint32_t index, DxUnresolvedContextInfo *out) {
+    DxExecutionContext *exec;
+    if (!vm || !out) return -1;
+    dx_vm_shared_lock((DxVM *)vm);
+    if (index >= vm->exec_count || !vm->execs[index]) {
+        dx_vm_shared_unlock((DxVM *)vm);
+        return -1;
+    }
+    exec = vm->execs[index];
+    out->exec_id = exec->id;
+    out->count = __atomic_load_n(&exec->unresolved_count, __ATOMIC_ACQUIRE);
+    out->dropped = __atomic_load_n(&exec->unresolved_dropped, __ATOMIC_ACQUIRE);
+    dx_vm_shared_unlock((DxVM *)vm);
+    if (out->count > DX_UNRESOLVED_TRACE_CAP) out->count = DX_UNRESOLVED_TRACE_CAP;
+    return 0;
+}
+
+int dx_vm_copy_unresolved_event(const DxVM *vm, uint32_t context_index, uint32_t event_index,
+                                DxInvokeWitness *out) {
+    DxExecutionContext *exec;
+    uint32_t count;
+    DxInvokeWitness slot;
+    if (!vm || !out) return -1;
+    dx_vm_shared_lock((DxVM *)vm);
+    if (context_index >= vm->exec_count || !vm->execs[context_index]) {
+        dx_vm_shared_unlock((DxVM *)vm);
+        return -1;
+    }
+    exec = vm->execs[context_index];
+    count = __atomic_load_n(&exec->unresolved_count, __ATOMIC_ACQUIRE);
+    if (count > DX_UNRESOLVED_TRACE_CAP) count = DX_UNRESOLVED_TRACE_CAP;
+    if (event_index >= count) {
+        dx_vm_shared_unlock((DxVM *)vm);
+        return -1;
+    }
+    slot = exec->unresolved_trace[event_index];
+    dx_vm_shared_unlock((DxVM *)vm);
+    *out = slot;
+    return 0;
+}
+
+void dx_vm_witness_resolved(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                            uint32_t method_idx, DxMethod *target, const DxValue *args,
+                            uint8_t argc, const DxValue *result, int has_result) {
+    if (!vm || !vm->telemetry.telemetry_enabled || !target) return;
+    if (target->declaring_class && target->declaring_class->descriptor &&
+        strcmp(target->declaring_class->descriptor, "Ljava/util/Vector;") == 0) {
+        dx_vm_note_vector(vm, frame, pc, opcode, method_idx, target->name, target->shorty,
+                          args, argc, 1, result, has_result);
+    }
+    if (witness_is_fordigit(target)) {
+        DxInvokeWitness *slot;
+        if (vm->witness_fordigit_count >= 8) return;
+        slot = &vm->witness_fordigit[vm->witness_fordigit_count++];
+        witness_fill(slot, vm, frame, pc, opcode, method_idx, args, argc);
+        slot->resolved = 1;
+        snprintf(slot->target_class, sizeof(slot->target_class), "%s",
+                 target->declaring_class && target->declaring_class->descriptor
+                     ? target->declaring_class->descriptor : "?");
+        snprintf(slot->target_name, sizeof(slot->target_name), "%s", target->name);
+        snprintf(slot->shorty, sizeof(slot->shorty), "%s", target->shorty ? target->shorty : "?");
+        if (has_result && result) {
+            slot->has_ret = 1;
+            slot->ret_tag = (uint8_t)result->tag;
+            slot->ret_i = result->i;
+        }
+        if (!vm->witness_continuation_set) vm->witness_want_continuation = 1;
+        return;
+    }
+    if (!vm->witness_want_continuation || vm->witness_continuation_set) return;
+    witness_fill(&vm->witness_continuation, vm, frame, pc, opcode, method_idx, args, argc);
+    vm->witness_continuation.resolved = 1;
+    snprintf(vm->witness_continuation.target_class, sizeof(vm->witness_continuation.target_class), "%s",
+             target->declaring_class && target->declaring_class->descriptor
+                 ? target->declaring_class->descriptor : "?");
+    snprintf(vm->witness_continuation.target_name, sizeof(vm->witness_continuation.target_name), "%s",
+             target->name ? target->name : "?");
+    snprintf(vm->witness_continuation.shorty, sizeof(vm->witness_continuation.shorty), "%s",
+             target->shorty ? target->shorty : "?");
+    if (has_result && result) {
+        vm->witness_continuation.has_ret = 1;
+        vm->witness_continuation.ret_tag = (uint8_t)result->tag;
+        vm->witness_continuation.ret_i = result->i;
+    }
+    vm->witness_continuation_set = 1;
+    vm->witness_want_continuation = 0;
+}
+
+uint32_t dx_vm_witness_fordigit_count(const DxVM *vm) {
+    return vm ? vm->witness_fordigit_count : 0;
+}
+
+int dx_vm_copy_witness_fordigit(const DxVM *vm, uint32_t index, DxInvokeWitness *out) {
+    if (!vm || !out || index >= vm->witness_fordigit_count) return -1;
+    *out = vm->witness_fordigit[index];
+    return 0;
+}
+
+int dx_vm_copy_witness_continuation(const DxVM *vm, DxInvokeWitness *out) {
+    if (!vm || !out || !vm->witness_continuation_set) return -1;
+    *out = vm->witness_continuation;
+    return 0;
+}
+
+uint32_t dx_vm_witness_unresolved_after_count(const DxVM *vm) {
+    return vm ? vm->witness_unresolved_after_count : 0;
+}
+
+int dx_vm_copy_witness_unresolved_after(const DxVM *vm, uint32_t index, DxInvokeWitness *out) {
+    if (!vm || !out || index >= vm->witness_unresolved_after_count) return -1;
+    *out = vm->witness_unresolved_after[index];
+    return 0;
+}
+
+static void vector_tally_add(DxVM *vm, const char *name, const char *shorty, int resolved) {
+    uint32_t i;
+    if (!name) name = "?";
+    if (!shorty) shorty = "?";
+    for (i = 0; i < vm->vector_tally_count; i++) {
+        if (strcmp(vm->vector_tally[i].method, name) == 0 &&
+            strcmp(vm->vector_tally[i].shorty, shorty) == 0) {
+            vm->vector_tally[i].count++;
+            if (resolved) vm->vector_tally[i].resolved = 1;
+            return;
+        }
+    }
+    if (vm->vector_tally_count >= DX_VECTOR_TALLY_CAP) return;
+    i = vm->vector_tally_count++;
+    snprintf(vm->vector_tally[i].method, sizeof(vm->vector_tally[i].method), "%s", name);
+    snprintf(vm->vector_tally[i].shorty, sizeof(vm->vector_tally[i].shorty), "%s", shorty);
+    vm->vector_tally[i].count = 1;
+    vm->vector_tally[i].resolved = resolved ? 1 : 0;
+}
+
+void dx_vm_note_vector(DxVM *vm, DxFrame *frame, uint32_t pc, uint8_t opcode,
+                       uint32_t method_idx, const char *name, const char *shorty,
+                       const DxValue *args, uint8_t argc, int resolved,
+                       const DxValue *result, int has_result) {
+    DxVectorTrace *slot;
+    const char *caller_cls = "?";
+    const char *caller_name = "?";
+    if (!vm || !vm->telemetry.telemetry_enabled) return;
+    if (!name) name = "?";
+    if (!shorty) shorty = "?";
+    vector_tally_add(vm, name, shorty, resolved);
+    /* addElement can dominate the ring. Keep the early samples and every other method. */
+    if (strcmp(name, "addElement") == 0 && vm->vector_addelement_stored >= 48) {
+        vm->vector_trace_dropped++;
+        return;
+    }
+    if (vm->vector_trace_count >= DX_VECTOR_TRACE_CAP) {
+        vm->vector_trace_dropped++;
+        return;
+    }
+    if (!vm->vector_trace) {
+        vm->vector_trace = (DxVectorTrace *)dx_malloc(sizeof(DxVectorTrace) * DX_VECTOR_TRACE_CAP);
+        if (!vm->vector_trace) return;
+        memset(vm->vector_trace, 0, sizeof(DxVectorTrace) * DX_VECTOR_TRACE_CAP);
+    }
+    slot = &vm->vector_trace[vm->vector_trace_count++];
+    memset(slot, 0, sizeof(*slot));
+    slot->exec_id = dx_vm_current_exec(vm) ? dx_vm_current_exec(vm)->id : 0;
+    slot->pc = pc;
+    slot->opcode = opcode;
+    slot->method_idx = method_idx;
+    slot->resolved = resolved ? 1 : 0;
+    slot->argc = argc;
+    snprintf(slot->method, sizeof(slot->method), "%s", name);
+    snprintf(slot->shorty, sizeof(slot->shorty), "%s", shorty);
+    if (frame && frame->method) {
+        if (frame->method->declaring_class && frame->method->declaring_class->descriptor)
+            caller_cls = frame->method->declaring_class->descriptor;
+        if (frame->method->name) caller_name = frame->method->name;
+    }
+    snprintf(slot->caller, sizeof(slot->caller), "%s.%s", caller_cls, caller_name);
+    if (argc > 0 && args && args[0].tag == DX_VAL_OBJ && args[0].obj) {
+        slot->receiver = (uint64_t)(uintptr_t)args[0].obj;
+        if (args[0].obj->klass && args[0].obj->klass->descriptor)
+            snprintf(slot->recv_class, sizeof(slot->recv_class), "%s", args[0].obj->klass->descriptor);
+    }
+    if (argc > 1 && args) {
+        if (args[1].tag == DX_VAL_OBJ)
+            slot->arg_obj = (uint64_t)(uintptr_t)args[1].obj;
+        else
+            slot->arg_int = args[1].i;
+    }
+    if (argc > 2 && args) slot->arg2_int = args[2].i;
+    if (has_result && result) {
+        slot->has_ret = 1;
+        slot->ret_tag = (uint8_t)result->tag;
+        slot->ret_i = result->i;
+        if (result->tag == DX_VAL_OBJ && result->obj) {
+            slot->ret_obj = (uint64_t)(uintptr_t)result->obj;
+            if (result->obj->klass && result->obj->klass->descriptor)
+                snprintf(slot->ret_class, sizeof(slot->ret_class), "%s", result->obj->klass->descriptor);
+        }
+    }
+    if (strcmp(name, "addElement") == 0) vm->vector_addelement_stored++;
+    if (resolved && strcmp(name, "elementAt") == 0 && has_result && result &&
+        result->tag == DX_VAL_OBJ && result->obj) {
+        vm->vector_after_element_armed = 1;
+        vm->vector_seen_element_at = 1;
+    }
+}
+
+uint32_t dx_vm_vector_trace_count(const DxVM *vm) {
+    return vm ? vm->vector_trace_count : 0;
+}
+
+uint32_t dx_vm_vector_trace_dropped(const DxVM *vm) {
+    return vm ? vm->vector_trace_dropped : 0;
+}
+
+int dx_vm_copy_vector_trace(const DxVM *vm, uint32_t index, DxVectorTrace *out) {
+    if (!vm || !out || !vm->vector_trace || index >= vm->vector_trace_count) return -1;
+    *out = vm->vector_trace[index];
+    return 0;
+}
+
+uint32_t dx_vm_vector_tally_count(const DxVM *vm) {
+    return vm ? vm->vector_tally_count : 0;
+}
+
+int dx_vm_copy_vector_tally(const DxVM *vm, uint32_t index, DxVectorTally *out) {
+    if (!vm || !out || index >= vm->vector_tally_count) return -1;
+    *out = vm->vector_tally[index];
+    return 0;
 }

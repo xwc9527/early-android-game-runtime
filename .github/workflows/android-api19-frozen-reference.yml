@@ -1,0 +1,242 @@
+name: Frozen Bubble Android API19 reference
+
+on:
+  workflow_dispatch:
+    inputs:
+      replay:
+        description: Run the evidence-selected player trajectory after a cold start
+        type: boolean
+        default: false
+      run_sdk_preflight:
+        description: Inspect the official API19 SDK image (known Android 4.4.2, not the 4.4.4 oracle)
+        type: boolean
+        default: false
+  push:
+    branches: ['cursor/runtime-traversal-dispatch-1-0353']
+    paths:
+      - '.github/workflows/android-api19-frozen-reference.yml'
+      - 'ci/run-android-api19-frozen-reference.py'
+      - 'Tests/Android44Reference/frozen-bubble-replay.json'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-android-444-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate platform-neutral trajectory contracts
+        run: |
+          python3 ci/test-gameplay-trajectory.py
+          python3 ci/test-compare-gameplay-trajectory.py
+      - name: Restore verified Android 4.4.4 image
+        id: android_image_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/android-x86-4.4-r5.iso
+          key: agr-android-x86-4.4-r5-4c0edceef12bf4b8afb1b8390d94a9af29bbbca8
+      - name: Inspect Android-x86 image against exact AOSP release requirement
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq p7zip-full squashfs-tools e2fsprogs qemu-system-x86
+          mkdir -p build/artifacts/android-444-image-probe
+          if [[ ! -f "$RUNNER_TEMP/android-x86-4.4-r5.iso" ]]; then
+            curl -fL --retry 3 --retry-delay 5 \
+              'https://downloads.sourceforge.net/project/android-x86/Release%204.4/android-x86-4.4-r5.iso' \
+              -o "$RUNNER_TEMP/android-x86-4.4-r5.iso"
+          fi
+          printf '%s  %s\n' 4c0edceef12bf4b8afb1b8390d94a9af29bbbca8 \
+            "$RUNNER_TEMP/android-x86-4.4-r5.iso" | sha1sum -c -
+          7z l "$RUNNER_TEMP/android-x86-4.4-r5.iso" > build/artifacts/android-444-image-probe/iso-list.txt
+          7z e -y "$RUNNER_TEMP/android-x86-4.4-r5.iso" system.sfs -o"$RUNNER_TEMP/agr-android-444"
+          unsquashfs -no-xattrs -d "$RUNNER_TEMP/agr-android-444/system" "$RUNNER_TEMP/agr-android-444/system.sfs"
+          find "$RUNNER_TEMP/agr-android-444/system" -maxdepth 2 -type f -printf '%P\n' \
+            > build/artifacts/android-444-image-probe/system-list.txt
+          IMAGE="$(find "$RUNNER_TEMP/agr-android-444/system" -name system.img -print -quit)"
+          test -n "$IMAGE"
+          debugfs -R 'cat /build.prop' "$IMAGE" 2>/dev/null \
+            > build/artifacts/android-444-image-probe/build.prop
+          grep -E '^(ro.build.version.release|ro.build.version.sdk|ro.build.fingerprint|ro.product.cpu.abi)=' \
+            build/artifacts/android-444-image-probe/build.prop
+          grep -qx 'ro.build.version.release=4.4.4' build/artifacts/android-444-image-probe/build.prop
+          grep -qx 'ro.build.version.sdk=19' build/artifacts/android-444-image-probe/build.prop
+      - name: Cache verified Android 4.4.4 image
+        if: steps.android_image_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/android-x86-4.4-r5.iso
+          key: agr-android-x86-4.4-r5-4c0edceef12bf4b8afb1b8390d94a9af29bbbca8
+      - name: Boot exact Android 4.4.4 image and verify ADB
+        timeout-minutes: 9
+        run: |
+          set -euo pipefail
+          export PATH="$ANDROID_HOME/platform-tools:$PATH"
+          ISO="$RUNNER_TEMP/android-x86-4.4-r5.iso"
+          adb start-server
+          if [[ -r /dev/kvm && -w /dev/kvm ]]; then
+            ACCEL=kvm
+            CPU=host
+          else
+            ACCEL=tcg
+            CPU=qemu64
+          fi
+          printf 'accel=%s cpu=%s\n' "$ACCEL" "$CPU" \
+            > build/artifacts/android-444-image-probe/qemu-acceleration.txt
+          nohup qemu-system-x86_64 -machine pc -accel "$ACCEL" -cpu "$CPU" -smp 1 -m 2048 \
+            -cdrom "$ISO" -boot d -vga std -display none \
+            -monitor tcp:127.0.0.1:4444,server,nowait \
+            -serial file:build/artifacts/android-444-image-probe/serial.log \
+            -netdev user,id=net0,hostfwd=tcp:127.0.0.1:5555-:5555 \
+            -device e1000,netdev=net0 \
+            > build/artifacts/android-444-image-probe/qemu.log 2>&1 &
+          QEMU_PID=$!
+          timeout 3 adb connect 127.0.0.1:5555 >/dev/null 2>&1 || true
+          for i in $(seq 1 115); do
+            if (( i % 25 == 0 )); then
+              timeout 3 adb disconnect 127.0.0.1:5555 >/dev/null 2>&1 || true
+              timeout 3 adb connect 127.0.0.1:5555 >/dev/null 2>&1 || true
+            fi
+            if timeout 3 adb -s 127.0.0.1:5555 shell getprop sys.boot_completed 2>/dev/null \
+              | tr -d '\r' | grep -qx 1; then break; fi
+            if ! kill -0 "$QEMU_PID" 2>/dev/null; then
+              cat build/artifacts/android-444-image-probe/qemu.log
+              exit 1
+            fi
+            if (( i == 12 || i == 40 || i == 80 || i == 115 )); then
+              adb devices -l > "build/artifacts/android-444-image-probe/adb-devices-$i.txt" || true
+              python3 - "$i" <<'PY'
+          import pathlib, socket, sys, time
+          out = pathlib.Path('build/artifacts/android-444-image-probe') / f'vga-{sys.argv[1]}.ppm'
+          try:
+              with socket.create_connection(('127.0.0.1', 4444), timeout=3) as monitor:
+                  monitor.settimeout(3)
+                  monitor.recv(4096)
+                  monitor.sendall(f'screendump {out.resolve()}\n'.encode())
+                  time.sleep(1)
+          except OSError as exc:
+              print(f'QEMU monitor screenshot unavailable: {exc}', file=sys.stderr)
+          PY
+            fi
+            sleep 3
+          done
+          if ! timeout 5 adb -s 127.0.0.1:5555 shell getprop sys.boot_completed 2>/dev/null \
+            | tr -d '\r' | grep -qx 1; then
+            echo 'Android 4.4.4 guest did not reach boot_completed; VGA/ADB/serial evidence retained' >&2
+            exit 1
+          fi
+          adb -s 127.0.0.1:5555 shell getprop ro.build.version.release \
+            | tr -d '\r' | tee build/artifacts/android-444-image-probe/live-release.txt
+          grep -qx 4.4.4 build/artifacts/android-444-image-probe/live-release.txt
+          adb -s 127.0.0.1:5555 shell getprop ro.build.version.sdk \
+            | tr -d '\r' | grep -qx 19
+          adb -s 127.0.0.1:5555 shell getprop ro.build.fingerprint \
+            | tr -d '\r' > build/artifacts/android-444-image-probe/live-fingerprint.txt
+      - name: Capture exact Frozen Bubble APK zero-input reference
+        timeout-minutes: 12
+        env:
+          ANDROID_SERIAL: 127.0.0.1:5555
+        run: |
+          set -euo pipefail
+          export PATH="$ANDROID_HOME/platform-tools:$PATH"
+          python3 tools/fetch_fdroid_samples.py --profile focused-framework --inputs-only
+          printf '%s  %s\n' \
+            57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569 \
+            samples/frozen-bubble.apk | sha256sum -c -
+          if [[ '${{ inputs.replay }}' == 'true' ]]; then
+            python3 ci/run-android-api19-frozen-reference.py \
+              --apk samples/frozen-bubble.apk \
+              --out build/artifacts/android-api19-reference \
+              --replay Tests/Android44Reference/frozen-bubble-replay.json
+          else
+            python3 ci/run-android-api19-frozen-reference.py \
+              --apk samples/frozen-bubble.apk \
+              --out build/artifacts/android-api19-reference
+          fi
+      - name: Preserve image provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-444-image-probe-${{ github.sha }}
+          path: |
+            build/artifacts/android-444-image-probe/**
+            build/artifacts/android-api19-reference/**
+          if-no-files-found: warn
+
+  api19-original-apk:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_sdk_preflight == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore locked original APK
+        uses: actions/cache/restore@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-full-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Verify or obtain the exact APK
+        run: |
+          python3 tools/fetch_fdroid_samples.py --profile focused-framework --inputs-only
+          printf '%s  %s\n' \
+            57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569 \
+            samples/frozen-bubble.apk | sha256sum -c -
+      - name: Install Android 19 ARM system image
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort | tail -n 1)"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" 'platform-tools' 'emulator' 'system-images;android-19;default;armeabi-v7a'
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
+          echo "$(dirname "$SDKMANAGER")" > sdk-tools-path.txt
+      - name: Boot Android 19 ARM reference
+        run: |
+          SDK_TOOLS="$(cat sdk-tools-path.txt)"
+          LEGACY_ROOT="$RUNNER_TEMP/android-sdk-tools-25.2.3"
+          curl -fL --retry 3 https://dl.google.com/android/repository/tools_r25.2.3-linux.zip -o "$RUNNER_TEMP/tools_r25.2.3-linux.zip"
+          unzip -q "$RUNNER_TEMP/tools_r25.2.3-linux.zip" -d "$LEGACY_ROOT"
+          LEGACY_EMULATOR="$LEGACY_ROOT/tools/emulator"
+          test -x "$LEGACY_EMULATOR"
+          export ANDROID_AVD_HOME="$HOME/.android/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          "$SDK_TOOLS/avdmanager" create avd --force --name agr-frozen-api19 --device pixel --package 'system-images;android-19;default;armeabi-v7a'
+          AVD_CONFIG="$ANDROID_AVD_HOME/agr-frozen-api19.avd/config.ini"
+          sed -i '/^hw.lcd.width=/d;/^hw.lcd.height=/d;/^skin.name=/d;/^skin.path=/d' "$AVD_CONFIG"
+          printf 'hw.lcd.width=480\nhw.lcd.height=800\nskin.name=480x800\nskin.path=480x800\n' >> "$AVD_CONFIG"
+          nohup "$LEGACY_EMULATOR" @agr-frozen-api19 -skin 480x800 -no-window -noaudio -no-snapshot -wipe-data -no-boot-anim -gpu off > emulator.log 2>&1 &
+          EMULATOR_PID=$!
+          for i in $(seq 1 180); do
+            if adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' | grep -q '^1$'; then break; fi
+            if ! kill -0 "$EMULATOR_PID" 2>/dev/null; then cat emulator.log; exit 1; fi
+            sleep 5
+          done
+          adb get-state
+          adb shell getprop ro.build.version.sdk | tr -d '\r' | grep -x 19
+          adb shell getprop ro.build.version.release | tr -d '\r' > android-release.txt
+          cat android-release.txt
+      - name: Capture unmodified APK cold start and optional trajectory
+        run: |
+          mkdir -p build/artifacts/android-api19-reference
+          if [[ '${{ inputs.replay }}' == 'true' ]]; then
+            python3 ci/run-android-api19-frozen-reference.py \
+              --apk samples/frozen-bubble.apk \
+              --out build/artifacts/android-api19-reference \
+              --replay Tests/Android44Reference/frozen-bubble-replay.json
+          else
+            python3 ci/run-android-api19-frozen-reference.py \
+              --apk samples/frozen-bubble.apk \
+              --out build/artifacts/android-api19-reference
+          fi
+      - name: Preserve Android reference evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frozen-bubble-api19-reference-${{ github.sha }}
+          path: |
+            build/artifacts/android-api19-reference/**
+            emulator.log
+            android-release.txt
+          if-no-files-found: warn

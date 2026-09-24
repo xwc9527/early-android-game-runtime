@@ -1,0 +1,82 @@
+{
+  "schema_version": 2,
+  "classification": "AGR_INTERNAL_BUG",
+  "subsystem": "Canvas save, clipRect REPLACE, and restore",
+  "observed_discontinuity": "Unchanged Frozen Bubble Sprite.drawImageClipped invokes Canvas.save(int), Canvas.clipRect(float,float,float,float,Region.Op), Canvas.drawBitmap, and Canvas.restore on a Canvas locked to the SurfaceView content Surface. AGR had no Canvas clip stack, so the save invoke was unresolved.",
+  "upstream": {
+    "map_entry": "framework.graphics.canvas_state_clip",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "graphics/java/android/graphics/Canvas.java",
+      "core/jni/android/graphics/Canvas.cpp",
+      "graphics/java/android/graphics/Region.java"
+    ],
+    "call_path": [
+      "Canvas.save(int)",
+      "Canvas.clipRect(float,float,float,float,Region.Op)",
+      "Canvas.restore",
+      "Region.Op.REPLACE"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "save(int) returns the save count before the push. The base lock count is 1, so the first save returns 1.",
+    "CLIP_SAVE_FLAG 0x02 copies the current clip. A save without that bit shares the clip, so restore does not roll it back.",
+    "clipRect with Region.Op.REPLACE sets the current clip to the rounded rectangle constrained to the device bounds.",
+    "clipRect returns true only when the resulting clip is non-empty.",
+    "A null Region.Op throws NullPointerException and does not modify the clip.",
+    "restore pops the previous saved state and restores the clip when that save included CLIP_SAVE_FLAG.",
+    "drawBitmap consumes the current clip. A later lockCanvas starts from the full surface and an empty save stack."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/game_dex_runner.c",
+      "Runtime/DexLoom/game_dex_runner.h",
+      "Runtime/DexLoom/VM/dx_interpreter.c"
+    ],
+    "call_path": [
+      "canvas_save",
+      "canvas_clip_rect",
+      "canvas_draw_bitmap",
+      "canvas_restore",
+      "publish_region_op_replace"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "Canvas.save(int), clipRect(float,float,float,float,Region.Op), and restore were not registered, and Region.Op.REPLACE was not a framework static.",
+      "relevance": "Sprite.drawImageClipped uses that sequence to limit one drawBitmap and then return to the previous clip. Skipping save leaves the following clip and restore unresolved."
+    }
+  ],
+  "earliest_evidenced_divergence": "API19 Canvas.save(int) pushes the requested graphics state and returns the pre-push save count. AGR had no method, so Sprite.drawImageClipped pc 1 invoke-virtual Canvas.save was unresolved.",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "android-4.4.4_r2 Canvas.java CLIP_SAVE_FLAG is 0x02. save(int) and restore() are native. clipRect(float,float,float,float,Region.Op) calls native_clipRect with op.nativeInt and returns whether the clip is non-empty. Region.Op.REPLACE is nativeInt 5. Canvas.cpp clipRect builds an SkRect and calls canvas->clipRect(rect, (SkRegion::Op)op). restore throws IllegalStateException Underflow in restore when getSaveCount() <= 1. SkCanvas::internalSave returns getSaveCount() before the push; the base count is 1. A save copies the raster clip only when kClip_SaveFlag is set. The non-AA BW clip path uses SkRect::round, which is SkFloatToIntRound."
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Linux canvas-state-clip-host PASS on a 320x480 content surface. lockCanvas(null) sets clip 0,0,320,480 and save count 1. save(CLIP_SAVE_FLAG) returns 1 and save count 2. clipRect(8,8,16,16,REPLACE) returns true and stores 8,8,16,16. drawBitmap changes pixel (10,10) and leaves (0,0) and (20,20) unchanged. restore returns the base clip, and the next draw changes pixels outside the prior clip. Empty clipRect(5,5,5,12) returns false, stores 0,0,0,0, and drawBitmap writes 0 pixels. A rect outside the device returns false. clipRect(-10,-4,15,25) stores 0,0,15,25. clipRect(10.5,20.5,30.5,40.5) stores 11,21,31,41. Nested save/clip A/save/clip B/restore/restore returns A then the base. save(MATRIX_SAVE_FLAG) does not restore the clip. The next lockCanvas drops the previous stack. A null Op throws NullPointerException. A non-REPLACE Op throws and does not change the clip. The surface lock/post contract still PASS."
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "Local unchanged Frozen Bubble APK org.jfedor.frozenbubble_8 sha256 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569, Linux host 320x480, diagnostics enabled. After three host frames and 300ms: surfaceCreated 1, surfaceChanged 1, lock 6, unlock 6, post 6, draw_bitmap 18, pixel_change 1007400, hash_before 4f2d9f141eeda325, hash_after 2c8b0c801b36f84a, format 4, generation 1, owner execution context 1. The harness did not call save, clipRect, drawBitmap, or restore. Six identical clusters on execution context 1 from Lorg/jfedor/frozenbubble/Sprite;.drawImageClipped: save pc 1 opcode 0x6e method_idx 36 shorty II flag 2 returned 1 save_count 2 clip 0,0,320,480; clipRect pc 47 opcode 0x74 invoke-virtual/range method_idx 30 shorty ZFFFFL coords 25,433,35,455 class Landroid/graphics/Region$Op; nativeInt 5 null 0 result true clip after 25,433,35,455; drawBitmap pc 69 opcode 0x6e method_idx 31 effective clip 25,433,35,455 placement left -140 top 433 wrote 220 pixels with write bounds 25,433,35,455; restore pc 72 opcode 0x6e method_idx 33 save_count 1 clip before 25,433,35,455 clip after 0,0,320,480. The earliest unresolved invoke after forDigit is now java.util.Vector.size. This probe is not a new Simulator run."
+    }
+  ],
+  "remaining_uncertainty": [
+    "REPLACE stores the device intersection. API19 Skia can retain a non-empty region that lies entirely outside the bitmap and return true. A non-overlapping rect here returns false and stores an empty clip so drawBitmap writes 0 pixels.",
+    "Region.Op values other than REPLACE throw UnsupportedOperationException and do not modify the clip. DIFFERENCE, INTERSECT, UNION, XOR, and REVERSE_DIFFERENCE are not implemented.",
+    "There is no Matrix stack. save() without arguments, saveLayer, saveLayerAlpha, and restoreToCount are not registered.",
+    "The save stack above the base lock is bounded at 16 levels.",
+    "java.util.Vector core is a separate contract. This clip contract does not change Vector, Matrix, saveLayer, or presentation."
+  ],
+  "next_action": "Canvas save, clipRect, and restore stay REAL_GAME_CONFIRMED. java.util.Vector core is separate. Do not add Matrix, other Region.Op values, saveLayer, or presentation. Do not rerun the content-frame Simulator.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "The clip stack lives on the locked content Surface and is passed to the existing agr_bitmap_draw. There is no second framebuffer and no SkCanvas. Each lockCanvas resets the stack and the base clip. A generation mismatch does not operate on the old backing."
+}

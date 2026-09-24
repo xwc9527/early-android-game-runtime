@@ -1,0 +1,86 @@
+{
+  "schema_version": 2,
+  "classification": "AGR_INTERNAL_BUG",
+  "subsystem": "SurfaceHolder.lockCanvas content-surface binding",
+  "observed_discontinuity": "Unchanged Frozen Bubble GameThread.run invokes SurfaceHolder.lockCanvas(Rect) on a valid SurfaceView holder. The invoke was unresolved and skipped, so no app content drawing could occur.",
+  "upstream": {
+    "map_entry": "framework.view.surface_holder_canvas",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "core/java/android/view/SurfaceView.java",
+      "core/java/android/view/Surface.java",
+      "core/java/android/view/SurfaceHolder.java"
+    ],
+    "call_path": [
+      "SurfaceHolder.lockCanvas(Rect)",
+      "SurfaceView.SurfaceHolder.internalLockCanvas",
+      "Surface.lockCanvas",
+      "Surface.unlockCanvasAndPost"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "lockCanvas() and lockCanvas(Rect) on a valid created Surface return one Canvas bound to that Surface.",
+    "A null dirty rect means the full surface. An invalid dirty rect returns null from the SurfaceView holder.",
+    "A surface that is not created returns null. Failed locks are throttled.",
+    "The same caller does not obtain a second writer. Another caller does not write the same backing while the lock is held.",
+    "unlockCanvasAndPost of a different Canvas throws IllegalArgumentException.",
+    "unlockCanvasAndPost when the Surface is not locked throws IllegalStateException.",
+    "unlockCanvasAndPost of the locked Canvas releases the lock and posts that buffer.",
+    "The Canvas target is the SurfaceView child content Surface, not the ViewRoot root Surface.",
+    "A posted buffer that no guest draw wrote is not a frame."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/game_dex_runner.c",
+      "Runtime/DexLoom/game_dex_runner.h"
+    ],
+    "call_path": [
+      "surface_holder_lock_canvas",
+      "surface_holder_unlock_canvas",
+      "content_bind_canvas"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "AGR had no SurfaceHolder.lockCanvas or unlockCanvasAndPost method, so the interpreter skipped the invoke.",
+      "relevance": "Frozen Bubble GameThread.run pc 36 is invoke-interface method_idx 71 Landroid/view/SurfaceHolder;.lockCanvas shorty LL with a null Rect. unlockCanvasAndPost is method_idx 72 shorty VL at pc 62 and on the exception path at pc 86. The DEX has no no-arg lockCanvas method id. Both overloads are now registered. Exact shorty selects the Rect overload."
+    },
+    {
+      "id": "D2",
+      "description": "Guest-visible format stays PixelFormat.RGB_565 (4). The in-process backing is width*height*4 bytes, row bytes width*4, interpreted as host RGBA8888.",
+      "relevance": "surfaceChanged already publishes format 4 and GameView.surfaceChanged ignores that argument. No public Canvas method returns row bytes. The guest fields _width, _height, _rowBytes, _generation, _format, and _locked are host binding fields. This is an intentional host adaptation so a later bitmap blit can copy pixels without a second conversion."
+    }
+  ],
+  "earliest_evidenced_divergence": "Frozen Bubble GameThread.run pc 36 invokes SurfaceHolder.lockCanvas(Rect) with a null rect on a valid SurfaceView holder. API19 SurfaceView.internalLockCanvas returns a Canvas bound to that Surface. AGR had no lockCanvas method, so the invoke was skipped and no app content drawing could occur.",
+  "causal_status": "CONTRACT_CONFIRMED",
+  "evidence_level": "CONTRACT_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "android-4.4.4_r2 SurfaceView.java internalLockCanvas holds mSurfaceLock, calls Surface.lockCanvas, and returns null after a 100ms throttle when the surface is not ready or the lock throws. Surface.lockCanvas reuses mCanvas and throws IllegalStateException when already locked. unlockCanvasAndPost requires that same Canvas and throws IllegalStateException when the surface was not locked. SurfaceHolder.lockCanvas returns null when the surface has not been created. A null dirty rect redraws the entire surface. The holder lock prevents the SurfaceView from replacing the surface until unlock. Frozen Bubble passes a null Rect."
+    },
+    {
+      "type": "RUNTIME",
+      "artifact": "Local unchanged Frozen Bubble probe. The harness did not call lockCanvas, Canvas.draw, or unlockCanvasAndPost. start_activity 0, launch_stage 9, surfaceCreated 1, surfaceChanged 1, format 4, 320x480, row bytes 1280, generation 1, content Surface distinct from the root. After 300ms: lock_count 7, unlock_count 7, post_count 7, canvas_locked 0, lock owner execution context 1, locked generation 1, post generation 1, hash before lock 4f2d9f141eeda325, hash after post 4f2d9f141eeda325, pixel_change_count 0. LOCK_ACQUIRED yes. DRAW_MUTATED no. POSTED yes for an unchanged buffer. Destroy cancels the worker at rc 21 with 4926 instructions. The first unresolved draw method is Canvas.drawBitmap method_idx 31 shorty VLFFL. drawRGB and Bitmap.createScaledBitmap were not invoked. This is not a first frame and not a Simulator run."
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Linux surface canvas contract PASS. Frame 1 created_count 0. Frame 2 created_count 1, changed_count 1, format 4, 320x480, row bytes 1280, generation 1, content identity distinct from the root. Guest surfaceCreated locks the child surface: width 320, height 480, generation 1, row 1280, format 4, locked 1. Same-context reentry returns null. The waiter stays blocked until unlock, then acquires. No-arg relock succeeds. lock_count 3, unlock_count 3, post_count 3, locked 0. Wrong Canvas and unlock-without-lock throw and do not post. Hashes are equal and pixel_change_count is 0. Protected traversal, vtable, and Java Thread contracts still PASS."
+    }
+  ],
+  "remaining_uncertainty": [
+    "The Frozen Bubble probe is a local Linux host run. It is not Simulator discovery and not a device run.",
+    "A successful lock does not arm the 100ms failure throttle. API19 also stamps the lock time on success, so a same-thread reentry waits. The null return is the same. Frozen Bubble does not double-lock.",
+    "API19 does not guarantee that pixels survive a null-rect unlock. AGR keeps the previous backing. The caller must redraw the full surface.",
+    "A generation mismatch clears the lock and throws IllegalStateException instead of posting onto a replaced buffer. The current game does not replace the surface while it is locked.",
+    "System.currentTimeMillis still returns 0, so the GameThread delay stays 40ms."
+  ],
+  "next_action": "Do not reopen lockCanvas. Pixel blit and first content frame ownership are framework-canvas-bitmap.json. Protect this lock/post contract under later Character.forDigit and Simulator work.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "The content Surface stays an in-process child buffer. There is no SurfaceFlinger, BufferQueue IPC, or Binder graphics path. Guest-visible format remains 4. Host backing is 4 bytes per pixel and row bytes are width*4. One guest Canvas object is reused per slot and looked up by identity. The host mutex and condition cover only the locked-flag update. They are not held across guest bytecode, a Java monitor, or the VM shared lock. A waiter uses 10ms slices and returns null when stop_requested is set. Workers are joined before the pixels are freed. UI replacement defers while canvas_locked is set."
+}

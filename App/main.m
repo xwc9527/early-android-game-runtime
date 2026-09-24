@@ -1,7 +1,27 @@
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>
+#import <Metal/Metal.h>
+#import <CommonCrypto/CommonDigest.h>
+#import <TargetConditionals.h>
+#include <mach-o/fat.h>
+#include <mach-o/loader.h>
+#include <libkern/OSByteOrder.h>
+#include <sys/sysctl.h>
+#include <sys/proc.h>
+#include <sys/utsname.h>
+#include <time.h>
+#include <unistd.h>
+#if __has_include("agr_build_identity.h")
+#include "agr_build_identity.h"
+#endif
+#ifndef AGR_BUILD_COMMIT
+#define AGR_BUILD_COMMIT "unknown"
+#define AGR_BUILD_TREE "unknown"
+#define AGR_BUILD_BRANCH "unknown"
+#endif
 #include "../Tests/Conformance/agr_contracts.h"
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "agr_runtime.h"
@@ -13,6 +33,8 @@
 #include "agr_bitmap.h"
 #include "agr_guest_runtime.h"
 #include "game_dex_runner.h"
+#include "agr_forensic.h"
+#include <pthread.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
@@ -991,6 +1013,44 @@ static NSDictionary *dexSnapshotDictionary(const agr_dex_runtime_snapshot *snaps
       @"layout_complete":snapshot->layout_complete ? @YES : @NO,
       @"surface_valid":snapshot->surface_valid ? @YES : @NO,
       @"surface_generation":@(snapshot->surface_generation),
+      @"draw_count":@(snapshot->draw_count),
+      @"content_view_installed":snapshot->content_view_installed ? @YES : @NO,
+      @"content_layout_width":@(snapshot->content_layout_width),
+      @"content_layout_height":@(snapshot->content_layout_height),
+      @"content_child_count":@(snapshot->content_child_count),
+      @"content_first_child_id":@(snapshot->content_first_child_id),
+      @"content_surface_valid":snapshot->content_surface_valid ? @YES : @NO,
+      @"content_surface_generation":@(snapshot->content_surface_generation),
+      @"content_surface_width":@(snapshot->content_surface_width),
+      @"content_surface_height":@(snapshot->content_surface_height),
+      @"content_surface_format":@(snapshot->content_surface_format),
+      @"content_surface_callback_count":@(snapshot->content_surface_callback_count),
+      @"content_surface_created_count":@(snapshot->content_surface_created_count),
+      @"content_surface_changed_count":@(snapshot->content_surface_changed_count),
+      @"content_surface_identity":@(snapshot->content_surface_identity),
+      @"root_surface_identity":@(snapshot->root_surface_identity),
+      @"content_surface_owner_id":@(snapshot->content_surface_owner_id),
+      @"canvas_lock_count":@(snapshot->canvas_lock_count),
+      @"canvas_unlock_count":@(snapshot->canvas_unlock_count),
+      @"canvas_post_count":@(snapshot->canvas_post_count),
+      @"canvas_locked":@(snapshot->canvas_locked!=0),
+      @"canvas_lock_owner_exec":@(snapshot->canvas_lock_owner_exec),
+      @"canvas_lock_owner_host":@(snapshot->canvas_lock_owner_host),
+      @"canvas_locked_generation":@(snapshot->canvas_locked_generation),
+      @"canvas_last_post_generation":@(snapshot->canvas_last_post_generation),
+      @"canvas_row_bytes":@(snapshot->canvas_row_bytes),
+      @"canvas_buffer_hash_before":@(snapshot->canvas_buffer_hash_before),
+      @"canvas_buffer_hash_after":@(snapshot->canvas_buffer_hash_after),
+      @"canvas_pixel_change_count":@(snapshot->canvas_pixel_change_count),
+      @"canvas_draw_bitmap_count":@(snapshot->canvas_draw_bitmap_count),
+      @"canvas_identity":@(snapshot->canvas_identity),
+      @"bitmap_guest_identity":@(snapshot->bitmap_guest_identity),
+      @"bitmap_host_identity":@(snapshot->bitmap_host_identity),
+      @"bitmap_width":@(snapshot->bitmap_width),
+      @"bitmap_height":@(snapshot->bitmap_height),
+      @"bitmap_path":[NSString stringWithUTF8String:snapshot->bitmap_path],
+      @"bitmap_encoding":[NSString stringWithUTF8String:snapshot->bitmap_encoding],
+      @"content_surface_exception":[NSString stringWithUTF8String:snapshot->content_surface_exception],
       @"last_method":[NSString stringWithUTF8String:snapshot->last_method],
       @"method_trace":methods, @"framework_trace":framework,
       @"exception_class":[NSString stringWithUTF8String:snapshot->exception_class],
@@ -1172,6 +1232,400 @@ static NSString *runFrameworkRuntimeContinuationDiscovery(BOOL runTraversal,
     if (package) agr_apk_package_close(package);
     NSData *json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted error:nil];
     return [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
+}
+
+static agr_dex_game *gDispatchGame = NULL;
+static agr_apk_package *gDispatchPackage = NULL;
+static NSDictionary *gDispatchContract = nil;
+static NSDictionary *gDispatchBefore = nil;
+static NSMutableArray *gDispatchFrames = nil;
+static uint32_t gDispatchVsync = 0;
+static uint32_t gDispatchWidth = 0;
+static uint32_t gDispatchHeight = 0;
+static int gDispatchStart = -1;
+static BOOL gDispatchFinished = NO;
+static BOOL gDispatchContentHold = NO;
+static int gDispatchContentPolls = 0;
+static BOOL gDispatchOwnerGraph = NO;
+static CADisplayLink *gDispatchLink = nil;
+static CADisplayLink *gPhysicalLink = nil;
+static agr_dex_game *gPhysicalGame = NULL;
+static agr_apk_package *gPhysicalPackage = NULL;
+static UIViewController *gPhysicalSurfaceController = nil;
+static uint32_t gPhysicalConsumerPosts[4] = {0};
+static uint32_t gPhysicalHostSubmissions = 0;
+static uint64_t gPhysicalLastSubmittedHash = 0;
+static uint32_t gPhysicalVsync = 0;
+static uint32_t gPhysicalWidth = 0;
+static uint32_t gPhysicalHeight = 0;
+static int gPhysicalDisplayOverride = 0;
+static int gPhysicalStart = -1;
+static BOOL gPhysicalFinished = NO;
+static BOOL gPostFirstFrameDiscovery = NO;
+static BOOL gGameplayTrajectoryMode = NO;
+static NSMutableArray *gPostFirstFrameCheckpoints = nil;
+static uint64_t gNextPostFirstFrameCheckpoint = 0;
+static BOOL gPhysicalContentHold = NO;
+static int gPhysicalPolls = 0;
+static NSString *gPhysicalApkPath = nil;
+static NSString *gPhysicalSha = nil;
+static NSString *gPhysicalError = nil;
+static int gPhysicalTraceReady = 0;
+static uint32_t gPhysicalLastTraversal = 0;
+static int gPhysicalSawAttach = 0;
+static int gPhysicalSawSchedule = 0;
+static int gPhysicalSawVectorSize = 0;
+static int gPhysicalSawVectorElement = 0;
+static int gPhysicalSawPaint = 0;
+static char gPhysicalLastStage[32];
+static NSMutableArray<NSDictionary *> *gPhysicalInputTrace = nil;
+static dispatch_queue_t gPhysicalInputTraceQueue;
+static void armPhysicalRuntime(uint32_t width, uint32_t height);
+static NSDictionary *captureEnvironment(int physical, int displayOverride, uint32_t hostW, uint32_t hostH);
+static void publishEnvironment(int physical, int displayOverride, uint32_t hostW, uint32_t hostH);
+static NSDictionary *displayLinkRecord(CADisplayLink *link, double *previous);
+static uint64_t hostMonoNs(void);
+static NSDictionary *gLatestEnvironment;
+static NSDictionary *gStartEnvironment;
+static NSMutableArray *gDisplayLinkFrames;
+static double gLinkPrevious = 0;
+static uint64_t gObsStart = 0;
+static uint64_t gObsDeadline = 0;
+static NSString *gObsStop = @"";
+
+@interface AGRPhysicalTouchView : UIView
+@property(nonatomic, strong) UITouch *activeTouch;
+@end
+
+@implementation AGRPhysicalTouchView
+- (void)recordTouch:(UITouch *)touch action:(int)action {
+    if (!touch || !gPhysicalGame || !gPhysicalWidth || !gPhysicalHeight ||
+        self.bounds.size.width <= 0 || self.bounds.size.height <= 0) return;
+    CGPoint point = [touch locationInView:self];
+    float x = (float)(point.x * (double)gPhysicalWidth / self.bounds.size.width);
+    float y = (float)(point.y * (double)gPhysicalHeight / self.bounds.size.height);
+    uint64_t timeMs = (uint64_t)(touch.timestamp * 1000.0);
+    int consumed = agr_dex_game_dispatch_touch(gPhysicalGame, action, x, y, timeMs);
+    NSDictionary *entry = @{@"action":@(action), @"x":@(x), @"y":@(y),
+                            @"event_time_ms":@(timeMs), @"consumed":@(consumed),
+                            @"host_vsync":@(gPhysicalVsync),
+                            @"host_submissions":@(gPhysicalHostSubmissions)};
+    if (!gPhysicalInputTrace) gPhysicalInputTrace = [NSMutableArray arrayWithCapacity:64];
+    if (gPhysicalInputTrace.count >= 512) [gPhysicalInputTrace removeObjectAtIndex:0];
+    [gPhysicalInputTrace addObject:entry];
+    NSArray *events = [gPhysicalInputTrace copy];
+    if (!gPhysicalInputTraceQueue)
+        gPhysicalInputTraceQueue = dispatch_queue_create("dev.agr.input-trace", DISPATCH_QUEUE_SERIAL);
+    dispatch_async(gPhysicalInputTraceQueue, ^{
+        NSDictionary *trace = @{@"schema":@"agr.manual-input.v1", @"events":events};
+        NSData *json = [NSJSONSerialization dataWithJSONObject:trace options:0 error:nil];
+        [json writeToFile:[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/manual-replay.json"]
+                 atomically:YES];
+    });
+    NSLog(@"AGR_INPUT action=%d x=%.2f y=%.2f consumed=%d post=%u", action, x, y,
+          consumed, gPhysicalHostSubmissions);
+}
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    (void)event;
+    if (self.activeTouch) return;
+    self.activeTouch = touches.anyObject;
+    [self recordTouch:self.activeTouch action:0];
+}
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    (void)event;
+    if (self.activeTouch && [touches containsObject:self.activeTouch])
+        [self recordTouch:self.activeTouch action:2];
+}
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    (void)event;
+    if (self.activeTouch && [touches containsObject:self.activeTouch]) {
+        [self recordTouch:self.activeTouch action:1];
+        self.activeTouch = nil;
+    }
+}
+- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    (void)event;
+    if (self.activeTouch && [touches containsObject:self.activeTouch]) {
+        [self recordTouch:self.activeTouch action:3];
+        self.activeTouch = nil;
+    }
+}
+@end
+
+static NSDictionary *bundleBuildEnvironment(void) {
+    NSString *path=[[NSBundle mainBundle] pathForResource:@"agr-build-environment" ofType:@"json"];
+    NSData *data=path ? [NSData dataWithContentsOfFile:path] : nil;
+    id value=data ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
+    return [value isKindOfClass:[NSDictionary class]] ? value : @{};
+}
+
+static NSArray *environmentDifferences(NSDictionary *start, NSDictionary *end) {
+    NSArray<NSArray<NSString *> *> *paths=@[
+      @[@"lifecycle", @"state"], @[@"lifecycle", @"active"],
+      @[@"power", @"thermal_state"], @[@"power", @"low_power_mode_enabled"],
+      @[@"power", @"battery_state"], @[@"power", @"battery_level"],
+      @[@"display", @"logical_width"], @[@"display", @"logical_height"],
+      @[@"display", @"native_width"], @[@"display", @"native_height"],
+      @[@"display", @"scale"], @[@"display", @"native_scale"],
+      @[@"display", @"maximum_fps"], @[@"graphics", @"device_name"]
+    ];
+    NSMutableArray *changes=[NSMutableArray array];
+    for (NSArray<NSString *> *path in paths) {
+        id left=start;
+        id right=end;
+        for (NSString *key in path) {
+            left=[left isKindOfClass:[NSDictionary class]] ? left[key] : nil;
+            right=[right isKindOfClass:[NSDictionary class]] ? right[key] : nil;
+        }
+        if ((left==[NSNull null]) || (right==[NSNull null])) continue;
+        if ((left || right) && ![left isEqual:right])
+            [changes addObject:@{@"field":[path componentsJoinedByString:@"."],
+                                 @"start":left ?: [NSNull null], @"end":right ?: [NSNull null]}];
+    }
+    return changes;
+}
+
+static int physicalContentLockBusy(void *user) {
+    return agr_dex_game_diagnostic_content_lock_busy((const agr_dex_game *)user);
+}
+
+static void physicalNote(uint32_t phase, int critical, int hasExec, uint32_t execId, const char *detail) {
+    agr_forensic_sample sample;
+    memset(&sample, 0, sizeof(sample));
+    sample.phase = phase;
+    sample.critical = critical;
+    sample.has_exec = hasExec;
+    sample.exec_id = execId;
+    sample.host_thread = (uint64_t)pthread_self();
+    if (detail) snprintf(sample.detail, sizeof(sample.detail), "%s", detail);
+    agr_physical_trace_event(&sample);
+}
+
+static void physicalPublish(const agr_dex_runtime_snapshot *snapshot) {
+    agr_forensic_sample sample;
+    if (!snapshot) return;
+    memset(&sample, 0, sizeof(sample));
+    sample.surface_valid = snapshot->content_surface_valid;
+    sample.surface_generation = snapshot->content_surface_generation;
+    sample.surface_identity = snapshot->content_surface_identity;
+    sample.canvas_locked = snapshot->canvas_locked;
+    sample.lock_owner_exec = snapshot->canvas_lock_owner_exec;
+    sample.lock_count = snapshot->canvas_lock_count;
+    sample.unlock_count = snapshot->canvas_unlock_count;
+    sample.post_count = snapshot->canvas_post_count;
+    sample.draw_bitmap_count = snapshot->canvas_draw_bitmap_count;
+    sample.pixel_change_count = snapshot->canvas_pixel_change_count;
+    sample.created_count = snapshot->content_surface_created_count;
+    sample.changed_count = snapshot->content_surface_changed_count;
+    sample.host_thread = snapshot->canvas_lock_owner_host;
+    if (snapshot->canvas_lock_owner_exec) {
+        sample.has_exec = 1;
+        sample.exec_id = snapshot->canvas_lock_owner_exec;
+    }
+    agr_physical_trace_publish_ownership(&sample);
+}
+
+static void vectorWitnesses(DxVM *vm, NSString **sizeText, NSString **elementClass,
+                            NSString **paintText, BOOL *paintReached);
+
+static void physicalObserve(const agr_dex_runtime_snapshot *snapshot, DxVM *vm) {
+    const char *stage;
+    NSString *vectorSize = @"";
+    NSString *elementClass = @"";
+    NSString *paintWitness = @"";
+    BOOL paint = NO;
+    if (!snapshot) return;
+    physicalPublish(snapshot);
+    stage = launchStageName(gPhysicalGame ? agr_dex_game_launch_stage(gPhysicalGame) : AGR_ACTIVITY_LAUNCH_NONE).UTF8String;
+    if (stage && strncmp(gPhysicalLastStage, stage, sizeof(gPhysicalLastStage)) != 0) {
+        snprintf(gPhysicalLastStage, sizeof(gPhysicalLastStage), "%s", stage);
+        physicalNote(AGR_PHYS_PHASE_ACTIVITY_STAGE, 0, 0, 0, stage);
+    }
+    if (!gPhysicalSawAttach && snapshot->viewroot_attach_completed) {
+        gPhysicalSawAttach = 1;
+        physicalNote(AGR_PHYS_PHASE_VIEWROOT_ATTACH, 0, 0, 0, "attach_complete");
+    }
+    if (!gPhysicalSawSchedule && snapshot->traversal_scheduled) {
+        gPhysicalSawSchedule = 1;
+        physicalNote(AGR_PHYS_PHASE_TRAVERSAL_SCHEDULED, 0, 0, 0, NULL);
+    }
+    if (snapshot->traversal_count > gPhysicalLastTraversal) {
+        physicalNote(AGR_PHYS_PHASE_TRAVERSAL_BEGIN, 0, 0, 0, NULL);
+        physicalNote(AGR_PHYS_PHASE_TRAVERSAL_END, 0, 0, 0, NULL);
+        gPhysicalLastTraversal = snapshot->traversal_count;
+    }
+    vectorWitnesses(vm, &vectorSize, &elementClass, &paintWitness, &paint);
+    if (!gPhysicalSawVectorSize && vectorSize.length) {
+        gPhysicalSawVectorSize = 1;
+        physicalNote(AGR_PHYS_PHASE_VECTOR_SIZE, 0, 0, 0, vectorSize.UTF8String);
+    }
+    if (!gPhysicalSawVectorElement && elementClass.length) {
+        gPhysicalSawVectorElement = 1;
+        physicalNote(AGR_PHYS_PHASE_VECTOR_ELEMENT, 0, 0, 0, elementClass.UTF8String);
+    }
+    if (!gPhysicalSawPaint && paint) {
+        gPhysicalSawPaint = 1;
+        physicalNote(AGR_PHYS_PHASE_PENGUIN_SPRITE_PAINT_WITNESS, 1, 0, 0, "PenguinSprite.paint");
+    }
+}
+
+static NSDictionary *syntheticTraversalDispatchContract(uint32_t width, uint32_t height) {
+    NSString *fixturePath=[[NSBundle mainBundle] pathForResource:@"activity-launch-fixture" ofType:@"dex"];
+    NSData *fixture=fixturePath ? [NSData dataWithContentsOfFile:fixturePath] : nil;
+    agr_dex_game *game=fixture ? agr_dex_game_create_for_launch(fixture.bytes,(uint32_t)fixture.length,
+        "Ltest/TestActivity;","Ltest/TestApplication;","test.activity.launch") : NULL;
+    if (game) agr_dex_game_enable_diagnostics(game,1);
+    int display=game ? agr_dex_game_set_host_display(game,width,height) : -1;
+    int start=game ? agr_dex_game_start_activity(game) : -1;
+    agr_dex_runtime_snapshot started={0},frame1={0},frame2={0},frame3={0};
+    if (game) agr_dex_game_runtime_snapshot(game,&started);
+    int first=game && start==0 ? agr_dex_game_choreographer_frame(game) : -1;
+    if (game) agr_dex_game_runtime_snapshot(game,&frame1);
+    void *pixels1=NULL,*pixels2=NULL;
+    uint32_t w1=0,h1=0,s1=0,g1=0,w2=0,h2=0,s2=0,g2=0;
+    int surface1=game ? agr_dex_game_root_surface(game,&pixels1,&w1,&h1,&s1,&g1) : -1;
+    int second=first==0 ? agr_dex_game_choreographer_frame(game) : -1;
+    if (game) agr_dex_game_runtime_snapshot(game,&frame2);
+    int surface2=game ? agr_dex_game_root_surface(game,&pixels2,&w2,&h2,&s2,&g2) : -1;
+    int idle=second==0 ? agr_dex_game_choreographer_frame(game) : -1;
+    if (game) agr_dex_game_runtime_snapshot(game,&frame3);
+    BOOL sameBacking=surface1==0 && surface2==0 && pixels1==pixels2 && g1==g2 && w1==w2 && h1==h2;
+    BOOL passed=display==0 && start==0 && started.traversal_count==0 && started.traversal_scheduled &&
+        started.draw_count==0 && first==0 && frame1.traversal_count==1 && frame1.traversal_scheduled &&
+        frame1.surface_valid && frame1.draw_count==0 && second==0 && frame2.traversal_count==2 &&
+        !frame2.traversal_scheduled && frame2.surface_generation==1 && frame2.draw_count==1 &&
+        sameBacking && idle==1 && frame3.traversal_count==2 && frame3.draw_count==1;
+    if (game) agr_dex_game_destroy(game);
+
+    agr_dex_game *closed=fixture ? agr_dex_game_create_for_launch(fixture.bytes,(uint32_t)fixture.length,
+        "Ltest/TestActivity;","Ltest/TestApplication;","test.activity.launch") : NULL;
+    if (closed) agr_dex_game_enable_diagnostics(closed,1);
+    int closedStart=closed ? agr_dex_game_start_activity(closed) : -1;
+    int explicit1=closedStart==0 ? agr_dex_game_do_traversal(closed,width,height) : -1;
+    agr_dex_runtime_snapshot closed1={0},closed2={0};
+    if (closed) agr_dex_game_runtime_snapshot(closed,&closed1);
+    int explicit2=explicit1==0 ? agr_dex_game_do_traversal(closed,width,height) : -1;
+    if (closed) agr_dex_game_runtime_snapshot(closed,&closed2);
+    BOOL closedTrace=closed1.framework_event_count>0 &&
+        strcmp(closed1.framework_events[closed1.framework_event_count-1],"handoff.viewroot_surface_ready")==0;
+    BOOL closedPassed=explicit1==0 && closed1.traversal_count==1 && closed1.draw_count==0 && closedTrace &&
+        explicit2==0 && closed2.traversal_count==2 && !closed2.traversal_scheduled &&
+        closed2.surface_generation==1 && closed2.draw_count==1;
+    if (closed) agr_dex_game_destroy(closed);
+
+    agr_dex_game *failed=fixture ? agr_dex_game_create_for_launch(fixture.bytes,(uint32_t)fixture.length,
+        "Ltest/TestActivity;","Ltest/TestApplication;","test.activity.launch") : NULL;
+    int failure=-1,retry=-1;
+    agr_dex_runtime_snapshot failedSnap={0},retrySnap={0};
+    if (failed && agr_dex_game_set_host_display(failed,width,height)==0 &&
+        agr_dex_game_start_activity(failed)==0 &&
+        agr_dex_game_set_relayout_gate(failed,rejectRelayout,NULL)==0) {
+        failure=agr_dex_game_choreographer_frame(failed);
+        agr_dex_game_runtime_snapshot(failed,&failedSnap);
+        if (agr_dex_game_set_relayout_gate(failed,NULL,NULL)==0) {
+            retry=agr_dex_game_choreographer_frame(failed);
+            agr_dex_game_runtime_snapshot(failed,&retrySnap);
+        }
+    }
+    if (failed) agr_dex_game_destroy(failed);
+    BOOL failurePassed=failure!=0 && failedSnap.traversal_scheduled && !failedSnap.surface_valid &&
+        failedSnap.draw_count==0 && retry==0 && retrySnap.surface_valid && retrySnap.draw_count==0 &&
+        retrySnap.traversal_count==1;
+    return @{ @"passed":@(passed && closedPassed && failurePassed),
+      @"consumer":@"synthetic-host-pump",
+      @"after_start":dexSnapshotDictionary(&started),
+      @"frame1":dexSnapshotDictionary(&frame1),
+      @"frame2":dexSnapshotDictionary(&frame2),
+      @"frame3":dexSnapshotDictionary(&frame3),
+      @"same_backing":@(sameBacking),
+      @"closed_explicit_passed":@(closedPassed),
+      @"closed_first":dexSnapshotDictionary(&closed1),
+      @"closed_second":dexSnapshotDictionary(&closed2),
+      @"relayout_failure_result":@(failure),
+      @"retry_result":@(retry) };
+}
+
+static void finishTraversalDispatchReport(void) {
+    if (gDispatchFinished) return;
+    gDispatchFinished=YES;
+    publishEnvironment(0, getenv("AGR_HOST_DISPLAY_WIDTH") && getenv("AGR_HOST_DISPLAY_HEIGHT"), gDispatchWidth, gDispatchHeight);
+    if (gDispatchLink) { [gDispatchLink invalidate]; gDispatchLink=nil; }
+    agr_dex_runtime_snapshot after={0};
+    if (gDispatchGame) agr_dex_game_runtime_snapshot(gDispatchGame,&after);
+    NSDictionary *afterDict=gDispatchGame ? dexSnapshotDictionary(&after) : @{};
+    NSDictionary *before=gDispatchBefore ?: @{};
+    BOOL scheduledAtStart=[before[@"traversal_scheduled"] boolValue] &&
+        [before[@"traversal_count"] intValue]==0 && [before[@"draw_count"] intValue]==0;
+    BOOL chain=gDispatchStart==0 && gDispatchVsync>=2 && scheduledAtStart &&
+        after.traversal_count==2 && after.surface_valid && after.draw_count>=1 &&
+        !after.traversal_scheduled && after.surface_generation==1 && gDispatchOwnerGraph;
+    NSString *classification=chain ? @"viewroot_draw_entered" :
+        (gDispatchGame && gDispatchStart==0 ? @"traversal_dispatch_failed" : @"launch_failed");
+    NSString *dispatchStop=gDispatchStart!=0 ? @"RUNTIME_ERROR" :
+        (after.canvas_draw_bitmap_count>0 && after.canvas_pixel_change_count>0 && after.canvas_post_count>0 ? @"CONTENT_PRODUCED" :
+         (gDispatchContentPolls>=40 ? @"OBSERVATION_DEADLINE" :
+          (gDispatchVsync>=4 ? @"FRAME_BUDGET" : @"OBSERVATION_DEADLINE")));
+    NSDictionary *report=@{ @"schema":@"agr.framework-traversal-dispatch.discovery.v1",
+      @"sample":@"frozen-bubble", @"consumer":@"uikit-cadisplaylink",
+      @"branch":@AGR_BUILD_BRANCH, @"commit":@AGR_BUILD_COMMIT, @"tree":@AGR_BUILD_TREE,
+      @"build_environment":bundleBuildEnvironment(),
+      @"harness_called_do_traversal":@NO, @"harness_called_render_api":@NO,
+      @"host_vsync_count":@(gDispatchVsync),
+      @"display_width":@(gDispatchWidth), @"display_height":@(gDispatchHeight),
+      @"environment": gLatestEnvironment ?: @{},
+      @"display_link_frames": gDisplayLinkFrames ?: @[],
+      @"observation_start_monotonic": @(gObsStart),
+      @"observation_deadline": @(gObsDeadline),
+      @"observation_end": @(hostMonoNs()),
+      @"frames_observed": @(gDispatchVsync),
+      @"stop_reason": dispatchStop,
+      @"launch_result":@(gDispatchStart),
+      @"launch_stage":launchStageName(gDispatchGame ? agr_dex_game_launch_stage(gDispatchGame) : AGR_ACTIVITY_LAUNCH_NONE),
+      @"real_owner_graph":@(gDispatchOwnerGraph),
+      @"resume_snapshot":before, @"frames":gDispatchFrames ?: @[],
+      @"after_snapshot":afterDict, @"contract":gDispatchContract ?: @{},
+      @"classification":classification };
+    NSData *json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted error:nil];
+    NSString *text=[[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
+    NSString *path=[NSHomeDirectory() stringByAppendingPathComponent:
+        @"Documents/framework-traversal-dispatch.json"];
+    [text writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    NSLog(@"AGR_RESULT_BEGIN%@AGR_RESULT_END", text);
+    if (gDispatchGame) agr_dex_game_destroy(gDispatchGame);
+    gDispatchGame=NULL;
+    if (gDispatchPackage) agr_apk_package_close(gDispatchPackage);
+    gDispatchPackage=NULL;
+}
+
+static void armTraversalDispatchApk(uint32_t width, uint32_t height) {
+    gDispatchWidth=width; gDispatchHeight=height;
+    gDispatchContract=syntheticTraversalDispatchContract(width,height);
+    gDispatchFrames=[NSMutableArray array];
+    NSString *planPath=[[NSBundle mainBundle] pathForResource:@"batch-plan" ofType:@"json"];
+    NSData *planData=planPath ? [NSData dataWithContentsOfFile:planPath] : nil;
+    NSDictionary *plan=planData ? [NSJSONSerialization JSONObjectWithData:planData options:0 error:nil] : nil;
+    NSDictionary *sample=nil;
+    for (NSDictionary *candidate in plan[@"samples"] ?: @[])
+        if ([candidate[@"id"] isEqualToString:@"frozen-bubble"]) { sample=candidate; break; }
+    NSString *resource=sample[@"resource"];
+    NSString *path=resource ? [[NSBundle mainBundle] pathForResource:resource.stringByDeletingPathExtension
+                                                              ofType:resource.pathExtension] : nil;
+    gDispatchPackage=path ? agr_apk_package_open(path.UTF8String) : NULL;
+    gDispatchGame=gDispatchPackage ? agr_dex_game_create_from_apk(gDispatchPackage) : NULL;
+    if (gDispatchGame) agr_dex_game_enable_diagnostics(gDispatchGame,1);
+    if (gDispatchGame) agr_dex_game_set_host_display(gDispatchGame,width,height);
+    if (gDispatchGame) dx_vm_set_draw_witness(agr_dex_game_vm(gDispatchGame), 128);
+    gDisplayLinkFrames=[NSMutableArray array];
+    gObsStart=hostMonoNs();
+    gObsDeadline=gObsStart + 8000000000ull;
+    publishEnvironment(0, getenv("AGR_HOST_DISPLAY_WIDTH") && getenv("AGR_HOST_DISPLAY_HEIGHT"), width, height);
+    gDispatchStart=gDispatchGame ? agr_dex_game_start_activity(gDispatchGame) : -1;
+    gDispatchOwnerGraph=gDispatchGame && agr_dex_game_viewroot_contract(gDispatchGame)==1;
+    agr_dex_runtime_snapshot before={0};
+    if (gDispatchGame) agr_dex_game_runtime_snapshot(gDispatchGame,&before);
+    gDispatchBefore=gDispatchGame ? dexSnapshotDictionary(&before) : @{};
+    if (gDispatchStart!=0 || !gDispatchLink) finishTraversalDispatchReport();
+    else gDispatchLink.paused=NO;
 }
 
 static NSString *runTests(void) {
@@ -1459,30 +1913,121 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
 }
 @end
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
+@interface AppDelegate : UIResponder <UIApplicationDelegate, UIWindowSceneDelegate>
 @property(nonatomic, strong) UIWindow *window;
 @end
 @implementation AppDelegate
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)options {
     (void)application; (void)options;
-    self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
+    return YES;
+}
+- (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session
+      options:(UISceneConnectionOptions *)connectionOptions {
+    (void)session; (void)connectionOptions;
+    if (![scene isKindOfClass:UIWindowScene.class]) return;
     NSArray<NSString *> *arguments=NSProcessInfo.processInfo.arguments;
     BOOL interactive=[arguments containsObject:@"--interactive"];
     BOOL dexParserCompatibility=[arguments containsObject:@"--dex-parser-compatibility"];
     BOOL activityLaunchCompatibility=[arguments containsObject:@"--activity-launch-compatibility"];
     BOOL frameworkRuntimeContinuation=[arguments containsObject:@"--framework-viewroot-attach-discovery"];
     BOOL firstTraversalDiscovery=[arguments containsObject:@"--framework-first-traversal-discovery"];
+    BOOL traversalDispatch=[arguments containsObject:@"--framework-traversal-dispatch-discovery"];
+    gPostFirstFrameDiscovery=[arguments containsObject:@"--post-first-frame-discovery"];
+    gGameplayTrajectoryMode=[arguments containsObject:@"--gameplay-trajectory"];
+    BOOL physicalRuntime=NO;
+    BOOL physicalDisplayOverride=NO;
+    uint32_t runtimeWidth=(uint32_t)UIScreen.mainScreen.nativeBounds.size.width;
+    uint32_t runtimeHeight=(uint32_t)UIScreen.mainScreen.nativeBounds.size.height;
 #if AGR_DEVICE_INTERACTIVE
-    interactive=YES;
+    physicalRuntime=![arguments containsObject:@"--interactive"];
+    if (!physicalRuntime) interactive=YES;
+#else
+    physicalRuntime=[arguments containsObject:@"--physical-runtime-validation"] ||
+        gPostFirstFrameDiscovery || gGameplayTrajectoryMode;
 #endif
-    UIViewController *controller = interactive ? [AGRDebugController new] : [UIViewController new]; controller.view.backgroundColor = UIColor.blackColor;
-    self.window.rootViewController = controller; [self.window makeKeyAndVisible];
+    if (physicalRuntime) {
+      /* Establish a new Documents current-root before constructing the scene
+         window or creating any Runtime objects. */
+      NSString *documents=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+      agr_physical_trace_config traceConfig;
+#if TARGET_OS_SIMULATOR
+      const char *forcedWidth=getenv("AGR_HOST_DISPLAY_WIDTH");
+      const char *forcedHeight=getenv("AGR_HOST_DISPLAY_HEIGHT");
+      if (forcedWidth && forcedHeight) {
+        unsigned long parsedWidth=strtoul(forcedWidth, NULL, 10);
+        unsigned long parsedHeight=strtoul(forcedHeight, NULL, 10);
+        if (parsedWidth>0 && parsedWidth<=10000 && parsedHeight>0 && parsedHeight<=10000) {
+          runtimeWidth=(uint32_t)parsedWidth;
+          runtimeHeight=(uint32_t)parsedHeight;
+          physicalDisplayOverride=YES;
+        }
+      }
+#endif
+      gPhysicalDisplayOverride=physicalDisplayOverride ? 1 : 0;
+      [[NSFileManager defaultManager] createDirectoryAtPath:documents withIntermediateDirectories:YES attributes:nil error:nil];
+      memset(&traceConfig, 0, sizeof(traceConfig));
+      traceConfig.directory=documents.UTF8String;
+      traceConfig.branch=AGR_BUILD_BRANCH;
+      traceConfig.commit=AGR_BUILD_COMMIT;
+      traceConfig.tree=AGR_BUILD_TREE;
+#if TARGET_OS_SIMULATOR
+      traceConfig.device_platform="iphonesimulator";
+      traceConfig.architecture="arm64-simulator";
+#else
+      traceConfig.device_platform="iphoneos";
+      traceConfig.architecture="arm64";
+#endif
+      traceConfig.apk_sha256_expected="57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569";
+      gPhysicalTraceReady=agr_physical_trace_begin(&traceConfig)==0;
+    }
     CGSize displayPixels=UIScreen.mainScreen.nativeBounds.size;
-    if(!interactive){
-      /* Returning from didFinishLaunching promptly is required even for the
-       * headless regression host.  Running the complete APK trajectory here
-       * blocks UIKit's launch handshake long enough for the Simulator launch
-       * watchdog to terminate an otherwise healthy Runtime process. */
+    self.window = [[UIWindow alloc] initWithWindowScene:(UIWindowScene *)scene];
+    self.window.frame = ((UIWindowScene *)scene).coordinateSpace.bounds;
+    UIViewController *controller = (interactive && !physicalRuntime) ? [AGRDebugController new] : [UIViewController new]; controller.view.backgroundColor = UIColor.blackColor;
+    if (physicalRuntime) {
+      controller.view = [[AGRPhysicalTouchView alloc] initWithFrame:controller.view.bounds];
+      controller.view.backgroundColor = UIColor.blackColor;
+      gPhysicalSurfaceController = controller;
+      controller.view.layer.contentsGravity = kCAGravityResizeAspect;
+      controller.view.layer.contentsScale = UIScreen.mainScreen.scale;
+    }
+    self.window.rootViewController = controller; [self.window makeKeyAndVisible];
+    if (physicalRuntime) {
+      physicalNote(AGR_PHYS_PHASE_APP_DID_FINISH_LAUNCHING, 1, 0, 0, "SCENE_CONNECTED");
+      publishEnvironment(TARGET_OS_SIMULATOR ? 0 : 1, physicalDisplayOverride ? 1 : 0,
+                         runtimeWidth, runtimeHeight);
+      agr_physical_trace_set_lifecycle("LAUNCHING", 1, 0);
+      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrMemoryWarning:) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
+      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrThermal:) name:NSProcessInfoThermalStateDidChangeNotification object:nil];
+      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrPower:) name:NSProcessInfoPowerStateDidChangeNotification object:nil];
+      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrProtectedAvailable:) name:UIApplicationProtectedDataDidBecomeAvailable object:nil];
+      [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(agrProtectedUnavailable:) name:UIApplicationProtectedDataWillBecomeUnavailable object:nil];
+      gPhysicalLink=[CADisplayLink displayLinkWithTarget:self selector:@selector(hostPhysicalVsync:)];
+      [gPhysicalLink addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
+      gPhysicalLink.paused=YES;
+      physicalNote(AGR_PHYS_PHASE_CADISPLAYLINK_CREATED, 1, 0, 0, NULL);
+      dispatch_async(dispatch_get_main_queue(),^{ @autoreleasepool { armPhysicalRuntime(runtimeWidth,runtimeHeight); } });
+      return;
+    }
+    if(!interactive && traversalDispatch){
+      gDispatchLink=[CADisplayLink displayLinkWithTarget:self selector:@selector(hostTraversalVsync:)];
+      [gDispatchLink addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
+      gDispatchLink.paused=YES;
+      uint32_t width=(uint32_t)displayPixels.width, height=(uint32_t)displayPixels.height;
+      const char *forcedWidth=getenv("AGR_HOST_DISPLAY_WIDTH");
+      const char *forcedHeight=getenv("AGR_HOST_DISPLAY_HEIGHT");
+      if (forcedWidth && forcedHeight) {
+        unsigned long parsedWidth=strtoul(forcedWidth, NULL, 10);
+        unsigned long parsedHeight=strtoul(forcedHeight, NULL, 10);
+        if (parsedWidth>0 && parsedWidth<=10000 && parsedHeight>0 && parsedHeight<=10000) {
+          width=(uint32_t)parsedWidth;
+          height=(uint32_t)parsedHeight;
+        }
+      }
+      dispatch_async(dispatch_get_main_queue(),^{ @autoreleasepool { armTraversalDispatchApk(width,height); } });
+    } else if(!interactive){
+      /* Return from scene connection promptly. Running the complete APK
+       * trajectory here blocks UIKit's launch handshake and watchdog. */
       dispatch_queue_t regressionQueue=dispatch_queue_create("dev.agr.simulator.regression",DISPATCH_QUEUE_SERIAL);
       dispatch_async(regressionQueue,^{ @autoreleasepool {
         NSString *result = (frameworkRuntimeContinuation || firstTraversalDiscovery)
@@ -1500,7 +2045,896 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
         NSLog(@"AGR_RESULT_BEGIN%@AGR_RESULT_END", result);
       }});
     }
-    return YES;
+}
+static void pollContentFrameReport(void) {
+    agr_dex_runtime_snapshot snapshot={0};
+    int posted;
+    if (gDispatchFinished || !gDispatchGame) return;
+    agr_dex_game_runtime_snapshot(gDispatchGame,&snapshot);
+    posted=snapshot.canvas_lock_count>0 && snapshot.canvas_draw_bitmap_count>0 &&
+        snapshot.canvas_pixel_change_count>0 && snapshot.canvas_post_count>0 &&
+        snapshot.canvas_buffer_hash_before!=snapshot.canvas_buffer_hash_after;
+    /* One content frame can outlast 600ms when the first blit is a scaled
+       1206x2622 background. Keep polling until that post, or 4 seconds. */
+    if (posted || gDispatchContentPolls>=40) {
+        finishTraversalDispatchReport();
+        return;
+    }
+    gDispatchContentPolls++;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1*NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{ pollContentFrameReport(); });
+}
+static uint64_t hostMonoNs(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * 1000000000ull + (uint64_t)ts.tv_nsec;
+}
+
+static NSString *sha256File(NSString *path) {
+    NSData *data=path ? [NSData dataWithContentsOfFile:path] : nil;
+    unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+    NSMutableString *text;
+    if (!data || data.length > UINT32_MAX) return @"";
+    CC_SHA256(data.bytes, (CC_LONG)data.length, digest);
+    text=[NSMutableString stringWithCapacity:CC_SHA256_DIGEST_LENGTH*2];
+    for (int i=0;i<CC_SHA256_DIGEST_LENGTH;i++) [text appendFormat:@"%02x", digest[i]];
+    return text;
+}
+
+int agr_physical_sha256_file(const char *rawPath, char *out, size_t outCap) {
+    @autoreleasepool {
+        NSString *path = rawPath ? [NSString stringWithUTF8String:rawPath] : nil;
+        NSInputStream *stream = path ? [NSInputStream inputStreamWithFileAtPath:path] : nil;
+        CC_SHA256_CTX ctx;
+        unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+        unsigned char chunk[32768];
+        NSInteger n;
+        size_t i;
+        if (!stream || !out || outCap < CC_SHA256_DIGEST_LENGTH * 2 + 1) return -1;
+        [stream open];
+        CC_SHA256_Init(&ctx);
+        while ((n = [stream read:chunk maxLength:sizeof(chunk)]) > 0)
+            CC_SHA256_Update(&ctx, chunk, (CC_LONG)n);
+        [stream close];
+        if (n < 0) return -1;
+        CC_SHA256_Final(digest, &ctx);
+        for (i = 0; i < CC_SHA256_DIGEST_LENGTH; i++)
+            snprintf(out + i * 2, outCap - i * 2, "%02x", digest[i]);
+        out[CC_SHA256_DIGEST_LENGTH * 2] = 0;
+        return 0;
+    }
+}
+
+static NSString *sysctlText(const char *name) {
+    char buf[256];
+    size_t len = sizeof(buf);
+    memset(buf, 0, sizeof(buf));
+    if (!name || sysctlbyname(name, buf, &len, NULL, 0) != 0 || !buf[0]) return nil;
+    return [NSString stringWithUTF8String:buf];
+}
+
+static NSString *formatUUID(const uint8_t uuid[16]) {
+    return [NSString stringWithFormat:@"%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+            uuid[0], uuid[1], uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7],
+            uuid[8], uuid[9], uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15]];
+}
+
+static NSString *uuidAt(const uint8_t *bytes, size_t length) {
+    uint32_t magic;
+    if (!bytes || length < sizeof(struct mach_header_64)) return @"";
+    magic = *(const uint32_t *)bytes;
+    if (magic == FAT_MAGIC || magic == FAT_CIGAM) {
+        const struct fat_header *header = (const struct fat_header *)bytes;
+        int swap = magic == FAT_MAGIC;
+        uint32_t count = swap ? OSSwapBigToHostInt32(header->nfat_arch) : header->nfat_arch;
+        const struct fat_arch *arch;
+        uint32_t i;
+        if (sizeof(*header) + (size_t)count * sizeof(*arch) > length) return @"";
+        arch = (const struct fat_arch *)(bytes + sizeof(*header));
+        for (i = 0; i < count; i++) {
+            cpu_type_t cpu = swap ? (cpu_type_t)OSSwapBigToHostInt32(arch[i].cputype) : arch[i].cputype;
+            uint32_t off = swap ? OSSwapBigToHostInt32(arch[i].offset) : arch[i].offset;
+            uint32_t size = swap ? OSSwapBigToHostInt32(arch[i].size) : arch[i].size;
+            if (cpu == CPU_TYPE_ARM64 && (size_t)off + size <= length)
+                return uuidAt(bytes + off, size);
+        }
+        return @"";
+    }
+    if (magic == MH_MAGIC_64) {
+        const struct mach_header_64 *header = (const struct mach_header_64 *)bytes;
+        const uint8_t *cmd = bytes + sizeof(*header);
+        const uint8_t *end = bytes + length;
+        uint32_t i;
+        for (i = 0; i < header->ncmds; i++) {
+            const struct load_command *load;
+            if (cmd + sizeof(*load) > end) break;
+            load = (const struct load_command *)cmd;
+            if (load->cmdsize < sizeof(*load) || cmd + load->cmdsize > end) break;
+            if (load->cmd == LC_UUID && load->cmdsize >= sizeof(struct uuid_command))
+                return formatUUID(((const struct uuid_command *)cmd)->uuid);
+            cmd += load->cmdsize;
+        }
+    }
+    return @"";
+}
+
+static NSString *machoUUID(NSString *path) {
+    NSData *data = path.length ? [NSData dataWithContentsOfFile:path] : nil;
+    if (!data) return @"";
+    return uuidAt(data.bytes, data.length);
+}
+
+static NSDictionary *binaryRecord(NSString *role, NSString *path) {
+    NSString *uuid = machoUUID(path);
+    NSString *sha = sha256File(path);
+    return @{ @"role": role ?: @"",
+              @"uuid": uuid ?: @"",
+              @"sha256": sha ?: @"",
+              @"present": @((uuid.length > 0 && sha.length == 64)) };
+}
+
+static NSDictionary *displayLinkRecord(CADisplayLink *link, double *previous) {
+    double now = link ? link.timestamp : 0;
+    double delta = previous && *previous > 0 ? now - *previous : 0;
+    NSString *state = @"INACTIVE";
+    UIApplicationState app = UIApplication.sharedApplication.applicationState;
+    if (previous) *previous = now;
+    if (app == UIApplicationStateActive) state = @"ACTIVE";
+    else if (app == UIApplicationStateBackground) state = @"BACKGROUND";
+    return @{ @"timestamp": @(now),
+              @"targetTimestamp": @(link ? link.targetTimestamp : 0),
+              @"duration": @(link ? link.duration : 0),
+              @"maximumFPS": @(UIScreen.mainScreen.maximumFramesPerSecond),
+              @"callback_delta": @(delta),
+              @"thread": [NSString stringWithFormat:@"%llu", (unsigned long long)pthread_self()],
+              @"application_state": state };
+}
+
+static NSDictionary *captureEnvironment(int physical, int displayOverride, uint32_t hostW, uint32_t hostH) {
+    NSProcessInfo *process = NSProcessInfo.processInfo;
+    NSOperatingSystemVersion version = process.operatingSystemVersion;
+    UIScreen *screen = UIScreen.mainScreen;
+    NSBundle *bundle = NSBundle.mainBundle;
+    struct utsname sys;
+    NSString *osBuild = sysctlText("kern.osversion");
+    NSString *machine = sysctlText("hw.machine");
+    id<MTLDevice> gpu = MTLCreateSystemDefaultDevice();
+    NSString *thermal = @"UNKNOWN";
+    NSProcessInfoThermalState thermalState = process.thermalState;
+    int debugger = 0;
+    struct kinfo_proc info;
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()};
+    size_t infoSize = sizeof(info);
+    NSString *exe = bundle.executablePath;
+    NSString *egl = [bundle.bundlePath stringByAppendingPathComponent:@"Frameworks/libEGL.framework/libEGL"];
+    NSString *gles = [bundle.bundlePath stringByAppendingPathComponent:@"Frameworks/libGLESv2.framework/libGLESv2"];
+    NSArray *binaries = @[binaryRecord(@"executable", exe), binaryRecord(@"libEGL", egl), binaryRecord(@"libGLESv2", gles)];
+    BOOL provision = [[NSFileManager defaultManager] fileExistsAtPath:[bundle.bundlePath stringByAppendingPathComponent:@"embedded.mobileprovision"]];
+    memset(&sys, 0, sizeof(sys));
+    uname(&sys);
+    memset(&info, 0, sizeof(info));
+    if (sysctl(mib, 4, &info, &infoSize, NULL, 0) == 0)
+        debugger = (info.kp_proc.p_flag & P_TRACED) != 0;
+    if (thermalState == NSProcessInfoThermalStateNominal) thermal = @"NOMINAL";
+    else if (thermalState == NSProcessInfoThermalStateFair) thermal = @"FAIR";
+    else if (thermalState == NSProcessInfoThermalStateSerious) thermal = @"SERIOUS";
+    else if (thermalState == NSProcessInfoThermalStateCritical) thermal = @"CRITICAL";
+    UIDevice.currentDevice.batteryMonitoringEnabled = YES;
+    uint64_t workingSet = 0;
+    if (gpu && @available(iOS 16.0, *)) workingSet = gpu.recommendedMaxWorkingSetSize;
+    UIApplicationState appState=UIApplication.sharedApplication.applicationState;
+    NSString *lifecycle=appState==UIApplicationStateActive ? @"ACTIVE" :
+        (appState==UIApplicationStateBackground ? @"BACKGROUND" : @"INACTIVE");
+    return @{
+        @"schema": @"agr.physical-environment.v1",
+        @"target_type": physical ? @"physical_device" : @"simulator",
+        @"kernel_role": physical ? @"device" : @"host_derived",
+        @"os": @{
+            @"system_name": UIDevice.currentDevice.systemName ?: @"",
+            @"system_version": UIDevice.currentDevice.systemVersion ?: @"",
+            @"major": @(version.majorVersion),
+            @"minor": @(version.minorVersion),
+            @"patch": @(version.patchVersion),
+            @"os_build": osBuild ?: [NSNull null],
+            @"os_build_available": @(osBuild != nil),
+            @"kernel_name": [NSString stringWithUTF8String:sys.sysname],
+            @"kernel_release": [NSString stringWithUTF8String:sys.release],
+            @"kernel_version": [NSString stringWithUTF8String:sys.version]
+        },
+        @"hardware": @{
+            @"hw_machine": machine ?: @"",
+            @"hw_machine_available": @(machine != nil),
+            @"marketing_model": [NSNull null],
+            @"architecture": physical ? @"arm64" : @"arm64-simulator",
+            @"logical_cpu_count": @(process.processorCount),
+            @"active_processor_count": @(process.activeProcessorCount),
+            @"page_size": @((long)sysconf(_SC_PAGESIZE)),
+            @"physical_memory": @(process.physicalMemory)
+        },
+        @"display": @{
+            @"logical_width": @(screen.bounds.size.width),
+            @"logical_height": @(screen.bounds.size.height),
+            @"native_width": @(screen.nativeBounds.size.width),
+            @"native_height": @(screen.nativeBounds.size.height),
+            @"scale": @(screen.scale),
+            @"native_scale": @(screen.nativeScale),
+            @"runtime_host_width": @(hostW),
+            @"runtime_host_height": @(hostH),
+            @"maximum_fps": @(screen.maximumFramesPerSecond),
+            @"display_override": @(displayOverride != 0),
+            @"source": displayOverride ? @"AGR_HOST_DISPLAY_OVERRIDE" : @"UIScreen.nativeBounds"
+        },
+        @"graphics": @{
+            @"metal_available": @(gpu != nil),
+            @"device_name": gpu.name ?: @"",
+            @"registry_id": @(gpu ? gpu.registryID : 0),
+            @"recommended_max_working_set": @(workingSet)
+        },
+        @"process": @{
+            @"pid": @(getpid()),
+            @"process_name": process.processName ?: @"",
+            @"debugger_attached": @(debugger != 0),
+            @"environment_target": physical ? @"iphoneos" : @"simulator"
+        },
+        @"app": @{
+            @"bundle_id": bundle.bundleIdentifier ?: @"",
+            @"bundle_name": bundle.infoDictionary[@"CFBundleName"] ?: @"",
+            @"version": bundle.infoDictionary[@"CFBundleShortVersionString"] ?: @"",
+            @"build": bundle.infoDictionary[@"CFBundleVersion"] ?: @"",
+            @"executable_name": exe.lastPathComponent ?: @"",
+            @"signing_identity_available": @NO,
+            @"embedded_mobileprovision": @(provision)
+        },
+        @"power": @{
+            @"low_power_mode_enabled": @(process.isLowPowerModeEnabled),
+            @"thermal_state": thermal,
+            @"battery_monitoring_available": @(UIDevice.currentDevice.batteryState != UIDeviceBatteryStateUnknown),
+            @"battery_state": @(UIDevice.currentDevice.batteryState),
+            @"battery_level": @(UIDevice.currentDevice.batteryLevel)
+        },
+        @"lifecycle": @{ @"state": lifecycle, @"active":@(appState==UIApplicationStateActive),
+                          @"foreground":@(appState!=UIApplicationStateBackground) },
+        @"build": @{
+            @"branch": @AGR_BUILD_BRANCH,
+            @"commit": @AGR_BUILD_COMMIT,
+            @"tree": @AGR_BUILD_TREE
+        },
+        @"build_environment": bundleBuildEnvironment(),
+        @"simulator": @{
+            @"physical_target_os": physical ? (UIDevice.currentDevice.systemVersion ?: @"") :
+                (bundleBuildEnvironment()[@"physical_target_os"] ?: [NSNull null]),
+            @"runtime_requested": bundleBuildEnvironment()[@"simulator_runtime_requested"] ?: [NSNull null],
+            @"runtime_actual": bundleBuildEnvironment()[@"simulator_runtime_actual"] ?: [NSNull null],
+            @"runtime_version": bundleBuildEnvironment()[@"simulator_runtime_version"] ?: [NSNull null],
+            @"os_version_parity": bundleBuildEnvironment()[@"os_version_parity"] ?: [NSNull null],
+            @"device_type": bundleBuildEnvironment()[@"simulator_device_type"] ?: [NSNull null]
+        },
+        @"binaries": binaries
+    };
+}
+
+static void publishEnvironment(int physical, int displayOverride, uint32_t hostW, uint32_t hostH) {
+    NSDictionary *env = captureEnvironment(physical, displayOverride, hostW, hostH);
+    NSData *data = [NSJSONSerialization dataWithJSONObject:env options:0 error:nil];
+    NSString *text = data ? [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] : nil;
+    NSString *machine = env[@"hardware"][@"hw_machine"];
+    NSString *version = env[@"os"][@"system_version"];
+    int stored = -1;
+    BOOL partial = machine.length == 0 || version.length == 0;
+    gLatestEnvironment = env;
+    if (!gStartEnvironment) gStartEnvironment = env;
+    if (gPhysicalTraceReady && text.length)
+        stored = agr_physical_trace_set_environment_json(text.UTF8String);
+    for (NSDictionary *binary in env[@"binaries"]) {
+        if (!gPhysicalTraceReady) break;
+        agr_physical_trace_add_binary([binary[@"role"] UTF8String], [binary[@"uuid"] UTF8String], [binary[@"sha256"] UTF8String]);
+        physicalNote(AGR_PHYS_PHASE_BINARY_FINGERPRINT, 1, 0, 0,
+                     [[NSString stringWithFormat:@"role=%@ uuid=%@ sha256=%@",
+                       binary[@"role"], binary[@"uuid"], binary[@"sha256"]] UTF8String]);
+    }
+    if (!gPhysicalTraceReady) return;
+    physicalNote(AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_BEGIN, 0, 0, 0, NULL);
+    if (stored != 0) physicalNote(AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_FAIL, 1, 0, 0, "environment_json");
+    else if (partial) physicalNote(AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_PARTIAL, 1, 0, 0, "missing=hw_machine,system_version");
+    else physicalNote(AGR_PHYS_PHASE_ENVIRONMENT_CAPTURE_OK, 1, 0, 0, NULL);
+}
+
+static NSString *frozenBubbleApkPath(void) {
+    NSString *bundled=[[NSBundle mainBundle] pathForResource:@"sample--frozen-bubble" ofType:@"apk"];
+    NSString *documents=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/org.jfedor.frozenbubble_8.apk"];
+    if (bundled.length) return bundled;
+    if ([[NSFileManager defaultManager] fileExistsAtPath:documents]) return documents;
+    return nil;
+}
+
+static void vectorWitnesses(DxVM *vm, NSString **sizeText, NSString **elementClass,
+                            NSString **paintText, BOOL *paintReached) {
+    uint32_t count=vm ? dx_vm_vector_trace_count(vm) : 0;
+    int haveSize=0;
+    int32_t sizeValue=0;
+    NSString *element=@"";
+    BOOL paint=NO;
+    NSString *paintWitness=@"";
+    uint32_t after;
+    uint32_t i;
+    for (i=0;i<count;i++) {
+        DxVectorTrace trace;
+        if (dx_vm_copy_vector_trace(vm, i, &trace)!=0) continue;
+        if (strcmp(trace.method, "size")==0 && trace.has_ret) {
+            haveSize=1;
+            sizeValue=trace.ret_i;
+        }
+        if (strcmp(trace.method, "elementAt")==0 && trace.ret_class[0]) {
+            if (!element.length || strstr(trace.ret_class, "PenguinSprite"))
+                element=[NSString stringWithUTF8String:trace.ret_class];
+        }
+    }
+    after=vm ? dx_vm_vector_after_element_count(vm) : 0;
+    for (i=0;i<after;i++) {
+        DxInvokeWitness witness;
+        if (dx_vm_copy_vector_after_element(vm, i, &witness)!=0) continue;
+        if (strcmp(witness.target_name, "paint")==0 && strstr(witness.recv_class, "PenguinSprite")) {
+            paint=YES;
+            paintWitness=[NSString stringWithFormat:@"exec=%u caller=%s recv=%s target=%s",
+                          witness.exec_id, witness.caller, witness.recv_class, witness.target_name];
+        }
+    }
+    *sizeText=haveSize ? [NSString stringWithFormat:@"%d", sizeValue] : @"";
+    *elementClass=element;
+    *paintText=paintWitness;
+    *paintReached=paint;
+}
+
+static void finishPhysicalReport(void) {
+    agr_dex_runtime_snapshot snapshot={0};
+    DxVM *vm=gPhysicalGame ? agr_dex_game_vm(gPhysicalGame) : NULL;
+    NSMutableArray *contexts=[NSMutableArray array];
+    NSString *vectorSize=@"";
+    NSString *elementClass=@"";
+    NSString *paintWitness=@"";
+    BOOL paintReached=NO;
+    BOOL contentProduced;
+    BOOL contentPosted;
+    NSString *documents;
+    NSData *json;
+    NSDictionary *environmentEnd;
+    NSArray *environmentChanges;
+    NSData *environmentEndData;
+    NSData *environmentChangesData;
+    uint32_t contextCount;
+    uint32_t i;
+    if (gPhysicalFinished) return;
+    gPhysicalFinished=YES;
+    environmentEnd=captureEnvironment(TARGET_OS_SIMULATOR ? 0 : 1, gPhysicalDisplayOverride,
+                                      gPhysicalWidth, gPhysicalHeight);
+    environmentChanges=environmentDifferences(gStartEnvironment ?: gLatestEnvironment ?: @{}, environmentEnd);
+    environmentEndData=[NSJSONSerialization dataWithJSONObject:environmentEnd options:0 error:nil];
+    environmentChangesData=[NSJSONSerialization dataWithJSONObject:environmentChanges options:0 error:nil];
+    if (gPhysicalTraceReady) {
+        NSString *endText=environmentEndData ? [[NSString alloc] initWithData:environmentEndData encoding:NSUTF8StringEncoding] : nil;
+        NSString *changesText=environmentChangesData ? [[NSString alloc] initWithData:environmentChangesData encoding:NSUTF8StringEncoding] : nil;
+        if (endText.length) agr_physical_trace_set_environment_end_json(endText.UTF8String, changesText.UTF8String);
+        if (environmentChanges.count) physicalNote(AGR_PHYS_PHASE_ENVIRONMENT_CHANGED, 1, 0, 0, "environment_end_diff");
+    }
+    if (gPhysicalGame) agr_dex_game_runtime_snapshot(gPhysicalGame, &snapshot);
+    vectorWitnesses(vm, &vectorSize, &elementClass, &paintWitness, &paintReached);
+    contextCount=vm ? dx_vm_unresolved_context_count(vm) : 0;
+    for (i=0;i<contextCount;i++) {
+        DxUnresolvedContextInfo info;
+        NSMutableArray *events=[NSMutableArray array];
+        uint32_t event;
+        if (dx_vm_copy_unresolved_context(vm, i, &info)!=0) continue;
+        for (event=0;event<info.count;event++) {
+            DxInvokeWitness witness;
+            if (dx_vm_copy_unresolved_event(vm, i, event, &witness)!=0) continue;
+            [events addObject:@{
+                @"exec":@(witness.exec_id),
+                @"pc":@(witness.pc),
+                @"class":[NSString stringWithUTF8String:witness.target_class],
+                @"method":[NSString stringWithUTF8String:witness.target_name],
+                @"shorty":[NSString stringWithUTF8String:witness.shorty]
+            }];
+        }
+        [contexts addObject:@{@"exec":@(info.exec_id), @"count":@(info.count),
+                              @"dropped":@(info.dropped), @"events":events}];
+    }
+    contentProduced=snapshot.canvas_lock_count>0 && snapshot.canvas_draw_bitmap_count>0 &&
+        snapshot.canvas_pixel_change_count>0 &&
+        snapshot.canvas_buffer_hash_before!=snapshot.canvas_buffer_hash_after;
+    contentPosted=snapshot.canvas_unlock_count>0 && snapshot.canvas_post_count>0;
+    NSDictionary *report=@{
+        @"schema":@"agr.physical-runtime.v1",
+        @"branch":@AGR_BUILD_BRANCH,
+        @"commit":@AGR_BUILD_COMMIT,
+        @"tree":@AGR_BUILD_TREE,
+#if TARGET_OS_SIMULATOR
+        @"device_platform":@"iphonesimulator",
+        @"iphoneos":@NO,
+#else
+        @"device_platform":@"iphoneos",
+        @"iphoneos":@YES,
+#endif
+#if TARGET_OS_SIMULATOR
+        @"architecture":@"arm64-simulator",
+#else
+        @"architecture":@"arm64",
+#endif
+        @"apk_package":gPhysicalPackage ? [NSString stringWithUTF8String:agr_apk_package_name(gPhysicalPackage)] : @"",
+        @"apk_path":gPhysicalApkPath ?: @"",
+        @"apk_sha256":gPhysicalSha ?: @"",
+        @"apk_sha256_expected":@"57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569",
+        @"apk_opened":@(gPhysicalPackage!=NULL),
+        @"activity_launch_stage":launchStageName(gPhysicalGame ? agr_dex_game_launch_stage(gPhysicalGame) : AGR_ACTIVITY_LAUNCH_NONE),
+        @"activity_resumed":@([launchStageName(gPhysicalGame ? agr_dex_game_launch_stage(gPhysicalGame) : AGR_ACTIVITY_LAUNCH_NONE) caseInsensitiveCompare:@"resumed"]==NSOrderedSame),
+        @"launch_result":@(gPhysicalStart),
+        @"process_alive":@YES,
+        @"execution_contexts":contexts,
+        @"game_thread_exec":@(snapshot.canvas_lock_owner_exec),
+        @"game_thread_host":[NSString stringWithFormat:@"%llu", (unsigned long long)snapshot.canvas_lock_owner_host],
+        @"surface_created":@(snapshot.content_surface_created_count),
+        @"surface_changed":@(snapshot.content_surface_changed_count),
+        @"surface_callback_ok_count":@(snapshot.content_surface_created_count + snapshot.content_surface_changed_count),
+        @"content_surface_valid":@(snapshot.content_surface_valid!=0),
+        @"content_surface_identity":[NSString stringWithFormat:@"%llu", (unsigned long long)snapshot.content_surface_identity],
+        @"root_surface_identity":[NSString stringWithFormat:@"%llu", (unsigned long long)snapshot.root_surface_identity],
+        @"content_surface_generation":@(snapshot.content_surface_generation),
+        @"width":@(snapshot.content_surface_width),
+        @"height":@(snapshot.content_surface_height),
+        @"format":@(snapshot.content_surface_format),
+        @"lock_count":@(snapshot.canvas_lock_count),
+        @"unlock_count":@(snapshot.canvas_unlock_count),
+        @"post_count":@(snapshot.canvas_post_count),
+        @"draw_bitmap_count":@(snapshot.canvas_draw_bitmap_count),
+        @"pixel_change_count":@(snapshot.canvas_pixel_change_count),
+        @"hash_before":[NSString stringWithFormat:@"%016llx", (unsigned long long)snapshot.canvas_buffer_hash_before],
+        @"hash_after":[NSString stringWithFormat:@"%016llx", (unsigned long long)snapshot.canvas_buffer_hash_after],
+        @"vector_size":vectorSize,
+        @"element_at_class":elementClass,
+        @"penguin_sprite_paint":@(paintReached),
+        @"penguin_sprite_paint_witness":paintWitness,
+        @"unresolved_contexts":contexts,
+        @"pending_exception":@(snapshot.pending_exception!=0),
+        @"exception_class":[NSString stringWithUTF8String:snapshot.exception_class],
+        @"runtime_error":gPhysicalError ? gPhysicalError : (gPhysicalGame ? [NSString stringWithUTF8String:agr_dex_game_launch_error(gPhysicalGame)] : @"apk_unavailable"),
+        @"vm_error":[NSString stringWithUTF8String:snapshot.error],
+        @"harness_called_do_traversal":@NO,
+        @"harness_called_render_api":@NO,
+        @"frame_owner":@"CADisplayLink",
+        @"host_vsync_count":@(gPhysicalVsync),
+        @"display_width":@(gPhysicalWidth),
+        @"display_height":@(gPhysicalHeight),
+        @"content_produced":contentProduced ? @"YES" : @"NO",
+        @"content_posted":contentPosted ? @"YES" : @"NO",
+        @"host_surface_submissions":@(gPhysicalHostSubmissions),
+        @"input_dispatched":@(snapshot.touch_dispatched),
+        @"input_consumed":@(snapshot.touch_consumed),
+        @"touch_down_active":@(snapshot.touch_down_active),
+        @"manual_input_trace_count":@(gPhysicalInputTrace.count),
+        @"host_last_submitted_hash":[NSString stringWithFormat:@"%016llx", (unsigned long long)gPhysicalLastSubmittedHash],
+        @"observation_mode":gPostFirstFrameDiscovery ? @"POST_FIRST_FRAME_ZERO_INPUT" : @"FIRST_CONTENT_FRAME",
+        @"post_first_frame_checkpoints":gPostFirstFrameCheckpoints ?: @[],
+        @"screen_presented":@"NOT_TESTED",
+        @"environment": gStartEnvironment ?: gLatestEnvironment ?: @{},
+        @"environment_start": gStartEnvironment ?: gLatestEnvironment ?: @{},
+        @"environment_end": environmentEnd ?: @{},
+        @"environment_changed": environmentChanges ?: @[],
+        @"display_link_frames": gDisplayLinkFrames ?: @[],
+        @"observation_start_monotonic": @(gObsStart),
+        @"observation_deadline": @(gObsDeadline),
+        @"observation_end": @(hostMonoNs()),
+        @"frames_observed": @(gPhysicalVsync),
+        @"stop_reason": gObsStop ?: @""
+    };
+    {
+        const char *reason = gPhysicalError ? "RUNTIME_ERROR" :
+            (gPhysicalStart != 0 ? "ACTIVITY_START_FAILED" :
+             (gPostFirstFrameDiscovery ? "POST_FIRST_FRAME_OBSERVED" :
+              (contentPosted ? "CONTENT_POSTED" : "OBSERVATION_TIMEOUT")));
+        const char *stop = gPhysicalError || gPhysicalStart != 0 ? "RUNTIME_ERROR" :
+            (gPostFirstFrameDiscovery ? "POST_FIRST_FRAME_DEADLINE" :
+             (gPhysicalHostSubmissions >= 3 ? "HOST_SURFACE_SUBMITTED" :
+             (contentProduced ? "CONTENT_PRODUCED" :
+             (contentPosted ? "CONTENT_POSTED" :
+              (gPhysicalPolls >= 80 ? "OBSERVATION_DEADLINE" :
+               (gPhysicalVsync >= 4 ? "FRAME_BUDGET" : "OBSERVATION_DEADLINE"))))));
+        agr_physical_trace_status preStatus;
+        memset(&preStatus, 0, sizeof(preStatus));
+        if (gPhysicalTraceReady) agr_physical_trace_copy_status(&preStatus);
+        if (preStatus.watchdog_stalled) stop = "WATCHDOG_STALL";
+        gObsStop=[NSString stringWithUTF8String:stop];
+        if (gPhysicalTraceReady) {
+            agr_physical_trace_set_observation(gObsStart, gObsDeadline, hostMonoNs(), gPhysicalVsync, stop);
+            physicalNote(AGR_PHYS_PHASE_OBSERVATION_WINDOW, 1, 0, 0, stop);
+        }
+        agr_physical_trace_status traceStatus;
+        NSMutableDictionary *full = [report mutableCopy];
+        const char *authoritative = reason;
+        memset(&traceStatus, 0, sizeof(traceStatus));
+        if (gPhysicalTraceReady) agr_physical_trace_finish(reason, &traceStatus);
+        if (traceStatus.termination_reason[0]) authoritative = traceStatus.termination_reason;
+        full[@"run_id"] = [NSString stringWithUTF8String:traceStatus.run_id];
+        full[@"process_launch_id"] = [NSString stringWithUTF8String:traceStatus.process_launch_id];
+        full[@"pid"] = @(traceStatus.pid);
+        full[@"process_start_wall_time"] = [NSString stringWithUTF8String:traceStatus.process_start_wall_time];
+        full[@"process_start_monotonic_ns"] = @(traceStatus.process_start_monotonic_ns);
+        full[@"environment"] = gStartEnvironment ?: gLatestEnvironment ?: @{};
+        full[@"environment_start"] = gStartEnvironment ?: gLatestEnvironment ?: @{};
+        full[@"environment_end"] = environmentEnd ?: @{};
+        full[@"environment_changed"] = environmentChanges ?: @[];
+        full[@"binaries"] = (gStartEnvironment ?: gLatestEnvironment)[@"binaries"] ?: @[];
+        full[@"observation_start_monotonic"] = @(gObsStart);
+        full[@"observation_deadline"] = @(gObsDeadline);
+        full[@"observation_end"] = @(hostMonoNs());
+        full[@"frames_observed"] = @(gPhysicalVsync);
+        full[@"stop_reason"] = gObsStop ?: @"";
+        full[@"final_state"] = [NSString stringWithUTF8String:authoritative];
+        full[@"termination_reason"] = [NSString stringWithUTF8String:authoritative];
+        full[@"last_trace_seq"] = @(traceStatus.last_seq);
+        full[@"last_trace_event"] = [NSString stringWithUTF8String:traceStatus.last_event];
+        full[@"trace_file"] = [NSString stringWithUTF8String:traceStatus.trace_file];
+        full[@"trace_event_count"] = @(traceStatus.event_count);
+        full[@"passive_dropped_count"] = @(traceStatus.passive_dropped_count);
+        full[@"trace_capacity_reached"] = @(traceStatus.trace_capacity_reached != 0);
+        full[@"trace_events_omitted"] = @(traceStatus.trace_events_omitted);
+        full[@"watchdog_state"] = [NSString stringWithUTF8String:traceStatus.watchdog_state];
+        full[@"watchdog_heartbeat_count"] = @(traceStatus.heartbeat_count);
+        full[@"watchdog_no_progress_level"] = @(traceStatus.no_progress_level);
+        full[@"max_progress_gap_ms"] = @(traceStatus.max_progress_gap_ms);
+        full[@"progress_age_ms"] = @(traceStatus.progress_age_ms);
+        full[@"crash_marker_present"] = @(traceStatus.crash_marker_present != 0);
+        full[@"root_exec"] = traceStatus.has_root_exec ? @(traceStatus.root_exec) : [NSNull null];
+        full[@"game_thread_state"] = @(traceStatus.game_thread_state);
+        report = full;
+    }
+    json=[NSJSONSerialization dataWithJSONObject:report options:NSJSONWritingPrettyPrinted error:nil];
+    documents=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+    [[NSFileManager defaultManager] createDirectoryAtPath:documents withIntermediateDirectories:YES attributes:nil error:nil];
+    if (![json writeToFile:[documents stringByAppendingPathComponent:@"agr-current-runtime.json"] atomically:YES])
+        agr_physical_trace_note_writer_error("EVIDENCE_WRITER_ERROR");
+    if (gPhysicalTraceReady && agr_physical_trace_refresh_manifest() != 0)
+        agr_physical_trace_note_writer_error("MANIFEST_REFRESH_FAILED");
+    agr_physical_trace_set_lock_probe(NULL, NULL);
+    /* The evidence window ends here, not the Android app process. A posted
+       Surface remains live and keeps receiving producer frames after sealing. */
+    if ((!gPostFirstFrameDiscovery && (!contentPosted || gPhysicalHostSubmissions == 0)) || gPhysicalError) {
+        if (gPhysicalLink) { [gPhysicalLink invalidate]; gPhysicalLink=nil; }
+        if (gPhysicalGame) agr_dex_game_destroy(gPhysicalGame);
+        gPhysicalGame=NULL;
+        if (gPhysicalPackage) agr_apk_package_close(gPhysicalPackage);
+        gPhysicalPackage=NULL;
+    }
+}
+
+static void pollPhysicalReport(void) {
+    agr_dex_runtime_snapshot snapshot={0};
+    int posted;
+    if (gPhysicalFinished || !gPhysicalGame) return;
+    agr_dex_game_runtime_snapshot(gPhysicalGame, &snapshot);
+    physicalObserve(&snapshot, agr_dex_game_vm(gPhysicalGame));
+    posted=snapshot.canvas_lock_count>0 && snapshot.canvas_draw_bitmap_count>0 &&
+        snapshot.canvas_pixel_change_count>0 && snapshot.canvas_post_count>0 &&
+        snapshot.canvas_buffer_hash_before!=snapshot.canvas_buffer_hash_after;
+    /* A producer post is not a visible frame. Observe several distinct host
+       submissions before sealing evidence; never stop the running game here. */
+    if ((gPostFirstFrameDiscovery && hostMonoNs() >= gObsDeadline) ||
+        (!gPostFirstFrameDiscovery && ((posted && gPhysicalHostSubmissions >= 3) || gPhysicalPolls>=80))) {
+        finishPhysicalReport();
+        return;
+    }
+    gPhysicalPolls++;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1*NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{ pollPhysicalReport(); });
+}
+
+/* UIKit is solely the device endpoint. SurfaceHolder/Canvas state and the
+   completed-post boundary remain in the Android compatibility runtime. */
+static void presentPhysicalPostedSurfaces(void) {
+    uint32_t count;
+    if (!gPhysicalGame || !gPhysicalSurfaceController) return;
+    count = agr_dex_game_content_surface_count(gPhysicalGame);
+    if (count > 4) count = 4;
+    for (uint32_t index = 0; index < count; index++) {
+        agr_dex_posted_surface frame = {0};
+        int result = agr_dex_game_copy_posted_surface(gPhysicalGame, index,
+                                                     gPhysicalConsumerPosts[index], &frame);
+        if (result != 0) continue;
+        char detail[220];
+        snprintf(detail, sizeof(detail), "surface=%llu generation=%u post=%u size=%ux%u hash=%016llx",
+                 (unsigned long long)frame.surface_identity, frame.generation, frame.post_count,
+                 frame.width, frame.height, (unsigned long long)frame.pixel_hash);
+        if (!gPhysicalFinished) physicalNote(AGR_PHYS_PHASE_HOST_SURFACE_ACQUIRED, 1, 0, 0, detail);
+        NSData *rgba = [NSData dataWithBytesNoCopy:frame.pixels length:frame.bytes freeWhenDone:YES];
+        if (rgba) frame.pixels = NULL; /* CGImage provider retains this host-owned post. */
+        CGDataProviderRef provider = rgba ? CGDataProviderCreateWithCFData((__bridge CFDataRef)rgba) : NULL;
+        CGColorSpaceRef color = provider ? CGColorSpaceCreateDeviceRGB() : NULL;
+        CGImageRef image = color ? CGImageCreate(frame.width, frame.height, 8, 32,
+            frame.row_bytes, color, kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedLast,
+            provider, NULL, false, kCGRenderingIntentDefault) : NULL;
+        if (image) {
+            gPhysicalSurfaceController.view.layer.contents = (__bridge id)image;
+            gPhysicalConsumerPosts[index] = frame.post_count;
+            gPhysicalLastSubmittedHash = frame.pixel_hash;
+            gPhysicalHostSubmissions++;
+            if (!gPhysicalFinished)
+                physicalNote(AGR_PHYS_PHASE_HOST_SURFACE_SUBMITTED, 1, 0, 0, detail);
+            CGImageRelease(image);
+        }
+        if (color) CGColorSpaceRelease(color);
+        if (provider) CGDataProviderRelease(provider);
+        agr_dex_posted_surface_release(&frame);
+    }
+}
+
+static void armPhysicalRuntime(uint32_t width, uint32_t height) {
+    static NSString *const expected=@"57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569";
+    int display = -1;
+    gPhysicalWidth=width;
+    gPhysicalHeight=height;
+    physicalNote(AGR_PHYS_PHASE_APK_LOCATE_BEGIN, 0, 0, 0, NULL);
+    gPhysicalApkPath=frozenBubbleApkPath();
+    if (!gPhysicalApkPath.length) {
+        physicalNote(AGR_PHYS_PHASE_APK_LOCATE_FAIL, 1, 0, 0, "apk_missing");
+        gPhysicalError=@"apk_missing";
+        gPhysicalStart=-1;
+        physicalNote(AGR_PHYS_PHASE_RUNTIME_ERROR, 1, 0, 0, "apk_missing");
+        finishPhysicalReport();
+        return;
+    }
+    physicalNote(AGR_PHYS_PHASE_APK_LOCATE_OK, 1, 0, 0, NULL);
+    physicalNote(AGR_PHYS_PHASE_APK_SHA_BEGIN, 0, 0, 0, NULL);
+    gPhysicalSha=sha256File(gPhysicalApkPath);
+    agr_physical_trace_set_apk_sha_actual(gPhysicalSha.UTF8String);
+    if (![gPhysicalSha isEqualToString:expected]) {
+        physicalNote(AGR_PHYS_PHASE_APK_SHA_FAIL, 1, 0, 0, "apk_sha256_mismatch");
+        gPhysicalError=@"apk_sha256_mismatch";
+        gPhysicalStart=-1;
+        physicalNote(AGR_PHYS_PHASE_RUNTIME_ERROR, 1, 0, 0, "apk_sha256_mismatch");
+        finishPhysicalReport();
+        return;
+    }
+    physicalNote(AGR_PHYS_PHASE_APK_SHA_OK, 1, 0, 0, NULL);
+    physicalNote(AGR_PHYS_PHASE_APK_OPEN_BEGIN, 0, 0, 0, NULL);
+    gPhysicalPackage=agr_apk_package_open(gPhysicalApkPath.UTF8String);
+    if (!gPhysicalPackage) {
+        physicalNote(AGR_PHYS_PHASE_APK_OPEN_FAIL, 1, 0, 0, "apk_open_failed");
+        gPhysicalError=@"apk_open_failed";
+        gPhysicalStart=-1;
+        physicalNote(AGR_PHYS_PHASE_RUNTIME_ERROR, 1, 0, 0, "apk_open_failed");
+        finishPhysicalReport();
+        return;
+    }
+    physicalNote(AGR_PHYS_PHASE_APK_OPEN_OK, 1, 0, 0, NULL);
+    physicalNote(AGR_PHYS_PHASE_GAME_CREATE_BEGIN, 0, 0, 0, NULL);
+    gPhysicalGame=agr_dex_game_create_from_apk(gPhysicalPackage);
+    if (!gPhysicalGame) {
+        physicalNote(AGR_PHYS_PHASE_GAME_CREATE_FAIL, 1, 0, 0, "game_create_failed");
+        gPhysicalError=@"game_create_failed";
+        gPhysicalStart=-1;
+        physicalNote(AGR_PHYS_PHASE_RUNTIME_ERROR, 1, 0, 0, "game_create_failed");
+        finishPhysicalReport();
+        return;
+    }
+    physicalNote(AGR_PHYS_PHASE_GAME_CREATE_OK, 1, 0, 0, NULL);
+    agr_physical_trace_set_lock_probe(physicalContentLockBusy, gPhysicalGame);
+    agr_dex_game_enable_diagnostics(gPhysicalGame, 1);
+    physicalNote(AGR_PHYS_PHASE_DIAGNOSTICS_ENABLED, 0, 0, 0, NULL);
+    physicalNote(AGR_PHYS_PHASE_HOST_DISPLAY_SET_BEGIN, 0, 0, 0, NULL);
+    display=agr_dex_game_set_host_display(gPhysicalGame, width, height);
+    physicalNote(display==0 ? AGR_PHYS_PHASE_HOST_DISPLAY_SET_OK : AGR_PHYS_PHASE_HOST_DISPLAY_SET_FAIL,
+                1, 0, 0, display==0 ? NULL : "host_display_failed");
+    physicalNote(AGR_PHYS_PHASE_ACTIVITY_START_BEGIN, 0, 0, 0, NULL);
+    if (gPhysicalGame) dx_vm_set_draw_witness(agr_dex_game_vm(gPhysicalGame), 128);
+    gPhysicalStart=agr_dex_game_start_activity(gPhysicalGame);
+    if (gPhysicalStart==0) {
+        DxVM *vm=agr_dex_game_vm(gPhysicalGame);
+        DxExecutionContext *exec=vm ? dx_vm_current_exec(vm) : NULL;
+        physicalNote(AGR_PHYS_PHASE_ACTIVITY_START_OK, 1, exec!=NULL, exec ? exec->id : 0, NULL);
+        physicalNote(AGR_PHYS_PHASE_EXEC_PUBLISHED, 0, exec!=NULL, exec ? exec->id : 0, "root");
+        if (gPhysicalLink) {
+            gPhysicalLink.paused=NO;
+            gObsStart=hostMonoNs();
+            gObsDeadline=gObsStart + (gGameplayTrajectoryMode ? 600000000000ull :
+                (gPostFirstFrameDiscovery ? 20000000000ull : 8000000000ull));
+            gDisplayLinkFrames=[NSMutableArray array];
+            if (gPostFirstFrameDiscovery) {
+                gPostFirstFrameCheckpoints=[NSMutableArray arrayWithCapacity:12];
+                gNextPostFirstFrameCheckpoint=gObsStart + 2000000000ull;
+            }
+            agr_physical_trace_set_observation(gObsStart, gObsDeadline, 0, 0, "");
+            physicalNote(AGR_PHYS_PHASE_CADISPLAYLINK_STARTED, 1, 0, 0, NULL);
+            physicalNote(AGR_PHYS_PHASE_OBSERVATION_WINDOW, 1, 0, 0, "start");
+            if (gPostFirstFrameDiscovery) {
+                gPhysicalContentHold=YES;
+                pollPhysicalReport();
+            }
+        } else {
+            finishPhysicalReport();
+        }
+    } else {
+        physicalNote(AGR_PHYS_PHASE_ACTIVITY_START_FAIL, 1, 0, 0, "activity_start_failed");
+        finishPhysicalReport();
+    }
+}
+
+- (void)publishGameplayTrajectoryState:(const agr_dex_runtime_snapshot *)snapshot {
+    if (!gGameplayTrajectoryMode || !snapshot) return;
+    agr_physical_trace_status status;
+    memset(&status, 0, sizeof(status));
+    if (gPhysicalTraceReady) agr_physical_trace_copy_status(&status);
+    NSDictionary *state=@{
+        @"schema":@"agr.gameplay-host-checkpoint.v1",
+        @"commit":@AGR_BUILD_COMMIT, @"tree":@AGR_BUILD_TREE,
+        @"apk_sha256":gPhysicalSha ?: @"",
+        @"run_id":[NSString stringWithUTF8String:status.run_id],
+        @"pid":@(getpid()), @"host_vsync":@(gPhysicalVsync),
+        @"monotonic_ns":@(hostMonoNs()),
+        @"environment":gStartEnvironment ?: gLatestEnvironment ?: @{},
+        @"ui_touch_view_bounds":@{@"x":@0, @"y":@0,
+                                   @"width":@(gPhysicalSurfaceController.view.bounds.size.width),
+                                   @"height":@(gPhysicalSurfaceController.view.bounds.size.height)},
+        @"activity_stage":launchStageName(gPhysicalGame ? agr_dex_game_launch_stage(gPhysicalGame) : AGR_ACTIVITY_LAUNCH_NONE),
+        @"root_execution_context":@(dx_vm_current_exec(agr_dex_game_vm(gPhysicalGame)) ?
+                                     dx_vm_current_exec(agr_dex_game_vm(gPhysicalGame))->id : 0),
+        @"draw_execution_context":@(snapshot->canvas_lock_owner_exec),
+        @"instructions":@(snapshot->instructions_executed),
+        @"methods":@(snapshot->methods_invoked),
+        @"pending_exception":@(snapshot->pending_exception!=0),
+        @"exception_class":[NSString stringWithUTF8String:snapshot->exception_class],
+        @"vm_error":[NSString stringWithUTF8String:snapshot->error],
+        @"surface":@{@"identity":@(snapshot->content_surface_identity),
+                      @"generation":@(snapshot->content_surface_generation),
+                      @"valid":@(snapshot->content_surface_valid!=0),
+                      @"width":@(snapshot->content_surface_width),
+                      @"height":@(snapshot->content_surface_height),
+                      @"locks":@(snapshot->canvas_lock_count),
+                      @"posts":@(snapshot->canvas_post_count),
+                      @"draws":@(snapshot->canvas_draw_bitmap_count),
+                      @"hash_after":@(snapshot->canvas_buffer_hash_after)},
+        @"host_surface_submissions":@(gPhysicalHostSubmissions),
+        @"host_last_submitted_hash":@(gPhysicalLastSubmittedHash),
+        @"input_dispatched":@(snapshot->touch_dispatched),
+        @"input_consumed":@(snapshot->touch_consumed),
+        @"last_touch":gPhysicalInputTrace.lastObject ?: @{},
+        @"input_trace_count":@(gPhysicalInputTrace.count),
+        @"runtime_failure":gPhysicalError ?: @""
+    };
+    NSData *data=[NSJSONSerialization dataWithJSONObject:state options:0 error:nil];
+    [data writeToFile:[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/agr-gameplay-state.json"] atomically:YES];
+}
+
+- (void)hostPhysicalVsync:(CADisplayLink *)link {
+    if (!gPhysicalGame) return;
+    gPhysicalVsync++;
+    presentPhysicalPostedSurfaces();
+    if (gPhysicalFinished) {
+        (void)agr_dex_game_choreographer_frame(gPhysicalGame);
+        return;
+    }
+    {
+        NSDictionary *frame=displayLinkRecord(link, &gLinkPrevious);
+        if (!gDisplayLinkFrames) gDisplayLinkFrames=[NSMutableArray array];
+        if ((!gPostFirstFrameDiscovery && !gGameplayTrajectoryMode) || gDisplayLinkFrames.count < 256)
+            [gDisplayLinkFrames addObject:frame];
+        physicalNote(AGR_PHYS_PHASE_CADISPLAYLINK_FRAME, 0, 0, 0,
+                     [[NSString stringWithFormat:@"timestamp=%@ targetTimestamp=%@ duration=%@ maximumFPS=%@ delta=%@ thread=%@ app=%@",
+                       frame[@"timestamp"], frame[@"targetTimestamp"], frame[@"duration"],
+                       frame[@"maximumFPS"], frame[@"callback_delta"], frame[@"thread"],
+                       frame[@"application_state"]] UTF8String]);
+    }
+    physicalNote(AGR_PHYS_PHASE_PHYSICAL_FRAME_BEGIN, 0, 0, 0, NULL);
+    int result=agr_dex_game_choreographer_frame(gPhysicalGame);
+    agr_dex_runtime_snapshot snapshot={0};
+    agr_dex_game_runtime_snapshot(gPhysicalGame, &snapshot);
+    physicalObserve(&snapshot, agr_dex_game_vm(gPhysicalGame));
+    if (gPostFirstFrameDiscovery && hostMonoNs() >= gNextPostFirstFrameCheckpoint &&
+        gPostFirstFrameCheckpoints.count < 12) {
+        [gPostFirstFrameCheckpoints addObject:@{
+            @"elapsed_ms":@((hostMonoNs()-gObsStart)/1000000ull),
+            @"host_vsync":@(gPhysicalVsync),
+            @"host_submissions":@(gPhysicalHostSubmissions),
+            @"host_last_hash":[NSString stringWithFormat:@"%016llx", (unsigned long long)gPhysicalLastSubmittedHash],
+            @"traversal":@(snapshot.traversal_count),
+            @"surface_generation":@(snapshot.content_surface_generation),
+            @"surface_valid":@(snapshot.content_surface_valid!=0),
+            @"locks":@(snapshot.canvas_lock_count),
+            @"posts":@(snapshot.canvas_post_count),
+            @"draw_bitmap":@(snapshot.canvas_draw_bitmap_count),
+            @"instructions":@(snapshot.instructions_executed),
+            @"methods":@(snapshot.methods_invoked),
+            @"pending_exception":@(snapshot.pending_exception!=0),
+            @"exception_class":[NSString stringWithUTF8String:snapshot.exception_class],
+            @"last_method":[NSString stringWithUTF8String:snapshot.last_method],
+            @"vm_error":[NSString stringWithUTF8String:snapshot.error]
+        }];
+        gNextPostFirstFrameCheckpoint=hostMonoNs()+2000000000ull;
+    }
+    physicalNote(AGR_PHYS_PHASE_PHYSICAL_FRAME_END, 0, 0, 0, NULL);
+    if (result<0) {
+        finishPhysicalReport();
+        return;
+    }
+    if (gGameplayTrajectoryMode) {
+        if (gPhysicalVsync == 1 || gPhysicalVsync % 15 == 0) [self publishGameplayTrajectoryState:&snapshot];
+        NSString *finalize=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/agr-gameplay-finalize.flag"];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:finalize]) {
+            [[NSFileManager defaultManager] removeItemAtPath:finalize error:nil];
+            [self publishGameplayTrajectoryState:&snapshot];
+            finishPhysicalReport();
+        }
+        return;
+    }
+    if (snapshot.traversal_count>=2 && !gPhysicalContentHold) {
+        gPhysicalContentHold=YES;
+        pollPhysicalReport();
+    }
+}
+
+- (void)hostTraversalVsync:(CADisplayLink *)link {
+    if (!gDispatchGame || gDispatchFinished || gDispatchContentHold) return;
+    gDispatchVsync++;
+    if (!gDisplayLinkFrames) gDisplayLinkFrames=[NSMutableArray array];
+    [gDisplayLinkFrames addObject:displayLinkRecord(link, &gLinkPrevious)];
+    int result=agr_dex_game_choreographer_frame(gDispatchGame);
+    agr_dex_runtime_snapshot snapshot={0};
+    agr_dex_game_runtime_snapshot(gDispatchGame,&snapshot);
+    if (gDispatchFrames) [gDispatchFrames addObject:dexSnapshotDictionary(&snapshot)];
+    if (result<0 || gDispatchVsync>=4) {
+        finishTraversalDispatchReport();
+        return;
+    }
+    /* The second host frame creates the child Surface. Stop host traversals
+       and let the worker lock, draw, and post. */
+    if (snapshot.traversal_count>=2) {
+        gDispatchContentHold=YES;
+        pollContentFrameReport();
+    }
+}
+- (void)sceneDidBecomeActive:(UIScene *)scene {
+    (void)scene;
+    agr_physical_trace_set_lifecycle("ACTIVE", 1, 1);
+    physicalNote(AGR_PHYS_PHASE_APP_DID_BECOME_ACTIVE, 1, 0, 0, "ACTIVE");
+}
+- (void)sceneWillResignActive:(UIScene *)scene {
+    (void)scene;
+    agr_physical_trace_set_lifecycle("INACTIVE", 1, 0);
+    physicalNote(AGR_PHYS_PHASE_APP_WILL_RESIGN_ACTIVE, 1, 0, 0, "INACTIVE");
+}
+- (void)sceneDidEnterBackground:(UIScene *)scene {
+    (void)scene;
+    agr_physical_trace_set_lifecycle("BACKGROUND", 0, 0);
+    physicalNote(AGR_PHYS_PHASE_APP_DID_ENTER_BACKGROUND, 1, 0, 0, "BACKGROUND");
+}
+- (void)sceneWillEnterForeground:(UIScene *)scene {
+    (void)scene;
+    agr_physical_trace_set_lifecycle("FOREGROUND", 1, 0);
+    physicalNote(AGR_PHYS_PHASE_APP_WILL_ENTER_FOREGROUND, 1, 0, 0, "FOREGROUND");
+}
+- (void)applicationWillTerminate:(UIApplication *)application {
+    (void)application;
+    physicalNote(AGR_PHYS_PHASE_APP_WILL_TERMINATE, 1, 0, 0, "TERMINATE");
+}
+- (void)agrMemoryWarning:(NSNotification *)note {
+    (void)note;
+    physicalNote(AGR_PHYS_PHASE_MEMORY_WARNING, 1, 0, 0, "memory_warning");
+}
+- (void)agrThermal:(NSNotification *)note {
+    (void)note;
+    physicalNote(AGR_PHYS_PHASE_THERMAL_CHANGED, 1, 0, 0, "thermal_state_change");
+    physicalNote(AGR_PHYS_PHASE_ENVIRONMENT_CHANGED, 1, 0, 0, "thermal");
+}
+- (void)agrPower:(NSNotification *)note {
+    (void)note;
+    physicalNote(AGR_PHYS_PHASE_LOW_POWER_CHANGED, 1, 0, 0,
+                 NSProcessInfo.processInfo.isLowPowerModeEnabled ? "low_power=1" : "low_power=0");
+    physicalNote(AGR_PHYS_PHASE_ENVIRONMENT_CHANGED, 1, 0, 0, "low_power");
+}
+- (void)agrProtectedAvailable:(NSNotification *)note {
+    (void)note;
+    physicalNote(AGR_PHYS_PHASE_PROTECTED_DATA_CHANGED, 1, 0, 0, "protected_data=available");
+}
+- (void)agrProtectedUnavailable:(NSNotification *)note {
+    (void)note;
+    physicalNote(AGR_PHYS_PHASE_PROTECTED_DATA_CHANGED, 1, 0, 0, "protected_data=unavailable");
 }
 @end
 int main(int argc, char **argv) {

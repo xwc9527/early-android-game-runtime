@@ -9,4 +9,13 @@
 <key>CFBundleVersion</key><string>1</string>
 <key>LSRequiresIPhoneOS</key><true/>
 <key>UILaunchScreen</key><dict/>
+<key>UIApplicationSceneManifest</key><dict>
+  <key>UIApplicationSupportsMultipleScenes</key><false/>
+  <key>UISceneConfigurations</key><dict>
+    <key>UIWindowSceneSessionRoleApplication</key><array><dict>
+      <key>UISceneConfigurationName</key><string>AGR Main Scene</string>
+      <key>UISceneDelegateClassName</key><string>AppDelegate</string>
+    </dict></array>
+  </dict>
+</dict>
 </dict></plist>

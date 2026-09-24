@@ -1,0 +1,88 @@
+{
+  "schema_version": 2,
+  "classification": "ANDROID_SEMANTIC_BUG",
+  "subsystem": "API19 SurfaceView child Surface and SurfaceHolder callbacks",
+  "observed_discontinuity": "Unchanged Frozen Bubble installed org.jfedor.frozenbubble.GameView and the host Decor entered performDraw. The SurfaceView child had no SurfaceHolder lifecycle.",
+  "upstream": {
+    "map_entry": "framework.view.surface_view",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "core/java/android/view/SurfaceView.java",
+      "core/java/android/view/SurfaceHolder.java",
+      "graphics/java/android/graphics/PixelFormat.java"
+    ],
+    "call_path": [
+      "SurfaceView.getHolder",
+      "SurfaceHolder.addCallback",
+      "ViewTreeObserver.OnPreDrawListener",
+      "SurfaceView.updateWindow",
+      "SurfaceHolder.Callback.surfaceCreated",
+      "SurfaceHolder.Callback.surfaceChanged"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "SurfaceView.getHolder returns a holder whose Surface is a different object from the ViewRoot window Surface.",
+    "addCallback stores the callback and does not fire surfaceCreated.",
+    "The child Surface is created only when the window and the view are visible and the view frame is positive.",
+    "surfaceCreated runs once for that creation, then surfaceChanged runs with the view size and PixelFormat.RGB_565.",
+    "A later traversal with the same size and format does not repeat either callback.",
+    "A hidden view or a non-positive frame does not create a Surface or fire callbacks.",
+    "Allocation failure leaves the holder invalid and does not invalidate the root Surface."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+      "Runtime/DexLoom/AndroidMini/framework_viewroot.h",
+      "Runtime/DexLoom/game_dex_runner.c",
+      "Runtime/DexLoom/game_dex_runner.h",
+      "App/main.m"
+    ],
+    "call_path": [
+      "agr_dex_game_choreographer_frame",
+      "agr_viewroot_do_traversal",
+      "content_surface_pre_draw",
+      "surface_holder.surface_created",
+      "surface_holder.surface_changed",
+      "viewroot.perform_draw"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "API19 SurfaceView.updateWindow creates a child window Surface after mHaveFrame and dispatches SurfaceHolder callbacks. AGR's host Decor performDraw had no child Surface owner.",
+      "relevance": "The inflated GameView could not receive surfaceCreated, so the app never obtained a valid content Surface."
+    }
+  ],
+  "earliest_evidenced_divergence": "API19 SurfaceView.updateWindow creates a child Surface and dispatches surfaceCreated then surfaceChanged once the view has a positive frame and is visible; AGR reached host Decor performDraw with the inflated GameView child and no SurfaceHolder lifecycle.",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "Pinned android-4.4.4_r2 SurfaceView.java, SurfaceHolder.java, and PixelFormat.java hashes in framework.view.surface_view"
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Linux host contract agr.framework-traversal-dispatch.host.v1: frame 1 does not create the child Surface; frame 2 creates generation 1, distinct from the root Surface, and delivers surfaceCreated then surfaceChanged before performDraw. Hidden, zero-size, removed-callback, and allocation-failure cases hold. A same-size third frame does not repeat the callbacks. The closed explicit first traversal still ends at handoff.viewroot_surface_ready."
+    },
+    {
+      "type": "RUNTIME",
+      "artifact": "Local host execution of unchanged org.jfedor.frozenbubble 1.7: GameView id 0x7f060000 registers its callback during onCreate. Frame 1 has created_count 0. Frame 2 has content_surface_valid, generation 1, 320x480, format 4, callback_count 1, created_count 1, changed_count 1, and an identity distinct from the root Surface. Trace order is child_surface_created, surface_created, surface_changed, perform_draw. GameView.surfaceCreated calls GameThread.setSurfaceOK. GameView.surfaceChanged calls setSurfaceSize, which reaches resizeBitmaps and scaleFrom and throws Ljava/lang/NullPointerException. BitmapFactory.decodeResource was unresolved on that run. A later slot dump showed GameView.<init> pc 30 invoke-virtual method_idx 247 setRunning already selected GameThread.setRunning, while pc 35 method_idx 252 resolved Thread.start at vtable_idx 0 onto GameThread.cleanUp. That dispatch defect is dalvik.vm.vtable. This is not a first frame."
+    },
+    {
+      "type": "REAL_GAME",
+      "artifact": "Simulator discovery 35683118511 commit 68ed706 unchanged Frozen Bubble, UIKit CADisplayLink, harness_called_do_traversal false, classification viewroot_draw_entered, display 1206x2622, host_vsync_count 2. Frame 1: traversal_count 1, draw_count 0, content_surface_created_count 0, callback_count 1, content identity distinct from the root Surface. Frame 2: traversal_count 2, draw_count 1, content_surface_valid, generation 1, 1206x2622, format 4, created_count 1, changed_count 1, same content identity, owner 2131099648. Trace order is child_surface_created, surface_created, surface_changed, viewroot.perform_draw. content_surface_exception is Ljava/lang/NullPointerException and last_method is GameThread.scaleFrom. This is not a first frame."
+    }
+  ],
+  "remaining_uncertainty": [
+    "surfaceCreated and performDraw are not a first frame.",
+    "The scaleFrom NullPointerException on this run followed GameThread.cleanUp clearing bitmap fields. The mismatched invoke was Thread.start, recorded in framework-dex-virtual-dispatch.json."
+  ],
+  "next_action": "Do not rerun discovery 35683118511 and do not reopen SurfaceView. lockCanvas is framework-surface-holder-canvas.json. First content frame is framework-canvas-bitmap.json.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "The child Surface is an in-process buffer owned by the SurfaceView holder. It is not the ViewRoot window Surface and it is not a SurfaceFlinger child window. IWindowSession.addToDisplayWithoutInputChannel is not a separate process. A callback exception is recorded and cleared so the host Decor performDraw still runs."
+}

@@ -1,0 +1,79 @@
+{
+  "schema_version": 2,
+  "classification": "ANDROID_SEMANTIC_BUG",
+  "subsystem": "API19 BitmapFactory.decodeResource",
+  "observed_discontinuity": "Frozen Bubble GameThread.<init> calls BitmapFactory.decodeResource(Resources, int, Options). AGR skipped the unresolved method, so the source Bitmap stayed null and scaleFrom threw NullPointerException.",
+  "upstream": {
+    "map_entry": "framework.graphics.bitmap_decode_resource",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": [
+      "graphics/java/android/graphics/BitmapFactory.java",
+      "graphics/java/android/graphics/Bitmap.java"
+    ],
+    "call_path": [
+      "BitmapFactory.decodeResource",
+      "Resources.openRawResource",
+      "Bitmap.getWidth",
+      "Bitmap.getHeight",
+      "Bitmap.recycle"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "decodeResource(Resources, int, Options) returns a Bitmap whose width and height are the decoded pixel dimensions.",
+    "A missing or undecodable resource returns null.",
+    "Options.inBitmap set and a failed decode throws IllegalArgumentException.",
+    "Options.inJustDecodeBounds returns null and writes outWidth and outHeight without allocating pixel backing.",
+    "Bitmap.getWidth and Bitmap.getHeight return those dimensions.",
+    "Bitmap.recycle releases host pixel backing."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/game_dex_runner.c",
+      "Runtime/Bitmap/agr_bitmap.cpp",
+      "Runtime/Bitmap/agr_bitmap.h"
+    ],
+    "call_path": [
+      "bitmap_decode_resource",
+      "agr_bitmap_decode",
+      "guest_bitmap_attach",
+      "bitmap_recycle",
+      "bitmap_get_dimension"
+    ]
+  },
+  "differences": [
+    {
+      "id": "D1",
+      "description": "API19 BitmapFactory.decodeResource opens the raw resource and returns a Bitmap with pixels. AGR previously had no LLIL method, so the invoke was skipped and the result was null. AGR now decodes through agr_bitmap and retains host pixels keyed by guest Bitmap identity.",
+      "relevance": "GameThread stores real source bitmaps. Canvas.drawBitmap consumes those pixels."
+    }
+  ],
+  "earliest_evidenced_divergence": "API19 decodeResource(Resources, int, Options) returns the decoded Bitmap; AGR skipped Landroid/graphics/BitmapFactory;.decodeResource LLIL.",
+  "causal_status": "CONTRACT_CONFIRMED",
+  "evidence_level": "CONTRACT_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "Pinned android-4.4.4_r2 BitmapFactory.decodeResource and Bitmap.getWidth/getHeight/recycle in framework.graphics.bitmap_decode_resource"
+    },
+    {
+      "type": "RUNTIME",
+      "artifact": "Local host probe of unchanged org.jfedor.frozenbubble 1.7: decodeResource returns Bitmaps with host agr_bitmap backing for PNG, JPEG, and GIF. First drawBitmap source is res/drawable/background.jpg JPEG 640x480. inJustDecodeBounds still returns null without pixel decode."
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Linux agr-bitmap-draw-host PASS for fixture-2x2.png RGBA layout, Frozen Bubble background.jpg, and bubble GIF Index8 expand."
+    }
+  ],
+  "remaining_uncertainty": [
+    "Density scaling is not applied. Frozen Bubble sets Options.inScaled false through unresolved reflection, and the returned size is the decoded pixel size.",
+    "createScaledBitmap is not this contract.",
+    "Canvas.drawBitmap ownership is framework-canvas-bitmap.json."
+  ],
+  "next_action": "Do not strip pixel backing. Protect decode failure and inJustDecodeBounds contracts. drawBitmap ownership remains framework-canvas-bitmap.json.",
+  "needs_experiment": false,
+  "experimental": false,
+  "host_adaptation": "Guest Bitmap identity maps to a host agr_bitmap without storing a host pointer in a guest field. KitKat SkImageDecoder through agr_bitmap stands in for BitmapFactory native decode. Pixel layout is little-endian RGBA. Nine-patch PNG content size subtracts the one-pixel border when an npTc chunk is present."
+}

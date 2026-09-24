@@ -34,6 +34,12 @@ static DxResult request_first_layout(agr_viewroot_attach_state *state,
     return DX_OK;
 }
 
+DxResult agr_viewroot_request_layout(agr_viewroot_attach_state *state,
+                                    agr_viewroot_trace_fn trace, void *user) {
+    if (!state || !state->attach_complete) return DX_ERR_INVALID_FORMAT;
+    return request_first_layout(state, trace, user);
+}
+
 /* In-process API19 IWindowSession.addToDisplay boundary for a normal app
  * window.  A session owns the attached window identity and initial input/
  * inset state; duplicate attachment or an invalid app type is rejected. */
@@ -290,6 +296,14 @@ DxResult agr_viewroot_do_traversal(DxVM *vm, agr_viewroot_attach_state *state,
         state->traversal_phase = AGR_TRAVERSAL_SCHEDULED;
         set(state->root, "_traversalPending", DX_INT_VALUE(1));
         emit(trace, user, "viewroot.traversal.rescheduled");
+    } else if (agr_viewroot_surface_valid(state)) {
+        /* performTraversals calls performDraw only when this pass did not
+           acquire the Surface. OnPreDraw runs first; that is where API19
+           SurfaceView sets mHaveFrame and calls updateWindow. */
+        if (state->pre_draw) state->pre_draw(vm, state, state->pre_draw_user);
+        emit(trace, user, "viewroot.perform_draw");
+        emit(trace, user, "view.draw");
+        state->draw_count++;
     }
     if (agr_viewroot_surface_valid(state)) emit(trace, user, "handoff.viewroot_surface_ready");
     return DX_OK;
@@ -299,4 +313,20 @@ failed:
     set(state->root, "_traversalPending", DX_INT_VALUE(1));
     emit(trace, user, "viewroot.traversal.failed");
     return failure;
+}
+
+DxResult agr_viewroot_choreographer_frame(DxVM *vm, agr_viewroot_attach_state *state,
+                                           agr_viewroot_display display,
+                                           agr_viewroot_trace_fn trace, void *user) {
+    /* Choreographer.doCallbacks extracts due CALLBACK_TRAVERSAL records
+       before running them. A scheduleTraversals inside performTraversals
+       therefore arms the next host frame and must not run here. */
+    if (!vm || !state) return DX_ERR_INVALID_FORMAT;
+    emit(trace, user, "choreographer.frame");
+    if (!state->pending_first_traversal || state->traversal_phase != AGR_TRAVERSAL_SCHEDULED) {
+        emit(trace, user, "choreographer.traversal.idle");
+        return DX_OK;
+    }
+    emit(trace, user, "choreographer.traversal.callback");
+    return agr_viewroot_do_traversal(vm, state, display, trace, user);
 }

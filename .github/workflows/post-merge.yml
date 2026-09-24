@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   post-merge:
-    runs-on: macos-15
+    runs-on: xcode-27
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4

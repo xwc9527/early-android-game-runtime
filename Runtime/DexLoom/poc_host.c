@@ -82,11 +82,11 @@ EXPORT int32_t poc_gc_with_roots(DxVM *vm, DxObject **roots, uint32_t count) {
     fake_method.has_code = true;
     fake_method.code.registers_size = count > DX_MAX_REGISTERS ? DX_MAX_REGISTERS : count;
     fake_frame.method = &fake_method;
-    fake_frame.caller = vm->current_frame;
+    fake_frame.caller = dx_vm_current_exec(vm)->current_frame;
     for (uint32_t i = 0; i < count && i < DX_MAX_REGISTERS; i++) fake_frame.registers[i] = DX_OBJ_VALUE(roots[i]);
-    vm->current_frame = &fake_frame;
+    dx_vm_current_exec(vm)->current_frame = &fake_frame;
     DxResult r = dx_vm_gc_collect(vm);
-    vm->current_frame = fake_frame.caller;
+    dx_vm_current_exec(vm)->current_frame = fake_frame.caller;
     return r;
 }
 
