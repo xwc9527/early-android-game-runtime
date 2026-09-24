@@ -19,6 +19,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Restore pinned upstream source cache
+        uses: actions/cache@v4
+        with:
+          path: build/upstream-source-cache
+          key: agr-upstream-source-${{ hashFiles('ci/governance/upstream-map.json') }}
+          restore-keys: agr-upstream-source-
       - name: Compile governance tools
         run: python3 -m py_compile ci/*.py
       - name: Validate discovery governance and upstream mapping

@@ -16,7 +16,7 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y clang python3
+          # allocator, futex, and host-services compile agr_host_services_darwin.c.
+          # Those contracts stay on the Darwin runtime workflow.
           bash scripts/test-guest-vma.sh
-          bash scripts/test-nativecore-allocator.sh
           bash scripts/test-aosp-linker.sh
-          bash scripts/test-bionic-futex-host.sh
