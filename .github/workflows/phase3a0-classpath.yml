@@ -1,0 +1,53 @@
+name: Phase 3A0 classpath
+
+on:
+  pull_request:
+  push:
+    branches: ['recovery/**', main]
+    paths:
+      - 'Runtime/DexLoom/VM/**'
+      - 'Runtime/DexLoom/Include/dx_vm.h'
+      - 'Runtime/DexLoom/DEX/**'
+      - 'Tests/DexLoom/classpath-host.c'
+      - 'Tests/DexLoom/make_classpath_fixture.py'
+      - '.github/workflows/phase3a0-classpath.yml'
+
+jobs:
+  classpath-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: AGR classpath host contract
+        run: |
+          set -euo pipefail
+          DIR=/tmp/classpath-fixtures
+          mkdir -p "$DIR"
+          python3 Tests/DexLoom/make_classpath_fixture.py "$DIR/boot.dex" 'Lboot/Only;' 'Lshared/Name;'
+          python3 Tests/DexLoom/make_classpath_fixture.py "$DIR/app.dex" 'Lshared/Name;' 'Lapp/Only;' 'Lother/Name;' 'Ljava/lang/Object;' 'Ldup/C;'
+          python3 Tests/DexLoom/make_classpath_fixture.py "$DIR/dup.dex" 'Ldup/C;'
+          python3 Tests/DexLoom/make_classpath_fixture.py "$DIR/left.dex" 'Ltwin/Foo;'
+          python3 Tests/DexLoom/make_classpath_fixture.py "$DIR/right.dex" 'Ltwin/Foo;'
+          for i in 0 1 2 3 4 5 6 7 8; do
+            if [ "$i" = 8 ]; then
+              python3 Tests/DexLoom/make_classpath_fixture.py "$DIR/n$i.dex" 'Lninth/C;'
+            else
+              python3 Tests/DexLoom/make_classpath_fixture.py "$DIR/n$i.dex" "Lpad/C$i;"
+            fi
+          done
+          DEX=Runtime/DexLoom
+          OBJ=/tmp/classpath-obj
+          mkdir -p "$OBJ"
+          COMMON=(-std=gnu11 -O1 -I "$DEX/Include" -I "$DEX" -w -pthread)
+          for source in \
+            "$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" \
+            "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" \
+            "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" "$DEX/VM/dx_exec.c" "$DEX/VM/dx_indirect_ref.c"
+          do
+            cc "${COMMON[@]}" -c "$source" -o "$OBJ/$(basename "${source%.c}").o"
+          done
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/classpath-host.c -o "$OBJ/classpath-host.o"
+          cc -pthread "$OBJ"/dx_log.o "$OBJ"/dx_memory.o "$OBJ"/dx_arena.o "$OBJ"/dx_dex.o "$OBJ"/dx_opcode.o \
+            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "$OBJ"/dx_exec.o "$OBJ"/dx_indirect_ref.o \
+            "$OBJ"/classpath-host.o -lz -lm -o /tmp/classpath-host
+          /tmp/classpath-host "$DIR"

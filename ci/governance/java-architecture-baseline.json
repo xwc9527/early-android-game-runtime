@@ -1,0 +1,2727 @@
+{
+  "public_descriptors": [
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/Manifest$permission;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/accounts/Account;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/accounts/AccountManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/animation/Animator$AnimatorListener;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/animation/Animator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/animation/AnimatorListenerAdapter;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/animation/AnimatorSet$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/animation/AnimatorSet;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/animation/ArgbEvaluator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/animation/Keyframe;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/animation/LayoutTransition;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/animation/ObjectAnimator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/animation/PropertyValuesHolder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/animation/TimeInterpolator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/animation/TypeEvaluator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/animation/ValueAnimator$AnimatorUpdateListener;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/animation/ValueAnimator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/Activity;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/ActivityManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/AlarmManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/AlertDialog$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/AlertDialog;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/Application;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/Dialog;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/Fragment;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/FragmentManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/IntentService;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/KeyguardManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/Notification$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/Notification;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/NotificationChannel;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/NotificationManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/PendingIntent;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/Service;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/UiModeManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/job/JobInfo$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/job/JobInfo;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/job/JobScheduler;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/app/job/JobService;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/BroadcastReceiver;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/ClipData$Item;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/ClipData;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/ClipboardManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/ComponentName;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/ContentProvider;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/ContentResolver;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/ContentValues;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/Context;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/Intent;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/IntentFilter;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/ServiceConnection;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/SharedPreferences$Editor;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/SharedPreferences;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/pm/ApplicationInfo;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/pm/PackageInfo;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/pm/PackageManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/res/AssetManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/res/ColorStateList;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/res/Configuration;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/res/Resources$Theme;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/res/Resources;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/content/res/TypedArray;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/database/Cursor;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/database/sqlite/SQLiteDatabase;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/database/sqlite/SQLiteOpenHelper;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/Bitmap$Config;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/Bitmap;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/BitmapFactory$Options;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/BitmapFactory;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/Canvas;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/Color;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/Matrix;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/Paint$Style;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/Paint;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/Path;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/Point;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/PointF;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/PorterDuff$Mode;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/PorterDuff;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/Rect;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/RectF;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/Typeface;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/drawable/BitmapDrawable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/drawable/ColorDrawable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/drawable/Drawable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/drawable/GradientDrawable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/drawable/LayerDrawable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/drawable/RippleDrawable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/drawable/ShapeDrawable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/graphics/drawable/StateListDrawable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/hardware/display/DisplayManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/location/Criteria;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/location/Location;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/location/LocationListener;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/location/LocationManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/AudioAttributes$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/AudioAttributes;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/AudioFocusRequest$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/AudioFocusRequest;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/AudioFormat$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/AudioFormat;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/AudioManager$OnAudioFocusChangeListener;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/AudioManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/MediaPlayer$OnCompletionListener;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/MediaPlayer$OnErrorListener;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/MediaPlayer$OnPreparedListener;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/MediaPlayer;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/Ringtone;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/RingtoneManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/SoundPool$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/SoundPool$OnLoadCompleteListener;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/media/SoundPool;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/net/ConnectivityManager$NetworkCallback;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/net/ConnectivityManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/net/Network;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/net/NetworkCapabilities;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/net/NetworkInfo;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/net/NetworkRequest$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/net/NetworkRequest;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/net/Uri$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/net/Uri;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/Build$VERSION;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/Build;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/Bundle;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/Environment;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/Handler;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/HandlerThread;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/Looper;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/Message;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/MessageQueue;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/Parcel;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/Parcelable$Creator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/Parcelable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/PowerManager$WakeLock;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/PowerManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/Process;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/StrictMode;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/SystemClock;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/VibrationEffect;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/os/Vibrator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/provider/Settings$Global;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/provider/Settings$Secure;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/provider/Settings$System;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/support/v4/widget/SwipeRefreshLayout;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/text/Editable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/text/Html;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/text/SpannableString;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/text/SpannableStringBuilder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/text/Spanned;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/text/TextUtils;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/text/TextWatcher;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/text/format/DateFormat;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/text/method/LinkMovementMethod;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/transition/AutoTransition;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/transition/ChangeBounds;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/transition/Fade;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/transition/Slide;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/transition/Transition;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/transition/TransitionManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/transition/TransitionSet;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/util/AndroidRuntimeException;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/util/ArrayMap;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/util/AttributeSet;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/util/Base64;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/util/DisplayMetrics;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/util/Log;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/util/LongSparseArray;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/util/Pair;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/util/SparseArray;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/util/SparseIntArray;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/util/TypedValue;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/Display;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/GestureDetector;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/KeyEvent;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/LayoutInflater;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/Menu;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/MenuInflater;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/MenuItem;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/MotionEvent;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/SubMenu;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/View$OnClickListener;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/View$OnLongClickListener;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/View$OnTouchListener;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/View;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/ViewGroup;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/ViewPropertyAnimator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/Window$Callback;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/Window;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/WindowManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/AccelerateDecelerateInterpolator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/AccelerateInterpolator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/AlphaAnimation;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/Animation$AnimationListener;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/Animation;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/AnimationSet;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/AnimationUtils;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/AnticipateInterpolator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/AnticipateOvershootInterpolator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/BounceInterpolator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/CycleInterpolator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/DecelerateInterpolator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/Interpolator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/LayoutAnimationController;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/LinearInterpolator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/OvershootInterpolator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/PathInterpolator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/RotateAnimation;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/ScaleAnimation;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/animation/TranslateAnimation;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/view/inputmethod/InputMethodManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/webkit/WebChromeClient;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/webkit/WebSettings;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/webkit/WebView;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/webkit/WebViewClient;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/AbsListView;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/AdapterView$OnItemClickListener;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/AdapterView$OnItemSelectedListener;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/AdapterView;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/ArrayAdapter;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/BaseAdapter;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/Button;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/CheckBox;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/CompoundButton$OnCheckedChangeListener;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/CompoundButton;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/EditText;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/FrameLayout;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/GridView;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/ImageView;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/LinearLayout;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/ListView;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/NumberPicker;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/RadioButton;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/RadioGroup;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/RelativeLayout;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/ScrollView;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/SeekBar;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/Spinner;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/Switch;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/TextView;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/Toast;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Landroid/widget/ToggleButton;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ldalvik/system/DexClassLoader;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ldalvik/system/PathClassLoader;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/io/BufferedReader;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/io/BufferedWriter;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/io/ByteArrayInputStream;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/io/ByteArrayOutputStream;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/io/Closeable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/io/File;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/io/FileInputStream;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/io/FileOutputStream;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/io/InputStream;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/io/InputStreamReader;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/io/OutputStream;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/io/OutputStreamWriter;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/io/PrintWriter;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/io/Serializable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/Boolean;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/Byte;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/CharSequence;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/Character;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/Class;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/ClassLoader;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/Double;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/Float;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/Integer;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/Iterable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/Long;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/Math;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/NullPointerException;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/Number;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/Runnable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/Short;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/String;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/StringBuffer;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/StringBuilder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/System;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/Thread;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/annotation/Annotation;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/annotation/Documented;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/annotation/Retention;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/annotation/Target;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/ref/Reference;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/ref/ReferenceQueue;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/ref/SoftReference;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/ref/WeakReference;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/reflect/Field;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/lang/reflect/Method;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/net/HttpURLConnection;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/net/ServerSocket;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/net/Socket;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/net/SocketInputStream;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/net/SocketOutputStream;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/net/URI;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/net/URL;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/net/URLClassLoader;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/nio/ByteBuffer;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/nio/ByteOrder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/nio/channels/FileChannel;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/nio/charset/Charset;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/nio/charset/StandardCharsets;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/text/DateFormat;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/text/DecimalFormat;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/text/SimpleDateFormat;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/ArrayDeque;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/ArrayList;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Arrays;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Calendar;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Collection;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Collections;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Date;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Deque;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Enumeration;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/GregorianCalendar;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/HashSet;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Hashtable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Iterator;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/LinkedHashMap;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/LinkedHashSet;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/LinkedList;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/List;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Locale;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Map$Entry;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Map;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/NavigableMap;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/NavigableSet;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Objects;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Optional;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/OptionalDouble;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/OptionalInt;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/OptionalLong;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/PriorityQueue;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Queue;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Set;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/SortedMap;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/SortedSet;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Stack;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/TimeZone;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Timer;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/TimerTask;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/TreeMap;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/TreeSet;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/UUID;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/Vector;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/WeakHashMap;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/ArrayBlockingQueue;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/BlockingQueue;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/Callable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/CompletableFuture;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/ConcurrentHashMap;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/ConcurrentLinkedDeque;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/ConcurrentLinkedQueue;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/CopyOnWriteArrayList;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/CopyOnWriteArraySet;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/CountDownLatch;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/Executor;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/ExecutorService;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/Executors;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/Future;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/LinkedBlockingQueue;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/PriorityBlockingQueue;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/ScheduledExecutorService;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/ScheduledThreadPoolExecutor;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/Semaphore;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/ThreadPoolExecutor;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/atomic/AtomicBoolean;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/atomic/AtomicInteger;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/atomic/AtomicLong;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljava/util/concurrent/atomic/AtomicReference;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljavax/inject/Inject;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljavax/inject/Named;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljavax/inject/Provider;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljavax/inject/Singleton;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ljavax/net/ssl/HttpsURLConnection;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+      "descriptor": "Landroid/view/IWindowSession;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+      "descriptor": "Landroid/view/Surface;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+      "descriptor": "Landroid/view/View$AttachInfo;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/framework_viewroot.c",
+      "descriptor": "Landroid/view/ViewRootImpl;"
+    },
+    {
+      "file": "Runtime/DexLoom/Runtime/dx_runtime.c",
+      "descriptor": "Landroid/app/Fragment;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_exec.c",
+      "descriptor": "Ljava/lang/IllegalArgumentException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_exec.c",
+      "descriptor": "Ljava/lang/IllegalMonitorStateException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_exec.c",
+      "descriptor": "Ljava/lang/IllegalThreadStateException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_exec.c",
+      "descriptor": "Ljava/lang/NullPointerException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_exec.c",
+      "descriptor": "Ljava/lang/OutOfMemoryError;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_exec.c",
+      "descriptor": "Ljava/lang/Thread;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_interpreter.c",
+      "descriptor": "Landroid/graphics/Bitmap;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_interpreter.c",
+      "descriptor": "Landroid/graphics/Canvas;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_interpreter.c",
+      "descriptor": "Ljava/lang/ArithmeticException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_interpreter.c",
+      "descriptor": "Ljava/lang/ArrayIndexOutOfBoundsException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_interpreter.c",
+      "descriptor": "Ljava/lang/Class;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_interpreter.c",
+      "descriptor": "Ljava/lang/ClassCastException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_interpreter.c",
+      "descriptor": "Ljava/lang/Exception;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_interpreter.c",
+      "descriptor": "Ljava/lang/NullPointerException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_interpreter.c",
+      "descriptor": "Ljava/lang/Throwable;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_interpreter.c",
+      "descriptor": "Ljava/lang/invoke/MethodHandle;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_interpreter.c",
+      "descriptor": "Ljava/lang/invoke/MethodType;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_interpreter.c",
+      "descriptor": "Ljava/util/Vector;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_jni.c",
+      "descriptor": "Ljava/lang/Exception;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_jni.c",
+      "descriptor": "Ljava/lang/String;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/io/PrintStream;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/io/Serializable;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/ArithmeticException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/ArrayIndexOutOfBoundsException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Boolean;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Byte;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/CharSequence;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Character;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Class;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/ClassCastException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/ClassNotFoundException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Comparable;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Double;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Enum;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Error;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Exception;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Float;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Foo;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/IllegalArgumentException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/IllegalMonitorStateException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/IllegalStateException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/IllegalThreadStateException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/IndexOutOfBoundsException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Integer;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Iterable;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Long;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Math;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/NoSuchMethodException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/NullPointerException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Number;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/NumberFormatException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Object;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/OutOfMemoryError;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Runnable;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/RuntimeException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Short;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/StackOverflowError;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/StackTraceElement;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/String;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/StringBuffer;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/StringBuilder;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/System;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Thread;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Throwable;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/UnsupportedOperationException;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/Void;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/reflect/Array;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/reflect/Constructor;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/reflect/Field;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/reflect/InvocationHandler;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/reflect/Method;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/lang/reflect/Proxy;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/ArrayList;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/Arrays;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/Collection;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/Collections;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/HashMap;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/Iterator;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/List;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/Locale;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/Map;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/Properties;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/Random;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/Set;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/UUID;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/Vector;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/concurrent/ConcurrentHashMap;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/concurrent/ConcurrentLinkedQueue;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/concurrent/CopyOnWriteArrayList;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/concurrent/atomic/AtomicBoolean;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/concurrent/atomic/AtomicInteger;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/concurrent/atomic/AtomicLong;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Ljava/util/concurrent/atomic/AtomicReference;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/app/Activity;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/app/Application;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/app/NativeActivity;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/content/Context;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/content/ContextWrapper;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/content/Intent;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/content/res/AssetManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/content/res/Resources;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/graphics/Bitmap;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/graphics/BitmapFactory$Options;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/graphics/BitmapFactory;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/graphics/Canvas;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/graphics/Rect;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/graphics/Region$Op;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/graphics/Region;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/media/SoundPool;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/opengl/GLES20;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/opengl/GLUtils;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/util/AndroidRuntimeException;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/util/AttributeSet;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/util/Log;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/view/IWindowSession;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/view/MotionEvent;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/view/Surface;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/view/SurfaceHolder;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/view/SurfaceView;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/view/View$AttachInfo;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/view/View;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/view/ViewGroup;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/view/ViewRootImpl;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/view/Window;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/view/WindowManager$LayoutParams;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/view/WindowManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/widget/%s;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Landroid/widget/FrameLayout;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Ljava/io/FileNotFoundException;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Ljava/io/IOException;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Ljava/io/InputStream;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Ljava/lang/Enum;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Ljava/lang/Exception;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Ljava/lang/IllegalArgumentException;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Ljava/lang/IllegalStateException;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Ljava/lang/IndexOutOfBoundsException;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Ljava/lang/NullPointerException;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Ljava/lang/RuntimeException;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Ljava/lang/String;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Ljava/lang/UnsupportedOperationException;"
+    },
+    {
+      "file": "Runtime/GuestRuntime/agr_guest_runtime.c",
+      "descriptor": "Ljava/lang/Object;"
+    }
+  ],
+  "app_packages": [
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/bumptech/glide/Glide;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/bumptech/glide/GlideBuilder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/bumptech/glide/RequestBuilder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/bumptech/glide/RequestManager;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/bumptech/glide/load/engine/DiskCacheStrategy;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/bumptech/glide/request/RequestOptions;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/example/Foo;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/google/android/material/appbar/AppBarLayout;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/google/android/material/appbar/CollapsingToolbarLayout;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/google/android/material/bottomnavigation/BottomNavigationView;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/google/android/material/dialog/MaterialAlertDialogBuilder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/google/android/material/floatingactionbutton/FloatingActionButton;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/google/android/material/snackbar/Snackbar;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/google/android/material/tabs/TabLayout;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/google/gson/Gson;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/google/gson/GsonBuilder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/google/gson/JsonArray;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/google/gson/JsonElement;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/google/gson/JsonNull;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/google/gson/JsonObject;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/google/gson/JsonPrimitive;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/google/gson/reflect/TypeToken;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/squareup/moshi/JsonAdapter;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/squareup/moshi/Moshi$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/squareup/moshi/Moshi;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lcom/squareup/picasso/Picasso;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ldagger/Binds;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ldagger/Component;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ldagger/Lazy;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ldagger/Module;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ldagger/Provides;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ldagger/Subcomponent;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ldagger/hilt/InstallIn;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ldagger/hilt/android/AndroidEntryPoint;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ldagger/hilt/android/HiltAndroidApp;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ldagger/hilt/android/lifecycle/HiltViewModel;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ldagger/hilt/components/SingletonComponent;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/Completable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/Observable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/Single;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/android/schedulers/AndroidSchedulers;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/disposables/CompositeDisposable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/disposables/Disposable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/rxjava3/android/schedulers/AndroidSchedulers;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/rxjava3/core/Completable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/rxjava3/core/Flowable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/rxjava3/core/Maybe;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/rxjava3/core/Observable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/rxjava3/core/Scheduler;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/rxjava3/core/Single;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/rxjava3/disposables/CompositeDisposable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/rxjava3/disposables/Disposable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/rxjava3/schedulers/Schedulers;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lio/reactivex/schedulers/Schedulers;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/BuildersKt;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/BuildersKt__Builders_commonKt;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/CoroutineDispatcher;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/CoroutineScope;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/CoroutineScopeKt;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/Deferred;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/DelayKt;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/Dispatchers$Main;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/Dispatchers;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/GlobalScope;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/Job;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/NonCancellable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/SupervisorKt;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/flow/Flow;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/flow/FlowCollector;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/flow/FlowKt;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/flow/MutableSharedFlow;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/flow/MutableStateFlow;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/flow/SharedFlow;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/flow/SharedFlowKt;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/flow/StateFlow;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lkotlinx/coroutines/flow/StateFlowKt;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/CacheControl;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/Call;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/Callback;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/FormBody$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/FormBody;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/Headers$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/Headers;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/HttpUrl;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/Interceptor$Chain;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/Interceptor;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/MediaType;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/MultipartBody$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/MultipartBody;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/OkHttpClient$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/OkHttpClient;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/Request$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/Request;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/RequestBody;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/Response$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/Response;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/ResponseBody;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/logging/HttpLoggingInterceptor$Level;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lokhttp3/logging/HttpLoggingInterceptor;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lorg/json/JSONArray;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lorg/json/JSONException;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lorg/json/JSONObject;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/Call;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/CallAdapter$Factory;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/Callback;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/Converter$Factory;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/Response;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/Retrofit$Builder;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/Retrofit;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/adapter/rxjava2/RxJava2CallAdapterFactory;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/adapter/rxjava3/RxJava3CallAdapterFactory;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/converter/gson/GsonConverterFactory;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/converter/moshi/MoshiConverterFactory;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/converter/scalars/ScalarsConverterFactory;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/Body;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/DELETE;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/Field;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/FieldMap;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/FormUrlEncoded;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/GET;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/HEAD;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/HTTP;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/Header;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/Headers;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/Multipart;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/OPTIONS;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/PATCH;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/POST;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/PUT;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/Path;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/Query;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/QueryMap;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/Streaming;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lretrofit2/http/Url;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lrx/Observable;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lrx/Scheduler;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lrx/Subscriber;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lrx/Subscription;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lrx/android/schedulers/AndroidSchedulers;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lrx/n/c/b$b;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lrx/n/c/b;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lrx/n/c/k;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Lrx/schedulers/Schedulers;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ltimber/log/Timber$DebugTree;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ltimber/log/Timber$Tree;"
+    },
+    {
+      "file": "Runtime/DexLoom/AndroidMini/dx_android_framework.c",
+      "descriptor": "Ltimber/log/Timber;"
+    },
+    {
+      "file": "Runtime/DexLoom/Include/dx_dex.h",
+      "descriptor": "Lretrofit2/http/GET;"
+    },
+    {
+      "file": "Runtime/DexLoom/Include/dx_vm.h",
+      "descriptor": "Lcom/example/Main;"
+    },
+    {
+      "file": "Runtime/DexLoom/Runtime/dx_runtime.c",
+      "descriptor": "LayoutInflater;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Lcom/example/Foo;"
+    },
+    {
+      "file": "Runtime/DexLoom/VM/dx_vm.c",
+      "descriptor": "Long;"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "descriptor": "Lcom/onetwofivegames/kungfoobarracuda/KungFooBarracudaNativeActivity;"
+    },
+    {
+      "file": "Runtime/DexLoom/poc_host.c",
+      "descriptor": "Lpoc/Bridge;"
+    }
+  ],
+  "game_lines": [
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "text": "\"Lcom/onetwofivegames/kungfoobarracuda/KungFooBarracudaNativeActivity;\","
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "text": "\"Lcom/onetwofivegames/kungfoobarracuda/KungFooBarracudaNativeActivity;\", &cls);"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "text": "\"com.onetwofivegames.kungfoobarracuda\");"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "text": "/* API19 Canvas.drawBitmap(Bitmap, float, float, Paint). Frozen Bubble passes a"
+    },
+    {
+      "file": "Runtime/DexLoom/game_dex_runner.c",
+      "text": "allocating pixels. Density scaling is not applied: Frozen Bubble sets"
+    }
+  ],
+  "fixed_tables": [
+    {
+      "file": "Runtime/DexLoom/Include/dx_vm.h",
+      "name": "DX_MAX_DEX_FILES",
+      "capacity": 8
+    }
+  ]
+}

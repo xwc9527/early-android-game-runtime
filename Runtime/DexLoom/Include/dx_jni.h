@@ -10,6 +10,8 @@
 
 // Initialize the JNI environment for a VM instance
 DxResult dx_jni_init(DxVM *vm);
+/* Call JNI_OnLoad. A missing function is success. A version other than 1.4 or 1.6 fails. */
+jint dx_jni_call_onload(JavaVM *vm, jint (*onload)(JavaVM *vm, void *reserved));
 
 // Get the JNIEnv pointer (for passing to JNI_OnLoad, native methods, etc.)
 JNIEnv *dx_jni_get_env(DxVM *vm);

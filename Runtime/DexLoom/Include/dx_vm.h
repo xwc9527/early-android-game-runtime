@@ -3,6 +3,7 @@
 
 #include "dx_types.h"
 #include "dx_dex.h"
+#include "dx_indirect_ref.h"
 #include <pthread.h>
 
 // Release vs Debug build configuration
@@ -44,6 +45,8 @@ struct DxClass {
         bool         is_volatile;   // ACC_VOLATILE (0x0040) -- memory barrier semantics
     } *field_defs;
     DxValue         *static_fields;     // array[static_field_count]
+    const char     **static_field_names;
+    const char     **static_field_types;
 
     // Methods
     DxMethod        *direct_methods;
@@ -70,9 +73,12 @@ struct DxClass {
     // DEX origin
     DxDexFile       *dex_file;          // which DEX file this class came from
     uint32_t         dex_class_def_idx;
-    uint8_t          source_dex_idx;    // index into vm->dex_files[] this class came from
+    uint32_t         source_dex_idx;    // index into vm->dex_files[] this class came from
+    struct DxClassLoader *defining_loader;
     bool             is_framework;      // true for built-in Android stubs
     bool             owns_descriptor;   // true when descriptor was allocated for a synthetic type
+    DxObject        *class_object;      // one java.lang.Class mirror
+    uint32_t         class_global_ref;  // stable global iref of that mirror
 };
 
 // Inline cache for monomorphic/polymorphic call site optimization
@@ -101,6 +107,14 @@ typedef struct {
 typedef struct {
     DxICSlot slots[DX_IC_TABLE_SIZE];
 } DxICTable;
+
+typedef struct DxFieldId {
+    DxClass *declaring;
+    const char *name;
+    const char *type;
+    int is_static;
+    uint32_t index;
+} DxFieldId;
 
 // Native method implementation signature
 typedef DxResult (*DxNativeMethodFn)(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count);
@@ -164,6 +178,8 @@ struct DxObject {
 
     // String storage (owned; freed with object)
     char      *string_data;     // UTF-8 C string for java.lang.String / StringBuilder buf
+    /* Non-NULL when this object is the java.lang.Class mirror of a DxClass. */
+    DxClass   *represented_class;
 
     // Array support
     bool       is_array;
@@ -313,10 +329,25 @@ typedef struct DxExecutionContext {
 
     DxFrame *frame_pool[DX_FRAME_POOL_SIZE];
     uint32_t frame_pool_count;
+
+    DxIRefTable local_refs;
+    uint32_t local_bottom;
+    uint32_t local_frame_state[32];
+    uint32_t local_frame_bottom[32];
+    uint32_t local_frame_depth;
+    const void *jni_functions;
+    int jni_attached;
 } DxExecutionContext;
 
-// VM state
-#define DX_MAX_DEX_FILES 8
+// Classpath is a dynamic container. A fixed DEX count is not a capability boundary.
+typedef struct DxClassLoader {
+    uint32_t id;
+    struct DxClassLoader *parent;
+    int boot;
+    uint32_t *dex_indexes;
+    uint32_t dex_count;
+    uint32_t dex_capacity;
+} DxClassLoader;
 
 // Forward declaration for missing feature tracker (full definition below)
 #define DX_MAX_MISSING_FEATURES 32
@@ -328,8 +359,19 @@ typedef struct {
 struct DxVM {
     DxContext  *ctx;
     DxDexFile *dex;              // primary DEX (for backwards compat)
-    DxDexFile *dex_files[DX_MAX_DEX_FILES];
+    DxDexFile **dex_files;
     uint32_t   dex_count;
+    uint32_t   dex_capacity;
+    DxClassLoader *boot_loader;
+    DxClassLoader *app_loader;
+    DxClassLoader **loaders;
+    uint32_t loader_count;
+    uint32_t loader_capacity;
+    DxClassLoader *pending_defining_loader;
+    DxClassLoader *pending_resolve_loader;
+    DxIRefTable global_refs;
+    DxIRefTable weak_refs;
+    int jni_refs_ready;
     /* Host runtime boundary used only when a DEX-declared native method has
        no framework-native implementation inside DexLoom. */
     DxUnboundNativeMethodFn unbound_native_fn;
@@ -341,8 +383,8 @@ struct DxVM {
 
     // Per-DEX class cache: maps class_def_index -> already-loaded DxClass*
     // Avoids re-parsing the same class_def on repeated load_class calls
-    DxClass  **class_def_cache[DX_MAX_DEX_FILES];  // lazily allocated per DEX
-    uint32_t   class_def_cache_size[DX_MAX_DEX_FILES];
+    DxClass  ***class_def_cache;  // lazily allocated per DEX
+    uint32_t   *class_def_cache_size;
 
     // Class table
     DxClass   *classes[DX_MAX_CLASSES];
@@ -352,6 +394,7 @@ struct DxVM {
     #define DX_CLASS_HASH_SIZE 4096
     struct {
         const char *descriptor;  // key (points to DxClass->descriptor)
+        uint32_t    loader_id;
         DxClass    *cls;         // value
     } class_hash[DX_CLASS_HASH_SIZE];
 
@@ -534,12 +577,18 @@ struct DxVM {
 DxVM    *dx_vm_create(DxContext *ctx);
 void     dx_vm_destroy(DxVM *vm);
 DxResult dx_vm_load_dex(DxVM *vm, DxDexFile *dex);
+DxResult dx_vm_load_dex_on_loader(DxVM *vm, DxClassLoader *loader, DxDexFile *dex);
+DxClassLoader *dx_vm_boot_loader(DxVM *vm);
+DxClassLoader *dx_vm_application_loader(DxVM *vm);
+DxClassLoader *dx_vm_create_loader(DxVM *vm, DxClassLoader *parent);
+DxResult dx_vm_resolve_class(DxVM *vm, DxClassLoader *initiating, const char *descriptor, DxClass **out);
 DxResult dx_vm_register_framework_classes(DxVM *vm);
 
 // Class operations
 DxResult dx_vm_load_class(DxVM *vm, const char *descriptor, DxClass **out);
 DxResult dx_vm_init_class(DxVM *vm, DxClass *cls);
 DxClass *dx_vm_find_class(DxVM *vm, const char *descriptor);
+DxClass *dx_vm_find_defined_class(DxVM *vm, DxClassLoader *loader, const char *descriptor);
 void     dx_vm_class_hash_insert(DxVM *vm, DxClass *cls);
 DxResult dx_vm_unload_class(DxVM *vm, const char *descriptor);
 
@@ -560,6 +609,8 @@ DxObject *dx_vm_alloc_array(DxVM *vm, uint32_t length);
 DxClass  *dx_vm_resolve_type(DxVM *vm, const char *descriptor);
 /* Class object whose klass is the resolved type (same convention as Class.forName). */
 DxObject *dx_vm_box_class(DxVM *vm, const char *descriptor);
+/* One Class mirror per DxClass. The returned object is also published as a global iref. */
+DxObject *dx_vm_class_mirror(DxVM *vm, DxClass *cls);
 void      dx_vm_release_object(DxVM *vm, DxObject *obj);
 DxResult  dx_vm_set_field(DxObject *obj, const char *name, DxValue value);
 DxResult  dx_vm_get_field(DxObject *obj, const char *name, DxValue *out);
@@ -580,6 +631,10 @@ void dx_vm_trace_virtual_invoke(DxFrame *frame, uint32_t pc, uint8_t opcode,
                                 uint32_t method_idx, DxMethod *resolved,
                                 DxClass *receiver, DxMethod *slot);
 DxMethod *dx_vm_find_interface_method(DxVM *vm, DxClass *cls, const char *name, const char *shorty);
+/* virtual 0x6e, super 0x6f, direct 0x70, static 0x71, interface 0x72.
+   NULL means the invoke cannot be dispatched, including an abstract target. */
+DxMethod *dx_vm_select_invoke(DxVM *vm, uint8_t opcode, DxMethod *resolved,
+                              DxObject *receiver, DxClass *caller_class);
 
 // Frame pool
 DxFrame *dx_vm_alloc_frame(DxVM *vm);
@@ -597,6 +652,7 @@ void dx_exec_vm_fini(DxVM *vm);
 DxResult dx_vm_monitor_enter(DxVM *vm, DxObject *obj);
 DxResult dx_vm_monitor_exit(DxVM *vm, DxObject *obj);
 DxResult dx_vm_exec_poll(DxVM *vm);
+DxExecutionContext *dx_exec_create_attached(DxVM *vm);
 void dx_exec_enter(DxExecutionContext *exec);
 void dx_exec_leave(DxExecutionContext *exec);
 void dx_exec_gc_begin(DxVM *vm);

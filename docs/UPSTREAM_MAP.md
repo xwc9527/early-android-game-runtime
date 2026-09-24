@@ -33,6 +33,7 @@ Each machine entry records pinned source paths/hashes, AGR paths/hashes, depende
 | Activity.requestWindowFeature | `Activity.requestWindowFeature`, `PhoneWindow.requestFeature`, `Window.requestFeature` | `game_dex_runner.c` `activity_request_window_feature` / `window_request_feature` | HOST-DEX_HLE | FEATURE_NO_TITLE is stored on the Activity window; content installed later rejects another request; no title dominates ACTION_BAR |
 | Activity.getIntent | `Activity.getIntent` | `game_dex_runner.c` `activity_get_intent` | HOST-DEX_HLE | returns the Activity `_intent` object identity; does not copy the Intent |
 | Java monitor-enter / monitor-exit | Dalvik `vm/Sync.cpp` `dvmLockObject` / `dvmUnlockObject` | `dx_exec.c` `dx_vm_monitor_enter` / `dx_vm_monitor_exit` | HOST-DEX | mutual exclusion and same-context reentry; `Object.wait` / `notify` are not implemented |
+| Boot ClassPath / ClassLoader | API19 `ClassLoader.loadClass` / `dvmDefineClass`, hash-verified `android-4.4.4_r2` | `dx_vm.c` `dx_vm_resolve_class` | HOST-DEX | defining loader plus descriptor; boot wins; no suffix guess; dynamic classpath; host contract is not a reference differential |
 
 Each new public path adds or updates one machine-readable entry. A problem report references the map entry, then supplies a compact `semantic-diff.json`; it does not duplicate the upstream map in prose.
 

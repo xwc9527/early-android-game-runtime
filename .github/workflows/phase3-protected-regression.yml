@@ -1,0 +1,22 @@
+name: Phase 3 protected regression
+
+on:
+  pull_request:
+  push:
+    branches: ['recovery/**', main]
+
+jobs:
+  protected-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Protected stable native contracts
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y clang python3
+          # allocator, futex, and host-services compile agr_host_services_darwin.c.
+          # Those contracts stay on the Darwin runtime workflow.
+          bash scripts/test-guest-vma.sh
+          bash scripts/test-aosp-linker.sh

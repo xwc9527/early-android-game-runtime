@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "target": "Android Framework Runtime Traversal Dispatch / Surface Draw Consumer Phase 1",
+  "target": "Phase 3 Dalvik semantics closure",
   "state": "IMPLEMENTED",
   "closure_tested_commit": null,
   "closure_tested_tree": null,

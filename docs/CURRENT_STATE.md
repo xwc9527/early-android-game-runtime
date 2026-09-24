@@ -1,5 +1,13 @@
 # AGR Current State
 
+Updated: 2026-09-24
+
+Phase 3A0 is CLOSED at `ccccca77b9a1dd11880907ef1fb3da3f83e739ab` / tree `5392048daa8d5b96995406b51610afa17decc7da`. Phase 3A and Phase 3B are CLOSED at `a2e07eb37f645f39c9a968b78808e88cdc25c6e3` / tree `d9544ad8bff3eabc145ab40a7002b7753f136935`. Phase 3C exceptions and native binding is CLOSED at `d8fdb0c55a8bcfe8f1f1074caebe37510199408d` / tree `e56edae4f32437df030bfe57433bcc655557c355`. CI on that commit: JNI `36025336686` and `36025331058`, classpath `36025336758` and `36025330941`, governance `36025336918` and `36025330969`, protected regression `36025336727` and `36025330952`. `API19_REFERENCE_DIFFERENTIAL` was not executed. Phase 3D GC roots and object lifetime is CLOSED at `fcf78ce222055e4b36ad77b8d9456a184422d67c` / tree `4f63f6d649e27a4110efc82d0eea6008e015d3af`. CI on that commit: JNI `36025946466` and `36025940192`, classpath `36025946450` and `36025939935`, governance `36025946478` and `36025939840`, protected regression `36025946469` and `36025939958`. Active target is the Phase 3 final gate. Phase 3 is not CLOSED.
+
+`game_dex_runner.c` is `LEGACY_BOOTSTRAP`. `dx_android_framework.c` is `LEGACY_REFERENCE` and is not a production source. Owner ledgers are `ci/governance/java-legacy-migration.json` and `ci/governance/java-public-owner.json`.
+
+## Previous merged traversal baseline
+
 Updated: 2026-09-22
 
 Active target: Android Framework Runtime Traversal Dispatch / Surface Draw Consumer Phase 1. Lifecycle: `IMPLEMENTED`. Integration base: `main @ 6e47ce9ab6da32483f049731ac04f2a8356a4b67`. Formal Runtime baseline and last known good remain `3e3db84a53ad0957e9217f804b6f718a942b9a11` / tree `1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa`.

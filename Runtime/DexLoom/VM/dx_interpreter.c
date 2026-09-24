@@ -418,12 +418,9 @@ static DxResult handle_invoke(DxVM *vm, DxFrame *frame, const uint16_t *code,
                     slot = ic_result;
                     target = ic_result;
                 } else {
-                    // IC miss — do the full vtable lookup
-                    if ((uint32_t)target->vtable_idx < receiver->klass->vtable_size) {
-                        DxMethod *vtable_target = receiver->klass->vtable[target->vtable_idx];
-                        slot = vtable_target;
-                        if (vtable_target) target = vtable_target;
-                    }
+                    DxMethod *selected = dx_vm_select_invoke(vm, opcode, target, receiver, NULL);
+                    slot = selected;
+                    if (selected) target = selected;
                     // Insert into inline cache for next time
                     if (ic) {
                         dx_vm_ic_insert(ic, receiver->klass, target);
@@ -435,80 +432,18 @@ static DxResult handle_invoke(DxVM *vm, DxFrame *frame, const uint16_t *code,
         }
     }
 
-    // For invoke-interface, dispatch on the receiver's actual class.
-    // 1) Check if the concrete class (or its parents) overrides the method
-    // 2) If not found, search implemented interfaces for a default method
-    if (opcode == 0x72 && argc > 0) {
+    if ((opcode == 0x72 || opcode == 0x6F) && argc > 0) {
+        DxObject *receiver = NULL;
         DxValue recv_val = frame->registers[arg_regs[0]];
-        if (recv_val.tag == DX_VAL_OBJ && recv_val.obj && recv_val.obj->klass) {
-            DxClass *recv_cls = recv_val.obj->klass;
-            // Try the receiver's class hierarchy first (concrete override)
-            DxMethod *override = dx_vm_find_method(recv_cls, target->name, target->shorty);
-            if (override) {
-                target = override;
-            } else {
-                // Fall back to interface default method search
-                DxMethod *iface_default = dx_vm_find_interface_method(vm, recv_cls,
-                                                                        target->name, target->shorty);
-                if (iface_default) target = iface_default;
-            }
-        }
-        // If target is a bridge method, try to find the non-bridge version
-        if ((target->access_flags & DX_ACC_BRIDGE) && target->declaring_class) {
-            DxMethod *real = dx_vm_find_method(target->declaring_class, target->name, target->shorty);
-            if (real && !(real->access_flags & DX_ACC_BRIDGE)) target = real;
-        }
-    }
-
-    // For invoke-super, resolve on the declaring class's super (Dalvik semantics)
-    // Walk up the entire superclass chain to find the method (grandparent etc.)
-    if (opcode == 0x6F && argc > 0) {
-        /* invoke-super dispatch starts at the current method's direct
-           superclass.  The resolved method reference commonly already
-           declares that superclass, so starting at target->super_class skips
-           the exact method the bytecode requested. */
-        DxClass *declaring = frame->method ? frame->method->declaring_class : NULL;
-        DxMethod *original_target = target;
-        bool super_found = false;
-        if (declaring && declaring->super_class) {
-            // Walk up the superclass hierarchy to find the method
-            DxClass *walk = declaring->super_class;
-            while (walk && !super_found) {
-                DxMethod *super_method = dx_vm_find_method(walk, target->name, target->shorty);
-                if (super_method) {
-                    target = super_method;
-                    super_found = true;
-                }
-                walk = walk->super_class;
-            }
-            // Fallback: try vtable lookup on receiver's super chain
-            if (!super_found && target->vtable_idx >= 0) {
-                DxValue recv_val = frame->registers[arg_regs[0]];
-                if (recv_val.tag == DX_VAL_OBJ && recv_val.obj) {
-                    DxObject *receiver = recv_val.obj;
-                    DxClass *super = receiver->klass ? receiver->klass->super_class : NULL;
-                    while (super && !super_found) {
-                        if ((uint32_t)target->vtable_idx < super->vtable_size) {
-                            DxMethod *vtbl = super->vtable[target->vtable_idx];
-                            if (vtbl && vtbl != original_target) {
-                                target = vtbl;
-                                super_found = true;
-                            }
-                        }
-                        super = super->super_class;
-                    }
-                }
-            }
-        }
-        // If super method not found or resolves to self, skip to avoid infinite recursion
-        if (!super_found) {
-            DX_WARN(TAG, "invoke-super: method %s not found in %s hierarchy",
-                    original_target->name,
-                    original_target->declaring_class ? original_target->declaring_class->descriptor : "?");
+        if (recv_val.tag == DX_VAL_OBJ) receiver = recv_val.obj;
+        DxClass *caller = frame->method ? frame->method->declaring_class : NULL;
+        DxMethod *selected = dx_vm_select_invoke(vm, opcode, target, receiver, caller);
+        if (!selected) {
             frame->result = DX_NULL_VALUE;
             frame->has_result = true;
             return DX_OK;
         }
+        target = selected;
     }
 
     // Build argument array

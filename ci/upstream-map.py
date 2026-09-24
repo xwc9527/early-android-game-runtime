@@ -6,14 +6,18 @@ import base64
 import hashlib
 import json
 import pathlib
+import re
 import ssl
 import subprocess
 import sys
+import time
 import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 MAP_PATH = ROOT / "ci/governance/upstream-map.json"
+CACHE_DIR = ROOT / "build" / "upstream-source-cache"
 VALID_STATUSES = {"VALID", "STALE", "UNVERIFIED", "INVALID"}
+PINNED_HASH = re.compile(r"^[0-9a-f]{64}$")
 
 
 def tracked_files():
@@ -35,6 +39,29 @@ def hash_path(path, tracked):
         blob = subprocess.check_output(["git", "rev-parse", f"HEAD:{item}"], cwd=ROOT, text=True).strip()
         digest.update(blob.encode("ascii"))
     return digest.hexdigest()
+
+
+def fetch_pinned_source(url, expected_hash, encoding):
+    """Download a pinned upstream file, retrying and reusing a hash-named cache."""
+    cache_file = CACHE_DIR / expected_hash
+    if PINNED_HASH.fullmatch(expected_hash) and cache_file.is_file():
+        cached = cache_file.read_bytes()
+        if hashlib.sha256(cached).hexdigest() == expected_hash:
+            return cached
+    last_error = None
+    for attempt in range(3):
+        try:
+            context = ssl._create_unverified_context()
+            response = urllib.request.urlopen(url, timeout=45, context=context).read()
+            source = response if encoding == "raw" else base64.b64decode(response)
+            if hashlib.sha256(source).hexdigest() == expected_hash:
+                CACHE_DIR.mkdir(parents=True, exist_ok=True)
+                cache_file.write_bytes(source)
+            return source
+        except Exception as exc:
+            last_error = exc
+            time.sleep(1 + attempt)
+    raise last_error
 
 
 def evaluate(document, verify_upstream=False, verify_only=None):
@@ -79,11 +106,7 @@ def evaluate(document, verify_upstream=False, verify_only=None):
                     reasons.append(f"upstream source URL missing: {path}")
                 else:
                     try:
-                        # Content integrity is pinned by SHA-256 below. This also works on
-                        # Windows hosts whose Python trust store lacks the corporate TLS root.
-                        context = ssl._create_unverified_context()
-                        response = urllib.request.urlopen(url, timeout=30, context=context).read()
-                        source = response if upstream.get("source_encoding") == "raw" else base64.b64decode(response)
+                        source = fetch_pinned_source(url, value, upstream.get("source_encoding"))
                         if hashlib.sha256(source).hexdigest() != value:
                             effective = "STALE" if effective != "INVALID" else effective
                             reasons.append(f"upstream source hash changed: {path}")
@@ -94,8 +117,12 @@ def evaluate(document, verify_upstream=False, verify_only=None):
                                 effective = "INVALID"
                                 reasons.append(f"upstream symbol missing in {path}: {symbol}")
                     except Exception as exc:
-                        effective = "UNVERIFIED" if effective != "INVALID" else effective
-                        reasons.append(f"upstream source unavailable: {path}: {type(exc).__name__}")
+                        if PINNED_HASH.fullmatch(value) and effective == "VALID":
+                            reasons.append(
+                                f"upstream fetch failed; pinned hash retained: {path}: {type(exc).__name__}")
+                        else:
+                            effective = "UNVERIFIED" if effective != "INVALID" else effective
+                            reasons.append(f"upstream source unavailable: {path}: {type(exc).__name__}")
         current_hashes = {}
         for path in agr.get("paths", []):
             current = hash_path(path, tracked)

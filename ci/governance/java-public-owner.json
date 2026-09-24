@@ -1,0 +1,2644 @@
+{
+  "schema_version": 1,
+  "allowed_owners": [
+    "AOSP_JAVA",
+    "DALVIK_VM",
+    "AOSP_NATIVE",
+    "HOST_SERVICE_HLE",
+    "UNSUPPORTED",
+    "TEST_ONLY"
+  ],
+  "symbols": [
+    {
+      "symbol": "Landroid/Manifest$permission;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/accounts/Account;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/accounts/AccountManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/animation/Animator$AnimatorListener;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/animation/Animator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/animation/AnimatorListenerAdapter;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/animation/AnimatorSet$Builder;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/animation/AnimatorSet;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/animation/ArgbEvaluator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/animation/Keyframe;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/animation/LayoutTransition;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/animation/ObjectAnimator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/animation/PropertyValuesHolder;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/animation/TimeInterpolator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/animation/TypeEvaluator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/animation/ValueAnimator$AnimatorUpdateListener;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/animation/ValueAnimator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/Activity;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/ActivityManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/AlarmManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/AlertDialog$Builder;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/AlertDialog;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/Application;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/Dialog;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/Fragment;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/FragmentManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/IntentService;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/KeyguardManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/NativeActivity;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/Notification$Builder;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/Notification;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/NotificationChannel;",
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Landroid/app/NotificationManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/PendingIntent;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/Service;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/UiModeManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/app/job/JobInfo$Builder;",
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Landroid/app/job/JobInfo;",
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Landroid/app/job/JobScheduler;",
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Landroid/app/job/JobService;",
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Landroid/content/BroadcastReceiver;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/ClipData$Item;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/ClipData;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/ClipboardManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/ComponentName;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/ContentProvider;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/ContentResolver;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/ContentValues;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/Context;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/ContextWrapper;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/Intent;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/IntentFilter;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/ServiceConnection;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/SharedPreferences$Editor;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/SharedPreferences;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/pm/ApplicationInfo;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/pm/PackageInfo;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/pm/PackageManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/res/AssetManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/res/ColorStateList;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/res/Configuration;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/res/Resources$Theme;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/res/Resources;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/content/res/TypedArray;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/database/Cursor;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/database/sqlite/SQLiteDatabase;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/database/sqlite/SQLiteOpenHelper;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/Bitmap$Config;",
+      "owner": "AOSP_NATIVE",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_NATIVE"
+    },
+    {
+      "symbol": "Landroid/graphics/Bitmap;",
+      "owner": "AOSP_NATIVE",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_NATIVE"
+    },
+    {
+      "symbol": "Landroid/graphics/BitmapFactory$Options;",
+      "owner": "AOSP_NATIVE",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_NATIVE"
+    },
+    {
+      "symbol": "Landroid/graphics/BitmapFactory;",
+      "owner": "AOSP_NATIVE",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_NATIVE"
+    },
+    {
+      "symbol": "Landroid/graphics/Canvas;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/Color;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/Matrix;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/Paint$Style;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/Paint;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/Path;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/Point;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/PointF;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/PorterDuff$Mode;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/PorterDuff;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/Rect;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/RectF;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/Region$Op;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/Region;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/Typeface;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/BitmapDrawable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/ColorDrawable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/Drawable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/GradientDrawable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/LayerDrawable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/RippleDrawable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/ShapeDrawable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/StateListDrawable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/hardware/display/DisplayManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/location/Criteria;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/location/Location;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/location/LocationListener;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/location/LocationManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/AudioAttributes$Builder;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/AudioAttributes;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/AudioFocusRequest$Builder;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/AudioFocusRequest;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/AudioFormat$Builder;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/AudioFormat;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/AudioManager$OnAudioFocusChangeListener;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/AudioManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/MediaPlayer$OnCompletionListener;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/MediaPlayer$OnErrorListener;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/MediaPlayer$OnPreparedListener;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/MediaPlayer;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/Ringtone;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/RingtoneManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/SoundPool$Builder;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/SoundPool$OnLoadCompleteListener;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/media/SoundPool;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/net/ConnectivityManager$NetworkCallback;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/net/ConnectivityManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/net/Network;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/net/NetworkCapabilities;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/net/NetworkInfo;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/net/NetworkRequest$Builder;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/net/NetworkRequest;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/net/Uri$Builder;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/net/Uri;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/opengl/GLES20;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/opengl/GLUtils;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/Build$VERSION;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/Build;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/Bundle;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/Environment;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/Handler;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/HandlerThread;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/Looper;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/Message;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/MessageQueue;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/Parcel;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/Parcelable$Creator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/Parcelable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/PowerManager$WakeLock;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/PowerManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/Process;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/StrictMode;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/SystemClock;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/VibrationEffect;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/os/Vibrator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/provider/Settings$Global;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/provider/Settings$Secure;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/provider/Settings$System;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/support/v4/widget/SwipeRefreshLayout;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/text/Editable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/text/Html;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/text/SpannableString;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/text/SpannableStringBuilder;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/text/Spanned;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/text/TextUtils;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/text/TextWatcher;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/text/format/DateFormat;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/text/method/LinkMovementMethod;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/transition/AutoTransition;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/transition/ChangeBounds;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/transition/Fade;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/transition/Slide;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/transition/Transition;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/transition/TransitionManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/transition/TransitionSet;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/util/AndroidRuntimeException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/util/ArrayMap;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/util/AttributeSet;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/util/Base64;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/util/DisplayMetrics;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/util/Log;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/util/LongSparseArray;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/util/Pair;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/util/SparseArray;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/util/SparseIntArray;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/util/TypedValue;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/Display;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/GestureDetector;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/IWindowSession;",
+      "owner": "HOST_SERVICE_HLE",
+      "production": true,
+      "legacy_disposition": "KEEP_HOST_BOUNDARY",
+      "api19_source": "Android 4.4.4_r2 platform/frameworks/base",
+      "upstream_boundary": "IWindowSession.relayout / add / remove",
+      "why_original_cannot_run": "API19 ViewRoot talks to WindowManagerService through Binder. AGR has no system_server.",
+      "removed_android_dependency": "WindowManagerService and Binder",
+      "agr_host_replacement": "framework_viewroot.c in-process WindowSession endpoint",
+      "observable_contract": "relayout returns a frame and a persistent Surface identity",
+      "differential_evidence": "pending Phase 4 host-boundary differential; Phase 3A0 does not close this symbol"
+    },
+    {
+      "symbol": "Landroid/view/KeyEvent;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/LayoutInflater;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/Menu;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/MenuInflater;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/MenuItem;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/MotionEvent;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/SubMenu;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/Surface;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/SurfaceHolder;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/SurfaceView;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/View$AttachInfo;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/View$OnClickListener;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/View$OnLongClickListener;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/View$OnTouchListener;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/View;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/ViewGroup;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/ViewPropertyAnimator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/ViewRootImpl;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/Window$Callback;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/Window;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/WindowManager$LayoutParams;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/WindowManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/AccelerateDecelerateInterpolator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/AccelerateInterpolator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/AlphaAnimation;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/Animation$AnimationListener;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/Animation;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/AnimationSet;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/AnimationUtils;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/AnticipateInterpolator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/AnticipateOvershootInterpolator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/BounceInterpolator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/CycleInterpolator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/DecelerateInterpolator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/Interpolator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/LayoutAnimationController;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/LinearInterpolator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/OvershootInterpolator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/PathInterpolator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/RotateAnimation;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/ScaleAnimation;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/animation/TranslateAnimation;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/view/inputmethod/InputMethodManager;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/webkit/WebChromeClient;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/webkit/WebSettings;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/webkit/WebView;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/webkit/WebViewClient;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/%s;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/AbsListView;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/AdapterView$OnItemClickListener;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/AdapterView$OnItemSelectedListener;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/AdapterView;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/ArrayAdapter;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/BaseAdapter;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/Button;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/CheckBox;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/CompoundButton$OnCheckedChangeListener;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/CompoundButton;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/EditText;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/FrameLayout;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/GridView;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/ImageView;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/LinearLayout;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/ListView;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/NumberPicker;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/RadioButton;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/RadioGroup;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/RelativeLayout;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/ScrollView;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/SeekBar;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/Spinner;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/Switch;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/TextView;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/Toast;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Landroid/widget/ToggleButton;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ldalvik/system/DexClassLoader;",
+      "owner": "DALVIK_VM",
+      "production": true,
+      "legacy_disposition": "MIGRATE_DALVIK"
+    },
+    {
+      "symbol": "Ldalvik/system/PathClassLoader;",
+      "owner": "DALVIK_VM",
+      "production": true,
+      "legacy_disposition": "MIGRATE_DALVIK"
+    },
+    {
+      "symbol": "Ljava/io/BufferedReader;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/BufferedWriter;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/ByteArrayInputStream;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/ByteArrayOutputStream;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/Closeable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/File;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/FileInputStream;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/FileNotFoundException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/FileOutputStream;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/IOException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/InputStream;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/InputStreamReader;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/OutputStream;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/OutputStreamWriter;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/PrintStream;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/PrintWriter;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/io/Serializable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/ArithmeticException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/ArrayIndexOutOfBoundsException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Boolean;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Byte;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/CharSequence;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Character;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Class;",
+      "owner": "DALVIK_VM",
+      "production": true,
+      "legacy_disposition": "MIGRATE_DALVIK"
+    },
+    {
+      "symbol": "Ljava/lang/ClassCastException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/ClassLoader;",
+      "owner": "DALVIK_VM",
+      "production": true,
+      "legacy_disposition": "MIGRATE_DALVIK"
+    },
+    {
+      "symbol": "Ljava/lang/ClassNotFoundException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Comparable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Double;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Enum;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Error;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Exception;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Float;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Foo;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/IllegalArgumentException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/IllegalMonitorStateException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/IllegalStateException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/IllegalThreadStateException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/IndexOutOfBoundsException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Integer;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Iterable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Long;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Math;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/NoSuchMethodException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/NullPointerException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Number;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/NumberFormatException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Object;",
+      "owner": "DALVIK_VM",
+      "production": true,
+      "legacy_disposition": "MIGRATE_DALVIK"
+    },
+    {
+      "symbol": "Ljava/lang/OutOfMemoryError;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Runnable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/RuntimeException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Short;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/StackOverflowError;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/StackTraceElement;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/String;",
+      "owner": "DALVIK_VM",
+      "production": true,
+      "legacy_disposition": "MIGRATE_DALVIK"
+    },
+    {
+      "symbol": "Ljava/lang/StringBuffer;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/StringBuilder;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/System;",
+      "owner": "DALVIK_VM",
+      "production": true,
+      "legacy_disposition": "MIGRATE_DALVIK"
+    },
+    {
+      "symbol": "Ljava/lang/Thread;",
+      "owner": "DALVIK_VM",
+      "production": true,
+      "legacy_disposition": "MIGRATE_DALVIK"
+    },
+    {
+      "symbol": "Ljava/lang/Throwable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/UnsupportedOperationException;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/Void;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/annotation/Annotation;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/annotation/Documented;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/annotation/Retention;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/annotation/Target;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/invoke/MethodHandle;",
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Ljava/lang/invoke/MethodType;",
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Ljava/lang/ref/Reference;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/ref/ReferenceQueue;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/ref/SoftReference;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/ref/WeakReference;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/reflect/Array;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/reflect/Constructor;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/reflect/Field;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/reflect/InvocationHandler;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/reflect/Method;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/lang/reflect/Proxy;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/net/HttpURLConnection;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/net/ServerSocket;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/net/Socket;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/net/SocketInputStream;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/net/SocketOutputStream;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/net/URI;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/net/URL;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/net/URLClassLoader;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/nio/ByteBuffer;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/nio/ByteOrder;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/nio/channels/FileChannel;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/nio/charset/Charset;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/nio/charset/StandardCharsets;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/text/DateFormat;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/text/DecimalFormat;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/text/SimpleDateFormat;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/ArrayDeque;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/ArrayList;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Arrays;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Calendar;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Collection;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Collections;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Date;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Deque;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Enumeration;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/GregorianCalendar;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/HashMap;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/HashSet;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Hashtable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Iterator;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/LinkedHashMap;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/LinkedHashSet;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/LinkedList;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/List;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Locale;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Map$Entry;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Map;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/NavigableMap;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/NavigableSet;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Objects;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Optional;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/OptionalDouble;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/OptionalInt;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/OptionalLong;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/PriorityQueue;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Properties;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Queue;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Random;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Set;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/SortedMap;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/SortedSet;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Stack;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/TimeZone;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Timer;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/TimerTask;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/TreeMap;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/TreeSet;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/UUID;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/Vector;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/WeakHashMap;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ArrayBlockingQueue;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/BlockingQueue;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/Callable;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/CompletableFuture;",
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ConcurrentHashMap;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ConcurrentLinkedDeque;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ConcurrentLinkedQueue;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/CopyOnWriteArrayList;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/CopyOnWriteArraySet;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/CountDownLatch;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/Executor;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ExecutorService;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/Executors;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/Future;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/LinkedBlockingQueue;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/PriorityBlockingQueue;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ScheduledExecutorService;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ScheduledThreadPoolExecutor;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/Semaphore;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ThreadPoolExecutor;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/atomic/AtomicBoolean;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/atomic/AtomicInteger;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/atomic/AtomicLong;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/atomic/AtomicReference;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Ljavax/inject/Inject;",
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Ljavax/inject/Named;",
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Ljavax/inject/Provider;",
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Ljavax/inject/Singleton;",
+      "owner": "UNSUPPORTED",
+      "production": false,
+      "legacy_disposition": "DELETE_AFTER_PARITY",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Ljavax/net/ssl/HttpsURLConnection;",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "java.util.Vector.elementAt",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "java.lang.Character.forDigit",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "android.app.Activity.getIntent",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "android.content.Intent",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "android.os.Bundle",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "android.view.View.dispatchTouchEvent",
+      "owner": "AOSP_JAVA",
+      "production": true,
+      "legacy_disposition": "MIGRATE_AOSP_JAVA"
+    },
+    {
+      "symbol": "Surface.pixelStorage",
+      "owner": "HOST_SERVICE_HLE",
+      "production": true,
+      "legacy_disposition": "KEEP_HOST_BOUNDARY",
+      "api19_source": "Android 4.4.4_r2 platform/frameworks/base",
+      "upstream_boundary": "Surface buffer producer after the WindowSession cut",
+      "why_original_cannot_run": "BufferQueue and SurfaceFlinger are not present in the single-process iOS runtime.",
+      "removed_android_dependency": "SurfaceFlinger BufferQueue",
+      "agr_host_replacement": "HostSurface pixel backing",
+      "observable_contract": "posted pixels remain addressable until the next post",
+      "differential_evidence": "pending Phase 4 host-boundary differential; Phase 3A0 does not close this symbol"
+    },
+    {
+      "symbol": "UIKit.screenPresentation",
+      "owner": "HOST_SERVICE_HLE",
+      "production": true,
+      "legacy_disposition": "KEEP_HOST_BOUNDARY",
+      "api19_source": "no Android class; host display endpoint",
+      "upstream_boundary": "display composition after the Surface producer",
+      "why_original_cannot_run": "API19 composition is SurfaceFlinger. iOS presents through UIKit.",
+      "removed_android_dependency": "SurfaceFlinger",
+      "agr_host_replacement": "UIKit view presentation",
+      "observable_contract": "posted host pixels become visible on the UIKit surface",
+      "differential_evidence": "pending Phase 4 host-boundary differential; Phase 3A0 does not close this symbol"
+    },
+    {
+      "symbol": "APK.diagnostics",
+      "owner": "TEST_ONLY",
+      "production": false,
+      "legacy_disposition": "KEEP_TEST_ORACLE"
+    }
+  ]
+}

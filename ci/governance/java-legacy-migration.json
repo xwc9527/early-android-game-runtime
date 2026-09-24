@@ -1,0 +1,2624 @@
+{
+  "schema_version": 1,
+  "phase": "3A0",
+  "allowed_dispositions": [
+    "KEEP_HOST_BOUNDARY",
+    "KEEP_TEST_ORACLE",
+    "MIGRATE_DALVIK",
+    "MIGRATE_AOSP_JAVA",
+    "MIGRATE_AOSP_NATIVE",
+    "DELETE_AFTER_PARITY"
+  ],
+  "clusters": [
+    {
+      "symbol": "Landroid/Manifest$permission;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/accounts/Account;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/accounts/AccountManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/animation/Animator$AnimatorListener;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/animation/Animator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/animation/AnimatorListenerAdapter;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/animation/AnimatorSet$Builder;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/animation/AnimatorSet;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/animation/ArgbEvaluator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/animation/Keyframe;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/animation/LayoutTransition;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/animation/ObjectAnimator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/animation/PropertyValuesHolder;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/animation/TimeInterpolator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/animation/TypeEvaluator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/animation/ValueAnimator$AnimatorUpdateListener;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/animation/ValueAnimator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/Activity;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/ActivityManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/AlarmManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/AlertDialog$Builder;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/AlertDialog;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/Application;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/Dialog;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/Fragment;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/FragmentManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/IntentService;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/KeyguardManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/NativeActivity;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/Notification$Builder;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/Notification;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/NotificationChannel;",
+      "disposition": "DELETE_AFTER_PARITY",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Landroid/app/NotificationManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/PendingIntent;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/Service;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/UiModeManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/app/job/JobInfo$Builder;",
+      "disposition": "DELETE_AFTER_PARITY",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Landroid/app/job/JobInfo;",
+      "disposition": "DELETE_AFTER_PARITY",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Landroid/app/job/JobScheduler;",
+      "disposition": "DELETE_AFTER_PARITY",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Landroid/app/job/JobService;",
+      "disposition": "DELETE_AFTER_PARITY",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Landroid/content/BroadcastReceiver;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/ClipData$Item;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/ClipData;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/ClipboardManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/ComponentName;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/ContentProvider;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/ContentResolver;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/ContentValues;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/Context;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/ContextWrapper;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/Intent;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/IntentFilter;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/ServiceConnection;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/SharedPreferences$Editor;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/SharedPreferences;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/pm/ApplicationInfo;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/pm/PackageInfo;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/pm/PackageManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/res/AssetManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/res/ColorStateList;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/res/Configuration;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/res/Resources$Theme;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/res/Resources;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/content/res/TypedArray;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/database/Cursor;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/database/sqlite/SQLiteDatabase;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/database/sqlite/SQLiteOpenHelper;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/Bitmap$Config;",
+      "disposition": "MIGRATE_AOSP_NATIVE",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/Bitmap;",
+      "disposition": "MIGRATE_AOSP_NATIVE",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/BitmapFactory$Options;",
+      "disposition": "MIGRATE_AOSP_NATIVE",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/BitmapFactory;",
+      "disposition": "MIGRATE_AOSP_NATIVE",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/Canvas;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/Color;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/Matrix;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/Paint$Style;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/Paint;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/Path;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/Point;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/PointF;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/PorterDuff$Mode;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/PorterDuff;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/Rect;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/RectF;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/Region$Op;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/Region;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/Typeface;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/BitmapDrawable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/ColorDrawable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/Drawable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/GradientDrawable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/LayerDrawable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/RippleDrawable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/ShapeDrawable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/graphics/drawable/StateListDrawable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/hardware/display/DisplayManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/location/Criteria;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/location/Location;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/location/LocationListener;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/location/LocationManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/AudioAttributes$Builder;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/AudioAttributes;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/AudioFocusRequest$Builder;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/AudioFocusRequest;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/AudioFormat$Builder;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/AudioFormat;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/AudioManager$OnAudioFocusChangeListener;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/AudioManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/MediaPlayer$OnCompletionListener;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/MediaPlayer$OnErrorListener;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/MediaPlayer$OnPreparedListener;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/MediaPlayer;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/Ringtone;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/RingtoneManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/SoundPool$Builder;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/SoundPool$OnLoadCompleteListener;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/media/SoundPool;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/net/ConnectivityManager$NetworkCallback;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/net/ConnectivityManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/net/Network;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/net/NetworkCapabilities;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/net/NetworkInfo;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/net/NetworkRequest$Builder;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/net/NetworkRequest;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/net/Uri$Builder;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/net/Uri;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/opengl/GLES20;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/opengl/GLUtils;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/Build$VERSION;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/Build;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/Bundle;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/Environment;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/Handler;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/HandlerThread;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/Looper;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/Message;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/MessageQueue;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/Parcel;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/Parcelable$Creator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/Parcelable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/PowerManager$WakeLock;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/PowerManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/Process;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/StrictMode;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/SystemClock;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/VibrationEffect;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/os/Vibrator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/provider/Settings$Global;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/provider/Settings$Secure;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/provider/Settings$System;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/support/v4/widget/SwipeRefreshLayout;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/text/Editable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/text/Html;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/text/SpannableString;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/text/SpannableStringBuilder;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/text/Spanned;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/text/TextUtils;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/text/TextWatcher;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/text/format/DateFormat;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/text/method/LinkMovementMethod;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/transition/AutoTransition;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/transition/ChangeBounds;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/transition/Fade;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/transition/Slide;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/transition/Transition;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/transition/TransitionManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/transition/TransitionSet;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/util/AndroidRuntimeException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/util/ArrayMap;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/util/AttributeSet;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/util/Base64;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/util/DisplayMetrics;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/util/Log;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/util/LongSparseArray;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/util/Pair;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/util/SparseArray;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/util/SparseIntArray;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/util/TypedValue;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/Display;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/GestureDetector;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/IWindowSession;",
+      "disposition": "KEEP_HOST_BOUNDARY",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/KeyEvent;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/LayoutInflater;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/Menu;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/MenuInflater;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/MenuItem;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/MotionEvent;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/SubMenu;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/Surface;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/SurfaceHolder;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/SurfaceView;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/View$AttachInfo;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/View$OnClickListener;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/View$OnLongClickListener;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/View$OnTouchListener;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/View;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/ViewGroup;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/ViewPropertyAnimator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/ViewRootImpl;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/Window$Callback;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/Window;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/WindowManager$LayoutParams;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/WindowManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/AccelerateDecelerateInterpolator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/AccelerateInterpolator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/AlphaAnimation;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/Animation$AnimationListener;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/Animation;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/AnimationSet;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/AnimationUtils;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/AnticipateInterpolator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/AnticipateOvershootInterpolator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/BounceInterpolator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/CycleInterpolator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/DecelerateInterpolator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/Interpolator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/LayoutAnimationController;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/LinearInterpolator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/OvershootInterpolator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/PathInterpolator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/RotateAnimation;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/ScaleAnimation;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/animation/TranslateAnimation;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/view/inputmethod/InputMethodManager;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/webkit/WebChromeClient;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/webkit/WebSettings;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/webkit/WebView;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/webkit/WebViewClient;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/%s;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/AbsListView;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/AdapterView$OnItemClickListener;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/AdapterView$OnItemSelectedListener;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/AdapterView;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/ArrayAdapter;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/BaseAdapter;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/Button;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/CheckBox;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/CompoundButton$OnCheckedChangeListener;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/CompoundButton;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/EditText;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/FrameLayout;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/GridView;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/ImageView;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/LinearLayout;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/ListView;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/NumberPicker;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/RadioButton;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/RadioGroup;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/RelativeLayout;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/ScrollView;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/SeekBar;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/Spinner;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/Switch;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/TextView;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/Toast;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Landroid/widget/ToggleButton;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ldalvik/system/DexClassLoader;",
+      "disposition": "MIGRATE_DALVIK",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ldalvik/system/PathClassLoader;",
+      "disposition": "MIGRATE_DALVIK",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/BufferedReader;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/BufferedWriter;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/ByteArrayInputStream;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/ByteArrayOutputStream;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/Closeable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/File;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/FileInputStream;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/FileNotFoundException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/FileOutputStream;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/IOException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/InputStream;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/InputStreamReader;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/OutputStream;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/OutputStreamWriter;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/PrintStream;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/PrintWriter;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/io/Serializable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/ArithmeticException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/ArrayIndexOutOfBoundsException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Boolean;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Byte;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/CharSequence;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Character;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Class;",
+      "disposition": "MIGRATE_DALVIK",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/ClassCastException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/ClassLoader;",
+      "disposition": "MIGRATE_DALVIK",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/ClassNotFoundException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Comparable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Double;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Enum;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Error;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Exception;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Float;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Foo;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/IllegalArgumentException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/IllegalMonitorStateException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/IllegalStateException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/IllegalThreadStateException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/IndexOutOfBoundsException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Integer;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Iterable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Long;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Math;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/NoSuchMethodException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/NullPointerException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Number;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/NumberFormatException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Object;",
+      "disposition": "MIGRATE_DALVIK",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/OutOfMemoryError;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Runnable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/RuntimeException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Short;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/StackOverflowError;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/StackTraceElement;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/String;",
+      "disposition": "MIGRATE_DALVIK",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/StringBuffer;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/StringBuilder;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/System;",
+      "disposition": "MIGRATE_DALVIK",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Thread;",
+      "disposition": "MIGRATE_DALVIK",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Throwable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/UnsupportedOperationException;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/Void;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/annotation/Annotation;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/annotation/Documented;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/annotation/Retention;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/annotation/Target;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/invoke/MethodHandle;",
+      "disposition": "DELETE_AFTER_PARITY",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Ljava/lang/invoke/MethodType;",
+      "disposition": "DELETE_AFTER_PARITY",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Ljava/lang/ref/Reference;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/ref/ReferenceQueue;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/ref/SoftReference;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/ref/WeakReference;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/reflect/Array;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/reflect/Constructor;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/reflect/Field;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/reflect/InvocationHandler;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/reflect/Method;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/lang/reflect/Proxy;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/net/HttpURLConnection;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/net/ServerSocket;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/net/Socket;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/net/SocketInputStream;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/net/SocketOutputStream;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/net/URI;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/net/URL;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/net/URLClassLoader;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/nio/ByteBuffer;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/nio/ByteOrder;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/nio/channels/FileChannel;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/nio/charset/Charset;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/nio/charset/StandardCharsets;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/text/DateFormat;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/text/DecimalFormat;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/text/SimpleDateFormat;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/ArrayDeque;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/ArrayList;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Arrays;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Calendar;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Collection;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Collections;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Date;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Deque;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Enumeration;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/GregorianCalendar;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/HashMap;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/HashSet;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Hashtable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Iterator;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/LinkedHashMap;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/LinkedHashSet;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/LinkedList;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/List;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Locale;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Map$Entry;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Map;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/NavigableMap;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/NavigableSet;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Objects;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Optional;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/OptionalDouble;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/OptionalInt;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/OptionalLong;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/PriorityQueue;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Properties;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Queue;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Random;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Set;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/SortedMap;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/SortedSet;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Stack;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/TimeZone;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Timer;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/TimerTask;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/TreeMap;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/TreeSet;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/UUID;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/Vector;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/WeakHashMap;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ArrayBlockingQueue;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/BlockingQueue;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/Callable;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/CompletableFuture;",
+      "disposition": "DELETE_AFTER_PARITY",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ConcurrentHashMap;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ConcurrentLinkedDeque;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ConcurrentLinkedQueue;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/CopyOnWriteArrayList;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/CopyOnWriteArraySet;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/CountDownLatch;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/Executor;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ExecutorService;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/Executors;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/Future;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/LinkedBlockingQueue;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/PriorityBlockingQueue;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ScheduledExecutorService;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ScheduledThreadPoolExecutor;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/Semaphore;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/ThreadPoolExecutor;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/atomic/AtomicBoolean;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/atomic/AtomicInteger;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/atomic/AtomicLong;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljava/util/concurrent/atomic/AtomicReference;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "Ljavax/inject/Inject;",
+      "disposition": "DELETE_AFTER_PARITY",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Ljavax/inject/Named;",
+      "disposition": "DELETE_AFTER_PARITY",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Ljavax/inject/Provider;",
+      "disposition": "DELETE_AFTER_PARITY",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Ljavax/inject/Singleton;",
+      "disposition": "DELETE_AFTER_PARITY",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes.",
+      "api19_surface": "POST_API19"
+    },
+    {
+      "symbol": "Ljavax/net/ssl/HttpsURLConnection;",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom",
+      "note": "Class-level cluster. Method bodies stay in the legacy file until the named owner closes."
+    },
+    {
+      "symbol": "java.util.Vector.elementAt",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Public libcore behavior. Do not keep a C replacement after API19 bytecode parity."
+    },
+    {
+      "symbol": "java.lang.Character.forDigit",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Public libcore behavior. Do not keep a C replacement after API19 bytecode parity."
+    },
+    {
+      "symbol": "android.app.Activity.getIntent",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Framework policy moves to API19 Java."
+    },
+    {
+      "symbol": "android.content.Intent",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Intent/Bundle Java policy."
+    },
+    {
+      "symbol": "android.os.Bundle",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Intent/Bundle Java policy."
+    },
+    {
+      "symbol": "android.view.View.dispatchTouchEvent",
+      "disposition": "MIGRATE_AOSP_JAVA",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "View dispatch policy is AOSP Java."
+    },
+    {
+      "symbol": "Surface.pixelStorage",
+      "disposition": "KEEP_HOST_BOUNDARY",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Pixel backing is the host Surface endpoint."
+    },
+    {
+      "symbol": "UIKit.screenPresentation",
+      "disposition": "KEEP_HOST_BOUNDARY",
+      "current_implementation": "App",
+      "note": "UIKit presents the host surface. It does not own Android View policy."
+    },
+    {
+      "symbol": "APK.diagnostics",
+      "disposition": "KEEP_TEST_ORACLE",
+      "current_implementation": "Runtime/DexLoom/game_dex_runner.c",
+      "note": "Diagnostics and forensics stay out of production semantics."
+    }
+  ]
+}
