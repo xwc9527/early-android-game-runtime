@@ -7,6 +7,10 @@ on:
         description: Run the evidence-selected player trajectory after a cold start
         type: boolean
         default: false
+      run_sdk_preflight:
+        description: Inspect the official API19 SDK image (known Android 4.4.2, not the 4.4.4 oracle)
+        type: boolean
+        default: false
   push:
     branches: ['cursor/runtime-traversal-dispatch-1-0353']
     paths:
@@ -23,6 +27,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Validate platform-neutral trajectory contracts
+        run: |
+          python3 ci/test-gameplay-trajectory.py
+          python3 ci/test-compare-gameplay-trajectory.py
       - name: Inspect Android-x86 image against exact AOSP release requirement
         run: |
           set -euo pipefail
@@ -36,7 +44,7 @@ jobs:
             "$RUNNER_TEMP/android-x86-4.4-r5.iso" | sha1sum -c -
           7z l "$RUNNER_TEMP/android-x86-4.4-r5.iso" > build/artifacts/android-444-image-probe/iso-list.txt
           7z e -y "$RUNNER_TEMP/android-x86-4.4-r5.iso" system.sfs -o"$RUNNER_TEMP/agr-android-444"
-          unsquashfs -d "$RUNNER_TEMP/agr-android-444/system" "$RUNNER_TEMP/agr-android-444/system.sfs"
+          unsquashfs -no-xattrs -d "$RUNNER_TEMP/agr-android-444/system" "$RUNNER_TEMP/agr-android-444/system.sfs"
           find "$RUNNER_TEMP/agr-android-444/system" -maxdepth 2 -type f -printf '%P\n' \
             > build/artifacts/android-444-image-probe/system-list.txt
           IMAGE="$(find "$RUNNER_TEMP/agr-android-444/system" -name system.img -print -quit)"
@@ -56,6 +64,7 @@ jobs:
           if-no-files-found: warn
 
   api19-original-apk:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_sdk_preflight == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
