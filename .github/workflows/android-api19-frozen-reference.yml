@@ -24,7 +24,7 @@ permissions:
 jobs:
   inspect-android-444-image:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - name: Validate platform-neutral trajectory contracts
@@ -135,7 +135,7 @@ jobs:
           adb -s 127.0.0.1:5555 shell getprop ro.build.fingerprint \
             | tr -d '\r' > build/artifacts/android-444-image-probe/live-fingerprint.txt
       - name: Capture exact Frozen Bubble APK zero-input reference
-        timeout-minutes: 8
+        timeout-minutes: 12
         env:
           ANDROID_SERIAL: 127.0.0.1:5555
         run: |

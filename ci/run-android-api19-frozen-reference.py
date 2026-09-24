@@ -132,14 +132,20 @@ def run_executed_trajectory(apk, out, plan, run_number, environment):
 def fresh_launch(apk, out):
     adb("shell", "am", "force-stop", PACKAGE, check=False)
     adb("uninstall", PACKAGE, check=False)
+    remote_apk = "/data/local/tmp/agr-frozen-reference.apk"
     try:
-        install = adb("install", "--no-streaming", str(apk), timeout=90)
+        push = adb("push", str(apk), remote_apk, timeout=90)
+        (out / "apk-push-result.txt").write_text(push + "\n", encoding="utf-8")
+        install = adb("shell", "pm", "install", remote_apk, timeout=300)
+        if "Success" not in install:
+            raise RuntimeError(f"API19 PackageManager did not install the APK: {install}")
     except (RuntimeError, subprocess.TimeoutExpired) as exc:
         diagnostics = {"install_error": str(exc)}
         for name, args in {
             "devices": ("devices", "-l"),
             "boot": ("shell", "getprop", "sys.boot_completed"),
             "package_service": ("shell", "service", "check", "package"),
+            "package_path": ("shell", "pm", "path", PACKAGE),
             "data_space": ("shell", "df", "/data"),
             "mounts": ("shell", "mount"),
             "logcat": ("logcat", "-d", "-t", "300"),

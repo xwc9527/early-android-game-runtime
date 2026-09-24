@@ -48,7 +48,10 @@ jobs:
         run: bash scripts/prepare-run-simulator.sh focused-framework
       - name: Install external Simulator HID client
         timeout-minutes: 12
-        run: brew install facebook/fb/idb
+        run: |
+          brew tap facebook/fb
+          brew trust facebook/fb
+          brew install facebook/fb/idb
       - name: Verify test-only checkpoint without injecting game input
         timeout-minutes: 3
         run: |
