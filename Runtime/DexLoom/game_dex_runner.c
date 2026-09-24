@@ -1,4 +1,5 @@
 #include "dx_vm.h"
+#include "dx_view.h"
 #include "dx_dex.h"
 #include "dx_memory.h"
 #include "dx_apk.h"
