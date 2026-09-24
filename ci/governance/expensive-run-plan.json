@@ -1,24 +1,24 @@
 {
   "schema_version": 1,
   "enabled": true,
-  "question": "On the exact iOS 27.0 Simulator and unchanged Frozen Bubble APK, does the original GameThread continue to post new content after the first three visible submissions during a bounded zero-input observation?",
+  "question": "After API19 asset-stream and String(byte[]) integration passes Linux contracts, does the unchanged Frozen Bubble APK on iOS 27.0 parse nonempty levels and produce a new presented frame after the original second touch?",
   "current_uncertainty": [
-    "The prior Simulator evidence seals after three host submissions and therefore does not show the game's subsequent producer, VM, or presentation state. The iOS 27.0 toolchain/runtime baseline is now validated on the same candidate as the iphoneos build, but there is no fresh physical run for causal comparison."
+    "Linux discovery 35973026898 consumed the second original touch at readyToFire=1, then stopped posting while the worker remained in BubbleManager.nextBubbleIndex. Static exact-DEX review found unresolved AssetInputStream.available/read and String(byte[]) before LevelManager could populate bubble counts. The new public behavior has a focused Linux contract, but there is no iOS 27.0 evidence for the amended guest state and display chain."
   ],
   "expected_outcome_a": {
-    "result": "Post/draw and host submission counts continue advancing through the observation window without a Runtime error.",
+    "result": "The original APK has nonempty level and bubble counts, the second touch is consumed, and a later changed buffer is posted and presented without Runtime failure.",
     "excludes": [
-      "claiming that the producer stops automatically after the first-content evidence is sealed",
-      "treating the first three submissions as the whole original game loop"
+      "an empty-level bubble-selection loop as the remaining primary blocker",
+      "a path-only AssetManager.open as sufficient for gameplay"
     ]
   },
   "expected_outcome_b": {
-    "result": "New posts or guest progress cease, or a Runtime failure appears; bounded checkpoints locate the first observed loss of progress without assuming its cause.",
+    "result": "Level or bubble counts remain empty, or changed posts still stop; bounded guest state and call evidence locate the next public divergence.",
     "excludes": [
-      "claiming continued game progress solely from a still-running iOS process",
-      "attributing a Simulator observation to a device-specific defect before a same-commit physical run"
+      "classifying the new asset and String contracts as real-game confirmed",
+      "attributing this run to a device-specific defect without same-commit physical evidence"
     ]
   },
-  "why_cheaper_test_is_insufficient": "Static source and Linux contracts establish control flow and API behavior but cannot determine whether the actual iOS 27.0 Simulator event loop, GameThread and host presentation continue together after the current evidence cutoff. The existing iOS 27.0 validation stops at the first three submissions.",
+  "why_cheaper_test_is_insufficient": "The Linux host test can show parsed guest levels and a changed post, but cannot prove that the iOS 27.0 event loop submits that later buffer after touch through UIKit. Simulator runs only after Linux source and gameplay contracts pass.",
   "prior_expensive_runs_without_information_gain": 0
 }
