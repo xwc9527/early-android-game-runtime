@@ -39,7 +39,7 @@
         ],
         "source_hashes": {
           "App/main.m": "4a95e06fd863b78903e7647eee0ee4f75cfae805464ee3857a61ce7186728b30",
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "8b416d00e1ae0317b90666a5bbadb6dec7f2e1ab45b03f6c88d6d9e0861e5150"
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "93c666e78a3ca1314cad19afe67c9e8382c43c75954a527ccb8d984ef306b075"
         }
       },
       "verified_at_commit": "93a0299",
@@ -95,7 +95,7 @@
           "pipe_create_cb / ALooper dispatch"
         ],
         "source_hashes": {
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "8b416d00e1ae0317b90666a5bbadb6dec7f2e1ab45b03f6c88d6d9e0861e5150",
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "93c666e78a3ca1314cad19afe67c9e8382c43c75954a527ccb8d984ef306b075",
           "Runtime/NativeCore/agr_runtime.c": "8fe5bc168aa590eb56c8817843937e6954cb44245815c4d141e55a666ed74260"
         }
       },
@@ -154,7 +154,7 @@
           "dispatch_import ALooper_*"
         ],
         "source_hashes": {
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "8b416d00e1ae0317b90666a5bbadb6dec7f2e1ab45b03f6c88d6d9e0861e5150",
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "93c666e78a3ca1314cad19afe67c9e8382c43c75954a527ccb8d984ef306b075",
           "Runtime/GuestRuntime/agr_service_dispatch.c": "b8972103bc08edbd895fd957baa278286958e1919dee13bfc119ad07a25e242c"
         }
       },
@@ -210,7 +210,7 @@
           "input_queue_push / dispatch_import AInputQueue_*"
         ],
         "source_hashes": {
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "8b416d00e1ae0317b90666a5bbadb6dec7f2e1ab45b03f6c88d6d9e0861e5150",
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "93c666e78a3ca1314cad19afe67c9e8382c43c75954a527ccb8d984ef306b075",
           "App/main.m": "4a95e06fd863b78903e7647eee0ee4f75cfae805464ee3857a61ce7186728b30"
         }
       },
@@ -267,7 +267,7 @@
           "dispatch_import egl*"
         ],
         "source_hashes": {
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "8b416d00e1ae0317b90666a5bbadb6dec7f2e1ab45b03f6c88d6d9e0861e5150"
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "93c666e78a3ca1314cad19afe67c9e8382c43c75954a527ccb8d984ef306b075"
         }
       },
       "verified_at_commit": "48761d372284511a48242f2a33c5a9310495b5a1",
@@ -326,7 +326,7 @@
         ],
         "source_hashes": {
           "Runtime/GuestRuntime/agr_jni_methods.c": "8bdc5b524175bb6066c696fa347162d43dc494d31a1b6a2b47914a6418f07d3d",
-          "Runtime/GuestRuntime/agr_guest_runtime.c": "8b416d00e1ae0317b90666a5bbadb6dec7f2e1ab45b03f6c88d6d9e0861e5150",
+          "Runtime/GuestRuntime/agr_guest_runtime.c": "93c666e78a3ca1314cad19afe67c9e8382c43c75954a527ccb8d984ef306b075",
           "Runtime/DexLoom/game_dex_runner.c": "b6704b4276030423ef332ed3895e5d2746f2b183ac602d0df96ce64664d6a47d"
         }
       },
