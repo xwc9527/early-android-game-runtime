@@ -76,6 +76,13 @@ failure is recorded at
 The image has a verified boot, but sample launch has not passed.
 Zulu OpenJDK 6 runs in the local WSL2 workbench; a KitKat build has not
 been attempted or validated with that JDK.
+The Ubuntu reference workbench was exported and imported as WSL2 distro
+`Ubuntu-22.04-AGR` at `D:\1\AGR-Reference\Ubuntu-22.04-AGR` after the D:
+drive gained build capacity. KVM, the pinned Framework checkout, and the
+Java 6 runtime were verified in the imported distro. The AOSP
+`android-4.4.4_r2` manifest was downloaded to
+`/agr-reference/aosp-4.4.4-r2/default.xml`; full source sync and image
+build have not run.
 These changes are IMPLEMENTED locally, not CLOSED or MERGED.
 
 R0 remains partial: the recorded CLEAN guest boot is retained, while the
