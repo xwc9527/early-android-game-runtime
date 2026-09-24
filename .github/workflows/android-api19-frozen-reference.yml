@@ -1,0 +1,94 @@
+name: Frozen Bubble Android API19 reference
+
+on:
+  workflow_dispatch:
+    inputs:
+      replay:
+        description: Run the evidence-selected player trajectory after a cold start
+        type: boolean
+        default: false
+  push:
+    branches: ['cursor/runtime-traversal-dispatch-1-0353']
+    paths:
+      - '.github/workflows/android-api19-frozen-reference.yml'
+      - 'ci/run-android-api19-frozen-reference.py'
+      - 'Tests/Android44Reference/frozen-bubble-replay.json'
+
+permissions:
+  contents: read
+
+jobs:
+  api19-original-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore locked original APK
+        uses: actions/cache/restore@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-full-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Verify or obtain the exact APK
+        run: |
+          python3 tools/fetch_fdroid_samples.py --profile focused-framework --inputs-only
+          printf '%s  %s\n' \
+            57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569 \
+            samples/frozen-bubble.apk | sha256sum -c -
+      - name: Install Android 19 ARM system image
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort | tail -n 1)"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" 'platform-tools' 'system-images;android-19;default;armeabi-v7a'
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
+          echo "$(dirname "$SDKMANAGER")" > sdk-tools-path.txt
+      - name: Boot Android 19 ARM reference
+        run: |
+          SDK_TOOLS="$(cat sdk-tools-path.txt)"
+          LEGACY_ROOT="$RUNNER_TEMP/android-sdk-tools-25.2.3"
+          curl -fL --retry 3 https://dl.google.com/android/repository/tools_r25.2.3-linux.zip -o "$RUNNER_TEMP/tools_r25.2.3-linux.zip"
+          unzip -q "$RUNNER_TEMP/tools_r25.2.3-linux.zip" -d "$LEGACY_ROOT"
+          LEGACY_EMULATOR="$LEGACY_ROOT/tools/emulator"
+          test -x "$LEGACY_EMULATOR"
+          export ANDROID_AVD_HOME="$HOME/.android/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          "$SDK_TOOLS/avdmanager" create avd --force --name agr-frozen-api19 --device pixel --package 'system-images;android-19;default;armeabi-v7a'
+          AVD_CONFIG="$ANDROID_AVD_HOME/agr-frozen-api19.avd/config.ini"
+          sed -i '/^hw.lcd.width=/d;/^hw.lcd.height=/d;/^skin.name=/d;/^skin.path=/d' "$AVD_CONFIG"
+          printf 'hw.lcd.width=480\nhw.lcd.height=800\nskin.name=480x800\nskin.path=480x800\n' >> "$AVD_CONFIG"
+          nohup "$LEGACY_EMULATOR" @agr-frozen-api19 -skin 480x800 -no-window -noaudio -no-snapshot -wipe-data -no-boot-anim -gpu off > emulator.log 2>&1 &
+          EMULATOR_PID=$!
+          for i in $(seq 1 180); do
+            if adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' | grep -q '^1$'; then break; fi
+            if ! kill -0 "$EMULATOR_PID" 2>/dev/null; then cat emulator.log; exit 1; fi
+            sleep 5
+          done
+          adb get-state
+          adb shell getprop ro.build.version.sdk | tr -d '\r' | grep -x 19
+          adb shell getprop ro.build.version.release | tr -d '\r' > android-release.txt
+          cat android-release.txt
+      - name: Capture unmodified APK cold start and optional trajectory
+        run: |
+          mkdir -p build/artifacts/android-api19-reference
+          if [[ '${{ inputs.replay }}' == 'true' ]]; then
+            python3 ci/run-android-api19-frozen-reference.py \
+              --apk samples/frozen-bubble.apk \
+              --out build/artifacts/android-api19-reference \
+              --replay Tests/Android44Reference/frozen-bubble-replay.json
+          else
+            python3 ci/run-android-api19-frozen-reference.py \
+              --apk samples/frozen-bubble.apk \
+              --out build/artifacts/android-api19-reference
+          fi
+      - name: Preserve Android reference evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frozen-bubble-api19-reference-${{ github.sha }}
+          path: |
+            build/artifacts/android-api19-reference/**
+            emulator.log
+            android-release.txt
+          if-no-files-found: warn
