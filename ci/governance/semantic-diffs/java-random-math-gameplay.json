@@ -1,0 +1,40 @@
+{
+  "schema_version": 2,
+  "classification": "ANDROID_SEMANTIC_BUG",
+  "subsystem": "API19 java.util.Random and java.lang.Math gameplay primitives",
+  "observed_discontinuity": "The unchanged Frozen Bubble APK consumes a second touch after GameThread reports readyToFire=1, then the worker runs BubbleManager.nextBubbleIndex without another Surface post. The execution trace records unresolved Random.<init>, Random.nextInt, Math.sin and Math.cos.",
+  "upstream": {
+    "map_entry": "java.util.random.math.gameplay",
+    "map_status": "VALID",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": true,
+    "files": ["luni/src/main/java/java/util/Random.java", "luni/src/main/native/java_lang_Math.cpp", "luni/src/main/java/java/lang/System.java"],
+    "call_path": ["Random.Random", "Random.setSeed", "Random.next", "Random.nextInt", "Math_sin", "Math_cos", "System.currentTimeMillis"]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "Random keeps a per-instance 48-bit LCG seed and returns the next 32 bits for nextInt().",
+    "Random.nextInt(bound) uses the API19 power-of-two and rejection paths, with IllegalArgumentException for nonpositive bound.",
+    "Math.sin and Math.cos evaluate the supplied double through libm.",
+    "System.currentTimeMillis returns wall-clock milliseconds."
+  ],
+  "agr": {
+    "files": ["Runtime/DexLoom/VM/dx_vm.c"],
+    "call_path": ["dx_register_java_lang", "native_random_init", "native_random_next_int", "native_math_sin", "native_math_cos", "native_system_currenttimemillis"]
+  },
+  "differences": [
+    {"id": "D1", "description": "Random was absent from the host-side DEX core, so the original game's Random constructor and nextInt invokes did not execute API19 semantics.", "relevance": "The first no-post interval starts when the second touch reaches BubbleManager.nextBubbleIndex."},
+    {"id": "D2", "description": "Math.sin and Math.cos were unresolved and currentTimeMillis returned zero.", "relevance": "These calls are on the same original gameplay path and can change motion and timing."}
+  ],
+  "earliest_evidenced_divergence": "At the second original touch, the guest game thread enters BubbleManager.nextBubbleIndex while its Random call is unresolved; Surface posts stop at 24 despite continued ARM/DEX execution.",
+  "causal_status": "REAL_GAME_CONFIRMED",
+  "evidence_level": "REAL_GAME_CONFIRMED",
+  "evidence": [
+    {"type": "SOURCE", "artifact": "Pinned libcore android-4.4.4_r2 Random.java 48-bit LCG and native java_lang_Math.cpp sin/cos mapping; hashes in upstream map."},
+    {"type": "REAL_GAME", "artifact": "Simulator discovery 35971148452 at c67b5f2: unchanged Frozen Bubble APK, readyToFire=1, second touch down/up handled; posts freeze at 24 for 3 seconds, worker executes about 178.6 million instructions, and unresolved Random.<init>/nextInt and Math.sin/cos appear. This proves the public semantic gap, not yet that its repair restores gameplay."}
+  ],
+  "remaining_uncertainty": ["The focused contract and unchanged APK must confirm that the repair passes BubbleManager.nextBubbleIndex and subsequent draw/post.", "Other Random methods and exact wall-clock adjustment are not in this focused contract."],
+  "next_action": "Run focused Random/Math contract, then unchanged APK two-touch regression. Classify the next observed boundary before broader Simulator discovery.",
+  "needs_experiment": false,
+  "experimental": false
+}

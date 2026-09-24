@@ -685,7 +685,7 @@
         ],
         "source_hashes": {
           "Runtime/DexLoom/game_dex_runner.c": "ed283df128fb5c3d7e4ee69a0d4f9075f24ca829f7d68937a532fae95ff96b40",
-          "Runtime/DexLoom/VM/dx_vm.c": "ebfb55f49f7825f912bdb1173f6f497e26b0fbcd9058afbc59d4ae51a140c7ee"
+          "Runtime/DexLoom/VM/dx_vm.c": "e94eae853b73e5efe99b5c43812c9a43bb97cabfd7c6e6485eb2a7988b75c69b"
         }
       },
       "verified_at_commit": "0d5126f",
@@ -875,7 +875,7 @@
         "source_hashes": {
           "Runtime/DexLoom/APK/dx_manifest.c": "17d608e345e27ba2bcf564dd61e7918c79da4b243f32d811e59126996b27519e",
           "Runtime/DexLoom/game_dex_runner.c": "ed283df128fb5c3d7e4ee69a0d4f9075f24ca829f7d68937a532fae95ff96b40",
-          "Runtime/DexLoom/VM/dx_vm.c": "ebfb55f49f7825f912bdb1173f6f497e26b0fbcd9058afbc59d4ae51a140c7ee",
+          "Runtime/DexLoom/VM/dx_vm.c": "e94eae853b73e5efe99b5c43812c9a43bb97cabfd7c6e6485eb2a7988b75c69b",
           "App/main.m": "4a95e06fd863b78903e7647eee0ee4f75cfae805464ee3857a61ce7186728b30"
         }
       },
@@ -1269,7 +1269,7 @@
           "Runtime/DexLoom/AndroidMini/framework_viewroot.c": "8f7153bb2b5ff27ef62c4aac514f6abef0d0e9c294d1bb1cdd2df530d25a2e51",
           "Runtime/DexLoom/AndroidMini/framework_viewroot.h": "f65463e81391684c2e545a0eff03064357c1db217add1f6b51f0021c7a6d44d3",
           "Runtime/DexLoom/APK/dx_resources.c": "d1ccd60b46850517bb9905db8505f81222d8658b4af9b675547208f1eb07a0e2",
-          "Runtime/DexLoom/VM/dx_vm.c": "ebfb55f49f7825f912bdb1173f6f497e26b0fbcd9058afbc59d4ae51a140c7ee",
+          "Runtime/DexLoom/VM/dx_vm.c": "e94eae853b73e5efe99b5c43812c9a43bb97cabfd7c6e6485eb2a7988b75c69b",
           "Runtime/DexLoom/VM/dx_interpreter.c": "9a53e5d9cf038efb2871c43af09b581a57f8898935669ad9f7703b0d5638048b"
         }
       },
@@ -1779,7 +1779,7 @@
           "dx_vm_trace_virtual_invoke"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/VM/dx_vm.c": "ebfb55f49f7825f912bdb1173f6f497e26b0fbcd9058afbc59d4ae51a140c7ee",
+          "Runtime/DexLoom/VM/dx_vm.c": "e94eae853b73e5efe99b5c43812c9a43bb97cabfd7c6e6485eb2a7988b75c69b",
           "Runtime/DexLoom/VM/dx_interpreter.c": "9a53e5d9cf038efb2871c43af09b581a57f8898935669ad9f7703b0d5638048b"
         }
       },
@@ -1849,7 +1849,7 @@
           "dx_vm_execute_method"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/VM/dx_vm.c": "ebfb55f49f7825f912bdb1173f6f497e26b0fbcd9058afbc59d4ae51a140c7ee",
+          "Runtime/DexLoom/VM/dx_vm.c": "e94eae853b73e5efe99b5c43812c9a43bb97cabfd7c6e6485eb2a7988b75c69b",
           "Runtime/DexLoom/VM/dx_exec.c": "ed287b0b7172da6e5f4a98d0f8036a05c86e9b157d31343fc796344aa6a313f2",
           "Runtime/DexLoom/VM/dx_interpreter.c": "9a53e5d9cf038efb2871c43af09b581a57f8898935669ad9f7703b0d5638048b"
         }
@@ -1884,7 +1884,7 @@
       ],
       "known_deviations": [
         "Object.wait, notify, and notifyAll are not implemented",
-        "currentTimeMillis still returns 0",
+        "currentTimeMillis uses the host wall clock in milliseconds; exact API19 clock adjustments remain unverified",
         "each top-level context uses the 10000 ms process watchdog",
         "the HLE Thread vtable is the methods AGR registered, not the full libcore list"
       ],
@@ -2036,6 +2036,50 @@
       ]
     },
     {
+      "id": "java.util.random.math.gameplay",
+      "subsystem": "API19 Random, Math, and wall clock gameplay primitives",
+      "android_api": "Random constructors/setSeed/nextInt/nextDouble, Math.sin/cos, System.currentTimeMillis",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/libcore",
+        "paths": [
+          "luni/src/main/java/java/util/Random.java",
+          "luni/src/main/native/java_lang_Math.cpp",
+          "luni/src/main/java/java/lang/System.java"
+        ],
+        "symbols": ["Random.setSeed", "Random.next", "Random.nextInt", "Math_sin", "Math_cos", "System.currentTimeMillis"],
+        "source_hashes": {
+          "luni/src/main/java/java/util/Random.java": "afea1f8fcb6dd07d21ff8d7625b2fb2b8c8ea40e21eb1f4c36260965dcf62323",
+          "luni/src/main/native/java_lang_Math.cpp": "2f6ef8b9e7507e3aecae6c68b8dc234e8e2212754806ec4fd4bfe20ad449e7ae",
+          "luni/src/main/java/java/lang/System.java": "e33317ed3f12f510c35884a42df4feb34c38854e3aeb096e3ff8138e61f9e80a"
+        },
+        "source_urls": {
+          "luni/src/main/java/java/util/Random.java": "https://android.googlesource.com/platform/libcore/+/android-4.4.4_r2/luni/src/main/java/java/util/Random.java?format=TEXT",
+          "luni/src/main/native/java_lang_Math.cpp": "https://android.googlesource.com/platform/libcore/+/android-4.4.4_r2/luni/src/main/native/java_lang_Math.cpp?format=TEXT",
+          "luni/src/main/java/java/lang/System.java": "https://android.googlesource.com/platform/libcore/+/android-4.4.4_r2/luni/src/main/java/java/lang/System.java?format=TEXT"
+        }
+      },
+      "agr": {
+        "paths": ["Runtime/DexLoom/VM/dx_vm.c"],
+        "symbols": ["native_random_init", "native_random_next_int", "native_random_next_double", "native_math_sin", "native_math_cos", "native_system_currenttimemillis"],
+        "source_hashes": {"Runtime/DexLoom/VM/dx_vm.c": "e94eae853b73e5efe99b5c43812c9a43bb97cabfd7c6e6485eb2a7988b75c69b"}
+      },
+      "verified_at_commit": "c67b5f20add10b1659826db4e90cfb413e798a2b",
+      "status": "VALID",
+      "dependencies": ["dalvik.vm.monitor"],
+      "observable_semantics": [
+        "Random maintains a per-object 48-bit LCG seed and clears its Gaussian cache on setSeed",
+        "nextInt and bounded nextInt use the API19 bit and rejection algorithms",
+        "Math.sin and Math.cos map double arguments through native libm",
+        "System.currentTimeMillis returns wall-clock milliseconds rather than a constant"
+      ],
+      "internal_invariants": ["Random instance seed remains in the guest DEX object heap", "Random.next updates seed while holding its object monitor"],
+      "execution_placement": "HOST-DEX",
+      "host_substitutions": ["C guest-object-field adapter for libcore Random", "host libm for API19 native Math", "host wall clock for System.currentTimeMillis"],
+      "known_deviations": ["Random nextGaussian and other Random methods remain outside this focused contract", "exact API19 wall-clock adjustment behavior is not yet differential-tested"],
+      "contracts": ["dex.random_math_gameplay"]
+    },
+    {
       "id": "java.lang.character.for_digit",
       "subsystem": "java.lang.Character.forDigit",
       "android_api": "API19 Character.forDigit(int, int)",
@@ -2070,7 +2114,7 @@
           "native_character_fordigit"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/VM/dx_vm.c": "ebfb55f49f7825f912bdb1173f6f497e26b0fbcd9058afbc59d4ae51a140c7ee"
+          "Runtime/DexLoom/VM/dx_vm.c": "e94eae853b73e5efe99b5c43812c9a43bb97cabfd7c6e6485eb2a7988b75c69b"
         }
       },
       "verified_at_commit": "5fec6a8777cf4e06f627b699cb19b75947ce4421",
@@ -2249,7 +2293,7 @@
           "native_vector_element_at"
         ],
         "source_hashes": {
-          "Runtime/DexLoom/VM/dx_vm.c": "ebfb55f49f7825f912bdb1173f6f497e26b0fbcd9058afbc59d4ae51a140c7ee",
+          "Runtime/DexLoom/VM/dx_vm.c": "e94eae853b73e5efe99b5c43812c9a43bb97cabfd7c6e6485eb2a7988b75c69b",
           "Runtime/DexLoom/VM/dx_interpreter.c": "9a53e5d9cf038efb2871c43af09b581a57f8898935669ad9f7703b0d5638048b"
         }
       },

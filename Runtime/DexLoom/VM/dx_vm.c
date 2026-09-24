@@ -6,10 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
+#include <time.h>
 #ifdef __APPLE__
 #include <mach/mach_time.h>
-#else
-#include <time.h>
 #endif
 
 #define TAG "VM"
@@ -27,6 +27,12 @@ static uint64_t dx_vm_time_ns(void) {
     timespec_get(&ts, TIME_UTC);
     return (uint64_t)ts.tv_sec * UINT64_C(1000000000) + (uint64_t)ts.tv_nsec;
 #endif
+}
+
+static int64_t dx_vm_wall_millis(void) {
+    struct timespec ts;
+    timespec_get(&ts, TIME_UTC);
+    return (int64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }
 
 DxVM *dx_vm_create(DxContext *ctx) {
@@ -1329,7 +1335,136 @@ static DxResult native_kotlin_check_not_null(DxVM *vm, DxFrame *frame, DxValue *
 static DxResult native_system_currenttimemillis(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
     (void)vm; (void)args; (void)arg_count;
     frame->result.tag = DX_VAL_LONG;
-    frame->result.l = 0; // Stub - could use real time but not necessary
+    frame->result.l = dx_vm_wall_millis();
+    frame->has_result = true;
+    return DX_OK;
+}
+
+/* Android 4.4.4 libcore/luni/src/main/java/java/util/Random.java uses a
+ * 48-bit LCG. The seed is an instance field in the DEX heap, not a host-only
+ * table; next(int) is synchronized on the Random instance. */
+#define DX_RANDOM_MULTIPLIER UINT64_C(0x5deece66d)
+#define DX_RANDOM_MASK ((UINT64_C(1) << 48) - 1)
+
+static DxResult random_set_seed(DxVM *vm, DxObject *self, int64_t seed) {
+    DxResult rc;
+    if (!vm || !self) return DX_ERR_NULL_PTR;
+    rc = dx_vm_monitor_enter(vm, self);
+    if (rc != DX_OK) return rc;
+    rc = dx_vm_set_field(self, "seed", (DxValue){.tag=DX_VAL_LONG,
+                           .l=(int64_t)(((uint64_t)seed ^ DX_RANDOM_MULTIPLIER) & DX_RANDOM_MASK)});
+    if (rc == DX_OK)
+        rc = dx_vm_set_field(self, "haveNextNextGaussian", DX_INT_VALUE(0));
+    dx_vm_monitor_exit(vm, self);
+    return rc;
+}
+
+static DxResult random_next_bits(DxVM *vm, DxObject *self, int bits, uint32_t *out) {
+    DxValue value = DX_NULL_VALUE;
+    DxResult rc;
+    uint64_t seed;
+    if (!vm || !self || !out || bits < 0 || bits > 32) return DX_ERR_INVALID_FORMAT;
+    rc = dx_vm_monitor_enter(vm, self);
+    if (rc != DX_OK) return rc;
+    rc = dx_vm_get_field(self, "seed", &value);
+    if (rc != DX_OK || value.tag != DX_VAL_LONG) {
+        dx_vm_monitor_exit(vm, self);
+        return DX_ERR_INVALID_FORMAT;
+    }
+    seed = ((uint64_t)value.l * DX_RANDOM_MULTIPLIER + UINT64_C(0xb)) & DX_RANDOM_MASK;
+    rc = dx_vm_set_field(self, "seed", (DxValue){.tag=DX_VAL_LONG,.l=(int64_t)seed});
+    if (rc == DX_OK) *out = (uint32_t)(seed >> (48 - bits));
+    dx_vm_monitor_exit(vm, self);
+    return rc;
+}
+
+static DxResult native_random_init(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) {
+    int64_t seed;
+    (void)frame;
+    if (count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return DX_ERR_NULL_PTR;
+    seed = count > 1 && args[1].tag == DX_VAL_LONG ? args[1].l :
+        dx_vm_wall_millis() + (int32_t)(uintptr_t)args[0].obj;
+    return random_set_seed(vm, args[0].obj, seed);
+}
+
+static DxResult native_random_set_seed(DxVM *vm, DxFrame *frame, DxValue *args,
+                                        uint32_t count) {
+    (void)frame;
+    if (count < 2 || args[0].tag != DX_VAL_OBJ || args[1].tag != DX_VAL_LONG)
+        return DX_ERR_INVALID_FORMAT;
+    return random_set_seed(vm, args[0].obj, args[1].l);
+}
+
+static DxResult native_random_next_int(DxVM *vm, DxFrame *frame, DxValue *args,
+                                        uint32_t count) {
+    uint32_t bits;
+    DxResult rc;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return DX_ERR_NULL_PTR;
+    if (count == 1) {
+        rc = random_next_bits(vm, args[0].obj, 32, &bits);
+        if (rc != DX_OK) return rc;
+        frame->result = DX_INT_VALUE((int32_t)bits);
+    } else {
+        int32_t n;
+        uint32_t value;
+        if (args[1].tag != DX_VAL_INT) return DX_ERR_INVALID_FORMAT;
+        n = args[1].i;
+        if (n <= 0) {
+            dx_vm_current_exec(vm)->pending_exception = dx_vm_create_exception(
+                vm, "Ljava/lang/IllegalArgumentException;", "n <= 0");
+            return DX_ERR_EXCEPTION;
+        }
+        if ((n & -n) == n) {
+            rc = random_next_bits(vm, args[0].obj, 31, &bits);
+            if (rc != DX_OK) return rc;
+            value = (uint32_t)(((uint64_t)(uint32_t)n * bits) >> 31);
+        } else {
+            do {
+                rc = random_next_bits(vm, args[0].obj, 31, &bits);
+                if (rc != DX_OK) return rc;
+                value = bits % (uint32_t)n;
+            } while ((int32_t)(bits - value + (uint32_t)(n - 1)) < 0);
+        }
+        frame->result = DX_INT_VALUE((int32_t)value);
+    }
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult native_random_next_double(DxVM *vm, DxFrame *frame, DxValue *args,
+                                           uint32_t count) {
+    uint32_t hi, lo;
+    DxResult rc;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return DX_ERR_NULL_PTR;
+    rc = random_next_bits(vm, args[0].obj, 26, &hi);
+    if (rc != DX_OK) return rc;
+    rc = random_next_bits(vm, args[0].obj, 27, &lo);
+    if (rc != DX_OK) return rc;
+    frame->result = (DxValue){.tag=DX_VAL_DOUBLE,
+                              .d=(double)(((uint64_t)hi << 27) + lo) / 9007199254740992.0};
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult native_math_sin(DxVM *vm, DxFrame *frame, DxValue *args,
+                                 uint32_t count) {
+    (void)vm;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_DOUBLE)
+        return DX_ERR_INVALID_FORMAT;
+    frame->result = (DxValue){.tag=DX_VAL_DOUBLE,.d=sin(args[0].d)};
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult native_math_cos(DxVM *vm, DxFrame *frame, DxValue *args,
+                                 uint32_t count) {
+    (void)vm;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_DOUBLE)
+        return DX_ERR_INVALID_FORMAT;
+    frame->result = (DxValue){.tag=DX_VAL_DOUBLE,.d=cos(args[0].d)};
     frame->has_result = true;
     return DX_OK;
 }
@@ -3822,7 +3957,41 @@ DxResult dx_register_java_lang(DxVM *vm) {
 
     // java.lang.Math
     DxClass *math_cls = create_class(vm, "Ljava/lang/Math;", obj_cls, true);
+    add_native_method(math_cls, "sin", "DD", DX_ACC_PUBLIC | DX_ACC_STATIC,
+                      native_math_sin, true);
+    add_native_method(math_cls, "cos", "DD", DX_ACC_PUBLIC | DX_ACC_STATIC,
+                      native_math_cos, true);
     math_cls->status = DX_CLASS_INITIALIZED;
+
+    // API19 libcore java.util.Random: seed and Gaussian cache live with the
+    // Java object, so GC and distinct Random instances keep correct identity.
+    DxClass *random_cls = create_class(vm, "Ljava/util/Random;", obj_cls, true);
+    random_cls->instance_field_count = 3;
+    random_cls->field_defs = dx_malloc(sizeof(*random_cls->field_defs) * 3);
+    if (!random_cls->field_defs) return DX_ERR_OUT_OF_MEMORY;
+    memset(random_cls->field_defs, 0, sizeof(*random_cls->field_defs) * 3);
+    random_cls->field_defs[0].name = "haveNextNextGaussian";
+    random_cls->field_defs[0].type = "Z";
+    random_cls->field_defs[0].slot_index = 0;
+    random_cls->field_defs[1].name = "seed";
+    random_cls->field_defs[1].type = "J";
+    random_cls->field_defs[1].slot_index = 1;
+    random_cls->field_defs[2].name = "nextNextGaussian";
+    random_cls->field_defs[2].type = "D";
+    random_cls->field_defs[2].slot_index = 2;
+    add_native_method(random_cls, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR,
+                      native_random_init, true);
+    add_native_method(random_cls, "<init>", "VJ", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR,
+                      native_random_init, true);
+    add_native_method(random_cls, "setSeed", "VJ", DX_ACC_PUBLIC,
+                      native_random_set_seed, false);
+    add_native_method(random_cls, "nextInt", "I", DX_ACC_PUBLIC,
+                      native_random_next_int, false);
+    add_native_method(random_cls, "nextInt", "II", DX_ACC_PUBLIC,
+                      native_random_next_int, false);
+    add_native_method(random_cls, "nextDouble", "D", DX_ACC_PUBLIC,
+                      native_random_next_double, false);
+    random_cls->status = DX_CLASS_INITIALIZED;
 
     // java.lang.Number (abstract parent of Integer, Long, Float, Double)
     DxClass *number_cls = create_class(vm, "Ljava/lang/Number;", obj_cls, true);
