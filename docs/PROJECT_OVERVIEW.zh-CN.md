@@ -1,10 +1,12 @@
 # Early Android Game Runtime 项目说明
 
+后续 Framework migration 的最高优先级规则是 [`REFERENCE_MIGRATION_RULES.md`](../REFERENCE_MIGRATION_RULES.md)。真实游戏只产生 dependency evidence 和 regression evidence。Runtime gap 本身不授权新增 Android implementation。
+
 ## 项目定位
 
 Early Android Game Runtime（AGR）是在一个原生 iOS 进程内运行早期 Android 游戏原始 APK、DEX 和 ARMv7 ELF 的兼容运行环境。它不启动 Android 内核、system_server、SurfaceFlinger 或完整 Android userspace，也不把游戏改写成 iOS 工程。游戏携带的逻辑、引擎、Runner、资源和 native 库继续作为原始二进制执行；AGR 提供这些二进制能够观察到的 Android 4.4.4/API 19 用户态行为，并把最终的设备能力映射到 Darwin、UIKit 和 Metal。
 
-当前仓库是“部分正式化 Runtime + 工程验证壳”，不是消费者产品，也不是已经闭合的通用 Android 游戏模拟器。已有真实 APK 可以执行到可见 framebuffer，但不能据此推断所有 JNI、Framework、C++ 异常、音频或游戏流程已经兼容。
+当前仓库是“部分正式化 Runtime + 工程验证壳”，不是消费者产品，也不是已经闭合的通用 Android 游戏模拟器。已有真实 APK 的执行结果是 dependency evidence 或 regression evidence，不授权补一个 Android API。
 
 ## 固定技术边界
 
@@ -48,7 +50,7 @@ Early Android Game Runtime（AGR）是在一个原生 iOS 进程内运行早期 
 - ARM interpreter 已运行真实 ARMv7 ELF，但尚无覆盖全部 A32/Thumb-2/VFP 行为的完备架构测试集。
 - DEX 能执行、调用 native、接收 native callback 并经历 GC，但 DexLoom 尚未达到 Dalvik 语义完整度。
 - JNI method registry 已改为动态结构，但 `agr_guest_runtime.c` 仍有 64 项 JNI string handle、32 项 primitive array、512 项 trap 等固定容量；local/global/weak reference、ID 生命周期和 GC roots 尚未按 Dalvik 完整迁移。
-- `AndroidMini/dx_android_framework.c` 包含大量 HLE、stub、固定返回值和容量限制。它是兼容实验面，不是正式 Framework 完成证明。
+- `AndroidMini/dx_android_framework.c` 是 `LEGACY_REFERENCE`，不是 production source，也不是待补 API 清单。
 - NativeActivity、Looper、Window 和触摸已经打通真实样本路径，但生命周期、队列、线程 affinity 和多窗口语义没有完成全面 API19 对照。
 - EGL/GLES1 的真实 draw/swap/readback 已验证；GLES2/3、完整 EGL 对象生命周期和所有 guest pointer/offset 组合尚未声明为完整支持。
 - ARM EHABI Phase 1、2A、2B 已闭合：未经修改的 NDK r10e GCC 4.8 guest runtime 已通过跨 DSO ARM/Thumb unwind、cleanup/resume、typed catch、继承与多继承调整、pointer catch、rethrow、exception lifetime、nested catch、双 guest thread TLS 隔离及 unload/reload differential。更广的 C++ 标准库能力仍不在该结论内。

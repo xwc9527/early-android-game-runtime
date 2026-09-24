@@ -56,4 +56,4 @@ Python is restricted to build, audit, test, CI, and device observation. Producti
 
 ## Technical Debt Policy
 
-Architecture debt must be resolved. Implementation debt remains outside the active target unless it blocks gameplay, a public Android contract, cross-game compatibility, future module construction, stability, or a locked architecture.
+Architecture debt must be resolved. Implementation debt remains outside the active target unless it blocks a closed public Android contract, stability, or a locked architecture. A missing call observed in a real game does not by itself open that debt. Framework work follows `REFERENCE_MIGRATION_RULES.md`.

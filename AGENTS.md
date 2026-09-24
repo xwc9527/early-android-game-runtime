@@ -44,7 +44,8 @@ Read `docs/ARCHITECTURE.md` when ownership, execution placement, or a locked bou
 - DEX remains host-side.
 - The formal linker is the sole ELF owner.
 - UIKit is a host endpoint, not an Android policy owner.
-- Real games discover public-environment defects and confirm final behavior. Focused contracts isolate the defect.
+- Real games produce dependency evidence and regression evidence. A Runtime gap does not authorize a new Android implementation or HLE.
+- Framework migration follows `REFERENCE_MIGRATION_RULES.md`. That file outranks this document for Framework owner selection, source port, and HLE termination.
 - Do not infer a cause from the last marker or first error line.
 - Nonblocking technical debt is not current work.
 

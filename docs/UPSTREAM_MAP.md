@@ -1,6 +1,6 @@
 # Android 4.4.4 to AGR Upstream Map
 
-This is the human-readable index for `ci/governance/upstream-map.json`. It is an encounter-driven navigation index and semantic cache, not an oracle. Pinned Android 4.4.4/API19 source and necessary reference execution remain authoritative; an agent may bypass this map at any time.
+This is the human-readable index for `ci/governance/upstream-map.json`. It is a navigation cache, not an oracle, and not a Framework migration surface. A recorded encounter does not authorize the next Android API or HLE. Pinned Android 4.4.4/API19 source remains authoritative. Framework work follows `REFERENCE_MIGRATION_RULES.md`.
 
 Each machine entry records pinned source paths/hashes, AGR paths/hashes, dependencies, verification commit, and `VALID`, `STALE`, `UNVERIFIED`, or `INVALID` status. `ci/upstream-map.py` recomputes AGR hashes. A changed AGR path, baseline revision, dependency, or missing path invalidates cached authority. `STALE` means recheck source; it does not mean the cached statement is false. Normal cache maintenance needs no ADR.
 

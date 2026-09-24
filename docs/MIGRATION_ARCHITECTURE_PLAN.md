@@ -1,5 +1,23 @@
 # Android 4.4.4 game runtime migration plan
 
+[`REFERENCE_MIGRATION_RULES.md`](../REFERENCE_MIGRATION_RULES.md) is the
+highest-priority rule for later Framework migration. This plan keeps the locked
+execution placement, guest ABI, HostServices boundary, and AOSP ownership below.
+It does not pre-declare Framework classes, and it does not let a real-game gap
+choose the next Android API.
+
+## Highest decision rule
+
+```text
+GAME → REFERENCE MAP → MIGRATION BOOK
+→ SOURCE CLOSURE → CLUSTER PORT → DIFFERENTIAL
+```
+
+HLE is not an implementation of Android semantics. A call chain may terminate
+as HLE only when it reaches an explicitly excluded Linux kernel,
+Binder/system_server, SurfaceFlinger, AudioFlinger, or real device/service
+boundary.
+
 ## Boundary and decision rule
 
 AGR hosts an Android 4.4.4/API 19 game process inside an iOS application. The
@@ -15,8 +33,9 @@ Every component uses one of these decisions:
   behavior and must be retired after differential tests pass.
 - **ADAPT AOSP**: retain upstream algorithms and object models, replacing only
   kernel, Binder, SurfaceFlinger, AudioFlinger or platform-device boundaries.
-- **HLE REQUIRED**: the observable contract is retained, but the original
-  component cannot run without excluded Android services.
+- **HLE REQUIRED**: termination only. The call chain has reached an explicitly
+  excluded Linux kernel, Binder/system_server, SurfaceFlinger, AudioFlinger, or
+  real device/service boundary. HLE is not how Android semantics are implemented.
 - **REMOVE**: sample-specific or synthetic behavior that is not part of the
   runtime architecture.
 
@@ -40,9 +59,10 @@ Every migrated component has one declared execution location:
   Its public boundary uses explicit 32-bit guest ABI records; no host pointer,
   `long`, `size_t`, `va_list`, fd, pthread object or native C++ object crosses
   that boundary.
-- **HOST-HLE** terminates an Android contract at an unavailable kernel,
-  Binder, system service, SurfaceFlinger, AudioFlinger or device boundary.
-  HLE is not permission to fabricate success.
+- **HOST-HLE** terminates a call chain only at an explicitly excluded Linux
+  kernel, Binder/system_server, SurfaceFlinger, AudioFlinger, or real
+  device/service boundary. HLE does not implement Android semantics and is not
+  permission to fabricate success.
 
 | Component | Placement | Reason and non-negotiable boundary |
 |---|---|---|
@@ -163,7 +183,7 @@ Dalvik `vm/Init.cpp`/`Thread.cpp`.
 | `libgcc` and ARM EHABI | API19 NDK/GCC ARM runtime | **GUEST-ARM** unwind, personality and compiler helpers |
 | `libz.so` | `external/zlib` pinned KitKat tag | **HOST-NATIVE AOSP** behind guest ABI adapter, or **GUEST-ARM** when APK-bundled |
 | APK-bundled `gnustl`/`stlport` | matching API19-era NDK runtime | **GUEST-ARM original**; linker resolves its EHABI dependencies |
-| Binder/gui/system-only libraries | respective AOSP trees | no general binary surface; declared game-facing contracts terminate at **HOST-HLE** |
+| Binder/gui/system-only libraries | respective AOSP trees | no general binary surface; a call terminates at **HOST-HLE** only on an excluded Binder, system service, or device boundary |
 
 This surface is reviewed against API19/NDK exports before game runs. APK
 DT_NEEDED data prioritizes work but does not define the implementation.

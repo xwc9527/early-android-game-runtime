@@ -43,7 +43,7 @@ The active target contract is machine-readable at `ci/targets/PVS1.json`. CI suc
 
 ## Real Games
 
-Runtime code cannot branch on game/package identity. Test harnesses may select a game, trajectory, timing, and expected observable. When a game reveals a public defect, reproduce it as a focused contract before declaring closure.
+Runtime code cannot branch on game/package identity. Test harnesses may select a game, trajectory, timing, and expected observable. A real game supplies dependency evidence and regression evidence. That evidence does not authorize a new Android API or HLE.
 
 ## Discovery and Closure
 
