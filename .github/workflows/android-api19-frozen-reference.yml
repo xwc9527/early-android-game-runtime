@@ -31,15 +31,23 @@ jobs:
         run: |
           python3 ci/test-gameplay-trajectory.py
           python3 ci/test-compare-gameplay-trajectory.py
+      - name: Restore verified Android 4.4.4 image
+        id: android_image_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/android-x86-4.4-r5.iso
+          key: agr-android-x86-4.4-r5-4c0edceef12bf4b8afb1b8390d94a9af29bbbca8
       - name: Inspect Android-x86 image against exact AOSP release requirement
         run: |
           set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y -qq p7zip-full squashfs-tools e2fsprogs qemu-system-x86
           mkdir -p build/artifacts/android-444-image-probe
-          curl -fL --retry 3 --retry-delay 5 \
-            'https://downloads.sourceforge.net/project/android-x86/Release%204.4/android-x86-4.4-r5.iso' \
-            -o "$RUNNER_TEMP/android-x86-4.4-r5.iso"
+          if [[ ! -f "$RUNNER_TEMP/android-x86-4.4-r5.iso" ]]; then
+            curl -fL --retry 3 --retry-delay 5 \
+              'https://downloads.sourceforge.net/project/android-x86/Release%204.4/android-x86-4.4-r5.iso' \
+              -o "$RUNNER_TEMP/android-x86-4.4-r5.iso"
+          fi
           printf '%s  %s\n' 4c0edceef12bf4b8afb1b8390d94a9af29bbbca8 \
             "$RUNNER_TEMP/android-x86-4.4-r5.iso" | sha1sum -c -
           7z l "$RUNNER_TEMP/android-x86-4.4-r5.iso" > build/artifacts/android-444-image-probe/iso-list.txt
@@ -55,8 +63,14 @@ jobs:
             build/artifacts/android-444-image-probe/build.prop
           grep -qx 'ro.build.version.release=4.4.4' build/artifacts/android-444-image-probe/build.prop
           grep -qx 'ro.build.version.sdk=19' build/artifacts/android-444-image-probe/build.prop
+      - name: Cache verified Android 4.4.4 image
+        if: steps.android_image_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/android-x86-4.4-r5.iso
+          key: agr-android-x86-4.4-r5-4c0edceef12bf4b8afb1b8390d94a9af29bbbca8
       - name: Boot exact Android 4.4.4 image and verify ADB
-        timeout-minutes: 8
+        timeout-minutes: 9
         run: |
           set -euo pipefail
           export PATH="$ANDROID_HOME/platform-tools:$PATH"
@@ -71,7 +85,7 @@ jobs:
           fi
           printf 'accel=%s cpu=%s\n' "$ACCEL" "$CPU" \
             > build/artifacts/android-444-image-probe/qemu-acceleration.txt
-          nohup qemu-system-x86_64 -machine pc -accel "$ACCEL" -cpu "$CPU" -smp 2 -m 2048 \
+          nohup qemu-system-x86_64 -machine pc -accel "$ACCEL" -cpu "$CPU" -smp 1 -m 2048 \
             -cdrom "$ISO" -boot d -vga std -display none \
             -monitor tcp:127.0.0.1:4444,server,nowait \
             -serial file:build/artifacts/android-444-image-probe/serial.log \
@@ -79,15 +93,19 @@ jobs:
             -device e1000,netdev=net0 \
             > build/artifacts/android-444-image-probe/qemu.log 2>&1 &
           QEMU_PID=$!
-          for i in $(seq 1 55); do
-            timeout 3 adb connect 127.0.0.1:5555 >/dev/null 2>&1 || true
+          timeout 3 adb connect 127.0.0.1:5555 >/dev/null 2>&1 || true
+          for i in $(seq 1 115); do
+            if (( i % 25 == 0 )); then
+              timeout 3 adb disconnect 127.0.0.1:5555 >/dev/null 2>&1 || true
+              timeout 3 adb connect 127.0.0.1:5555 >/dev/null 2>&1 || true
+            fi
             if timeout 3 adb -s 127.0.0.1:5555 shell getprop sys.boot_completed 2>/dev/null \
               | tr -d '\r' | grep -qx 1; then break; fi
             if ! kill -0 "$QEMU_PID" 2>/dev/null; then
               cat build/artifacts/android-444-image-probe/qemu.log
               exit 1
             fi
-            if (( i == 12 || i == 40 || i == 55 )); then
+            if (( i == 12 || i == 40 || i == 80 || i == 115 )); then
               adb devices -l > "build/artifacts/android-444-image-probe/adb-devices-$i.txt" || true
               python3 - "$i" <<'PY'
           import pathlib, socket, sys, time

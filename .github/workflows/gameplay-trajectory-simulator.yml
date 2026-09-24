@@ -1,0 +1,97 @@
+name: AGR gameplay trajectory Simulator preflight
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios27-gameplay-input-preflight:
+    runs-on: xcode-27
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Admit focused Simulator preflight
+        run: python3 ci/validate-expensive-run.py ci/governance/expensive-run-plan.json
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Restore pinned APK inputs
+        uses: actions/cache/restore@v4
+        with:
+          path: samples/*.apk
+          enableCrossOsArchive: true
+          key: agr-samples-focused-framework-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Select exact iOS 27.0 Simulator
+        run: |
+          set -euo pipefail
+          python3 tools/fetch_fdroid_samples.py --profile focused-framework
+          mkdir -p build/artifacts/gameplay-preflight
+          python3 ci/select-simulator-runtime.py build/artifacts/ci-environment.json \
+            > build/artifacts/simulator-device.txt
+      - name: Restore ANGLE Simulator slice
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            build/angle-v2.1.28252
+            build/angle-xcframeworks-v2.1.28252.zip
+          key: agr-angle-ios-simulator-v2.1.28252-59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be
+      - name: Restore ARM interpreter build
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            Runtime/ArmInterpreter/target
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: agr-rust-${{ runner.os }}-${{ runner.arch }}-ios-simulator-aarch64-${{ hashFiles('Runtime/ArmInterpreter/Cargo.toml') }}
+      - name: Build, boot and install Simulator Runtime
+        timeout-minutes: 30
+        run: bash scripts/prepare-run-simulator.sh focused-framework
+      - name: Install external Simulator HID client
+        timeout-minutes: 12
+        run: brew install facebook/fb/idb
+      - name: Verify test-only checkpoint without injecting game input
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          DEVICE="$(cat build/artifacts/simulator-device.txt)"
+          DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
+          xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator \
+            --args --gameplay-trajectory
+          python3 - "$DATA/Documents/agr-gameplay-state.json" \
+            build/artifacts/gameplay-preflight/checkpoint.json <<'PY'
+          import json, pathlib, sys, time
+          source, target = map(pathlib.Path, sys.argv[1:])
+          deadline = time.monotonic() + 90
+          while time.monotonic() < deadline:
+              try:
+                  state = json.loads(source.read_text())
+              except (OSError, ValueError):
+                  time.sleep(0.5)
+                  continue
+              if state.get('host_vsync', 0) >= 30:
+                  break
+              time.sleep(0.5)
+          else:
+              raise SystemExit('test-only gameplay checkpoint did not advance')
+          env = state['environment']
+          assert env['os']['system_version'] == '27.0', env['os']
+          assert env['simulator']['runtime_version'] == '27.0', env['simulator']
+          assert state['apk_sha256'] == '57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569'
+          assert state['ui_touch_view_bounds']['width'] > 0
+          assert state['ui_touch_view_bounds']['height'] > 0
+          target.write_text(json.dumps(state, indent=2) + '\n')
+          print('iOS 27 test-only checkpoint and exact APK identity PASS')
+          PY
+          idb list-targets > build/artifacts/gameplay-preflight/idb-targets.txt
+          grep -F "$DEVICE" build/artifacts/gameplay-preflight/idb-targets.txt
+      - name: Preserve focused preflight evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agr-gameplay-ios27-preflight-${{ github.sha }}
+          path: |
+            build/artifacts/gameplay-preflight/**
+            build/artifacts/ci-environment.json
+            build/artifacts/simulator-boot.log
+            build/artifacts/ci-stage-timings.jsonl
+          if-no-files-found: warn
