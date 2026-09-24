@@ -1848,12 +1848,18 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
 }
 @end
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
+@interface AppDelegate : UIResponder <UIApplicationDelegate, UIWindowSceneDelegate>
 @property(nonatomic, strong) UIWindow *window;
 @end
 @implementation AppDelegate
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)options {
     (void)application; (void)options;
+    return YES;
+}
+- (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session
+      options:(UISceneConnectionOptions *)connectionOptions {
+    (void)session; (void)connectionOptions;
+    if (![scene isKindOfClass:UIWindowScene.class]) return;
     NSArray<NSString *> *arguments=NSProcessInfo.processInfo.arguments;
     BOOL interactive=[arguments containsObject:@"--interactive"];
     BOOL dexParserCompatibility=[arguments containsObject:@"--dex-parser-compatibility"];
@@ -1872,9 +1878,8 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     physicalRuntime=[arguments containsObject:@"--physical-runtime-validation"];
 #endif
     if (physicalRuntime) {
-      /* Establish a new Documents current-root before constructing the app
-         window or creating any Runtime objects. UIApplication has entered its
-         launch delegate, but no app-owned UIKit scene has been initialized. */
+      /* Establish a new Documents current-root before constructing the scene
+         window or creating any Runtime objects. */
       NSString *documents=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
       agr_physical_trace_config traceConfig;
 #if TARGET_OS_SIMULATOR
@@ -1908,7 +1913,8 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
       gPhysicalTraceReady=agr_physical_trace_begin(&traceConfig)==0;
     }
     CGSize displayPixels=UIScreen.mainScreen.nativeBounds.size;
-    self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
+    self.window = [[UIWindow alloc] initWithWindowScene:(UIWindowScene *)scene];
+    self.window.frame = ((UIWindowScene *)scene).coordinateSpace.bounds;
     UIViewController *controller = (interactive && !physicalRuntime) ? [AGRDebugController new] : [UIViewController new]; controller.view.backgroundColor = UIColor.blackColor;
     if (physicalRuntime) {
       gPhysicalSurfaceController = controller;
@@ -1917,7 +1923,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     }
     self.window.rootViewController = controller; [self.window makeKeyAndVisible];
     if (physicalRuntime) {
-      physicalNote(AGR_PHYS_PHASE_APP_DID_FINISH_LAUNCHING, 1, 0, 0, "NEW_PROCESS");
+      physicalNote(AGR_PHYS_PHASE_APP_DID_FINISH_LAUNCHING, 1, 0, 0, "SCENE_CONNECTED");
       publishEnvironment(TARGET_OS_SIMULATOR ? 0 : 1, physicalDisplayOverride ? 1 : 0,
                          runtimeWidth, runtimeHeight);
       agr_physical_trace_set_lifecycle("LAUNCHING", 1, 0);
@@ -1931,7 +1937,7 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
       gPhysicalLink.paused=YES;
       physicalNote(AGR_PHYS_PHASE_CADISPLAYLINK_CREATED, 1, 0, 0, NULL);
       dispatch_async(dispatch_get_main_queue(),^{ @autoreleasepool { armPhysicalRuntime(runtimeWidth,runtimeHeight); } });
-      return YES;
+      return;
     }
     if(!interactive && traversalDispatch){
       gDispatchLink=[CADisplayLink displayLinkWithTarget:self selector:@selector(hostTraversalVsync:)];
@@ -1950,10 +1956,8 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
       }
       dispatch_async(dispatch_get_main_queue(),^{ @autoreleasepool { armTraversalDispatchApk(width,height); } });
     } else if(!interactive){
-      /* Returning from didFinishLaunching promptly is required even for the
-       * headless regression host.  Running the complete APK trajectory here
-       * blocks UIKit's launch handshake long enough for the Simulator launch
-       * watchdog to terminate an otherwise healthy Runtime process. */
+      /* Return from scene connection promptly. Running the complete APK
+       * trajectory here blocks UIKit's launch handshake and watchdog. */
       dispatch_queue_t regressionQueue=dispatch_queue_create("dev.agr.simulator.regression",DISPATCH_QUEUE_SERIAL);
       dispatch_async(regressionQueue,^{ @autoreleasepool {
         NSString *result = (frameworkRuntimeContinuation || firstTraversalDiscovery)
@@ -1971,7 +1975,6 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
         NSLog(@"AGR_RESULT_BEGIN%@AGR_RESULT_END", result);
       }});
     }
-    return YES;
 }
 static void pollContentFrameReport(void) {
     agr_dex_runtime_snapshot snapshot={0};
@@ -2717,23 +2720,23 @@ static void armPhysicalRuntime(uint32_t width, uint32_t height) {
         pollContentFrameReport();
     }
 }
-- (void)applicationDidBecomeActive:(UIApplication *)application {
-    (void)application;
+- (void)sceneDidBecomeActive:(UIScene *)scene {
+    (void)scene;
     agr_physical_trace_set_lifecycle("ACTIVE", 1, 1);
     physicalNote(AGR_PHYS_PHASE_APP_DID_BECOME_ACTIVE, 1, 0, 0, "ACTIVE");
 }
-- (void)applicationWillResignActive:(UIApplication *)application {
-    (void)application;
+- (void)sceneWillResignActive:(UIScene *)scene {
+    (void)scene;
     agr_physical_trace_set_lifecycle("INACTIVE", 1, 0);
     physicalNote(AGR_PHYS_PHASE_APP_WILL_RESIGN_ACTIVE, 1, 0, 0, "INACTIVE");
 }
-- (void)applicationDidEnterBackground:(UIApplication *)application {
-    (void)application;
+- (void)sceneDidEnterBackground:(UIScene *)scene {
+    (void)scene;
     agr_physical_trace_set_lifecycle("BACKGROUND", 0, 0);
     physicalNote(AGR_PHYS_PHASE_APP_DID_ENTER_BACKGROUND, 1, 0, 0, "BACKGROUND");
 }
-- (void)applicationWillEnterForeground:(UIApplication *)application {
-    (void)application;
+- (void)sceneWillEnterForeground:(UIScene *)scene {
+    (void)scene;
     agr_physical_trace_set_lifecycle("FOREGROUND", 1, 0);
     physicalNote(AGR_PHYS_PHASE_APP_WILL_ENTER_FOREGROUND, 1, 0, 0, "FOREGROUND");
 }
