@@ -72,3 +72,9 @@ is used. This changes the transport base, not the pinned tag or projects.
 Its `--transport github` mode generates a GitHub fallback, but the aosp-mirror
 organization does not contain every project in this release; it cannot
 currently sync the full checkout alone.
+
+Once the official checkout is fully synced, `build_clean.sh AOSP_ROOT
+JDK6_ROOT OUT_DIR` builds `aosp_x86-eng` from a clean source tree. It writes
+the resolved source manifest and the CLEAN `system.img` hash to a separate
+output directory. The driver requires Python 2 and JDK6 in the local build
+environment and refuses dirty source projects.
