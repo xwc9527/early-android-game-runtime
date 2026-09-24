@@ -552,3 +552,7 @@ jobs:
           test '${{ needs.iphoneos.result }}' = success
           test '${{ needs.environment-parity.result }}' = success
           test -s build/artifacts/framework-traversal-dispatch-run-summary.json
+
+  gameplay-trajectory-preflight:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_kind == 'discovery' && github.ref_name == 'cursor/runtime-traversal-dispatch-1-0353' }}
+    uses: ./.github/workflows/gameplay-trajectory-simulator.yml
