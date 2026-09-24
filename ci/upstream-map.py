@@ -70,7 +70,8 @@ def evaluate(document, verify_upstream=False, verify_only=None):
     tracked = tracked_files()
     required = {"id", "subsystem", "android_api", "upstream", "agr", "verified_at_commit", "status",
                 "dependencies", "observable_semantics", "internal_invariants", "execution_placement",
-                "host_substitutions", "known_deviations", "contracts"}
+                "host_substitutions", "known_deviations", "contracts",
+                "legacy_navigation_only", "migration_authority"}
     for index, entry in enumerate(document.get("entries", [])):
         missing = sorted(required - set(entry))
         if missing:
@@ -133,21 +134,12 @@ def evaluate(document, verify_upstream=False, verify_only=None):
             elif agr.get("source_hashes", {}).get(path) != current:
                 if effective != "INVALID": effective = "STALE"
                 reasons.append(f"AGR source hash changed: {path}")
-        legacy = bool(entry.get("legacy_navigation_only"))
+        legacy = entry.get("legacy_navigation_only")
         authority = entry.get("migration_authority")
-        pre_reference = (
-            entry_id.startswith("framework.")
-            or entry_id.startswith("java.")
-            or entry_id.startswith("android.app.")
-            or entry_id in {"dalvik.vm.vtable", "dalvik.thread.start", "dalvik.vm.monitor"}
-        )
-        if pre_reference and not (legacy and authority is False):
-            errors.append(
-                f"{entry_id}: pre-reference Framework/libcore entry must be "
-                "legacy_navigation_only with migration_authority false"
-            )
-        if legacy and authority is not False:
-            errors.append(f"{entry_id}: legacy navigation entry must set migration_authority false")
+        if not isinstance(legacy, bool):
+            errors.append(f"{entry_id}: legacy_navigation_only must be a boolean")
+        if authority is not False:
+            errors.append(f"{entry_id}: migration_authority must be false")
         entries[entry_id] = {"declared_status": declared, "effective_status": effective,
                              "reasons": reasons, "current_agr_hashes": current_hashes,
                              "dependencies": entry.get("dependencies", []),

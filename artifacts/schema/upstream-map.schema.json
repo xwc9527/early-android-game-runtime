@@ -11,11 +11,11 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "subsystem", "android_api", "upstream", "agr", "verified_at_commit", "status", "dependencies", "observable_semantics", "internal_invariants", "execution_placement", "host_substitutions", "known_deviations", "contracts"],
+        "required": ["id", "subsystem", "android_api", "upstream", "agr", "verified_at_commit", "status", "dependencies", "observable_semantics", "internal_invariants", "execution_placement", "host_substitutions", "known_deviations", "contracts", "legacy_navigation_only", "migration_authority"],
         "properties": {
           "status": {"enum": ["VALID", "STALE", "UNVERIFIED", "INVALID"]},
           "legacy_navigation_only": {"type": "boolean"},
-          "migration_authority": {"type": "boolean"},
+          "migration_authority": {"const": false},
           "upstream": {"type": "object", "required": ["revision", "repository", "paths", "symbols", "source_hashes"]},
           "agr": {"type": "object", "required": ["paths", "symbols", "source_hashes"]}
         }

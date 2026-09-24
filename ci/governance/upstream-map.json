@@ -64,7 +64,9 @@
       "contracts": [
         "nativeactivity.lifecycle.window",
         "PVS1 lifecycle trace"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "nativeactivity.native_app_glue",
@@ -120,7 +122,9 @@
       "known_deviations": [],
       "contracts": [
         "PVS1 native_app_glue command trace"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "looper.poll",
@@ -177,7 +181,9 @@
       "known_deviations": [],
       "contracts": [
         "PVS1 Looper trace"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "nativeactivity.input_queue",
@@ -238,7 +244,9 @@
       ],
       "contracts": [
         "input_queue.concurrent_ordered"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "egl.lifecycle",
@@ -289,7 +297,9 @@
       "contracts": [
         "egl.gles.draw.readback",
         "Gloomy renderer regression"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "dalvik.jni.binding",
@@ -352,7 +362,9 @@
       "contracts": [
         "dex.jni.roundtrip",
         "activity GC-root contract"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "androidfw.assets_resources",
@@ -406,7 +418,9 @@
       "contracts": [
         "asset.apk.resources_table",
         "Bitmap texture regression"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "bionic.pthread_tls_futex",
@@ -462,7 +476,9 @@
       "known_deviations": [],
       "contracts": [
         "Bionic pthread/futex contracts"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "bionic.linker_libdl",
@@ -515,7 +531,9 @@
       "known_deviations": [],
       "contracts": [
         "API19 linker/libdl differential"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "ehabi.unwind_cpp",
@@ -574,7 +592,9 @@
       "known_deviations": [],
       "contracts": [
         "EHABI Phase 1/2A/2B differential"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "bionic.allocator",
@@ -632,7 +652,9 @@
       "known_deviations": [],
       "contracts": [
         "API19 allocator differential and stress"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "dalvik.nativeactivity.activity_root",
@@ -708,7 +730,9 @@
       "contracts": [
         "activity_gc_root_contract",
         "PVS1 real-APK regression"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "dalvik.dex.parse",
@@ -796,7 +820,9 @@
         "dex-parser no-Bridge fixture",
         "Pixel Dungeon classes.dex parse",
         "Frozen Bubble classes.dex parse"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     },
     {
       "id": "framework.activity.launch",
@@ -2788,8 +2814,10 @@
       ],
       "contracts": [
         "Tests/DexLoom/classpath-host.c"
-      ]
+      ],
+      "legacy_navigation_only": false,
+      "migration_authority": false
     }
   ],
-  "legacy_navigation_policy": "Entries with legacy_navigation_only true and migration_authority false are historical source navigation and regression evidence only. They cannot authorize continued HLE, authorize a source port, choose the next migration target, or replace a Migration Book or API19 Source Closure."
+  "legacy_navigation_policy": "Every entry declares legacy_navigation_only and migration_authority false. UPSTREAM_MAP is NAVIGATION_CACHE_NOT_ORACLE. It may store source paths, source hashes, and historical differential or regression evidence, and it may help locate API19 source. It cannot authorize a new migration target, continued legacy HLE, a source port, a Migration Book, API19 Source Closure, or production source ownership. legacy_navigation_only true is pre-reference history. false is current source-navigation evidence with no migration authority."
 }

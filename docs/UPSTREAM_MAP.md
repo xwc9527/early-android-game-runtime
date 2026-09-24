@@ -2,7 +2,7 @@
 
 This is the human-readable index for `ci/governance/upstream-map.json`. It is a navigation cache, not an oracle. Pinned Android 4.4.4/API19 source remains authoritative. Android-visible source ownership follows `REFERENCE_MIGRATION_RULES.md`.
 
-Pre-reference Framework, libcore, and game-driven entries carry `legacy_navigation_only: true` and `migration_authority: false`. Those entries are historical source navigation and regression evidence only. They cannot authorize continued HLE, authorize a source port, choose the next migration target, or replace a Migration Book or API19 Source Closure.
+Every entry declares `legacy_navigation_only` and `migration_authority: false`. The map never grants migration authority. It may keep source paths, hashes, and historical differential or regression evidence, and it may point at API19 source. It cannot authorize a new migration target, continued legacy HLE, a source port, or production source ownership, and it cannot replace a Migration Book or API19 Source Closure. `legacy_navigation_only: true` is pre-reference history. `legacy_navigation_only: false` is still-current source navigation and still has no migration authority.
 
 Each machine entry records pinned source paths/hashes, AGR paths/hashes, dependencies, verification commit, and `VALID`, `STALE`, `UNVERIFIED`, or `INVALID` status. `ci/upstream-map.py` recomputes AGR hashes. A changed AGR path, baseline revision, dependency, or missing path invalidates cached authority. `STALE` means recheck source; it does not mean the cached statement is false. Normal cache maintenance needs no ADR.
 

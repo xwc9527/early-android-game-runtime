@@ -53,7 +53,17 @@ No Framework class is pre-declared as a migration target. The owner of a Framewo
 
 Migration Book → API19 Source Closure → Cluster Source Manifest
 
-A source port starts only after that API19 source owner exists. Existing CLOSED implementations, including Character.forDigit, Vector, Random, and older Framework HLE, stay closed. This document marks their historical ownership. It does not rewrite them.
+A source port starts only after that API19 source owner exists.
+
+This context reset does not rewrite existing pre-reference implementations.
+
+Existing regression evidence remains valid, but does not grant those implementations source ownership, migration authority, or CLOSED status.
+
+Their future disposition is decided only by:
+
+Migration Book → API19 Source Closure → Cluster Source Manifest
+
+A prior REAL_GAME_CONFIRMED result, a passing contract, or an upstream-map entry does not promote an implementation to CLOSED or to a source owner. This reset freezes rewriting for now. It does not keep those implementations permanently.
 
 HLE is not an implementation of Android semantics. A call chain may terminate as HLE only when it reaches an explicitly excluded Linux kernel, Binder/system_server, SurfaceFlinger, AudioFlinger, or real device/service boundary.
 
@@ -66,7 +76,7 @@ These files are history. Active governance and later Work must not read them as 
 - `ci/governance/history/reopens-pre-reference.json`
 - `docs/history/PRE_REFERENCE_RECOVERY_STATE.md`
 
-Upstream-map entries with `legacy_navigation_only: true` and `migration_authority: false` are historical source navigation and regression evidence only. They do not authorize continued HLE, a source port, or the next migration target, and they do not replace a Migration Book or API19 Source Closure.
+Every upstream-map entry has `migration_authority: false`. The map is a navigation cache. It may record source paths, hashes, and historical differential or regression evidence. It cannot authorize a migration target, continued legacy HLE, a source port, or production source ownership, and it cannot replace a Migration Book or API19 Source Closure. `legacy_navigation_only: true` marks pre-reference history. `legacy_navigation_only: false` marks source-navigation evidence that is still current and still has no migration authority.
 
 The required development order is:
 
