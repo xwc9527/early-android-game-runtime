@@ -18,6 +18,43 @@ permissions:
   contents: read
 
 jobs:
+  inspect-android-444-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect Android-x86 image against exact AOSP release requirement
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq p7zip-full squashfs-tools e2fsprogs
+          mkdir -p build/artifacts/android-444-image-probe
+          curl -fL --retry 3 --retry-delay 5 \
+            'https://downloads.sourceforge.net/project/android-x86/Release%204.4/android-x86-4.4-r5.iso' \
+            -o "$RUNNER_TEMP/android-x86-4.4-r5.iso"
+          printf '%s  %s\n' 4c0edceef12bf4b8afb1b8390d94a9af29bbbca8 \
+            "$RUNNER_TEMP/android-x86-4.4-r5.iso" | sha1sum -c -
+          7z l "$RUNNER_TEMP/android-x86-4.4-r5.iso" > build/artifacts/android-444-image-probe/iso-list.txt
+          7z e -y "$RUNNER_TEMP/android-x86-4.4-r5.iso" system.sfs -o"$RUNNER_TEMP/agr-android-444"
+          unsquashfs -d "$RUNNER_TEMP/agr-android-444/system" "$RUNNER_TEMP/agr-android-444/system.sfs"
+          find "$RUNNER_TEMP/agr-android-444/system" -maxdepth 2 -type f -printf '%P\n' \
+            > build/artifacts/android-444-image-probe/system-list.txt
+          IMAGE="$(find "$RUNNER_TEMP/agr-android-444/system" -name system.img -print -quit)"
+          test -n "$IMAGE"
+          debugfs -R 'cat /build.prop' "$IMAGE" 2>/dev/null \
+            > build/artifacts/android-444-image-probe/build.prop
+          grep -E '^(ro.build.version.release|ro.build.version.sdk|ro.build.fingerprint|ro.product.cpu.abi)=' \
+            build/artifacts/android-444-image-probe/build.prop
+          grep -qx 'ro.build.version.release=4.4.4' build/artifacts/android-444-image-probe/build.prop
+          grep -qx 'ro.build.version.sdk=19' build/artifacts/android-444-image-probe/build.prop
+      - name: Preserve image provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-444-image-probe-${{ github.sha }}
+          path: build/artifacts/android-444-image-probe/**
+          if-no-files-found: warn
+
   api19-original-apk:
     runs-on: ubuntu-latest
     timeout-minutes: 35
