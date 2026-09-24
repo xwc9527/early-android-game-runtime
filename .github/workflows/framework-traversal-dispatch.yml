@@ -22,6 +22,8 @@ on:
       - 'Tests/DexLoom/frozen-bubble-1080-host.c'
       - 'Tests/DexLoom/java-random-math-host.c'
       - 'Tests/DexLoom/asset-input-stream-host.c'
+      - 'ci/governance/semantic-diffs/framework-asset-input-stream.json'
+      - 'ci/governance/semantic-diffs/java-string-byte-constructor.json'
       - 'Tests/DexLoom/ios-image-codec-parity.py'
       - 'App/agr_physical_trace.c'
       - 'Runtime/DexLoom/agr_forensic.h'
@@ -253,6 +255,8 @@ jobs:
         run: |
           python3 ci/upstream-map.py --require-valid framework.viewroot.traversal_dispatch --require-valid framework.window.set_content_view --require-valid framework.view.surface_view --require-valid framework.view.surface_holder_canvas --require-valid framework.view.surface_post_display --require-valid framework.graphics.bitmap_decode_resource --require-valid framework.graphics.canvas_bitmap --require-valid framework.graphics.bitmap_create_scaled --require-valid dalvik.vm.vtable --require-valid dalvik.thread.start --require-valid java.lang.character.for_digit --require-valid framework.graphics.canvas_state_clip --require-valid java.util.vector.core --require-valid android.app.activity.request_window_feature --require-valid android.app.activity.get_intent --verify-upstream --verify-only framework.viewroot.traversal_dispatch --verify-only framework.window.set_content_view --verify-only framework.view.surface_view --verify-only framework.view.surface_holder_canvas --verify-only framework.view.surface_post_display --verify-only framework.graphics.bitmap_decode_resource --verify-only framework.graphics.canvas_bitmap --verify-only framework.graphics.bitmap_create_scaled --verify-only dalvik.vm.vtable --verify-only dalvik.thread.start --verify-only java.lang.character.for_digit --verify-only framework.graphics.canvas_state_clip --verify-only java.util.vector.core --verify-only android.app.activity.request_window_feature --verify-only android.app.activity.get_intent --output build/artifacts/traversal-dispatch-upstream-map.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-traversal-dispatch.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-asset-input-stream.json
+          python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/java-string-byte-constructor.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-surface-view.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-surface-holder-canvas.json
           python3 ci/semantic-diff.py validate ci/governance/semantic-diffs/framework-surface-post-display.json
