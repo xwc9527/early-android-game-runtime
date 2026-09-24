@@ -2583,6 +2583,42 @@
         "1080x2340 real APK post and Simulator screen capture",
         "exact-candidate iPhone physical visible frame"
       ]
+    },
+    {
+      "id": "java.lang.string.byte_constructor",
+      "subsystem": "java.lang.String(byte[])",
+      "android_api": "API19 String(byte[]) default-charset constructor",
+      "upstream": {
+        "revision": "Android 4.4.4_r2",
+        "repository": "platform/libcore",
+        "paths": ["libdvm/src/main/java/java/lang/String.java"],
+        "symbols": ["String(byte[])", "String(byte[], int, int)"],
+        "source_hashes": {
+          "libdvm/src/main/java/java/lang/String.java": "2e0da5edeafb72560624f7014bc6e4161bbd0d83844e7ed6fd47dc2301b662a8"
+        },
+        "source_urls": {
+          "libdvm/src/main/java/java/lang/String.java": "https://android.googlesource.com/platform/libcore/+/android-4.4.4_r2/libdvm/src/main/java/java/lang/String.java?format=TEXT"
+        },
+        "symbols_by_path": {
+          "libdvm/src/main/java/java/lang/String.java": ["public String(byte[] data)", "this(data, 0, data.length);"]
+        }
+      },
+      "agr": {
+        "paths": ["Runtime/DexLoom/VM/dx_vm.c"],
+        "symbols": ["native_string_init_bytes"],
+        "source_hashes": {
+          "Runtime/DexLoom/VM/dx_vm.c": "3ddeee6e45c37d2d8734f9c9dc14f1e032951a226ba05d56e881aa74928b7693"
+        }
+      },
+      "verified_at_commit": "a1953cb36c53dcaa307afc33e489cedbbee8e8aa",
+      "status": "VALID",
+      "dependencies": [],
+      "observable_semantics": ["String(byte[]) decodes through the platform default charset into the allocated receiver"],
+      "internal_invariants": ["The String receiver remains a distinct Java object"],
+      "execution_placement": "HOST-DEX",
+      "host_substitutions": ["C byte-array to host DEX String conversion"],
+      "known_deviations": ["Focused contract covers valid UTF-8; malformed sequences and full UTF-16 indexing remain outside this implementation"],
+      "contracts": ["asset-input-stream-host String(byte[]) receiver assignment"]
     }
   ]
 }

@@ -1573,7 +1573,16 @@ static DxObject *inflate_one_view(agr_dex_game *game, const char *name,
         args[1] = DX_OBJ_VALUE(game->activity);
         args[2] = DX_NULL_VALUE;
         if (init->shorty && !strcmp(init->shorty, "VLL")) argc = 3;
-        if (dx_vm_execute_method(game->vm, init, args, argc, NULL) != DX_OK) return NULL;
+        DxResult result = dx_vm_execute_method(game->vm, init, args, argc, NULL);
+        if (result != DX_OK) {
+            DxExecutionContext *exec = dx_vm_current_exec(game->vm);
+            DX_WARN("GameDex", "View constructor failed: %s result=%d exception=%s error=%s",
+                    descriptor, (int)result,
+                    exec && exec->pending_exception && exec->pending_exception->klass
+                        ? exec->pending_exception->klass->descriptor : "(none)",
+                    exec ? exec->error_msg : "");
+            return NULL;
+        }
     }
     dx_vm_set_field(view, "_id", DX_INT_VALUE(id));
     dx_vm_set_field(view, "_layoutWidth", DX_INT_VALUE(width));

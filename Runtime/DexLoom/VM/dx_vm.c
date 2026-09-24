@@ -3216,6 +3216,11 @@ static DxResult native_array_newinstance_dims(DxVM *vm, DxFrame *frame, DxValue 
             arr = alloc_dimensional_array(vm, component, values, count, 0);
         }
     }
+    if (!arr) {
+        DX_WARN(TAG, "Array.newInstance failed: component=%s dimensions=%u first=%d argument=%u",
+                component ? component : "(null)", count,
+                count ? values[0] : -1, arg_count);
+    }
     frame->result = arr ? DX_OBJ_VALUE(arr) : DX_NULL_VALUE;
     frame->has_result = true;
     return DX_OK;
