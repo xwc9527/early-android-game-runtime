@@ -220,6 +220,8 @@ typedef struct agr_physical_trace_status {
     int has_game_exec;
     uint32_t game_thread_state;
     uint64_t game_host_thread;
+    uint32_t trace_capacity_reached;
+    uint64_t trace_events_omitted;
     /* Authoritative finish reason. WATCHDOG_STALL replaces a later caller
        reason except CONTENT_POSTED. */
     char termination_reason[64];

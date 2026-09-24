@@ -19,7 +19,7 @@ import json, sys
 try:
     report = json.load(open(sys.argv[1], encoding="utf-8"))
     assert report.get("observation_mode") == "POST_FIRST_FRAME_ZERO_INPUT"
-    assert report.get("stop_reason") in ("POST_FIRST_FRAME_DEADLINE", "RUNTIME_ERROR")
+    assert report.get("stop_reason") in ("POST_FIRST_FRAME_DEADLINE", "RUNTIME_ERROR", "WATCHDOG_STALL")
 except (OSError, ValueError, AssertionError, TypeError):
     sys.exit(1)
 PY

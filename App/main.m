@@ -2504,6 +2504,8 @@ static void finishPhysicalReport(void) {
         full[@"trace_file"] = [NSString stringWithUTF8String:traceStatus.trace_file];
         full[@"trace_event_count"] = @(traceStatus.event_count);
         full[@"passive_dropped_count"] = @(traceStatus.passive_dropped_count);
+        full[@"trace_capacity_reached"] = @(traceStatus.trace_capacity_reached != 0);
+        full[@"trace_events_omitted"] = @(traceStatus.trace_events_omitted);
         full[@"watchdog_state"] = [NSString stringWithUTF8String:traceStatus.watchdog_state];
         full[@"watchdog_heartbeat_count"] = @(traceStatus.heartbeat_count);
         full[@"watchdog_no_progress_level"] = @(traceStatus.no_progress_level);

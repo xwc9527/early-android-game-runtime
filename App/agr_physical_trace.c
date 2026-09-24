@@ -71,6 +71,8 @@ static uint64_t g_last_progress_ns = 0;
 static uint64_t g_max_gap_ns = 0;
 static uint32_t g_event_count = 0;
 static uint32_t g_bytes = 0;
+static uint32_t g_trace_capacity_reached = 0;
+static uint64_t g_trace_events_omitted = 0;
 static uint32_t g_last_phase = 0;
 static uint32_t g_heartbeat_count = 0;
 static uint32_t g_no_progress_level = 0;
@@ -575,7 +577,20 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
     uint64_t now;
     const char *name;
     int sync;
-    if (!g_active || g_trace_fd < 0 || g_bytes >= DISK_CAP) return;
+    if (!g_active || g_trace_fd < 0) return;
+    if (g_bytes >= DISK_CAP) {
+        /* The disk record is bounded, but live guest progress must still
+           reach the watchdog after the bound is hit. */
+        g_trace_capacity_reached = 1;
+        g_trace_events_omitted++;
+        if (phase_is_runtime_progress(sample->phase)) {
+            now = mono_ns();
+            if (g_last_progress_ns && now - g_last_progress_ns > g_max_gap_ns)
+                g_max_gap_ns = now - g_last_progress_ns;
+            g_last_progress_ns = now;
+        }
+        return;
+    }
     seq = ++g_seq;
     now = mono_ns();
     name = agr_physical_phase_name(sample->phase);
@@ -690,7 +705,7 @@ static void commit_line_fixed(const agr_forensic_sample *sample) {
          sample->phase == AGR_PHYS_PHASE_APK_OPEN_FAIL ||
          sample->phase == AGR_PHYS_PHASE_APK_SHA_FAIL))
         copy_text(g_last_error, sizeof(g_last_error), sample->detail);
-    if (!phase_is_watchdog(sample->phase)) {
+    if (phase_is_runtime_progress(sample->phase)) {
         uint64_t gap = g_last_progress_ns ? now - g_last_progress_ns : 0;
         if (gap > g_max_gap_ns) g_max_gap_ns = gap;
         g_last_progress_ns = now;
@@ -717,6 +732,8 @@ static void fill_status(agr_physical_trace_status *out) {
     out->process_start_monotonic_ns = g_process_start_mono_ns;
     out->last_seq = g_seq >= SEQ_ORIGIN ? g_seq : 0;
     out->event_count = g_event_count;
+    out->trace_capacity_reached = g_trace_capacity_reached;
+    out->trace_events_omitted = g_trace_events_omitted;
     out->passive_dropped_count = __atomic_load_n(&g_passive_dropped, __ATOMIC_RELAXED);
     copy_text(out->last_event, sizeof(out->last_event), g_last_event);
     out->last_phase = g_last_phase;
@@ -829,6 +846,16 @@ static const char *state_for_sample(const agr_forensic_sample *sample) {
     default: break;
     }
     return NULL;
+}
+
+/* Host display cadence alone is not evidence that guest work advanced. */
+static int phase_is_runtime_progress(uint32_t phase) {
+    return !phase_is_watchdog(phase) &&
+           phase != AGR_PHYS_PHASE_CADISPLAYLINK_FRAME &&
+           phase != AGR_PHYS_PHASE_PHYSICAL_FRAME_BEGIN &&
+           phase != AGR_PHYS_PHASE_PHYSICAL_FRAME_END &&
+           phase != AGR_PHYS_PHASE_HOST_SURFACE_ACQUIRED &&
+           phase != AGR_PHYS_PHASE_HOST_SURFACE_SUBMITTED;
 }
 
 static void note_unlocked(const agr_forensic_sample *sample) {
@@ -1459,6 +1486,8 @@ int agr_physical_trace_begin(const agr_physical_trace_config *config) {
     g_passive_order = 0;
     pthread_mutex_unlock(&g_passive_mu);
     g_bytes = 0;
+    g_trace_capacity_reached = 0;
+    g_trace_events_omitted = 0;
     g_last_phase = 0;
     g_heartbeat_count = 0;
     g_no_progress_level = 0;

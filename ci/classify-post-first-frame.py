@@ -9,7 +9,7 @@ def classify(report):
     checkpoints = report.get("post_first_frame_checkpoints", [])
     if report.get("observation_mode") != "POST_FIRST_FRAME_ZERO_INPUT":
         raise ValueError("wrong observation mode")
-    if report.get("stop_reason") not in ("POST_FIRST_FRAME_DEADLINE", "RUNTIME_ERROR"):
+    if report.get("stop_reason") not in ("POST_FIRST_FRAME_DEADLINE", "RUNTIME_ERROR", "WATCHDOG_STALL"):
         raise ValueError("unexpected observation termination")
     first, last = (checkpoints[0], checkpoints[-1]) if checkpoints else ({}, {})
     if report.get("stop_reason") == "RUNTIME_ERROR" or report.get("runtime_error") or last.get("pending_exception") or last.get("vm_error"):
@@ -29,6 +29,10 @@ def classify(report):
         "apk_sha256": report.get("apk_sha256"),
         "observation_mode": report["observation_mode"],
         "observation_state": state,
+        "raw_stop_reason": report.get("stop_reason"),
+        "watchdog_progress_conflict": report.get("stop_reason") == "WATCHDOG_STALL" and state == "PRODUCER_CONTINUES",
+        "trace_capacity_reached": bool(report.get("trace_capacity_reached")),
+        "trace_events_omitted": report.get("trace_events_omitted", 0),
         "checkpoint_count": len(checkpoints),
         "first": first,
         "last": last,

@@ -533,6 +533,28 @@ static void test_canvas_and_pass(const char *script) {
            "strict pass requires a confirmed draw path");
 }
 
+static void test_trace_capacity_preserves_live_progress(void) {
+    const char *dir = "/tmp/agr-phys-trace-cap";
+    agr_physical_trace_config config;
+    agr_physical_trace_status status;
+    unsigned i;
+    mkdir(dir, 0755);
+    agr_physical_trace_set_watchdog_for_test(20, 100, 300, 600);
+    config = config_for(dir);
+    expect(agr_physical_trace_begin(&config) == 0, "trace cap begin");
+    for (i = 0; i < 5200; ++i) {
+        note(AGR_PHYS_PHASE_GUEST_METHOD_ENTER, 0, 1, 1, 7,
+             0, 0, 0, 0, 0, 0, "guest work continues");
+        if (i > 2500 && i % 50 == 0) usleep(20000);
+    }
+    agr_physical_trace_copy_status(&status);
+    expect(status.trace_capacity_reached != 0, "trace cap reached");
+    expect(status.trace_events_omitted > 0, "trace cap omissions recorded");
+    expect(status.watchdog_stalled == 0, "trace cap is not guest stall");
+    expect(status.progress_age_ms < 600, "guest progress survives trace cap");
+    agr_physical_trace_shutdown();
+}
+
 static void test_crash(const char *script) {
     const char *dir = "/tmp/agr-phys-crash";
     pid_t pid;
@@ -658,6 +680,7 @@ int main(int argc, char **argv) {
     test_stale_archive(script);
     test_archive_keeps_first_failure();
     test_watchdog_and_probe();
+    test_trace_capacity_preserves_live_progress();
     test_frame_sync_policy();
     test_stall_reason_agreement(script);
     test_root_exec_attribution();
