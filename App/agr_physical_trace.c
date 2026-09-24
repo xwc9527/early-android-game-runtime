@@ -73,6 +73,7 @@ static uint32_t g_event_count = 0;
 static uint32_t g_bytes = 0;
 static uint32_t g_trace_capacity_reached = 0;
 static uint64_t g_trace_events_omitted = 0;
+static int phase_is_runtime_progress(uint32_t phase);
 static uint32_t g_last_phase = 0;
 static uint32_t g_heartbeat_count = 0;
 static uint32_t g_no_progress_level = 0;
