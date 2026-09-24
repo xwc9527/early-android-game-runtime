@@ -30,7 +30,7 @@ jobs:
         run: |
           python3 -m py_compile ci/*.py
           python3 -m py_compile tools/reference-lab/*.py
-          python3 tools/reference-lab/test_reference_lab.py
+          python3 -m unittest discover -s tools/reference-lab -p 'test_*.py'
       - name: Validate discovery governance and upstream mapping
         run: |
           python3 ci/upstream-map.py --verify-upstream --require-valid dalvik.nativeactivity.activity_root --output build/artifacts/upstream-map-report.json

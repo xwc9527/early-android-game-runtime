@@ -29,15 +29,15 @@ def close_entry(entry, index, migration_type="SOURCE_PORT"):
         "canonical_name": entry["canonical_name"],
         "migration_type": migration_type,
         "status": "UNRESOLVED",
-        "source_revision": "Android 4.4.4_r2",
+        "source_revision": index.get("revision"),
     }
     for name in LIST_FIELDS:
         manifest[name] = []
-    if entry.get("service_boundary") == "HOST_SERVICE_HLE_BOUNDARY":
-        manifest["migration_type"] = "SERVICE_HLE"
+    manifest["closure_evidence"] = None
+    service_candidate = entry.get("service_boundary") == "HOST_SERVICE_HLE_BOUNDARY"
+    if service_candidate:
         manifest["service_boundaries"] = [entry["canonical_name"]]
-        manifest["status"] = "BOUNDARY"
-        return manifest
+        manifest["status"] = "BOUNDARY_CANDIDATE"
     pinned = (index.get("entries") or {}).get(entry["canonical_name"])
     if not pinned:
         return manifest
@@ -46,11 +46,28 @@ def close_entry(entry, index, migration_type="SOURCE_PORT"):
     for name in ("owner_cluster", "source_repo", "source_module", "source_file", "source_symbol"):
         if pinned.get(name):
             manifest[name] = pinned[name]
-    if manifest["source_files"] and manifest["required_symbols"]:
+    manifest["status"] = "SOURCE_LOCATED" if manifest["source_files"] and manifest["required_symbols"] else "PARTIAL"
+    evidence = pinned.get("closure_evidence")
+    revision = index.get("revision")
+    if (manifest["status"] == "SOURCE_LOCATED" and pinned.get("closure_reviewed") is True
+            and isinstance(evidence, dict) and evidence.get("source_sha256")
+            and evidence.get("reviewed_by") and evidence.get("closure_notes")
+            and isinstance(revision, str) and len(revision) == 40
+            and all(char in "0123456789abcdef" for char in revision.lower())
+            and pinned.get("source_repo") and pinned.get("source_file")
+            and pinned.get("source_symbol") and pinned.get("owner_cluster")):
         manifest["status"] = "SOURCE_CLOSED"
-    else:
-        manifest["status"] = "PARTIAL"
+        manifest["closure_evidence"] = evidence
     manifest["migration_type"] = pinned.get("migration_type") or migration_type
     if manifest["migration_type"] in FORBIDDEN:
         raise ValueError("forbidden migration type: " + manifest["migration_type"])
+    if manifest["migration_type"] not in MIGRATION_TYPES:
+        raise ValueError("unknown migration type: " + manifest["migration_type"])
+    if service_candidate:
+        if manifest["status"] == "SOURCE_CLOSED" and manifest["migration_type"] == "SERVICE_HLE":
+            if entry["canonical_name"] not in manifest["service_boundaries"]:
+                raise ValueError("reviewed service boundary is not in the source index")
+            manifest["status"] = "BOUNDARY"
+        else:
+            manifest["status"] = "BOUNDARY_CANDIDATE"
     return manifest

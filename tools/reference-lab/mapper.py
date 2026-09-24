@@ -30,6 +30,7 @@ KINDS = {
     "JAVA_CLASS",
     "JAVA_FIELD",
     "NATIVE_SYMBOL",
+    "NATIVE_LIBRARY",
     "SERVICE",
     "JNI_BINDING",
 }
@@ -51,13 +52,13 @@ def _record(kind, canonical, confidence, **fields):
         "canonical_name": canonical,
         "confidence": confidence,
         "migration_status": "UNMAPPED",
-        "native": kind in ("NATIVE_SYMBOL", "JNI_BINDING"),
+        "native": kind in ("NATIVE_SYMBOL", "NATIVE_LIBRARY", "JNI_BINDING"),
         "owner_cluster": fields.get("owner_cluster"),
         "caller": fields.get("caller"),
         "callsite": fields.get("callsite"),
         "lifecycle_phase": fields.get("lifecycle_phase"),
-        "source_repo": "platform/dalvik",
-        "source_revision": "android-4.4.4_r2",
+        "source_repo": None,
+        "source_revision": None,
         "source_module": None,
         "source_file": None,
         "source_symbol": None,
@@ -82,6 +83,12 @@ def from_trace_event(event):
         lifecycle_phase=event.get("lifecycle_phase"),
         registration=event.get("registration"),
         service_boundary=event.get("service_boundary"),
+        origin=origin,
+        resolved_callee=event.get("resolved_callee"),
+        native_library=event.get("native_library"),
+        native_address=event.get("native_address"),
+        transaction_code=event.get("transaction_code"),
+        interface_descriptor=event.get("interface_descriptor"),
     )
 
 
@@ -93,23 +100,35 @@ def from_static(item):
         item["canonical_name"],
         item["confidence"],
         caller=item.get("caller"),
+        origin=item.get("origin"),
     )
 
 
 def build_book(apk, trace_events, static_items):
     by_id = {}
-    for event in trace_events:
-        record = from_trace_event(event)
-        by_id[record["dependency_id"]] = record
     for item in static_items:
         record = from_static(item)
-        by_id.setdefault(record["dependency_id"], record)
+        by_id[record["dependency_id"]] = record
+    for event in trace_events:
+        record = from_trace_event(event)
+        previous = by_id.get(record["dependency_id"])
+        if previous and previous["confidence"] in ("OBSERVED_RUNTIME", "DYNAMIC_DISCOVERED"):
+            previous.setdefault("observations", []).append({
+                "caller": record["caller"], "callsite": record["callsite"],
+                "lifecycle_phase": record["lifecycle_phase"], "origin": record.get("origin"),
+            })
+            continue
+        record["observations"] = [{
+            "caller": record["caller"], "callsite": record["callsite"],
+            "lifecycle_phase": record["lifecycle_phase"], "origin": record.get("origin"),
+        }]
+        by_id[record["dependency_id"]] = record
     return {
         "schema_version": 1,
-        "variant": "TRACE",
+        "variant": "TRACE" if trace_events else "STATIC_ONLY",
         "role": "dependency_mapper",
         "apk": apk,
-        "dependencies": list(by_id.values()),
+        "dependencies": sorted(by_id.values(), key=lambda item: item["dependency_id"]),
         "rule": "Confidence levels are not one verified bit. TRACE does not authorize implementation.",
     }
 
@@ -117,3 +136,49 @@ def build_book(apk, trace_events, static_items):
 def write_book(path, book):
     Path(path).write_text(json.dumps(book, indent=2) + "\n", encoding="utf-8")
     return book
+
+
+def union_books(books):
+    """Union independently identified runs without upgrading static evidence."""
+    if not books:
+        raise ValueError("at least one book is required")
+    hashes = {book["apk"]["sha256"] for book in books}
+    if len(hashes) != 1:
+        raise ValueError("cannot union different APK identities as one game")
+    rank = {name: i for i, name in enumerate(CONFIDENCE)}
+    by_id = {}
+    for book in books:
+        for record in book["dependencies"]:
+            key = record["dependency_id"]
+            current = by_id.get(key)
+            if current is None or rank[record["confidence"]] < rank[current["confidence"]]:
+                replacement = dict(record)
+                replacement["observations"] = list(record.get("observations", []))
+                if current:
+                    replacement["observations"] = list(current.get("observations", [])) + replacement["observations"]
+                by_id[key] = replacement
+            elif current:
+                current.setdefault("observations", []).extend(record.get("observations", []))
+    return {"schema_version": 1, "variant": "UNION", "role": "dependency_mapper",
+            "apk": books[0]["apk"], "run_count": len(books),
+            "dependencies": sorted(by_id.values(), key=lambda item: item["dependency_id"])}
+
+
+def corpus_union(books):
+    """Keep each APK's confidence while deduplicating the global dependency set."""
+    if not books:
+        raise ValueError("at least one book is required")
+    by_id = {}
+    games = {}
+    for book in books:
+        apk = book["apk"]["sha256"]
+        games[apk] = book["apk"]
+        for dep in book["dependencies"]:
+            item = by_id.setdefault(dep["dependency_id"], {
+                "dependency_id": dep["dependency_id"], "kind": dep["kind"],
+                "canonical_name": dep["canonical_name"], "owner_cluster": dep.get("owner_cluster"),
+                "games": {},
+            })
+            item["games"][apk] = dep["confidence"]
+    return {"schema_version": 1, "variant": "CORPUS_UNION", "games": games,
+            "dependencies": sorted(by_id.values(), key=lambda item: item["dependency_id"])}

@@ -81,7 +81,7 @@ class ReferenceLabTest(unittest.TestCase):
                 "required_symbols": ["setContentView"],
             }
         }})
-        self.assertEqual(closed["status"], "SOURCE_CLOSED")
+        self.assertEqual(closed["status"], "SOURCE_LOCATED")
         self.assertEqual(closed["migration_type"], "SOURCE_PORT")
         self.assertNotIn("PhoneWindow", json.dumps(closed))
 
@@ -91,8 +91,8 @@ class ReferenceLabTest(unittest.TestCase):
             "canonical_name": "android.view.IWindowSession#relayout",
             "service_boundary": "HOST_SERVICE_HLE_BOUNDARY",
         }, {"entries": {}})
-        self.assertEqual(manifest["status"], "BOUNDARY")
-        self.assertEqual(manifest["migration_type"], "SERVICE_HLE")
+        self.assertEqual(manifest["status"], "BOUNDARY_CANDIDATE")
+        self.assertEqual(manifest["migration_type"], "SOURCE_PORT")
 
     def test_jni_table_index_uses_only_listed_symbols(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -112,7 +112,7 @@ class ReferenceLabTest(unittest.TestCase):
                 "dependency_id": "JNI_BINDING:GetStaticIntField",
                 "canonical_name": "GetStaticIntField",
             }, document)
-            self.assertEqual(manifest["status"], "SOURCE_CLOSED")
+            self.assertEqual(manifest["status"], "SOURCE_LOCATED")
             self.assertEqual(manifest["source_file"], "vm/Jni.cpp")
             self.assertEqual(manifest["owner_cluster"], "JNI")
 
