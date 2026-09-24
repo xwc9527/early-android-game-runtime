@@ -498,6 +498,52 @@ static DxResult native_view_set_on_touch_listener(DxVM *vm, DxFrame *frame,
     return DX_OK;
 }
 
+/* MotionEvent is a per-dispatch value object.  The host endpoint supplies the
+ * raw event; Android View dispatch and guest handlers read these fields. */
+static DxResult native_motion_event_field(DxVM *vm, DxFrame *frame,
+                                           DxValue *args, uint32_t count,
+                                           const char *name, DxValue fallback) {
+    DxValue value = fallback;
+    (void)vm;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return DX_ERR_NULL_PTR;
+    if (dx_vm_get_field(args[0].obj, name, &value) != DX_OK)
+        return DX_ERR_INVALID_FORMAT;
+    frame->result = value;
+    frame->has_result = true;
+    return DX_OK;
+}
+
+#define MOTION_FIELD_GETTER(fn, field, fallback) \
+static DxResult fn(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) { \
+    return native_motion_event_field(vm, frame, args, count, field, fallback); \
+}
+MOTION_FIELD_GETTER(native_motion_get_action, "_action", DX_INT_VALUE(0))
+MOTION_FIELD_GETTER(native_motion_get_x, "_x", ((DxValue){.tag=DX_VAL_FLOAT,.f=0}))
+MOTION_FIELD_GETTER(native_motion_get_y, "_y", ((DxValue){.tag=DX_VAL_FLOAT,.f=0}))
+MOTION_FIELD_GETTER(native_motion_get_event_time, "_eventTime", ((DxValue){.tag=DX_VAL_LONG,.l=0}))
+#undef MOTION_FIELD_GETTER
+
+static DxResult native_motion_get_pointer_count(DxVM *vm, DxFrame *frame,
+                                                 DxValue *args, uint32_t count) {
+    (void)vm;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return DX_ERR_NULL_PTR;
+    frame->result = DX_INT_VALUE(1);
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult native_motion_get_pointer_id(DxVM *vm, DxFrame *frame,
+                                              DxValue *args, uint32_t count) {
+    (void)vm;
+    if (!frame || count < 2 || args[0].tag != DX_VAL_OBJ || !args[0].obj ||
+        args[1].tag != DX_VAL_INT) return DX_ERR_INVALID_FORMAT;
+    frame->result = DX_INT_VALUE(args[1].i == 0 ? 0 : -1);
+    frame->has_result = true;
+    return DX_OK;
+}
+
 static DxResult native_swipe_refresh_set_on_refresh_listener(DxVM *vm, DxFrame *frame,
                                                               DxValue *args, uint32_t arg_count) {
     (void)vm; (void)frame; (void)arg_count;
@@ -14828,15 +14874,20 @@ DxResult dx_register_android_framework(DxVM *vm) {
 
     // --- android.view.* (input events) ---
     DxClass *motion_event_cls = reg_class(vm, "Landroid/view/MotionEvent;", obj);
-    add_method(motion_event_cls, "getAction", "I", DX_ACC_PUBLIC, native_return_int_zero, false);
-    add_method(motion_event_cls, "getX", "F", DX_ACC_PUBLIC, native_return_int_zero, false);
-    add_method(motion_event_cls, "getY", "F", DX_ACC_PUBLIC, native_return_int_zero, false);
-    add_method(motion_event_cls, "getRawX", "F", DX_ACC_PUBLIC, native_return_int_zero, false);
-    add_method(motion_event_cls, "getRawY", "F", DX_ACC_PUBLIC, native_return_int_zero, false);
-    add_method(motion_event_cls, "getPointerCount", "I", DX_ACC_PUBLIC, native_return_int_zero, false);
-    add_method(motion_event_cls, "getPointerId", "II", DX_ACC_PUBLIC, native_return_int_zero, false);
-    add_method(motion_event_cls, "getActionMasked", "I", DX_ACC_PUBLIC, native_return_int_zero, false);
-    add_method(motion_event_cls, "getEventTime", "J", DX_ACC_PUBLIC, native_return_int_zero, false);
+    {
+        const char *names[] = {"_action", "_x", "_y", "_eventTime"};
+        const char *types[] = {"I", "F", "F", "J"};
+        setup_instance_fields(motion_event_cls, names, types, 4);
+    }
+    add_method(motion_event_cls, "getAction", "I", DX_ACC_PUBLIC, native_motion_get_action, false);
+    add_method(motion_event_cls, "getX", "F", DX_ACC_PUBLIC, native_motion_get_x, false);
+    add_method(motion_event_cls, "getY", "F", DX_ACC_PUBLIC, native_motion_get_y, false);
+    add_method(motion_event_cls, "getRawX", "F", DX_ACC_PUBLIC, native_motion_get_x, false);
+    add_method(motion_event_cls, "getRawY", "F", DX_ACC_PUBLIC, native_motion_get_y, false);
+    add_method(motion_event_cls, "getPointerCount", "I", DX_ACC_PUBLIC, native_motion_get_pointer_count, false);
+    add_method(motion_event_cls, "getPointerId", "II", DX_ACC_PUBLIC, native_motion_get_pointer_id, false);
+    add_method(motion_event_cls, "getActionMasked", "I", DX_ACC_PUBLIC, native_motion_get_action, false);
+    add_method(motion_event_cls, "getEventTime", "J", DX_ACC_PUBLIC, native_motion_get_event_time, false);
     {
         // MotionEvent action constants: ACTION_DOWN=0, ACTION_UP=1, ACTION_MOVE=2, ACTION_CANCEL=3
         const char *me_names[] = { "ACTION_DOWN", "ACTION_UP", "ACTION_MOVE", "ACTION_CANCEL" };

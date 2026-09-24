@@ -108,6 +108,12 @@ static DxResult activity_set_content_layout(DxVM *vm, DxFrame *frame,
                                             DxValue *args, uint32_t count);
 static DxResult activity_find_view_by_id(DxVM *vm, DxFrame *frame,
                                          DxValue *args, uint32_t count);
+static DxResult activity_dispatch_touch(DxVM *vm, DxFrame *frame,
+                                        DxValue *args, uint32_t count);
+static DxResult window_super_dispatch_touch(DxVM *vm, DxFrame *frame,
+                                            DxValue *args, uint32_t count);
+static DxResult view_on_touch_default(DxVM *vm, DxFrame *frame,
+                                      DxValue *args, uint32_t count);
 static DxResult window_set_content_view(DxVM *vm, DxFrame *frame,
                                         DxValue *args, uint32_t count);
 static DxResult window_set_content_layout(DxVM *vm, DxFrame *frame,
@@ -607,6 +613,7 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(activity, "setContentView", "VLL", DX_ACC_PUBLIC, activity_set_content_view, 0);
     add_method(activity, "setContentView", "VI", DX_ACC_PUBLIC, activity_set_content_layout, 0);
     add_method(activity, "findViewById", "LI", DX_ACC_PUBLIC, activity_find_view_by_id, 0);
+    add_method(activity, "dispatchTouchEvent", "ZL", DX_ACC_PUBLIC, activity_dispatch_touch, 0);
     add_method(activity, "onContentChanged", "V", DX_ACC_PUBLIC, noop, 0);
     add_method(native_activity, "<init>", "V", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR, noop, 1);
     add_method(native_activity, "onCreate", "VL", DX_ACC_PUBLIC, noop, 0);
@@ -686,6 +693,9 @@ static DxResult register_game_framework(DxVM *vm) {
     add_method(window, "setContentView", "VL", DX_ACC_PUBLIC, window_set_content_view, 0);
     add_method(window, "setContentView", "VLL", DX_ACC_PUBLIC, window_set_content_view, 0);
     add_method(window, "setContentView", "VI", DX_ACC_PUBLIC, window_set_content_layout, 0);
+    add_method(window, "superDispatchTouchEvent", "ZL", DX_ACC_PUBLIC,
+               window_super_dispatch_touch, 0);
+    add_method(view, "onTouchEvent", "ZL", DX_ACC_PUBLIC, view_on_touch_default, 0);
     DxClass *window_manager = reg_class(vm, "Landroid/view/WindowManager;", obj);
     const char *manager_names[] = { "_lastView", "_lastLayoutParams", "_viewRoot" };
     const char *manager_types[] = { "Landroid/view/View;", "Landroid/view/WindowManager$LayoutParams;",
@@ -909,6 +919,10 @@ struct agr_dex_game {
     DxObject *window;
     DxObject *decor;
     DxObject *content_view;
+    DxObject *touch_target;
+    int touch_down_active;
+    uint32_t touch_dispatched;
+    uint32_t touch_consumed;
     int32_t content_width;
     int32_t content_height;
     int content_child_count;
@@ -1921,6 +1935,126 @@ static DxResult bitmap_create_scaled(DxVM *vm, DxFrame *frame, DxValue *args, ui
                                AGR_BITMAP_WITNESS_HAS_PIXELS,
                            (int)agr_bitmap_width(scaled), (int)agr_bitmap_height(scaled),
                            dst_w, dst_h, "scale_return_new_object");
+    return DX_OK;
+}
+
+/* API19 dispatch order for the supported single-pointer View hierarchy:
+ * Window/Decor -> topmost accepting child -> OnTouchListener -> onTouchEvent.
+ * The child that accepts ACTION_DOWN retains the gesture through UP/CANCEL. */
+static DxResult dispatch_touch_leaf(agr_dex_game *game, DxObject *view,
+                                    DxObject *event, int *handled) {
+    DxMethod *method;
+    DxValue args[3], result = DX_NULL_VALUE;
+    DxResult rc;
+    if (!game || !view || !event || !handled) return DX_ERR_NULL_PTR;
+    *handled = 0;
+    if (view->ui_node && view->ui_node->touch_listener) {
+        DxObject *listener = view->ui_node->touch_listener;
+        method = dx_vm_find_method(listener->klass, "onTouch", "ZLL");
+        if (method) {
+            args[0] = DX_OBJ_VALUE(listener);
+            args[1] = DX_OBJ_VALUE(view);
+            args[2] = DX_OBJ_VALUE(event);
+            rc = dx_vm_execute_method(game->vm, method, args, 3, &result);
+            if (rc != DX_OK) return rc;
+            if (result.tag == DX_VAL_INT && result.i) { *handled = 1; return DX_OK; }
+        }
+    }
+    method = dx_vm_find_method(view->klass, "onTouchEvent", "ZL");
+    if (!method) return DX_OK;
+    args[0] = DX_OBJ_VALUE(view);
+    args[1] = DX_OBJ_VALUE(event);
+    rc = dx_vm_execute_method(game->vm, method, args, 2, &result);
+    if (rc == DX_OK && result.tag == DX_VAL_INT) *handled = result.i != 0;
+    return rc;
+}
+
+static DxResult dispatch_touch_down(agr_dex_game *game, DxObject *view,
+                                     DxObject *event, unsigned depth, int *handled) {
+    DxObject *children[32];
+    DxValue child = DX_NULL_VALUE;
+    unsigned count = 0;
+    if (!view || depth >= 32) return DX_ERR_INVALID_FORMAT;
+    if (dx_vm_get_field(view, "_child", &child) == DX_OK && child.tag == DX_VAL_OBJ) {
+        for (DxObject *cursor = child.obj; cursor && count < 32;) {
+            DxValue next = DX_NULL_VALUE;
+            children[count++] = cursor;
+            if (dx_vm_get_field(cursor, "_next", &next) != DX_OK || next.tag != DX_VAL_OBJ)
+                break;
+            cursor = next.obj;
+        }
+    }
+    /* API19 ViewGroup visits the last child first for a new pointer target. */
+    while (count) {
+        DxObject *candidate = children[--count];
+        DxValue visibility = DX_NULL_VALUE;
+        int accepted = 0;
+        DxResult rc;
+        if (dx_vm_get_field(candidate, "_visibility", &visibility) == DX_OK &&
+            visibility.tag == DX_VAL_INT && visibility.i != 0) continue;
+        rc = dispatch_touch_down(game, candidate, event, depth + 1, &accepted);
+        if (rc != DX_OK) return rc;
+        if (accepted) { *handled = 1; return DX_OK; }
+    }
+    {
+        DxResult rc = dispatch_touch_leaf(game, view, event, handled);
+        if (rc == DX_OK && *handled) game->touch_target = view;
+        return rc;
+    }
+}
+
+static DxResult view_on_touch_default(DxVM *vm, DxFrame *frame,
+                                      DxValue *args, uint32_t count) {
+    (void)vm; (void)args; (void)count;
+    if (!frame) return DX_ERR_NULL_PTR;
+    frame->result = DX_INT_VALUE(0);
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult window_super_dispatch_touch(DxVM *vm, DxFrame *frame,
+                                            DxValue *args, uint32_t count) {
+    agr_dex_game *game = vm ? (agr_dex_game *)vm->framework_user : NULL;
+    DxValue action = DX_NULL_VALUE;
+    int handled = 0;
+    DxResult rc = DX_OK;
+    if (!game || !frame || count < 2 || args[0].tag != DX_VAL_OBJ ||
+        args[0].obj != game->window || args[1].tag != DX_VAL_OBJ || !args[1].obj ||
+        !game->content_view) return DX_ERR_INVALID_FORMAT;
+    if (dx_vm_get_field(args[1].obj, "_action", &action) != DX_OK ||
+        action.tag != DX_VAL_INT) return DX_ERR_INVALID_FORMAT;
+    if (action.i == 0) {
+        game->touch_target = NULL;
+        rc = dispatch_touch_down(game, game->content_view, args[1].obj, 0, &handled);
+    } else if (game->touch_target) {
+        rc = dispatch_touch_leaf(game, game->touch_target, args[1].obj, &handled);
+    }
+    if (action.i == 1 || action.i == 3) game->touch_target = NULL;
+    if (rc != DX_OK) return rc;
+    frame->result = DX_INT_VALUE(handled);
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult activity_dispatch_touch(DxVM *vm, DxFrame *frame,
+                                        DxValue *args, uint32_t count) {
+    agr_dex_game *game = vm ? (agr_dex_game *)vm->framework_user : NULL;
+    DxClass *window_class;
+    DxMethod *dispatch;
+    DxValue forwarded[2], result = DX_NULL_VALUE;
+    DxResult rc;
+    if (!game || !frame || count < 2 || args[0].tag != DX_VAL_OBJ ||
+        args[0].obj != game->activity || args[1].tag != DX_VAL_OBJ || !args[1].obj)
+        return DX_ERR_INVALID_FORMAT;
+    window_class = dx_vm_find_class(vm, "Landroid/view/Window;");
+    dispatch = window_class ? dx_vm_find_method(window_class, "superDispatchTouchEvent", "ZL") : NULL;
+    if (!dispatch) return DX_ERR_INVALID_FORMAT;
+    forwarded[0] = DX_OBJ_VALUE(game->window);
+    forwarded[1] = args[1];
+    rc = dx_vm_execute_method(vm, dispatch, forwarded, 2, &result);
+    if (rc != DX_OK) return rc;
+    frame->result = result;
+    frame->has_result = true;
     return DX_OK;
 }
 
@@ -3680,6 +3814,9 @@ int agr_dex_game_runtime_snapshot(const agr_dex_game *game, agr_dex_runtime_snap
     snapshot->surface_generation=game->viewroot.backing.generation;
     snapshot->draw_count=game->viewroot.draw_count;
     snapshot->content_view_installed=game->content_view!=NULL;
+    snapshot->touch_dispatched=game->touch_dispatched;
+    snapshot->touch_consumed=game->touch_consumed;
+    snapshot->touch_down_active=game->touch_down_active;
     snapshot->content_layout_width=game->content_view ? game->content_width : 0;
     snapshot->content_layout_height=game->content_view ? game->content_height : 0;
     snapshot->content_child_count=game->content_view ? game->content_child_count : 0;
@@ -3943,6 +4080,45 @@ int agr_dex_game_choreographer_frame(agr_dex_game *game) {
         return -1;
     }
     return scheduled ? 0 : 1;
+}
+
+int agr_dex_game_dispatch_touch(agr_dex_game *game, int action, float x, float y,
+                                uint64_t event_time_ms) {
+    DxClass *event_class;
+    DxMethod *dispatch;
+    DxObject *event;
+    DxValue args[2], result = DX_NULL_VALUE;
+    DxResult rc;
+    if (!game || !game->vm || !game->activity || !game->content_view ||
+        !game->viewroot.attach_complete || !game->window_visible ||
+        action < 0 || action > 3 || !isfinite(x) || !isfinite(y)) return -1;
+    if (action == 0) {
+        game->touch_down_active = 1;
+    } else if (!game->touch_down_active) {
+        return 0;
+    }
+    event_class = dx_vm_find_class(game->vm, "Landroid/view/MotionEvent;");
+    dispatch = dx_vm_find_method(game->activity->klass, "dispatchTouchEvent", "ZL");
+    event = event_class ? dx_vm_alloc_object(game->vm, event_class) : NULL;
+    if (!dispatch || !event) return -1;
+    dx_vm_set_field(event, "_action", DX_INT_VALUE(action));
+    dx_vm_set_field(event, "_x", ((DxValue){.tag=DX_VAL_FLOAT,.f=x}));
+    dx_vm_set_field(event, "_y", ((DxValue){.tag=DX_VAL_FLOAT,.f=y}));
+    dx_vm_set_field(event, "_eventTime", ((DxValue){.tag=DX_VAL_LONG,.l=(int64_t)event_time_ms}));
+    args[0] = DX_OBJ_VALUE(game->activity);
+    args[1] = DX_OBJ_VALUE(event);
+    framework_event(game, "input.activity.dispatch_touch");
+    rc = dx_vm_execute_method(game->vm, dispatch, args, 2, &result);
+    if (action == 1 || action == 3) game->touch_down_active = 0;
+    if (rc != DX_OK) return -1;
+    game->touch_dispatched++;
+    if (result.tag == DX_VAL_INT && result.i) {
+        game->touch_consumed++;
+        framework_event(game, "input.view.consumed");
+        return 1;
+    }
+    framework_event(game, "input.view.unhandled");
+    return 0;
 }
 
 int agr_dex_game_set_surface_allocator(agr_dex_game *game,

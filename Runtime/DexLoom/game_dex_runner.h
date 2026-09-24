@@ -85,6 +85,9 @@ typedef struct {
     uint32_t surface_generation;
     uint32_t draw_count;
     int content_view_installed;
+    uint32_t touch_dispatched;
+    uint32_t touch_consumed;
+    int touch_down_active;
     int content_layout_width;
     int content_layout_height;
     int content_child_count;
@@ -182,6 +185,10 @@ int agr_dex_game_set_host_display(agr_dex_game *game, uint32_t display_width_pix
 /* One host vsync. Returns 0 when a posted traversal ran, 1 when none was
    due, and -1 on error. Never runs the reschedule in the same call. */
 int agr_dex_game_choreographer_frame(agr_dex_game *game);
+/* API19 Activity -> Window -> View dispatch for one touchscreen pointer.
+   Returns 1 when guest View consumes it, 0 when unhandled, -1 on Runtime error. */
+int agr_dex_game_dispatch_touch(agr_dex_game *game, int action, float x, float y,
+                                uint64_t event_time_ms);
 /* Activity.setContentView(View) for a newly allocated content View.
    MATCH_PARENT params. Schedules a traversal only when the decor is already
    attached, and does not execute it. */

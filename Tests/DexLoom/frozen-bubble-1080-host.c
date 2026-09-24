@@ -155,6 +155,25 @@ int main(int argc, char **argv) {
         }
         agr_dex_posted_surface_release(&posted);
     }
+    {
+        uint32_t before_posts = snapshot.canvas_post_count;
+        uint64_t before_hash = snapshot.canvas_buffer_hash_after;
+        int down = agr_dex_game_dispatch_touch(game, 0, 540.0f, 450.0f, 1000);
+        int up = agr_dex_game_dispatch_touch(game, 1, 540.0f, 450.0f, 1100);
+        expect(down == 1 && up == 1, "original GameView consumes down and up through Activity/Window/View");
+        usleep(300000);
+        expect(agr_dex_game_runtime_snapshot(game, &snapshot) == 0, "snapshot after touch");
+        printf("touch down=%d up=%d dispatched=%u consumed=%u posts=%u->%u hash=%llx->%llx\n",
+               down, up, snapshot.touch_dispatched, snapshot.touch_consumed,
+               before_posts, snapshot.canvas_post_count,
+               (unsigned long long)before_hash,
+               (unsigned long long)snapshot.canvas_buffer_hash_after);
+        expect(snapshot.touch_dispatched == 2 && snapshot.touch_consumed == 2,
+               "touch consumption counters reflect guest result");
+        expect(snapshot.canvas_post_count > before_posts, "GameThread continues after touch");
+        expect(snapshot.canvas_buffer_hash_after != before_hash,
+               "original game touch changes a later completed frame");
+    }
     agr_dex_game_destroy(game);
     agr_apk_package_close(package);
     printf("frozen-bubble-1080: %s\n", g_failures ? "FAIL" : "PASS");

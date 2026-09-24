@@ -1277,6 +1277,8 @@ static int gPhysicalSawVectorSize = 0;
 static int gPhysicalSawVectorElement = 0;
 static int gPhysicalSawPaint = 0;
 static char gPhysicalLastStage[32];
+static NSMutableArray<NSDictionary *> *gPhysicalInputTrace = nil;
+static dispatch_queue_t gPhysicalInputTraceQueue;
 static void armPhysicalRuntime(uint32_t width, uint32_t height);
 static NSDictionary *captureEnvironment(int physical, int displayOverride, uint32_t hostW, uint32_t hostH);
 static void publishEnvironment(int physical, int displayOverride, uint32_t hostW, uint32_t hostH);
@@ -1289,6 +1291,65 @@ static double gLinkPrevious = 0;
 static uint64_t gObsStart = 0;
 static uint64_t gObsDeadline = 0;
 static NSString *gObsStop = @"";
+
+@interface AGRPhysicalTouchView : UIView
+@property(nonatomic, strong) UITouch *activeTouch;
+@end
+
+@implementation AGRPhysicalTouchView
+- (void)recordTouch:(UITouch *)touch action:(int)action {
+    if (!touch || !gPhysicalGame || !gPhysicalWidth || !gPhysicalHeight ||
+        self.bounds.size.width <= 0 || self.bounds.size.height <= 0) return;
+    CGPoint point = [touch locationInView:self];
+    float x = (float)(point.x * (double)gPhysicalWidth / self.bounds.size.width);
+    float y = (float)(point.y * (double)gPhysicalHeight / self.bounds.size.height);
+    uint64_t timeMs = (uint64_t)(touch.timestamp * 1000.0);
+    int consumed = agr_dex_game_dispatch_touch(gPhysicalGame, action, x, y, timeMs);
+    NSDictionary *entry = @{@"action":@(action), @"x":@(x), @"y":@(y),
+                            @"event_time_ms":@(timeMs), @"consumed":@(consumed),
+                            @"host_vsync":@(gPhysicalVsync),
+                            @"host_submissions":@(gPhysicalHostSubmissions)};
+    if (!gPhysicalInputTrace) gPhysicalInputTrace = [NSMutableArray arrayWithCapacity:64];
+    if (gPhysicalInputTrace.count >= 512) [gPhysicalInputTrace removeObjectAtIndex:0];
+    [gPhysicalInputTrace addObject:entry];
+    NSArray *events = [gPhysicalInputTrace copy];
+    if (!gPhysicalInputTraceQueue)
+        gPhysicalInputTraceQueue = dispatch_queue_create("dev.agr.input-trace", DISPATCH_QUEUE_SERIAL);
+    dispatch_async(gPhysicalInputTraceQueue, ^{
+        NSDictionary *trace = @{@"schema":@"agr.manual-input.v1", @"events":events};
+        NSData *json = [NSJSONSerialization dataWithJSONObject:trace options:0 error:nil];
+        [json writeToFile:[NSHomeDirectory() stringByAppendingPathComponent:@"Documents/manual-replay.json"]
+                 atomically:YES];
+    });
+    NSLog(@"AGR_INPUT action=%d x=%.2f y=%.2f consumed=%d post=%u", action, x, y,
+          consumed, gPhysicalHostSubmissions);
+}
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    (void)event;
+    if (self.activeTouch) return;
+    self.activeTouch = touches.anyObject;
+    [self recordTouch:self.activeTouch action:0];
+}
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    (void)event;
+    if (self.activeTouch && [touches containsObject:self.activeTouch])
+        [self recordTouch:self.activeTouch action:2];
+}
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    (void)event;
+    if (self.activeTouch && [touches containsObject:self.activeTouch]) {
+        [self recordTouch:self.activeTouch action:1];
+        self.activeTouch = nil;
+    }
+}
+- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    (void)event;
+    if (self.activeTouch && [touches containsObject:self.activeTouch]) {
+        [self recordTouch:self.activeTouch action:3];
+        self.activeTouch = nil;
+    }
+}
+@end
 
 static NSDictionary *bundleBuildEnvironment(void) {
     NSString *path=[[NSBundle mainBundle] pathForResource:@"agr-build-environment" ofType:@"json"];
@@ -1921,6 +1982,8 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     self.window.frame = ((UIWindowScene *)scene).coordinateSpace.bounds;
     UIViewController *controller = (interactive && !physicalRuntime) ? [AGRDebugController new] : [UIViewController new]; controller.view.backgroundColor = UIColor.blackColor;
     if (physicalRuntime) {
+      controller.view = [[AGRPhysicalTouchView alloc] initWithFrame:controller.view.bounds];
+      controller.view.backgroundColor = UIColor.blackColor;
       gPhysicalSurfaceController = controller;
       controller.view.layer.contentsGravity = kCAGravityResizeAspect;
       controller.view.layer.contentsScale = UIScreen.mainScreen.scale;
@@ -2440,6 +2503,10 @@ static void finishPhysicalReport(void) {
         @"content_produced":contentProduced ? @"YES" : @"NO",
         @"content_posted":contentPosted ? @"YES" : @"NO",
         @"host_surface_submissions":@(gPhysicalHostSubmissions),
+        @"input_dispatched":@(snapshot.touch_dispatched),
+        @"input_consumed":@(snapshot.touch_consumed),
+        @"touch_down_active":@(snapshot.touch_down_active),
+        @"manual_input_trace_count":@(gPhysicalInputTrace.count),
         @"host_last_submitted_hash":[NSString stringWithFormat:@"%016llx", (unsigned long long)gPhysicalLastSubmittedHash],
         @"observation_mode":gPostFirstFrameDiscovery ? @"POST_FIRST_FRAME_ZERO_INPUT" : @"FIRST_CONTENT_FRAME",
         @"post_first_frame_checkpoints":gPostFirstFrameCheckpoints ?: @[],
