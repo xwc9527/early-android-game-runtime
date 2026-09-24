@@ -5,6 +5,7 @@ entry points. Names that are not in that table are not added.
 """
 
 import json
+import hashlib
 import re
 from pathlib import Path
 
@@ -36,6 +37,7 @@ def index_jni_table(path):
 
 def build_index(path, revision="36e356c96640775f0a3f167bd2426ea0f0093b8b"):
     symbols = index_jni_table(path)
+    source_sha256 = hashlib.sha256(Path(path).read_bytes()).hexdigest()
     entries = {}
     for name in symbols:
         entries[name] = {
@@ -53,6 +55,7 @@ def build_index(path, revision="36e356c96640775f0a3f167bd2426ea0f0093b8b"):
         "baseline": "Android 4.4.4_r2",
         "revision": revision,
         "source": "platform/dalvik/vm/Jni.cpp",
+        "source_sha256": source_sha256,
         "entries": entries,
     }
 

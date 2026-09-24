@@ -78,7 +78,8 @@ class WorkflowTest(unittest.TestCase):
             self.assertEqual(len(corpus_union([book, book])["games"]), 1)
             with self.assertRaises(ValueError):
                 union_books([book, {**book, "apk": {"sha256": "b" * 64}}])
-            source = {"revision": "d" * 40, "entries": {event["canonical_name"]: {
+            source = {"revision": "d" * 40, "source_sha256": "c" * 64,
+                      "entries": {event["canonical_name"]: {
                 "source_files": ["platform/frameworks/base/core/java/android/app/Activity.java"],
                 "required_symbols": ["setContentView"],
                 "owner_cluster": "Framework", "source_repo": "platform/frameworks/base",
@@ -89,6 +90,9 @@ class WorkflowTest(unittest.TestCase):
                 "source_sha256": "c" * 64, "reviewed_by": "source-audit",
                 "closure_notes": "Reviewed entry and callees"}
             self.assertEqual(close_entry(book["dependencies"][0], source)["status"], "SOURCE_CLOSED")
+            source["source_sha256"] = "d" * 64
+            self.assertEqual(close_entry(book["dependencies"][0], source)["status"], "SOURCE_LOCATED")
+            source["source_sha256"] = "c" * 64
             self.assertIn("Framework", manifests(book, source)["cluster_source_manifests"])
             evidence["apk_sha256"] = "wrong"
             evidence_file.write_text(json.dumps(evidence), encoding="utf-8")
@@ -106,5 +110,5 @@ class WorkflowTest(unittest.TestCase):
                   "migration_type": "SERVICE_HLE", "closure_reviewed": True,
                   "closure_evidence": {"source_sha256": "f" * 64, "reviewed_by": "source-audit",
                                        "closure_notes": "Service boundary reviewed"}}
-        self.assertEqual(close_entry(entry, {"revision": "e" * 40,
+        self.assertEqual(close_entry(entry, {"revision": "e" * 40, "source_sha256": "f" * 64,
                                              "entries": {entry["canonical_name"]: source}})["status"], "BOUNDARY")

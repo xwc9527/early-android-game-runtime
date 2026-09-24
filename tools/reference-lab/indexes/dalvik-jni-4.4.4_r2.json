@@ -3,6 +3,7 @@
   "baseline": "Android 4.4.4_r2",
   "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
   "source": "platform/dalvik/vm/Jni.cpp",
+  "source_sha256": "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed",
   "entries": {
     "GetVersion": {
       "owner_cluster": "JNI",

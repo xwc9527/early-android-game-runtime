@@ -25,6 +25,15 @@ DT_NEEDED and imported symbols. It does not infer reachability, parse binary
 layout resources, or invent dynamic reflection targets. Those findings remain
 STATIC_REFERENCED.
 
+`evidence/frozen-bubble-static.json` is a static-only book generated from the
+repository-locked `org.jfedor.frozenbubble_8.apk` (SHA-256
+`57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569`).
+It contains 183 distinct entries: 57 classes, 117 methods, and 9 fields.
+The APK was fetched from the F-Droid archive mirror at
+`https://ftp.agdsn.de/pub/mirrors/fdroid/archive/org.jfedor.frozenbubble_8.apk`
+and verified against `Tests/Samples/fdroid.lock.json`. This book cannot
+authorize source closure or a cluster port until the matching TRACE run exists.
+
 An index entry is SOURCE_LOCATED when it names source files and symbols.
 SOURCE_CLOSED additionally requires explicit closure_reviewed=true and
 closure_evidence with source_sha256, reviewed_by, and closure_notes. That

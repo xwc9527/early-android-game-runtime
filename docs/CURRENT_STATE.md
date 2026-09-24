@@ -54,7 +54,17 @@ DT_NEEDED/imports, verify TRACE event identity before building a per-run
 Migration Book, union books by APK or corpus, and emit source manifests from
 an explicit source index. Static-only output cannot enter source closure.
 Source lookup alone is SOURCE_LOCATED; SOURCE_CLOSED requires a reviewed
-closure record and source hash. The JNI table example is SOURCE_LOCATED.
+closure record whose hash matches the pinned source index. The JNI table
+example is SOURCE_LOCATED. The local Ubuntu 22.04 WSL2 environment has
+`/dev/kvm`; the verified CLEAN ISO booted again there and ADB reported
+Android 4.4.4/API19 with the fingerprint recorded in
+`tools/reference-lab/clean_boot_evidence.json`. The checked-out Dalvik
+`vm/Jni.cpp` hashes to
+`ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed`;
+the regenerated 229-entry index matches the committed index semantically.
+The SHA-pinned Frozen Bubble APK produced
+`tools/reference-lab/evidence/frozen-bubble-static.json` with 183 static
+references. That artifact is STATIC_ONLY, not an observed TRACE run.
 These changes are IMPLEMENTED locally, not CLOSED or MERGED.
 
 R0 remains partial: the recorded CLEAN guest boot is retained, while the

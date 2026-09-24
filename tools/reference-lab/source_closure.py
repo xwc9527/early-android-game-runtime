@@ -51,6 +51,7 @@ def close_entry(entry, index, migration_type="SOURCE_PORT"):
     revision = index.get("revision")
     if (manifest["status"] == "SOURCE_LOCATED" and pinned.get("closure_reviewed") is True
             and isinstance(evidence, dict) and evidence.get("source_sha256")
+            and evidence["source_sha256"] == index.get("source_sha256")
             and evidence.get("reviewed_by") and evidence.get("closure_notes")
             and isinstance(revision, str) and len(revision) == 40
             and all(char in "0123456789abcdef" for char in revision.lower())
