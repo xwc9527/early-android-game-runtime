@@ -114,8 +114,11 @@ def probe_apk(root, apk_path, component, settle_s):
         packages = adb("shell", "pm", "list", "packages", timeout=45)
         if "package:com.android.settings" not in packages:
             raise RuntimeError("CLEAN package manager did not list com.android.settings")
-        record["stage"] = "install"
-        install = adb("install", "-r", str(apk_path), timeout=180)
+        remote_apk = "/data/local/tmp/agr-clean-probe.apk"
+        record["stage"] = "transfer"
+        record["transfer_result"] = adb("push", str(apk_path), remote_apk, timeout=60)
+        record["stage"] = "package_install"
+        install = adb("shell", "pm", "install", "-r", remote_apk, timeout=120)
         if "Success" not in install:
             raise RuntimeError("CLEAN APK install did not succeed: " + install)
         record["install_result"] = install
