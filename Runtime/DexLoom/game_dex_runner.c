@@ -365,6 +365,48 @@ static int options_value_int(DxValue *args, uint32_t count, const char *name, in
     return value.i;
 }
 
+static DxResult motion_event_field(DxVM *vm, DxFrame *frame, DxValue *args,
+                                    uint32_t count, const char *name) {
+    DxValue value = DX_NULL_VALUE;
+    (void)vm;
+    if (!frame || count < 1 || args[0].tag != DX_VAL_OBJ || !args[0].obj)
+        return DX_ERR_NULL_PTR;
+    if (dx_vm_get_field(args[0].obj, name, &value) != DX_OK)
+        return DX_ERR_INVALID_FORMAT;
+    frame->result = value;
+    frame->has_result = true;
+    return DX_OK;
+}
+
+#define MOTION_GETTER(fn, field) \
+static DxResult fn(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t count) { \
+    return motion_event_field(vm, frame, args, count, field); \
+}
+MOTION_GETTER(motion_get_action, "_action")
+MOTION_GETTER(motion_get_x, "_x")
+MOTION_GETTER(motion_get_y, "_y")
+MOTION_GETTER(motion_get_event_time, "_eventTime")
+#undef MOTION_GETTER
+
+static DxResult motion_get_pointer_count(DxVM *vm, DxFrame *frame,
+                                          DxValue *args, uint32_t count) {
+    (void)vm; (void)args; (void)count;
+    if (!frame) return DX_ERR_NULL_PTR;
+    frame->result = DX_INT_VALUE(1);
+    frame->has_result = true;
+    return DX_OK;
+}
+
+static DxResult motion_get_pointer_id(DxVM *vm, DxFrame *frame,
+                                       DxValue *args, uint32_t count) {
+    (void)vm;
+    if (!frame || count < 2 || args[1].tag != DX_VAL_INT || args[1].i != 0)
+        return DX_ERR_INVALID_FORMAT;
+    frame->result = DX_INT_VALUE(0);
+    frame->has_result = true;
+    return DX_OK;
+}
+
 static int options_value_set(DxValue *args, uint32_t count, const char *name) {
     DxValue value = DX_NULL_VALUE;
     if (count < 3 || args[2].tag != DX_VAL_OBJ || !args[2].obj) return 0;
@@ -678,6 +720,21 @@ static DxResult register_game_framework(DxVM *vm) {
     reg_class(vm, "Landroid/util/AttributeSet;", obj);
     add_method(view, "setVisibility", "VI", DX_ACC_PUBLIC, view_set_visibility, 0);
     add_method(view, "requestLayout", "V", DX_ACC_PUBLIC, view_request_layout, 0);
+    DxClass *motion_event = reg_class(vm, "Landroid/view/MotionEvent;", obj);
+    const char *motion_names[] = { "_action", "_x", "_y", "_eventTime" };
+    const char *motion_types[] = { "I", "F", "F", "J" };
+    own_fields(motion_event, 4, motion_names, motion_types);
+    add_method(motion_event, "getAction", "I", DX_ACC_PUBLIC, motion_get_action, 0);
+    add_method(motion_event, "getActionMasked", "I", DX_ACC_PUBLIC, motion_get_action, 0);
+    add_method(motion_event, "getX", "F", DX_ACC_PUBLIC, motion_get_x, 0);
+    add_method(motion_event, "getY", "F", DX_ACC_PUBLIC, motion_get_y, 0);
+    add_method(motion_event, "getRawX", "F", DX_ACC_PUBLIC, motion_get_x, 0);
+    add_method(motion_event, "getRawY", "F", DX_ACC_PUBLIC, motion_get_y, 0);
+    add_method(motion_event, "getEventTime", "J", DX_ACC_PUBLIC, motion_get_event_time, 0);
+    add_method(motion_event, "getPointerCount", "I", DX_ACC_PUBLIC,
+               motion_get_pointer_count, 0);
+    add_method(motion_event, "getPointerId", "II", DX_ACC_PUBLIC,
+               motion_get_pointer_id, 0);
     DxClass *layout_params = reg_class(vm, "Landroid/view/WindowManager$LayoutParams;", obj);
     const char *layout_names[] = { "_type", "_softInputMode", "_width", "_height" };
     const char *layout_types[] = { "I", "I", "I", "I" };
