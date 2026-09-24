@@ -24,17 +24,29 @@ static const int harness_called_do_traversal = 0;
 static const int harness_called_render_api = 0;
 static int g_failures = 0;
 
-static void print_game_modes(agr_dex_game *game, const char *when) {
+static int print_game_modes(agr_dex_game *game, const char *when) {
     DxVM *vm = agr_dex_game_vm(game);
+    int ready = -1;
     for (uint32_t i = 0; vm && i < vm->heap_count; i++) {
         DxObject *obj = vm->heap[i];
         DxValue mode = DX_NULL_VALUE;
+        DxValue frozen = DX_NULL_VALUE;
         if (!obj || !obj->klass || !obj->klass->descriptor ||
             strcmp(obj->klass->descriptor, "Lorg/jfedor/frozenbubble/GameView$GameThread;") != 0)
             continue;
         if (dx_vm_get_field(obj, "mMode", &mode) == DX_OK && mode.tag == DX_VAL_INT)
             printf("guest_game_mode %s=%d\n", when, mode.i);
+        if (dx_vm_get_field(obj, "mFrozenGame", &frozen) == DX_OK &&
+            frozen.tag == DX_VAL_OBJ && frozen.obj) {
+            DxValue flag = DX_NULL_VALUE;
+            if (dx_vm_get_field(frozen.obj, "readyToFire", &flag) == DX_OK &&
+                flag.tag == DX_VAL_INT) {
+                ready = flag.i;
+                printf("guest_ready_to_fire %s=%d\n", when, ready);
+            }
+        }
     }
+    return ready;
 }
 
 static void expect(int condition, const char *message) {
@@ -185,7 +197,22 @@ int main(int argc, char **argv) {
                    (unsigned long long)snapshot.instructions_executed);
             if (snapshot.canvas_buffer_hash_after != before_hash) break;
         }
-        print_game_modes(game, "after_touch");
+        int ready = print_game_modes(game, "after_touch");
+        if (ready == 1) {
+            int down2 = agr_dex_game_dispatch_touch(game, 0, 540.0f, 450.0f, 4000);
+            int up2 = agr_dex_game_dispatch_touch(game, 1, 540.0f, 450.0f, 4100);
+            printf("second_touch down=%d up=%d\n", down2, up2);
+            expect(down2 == 1 && up2 == 1, "second touch reaches original game when fire is ready");
+            for (int sample = 0; sample < 6; sample++) {
+                usleep(500000);
+                expect(agr_dex_game_runtime_snapshot(game, &snapshot) == 0,
+                       "snapshot after second touch");
+                printf("second_touch_progress sample=%d posts=%u hash=%llx\n",
+                       sample, snapshot.canvas_post_count,
+                       (unsigned long long)snapshot.canvas_buffer_hash_after);
+                if (snapshot.canvas_buffer_hash_after != before_hash) break;
+            }
+        }
         for (uint32_t i = 0; i < snapshot.method_event_count; i++)
             if (strstr(snapshot.method_events[i].method, "onTouchEvent") ||
                 strstr(snapshot.method_events[i].method, "doTouchEvent") ||
@@ -200,7 +227,8 @@ int main(int argc, char **argv) {
                (unsigned long long)before_hash,
                (unsigned long long)snapshot.canvas_buffer_hash_after,
                snapshot.error);
-        expect(snapshot.touch_dispatched == 2 && snapshot.touch_consumed == 2,
+        expect(snapshot.touch_dispatched == (ready == 1 ? 4u : 2u) &&
+               snapshot.touch_consumed == (ready == 1 ? 4u : 2u),
                "touch consumption counters reflect guest result");
         expect(snapshot.canvas_post_count > before_posts, "GameThread continues after touch");
         expect(snapshot.canvas_buffer_hash_after != before_hash,
