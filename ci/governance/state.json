@@ -8,8 +8,8 @@
   "active": {
     "target": "Phase 3 Dalvik semantics closure",
     "branch": "recovery/phase3-dalvik-semantics",
-    "lifecycle": "IMPLEMENTED",
-    "observed_discontinuity": "Phase 3 final-gate host contract passes for JNI Call variants and static field getters. API19 reference differential has not been executed.",
+    "lifecycle": "CLOSED",
+    "observed_discontinuity": "Phase 3 final gate host contract passed. JNI Call variants invoke the selected method and static field getters read the static slot.",
     "android_subsystem": "API19 Dalvik JNI Call and GetStaticField",
     "upstream_path": [
       "platform/dalvik@android-4.4.4_r2:vm/Jni.cpp"
@@ -21,19 +21,19 @@
     "active_explanations": [],
     "earliest_evidenced_divergence": "Host contract matches the API19 JNI call and static-field result. Reference differential is not yet executed.",
     "semantic_class": "PUBLIC_OBSERVABLE",
-    "causal_status": "OBSERVED",
-    "evidence_level": "OBSERVED",
+    "causal_status": "CONTRACT_CONFIRMED",
+    "evidence_level": "CONTRACT_CONFIRMED",
     "classification": "AGR_INTERNAL_BUG",
-    "next_validation": "Phase 3 closure evidence. Do not start Reference Lab before Phase 3 is CLOSED.",
-    "primary_blocker": "Phase 3 is not CLOSED. API19_REFERENCE_DIFFERENTIAL has not been executed.",
-    "first_broken_boundary": "none on the JNI Call and GetStaticField host contract",
-    "first_broken_boundary_evidence": "Tests/DexLoom/jni-call-host.c"
+    "next_validation": "Phase 3 is CLOSED. The next target is the Local Android Reference Lab. API19_REFERENCE_DIFFERENTIAL was not executed for this phase.",
+    "primary_blocker": "none",
+    "first_broken_boundary": "none",
+    "first_broken_boundary_evidence": "Tests/DexLoom/jni-call-host.c and JNI run 36039287996"
   },
   "ci_budget": {
     "valid_closure_runs": 1,
     "infrastructure_failures_consume_budget": false,
-    "closure_runs_used": 0,
-    "last_closure_attempt": "none for current target",
+    "closure_runs_used": 1,
+    "last_closure_attempt": "36039287996 VALID_PASS",
     "automatic_reruns_available": 1,
     "discovery_policy": "information_gain",
     "consecutive_expensive_runs_without_information_gain": 0

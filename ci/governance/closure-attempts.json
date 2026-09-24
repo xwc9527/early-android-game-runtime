@@ -7,8 +7,8 @@
     "second_run_after_valid_fail_requires_approval": true
   },
   "budget": {
-    "valid_attempts_used": 0,
-    "valid_attempts_remaining": 1
+    "valid_attempts_used": 1,
+    "valid_attempts_remaining": 0
   },
   "attempts": [
     {
@@ -189,6 +189,16 @@
       "tested_tree": "4f63f6d649e27a4110efc82d0eea6008e015d3af",
       "classification": "VALID_PASS",
       "reason": "Static, class, native-frame, JNI global, local-frame, weak, and repeated GC roots passed. No reference PASS was claimed.",
+      "consumes_budget": true
+    },
+    {
+      "target": "Phase 3 Dalvik semantics closure",
+      "target_evidence": "commit 851a025a14a75429c975da43853269f9d98ed8ef tree 9ece3c2b0f1bea5d8275bde75f13d91b5b3e63d6. jni-call-host, JNI 36039287996, classpath 36039288141, governance 36039288115, and protected regression 36039288207 passed. API19_REFERENCE_DIFFERENTIAL was not executed.",
+      "run_id": "36039287996",
+      "tested_commit": "851a025a14a75429c975da43853269f9d98ed8ef",
+      "tested_tree": "9ece3c2b0f1bea5d8275bde75f13d91b5b3e63d6",
+      "classification": "VALID_PASS",
+      "reason": "JNI Call, CallStatic, and CallNonvirtual variants invoke the selected method. Static field getters read the static slot. A zero without a pending exception is a real result. No reference PASS was claimed.",
       "consumes_budget": true
     }
   ],
