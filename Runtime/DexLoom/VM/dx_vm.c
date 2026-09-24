@@ -7001,6 +7001,11 @@ static void gc_mark_object_young(DxObject *obj) {
     }
 }
 
+static void gc_mark_jni_root_young(void *obj, void *user) {
+    (void)user;
+    gc_mark_object_young((DxObject *)obj);
+}
+
 // Scan old-generation objects for references to young objects (remembered set approximation)
 static void gc_scan_old_to_young(DxVM *vm) {
     for (uint32_t i = 0; i < vm->heap_count; i++) {
@@ -7107,6 +7112,20 @@ static DxResult dx_vm_gc_minor_locked(DxVM *vm) {
             if (cls->static_fields[f].tag == DX_VAL_OBJ && cls->static_fields[f].obj) {
                 gc_mark_object_young(cls->static_fields[f].obj);
             }
+        }
+    }
+
+    dx_iref_visit(&vm->global_refs, gc_mark_jni_root_young, NULL);
+    for (uint32_t jni_index = 0; jni_index < vm->exec_count; jni_index++) {
+        DxExecutionContext *jni_exec = vm->execs[jni_index];
+        if (jni_exec) dx_iref_visit(&jni_exec->local_refs, gc_mark_jni_root_young, NULL);
+    }
+    if (vm->weak_refs.slots) {
+        for (uint32_t weak_index = 0; weak_index < vm->weak_refs.top_index; weak_index++) {
+            DxObject *weak_obj = (DxObject *)vm->weak_refs.slots[weak_index].obj;
+            if (weak_obj && weak_obj != (DxObject *)DX_IREF_CLEARED &&
+                weak_obj->generation == 0 && !weak_obj->gc_mark)
+                vm->weak_refs.slots[weak_index].obj = DX_IREF_CLEARED;
         }
     }
 

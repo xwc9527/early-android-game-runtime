@@ -187,17 +187,14 @@ static jint JNICALL jni_Throw(JNIEnv *env, jthrowable obj) {
 }
 
 static jint JNICALL jni_ThrowNew(JNIEnv *env, jclass clazz, const char *msg) {
-    (void)env;
+    DxExecutionContext *exec = jni_env_exec(env);
     DxClass *cls = dx_jni_unwrap_class(clazz);
     const char *descriptor = cls ? cls->descriptor : "Ljava/lang/Exception;";
-    if (g_vm) {
-        DxObject *ex = dx_vm_create_exception(g_vm, descriptor, msg);
-        if (ex) {
-            dx_vm_current_exec(g_vm)->pending_exception = ex;
-        }
-    }
-    DX_WARN(TAG, "ThrowNew: %s: %s",
-             cls ? cls->descriptor : "?", msg ? msg : "(null)");
+    DxObject *ex;
+    if (!exec || !g_vm) return -1;
+    ex = dx_vm_create_exception(g_vm, descriptor, msg);
+    if (!ex) return -1;
+    exec->pending_exception = ex;
     return 0;
 }
 
@@ -1183,8 +1180,8 @@ static void JNICALL jni_DeleteWeakGlobalRef(JNIEnv *env, jweak ref) {
 }
 
 static jboolean JNICALL jni_ExceptionCheck(JNIEnv *env) {
-    (void)env;
-    return (g_vm && dx_vm_current_exec(g_vm)->pending_exception) ? JNI_TRUE : JNI_FALSE;
+    DxExecutionContext *exec = jni_env_exec(env);
+    return (exec && exec->pending_exception) ? JNI_TRUE : JNI_FALSE;
 }
 
 static jobject JNICALL jni_NewDirectByteBuffer(JNIEnv *env, void *address, jlong capacity) {

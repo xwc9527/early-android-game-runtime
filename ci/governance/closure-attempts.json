@@ -150,7 +150,27 @@
       "classification": "VALID_PASS",
       "reason": "AGR host contract, pinned API19 source, architecture freeze, governance, and Linux protected regression passed. No reference PASS was claimed.",
       "consumes_budget": true
+    },
+    {
+      "target": "Phase 3A Dalvik JNI references",
+      "target_evidence": "commit a2e07eb37f645f39c9a968b78808e88cdc25c6e3 tree d9544ad8bff3eabc145ab40a7002b7753f136935. JNI host contract, classpath, governance, and protected regression passed on push 36024048184 and pull request 36024054813. API19_REFERENCE_DIFFERENTIAL was not executed.",
+      "run_id": "36024054813",
+      "tested_commit": "a2e07eb37f645f39c9a968b78808e88cdc25c6e3",
+      "tested_tree": "d9544ad8bff3eabc145ab40a7002b7753f136935",
+      "classification": "VALID_PASS",
+      "reason": "Host and guest JNI share the indirect-ref owner. Synthetic jni_class and jni_string tables are gone. No reference PASS was claimed.",
+      "consumes_budget": true
+    },
+    {
+      "target": "Phase 3B Dalvik method field dispatch and class init",
+      "target_evidence": "commit a2e07eb37f645f39c9a968b78808e88cdc25c6e3 tree d9544ad8bff3eabc145ab40a7002b7753f136935. The same JNI workflow runs dispatch-host. Push JNI 36024048184 and pull request JNI 36024054813 passed. API19_REFERENCE_DIFFERENTIAL was not executed.",
+      "run_id": "36024048184",
+      "tested_commit": "a2e07eb37f645f39c9a968b78808e88cdc25c6e3",
+      "tested_tree": "d9544ad8bff3eabc145ab40a7002b7753f136935",
+      "classification": "VALID_PASS",
+      "reason": "Signature method and field identity, invoke selection, and class-init failure passed in the JNI host contract. No reference PASS was claimed.",
+      "consumes_budget": true
     }
   ],
-  "active_target": "Phase 3A Dalvik JNI references"
+  "active_target": "Phase 3C Dalvik exceptions and native binding"
 }

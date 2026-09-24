@@ -98,6 +98,9 @@ int main(void) {
     expect(pending && (*env)->IsSameObject(env, (jobject)pending, thrown), "exception occurred returns the same object");
     (*env)->ExceptionClear(env);
     expect((*env)->ExceptionCheck(env) == JNI_FALSE, "exception clear removes the pending exception");
+    expect((*env)->ThrowNew(env, object_ref, "thrown") == 0 && (*env)->ExceptionCheck(env) == JNI_TRUE,
+           "throw new sets the env pending exception");
+    (*env)->ExceptionClear(env);
     native_method.name = "nextInt";
     native_method.signature = "()I";
     native_method.fnPtr = (void *)native_probe;

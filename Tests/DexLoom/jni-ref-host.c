@@ -94,6 +94,10 @@ int main(void) {
     stale = (*env)->NewLocalRef(env, local);
     (*env)->DeleteLocalRef(env, stale);
     expect((*env)->NewLocalRef(env, stale) == NULL, "stale local handle rejected");
+    global = (*env)->NewGlobalRef(env, local);
+    expect(dx_vm_gc_minor(vm) == DX_OK && (*env)->IsSameObject(env, global, global),
+           "minor gc keeps a JNI global root");
+    (*env)->DeleteGlobalRef(env, global);
     for (i = 0; i < 200; i++) {
         jobject created = (*env)->NewGlobalRef(env, local);
         if (!created) g_failures++;

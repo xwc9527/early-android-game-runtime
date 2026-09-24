@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "target": "Phase 3A Dalvik JNI references",
+  "target": "Phase 3C Dalvik exceptions and native binding",
   "state": "IMPLEMENTED",
   "closure_tested_commit": null,
   "closure_tested_tree": null,

@@ -6,33 +6,32 @@
     "last_known_good": "3e3db84a53ad0957e9217f804b6f718a942b9a11"
   },
   "active": {
-    "target": "Phase 3A Dalvik JNI references",
+    "target": "Phase 3C Dalvik exceptions and native binding",
     "branch": "recovery/phase3-dalvik-semantics",
     "lifecycle": "IMPLEMENTED",
-    "observed_discontinuity": "Class lookup used one global descriptor table, kept the first DEX hit, and guessed a class by simple-name suffix.",
-    "android_subsystem": "API19 ClassLoader parent delegation and defining-loader identity",
+    "observed_discontinuity": "JNI ThrowNew and ExceptionCheck followed the VM current exec instead of the JNIEnv thread, and bytecode catch propagation is not yet the Phase 3C contract.",
+    "android_subsystem": "API19 pending exception, JNI exception state, and native binding",
     "upstream_path": [
-      "platform/libcore@android-4.4.4_r2:libdvm/src/main/java/java/lang/ClassLoader.java:loadClass",
-      "platform/dalvik@android-4.4.4_r2:vm/oo/Class.cpp:dvmDefineClass"
+      "platform/dalvik@android-4.4.4_r2:vm/Jni.cpp:ThrowNew",
+      "platform/dalvik@android-4.4.4_r2:vm/Jni.cpp:ExceptionCheck"
     ],
     "agr_path": [
-      "Runtime/DexLoom/VM/dx_vm.c:dx_vm_resolve_class",
-      "Runtime/DexLoom/Include/dx_vm.h:DxClass.defining_loader"
+      "Runtime/DexLoom/VM/dx_jni.c:jni_ThrowNew",
+      "Runtime/DexLoom/VM/dx_jni.c:jni_ExceptionCheck"
     ],
     "active_explanations": [
-      "API19 loadClass checks the initiating loader, then the parent, then that loader's dex path",
-      "a boot definition is a different class from an application definition of the same descriptor only when the parent does not already define it",
-      "suffix lookup is not part of ClassLoader resolution"
+      "the pending exception belongs to the JNIEnv thread",
+      "a catch handler clears that thread exception and resumes at the handler"
     ],
-    "earliest_evidenced_divergence": "dx_vm_load_class_locked previously returned the first flat-DEX descriptor match and then a simple-name suffix match.",
+    "earliest_evidenced_divergence": "ThrowNew wrote dx_vm_current_exec instead of the JNIEnv exec.",
     "semantic_class": "PUBLIC_OBSERVABLE",
     "causal_status": "CONTRACT_CONFIRMED",
     "evidence_level": "CONTRACT_CONFIRMED",
     "classification": "AGR_INTERNAL_BUG",
-    "next_validation": "Phase 3A indirect references. Do not start Framework migration.",
-    "primary_blocker": "none for the Phase 3A0 contract",
-    "first_broken_boundary": "none for the Phase 3A0 contract",
-    "first_broken_boundary_evidence": "Tests/DexLoom/classpath-host.c on 64023dae8b9a06bb93cfa34669193448f3820149"
+    "next_validation": "Phase 3C catch propagation and JNI_OnLoad. Do not start Framework migration.",
+    "primary_blocker": "bytecode throw/catch is not yet covered by a focused contract",
+    "first_broken_boundary": "interpreter exception delivery",
+    "first_broken_boundary_evidence": "Tests/DexLoom/method-id-host.c ThrowNew on a2e07eb plus the env-scoped follow-up"
   },
   "ci_budget": {
     "valid_closure_runs": 1,
