@@ -45,9 +45,30 @@ actual API19 source dependency review; the JNI table
 index in this repository only locates entry symbols. Service observations
 remain BOUNDARY_CANDIDATE until the excluded boundary is sourced and reviewed.
 
-The current implementation does not provide an Android TRACE event producer,
-Framework source closure, cluster ports, or iOS differential. Its output is
-not proof that those stages are complete.
+The current implementation does not provide a complete Android TRACE event
+producer, Framework source closure, cluster ports, or iOS differential. Its
+output is not proof that those stages are complete.
+
+The TRACE checkout now has a reproducible first Dalvik observer. Run
+`instrument_trace.py TRACE_ROOT` against an untouched `android-4.4.4_r2`
+checkout. It modifies only TRACE Dalvik source and regenerates the x86 and
+portable interpreter sources. Its call hook records game-classloader calls
+to boot-classloader methods, including caller, dex PC, opcode, method index,
+declared DEX target, and resolved callee. The TRACE guest must run with
+`dalvik.vm.execution-mode=int:portable` so every interpreted call traverses
+this hook; use the same execution mode for CLEAN comparisons. JIT and the x86
+assembly interpreter bypass this C++ hook. `parse_trace_log.py` accepts
+`adb logcat -v threadtime` captures and rejects malformed or missing sequence
+records. This observer covers only method calls. Class, field, JNI, native,
+service, and lifecycle observers are still needed before claiming a complete
+Dependency Mapper. No successful TRACE run has been recorded yet.
+
+`build_trace.sh TRACE_ROOT JDK6_ROOT MAKE382_ROOT TRACE_OUT CLEAN_OUT` checks
+the exact Dalvik instrumentation diff and confirms the fully resolved
+manifest matches CLEAN byte for byte before building. It records the TRACE
+patch and output image hash in a separate output directory. The instrumentation
+diff SHA-256 is
+`1340359e595c934aee364fcdf3119b52fef56ef27b13af2ed820b407eaf6393f`.
 
 `boot_clean.py --root /agr-reference --apk /path/to/game.apk --component
 package/.Activity` can probe installation and launch in the CLEAN guest. It
