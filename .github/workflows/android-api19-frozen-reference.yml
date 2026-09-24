@@ -62,7 +62,16 @@ jobs:
           export PATH="$ANDROID_HOME/platform-tools:$PATH"
           ISO="$RUNNER_TEMP/android-x86-4.4-r5.iso"
           adb start-server
-          nohup qemu-system-x86_64 -machine pc -accel tcg -cpu qemu64 -smp 2 -m 2048 \
+          if [[ -r /dev/kvm && -w /dev/kvm ]]; then
+            ACCEL=kvm
+            CPU=host
+          else
+            ACCEL=tcg
+            CPU=qemu64
+          fi
+          printf 'accel=%s cpu=%s\n' "$ACCEL" "$CPU" \
+            > build/artifacts/android-444-image-probe/qemu-acceleration.txt
+          nohup qemu-system-x86_64 -machine pc -accel "$ACCEL" -cpu "$CPU" -smp 2 -m 2048 \
             -cdrom "$ISO" -boot d -vga std -display none \
             -monitor tcp:127.0.0.1:4444,server,nowait \
             -serial file:build/artifacts/android-444-image-probe/serial.log \
