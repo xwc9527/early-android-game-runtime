@@ -5196,7 +5196,8 @@ static DxResult dx_vm_load_class_locked(DxVM *vm, const char *descriptor, DxClas
 
 DxResult dx_vm_init_class(DxVM *vm, DxClass *cls) {
     if (!cls) return DX_ERR_NULL_PTR;
-    if (cls->status >= DX_CLASS_INITIALIZED) return DX_OK;
+    if (cls->status == DX_CLASS_ERROR) return DX_ERR_CLASS_NOT_FOUND;
+    if (cls->status == DX_CLASS_INITIALIZED || cls->status == DX_CLASS_INITIALIZING) return DX_OK;
 
     // Initialize superclass first
     if (cls->super_class && cls->super_class->status < DX_CLASS_INITIALIZED) {

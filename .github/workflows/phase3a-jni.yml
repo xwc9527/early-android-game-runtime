@@ -10,6 +10,7 @@ on:
       - 'Runtime/DexLoom/Include/dx_indirect_ref.h'
       - 'Runtime/DexLoom/Include/dx_jni.h'
       - 'Tests/DexLoom/jni-ref-host.c'
+      - 'Tests/DexLoom/method-id-host.c'
       - '.github/workflows/phase3a-jni.yml'
 
 jobs:
@@ -36,3 +37,8 @@ jobs:
           cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/jni-ref-host.c -o "$OBJ/jni-ref-host.o"
           cc -pthread "$OBJ"/*.o -lz -lm -o /tmp/jni-ref-host
           /tmp/jni-ref-host
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/method-id-host.c -o "$OBJ/method-id-host.o"
+          cc -pthread "$OBJ"/dx_log.o "$OBJ"/dx_memory.o "$OBJ"/dx_arena.o "$OBJ"/dx_dex.o "$OBJ"/dx_opcode.o \
+            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "$OBJ"/dx_exec.o \
+            "$OBJ"/dx_indirect_ref.o "$OBJ"/method-id-host.o -lz -lm -o /tmp/method-id-host
+          /tmp/method-id-host

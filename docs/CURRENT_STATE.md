@@ -2,7 +2,7 @@
 
 Updated: 2026-09-24
 
-Phase 3A0 Boot ClassPath / ClassLoader identity is CLOSED at `ccccca77b9a1dd11880907ef1fb3da3f83e739ab` / tree `5392048daa8d5b96995406b51610afa17decc7da`. CI: classpath `36019018497`, governance `36019009849` and `36019018340`, protected regression `36019009689` and `36019018232`. `dalvik.classpath.loader` is VALID. Evidence kinds stay separate: `AGR_HOST_CONTRACT`, `PINNED_SOURCE_CONTRACT`, and `API19_REFERENCE_DIFFERENTIAL` not executed. Active target is now Phase 3A Dalvik JNI references.
+Phase 3A0 Boot ClassPath / ClassLoader identity is CLOSED at `ccccca77b9a1dd11880907ef1fb3da3f83e739ab` / tree `5392048daa8d5b96995406b51610afa17decc7da`. CI: classpath `36019018497`, governance `36019009849` and `36019018340`, protected regression `36019009689` and `36019018232`. `dalvik.classpath.loader` is VALID. Evidence kinds stay separate: `AGR_HOST_CONTRACT`, `PINNED_SOURCE_CONTRACT`, and `API19_REFERENCE_DIFFERENTIAL` not executed. Active target is now Phase 3A Dalvik JNI references. `Tests/DexLoom/jni-ref-host.c` covers reference and thread lifecycle. `Tests/DexLoom/method-id-host.c` covers signature method IDs, field slots, class init order, pending exceptions, and RegisterNatives. Phase 3A and later phases are not CLOSED.
 
 `game_dex_runner.c` is `LEGACY_BOOTSTRAP`. `dx_android_framework.c` is `LEGACY_REFERENCE` and is not a production source. Owner ledgers are `ci/governance/java-legacy-migration.json` and `ci/governance/java-public-owner.json`.
 

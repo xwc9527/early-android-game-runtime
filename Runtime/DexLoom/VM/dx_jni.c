@@ -173,10 +173,10 @@ static jobject JNICALL jni_ToReflectedField(JNIEnv *env, jclass cls,
 }
 
 static jint JNICALL jni_Throw(JNIEnv *env, jthrowable obj) {
-    (void)env;
-    if (g_vm) {
-        dx_vm_current_exec(g_vm)->pending_exception = (DxObject *)obj;
-    }
+    DxExecutionContext *exec = jni_env_exec(env);
+    DxObject *ex = dx_jni_unwrap_object((jobject)obj);
+    if (!exec || !ex) return -1;
+    exec->pending_exception = ex;
     return 0;
 }
 
@@ -196,11 +196,9 @@ static jint JNICALL jni_ThrowNew(JNIEnv *env, jclass clazz, const char *msg) {
 }
 
 static jthrowable JNICALL jni_ExceptionOccurred(JNIEnv *env) {
-    (void)env;
-    if (g_vm && dx_vm_current_exec(g_vm)->pending_exception) {
-        return (jthrowable)dx_vm_current_exec(g_vm)->pending_exception;
-    }
-    return NULL;
+    DxExecutionContext *exec = jni_env_exec(env);
+    if (!exec || !exec->pending_exception) return NULL;
+    return (jthrowable)dx_jni_wrap_object(exec->pending_exception);
 }
 
 static void JNICALL jni_ExceptionDescribe(JNIEnv *env) {
@@ -213,10 +211,8 @@ static void JNICALL jni_ExceptionDescribe(JNIEnv *env) {
 }
 
 static void JNICALL jni_ExceptionClear(JNIEnv *env) {
-    (void)env;
-    if (g_vm) {
-        dx_vm_current_exec(g_vm)->pending_exception = NULL;
-    }
+    DxExecutionContext *exec = jni_env_exec(env);
+    if (exec) exec->pending_exception = NULL;
 }
 
 static void JNICALL jni_FatalError(JNIEnv *env, const char *msg) {
@@ -1077,12 +1073,13 @@ static jint JNICALL jni_RegisterNatives(JNIEnv *env, jclass clazz,
         const char *name = methods[i].name;
         if (!name) continue;
 
-        // Find method by name (pass NULL shorty to match by name only)
-        DxMethod *method = dx_vm_find_method(cls, name, NULL);
+        char *shorty = jni_sig_to_shorty(methods[i].signature);
+        DxMethod *method = shorty ? dx_vm_find_method(cls, name, shorty) : NULL;
+        dx_free(shorty);
         if (!method) {
             DX_WARN(TAG, "  RegisterNatives: method %s.%s not found",
                     cls->descriptor, name);
-            continue;
+            return -1;
         }
 
         method->native_fn = (DxNativeMethodFn)methods[i].fnPtr;
