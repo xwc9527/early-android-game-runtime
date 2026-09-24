@@ -51,6 +51,12 @@ int main(int argc, char **argv) {
           buffer->array_elements[4].i == '6', "original first level prefix");
     check(invoke(vm, stream_cls, "available", "I", args, 1, &result) == DX_OK &&
           result.i == 29067, "available decreases after read");
+    DxObject *text = dx_vm_alloc_object(vm, vm->class_string);
+    DxValue constructor_args[2] = { DX_OBJ_VALUE(text), DX_OBJ_VALUE(buffer) };
+    check(invoke(vm, vm->class_string, "<init>", "VL", constructor_args, 2, NULL) == DX_OK &&
+          dx_vm_get_string_value(text) &&
+          strncmp(dx_vm_get_string_value(text), "6   6", 5) == 0,
+          "String(byte[]) populates the receiver from asset bytes");
     args[2] = DX_INT_VALUE(4);
     args[3] = DX_INT_VALUE(3);
     check(invoke(vm, stream_cls, "read", "ILII", args, 4, &result) == DX_OK &&

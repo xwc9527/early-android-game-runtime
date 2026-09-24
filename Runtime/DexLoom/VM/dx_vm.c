@@ -417,6 +417,33 @@ static DxResult native_object_getclass(DxVM *vm, DxFrame *frame, DxValue *args, 
 
 // --- java.lang.String native methods ---
 
+/* API19 String(byte[]) decodes the platform default charset (UTF-8 on
+ * Android). The VM keeps valid UTF-8 in string_data; the constructor must
+ * populate the allocated receiver, not return a different interned String. */
+static DxResult native_string_init_bytes(DxVM *vm, DxFrame *frame,
+                                         DxValue *args, uint32_t arg_count) {
+    (void)frame;
+    if (!vm || arg_count < 2 || args[0].tag != DX_VAL_OBJ || !args[0].obj ||
+        args[1].tag != DX_VAL_OBJ || !args[1].obj) {
+        DxExecutionContext *exec = vm ? dx_vm_current_exec(vm) : NULL;
+        if (exec) exec->pending_exception = dx_vm_create_exception(
+            vm, "Ljava/lang/NullPointerException;", "String bytes");
+        return exec && exec->pending_exception ? DX_ERR_EXCEPTION : DX_ERR_NULL_PTR;
+    }
+    DxObject *self = args[0].obj;
+    DxObject *bytes = args[1].obj;
+    if (!bytes->is_array) return DX_ERR_INVALID_FORMAT;
+    size_t length = bytes->array_length;
+    char *text = (char *)dx_malloc(length + 1);
+    if (!text) return DX_ERR_OUT_OF_MEMORY;
+    for (size_t i = 0; i < length; i++)
+        text[i] = (char)(bytes->array_elements[i].i & 0xff);
+    text[length] = '\0';
+    dx_free(self->string_data);
+    self->string_data = text;
+    return DX_OK;
+}
+
 static DxResult native_string_equals(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
     (void)vm; (void)arg_count;
     DxObject *self = args[0].obj;
@@ -3618,6 +3645,8 @@ DxResult dx_register_java_lang(DxVM *vm) {
         str_cls->field_defs[0].type = "[C";
         str_cls->field_defs[0].flags = DX_ACC_PRIVATE;
     }
+    add_native_method(str_cls, "<init>", "VL", DX_ACC_PUBLIC | DX_ACC_CONSTRUCTOR,
+                      native_string_init_bytes, true);
     add_native_method(str_cls, "equals", "ZL", DX_ACC_PUBLIC,
                       native_string_equals, false);
     add_native_method(str_cls, "hashCode", "I", DX_ACC_PUBLIC,
