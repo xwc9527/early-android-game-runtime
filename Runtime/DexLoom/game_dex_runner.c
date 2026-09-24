@@ -4092,7 +4092,14 @@ int agr_dex_game_dispatch_touch(agr_dex_game *game, int action, float x, float y
     DxResult rc;
     if (!game || !game->vm || !game->activity || !game->content_view ||
         !game->viewroot.attach_complete || !game->window_visible ||
-        action < 0 || action > 3 || !isfinite(x) || !isfinite(y)) return -1;
+        action < 0 || action > 3 || !isfinite(x) || !isfinite(y)) {
+        fprintf(stderr, "AGR_TOUCH_REJECT precondition game=%d vm=%d activity=%d content=%d attach=%d visible=%d action=%d x=%g y=%g\n",
+                game != NULL, game && game->vm != NULL,
+                game && game->activity != NULL, game && game->content_view != NULL,
+                game && game->viewroot.attach_complete, game && game->window_visible,
+                action, x, y);
+        return -1;
+    }
     if (action == 0) {
         game->touch_down_active = 1;
     } else if (!game->touch_down_active) {
@@ -4101,7 +4108,11 @@ int agr_dex_game_dispatch_touch(agr_dex_game *game, int action, float x, float y
     event_class = dx_vm_find_class(game->vm, "Landroid/view/MotionEvent;");
     dispatch = dx_vm_find_method(game->activity->klass, "dispatchTouchEvent", "ZL");
     event = event_class ? dx_vm_alloc_object(game->vm, event_class) : NULL;
-    if (!dispatch || !event) return -1;
+    if (!dispatch || !event) {
+        fprintf(stderr, "AGR_TOUCH_REJECT binding dispatch=%d event=%d\n",
+                dispatch != NULL, event != NULL);
+        return -1;
+    }
     dx_vm_set_field(event, "_action", DX_INT_VALUE(action));
     dx_vm_set_field(event, "_x", ((DxValue){.tag=DX_VAL_FLOAT,.f=x}));
     dx_vm_set_field(event, "_y", ((DxValue){.tag=DX_VAL_FLOAT,.f=y}));
@@ -4111,7 +4122,11 @@ int agr_dex_game_dispatch_touch(agr_dex_game *game, int action, float x, float y
     framework_event(game, "input.activity.dispatch_touch");
     rc = dx_vm_execute_method(game->vm, dispatch, args, 2, &result);
     if (action == 1 || action == 3) game->touch_down_active = 0;
-    if (rc != DX_OK) return -1;
+    if (rc != DX_OK) {
+        fprintf(stderr, "AGR_TOUCH_REJECT dispatch rc=%d vm_error=%s\n", (int)rc,
+                dx_vm_current_exec(game->vm)->error_msg);
+        return -1;
+    }
     game->touch_dispatched++;
     if (result.tag == DX_VAL_INT && result.i) {
         game->touch_consumed++;

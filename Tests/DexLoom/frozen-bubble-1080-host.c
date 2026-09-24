@@ -163,11 +163,13 @@ int main(int argc, char **argv) {
         expect(down == 1 && up == 1, "original GameView consumes down and up through Activity/Window/View");
         usleep(300000);
         expect(agr_dex_game_runtime_snapshot(game, &snapshot) == 0, "snapshot after touch");
-        printf("touch down=%d up=%d dispatched=%u consumed=%u posts=%u->%u hash=%llx->%llx\n",
-               down, up, snapshot.touch_dispatched, snapshot.touch_consumed,
+        printf("touch down=%d up=%d attached=%d visible=%d dispatched=%u consumed=%u posts=%u->%u hash=%llx->%llx vm_error=%s\n",
+               down, up, snapshot.viewroot_attach_completed, snapshot.window_visible,
+               snapshot.touch_dispatched, snapshot.touch_consumed,
                before_posts, snapshot.canvas_post_count,
                (unsigned long long)before_hash,
-               (unsigned long long)snapshot.canvas_buffer_hash_after);
+               (unsigned long long)snapshot.canvas_buffer_hash_after,
+               snapshot.error);
         expect(snapshot.touch_dispatched == 2 && snapshot.touch_consumed == 2,
                "touch consumption counters reflect guest result");
         expect(snapshot.canvas_post_count > before_posts, "GameThread continues after touch");
