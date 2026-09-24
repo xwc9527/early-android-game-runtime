@@ -56,29 +56,50 @@ jobs:
           grep -qx 'ro.build.version.release=4.4.4' build/artifacts/android-444-image-probe/build.prop
           grep -qx 'ro.build.version.sdk=19' build/artifacts/android-444-image-probe/build.prop
       - name: Boot exact Android 4.4.4 image and verify ADB
-        timeout-minutes: 16
+        timeout-minutes: 8
         run: |
           set -euo pipefail
           export PATH="$ANDROID_HOME/platform-tools:$PATH"
           ISO="$RUNNER_TEMP/android-x86-4.4-r5.iso"
           adb start-server
           nohup qemu-system-x86_64 -machine pc -accel tcg -cpu qemu64 -smp 2 -m 2048 \
-            -cdrom "$ISO" -boot d -vga std -display none -monitor none \
+            -cdrom "$ISO" -boot d -vga std -display none \
+            -monitor tcp:127.0.0.1:4444,server,nowait \
             -serial file:build/artifacts/android-444-image-probe/serial.log \
             -netdev user,id=net0,hostfwd=tcp:127.0.0.1:5555-:5555 \
             -device e1000,netdev=net0 \
             > build/artifacts/android-444-image-probe/qemu.log 2>&1 &
           QEMU_PID=$!
-          for i in $(seq 1 150); do
-            adb connect 127.0.0.1:5555 >/dev/null 2>&1 || true
-            if adb -s 127.0.0.1:5555 shell getprop sys.boot_completed 2>/dev/null \
+          for i in $(seq 1 55); do
+            timeout 3 adb connect 127.0.0.1:5555 >/dev/null 2>&1 || true
+            if timeout 3 adb -s 127.0.0.1:5555 shell getprop sys.boot_completed 2>/dev/null \
               | tr -d '\r' | grep -qx 1; then break; fi
             if ! kill -0 "$QEMU_PID" 2>/dev/null; then
               cat build/artifacts/android-444-image-probe/qemu.log
               exit 1
             fi
-            sleep 5
+            if (( i == 12 || i == 40 || i == 55 )); then
+              adb devices -l > "build/artifacts/android-444-image-probe/adb-devices-$i.txt" || true
+              python3 - "$i" <<'PY'
+          import pathlib, socket, sys, time
+          out = pathlib.Path('build/artifacts/android-444-image-probe') / f'vga-{sys.argv[1]}.ppm'
+          try:
+              with socket.create_connection(('127.0.0.1', 4444), timeout=3) as monitor:
+                  monitor.settimeout(3)
+                  monitor.recv(4096)
+                  monitor.sendall(f'screendump {out.resolve()}\n'.encode())
+                  time.sleep(1)
+          except OSError as exc:
+              print(f'QEMU monitor screenshot unavailable: {exc}', file=sys.stderr)
+          PY
+            fi
+            sleep 3
           done
+          if ! timeout 5 adb -s 127.0.0.1:5555 shell getprop sys.boot_completed 2>/dev/null \
+            | tr -d '\r' | grep -qx 1; then
+            echo 'Android 4.4.4 guest did not reach boot_completed; VGA/ADB/serial evidence retained' >&2
+            exit 1
+          fi
           adb -s 127.0.0.1:5555 shell getprop ro.build.version.release \
             | tr -d '\r' | tee build/artifacts/android-444-image-probe/live-release.txt
           grep -qx 4.4.4 build/artifacts/android-444-image-probe/live-release.txt
