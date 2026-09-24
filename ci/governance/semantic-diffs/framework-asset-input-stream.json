@@ -8,14 +8,14 @@
     "map_status": "UNVERIFIED",
     "revision": "Android 4.4.4_r2",
     "source_verified": true,
-    "files": ["core/java/android/content/res/AssetManager.java"],
-    "call_path": ["AssetManager.open", "AssetInputStream.available", "AssetInputStream.read", "AssetInputStream.close"]
+    "files": ["core/java/android/content/res/AssetManager.java", "core/jni/android_util_AssetManager.cpp"],
+    "call_path": ["AssetManager.open", "AssetInputStream.available", "AssetInputStream.read", "AssetInputStream.close", "android_content_AssetManager_readAsset"]
   },
   "semantic_class": "PUBLIC_OBSERVABLE",
   "required_semantics": [
     "open returns a stream over the named APK asset or throws FileNotFoundException",
     "available returns remaining bytes and read advances the stream cursor, returning -1 at EOF",
-    "close releases the stream asset and is idempotent"
+    "close releases the stream asset and is idempotent; a subsequent native read of the zero asset handle raises NullPointerException"
   ],
   "agr": {
     "files": ["Runtime/DexLoom/game_dex_runner.c"],
@@ -28,7 +28,7 @@
   "causal_status": "PLAUSIBLE",
   "evidence_level": "RUNTIME_OBSERVED",
   "evidence": [
-    {"type": "SOURCE", "artifact": "Pinned frameworks/base android-4.4.4_r2 AssetManager.java open and AssetInputStream methods, lines 260-305 and 508-547."},
+    {"type": "SOURCE", "artifact": "Pinned frameworks/base android-4.4.4_r2 AssetManager.java open and AssetInputStream methods, lines 260-305 and 508-547; android_util_AssetManager.cpp readAsset/readAssetChar/getAssetRemainingLength checks null handle."},
     {"type": "RUNTIME", "artifact": "Exact APK DEX invoke scan: GameThread constructor PCs 1251,1257,1261,1271,1274 enter getAssets/open/available/read/close; previous production registration lacked available/read."}
   ],
   "remaining_uncertainty": ["Contract execution and unchanged APK rerun must establish whether populated levels allow the second touch to complete and post a changed frame."],

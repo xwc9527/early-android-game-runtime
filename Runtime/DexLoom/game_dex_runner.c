@@ -338,7 +338,7 @@ static DxResult asset_stream_read(DxVM *vm, DxFrame *frame, DxValue *args, uint3
     dx_vm_get_field(stream, "_assetPosition", &pos);
     dx_vm_get_field(stream, "_assetClosed", &closed);
     if (closed.tag == DX_VAL_INT && closed.i)
-        return asset_stream_throw(vm, "Ljava/io/IOException;", "Stream closed");
+        return asset_stream_throw(vm, "Ljava/lang/NullPointerException;", "asset");
     if (data.tag != DX_VAL_OBJ || !data.obj || !data.obj->is_array)
         return asset_stream_throw(vm, "Ljava/io/IOException;", "Asset data unavailable");
     if (count > 1) {
@@ -382,7 +382,7 @@ static DxResult asset_stream_available(DxVM *vm, DxFrame *frame, DxValue *args, 
     dx_vm_get_field(args[0].obj, "_assetPosition", &pos);
     dx_vm_get_field(args[0].obj, "_assetClosed", &closed);
     if (closed.tag == DX_VAL_INT && closed.i)
-        return asset_stream_throw(vm, "Ljava/io/IOException;", "Stream closed");
+        return asset_stream_throw(vm, "Ljava/lang/NullPointerException;", "asset");
     uint32_t size = data.tag == DX_VAL_OBJ && data.obj && data.obj->is_array
         ? data.obj->array_length : 0;
     uint32_t cursor = pos.tag == DX_VAL_INT && pos.i >= 0 ? (uint32_t)pos.i : 0;
