@@ -2,6 +2,7 @@
 #include "dx_view.h"
 #include "dx_dex.h"
 #include "dx_memory.h"
+#include "dx_log.h"
 #include "dx_apk.h"
 #include "dx_manifest.h"
 #include "dx_resources.h"
