@@ -17,10 +17,7 @@
 static DxVM *g_vm = NULL;
 extern __thread DxExecutionContext *dx_tls_exec;
 
-// ============================================================================
-// JNI <-> DexLoom object mapping
-// We cast DxObject* directly to/from jobject (both are opaque pointers).
-// ============================================================================
+// JNI object and class values are indirect references into the VM tables.
 
 static jobject jni_from_ref(uint32_t ref) {
     return (jobject)(uintptr_t)ref;
@@ -78,11 +75,20 @@ DxObject *dx_jni_unwrap_object(jobject ref) {
 }
 
 jclass dx_jni_wrap_class(DxClass *cls) {
-    return (jclass)cls;
+    DxObject *mirror;
+    DxExecutionContext *exec;
+    if (!g_vm || !cls) return NULL;
+    mirror = dx_vm_class_mirror(g_vm, cls);
+    if (!mirror) return NULL;
+    exec = jni_exec();
+    if (exec && exec->local_refs.slots)
+        return (jclass)jni_from_ref(dx_iref_add(&exec->local_refs, exec->local_bottom, mirror));
+    return cls->class_global_ref ? (jclass)jni_from_ref(cls->class_global_ref) : NULL;
 }
 
 DxClass *dx_jni_unwrap_class(jclass ref) {
-    return (DxClass *)ref;
+    DxObject *obj = dx_jni_unwrap_object((jobject)ref);
+    return obj ? obj->represented_class : NULL;
 }
 
 // ============================================================================

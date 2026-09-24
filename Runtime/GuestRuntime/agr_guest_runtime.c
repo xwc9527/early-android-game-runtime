@@ -63,8 +63,6 @@ typedef struct { int size; GLenum type; int stride; uint32_t pointer; int active
 typedef struct { uint32_t read_fd, write_fd, read_offset, size; uint8_t data[4096]; int live; } virtual_pipe;
 typedef struct { uint32_t fd, ident, events, callback, data; } looper_fd;
 typedef struct { uint32_t handle; agr_afw_asset *asset; } asset_entry;
-typedef struct { uint32_t handle; char *text; } jni_string;
-typedef struct { uint32_t handle; char *descriptor; } jni_class;
 typedef struct { char *name; uint32_t handle; int32_t jni_version; } java_library;
 typedef struct { uint32_t handle, type, action, pointer_count, pointer_id; float x, y; } input_event;
 
@@ -104,8 +102,6 @@ struct agr_process_runtime {
     uint32_t next_asset_handle;
     agr_dex_game *dex_game;
     agr_jni_method_table methods;
-    jni_string *strings; uint32_t string_count, string_capacity;
-    jni_class *classes; uint32_t class_count, class_capacity;
     java_library *java_libraries; uint32_t java_library_count, java_library_capacity;
     const char *recent_imports[12];
     uint32_t recent_import_index;
@@ -396,37 +392,16 @@ void agr_guest_record_runtime_event(agr_guest *g, const char *type,
     atomic_flag_clear_explicit(&g->diagnostics_lock,memory_order_release);
 }
 static uint32_t jni_class_handle(agr_guest *g,const char *descriptor) {
-    if(!g||!descriptor)return 0;
-    for(uint32_t i=0;i<g->class_count;i++)if(!strcmp(g->classes[i].descriptor,descriptor))return g->classes[i].handle;
-    if(g->class_count==g->class_capacity) {
-        uint32_t next=g->class_capacity?g->class_capacity*2:16;
-        jni_class *grown=realloc(g->classes,(size_t)next*sizeof(*grown));
-        if(!grown)return 0;g->classes=grown;g->class_capacity=next;
-    }
-    char *copy=copy_string(descriptor);if(!copy)return 0;
-    uint32_t handle=g->dex_game?agr_dex_game_class_ref(g->dex_game,descriptor):0;
-    if(!handle){free(copy);return 0;}
-    g->classes[g->class_count++]=(jni_class){handle,copy};return handle;
+    return g && g->dex_game ? agr_dex_game_class_ref(g->dex_game, descriptor) : 0;
 }
 static const char *jni_class_descriptor(agr_guest *g,uint32_t handle) {
-    for(uint32_t i=0;g&&i<g->class_count;i++)if(g->classes[i].handle==handle)return g->classes[i].descriptor;
-    return NULL;
+    return g && g->dex_game ? agr_dex_game_class_descriptor(g->dex_game, handle) : NULL;
 }
 static uint32_t jni_string_handle(agr_guest *g,const char *text) {
-    if(!g||!text)return 0;
-    if(g->string_count==g->string_capacity) {
-        uint32_t next=g->string_capacity?g->string_capacity*2:16;
-        jni_string *grown=realloc(g->strings,(size_t)next*sizeof(*grown));
-        if(!grown)return 0;g->strings=grown;g->string_capacity=next;
-    }
-    char *copy=copy_string(text);if(!copy)return 0;
-    uint32_t handle=g->dex_game?agr_dex_game_string_ref(g->dex_game,text):0;
-    if(!handle){free(copy);return 0;}
-    g->strings[g->string_count++]=(jni_string){handle,copy};return handle;
+    return g && g->dex_game ? agr_dex_game_string_ref(g->dex_game, text) : 0;
 }
 static const char *jni_string_text(agr_guest *g,uint32_t handle) {
-    for(uint32_t i=0;g&&i<g->string_count;i++)if(g->strings[i].handle==handle)return g->strings[i].text;
-    return NULL;
+    return g && g->dex_game ? agr_dex_game_string_chars(g->dex_game, handle) : NULL;
 }
 static char *jni_mangle(const char *text,int descriptor) {
     if(!text)return NULL;
@@ -571,8 +546,21 @@ static int dispatch_jni_impl(agr_guest *g, uint32_t address) {
         }
         guest_return(g,0,0);return 1;
     }
-    if (slot == 21 || slot == 23 || slot == 22) {
-        guest_return(g,slot==21 ? argument(g,1) : 0,0); return 1;
+    if (slot == 21) {
+        uint32_t ref = g->dex_game ? agr_dex_game_new_global_ref(g->dex_game, argument(g,1)) : 0;
+        guest_return(g, ref, 0); return ref ? 1 : -1;
+    }
+    if (slot == 22) {
+        if (!g->dex_game || agr_dex_game_delete_global_ref(g->dex_game, argument(g,1))) {
+            set_error(g, "JNI DeleteGlobalRef invalid ref"); return -1;
+        }
+        guest_return(g, 0, 0); return 1;
+    }
+    if (slot == 23) {
+        if (!g->dex_game || agr_dex_game_delete_local_ref(g->dex_game, argument(g,1))) {
+            set_error(g, "JNI DeleteLocalRef invalid ref"); return -1;
+        }
+        guest_return(g, 0, 0); return 1;
     }
     if (slot >= 49 && slot <= 51) {
         uint32_t method_handle=argument(g,2);
@@ -1117,10 +1105,6 @@ void agr_guest_destroy(agr_guest *g) {
     if (g->assets) agr_afw_destroy(g->assets);
     if (g->dex_game) agr_dex_game_destroy(g->dex_game);
     agr_jni_method_table_destroy(&g->methods);
-    for (uint32_t i=0; i<g->string_count; i++) free(g->strings[i].text);
-    free(g->strings);
-    for (uint32_t i=0; i<g->class_count; i++) free(g->classes[i].descriptor);
-    free(g->classes);
     for (uint32_t i=0; i<g->java_library_count; i++) free(g->java_libraries[i].name);
     free(g->java_libraries);
     if (g->display != EGL_NO_DISPLAY && g->egl_owner_thread_id==g->main_thread->guest_thread_id) {

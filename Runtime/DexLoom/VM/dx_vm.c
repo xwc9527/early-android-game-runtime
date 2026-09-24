@@ -289,6 +289,8 @@ static DxClass *create_class(DxVM *vm, const char *descriptor, DxClass *super, b
     cls->status = DX_CLASS_LOADED;
     cls->is_framework = is_framework;
     cls->owns_descriptor = false;
+    cls->class_object = NULL;
+    cls->class_global_ref = 0;
     cls->defining_loader = vm->pending_defining_loader ? vm->pending_defining_loader : vm->boot_loader;
 
     vm->classes[vm->class_count++] = cls;
@@ -3211,6 +3213,21 @@ DxClass *dx_vm_resolve_type(DxVM *vm, const char *descriptor) {
     return loaded;
 }
 
+DxObject *dx_vm_class_mirror(DxVM *vm, DxClass *cls) {
+    DxClass *class_cls;
+    DxObject *obj;
+    if (!vm || !cls) return NULL;
+    if (cls->class_object) return cls->class_object;
+    class_cls = dx_vm_find_class(vm, "Ljava/lang/Class;");
+    obj = dx_vm_alloc_object(vm, class_cls ? class_cls : cls);
+    if (!obj) return NULL;
+    obj->represented_class = cls;
+    cls->class_object = obj;
+    if (vm->global_refs.slots)
+        cls->class_global_ref = dx_iref_add(&vm->global_refs, 0, obj);
+    return obj;
+}
+
 DxObject *dx_vm_box_class(DxVM *vm, const char *descriptor) {
     DxClass *represented = dx_vm_resolve_type(vm, descriptor);
     if (!represented) return NULL;
@@ -5824,6 +5841,7 @@ static DxObject *dx_vm_alloc_object_locked(DxVM *vm, DxClass *cls) {
     obj->array_length = 0;
     obj->array_elements = NULL;
     obj->monitor = NULL;
+    obj->represented_class = NULL;
 
     if (cls->instance_field_count > 0) {
         obj->fields = (DxValue *)dx_malloc(sizeof(DxValue) * cls->instance_field_count);

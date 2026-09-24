@@ -9,6 +9,7 @@
 #include "dx_manifest.h"
 #include "dx_resources.h"
 #include "game_dex_runner.h"
+#include "dx_jni.h"
 #include "AndroidMini/framework_viewroot.h"
 #include "agr_bitmap.h"
 #include "agr_forensic.h"
@@ -3641,6 +3642,7 @@ static agr_dex_game *create_game(const uint8_t *bytes, uint32_t size,
         !(game->vm=dx_vm_create(NULL)) ||
         dx_vm_load_dex(game->vm,game->dex)!=DX_OK ||
         dx_register_java_lang(game->vm)!=DX_OK ||
+        dx_jni_init(game->vm)!=DX_OK ||
         register_game_framework(game->vm)!=DX_OK)
         goto fail;
     game->vm->framework_user=game;
@@ -4449,18 +4451,53 @@ int agr_dex_game_resolve_class(agr_dex_game *game, const char *descriptor) {
     DxClass *cls=NULL;
     return game&&descriptor&&dx_vm_load_class(game->vm,descriptor,&cls)==DX_OK&&cls?0:-1;
 }
+static DxObject *game_ref_object(agr_dex_game *game, uint32_t ref) {
+    int status = DX_IREF_INVALID;
+    DxObject *obj = NULL;
+    if (!game || !game->vm || !ref) return NULL;
+    if ((ref & 3u) == DX_IREF_GLOBAL)
+        obj = dx_iref_get(&game->vm->global_refs, ref, &status);
+    else if ((ref & 3u) == DX_IREF_WEAK)
+        obj = dx_iref_get(&game->vm->weak_refs, ref, &status);
+    else if ((ref & 3u) == DX_IREF_LOCAL && game->vm->root_exec)
+        obj = dx_iref_get(&game->vm->root_exec->local_refs, ref, &status);
+    return status == DX_IREF_OK ? obj : NULL;
+}
 uint32_t agr_dex_game_class_ref(agr_dex_game *game, const char *descriptor) {
     DxClass *cls=NULL;
-    DxObject *obj;
     if(!game||!game->vm||!descriptor||dx_vm_load_class(game->vm,descriptor,&cls)!=DX_OK||!cls)return 0;
-    obj=dx_vm_alloc_object(game->vm, cls);
-    return obj?dx_iref_add(&game->vm->global_refs, 0, obj):0;
+    if (cls->class_global_ref) return cls->class_global_ref;
+    return dx_vm_class_mirror(game->vm, cls) ? cls->class_global_ref : 0;
+}
+const char *agr_dex_game_class_descriptor(agr_dex_game *game, uint32_t ref) {
+    DxObject *obj = game_ref_object(game, ref);
+    return obj && obj->represented_class ? obj->represented_class->descriptor : NULL;
 }
 uint32_t agr_dex_game_string_ref(agr_dex_game *game, const char *text) {
     DxObject *obj;
     if(!game||!game->vm||!text)return 0;
     obj=dx_vm_create_string(game->vm, text);
     return obj?dx_iref_add(&game->vm->global_refs, 0, obj):0;
+}
+const char *agr_dex_game_string_chars(agr_dex_game *game, uint32_t ref) {
+    DxObject *obj = game_ref_object(game, ref);
+    return obj ? obj->string_data : NULL;
+}
+uint32_t agr_dex_game_new_global_ref(agr_dex_game *game, uint32_t ref) {
+    DxObject *obj = game_ref_object(game, ref);
+    if (!obj || !game->vm->global_refs.slots) return 0;
+    return dx_iref_add(&game->vm->global_refs, 0, obj);
+}
+int agr_dex_game_delete_global_ref(agr_dex_game *game, uint32_t ref) {
+    if (!game || !game->vm || (ref & 3u) != DX_IREF_GLOBAL) return -1;
+    return dx_iref_remove(&game->vm->global_refs, 0, ref);
+}
+int agr_dex_game_delete_local_ref(agr_dex_game *game, uint32_t ref) {
+    DxExecutionContext *exec;
+    if (!game || !game->vm || (ref & 3u) != DX_IREF_LOCAL) return -1;
+    exec = game->vm->root_exec;
+    if (!exec) return -1;
+    return dx_iref_remove(&exec->local_refs, exec->local_bottom, ref);
 }
 int agr_dex_game_resolve_method(agr_dex_game *game, const char *class_descriptor,
                                 const char *name, const char *signature, int is_static) {

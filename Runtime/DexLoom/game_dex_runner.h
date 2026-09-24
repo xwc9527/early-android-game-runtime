@@ -160,7 +160,12 @@ void agr_dex_game_destroy(agr_dex_game *game);
 const char *agr_dex_game_activity_descriptor(const agr_dex_game *game);
 int agr_dex_game_resolve_class(agr_dex_game *game, const char *descriptor);
 uint32_t agr_dex_game_class_ref(agr_dex_game *game, const char *descriptor);
+const char *agr_dex_game_class_descriptor(agr_dex_game *game, uint32_t ref);
 uint32_t agr_dex_game_string_ref(agr_dex_game *game, const char *text);
+const char *agr_dex_game_string_chars(agr_dex_game *game, uint32_t ref);
+uint32_t agr_dex_game_new_global_ref(agr_dex_game *game, uint32_t ref);
+int agr_dex_game_delete_global_ref(agr_dex_game *game, uint32_t ref);
+int agr_dex_game_delete_local_ref(agr_dex_game *game, uint32_t ref);
 int agr_dex_game_resolve_method(agr_dex_game *game, const char *class_descriptor,
                                 const char *name, const char *signature, int is_static);
 int agr_dex_game_start_activity(agr_dex_game *game);

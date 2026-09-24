@@ -54,10 +54,13 @@ int main(void) {
     random_class = dx_vm_find_class(vm, "Ljava/util/Random;");
     math_class = dx_vm_find_class(vm, "Ljava/lang/Math;");
     object = dx_vm_alloc_object(vm, object_class);
-    object_ref = (jclass)object_class;
+    object_ref = dx_jni_wrap_class(object_class);
     (void)object;
-    random_ref = (jclass)random_class;
-    math_ref = (jclass)math_class;
+    random_ref = dx_jni_wrap_class(random_class);
+    math_ref = dx_jni_wrap_class(math_class);
+    expect(object_ref && (object_ref == dx_jni_wrap_class(object_class) ||
+           (*env)->IsSameObject(env, (jobject)object_ref, (jobject)dx_jni_wrap_class(object_class))),
+           "class ref is an indirect reference to one mirror");
     equals_obj = (*env)->GetMethodID(env, object_ref, "equals", "(Ljava/lang/Object;)Z");
     equals_bad = (*env)->GetMethodID(env, object_ref, "equals", "()V");
     expect(equals_obj && ((DxMethod *)equals_obj)->shorty &&

@@ -75,6 +75,8 @@ struct DxClass {
     struct DxClassLoader *defining_loader;
     bool             is_framework;      // true for built-in Android stubs
     bool             owns_descriptor;   // true when descriptor was allocated for a synthetic type
+    DxObject        *class_object;      // one java.lang.Class mirror
+    uint32_t         class_global_ref;  // stable global iref of that mirror
 };
 
 // Inline cache for monomorphic/polymorphic call site optimization
@@ -174,6 +176,8 @@ struct DxObject {
 
     // String storage (owned; freed with object)
     char      *string_data;     // UTF-8 C string for java.lang.String / StringBuilder buf
+    /* Non-NULL when this object is the java.lang.Class mirror of a DxClass. */
+    DxClass   *represented_class;
 
     // Array support
     bool       is_array;
@@ -603,6 +607,8 @@ DxObject *dx_vm_alloc_array(DxVM *vm, uint32_t length);
 DxClass  *dx_vm_resolve_type(DxVM *vm, const char *descriptor);
 /* Class object whose klass is the resolved type (same convention as Class.forName). */
 DxObject *dx_vm_box_class(DxVM *vm, const char *descriptor);
+/* One Class mirror per DxClass. The returned object is also published as a global iref. */
+DxObject *dx_vm_class_mirror(DxVM *vm, DxClass *cls);
 void      dx_vm_release_object(DxVM *vm, DxObject *obj);
 DxResult  dx_vm_set_field(DxObject *obj, const char *name, DxValue value);
 DxResult  dx_vm_get_field(DxObject *obj, const char *name, DxValue *out);
