@@ -1,3 +1,5 @@
+/* LEGACY_BOOTSTRAP: Android public Java/Framework behavior in this file is migration debt.
+   New production ownership belongs to Dalvik or API19 Java, not additional reg_class/add_method. */
 #include "dx_vm.h"
 #include "dx_view.h"
 #include "dx_dex.h"

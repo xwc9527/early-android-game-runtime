@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "components": {
+    "Runtime/DexLoom/game_dex_runner.c": "LEGACY_BOOTSTRAP",
+    "Runtime/DexLoom/AndroidMini/dx_android_framework.c": "LEGACY_REFERENCE"
+  },
+  "rules": {
+    "LEGACY_BOOTSTRAP": "May only lose implementation, migrate it, add migration telemetry, fix a migration regression, or keep a real host boundary.",
+    "LEGACY_REFERENCE": "Not a production source. Must not be linked into iphoneos or Simulator production builds."
+  }
+}
