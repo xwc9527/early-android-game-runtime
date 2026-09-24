@@ -12,13 +12,14 @@ ROLES = {
     "CLEAN": {
         "role": "semantic_oracle",
         "instrumented": False,
-        "baseline": "Android 4.4.4_r2",
+        "baseline": "android-x86-4.4-r5",
+        "oracle_ready": False,
         "may_authorize_implementation": False,
     },
     "TRACE": {
         "role": "dependency_mapper",
         "instrumented": True,
-        "baseline": "Android 4.4.4_r2",
+        "baseline": "android-4.4.4_r2",
         "may_authorize_implementation": False,
     },
 }
@@ -46,6 +47,17 @@ def assert_not_oracle(description):
         raise ValueError("TRACE cannot be the semantic oracle")
     if description.get("variant") == "TRACE" and description.get("role") == "semantic_oracle":
         raise ValueError("TRACE cannot be the semantic oracle")
+
+
+def assert_matched_reference(clean, trace):
+    """A CLEAN/TRACE differential needs the same pinned source and build base."""
+    if clean.get("variant") != "CLEAN" or trace.get("variant") != "TRACE":
+        raise ValueError("reference roles are not CLEAN and TRACE")
+    if clean.get("instrumented") is not False or trace.get("instrumented") is not True:
+        raise ValueError("reference instrumentation roles are invalid")
+    for key in ("baseline", "source_revision", "base_image_sha256"):
+        if not clean.get(key) or clean[key] != trace.get(key):
+            raise ValueError("CLEAN and TRACE have no proven common base: " + key)
 
 
 def ensure_layout(root):

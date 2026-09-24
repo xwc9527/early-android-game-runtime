@@ -85,6 +85,8 @@ def boot(root, timeout_s):
         "variant": "CLEAN",
         "instrumented": False,
         "role": "semantic_oracle",
+        "baseline": "android-x86-4.4-r5",
+        "oracle_ready": False,
         "live_release": release,
         "live_sdk": sdk,
         "live_fingerprint": adb_getprop(serial, "ro.build.fingerprint"),

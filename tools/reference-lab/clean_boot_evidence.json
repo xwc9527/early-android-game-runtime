@@ -2,6 +2,8 @@
   "schema_version": 1,
   "variant": "CLEAN",
   "role": "semantic_oracle",
+  "baseline": "android-x86-4.4-r5",
+  "oracle_ready": false,
   "instrumented": false,
   "may_authorize_implementation": false,
   "image": "android-x86-4.4-r5.iso",

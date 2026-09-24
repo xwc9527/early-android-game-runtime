@@ -59,6 +59,10 @@ These changes are IMPLEMENTED locally, not CLOSED or MERGED.
 
 R0 remains partial: the recorded CLEAN guest boot is retained, while the
 matching API19 TRACE build and event producer have not been established.
+That boot used an Android-x86 4.4-r5 image, whereas the intended TRACE
+source is AOSP android-4.4.4_r2. Their common build baseline is unproved,
+so the boot record is a candidate CLEAN environment, not a ready
+CLEAN-versus-TRACE semantic oracle.
 Consequently there is no observed Frozen Bubble Migration Book, no reviewed
 Framework source closure, no cluster source port, and no CLEAN-to-AGR
 differential under the new pipeline. No new Android-visible production

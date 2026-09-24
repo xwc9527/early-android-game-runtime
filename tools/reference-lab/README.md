@@ -2,6 +2,9 @@
 
 This directory contains the offline artifact path. It does not build an API19
 TRACE image. The committed CLEAN boot record cannot serve as TRACE evidence.
+The CLEAN boot image is Android-x86 4.4-r5 and its common source/build base
+with a future AOSP android-4.4.4_r2 TRACE image is unproved. The differential
+gate must use assert_matched_reference before treating them as a pair.
 
 Run the pipeline with:
 

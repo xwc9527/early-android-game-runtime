@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from lab import assert_not_oracle, describe, ensure_layout
+from lab import assert_matched_reference, assert_not_oracle, describe, ensure_layout
 from mapper import build_book, write_book
 from source_closure import close_entry
 from source_index import build_index
@@ -21,6 +21,10 @@ class ReferenceLabTest(unittest.TestCase):
         clean = describe("CLEAN")
         self.assertEqual(clean["role"], "semantic_oracle")
         self.assertFalse(clean["instrumented"])
+        with self.assertRaises(ValueError):
+            assert_matched_reference(
+                {"variant": "CLEAN", "instrumented": False, "baseline": "android-x86-4.4-r5"},
+                {"variant": "TRACE", "instrumented": True, "baseline": "android-4.4.4_r2"})
 
     def test_layout_keeps_clean_and_trace_apart(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -123,6 +127,7 @@ class ReferenceLabTest(unittest.TestCase):
         self.assertEqual(evidence["live_release"], "4.4.4")
         self.assertEqual(evidence["live_sdk"], "19")
         self.assertFalse(evidence["trace_image_built"])
+        self.assertFalse(evidence["oracle_ready"])
         self.assertEqual(evidence["image_sha1"], "4c0edceef12bf4b8afb1b8390d94a9af29bbbca8")
 
     def test_original_implementation_is_rejected(self):
