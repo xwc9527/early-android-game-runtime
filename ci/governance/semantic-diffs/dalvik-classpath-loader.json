@@ -1,0 +1,80 @@
+{
+  "schema_version": 2,
+  "classification": "AGR_INTERNAL_BUG",
+  "subsystem": "Dalvik Boot ClassPath / ClassLoader identity",
+  "observed_discontinuity": "Class lookup searched every loaded DEX by descriptor, kept the first hit, and if that missed guessed a class with the same simple name.",
+  "upstream": {
+    "map_entry": "dalvik.classpath.loader",
+    "map_status": "UNVERIFIED",
+    "revision": "Android 4.4.4_r2",
+    "source_verified": false,
+    "files": [
+      "libcore/libdvm/src/main/java/java/lang/ClassLoader.java",
+      "dalvik/vm/oo/Class.cpp"
+    ],
+    "call_path": [
+      "ClassLoader.loadClass",
+      "parent delegation",
+      "defining loader"
+    ]
+  },
+  "semantic_class": "PUBLIC_OBSERVABLE",
+  "required_semantics": [
+    "Boot definitions beat an application DEX with the same descriptor.",
+    "The same descriptor under two defining loaders has two identities.",
+    "A child loader delegates to its parent before defining.",
+    "Duplicate definitions on one loader keep the earliest DEX.",
+    "A missing descriptor returns class-not-found.",
+    "Resolution does not guess by simple-name suffix.",
+    "Resolution order follows classpath insertion order.",
+    "The classpath can hold more than eight DEX files."
+  ],
+  "agr": {
+    "files": [
+      "Runtime/DexLoom/VM/dx_vm.c",
+      "Runtime/DexLoom/Include/dx_vm.h",
+      "Tests/DexLoom/classpath-host.c"
+    ],
+    "call_path": [
+      "dx_vm_resolve_class",
+      "dx_vm_load_class_locked",
+      "dx_vm_load_dex_on_loader"
+    ]
+  },
+  "differences": [
+    {
+      "id": "suffix-resolution-removed",
+      "description": "Production lookup no longer substitutes a class whose simple name matches.",
+      "relevance": "PUBLIC_OBSERVABLE"
+    },
+    {
+      "id": "loader-identity",
+      "description": "A class is identified by its defining loader and descriptor. Parent delegation returns the parent identity.",
+      "relevance": "PUBLIC_OBSERVABLE"
+    },
+    {
+      "id": "dynamic-classpath",
+      "description": "DEX files are stored in a growable classpath. Eight is not a load limit.",
+      "relevance": "SEMANTIC_INVARIANT"
+    }
+  ],
+  "earliest_evidenced_divergence": "Before this contract, dx_vm_load_class_locked selected the first descriptor match in a flat DEX list and then applied a simple-name suffix fallback.",
+  "causal_status": "CONTRACT_CONFIRMED",
+  "evidence_level": "CONTRACT_CONFIRMED",
+  "evidence": [
+    {
+      "type": "SOURCE",
+      "artifact": "Runtime/DexLoom/VM/dx_vm.c"
+    },
+    {
+      "type": "CONTRACT",
+      "artifact": "Tests/DexLoom/classpath-host.c"
+    }
+  ],
+  "remaining_uncertainty": [
+    "The executable Android 4.4.4 reference image was not booted for this contract in this environment."
+  ],
+  "next_action": "Phase 3A indirect references and JNI thread state. Do not start Framework migration.",
+  "needs_experiment": false,
+  "experimental": false
+}

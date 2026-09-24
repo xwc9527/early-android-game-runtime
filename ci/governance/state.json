@@ -6,34 +6,33 @@
     "last_known_good": "3e3db84a53ad0957e9217f804b6f718a942b9a11"
   },
   "active": {
-    "target": "Android Framework Runtime Traversal Dispatch / Surface Draw Consumer Phase 1",
-    "branch": "cursor/runtime-traversal-dispatch-1-0353",
+    "target": "Phase 3A0 Boot ClassPath / ClassLoader identity",
+    "branch": "recovery/phase3-dalvik-semantics",
     "lifecycle": "IMPLEMENTED",
-    "observed_discontinuity": "The exact cdbaf341 iPhone run completed a nonempty child-Surface post, yet the screen remained black. No host consumer acquired the post, and the observer destroyed the game during its next draw.",
-    "android_subsystem": "API19 Surface.unlockCanvasAndPost through IGraphicBufferProducer to platform display consumer",
+    "observed_discontinuity": "Class lookup used one global descriptor table, kept the first DEX hit, and guessed a class by simple-name suffix.",
+    "android_subsystem": "API19 ClassLoader parent delegation and defining-loader identity",
     "upstream_path": [
-      "platform/frameworks/base@android-4.4.4_r2:core/java/android/view/Surface.java:unlockCanvasAndPost",
-      "platform/frameworks/base@android-4.4.4_r2:core/jni/android_view_Surface.cpp:nativeUnlockCanvasAndPost",
-      "platform/frameworks/native@kitkat-release:libs/gui/Surface.cpp:unlockAndPost/queueBuffer"
+      "platform/libcore@android-4.4.4_r2:libdvm/src/main/java/java/lang/ClassLoader.java:loadClass",
+      "platform/dalvik@android-4.4.4_r2:vm/oo/Class.cpp:dvmDefineClass"
     ],
     "agr_path": [
-      "Runtime/DexLoom/game_dex_runner.c:surface_holder_unlock_canvas/copy_posted_surface",
-      "App/main.m:presentPhysicalPostedSurfaces/hostPhysicalVsync"
+      "Runtime/DexLoom/VM/dx_vm.c:dx_vm_resolve_class",
+      "Runtime/DexLoom/Include/dx_vm.h:DxClass.defining_loader"
     ],
     "active_explanations": [
-      "API19 Surface unlockAndPost queues the completed buffer to IGraphicBufferProducer; the display consumer belongs to the Binder/SurfaceFlinger platform endpoint",
-      "the exact iPhone run has a nonempty producer post but no host acquisition or submission",
-      "the physical observation harness finalized and destroyed an active producer during its next draw"
+      "API19 loadClass checks the initiating loader, then the parent, then that loader's dex path",
+      "a boot definition is a different class from an application definition of the same descriptor only when the parent does not already define it",
+      "suffix lookup is not part of ClassLoader resolution"
     ],
-    "earliest_evidenced_divergence": "The first nonempty child-Surface post had no iOS consumer, so no content reached the black UIKit root; the observer then terminated the producer during the second draw.",
+    "earliest_evidenced_divergence": "dx_vm_load_class_locked previously returned the first flat-DEX descriptor match and then a simple-name suffix match.",
     "semantic_class": "PUBLIC_OBSERVABLE",
-    "causal_status": "REAL_GAME_CONFIRMED",
-    "evidence_level": "REAL_GAME_CONFIRMED",
-    "classification": "HOST_ADAPTATION_BUG",
-    "next_validation": "Run the focused Surface contract and exact-candidate 1080x2340 Simulator screen capture, then build iphoneos IPA and observe the installed original APK on the physical iPhone. Host submission and Simulator screen do not alone prove physical presentation. Preserve old current/previous evidence and verify new manifest identity/hash.",
-    "primary_blocker": "The posted child-Surface buffer has no iOS display consumer. This is the earliest evidenced missing boundary; the old Bitmap NPE is no longer active on the new physical candidate.",
-    "first_broken_boundary": "CANVAS_POST_END completed without host acquisition or display submission.",
-    "first_broken_boundary_evidence": "Physical run 000168ac811f20380000fd326ab452e5 on cdbaf341/06a1685d with unchanged APK SHA 57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569: seq 855 post with 5 drawBitmap and 5,284,440 changed pixels; seq 859-875 next draw; seq 878-879 observer finalization. Existing UIKit root was black and App/main.m had no content-Surface consumer. Manifest trace/runtime hashes match, but old run-file hash differs because a post-finalize lifecycle setter rewrote it; full old bundle integrity remains invalid."
+    "causal_status": "CONTRACT_CONFIRMED",
+    "evidence_level": "CONTRACT_CONFIRMED",
+    "classification": "AGR_INTERNAL_BUG",
+    "next_validation": "Phase 3A indirect references. Do not start Framework migration.",
+    "primary_blocker": "none for the Phase 3A0 contract",
+    "first_broken_boundary": "none for the Phase 3A0 contract",
+    "first_broken_boundary_evidence": "Tests/DexLoom/classpath-host.c on 64023dae8b9a06bb93cfa34669193448f3820149"
   },
   "ci_budget": {
     "valid_closure_runs": 1,

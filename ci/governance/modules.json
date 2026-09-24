@@ -72,6 +72,16 @@
       "reopen_reason": null
     },
     {
+      "name": "DalvikClassPath",
+      "status": "experimental",
+      "paths": [
+        "Runtime/DexLoom/VM/dx_vm.c",
+        "Runtime/DexLoom/Include/dx_vm.h"
+      ],
+      "gate": "phase3a0-classpath",
+      "reopen_reason": null
+    },
+    {
       "name": "Framework",
       "status": "experimental",
       "paths": [

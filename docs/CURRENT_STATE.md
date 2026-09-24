@@ -1,5 +1,13 @@
 # AGR Current State
 
+Updated: 2026-09-24
+
+Phase 3A0 Boot ClassPath / ClassLoader identity has a passing host contract on recovery branch `recovery/phase3-dalvik-semantics` at `64023dae8b9a06bb93cfa34669193448f3820149`. Governance lifecycle stays `IMPLEMENTED` because this environment did not boot the Android 4.4.4 reference image, so the phase is not a formal closure attempt. Class identity is the defining loader plus the descriptor. The boot loader wins over an application DEX, missing classes are not found, suffix lookup is gone, and the classpath is a growable list. The host contract is `Tests/DexLoom/classpath-host.c`. The executable Android 4.4.4 reference image was not booted for this contract. JNI reference migration and Framework migration are not started.
+
+`game_dex_runner.c` is `LEGACY_BOOTSTRAP`. `dx_android_framework.c` is `LEGACY_REFERENCE` and is not a production source. Owner ledgers are `ci/governance/java-legacy-migration.json` and `ci/governance/java-public-owner.json`.
+
+## Previous merged traversal baseline
+
 Updated: 2026-09-22
 
 Active target: Android Framework Runtime Traversal Dispatch / Surface Draw Consumer Phase 1. Lifecycle: `IMPLEMENTED`. Integration base: `main @ 6e47ce9ab6da32483f049731ac04f2a8356a4b67`. Formal Runtime baseline and last known good remain `3e3db84a53ad0957e9217f804b6f718a942b9a11` / tree `1af351ebd1987d1d19b8bee83f9a7a8aa5071ffa`.
