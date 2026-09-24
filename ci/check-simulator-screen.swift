@@ -2,7 +2,8 @@ import AppKit
 import Foundation
 
 guard CommandLine.arguments.count == 2,
-      let bitmap = NSBitmapImageRep(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1])),
+      let imageData = try? Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1])),
+      let bitmap = NSBitmapImageRep(data: imageData),
       bitmap.pixelsWide > 0, bitmap.pixelsHigh > 0 else {
     fputs("screen_capture_unreadable\n", stderr)
     exit(2)
@@ -21,7 +22,7 @@ var nonblack = 0
 for y in stride(from: y0, to: y1, by: stepY) {
     for x in stride(from: x0, to: x1, by: stepX) {
         sampled += 1
-        if let color = bitmap.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB),
+        if let color = bitmap.colorAt(x: x, y: y)?.usingColorSpace(NSColorSpace.deviceRGB),
            max(color.redComponent, max(color.greenComponent, color.blueComponent)) > 0.08 {
             nonblack += 1
         }
