@@ -73,8 +73,15 @@ data = {
     "simulator_runtime_requested": sim.get("simulator_runtime_requested"),
     "simulator_runtime_actual": sim.get("simulator_runtime_actual"),
     "simulator_runtime_version": sim.get("simulator_runtime_version"),
+    "simulator_runtime_build": sim.get("simulator_runtime_build"),
     "os_version_parity": sim.get("os_version_parity"),
     "simulator_device_type": sim.get("simulator_device_type_actual"),
+    "runner_image": sim.get("runner_image"),
+    "runner_image_version": sim.get("runner_image_version"),
+    "runner_arch": sim.get("runner_arch"),
+    "macos_version": sim.get("macos_version"),
+    "xcode_build": sim.get("xcode_build"),
+    "apk_sha256": sim.get("apk_sha256"),
 }
 with open(out_path, "w", encoding="utf-8") as f:
     json.dump(data, f, indent=2)
@@ -166,7 +173,9 @@ if grep -q '^SIMULATOR_RUNTIME_UNAVAILABLE' "$ARTIFACTS/ci-environment.json" 2>/
 fi
 if grep -q '^CREATE$' "$ARTIFACTS/simulator-device.txt"; then
   RUNTIME_ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["simulator_runtime_actual"])' "$ARTIFACTS/ci-environment.json")"
-  DEVICE="$(xcrun simctl create 'iPhone 16 Pro' com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro "$RUNTIME_ID")"
+  DEVICE_TYPE="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["simulator_device_type_actual"])' "$ARTIFACTS/ci-environment.json")"
+  DEVICE_NAME="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["simulator_device_type_name"])' "$ARTIFACTS/ci-environment.json")"
+  DEVICE="$(xcrun simctl create "$DEVICE_NAME" "$DEVICE_TYPE" "$RUNTIME_ID")"
   python3 -c 'import json,sys; p=sys.argv[1]; d=json.load(open(p)); d["udid"]=sys.argv[2]; d["create_device"]=False; json.dump(d, open(p,"w"), indent=2)' "$ARTIFACTS/ci-environment.json" "$DEVICE"
   printf '%s\n' "$DEVICE" > "$ARTIFACTS/simulator-device.txt"
 fi
@@ -193,7 +202,7 @@ data["sdk_version"] = out("xcrun", "--sdk", "iphonesimulator", "--show-sdk-versi
 json.dump(data, open(path, "w"), indent=2)
 print()
 PY
-} || true
+}
 phase "boot Simulator $DEVICE"
 phase "simulator boot requested $DEVICE"
 xcrun simctl boot "$DEVICE" 2>/dev/null || true; xcrun simctl bootstatus "$DEVICE" -b

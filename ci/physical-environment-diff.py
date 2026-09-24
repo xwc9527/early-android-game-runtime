@@ -104,6 +104,13 @@ def main():
         else:
             left, right = dig(pe, path), dig(se, path)
         parity[name] = compare(name, left, right, differences)
+    physical_product = dig(pe, ("os", "system_version"))
+    simulator_product = dig(se, ("simulator", "runtime_version"))
+    parity["PRODUCT_VERSION_PARITY"] = (
+        "EXACT" if physical_product == simulator_product == "27.0" else "MISMATCH")
+    parity["BUILD_ARTIFACT_IDENTITY"] = (
+        "EXACT" if all(parity.get(name) == "MATCH" for name in
+                       ("COMMIT_PARITY", "TREE_PARITY", "APK_PARITY")) else "MISMATCH")
     pbin, sbin = binary_map(physical, pe), binary_map(simulator, se)
     binary_roles = {}
     for role in sorted(set(pbin) | set(sbin)):
@@ -120,6 +127,9 @@ def main():
         "schema": "agr.physical-environment-diff.v2",
         "root_cause": None,
         "parity": parity,
+        "physical_product_version": physical_product,
+        "simulator_product_version": simulator_product,
+        "product_version_parity": parity["PRODUCT_VERSION_PARITY"],
         "difference_count": len(differences),
         "differences": differences,
     }

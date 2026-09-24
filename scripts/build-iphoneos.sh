@@ -4,6 +4,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"; BUILD="$ROOT/build/iphoneos"; APP="$BU
 SDK="$(xcrun --sdk iphoneos --show-sdk-path)"; TARGET="arm64-apple-ios15.0"
 mkdir -p "$BUILD/obj" "$APP"
 python3 "$ROOT/tools/fetch_fdroid_samples.py"
+python3 "$ROOT/ci/verify-iphoneos-environment.py" "$BUILD/prebuild-environment.json"
 python3 "$ROOT/tools/scan_apks.py" --shard-index "${SHARD_INDEX:-0}" --shard-count "${SHARD_COUNT:-1}"
 ANGLE_VERSION="v2.1.28252"
 ANGLE_SHA256="59e4b1f68956c92441cde4dca0e9eb1a835bbccd107cefdd1d3d3d60e27410be"
@@ -83,10 +84,13 @@ printf '%s\n%s\n%s\n' "$BRANCH" "$COMMIT" "$TREE" > "$BUILD/build-identity.txt"
 XCODE_VERSION="$(xcodebuild -version 2>/dev/null | tr '\n' ' ' || true)"
 SDK_VERSION="$(xcrun --sdk iphoneos --show-sdk-version 2>/dev/null || true)"
 RUSTC_VERSION="$(rustc -V 2>/dev/null || true)"
-python3 - "$BUILD/build-environment.json" "$BRANCH" "$COMMIT" "$TREE" "$XCODE_VERSION" "$SDK_VERSION" "$RUSTC_VERSION" <<'PY'
+python3 - "$BUILD/build-environment.json" "$BUILD/prebuild-environment.json" "$BRANCH" "$COMMIT" "$TREE" "$XCODE_VERSION" "$SDK_VERSION" "$RUSTC_VERSION" <<'PY'
 import json, os, sys
-path, branch, commit, tree, xcode, sdk, rustc = sys.argv[1:]
-json.dump({
+path, prebuild_path, branch, commit, tree, xcode, sdk, rustc = sys.argv[1:]
+prebuild = json.load(open(prebuild_path))
+assert prebuild["commit"] == commit and prebuild["tree"] == tree
+assert prebuild["sdk_version"] == sdk and prebuild["xcode_version"] in xcode
+data = {
     "schema": "agr.iphoneos-build-environment.v1",
     "branch": branch,
     "commit": commit,
@@ -103,7 +107,10 @@ json.dump({
     "rustc": rustc,
     "runner_os": os.uname().sysname,
     "runner_arch": os.uname().machine,
-}, open(path, "w"), indent=2)
+}
+data.update({key: prebuild[key] for key in ("runner_image", "runner_image_version",
+    "macos_version", "xcode_build", "apk_sha256")})
+json.dump(data, open(path, "w"), indent=2)
 print()
 PY
 DEX="$ROOT/Runtime/DexLoom"; DEX_INCLUDE="$DEX/Include"

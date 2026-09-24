@@ -28,6 +28,9 @@ on:
       - 'ci/export-physical-evidence.py'
       - 'ci/physical-environment-diff.py'
       - 'ci/select-simulator-runtime.py'
+      - 'ci/verify-iphoneos-environment.py'
+      - 'ci/check-ios27-parity.py'
+      - 'Tests/DexLoom/ios27-environment-test.py'
       - 'Tests/DexLoom/physical-runtime-evidence-test.py'
       - 'Tests/DexLoom/canvas-state-clip-host.c'
       - 'Tests/DexLoom/make_thread_start_fixture.py'
@@ -64,6 +67,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Verify exact iOS 27 environment selection contract
+        run: python3 Tests/DexLoom/ios27-environment-test.py
       - name: Restore pinned APK inputs
         uses: actions/cache/restore@v4
         with:
@@ -246,7 +251,7 @@ jobs:
   simulator-focused:
     needs: linux-source-contract
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, 'Dispatch the planned SurfaceView Simulator discovery'))
-    runs-on: macos-15
+    runs-on: xcode-27
     timeout-minutes: 90
     env:
       AGR_SIMULATOR_PROFILE: ${{ (inputs.run_kind == 'validation' || inputs.run_kind == 'closure') && 'full' || 'focused-framework' }}
@@ -262,6 +267,19 @@ jobs:
           path: samples/*.apk
           enableCrossOsArchive: true
           key: agr-samples-${{ (inputs.run_kind == 'validation' || inputs.run_kind == 'closure') && 'full' || 'focused-framework' }}-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Enforce exact iOS 27 Simulator baseline before build
+        run: |
+          set -euo pipefail
+          python3 tools/fetch_fdroid_samples.py --profile "$AGR_SIMULATOR_PROFILE"
+          mkdir -p build/artifacts
+          python3 ci/select-simulator-runtime.py build/artifacts/ci-environment.json > build/artifacts/simulator-device.txt
+      - name: Publish Simulator environment baseline
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agr-ios27-simulator-baseline
+          path: build/artifacts/ci-environment.json
+          if-no-files-found: warn
       - name: Restore ANGLE Simulator slice
         uses: actions/cache/restore@v4
         with:
@@ -389,7 +407,7 @@ jobs:
   iphoneos:
     if: ${{ github.event_name == 'push' || inputs.run_kind == 'validation' || inputs.run_kind == 'closure' }}
     needs: linux-source-contract
-    runs-on: macos-15
+    runs-on: xcode-27
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -400,6 +418,18 @@ jobs:
           path: samples/*.apk
           enableCrossOsArchive: true
           key: agr-samples-full-v2-${{ hashFiles('Tests/Samples/fdroid.lock.json', 'Tests/Samples/fdroid.json') }}
+      - name: Enforce exact iOS 27 device build baseline before build
+        run: |
+          set -euo pipefail
+          python3 tools/fetch_fdroid_samples.py
+          python3 ci/verify-iphoneos-environment.py build/iphoneos/prebuild-environment.json
+      - name: Publish iphoneos environment baseline
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agr-ios27-iphoneos-baseline
+          path: build/iphoneos/prebuild-environment.json
+          if-no-files-found: warn
       - name: Restore ANGLE device slice
         uses: actions/cache@v4
         with:
@@ -426,11 +456,40 @@ jobs:
             build/iphoneos/AGRDevice-unsigned.ipa
             build/iphoneos/build-identity.txt
             build/iphoneos/build-environment.json
+            build/iphoneos/prebuild-environment.json
           if-no-files-found: error
+
+  environment-parity:
+    needs: [simulator-focused, iphoneos]
+    if: ${{ needs.simulator-focused.result == 'success' && needs.iphoneos.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: agr-ios27-simulator-baseline
+          path: build/parity/simulator
+      - uses: actions/download-artifact@v4
+        with:
+          name: agr-ios27-iphoneos-baseline
+          path: build/parity/iphoneos
+      - name: Enforce exact Simulator and device build identity
+        run: |
+          python3 ci/check-ios27-parity.py \
+            --simulator build/parity/simulator/ci-environment.json \
+            --iphoneos build/parity/iphoneos/prebuild-environment.json \
+            --output build/artifacts/ios27-environment-parity.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agr-ios27-environment-parity
+          path: build/artifacts/ios27-environment-parity.json
+          if-no-files-found: warn
 
   closure-evidence:
     if: ${{ always() && inputs.run_kind == 'closure' }}
-    needs: [linux-source-contract, simulator-focused, iphoneos]
+    needs: [linux-source-contract, simulator-focused, iphoneos, environment-parity]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -460,4 +519,5 @@ jobs:
           test '${{ needs.linux-source-contract.result }}' = success
           test '${{ needs.simulator-focused.result }}' = success
           test '${{ needs.iphoneos.result }}' = success
+          test '${{ needs.environment-parity.result }}' = success
           test -s build/artifacts/framework-traversal-dispatch-run-summary.json

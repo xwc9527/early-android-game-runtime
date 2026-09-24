@@ -193,13 +193,20 @@ def check_discovery(result):
     ci_environment = result.get("ci_environment") or {}
     require(ci_environment.get("simulator_runtime_requested"), ci_environment)
     require(ci_environment.get("simulator_runtime_requested") == ci_environment.get("simulator_runtime_actual"), ci_environment)
-    require(ci_environment.get("physical_target_os") == "26.3.1 (a)", ci_environment)
-    require(ci_environment.get("simulator_runtime_version"), ci_environment)
-    require(ci_environment.get("os_version_parity") in (
-        "SAME_26_3_MINOR", "SAME_26_MAJOR_CLOSEST", "VERSION_DIFFERENT_FALLBACK"), ci_environment)
+    require(ci_environment.get("physical_target_os") == "27.0", ci_environment)
+    require(ci_environment.get("simulator_runtime_version") == "27.0", ci_environment)
+    require(ci_environment.get("simulator_runtime_actual") ==
+            "com.apple.CoreSimulator.SimRuntime.iOS-27-0", ci_environment)
+    require(ci_environment.get("os_version_parity") == "EXACT_27_0", ci_environment)
     require(ci_environment.get("xcode_version") and ci_environment.get("sdk_name") == "iphonesimulator" and
             ci_environment.get("sdk_version"), ci_environment)
-    require(ci_environment.get("simulator_device_type_requested") == "com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro", ci_environment)
+    require(ci_environment.get("xcode_version") == "Xcode 27.0" and
+            ci_environment.get("sdk_version") == "27.0", ci_environment)
+    require(ci_environment.get("apk_sha256") ==
+            "57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569",
+            ci_environment)
+    require(ci_environment.get("simulator_device_type_requested", "").startswith(
+        "com.apple.CoreSimulator.SimDeviceType.iPhone-"), ci_environment)
     require(ci_environment.get("simulator_device_type_actual") == ci_environment.get("simulator_device_type_requested"), ci_environment)
     build_environment = result.get("build_environment") or {}
     for key in ("branch", "commit", "tree"):
@@ -217,6 +224,8 @@ def check_discovery(result):
     require(build_environment.get("simulator_runtime_version") == ci_environment.get("simulator_runtime_version"),
             {"build": build_environment, "ci": ci_environment})
     require(build_environment.get("os_version_parity") == ci_environment.get("os_version_parity"),
+            {"build": build_environment, "ci": ci_environment})
+    require(build_environment.get("apk_sha256") == ci_environment.get("apk_sha256"),
             {"build": build_environment, "ci": ci_environment})
 
 
