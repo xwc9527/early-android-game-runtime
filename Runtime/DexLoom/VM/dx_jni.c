@@ -741,15 +741,16 @@ static void JNICALL jni_CallStaticVoidMethodA(JNIEnv *env, jclass c, jmethodID m
 // Static field access
 static jfieldID JNICALL jni_GetStaticFieldID(JNIEnv *env, jclass clazz,
                                               const char *name, const char *sig) {
-    (void)env; (void)sig;
+    (void)env;
     DxClass *cls = dx_jni_unwrap_class(clazz);
     if (!cls || !name) return NULL;
-    // Verify the field actually exists and is static
-    for (uint32_t i = 0; i < cls->static_field_count; i++) {
-        if (cls->field_defs[i].flags & DX_ACC_STATIC) {
-            if (strcmp(cls->field_defs[i].name, name) == 0) {
-                return jni_make_field_id(cls, cls->field_defs[i].name, cls->field_defs[i].type, 1, i);
-            }
+    for (DxClass *walk = cls; walk; walk = walk->super_class) {
+        for (uint32_t i = 0; i < walk->static_field_count; i++) {
+            const char *field_name = walk->static_field_names ? walk->static_field_names[i] : NULL;
+            const char *field_type = walk->static_field_types ? walk->static_field_types[i] : NULL;
+            if (!field_name || strcmp(field_name, name) != 0) continue;
+            if (sig && field_type && strcmp(field_type, sig) != 0) continue;
+            return jni_make_field_id(walk, field_name, field_type, 1, i);
         }
     }
     return NULL;

@@ -291,6 +291,8 @@ static DxClass *create_class(DxVM *vm, const char *descriptor, DxClass *super, b
     cls->owns_descriptor = false;
     cls->class_object = NULL;
     cls->class_global_ref = 0;
+    cls->static_field_names = NULL;
+    cls->static_field_types = NULL;
     cls->defining_loader = vm->pending_defining_loader ? vm->pending_defining_loader : vm->boot_loader;
 
     vm->classes[vm->class_count++] = cls;
@@ -5022,6 +5024,18 @@ static DxResult dx_vm_load_class_locked(DxVM *vm, const char *descriptor, DxClas
             if (cd->static_fields_count > 0) {
                 cls->static_fields = (DxValue *)dx_malloc(
                     sizeof(DxValue) * cd->static_fields_count);
+                cls->static_field_names = (const char **)dx_malloc(
+                    sizeof(const char *) * cd->static_fields_count);
+                cls->static_field_types = (const char **)dx_malloc(
+                    sizeof(const char *) * cd->static_fields_count);
+                for (uint32_t f = 0; f < cd->static_fields_count; f++) {
+                    uint32_t fidx = cd->static_fields[f].field_idx;
+                    if (cls->static_field_names)
+                        cls->static_field_names[f] = dx_dex_get_field_name(vm->dex, fidx);
+                    if (cls->static_field_types)
+                        cls->static_field_types[f] = fidx < vm->dex->field_count ?
+                            dx_dex_get_type(vm->dex, vm->dex->field_ids[fidx].type_idx) : "?";
+                }
             }
 
             // Parse encoded static field defaults from DEX
@@ -5229,9 +5243,10 @@ DxResult dx_vm_init_class(DxVM *vm, DxClass *cls) {
         if (strcmp(cls->direct_methods[i].name, "<clinit>") == 0) {
             DX_DEBUG(TAG, "Running <clinit> for %s", cls->descriptor);
             DxResult res = dx_vm_execute_method(vm, &cls->direct_methods[i], NULL, 0, NULL);
-            if (res != DX_OK) {
+            if (res != DX_OK ||
+                (dx_vm_current_exec(vm) && dx_vm_current_exec(vm)->pending_exception)) {
                 cls->status = DX_CLASS_ERROR;
-                return res;
+                return res != DX_OK ? res : DX_ERR_CLASS_NOT_FOUND;
             }
             break;
         }
@@ -6276,6 +6291,50 @@ DxMethod *dx_vm_find_interface_method(DxVM *vm, DxClass *cls, const char *name, 
     }
 
     return best;
+}
+
+static int method_unresolved_abstract(const DxMethod *method) {
+    return method && (method->access_flags & DX_ACC_ABSTRACT) &&
+           !method->has_code && !method->is_native && !method->native_fn;
+}
+
+DxMethod *dx_vm_select_invoke(DxVM *vm, uint8_t opcode, DxMethod *resolved,
+                              DxObject *receiver, DxClass *caller_class) {
+    DxMethod *target = resolved;
+    if (!target) return NULL;
+    if (opcode == 0x70 || opcode == 0x71) return target;
+    if (opcode == 0x6e && receiver && receiver->klass && target->vtable_idx >= 0 &&
+        (uint32_t)target->vtable_idx < receiver->klass->vtable_size) {
+        DxMethod *slot = receiver->klass->vtable[target->vtable_idx];
+        if (slot) target = slot;
+    } else if (opcode == 0x72 && receiver && receiver->klass) {
+        DxMethod *override = dx_vm_find_method(receiver->klass, target->name, target->shorty);
+        if (override) target = override;
+        else {
+            DxMethod *iface = dx_vm_find_interface_method(vm, receiver->klass, target->name, target->shorty);
+            if (iface) target = iface;
+        }
+        if ((target->access_flags & DX_ACC_BRIDGE) && target->declaring_class) {
+            DxMethod *real = dx_vm_find_method(target->declaring_class, target->name, target->shorty);
+            if (real && !(real->access_flags & DX_ACC_BRIDGE)) target = real;
+        }
+    } else if (opcode == 0x6f) {
+        DxClass *start = caller_class && caller_class->super_class ? caller_class->super_class : NULL;
+        DxMethod *found = NULL;
+        for (DxClass *walk = start; walk && !found; walk = walk->super_class) {
+            found = dx_vm_find_method(walk, target->name, target->shorty);
+        }
+        if (!found && target->vtable_idx >= 0 && receiver && receiver->klass) {
+            for (DxClass *super = receiver->klass->super_class; super && !found; super = super->super_class) {
+                if ((uint32_t)target->vtable_idx < super->vtable_size) {
+                    DxMethod *slot = super->vtable[target->vtable_idx];
+                    if (slot && slot != resolved) found = slot;
+                }
+            }
+        }
+        target = found;
+    }
+    return method_unresolved_abstract(target) ? NULL : target;
 }
 
 DxObject *dx_vm_create_exception(DxVM *vm, const char *class_descriptor, const char *message) {

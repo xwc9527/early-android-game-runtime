@@ -14,6 +14,7 @@ on:
       - 'Runtime/GuestRuntime/agr_guest_runtime.c'
       - 'Tests/DexLoom/jni-ref-host.c'
       - 'Tests/DexLoom/method-id-host.c'
+      - 'Tests/DexLoom/dispatch-host.c'
       - '.github/workflows/phase3a-jni.yml'
 
 jobs:
@@ -45,3 +46,8 @@ jobs:
             "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "$OBJ"/dx_exec.o \
             "$OBJ"/dx_indirect_ref.o "$OBJ"/method-id-host.o -lz -lm -o /tmp/method-id-host
           /tmp/method-id-host
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/dispatch-host.c -o "$OBJ/dispatch-host.o"
+          cc -pthread "$OBJ"/dx_log.o "$OBJ"/dx_memory.o "$OBJ"/dx_arena.o "$OBJ"/dx_dex.o "$OBJ"/dx_opcode.o \
+            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "$OBJ"/dx_exec.o \
+            "$OBJ"/dx_indirect_ref.o "$OBJ"/dispatch-host.o -lz -lm -o /tmp/dispatch-host
+          /tmp/dispatch-host

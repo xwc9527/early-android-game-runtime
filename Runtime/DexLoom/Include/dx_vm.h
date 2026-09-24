@@ -45,6 +45,8 @@ struct DxClass {
         bool         is_volatile;   // ACC_VOLATILE (0x0040) -- memory barrier semantics
     } *field_defs;
     DxValue         *static_fields;     // array[static_field_count]
+    const char     **static_field_names;
+    const char     **static_field_types;
 
     // Methods
     DxMethod        *direct_methods;
@@ -629,6 +631,10 @@ void dx_vm_trace_virtual_invoke(DxFrame *frame, uint32_t pc, uint8_t opcode,
                                 uint32_t method_idx, DxMethod *resolved,
                                 DxClass *receiver, DxMethod *slot);
 DxMethod *dx_vm_find_interface_method(DxVM *vm, DxClass *cls, const char *name, const char *shorty);
+/* virtual 0x6e, super 0x6f, direct 0x70, static 0x71, interface 0x72.
+   NULL means the invoke cannot be dispatched, including an abstract target. */
+DxMethod *dx_vm_select_invoke(DxVM *vm, uint8_t opcode, DxMethod *resolved,
+                              DxObject *receiver, DxClass *caller_class);
 
 // Frame pool
 DxFrame *dx_vm_alloc_frame(DxVM *vm);
