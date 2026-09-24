@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <pthread.h>
+#include <stdarg.h>
 
 #define TAG "JNI"
 
@@ -411,15 +412,44 @@ static jobject JNICALL jni_CallObjectMethodA(JNIEnv *env, jobject obj, jmethodID
 }
 
 // Helper: dispatch a JNI Call*Method and return the DxValue result
-static DxValue jni_dispatch_method(jobject obj, jmethodID mid) {
+static DxValue jni_invoke(jobject receiver, jmethodID mid, const jvalue *vals, va_list *ap) {
     DxValue result = {0};
-    DxMethod *m = (DxMethod *)mid;
-    DxObject *dobj = dx_jni_unwrap_object(obj);
-    if (!m || !g_vm) return result;
-    DxValue args[1] = { {.tag = DX_VAL_OBJ, .obj = dobj} };
+    DxValue args[DX_MAX_REGISTERS];
+    DxMethod *method = (DxMethod *)mid;
+    uint32_t count = 0;
+    const char *shorty;
+    uint32_t extra = 0;
+    if (!method || !g_vm) return result;
+    memset(args, 0, sizeof(args));
+    shorty = method->shorty ? method->shorty : "V";
+    if ((method->access_flags & DX_ACC_STATIC) == 0 && count < DX_MAX_REGISTERS)
+        args[count++] = DX_OBJ_VALUE(dx_jni_unwrap_object(receiver));
+    for (const char *param = shorty + 1; *param && count < DX_MAX_REGISTERS; param++, extra++) {
+        jvalue value;
+        memset(&value, 0, sizeof(value));
+        if (ap) {
+            if (*param == 'D') value.d = va_arg(*ap, jdouble);
+            else if (*param == 'F') value.f = (jfloat)va_arg(*ap, jdouble);
+            else if (*param == 'J') value.j = va_arg(*ap, jlong);
+            else if (*param == 'L' || *param == '[') value.l = va_arg(*ap, jobject);
+            else value.i = va_arg(*ap, jint);
+        } else if (vals) {
+            value = vals[extra];
+        }
+        if (*param == 'J') { args[count].tag = DX_VAL_LONG; args[count].l = value.j; }
+        else if (*param == 'F') { args[count].tag = DX_VAL_FLOAT; args[count].f = value.f; }
+        else if (*param == 'D') { args[count].tag = DX_VAL_DOUBLE; args[count].d = value.d; }
+        else if (*param == 'L' || *param == '[') args[count] = DX_OBJ_VALUE(dx_jni_unwrap_object(value.l));
+        else args[count] = DX_INT_VALUE(value.i);
+        count++;
+    }
     dx_vm_current_exec(g_vm)->insn_count = 0;
-    dx_vm_execute_method(g_vm, m, args, 1, &result);
+    dx_vm_execute_method(g_vm, method, args, count, &result);
     return result;
+}
+
+static DxValue jni_dispatch_method(jobject obj, jmethodID mid) {
+    return jni_invoke(obj, mid, NULL, NULL);
 }
 
 // Boolean
@@ -474,18 +504,24 @@ static jshort JNICALL jni_CallShortMethodA(JNIEnv *env, jobject obj, jmethodID m
 
 // Int
 static jint JNICALL jni_CallIntMethod(JNIEnv *env, jobject obj, jmethodID mid, ...) {
+    va_list args;
+    DxValue r;
     (void)env;
-    DxValue r = jni_dispatch_method(obj, mid);
+    va_start(args, mid);
+    r = jni_invoke(obj, mid, NULL, &args);
+    va_end(args);
     return (r.tag == DX_VAL_INT) ? (jint)r.i : 0;
 }
 static jint JNICALL jni_CallIntMethodV(JNIEnv *env, jobject obj, jmethodID mid, va_list a) {
-    (void)env; (void)a;
-    DxValue r = jni_dispatch_method(obj, mid);
+    DxValue r;
+    (void)env;
+    r = jni_invoke(obj, mid, NULL, &a);
     return (r.tag == DX_VAL_INT) ? (jint)r.i : 0;
 }
 static jint JNICALL jni_CallIntMethodA(JNIEnv *env, jobject obj, jmethodID mid, const jvalue *a) {
-    (void)env; (void)a;
-    DxValue r = jni_dispatch_method(obj, mid);
+    DxValue r;
+    (void)env;
+    r = jni_invoke(obj, mid, a, NULL);
     return (r.tag == DX_VAL_INT) ? (jint)r.i : 0;
 }
 
@@ -720,7 +756,27 @@ JNI_CALL_STATIC_STUB(Boolean, jboolean, JNI_FALSE)
 JNI_CALL_STATIC_STUB(Byte, jbyte, 0)
 JNI_CALL_STATIC_STUB(Char, jchar, 0)
 JNI_CALL_STATIC_STUB(Short, jshort, 0)
-JNI_CALL_STATIC_STUB(Int, jint, 0)
+static jint JNICALL jni_CallStaticIntMethod(JNIEnv *env, jclass c, jmethodID m, ...) {
+    va_list args;
+    DxValue r;
+    (void)env; (void)c;
+    va_start(args, m);
+    r = jni_invoke(NULL, m, NULL, &args);
+    va_end(args);
+    return (r.tag == DX_VAL_INT) ? (jint)r.i : 0;
+}
+static jint JNICALL jni_CallStaticIntMethodV(JNIEnv *env, jclass c, jmethodID m, va_list a) {
+    DxValue r;
+    (void)env; (void)c;
+    r = jni_invoke(NULL, m, NULL, &a);
+    return (r.tag == DX_VAL_INT) ? (jint)r.i : 0;
+}
+static jint JNICALL jni_CallStaticIntMethodA(JNIEnv *env, jclass c, jmethodID m, const jvalue *a) {
+    DxValue r;
+    (void)env; (void)c;
+    r = jni_invoke(NULL, m, a, NULL);
+    return (r.tag == DX_VAL_INT) ? (jint)r.i : 0;
+}
 JNI_CALL_STATIC_STUB(Long, jlong, 0)
 JNI_CALL_STATIC_STUB(Float, jfloat, 0.0f)
 JNI_CALL_STATIC_STUB(Double, jdouble, 0.0)

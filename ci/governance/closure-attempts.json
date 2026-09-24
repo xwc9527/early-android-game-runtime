@@ -180,7 +180,17 @@
       "classification": "VALID_PASS",
       "reason": "Throw, catch-all, move-exception, pending JNI exception state, RegisterNatives, and JNI_OnLoad version checks passed. No reference PASS was claimed.",
       "consumes_budget": true
+    },
+    {
+      "target": "Phase 3D Dalvik GC roots and object lifetime",
+      "target_evidence": "commit fcf78ce222055e4b36ad77b8d9456a184422d67c tree 4f63f6d649e27a4110efc82d0eea6008e015d3af. lifetime-host, JNI, classpath, governance, and protected regression passed. Push JNI 36025940192 and pull request JNI 36025946466. API19_REFERENCE_DIFFERENTIAL was not executed.",
+      "run_id": "36025946466",
+      "tested_commit": "fcf78ce222055e4b36ad77b8d9456a184422d67c",
+      "tested_tree": "4f63f6d649e27a4110efc82d0eea6008e015d3af",
+      "classification": "VALID_PASS",
+      "reason": "Static, class, native-frame, JNI global, local-frame, weak, and repeated GC roots passed. No reference PASS was claimed.",
+      "consumes_budget": true
     }
   ],
-  "active_target": "Phase 3D Dalvik GC roots and object lifetime"
+  "active_target": "Phase 3 Dalvik semantics closure"
 }

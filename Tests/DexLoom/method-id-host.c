@@ -22,6 +22,13 @@ static DxResult native_probe(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t a
     return DX_OK;
 }
 
+static DxResult native_plus(DxVM *vm, DxFrame *frame, DxValue *args, uint32_t arg_count) {
+    (void)vm;
+    frame->result = DX_INT_VALUE(arg_count > 1 ? args[1].i + 1 : -1);
+    frame->has_result = true;
+    return DX_OK;
+}
+
 int main(void) {
     DxVM *vm;
     JNIEnv *env;
@@ -108,5 +115,16 @@ int main(void) {
     expect(((DxMethod *)next_int)->native_fn == native_probe, "registered native is the resolved method");
     native_method.signature = "(J)I";
     expect((*env)->RegisterNatives(env, random_ref, &native_method, 1) != 0, "register natives rejects a missing signature");
+    native_method.signature = "(I)I";
+    native_method.fnPtr = (void *)native_plus;
+    expect((*env)->RegisterNatives(env, random_ref, &native_method, 1) == 0, "register natives binds the int overload");
+    {
+        DxObject *random_obj = dx_vm_alloc_object(vm, random_class);
+        jobject receiver = dx_jni_wrap_object(random_obj);
+        jvalue arg;
+        arg.i = 5;
+        expect((*env)->CallIntMethodA(env, receiver, next_int_arg, &arg) == 6,
+               "CallIntMethodA passes the argument");
+    }
     return g_failures ? 1 : 0;
 }

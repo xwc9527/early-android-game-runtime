@@ -3,13 +3,13 @@
   "reopens": [
     {
       "module": "NativeActivityInput",
-      "target": "Phase 3D Dalvik GC roots and object lifetime",
+      "target": "Phase 3 Dalvik semantics closure",
       "reason": "The guest JNI owner change remains in this branch. Phase 3D does not add a second reference table.",
       "evidence": "Phase 3A VALID_PASS a2e07eb37f645f39c9a968b78808e88cdc25c6e3. Guest class and string handles are Dalvik indirect refs."
     },
     {
       "module": "DEXRuntimeLifecycle",
-      "target": "Phase 3D Dalvik GC roots and object lifetime",
+      "target": "Phase 3 Dalvik semantics closure",
       "reason": "game_dex_runner.c still publishes references through the VM indirect-ref tables that Phase 3D marks as roots.",
       "evidence": "Phase 3A VALID_PASS a2e07eb37f645f39c9a968b78808e88cdc25c6e3. Class mirrors use the VM global ref table."
     },

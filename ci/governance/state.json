@@ -6,7 +6,7 @@
     "last_known_good": "3e3db84a53ad0957e9217f804b6f718a942b9a11"
   },
   "active": {
-    "target": "Phase 3D Dalvik GC roots and object lifetime",
+    "target": "Phase 3 Dalvik semantics closure",
     "branch": "recovery/phase3-dalvik-semantics",
     "lifecycle": "IMPLEMENTED",
     "observed_discontinuity": "Native frames were not GC roots, and DeleteLocalRef could not delete a local from an earlier frame.",
@@ -28,8 +28,8 @@
     "causal_status": "CONTRACT_CONFIRMED",
     "evidence_level": "CONTRACT_CONFIRMED",
     "classification": "AGR_INTERNAL_BUG",
-    "next_validation": "Phase 3D lifetime host contract and CI. Do not start Framework migration.",
-    "primary_blocker": "none for the Phase 3C contract",
+    "next_validation": "Phase 3 final gate. Remaining JNI Call and GetField stubs must not report fake success. Do not start Framework migration.",
+    "primary_blocker": "JNI static field getters and several Call variants still return a default",
     "first_broken_boundary": "native frame root",
     "first_broken_boundary_evidence": "Tests/DexLoom/lifetime-host.c native frame register"
   },
