@@ -46,7 +46,7 @@ See `THIRD_PARTY_NOTICES.md` for component licenses.
 
 ## Documentation
 
-[REFERENCE_MIGRATION_RULES.md](REFERENCE_MIGRATION_RULES.md) is the highest-priority migration rule for every Android-visible semantic that has an API19/AOSP source owner.
+[REFERENCE_MIGRATION_RULES.md](REFERENCE_MIGRATION_RULES.md) is the highest-priority migration rule for every Android-visible semantic that has an API19/AOSP source owner. The engineering plan after Phase 3 closure is [docs/AGR_REFERENCE_MIGRATION_PLAN.zh-CN.md](docs/AGR_REFERENCE_MIGRATION_PLAN.zh-CN.md).
 
 - [中文项目说明](docs/PROJECT_OVERVIEW.zh-CN.md)
 - [中文工程交接文档](docs/HANDOFF.zh-CN.md)

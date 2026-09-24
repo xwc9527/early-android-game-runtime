@@ -26,12 +26,13 @@ Make original target Android APK, DEX, and ARMv7 binaries actually run and remai
 
 1. `AGENTS.md`
 2. `REFERENCE_MIGRATION_RULES.md`
-3. `docs/CURRENT_STATE.md`
-4. `ci/governance/state.json`
-5. latest `run-summary.json` whose target matches `state.active.target`
-6. matching upstream-map entry when useful
-7. pinned API19 source
-8. AGR implementation
+3. `docs/AGR_REFERENCE_MIGRATION_PLAN.zh-CN.md`
+4. `docs/CURRENT_STATE.md`
+5. `ci/governance/state.json`
+6. latest `run-summary.json` whose target matches `state.active.target`
+7. matching upstream-map entry when useful
+8. pinned API19 source
+9. AGR implementation
 
 Do not read the newest run-summary without checking its target. A newer Frozen Bubble, Framework, or physical-device run is not the current task.
 

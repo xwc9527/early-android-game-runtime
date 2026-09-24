@@ -78,6 +78,8 @@ These files are history. Active governance and later Work must not read them as 
 
 Every upstream-map entry has `migration_authority: false`. The map is a navigation cache. It may record source paths, hashes, and historical differential or regression evidence. It cannot authorize a migration target, continued legacy HLE, a source port, or production source ownership, and it cannot replace a Migration Book or API19 Source Closure. `legacy_navigation_only: true` marks pre-reference history. `legacy_navigation_only: false` marks source-navigation evidence that is still current and still has no migration authority.
 
-The required development order is:
+工程方案是 `docs/AGR_REFERENCE_MIGRATION_PLAN.zh-CN.md`。它服从本文件。当前仍先完成 Phase 3 final gate。Phase 3 CLOSED 之后的顺序是：
 
-Phase 3 closure → Local Android Reference Lab → Game Dependency Mapper → Migration Book → API19 Source Closure → Cluster Source Port → Differential
+Phase 3 CLOSED → Phase R0 Local Android Reference Lab → Phase R1 Game Dependency Mapper → Phase R2 Migration Book → Phase R3 API19 Source Closure → Phase R4 Cluster Source Port → Phase R5 CLEAN differential → Phase R6 corpus union
+
+API19 TRACE 是 Dependency Mapper 的默认输入。API19 CLEAN 是 semantic oracle。TRACE 不授权原创实现。

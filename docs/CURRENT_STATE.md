@@ -42,8 +42,8 @@ JNI static field getters and several JNI Call variants still return a default. T
 
 ## Next architecture milestone
 
-Finish the Phase 3 final gate, then close Phase 3. Context reset is finished. The fixed order after that is:
+Finish the Phase 3 final gate, then close Phase 3. Context reset is finished. The engineering plan is `docs/AGR_REFERENCE_MIGRATION_PLAN.zh-CN.md`. It does not start until Phase 3 is CLOSED.
 
-Phase 3 final gate → Phase 3 CLOSED → Local Android Reference Lab → API19 CLEAN + TRACE → Game Dependency Mapper → Migration Book → API19 Source Closure → Cluster Source Port → Differential
+Phase 3 final gate → Phase 3 CLOSED → R0 Reference Lab → R1 Game Dependency Mapper → R2 Migration Book → R3 API19 Source Closure → R4 Cluster Source Port → R5 CLEAN differential → R6 corpus union
 
 Reference Lab is not started. No Android-visible API, module, class, or symbol is pre-declared as a migration target.
