@@ -62,9 +62,19 @@ Android 4.4.4/API19 with the fingerprint recorded in
 `vm/Jni.cpp` hashes to
 `ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed`;
 the regenerated 229-entry index matches the committed index semantically.
+`platform/frameworks/base@android-4.4.4_r2` was also checked out locally at
+`63ade05d76785975fc3292ca030abbaa1dda8891` for source inspection;
+this is not a complete AOSP build tree or a reviewed Framework closure.
 The SHA-pinned Frozen Bubble APK produced
 `tools/reference-lab/evidence/frozen-bubble-static.json` with 183 static
 references. That artifact is STATIC_ONLY, not an observed TRACE run.
+The CLEAN sample install probe passed a package-manager listing but
+`adb install -r` timed out after 180 seconds on two attempts; the second
+failure is recorded at
+`tools/reference-lab/evidence/frozen-bubble-clean-probe-failed.json`.
+The image has a verified boot, but sample launch has not passed.
+Zulu OpenJDK 6 runs in the local WSL2 workbench; a KitKat build has not
+been attempted or validated with that JDK.
 These changes are IMPLEMENTED locally, not CLOSED or MERGED.
 
 R0 remains partial: the recorded CLEAN guest boot is retained, while the

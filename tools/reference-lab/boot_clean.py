@@ -97,12 +97,66 @@ def boot(root, timeout_s):
     return evidence
 
 
+def probe_apk(root, apk_path, component, settle_s):
+    """Record one CLEAN launch; this does not create TRACE dependency evidence."""
+    serial = "127.0.0.1:5555"
+    root = Path(root)
+    apk_path = Path(apk_path)
+    if not apk_path.is_file():
+        raise SystemExit("APK does not exist: " + str(apk_path))
+    def adb(*args, timeout=120):
+        return subprocess.run(["adb", "-s", serial, *args], check=True,
+                              capture_output=True, text=True, timeout=timeout).stdout.strip()
+    record = {"variant": "CLEAN", "apk_sha256": hashlib.sha256(apk_path.read_bytes()).hexdigest(),
+              "component": component, "status": "FAILED", "stage": "package_manager"}
+    output = root / "emulator" / "clean-probe.json"
+    try:
+        packages = adb("shell", "pm", "list", "packages", timeout=45)
+        if "package:com.android.settings" not in packages:
+            raise RuntimeError("CLEAN package manager did not list com.android.settings")
+        record["stage"] = "install"
+        install = adb("install", "-r", str(apk_path), timeout=180)
+        if "Success" not in install:
+            raise RuntimeError("CLEAN APK install did not succeed: " + install)
+        record["install_result"] = install
+        record["stage"] = "launch"
+        launch = adb("shell", "am", "start", "-W", "-n", component)
+        record["launch_result"] = launch
+        record["stage"] = "capture"
+        time.sleep(settle_s)
+        remote = "/sdcard/agr-clean-probe.png"
+        adb("shell", "screencap", "-p", remote)
+        screenshot = root / "emulator" / "clean-probe.png"
+        adb("pull", remote, str(screenshot))
+        payload = screenshot.read_bytes()
+        if not payload.startswith(b"\x89PNG\r\n\x1a\n"):
+            raise RuntimeError("CLEAN screenshot is not PNG")
+        record.update({"status": "PASS", "stage": "complete",
+                       "screenshot_sha256": hashlib.sha256(payload).hexdigest(),
+                       "screenshot": str(screenshot),
+                       "activity": adb("shell", "dumpsys", "activity", "activities", timeout=60)})
+    except (subprocess.SubprocessError, RuntimeError, OSError) as exc:
+        record["error"] = str(exc)
+        output.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+        raise SystemExit("CLEAN APK probe failed at " + record["stage"] + ": " + str(exc)) from exc
+    output.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    return record
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default="/agr-reference")
     parser.add_argument("--timeout", type=int, default=180)
+    parser.add_argument("--apk")
+    parser.add_argument("--component")
+    parser.add_argument("--settle", type=float, default=8)
     args = parser.parse_args()
-    print(json.dumps(boot(Path(args.root), args.timeout), indent=2))
+    if bool(args.apk) != bool(args.component):
+        parser.error("--apk and --component must appear together")
+    result = {"boot": boot(Path(args.root), args.timeout)}
+    if args.apk:
+        result["probe"] = probe_apk(args.root, args.apk, args.component, args.settle)
+    print(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":

@@ -45,3 +45,11 @@ remain BOUNDARY_CANDIDATE until the excluded boundary is sourced and reviewed.
 The current implementation does not provide an Android TRACE event producer,
 Framework source closure, cluster ports, or iOS differential. Its output is
 not proof that those stages are complete.
+
+`boot_clean.py --root /agr-reference --apk /path/to/game.apk --component
+package/.Activity` can probe installation and launch in the CLEAN guest. It
+records a terminal PASS or FAILED result in `emulator/clean-probe.json` and
+captures a PNG only on a completed launch. The pinned Frozen Bubble APK probe
+currently fails at `adb install -r` after 180 seconds; the record is
+`evidence/frozen-bubble-clean-probe-failed.json`. This CLEAN candidate has
+boot evidence but does not yet have a successful sample launch.
