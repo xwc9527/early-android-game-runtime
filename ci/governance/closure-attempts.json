@@ -170,7 +170,17 @@
       "classification": "VALID_PASS",
       "reason": "Signature method and field identity, invoke selection, and class-init failure passed in the JNI host contract. No reference PASS was claimed.",
       "consumes_budget": true
+    },
+    {
+      "target": "Phase 3C Dalvik exceptions and native binding",
+      "target_evidence": "commit d8fdb0c55a8bcfe8f1f1074caebe37510199408d tree e56edae4f32437df030bfe57433bcc655557c355. exception-host, JNI, classpath, governance, and protected regression passed. Push JNI 36025331058 and pull request JNI 36025336686. API19_REFERENCE_DIFFERENTIAL was not executed.",
+      "run_id": "36025336686",
+      "tested_commit": "d8fdb0c55a8bcfe8f1f1074caebe37510199408d",
+      "tested_tree": "e56edae4f32437df030bfe57433bcc655557c355",
+      "classification": "VALID_PASS",
+      "reason": "Throw, catch-all, move-exception, pending JNI exception state, RegisterNatives, and JNI_OnLoad version checks passed. No reference PASS was claimed.",
+      "consumes_budget": true
     }
   ],
-  "active_target": "Phase 3C Dalvik exceptions and native binding"
+  "active_target": "Phase 3D Dalvik GC roots and object lifetime"
 }

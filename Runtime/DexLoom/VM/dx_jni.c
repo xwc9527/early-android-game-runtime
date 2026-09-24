@@ -260,7 +260,7 @@ static void JNICALL jni_DeleteGlobalRef(JNIEnv *env, jobject gref) {
 
 static void JNICALL jni_DeleteLocalRef(JNIEnv *env, jobject obj) {
     DxExecutionContext *exec = jni_env_exec(env);
-    if (exec) dx_iref_remove(&exec->local_refs, exec->local_bottom, jni_to_ref(obj));
+    if (exec) dx_iref_remove(&exec->local_refs, 0, jni_to_ref(obj));
 }
 
 static jboolean JNICALL jni_IsSameObject(JNIEnv *env, jobject obj1, jobject obj2) {

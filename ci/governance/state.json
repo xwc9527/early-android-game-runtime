@@ -6,32 +6,32 @@
     "last_known_good": "3e3db84a53ad0957e9217f804b6f718a942b9a11"
   },
   "active": {
-    "target": "Phase 3C Dalvik exceptions and native binding",
+    "target": "Phase 3D Dalvik GC roots and object lifetime",
     "branch": "recovery/phase3-dalvik-semantics",
     "lifecycle": "IMPLEMENTED",
-    "observed_discontinuity": "JNI ThrowNew and ExceptionCheck followed the VM current exec instead of the JNIEnv thread, and bytecode catch propagation is not yet the Phase 3C contract.",
-    "android_subsystem": "API19 pending exception, JNI exception state, and native binding",
+    "observed_discontinuity": "Native frames were not GC roots, and DeleteLocalRef could not delete a local from an earlier frame.",
+    "android_subsystem": "API19 mark-sweep roots and JNI local lifetime",
     "upstream_path": [
-      "platform/dalvik@android-4.4.4_r2:vm/Jni.cpp:ThrowNew",
-      "platform/dalvik@android-4.4.4_r2:vm/Jni.cpp:ExceptionCheck"
+      "platform/dalvik@android-4.4.4_r2:vm/alloc/MarkSweep.cpp",
+      "platform/dalvik@android-4.4.4_r2:vm/Jni.cpp:DeleteLocalRef"
     ],
     "agr_path": [
-      "Runtime/DexLoom/VM/dx_jni.c:jni_ThrowNew",
-      "Runtime/DexLoom/VM/dx_jni.c:jni_ExceptionCheck"
+      "Runtime/DexLoom/VM/dx_vm.c:dx_vm_gc",
+      "Runtime/DexLoom/VM/dx_jni.c:jni_DeleteLocalRef"
     ],
     "active_explanations": [
-      "the pending exception belongs to the JNIEnv thread",
-      "a catch handler clears that thread exception and resumes at the handler"
+      "frame registers, statics, class mirrors, and JNI globals are strong roots",
+      "a weak global is cleared when its referent is unmarked"
     ],
-    "earliest_evidenced_divergence": "ThrowNew wrote dx_vm_current_exec instead of the JNIEnv exec.",
-    "semantic_class": "PUBLIC_OBSERVABLE",
+    "earliest_evidenced_divergence": "Full GC marked registers only when the method had bytecode, so a native argument was not a root.",
+    "semantic_class": "SEMANTIC_INVARIANT",
     "causal_status": "CONTRACT_CONFIRMED",
     "evidence_level": "CONTRACT_CONFIRMED",
     "classification": "AGR_INTERNAL_BUG",
-    "next_validation": "Phase 3C catch propagation and JNI_OnLoad. Do not start Framework migration.",
-    "primary_blocker": "bytecode throw/catch is not yet covered by a focused contract",
-    "first_broken_boundary": "interpreter exception delivery",
-    "first_broken_boundary_evidence": "Tests/DexLoom/method-id-host.c ThrowNew on a2e07eb plus the env-scoped follow-up"
+    "next_validation": "Phase 3D lifetime host contract and CI. Do not start Framework migration.",
+    "primary_blocker": "none for the Phase 3C contract",
+    "first_broken_boundary": "native frame root",
+    "first_broken_boundary_evidence": "Tests/DexLoom/lifetime-host.c native frame register"
   },
   "ci_budget": {
     "valid_closure_runs": 1,

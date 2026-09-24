@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "target": "Phase 3C Dalvik exceptions and native binding",
+  "target": "Phase 3D Dalvik GC roots and object lifetime",
   "state": "IMPLEMENTED",
   "closure_tested_commit": null,
   "closure_tested_tree": null,

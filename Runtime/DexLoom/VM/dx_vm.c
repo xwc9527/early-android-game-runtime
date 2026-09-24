@@ -148,7 +148,9 @@ DxFrame *dx_vm_alloc_frame(DxVM *vm) {
         memset(f, 0, sizeof(DxFrame));
         return f;
     }
-    return (DxFrame *)dx_malloc(sizeof(DxFrame));
+    DxFrame *created = (DxFrame *)dx_malloc(sizeof(DxFrame));
+    if (created) memset(created, 0, sizeof(*created));
+    return created;
 }
 
 void dx_vm_free_frame(DxVM *vm, DxFrame *frame) {
@@ -5358,13 +5360,13 @@ static void gc_push_roots(DxVM *vm) {
         gc_mark_stack_push(vm, exec->pending_exception);
         DxFrame *frame = exec->current_frame;
         while (frame) {
-            if (frame->method && frame->method->has_code) {
-                uint32_t reg_count = frame->method->code.registers_size;
-                if (reg_count > DX_MAX_REGISTERS) reg_count = DX_MAX_REGISTERS;
+            {
+                uint32_t reg_count = DX_MAX_REGISTERS;
+                if (frame->method && frame->method->has_code && frame->method->code.registers_size < reg_count)
+                    reg_count = frame->method->code.registers_size;
                 for (uint32_t r = 0; r < reg_count; r++) {
-                    if (frame->registers[r].tag == DX_VAL_OBJ && frame->registers[r].obj) {
+                    if (frame->registers[r].tag == DX_VAL_OBJ && frame->registers[r].obj)
                         gc_mark_stack_push(vm, frame->registers[r].obj);
-                    }
                 }
             }
             if (frame->result.tag == DX_VAL_OBJ && frame->result.obj) {
@@ -5613,14 +5615,12 @@ static DxResult dx_vm_gc_locked(DxVM *vm) {
         gc_mark_object(exec->pending_exception);
         DxFrame *frame = exec->current_frame;
         while (frame) {
-            if (frame->method && frame->method->has_code) {
-                uint32_t reg_count = frame->method->code.registers_size;
-                if (reg_count > DX_MAX_REGISTERS) reg_count = DX_MAX_REGISTERS;
-                for (uint32_t r = 0; r < reg_count; r++) {
-                    if (frame->registers[r].tag == DX_VAL_OBJ && frame->registers[r].obj) {
-                        gc_mark_object(frame->registers[r].obj);
-                    }
-                }
+            uint32_t reg_count = DX_MAX_REGISTERS;
+            if (frame->method && frame->method->has_code && frame->method->code.registers_size < reg_count)
+                reg_count = frame->method->code.registers_size;
+            for (uint32_t r = 0; r < reg_count; r++) {
+                if (frame->registers[r].tag == DX_VAL_OBJ && frame->registers[r].obj)
+                    gc_mark_object(frame->registers[r].obj);
             }
             if (frame->result.tag == DX_VAL_OBJ && frame->result.obj) {
                 gc_mark_object(frame->result.obj);
@@ -5709,9 +5709,11 @@ static DxResult dx_vm_gc_locked(DxVM *vm) {
     if (!scrub_exec) continue;
     DxFrame *scrub_frame = scrub_exec->current_frame;
     while (scrub_frame) {
-        if (scrub_frame->method && scrub_frame->method->has_code) {
-            uint32_t reg_count = scrub_frame->method->code.registers_size;
-            if (reg_count > DX_MAX_REGISTERS) reg_count = DX_MAX_REGISTERS;
+        {
+            uint32_t reg_count = DX_MAX_REGISTERS;
+            if (scrub_frame->method && scrub_frame->method->has_code &&
+                scrub_frame->method->code.registers_size < reg_count)
+                reg_count = scrub_frame->method->code.registers_size;
             for (uint32_t r = 0; r < reg_count; r++) {
                 if (scrub_frame->registers[r].tag == DX_VAL_OBJ &&
                     scrub_frame->registers[r].obj &&
@@ -7087,13 +7089,13 @@ static DxResult dx_vm_gc_minor_locked(DxVM *vm) {
     if (young_exec->pending_exception) gc_mark_object_young(young_exec->pending_exception);
     DxFrame *frame = young_exec->current_frame;
     while (frame) {
-        if (frame->method && frame->method->has_code) {
-            uint32_t reg_count = frame->method->code.registers_size;
-            if (reg_count > DX_MAX_REGISTERS) reg_count = DX_MAX_REGISTERS;
+        {
+            uint32_t reg_count = DX_MAX_REGISTERS;
+            if (frame->method && frame->method->has_code && frame->method->code.registers_size < reg_count)
+                reg_count = frame->method->code.registers_size;
             for (uint32_t r = 0; r < reg_count; r++) {
-                if (frame->registers[r].tag == DX_VAL_OBJ && frame->registers[r].obj) {
+                if (frame->registers[r].tag == DX_VAL_OBJ && frame->registers[r].obj)
                     gc_mark_object_young(frame->registers[r].obj);
-                }
             }
         }
         if (frame->result.tag == DX_VAL_OBJ && frame->result.obj) {
