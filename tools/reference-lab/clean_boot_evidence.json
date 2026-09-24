@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "variant": "CLEAN",
+  "role": "semantic_oracle",
+  "instrumented": false,
+  "may_authorize_implementation": false,
+  "image": "android-x86-4.4-r5.iso",
+  "image_sha1": "4c0edceef12bf4b8afb1b8390d94a9af29bbbca8",
+  "accel": "kvm",
+  "live_release": "4.4.4",
+  "live_sdk": "19",
+  "live_fingerprint": "Android-x86/android_x86/x86:4.4.4/KTU84Q/eng.cwhuang.20160206.120252:userdebug/test-keys",
+  "dalvik_revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+  "dalvik_path": "platform/dalvik@android-4.4.4_r2",
+  "trace_image_built": false,
+  "full_aosp_tree": false
+}

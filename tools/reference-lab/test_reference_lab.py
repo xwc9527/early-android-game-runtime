@@ -7,6 +7,8 @@ from lab import assert_not_oracle, describe, ensure_layout
 from mapper import build_book, write_book
 from source_closure import close_entry
 
+EVIDENCE = Path(__file__).with_name("clean_boot_evidence.json")
+
 
 class ReferenceLabTest(unittest.TestCase):
     def test_trace_is_not_oracle(self):
@@ -90,6 +92,15 @@ class ReferenceLabTest(unittest.TestCase):
         }, {"entries": {}})
         self.assertEqual(manifest["status"], "BOUNDARY")
         self.assertEqual(manifest["migration_type"], "SERVICE_HLE")
+
+    def test_clean_boot_evidence_is_not_trace(self):
+        evidence = json.loads(EVIDENCE.read_text(encoding="utf-8"))
+        self.assertEqual(evidence["variant"], "CLEAN")
+        self.assertFalse(evidence["instrumented"])
+        self.assertEqual(evidence["live_release"], "4.4.4")
+        self.assertEqual(evidence["live_sdk"], "19")
+        self.assertFalse(evidence["trace_image_built"])
+        self.assertEqual(evidence["image_sha1"], "4c0edceef12bf4b8afb1b8390d94a9af29bbbca8")
 
     def test_original_implementation_is_rejected(self):
         with self.assertRaises(ValueError):

@@ -43,6 +43,6 @@ None for Phase 3. `API19_REFERENCE_DIFFERENTIAL` was not executed and is not cla
 
 ## Next architecture milestone
 
-Phase 3 is CLOSED. R0 has started as the local pipeline in `tools/reference-lab/`: CLEAN and TRACE stay separate, the mapper writes a Migration Book, and source closure uses only a supplied API19 index. Emulator images and the AOSP tree are not provisioned. R1 through R6 remain the later order. The plan is `docs/AGR_REFERENCE_MIGRATION_PLAN.zh-CN.md`.
+Phase 3 is CLOSED. R0 CLEAN guest has booted. The image is android-x86 4.4-r5, sha1 `4c0edceef12bf4b8afb1b8390d94a9af29bbbca8`, KVM, live `ro.build.version.release=4.4.4` and `ro.build.version.sdk=19`. Evidence is `tools/reference-lab/clean_boot_evidence.json`. That image is CLEAN only. TRACE is not built. `platform/dalvik@android-4.4.4_r2` is checked out at revision `36e356c96640775f0a3f167bd2426ea0f0093b8b` under the local lab root, including `vm/Jni.cpp`. The rest of the AOSP tree is not synced. The plan is `docs/AGR_REFERENCE_MIGRATION_PLAN.zh-CN.md`.
 
 No Android-visible API, module, class, or symbol is pre-declared as a migration target.
