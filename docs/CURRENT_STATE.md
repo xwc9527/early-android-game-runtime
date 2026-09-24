@@ -51,7 +51,8 @@ No Android-visible API, module, class, or symbol is pre-declared as a migration 
 
 The offline tools now scan DEX class/method/field ID tables and ARM ELF32
 DT_NEEDED/imports, verify TRACE event identity before building a per-run
-Migration Book, union books by APK or corpus, and emit source manifests from
+Migration Book, retain the validated TRACE run manifest in Books and unions,
+union books by APK or corpus, and emit source manifests from
 an explicit source index. Static-only output cannot enter source closure.
 Source lookup alone is SOURCE_LOCATED; SOURCE_CLOSED requires a reviewed
 closure record whose hash matches the pinned source index. The JNI table

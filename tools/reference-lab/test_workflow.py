@@ -9,7 +9,7 @@ from pathlib import Path
 from mapper import build_book, corpus_union, union_books
 from source_closure import close_entry
 from static_scan import _dex_refs, _elf_refs, apk_identity, scan_apk
-from workflow import manifests, trace_events
+from workflow import manifests, trace_events, validate_book
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -72,9 +72,16 @@ class WorkflowTest(unittest.TestCase):
             evidence_file.write_text(json.dumps(evidence), encoding="utf-8")
             events = trace_events(events_file, evidence_file, identity)
             self.assertEqual(events[0]["lifecycle_phase"], "activity_create")
-            book = build_book(identity, events, [])
+            book = build_book(identity, events, [], evidence)
             self.assertEqual(book["dependencies"][0]["confidence"], "OBSERVED_RUNTIME")
-            self.assertEqual(union_books([book, book])["run_count"], 2)
+            self.assertEqual(book["trace_runs"][0]["events_sha256"], evidence["events_sha256"])
+            validate_book(book)
+            with self.assertRaises(ValueError):
+                validate_book({**book, "trace_runs": []})
+            merged = union_books([book, book])
+            self.assertEqual(merged["run_count"], 2)
+            self.assertEqual(len(merged["trace_runs"]), 2)
+            validate_book(merged)
             self.assertEqual(len(corpus_union([book, book])["games"]), 1)
             with self.assertRaises(ValueError):
                 union_books([book, {**book, "apk": {"sha256": "b" * 64}}])

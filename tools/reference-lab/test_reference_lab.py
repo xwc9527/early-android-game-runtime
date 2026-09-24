@@ -51,6 +51,10 @@ class ReferenceLabTest(unittest.TestCase):
                 "canonical_name": "Vector.addElement",
                 "confidence": "STATIC_REFERENCED",
             }],
+            trace_evidence={"variant": "TRACE", "instrumented": True,
+                            "role": "dependency_mapper", "baseline": "android-4.4.4_r2",
+                            "apk_sha256": "a" * 64, "image_sha256": "b" * 64,
+                            "scenario": "cold_start", "events_sha256": "c" * 64},
         )
         names = {item["canonical_name"]: item["confidence"] for item in book["dependencies"]}
         self.assertEqual(names["Activity.setContentView(I)V"], "OBSERVED_RUNTIME")

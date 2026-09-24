@@ -17,6 +17,9 @@ Run the pipeline with:
 The TRACE run manifest must identify an instrumented dependency-mapper build
 of android-4.4.4_r2, its image SHA-256, the APK SHA-256, scenario, and
 the event file SHA-256. The importer rejects mismatched identity or hashes.
+The validated manifest is retained in each TRACE Migration Book and in
+per-game unions. An observed dependency without that run evidence is rejected
+by the Book validator.
 Static-only books remain STATIC_ONLY and cannot authorize source closure.
 
 The APK scanner reads DEX Android/libcore class, field, and method ID tables,

@@ -75,6 +75,22 @@ def validate_book(book):
         raise ValueError("unsupported Migration Book")
     if not book.get("apk", {}).get("sha256"):
         raise ValueError("Migration Book missing APK identity")
+    runs = book.get("trace_runs", [])
+    if not isinstance(runs, list):
+        raise ValueError("TRACE run evidence must be a list")
+    if book["variant"] == "TRACE" and len(runs) != 1:
+        raise ValueError("per-run TRACE book must retain one run manifest")
+    if book["variant"] == "STATIC_ONLY" and runs:
+        raise ValueError("static book cannot claim TRACE run evidence")
+    for run in runs:
+        if not isinstance(run, dict):
+            raise ValueError("TRACE run evidence must be an object")
+        if (run.get("variant") != "TRACE" or run.get("instrumented") is not True
+                or run.get("role") != "dependency_mapper"
+                or run.get("baseline") != "android-4.4.4_r2"
+                or run.get("apk_sha256") != book["apk"]["sha256"]
+                or not all(run.get(key) for key in ("image_sha256", "scenario", "events_sha256"))):
+            raise ValueError("Migration Book TRACE run identity mismatch")
     from mapper import CONFIDENCE, KINDS, dependency_id
     for dep in book.get("dependencies", []):
         if dep.get("kind") not in KINDS or dep.get("confidence") not in CONFIDENCE:
@@ -83,6 +99,8 @@ def validate_book(book):
             raise ValueError("dependency ID mismatch")
         if book["variant"] == "STATIC_ONLY" and dep["confidence"] in ("OBSERVED_RUNTIME", "DYNAMIC_DISCOVERED"):
             raise ValueError("static book claims runtime observation")
+        if dep["confidence"] in ("OBSERVED_RUNTIME", "DYNAMIC_DISCOVERED") and not runs:
+            raise ValueError("observed dependency lacks TRACE run evidence")
 
 
 def validate_source_manifests(document):
@@ -166,7 +184,8 @@ def main():
             parser.error("--events and --trace-evidence must appear together")
         apk = apk_identity(args.apk)
         events = trace_events(args.events, args.trace_evidence, apk) if args.events else []
-        artifact = build_book(apk, events, scan_apk(args.apk))
+        artifact = build_book(apk, events, scan_apk(args.apk),
+                              load(args.trace_evidence) if events else None)
         validate_book(artifact)
         write_book(args.out, artifact)
     elif args.command == "union":

@@ -104,7 +104,9 @@ def from_static(item):
     )
 
 
-def build_book(apk, trace_events, static_items):
+def build_book(apk, trace_events, static_items, trace_evidence=None):
+    if trace_events and not trace_evidence:
+        raise ValueError("observed dependencies require TRACE run evidence")
     by_id = {}
     for item in static_items:
         record = from_static(item)
@@ -123,7 +125,7 @@ def build_book(apk, trace_events, static_items):
             "lifecycle_phase": record["lifecycle_phase"], "origin": record.get("origin"),
         }]
         by_id[record["dependency_id"]] = record
-    return {
+    book = {
         "schema_version": 1,
         "variant": "TRACE" if trace_events else "STATIC_ONLY",
         "role": "dependency_mapper",
@@ -131,6 +133,9 @@ def build_book(apk, trace_events, static_items):
         "dependencies": sorted(by_id.values(), key=lambda item: item["dependency_id"]),
         "rule": "Confidence levels are not one verified bit. TRACE does not authorize implementation.",
     }
+    if trace_events:
+        book["trace_runs"] = [dict(trace_evidence)]
+    return book
 
 
 def write_book(path, book):
@@ -161,8 +166,10 @@ def union_books(books):
                 by_id[key] = replacement
             elif current:
                 current.setdefault("observations", []).extend(record.get("observations", []))
+    trace_runs = [run for book in books for run in book.get("trace_runs", [])]
     return {"schema_version": 1, "variant": "UNION", "role": "dependency_mapper",
             "apk": books[0]["apk"], "run_count": len(books),
+            "trace_runs": trace_runs,
             "dependencies": sorted(by_id.values(), key=lambda item: item["dependency_id"])}
 
 
