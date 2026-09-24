@@ -1709,6 +1709,15 @@ static JavaVM *process_java_vm(void) {
     return (JavaVM *)&g_java_vm;
 }
 
+jint dx_jni_call_onload(JavaVM *vm, jint (*onload)(JavaVM *vm, void *reserved)) {
+    jint version;
+    if (!vm) return JNI_ERR;
+    if (!onload) return JNI_OK;
+    version = onload(vm, NULL);
+    if (version != JNI_VERSION_1_4 && version != JNI_VERSION_1_6) return JNI_EVERSION;
+    return JNI_OK;
+}
+
 DxResult dx_jni_init(DxVM *vm) {
     if (!vm) return DX_ERR_NULL_PTR;
     g_vm = vm;

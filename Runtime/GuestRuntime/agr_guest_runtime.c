@@ -1323,7 +1323,11 @@ int32_t agr_guest_load_java_library(agr_guest *g,const char *name,int32_t *jni_v
     }
     uint32_t handle=agr_guest_dlopen(g,soname);if(!handle)return -1;
     int32_t version=0;uint32_t on_load=agr_dlsym(g->runtime,handle,"JNI_OnLoad");
-    if(on_load){uint32_t args[2]={JVM_PTR,0};if(call_address(g,on_load,args,2,&version)){agr_guest_dlclose(g,handle);return -1;}}
+    if(on_load){
+        uint32_t args[2]={JVM_PTR,0};
+        if(call_address(g,on_load,args,2,&version)||
+           (version!=0x00010004&&version!=0x00010006)){agr_guest_dlclose(g,handle);return -1;}
+    }
     if(g->java_library_count==g->java_library_capacity){uint32_t next=g->java_library_capacity?g->java_library_capacity*2:8;java_library *grown=realloc(g->java_libraries,(size_t)next*sizeof(*grown));if(!grown){agr_guest_dlclose(g,handle);return -1;}g->java_libraries=grown;g->java_library_capacity=next;}
     char *copy=copy_string(soname);if(!copy){agr_guest_dlclose(g,handle);return -1;}
     g->java_libraries[g->java_library_count++]=(java_library){copy,handle,version};
