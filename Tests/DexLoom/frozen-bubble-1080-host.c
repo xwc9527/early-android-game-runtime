@@ -175,13 +175,23 @@ int main(int argc, char **argv) {
         int down = agr_dex_game_dispatch_touch(game, 0, 540.0f, 450.0f, 1000);
         int up = agr_dex_game_dispatch_touch(game, 1, 540.0f, 450.0f, 1100);
         expect(down == 1 && up == 1, "original GameView consumes down and up through Activity/Window/View");
-        usleep(300000);
-        expect(agr_dex_game_runtime_snapshot(game, &snapshot) == 0, "snapshot after touch");
+        for (int sample = 0; sample < 6; sample++) {
+            usleep(500000);
+            expect(agr_dex_game_runtime_snapshot(game, &snapshot) == 0, "snapshot after touch");
+            printf("touch_progress sample=%d posts=%u hash=%llx methods=%llu insns=%llu\n",
+                   sample, snapshot.canvas_post_count,
+                   (unsigned long long)snapshot.canvas_buffer_hash_after,
+                   (unsigned long long)snapshot.methods_invoked,
+                   (unsigned long long)snapshot.instructions_executed);
+            if (snapshot.canvas_buffer_hash_after != before_hash) break;
+        }
         print_game_modes(game, "after_touch");
         for (uint32_t i = 0; i < snapshot.method_event_count; i++)
             if (strstr(snapshot.method_events[i].method, "onTouchEvent") ||
                 strstr(snapshot.method_events[i].method, "doTouchEvent") ||
-                strstr(snapshot.method_events[i].method, "MotionEvent"))
+                strstr(snapshot.method_events[i].method, "MotionEvent") ||
+                strstr(snapshot.method_events[i].method, "updateGameState") ||
+                strstr(snapshot.method_events[i].method, "FrozenGame;->play"))
                 printf("guest_touch_method %s\n", snapshot.method_events[i].method);
         printf("touch down=%d up=%d attached=%d visible=%d dispatched=%u consumed=%u posts=%u->%u hash=%llx->%llx vm_error=%s\n",
                down, up, snapshot.viewroot_attach_completed, snapshot.window_visible,
