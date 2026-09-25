@@ -12,25 +12,42 @@
       "source_files": [
         "core/java/android/view/ContextThemeWrapper.java",
         "core/java/android/content/ContextWrapper.java",
-        "core/java/android/app/ContextImpl.java"
+        "core/java/android/app/ContextImpl.java",
+        "core/java/android/app/LoadedApk.java",
+        "core/java/android/app/ActivityThread.java",
+        "core/java/android/app/ResourcesManager.java",
+        "core/java/android/content/res/Resources.java",
+        "core/java/android/content/res/ResourcesKey.java"
       ],
       "required_symbols": [
         "ContextThemeWrapper.getResources",
         "ContextWrapper.getResources",
         "ContextWrapper.createConfigurationContext",
         "ContextImpl.getResources",
-        "ContextImpl.createConfigurationContext"
+        "ContextImpl.createConfigurationContext",
+        "LoadedApk.getResources",
+        "ActivityThread.getTopLevelResources",
+        "ResourcesManager.getTopLevelResources",
+        "ResourcesManager.getDisplayMetricsLocked",
+        "Resources.getAssets",
+        "Resources.updateConfiguration",
+        "ResourcesKey.equals"
       ],
       "data_structures": [
-        "mResources",
-        "mOverrideConfiguration"
+        "ContextThemeWrapper.mResources",
+        "ContextThemeWrapper.mOverrideConfiguration",
+        "ContextImpl.mResources",
+        "LoadedApk.mResources",
+        "ResourcesManager.mActiveResources",
+        "ResourcesKey"
       ],
       "init_deps": [],
       "registration_deps": [],
       "cross_cluster_deps": [
-        "ContextImpl constructor",
-        "ResourcesManager.getTopLevelResources",
-        "LoadedApk.getResources"
+        "AssetManager.addAssetPath",
+        "AssetManager.isUpToDate",
+        "DisplayManager display metrics",
+        "CompatibilityInfo"
       ],
       "excluded_deps": [],
       "service_boundaries": [],

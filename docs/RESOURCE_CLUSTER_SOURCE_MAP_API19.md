@@ -6,7 +6,9 @@ Baseline: `platform/frameworks/base@63ade05d76785975fc3292ca030abbaa1dda8891` (`
 
 `ContextThemeWrapper.java:73-89` caches `mResources`. Without an override it delegates through `ContextWrapper.getResources()` (`ContextWrapper.java:87-89`) to the base context. With an override it calls `createConfigurationContext(mOverrideConfiguration)`, then reads and caches that context's resources. `ContextWrapper.java:654-655` delegates configuration-context creation to its base. `ContextImpl.java:1911-1920` creates a new `ContextImpl`; its constructor (`1991-2034`) selects `LoadedApk.getResources()` or `ResourcesManager.getTopLevelResources()` according to display, activity token, override configuration, and compatibility information. `ContextImpl.getResources()` (`620-622`) returns its `mResources`.
 
-The owner is Framework, not the game. Closure still needs the `LoadedApk` and `ResourcesManager` creation/cache paths, `Resources`/`AssetManager` lifetime, configuration changes, and any system-service boundary contract reached through those paths. This entry is `SOURCE_LOCATED`, not `SOURCE_CLOSED`.
+`LoadedApk.java:478-484` caches the package's default-display resources through `ActivityThread.getTopLevelResources()` (`ActivityThread.java:1531-1536`). `ResourcesManager.java:150-216` keys a weak cache by resource directory, display, override configuration, scale, and token through `ResourcesKey.java`; it returns an up-to-date cached object or creates an `AssetManager`, adds the package asset path, constructs `Resources`, and handles the second cache check before insertion. Configuration updates walk cached resources (`ResourcesManager.java:219-282`). These decisions are Android-owned resource semantics, including cache identity and lifetime.
+
+The owner is Framework, not the game. Closure still needs `Resources`/`AssetManager` lifetime, configuration and display metrics inputs, and any system-service boundary contract reached through those paths. This entry is `SOURCE_LOCATED`, not `SOURCE_CLOSED`.
 
 ## `AssetManager.AssetInputStream.close()` entry
 
