@@ -26,6 +26,19 @@ class ReferenceLabTest(unittest.TestCase):
                 {"variant": "CLEAN", "instrumented": False, "baseline": "android-x86-4.4-r5"},
                 {"variant": "TRACE", "instrumented": True, "baseline": "android-4.4.4_r2"})
 
+    def test_matched_pair_requires_same_build_base_and_clean_role(self):
+        common = {"baseline": "android-4.4.4_r2", "source_manifest_sha256": "a" * 64,
+                  "host_toolchain_sha256": "b" * 64, "build_only_patch_sha256": "c" * 64,
+                  "build_flavor": "aosp_x86-eng", "execution_mode": "int:portable"}
+        clean = dict(common, variant="CLEAN", instrumented=False, image_sha256="d" * 64)
+        trace = dict(common, variant="TRACE", instrumented=True,
+                     image_sha256="e" * 64, trace_patch_sha256="f" * 64)
+        assert_matched_reference(clean, trace)
+        with self.assertRaisesRegex(ValueError, "source_manifest_sha256"):
+            assert_matched_reference(clean, dict(trace, source_manifest_sha256="0" * 64))
+        with self.assertRaisesRegex(ValueError, "CLEAN image carries"):
+            assert_matched_reference(dict(clean, trace_patch_sha256="f" * 64), trace)
+
     def test_layout_keeps_clean_and_trace_apart(self):
         with tempfile.TemporaryDirectory() as tmp:
             document = ensure_layout(tmp)

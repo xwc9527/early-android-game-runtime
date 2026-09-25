@@ -2,8 +2,12 @@
 # API19 envsetup.sh reads optional variables without nounset guards.
 set -eo pipefail
 
-if [[ $# -ne 5 ]]; then
-    echo "usage: build_trace.sh TRACE_ROOT JDK6_ROOT MAKE382_ROOT OUT_DIR CLEAN_OUT_DIR" >&2
+if [[ $# -ne 5 && $# -ne 6 ]]; then
+    echo "usage: build_trace.sh TRACE_ROOT JDK6_ROOT MAKE382_ROOT OUT_DIR CLEAN_OUT_DIR [--vm-only]" >&2
+    exit 2
+fi
+if [[ $# -eq 6 && "$6" != --vm-only ]]; then
+    echo "unknown build mode: $6" >&2
     exit 2
 fi
 
@@ -50,6 +54,13 @@ cmp "$out_dir/source-manifest.xml" "$clean_out/source-manifest.xml"
 
 source build/envsetup.sh >/dev/null
 lunch aosp_x86-eng
+if [[ $# -eq 6 ]]; then
+    make -j1 libdvm
+    test -s "$out_dir/target/product/generic_x86/system/lib/libdvm.so"
+    sha256sum "$out_dir/target/product/generic_x86/system/lib/libdvm.so" \
+        > "$out_dir/libdvm.so.sha256"
+    exit 0
+fi
 make -j4
 
 test -s "$out_dir/target/product/generic_x86/system.img"

@@ -50,14 +50,25 @@ def assert_not_oracle(description):
 
 
 def assert_matched_reference(clean, trace):
-    """A CLEAN/TRACE differential needs the same pinned source and build base."""
+    """A CLEAN/TRACE differential needs an identical source and host build base."""
     if clean.get("variant") != "CLEAN" or trace.get("variant") != "TRACE":
         raise ValueError("reference roles are not CLEAN and TRACE")
     if clean.get("instrumented") is not False or trace.get("instrumented") is not True:
         raise ValueError("reference instrumentation roles are invalid")
-    for key in ("baseline", "source_revision", "base_image_sha256"):
+    for key in ("baseline", "source_manifest_sha256", "host_toolchain_sha256",
+                "build_only_patch_sha256", "build_flavor", "execution_mode"):
         if not clean.get(key) or clean[key] != trace.get(key):
             raise ValueError("CLEAN and TRACE have no proven common base: " + key)
+    if (clean["baseline"] != "android-4.4.4_r2" or
+            clean["execution_mode"] != "int:portable" or
+            clean["build_flavor"] != "aosp_x86-eng"):
+        raise ValueError("reference pair has an unapproved baseline or execution mode")
+    if not clean.get("image_sha256") or not trace.get("image_sha256"):
+        raise ValueError("reference pair lacks built image hashes")
+    if not trace.get("trace_patch_sha256"):
+        raise ValueError("TRACE image lacks an instrumentation patch identity")
+    if clean.get("trace_patch_sha256"):
+        raise ValueError("CLEAN image carries TRACE instrumentation")
 
 
 def ensure_layout(root):

@@ -69,6 +69,11 @@ manifest matches CLEAN byte for byte before building. It records the TRACE
 patch and output image hash in a separate output directory. The instrumentation
 diff SHA-256 is
 `1340359e595c934aee364fcdf3119b52fef56ef27b13af2ed820b407eaf6393f`.
+Use the optional `--vm-only` last argument for a Dalvik compilation check
+before the full image build. Once both full builds finish, `record_pair.py
+--clean-out CLEAN_OUT --trace-out TRACE_OUT --out pair.json` checks the image
+hashes, resolved manifest, host toolchain, and TRACE patch and writes a pair
+record. A verified build pair still needs live boot and sample evidence.
 
 `boot_clean.py --root /agr-reference --apk /path/to/game.apk --component
 package/.Activity` can probe installation and launch in the CLEAN guest. It
