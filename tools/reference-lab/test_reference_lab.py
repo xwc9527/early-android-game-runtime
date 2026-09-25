@@ -132,7 +132,8 @@ class ReferenceLabTest(unittest.TestCase):
 
     def test_multifile_closure_requires_all_hashes_and_edges(self):
         entry = {"dependency_id": "JAVA_METHOD:stream", "canonical_name": "Stream.close"}
-        pinned = {"owner_cluster": "Framework", "source_repo": "platform/frameworks/base",
+        pinned = {"owner_cluster": "Framework", "semantic_cluster": "Framework.AssetStream",
+                  "source_repo": "platform/frameworks/base",
                   "source_file": "A.java", "source_symbol": "close",
                   "source_files": ["A.java", "Bridge.cpp"],
                   "required_symbols": ["close", "destroyAsset"],
@@ -145,6 +146,21 @@ class ReferenceLabTest(unittest.TestCase):
                                                               "Bridge.cpp": "b" * 64},
                                        "reviewed_dependency_edges": ["native registration",
                                                                      "androidfw Asset"],
+                                       "edge_reviews": {
+                                           "native registration": {
+                                               "disposition": "IN_CLUSTER",
+                                               "source_repo": "platform/frameworks/base",
+                                               "revision": "c" * 40,
+                                               "source_file": "Bridge.cpp",
+                                               "source_symbol": "registerAsset"},
+                                           "androidfw Asset": {
+                                               "disposition": "SOURCE_CLOSED_EXTERNAL",
+                                               "semantic_cluster": "AndroidNative.Asset",
+                                               "source_repo": "platform/frameworks/base",
+                                               "revision": "c" * 40,
+                                               "source_file": "Asset.cpp",
+                                               "source_symbol": "Asset::read",
+                                               "source_manifest_sha256": "d" * 64}},
                                        "unresolved_dependency_edges": []}}
         index = {"revision": "c" * 40,
                  "source_file_sha256": {"A.java": "a" * 64,
@@ -153,6 +169,16 @@ class ReferenceLabTest(unittest.TestCase):
         complete = close_entry(entry, index)
         self.assertEqual(complete["status"], "SOURCE_CLOSED")
         validate_source_manifests({"schema_version": 1, "manifests": [complete]})
+        pinned["blocking_edges"] = ["unresolved host boundary"]
+        self.assertEqual(close_entry(entry, index)["status"], "SOURCE_LOCATED")
+        pinned.pop("blocking_edges")
+        pinned["closure_evidence"]["edge_reviews"].pop("androidfw Asset")
+        self.assertEqual(close_entry(entry, index)["status"], "SOURCE_LOCATED")
+        pinned["closure_evidence"]["edge_reviews"]["androidfw Asset"] = {
+            "disposition": "SOURCE_CLOSED_EXTERNAL", "semantic_cluster": "AndroidNative.Asset",
+            "source_repo": "platform/frameworks/base", "revision": "c" * 40,
+            "source_file": "Asset.cpp", "source_symbol": "Asset::read",
+            "source_manifest_sha256": "d" * 64}
         pinned["closure_evidence"]["reviewed_dependency_edges"] = ["native registration"]
         self.assertEqual(close_entry(entry, index)["status"], "SOURCE_LOCATED")
         pinned["closure_evidence"]["reviewed_dependency_edges"] = ["native registration",

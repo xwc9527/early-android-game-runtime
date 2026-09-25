@@ -32,10 +32,14 @@ Their pinned Java/JNI/androidfw source edges, AGR counterpart, and unresolved
 closure boundaries are recorded in
 `docs/RESOURCE_CLUSTER_SOURCE_MAP_API19.md`. Both remain `SOURCE_LOCATED`;
 this review does not authorize a resource-cluster port or pruning.
+The three-game `Integer.valueOf(int)` seed is in
+`evidence/integer-boxing-source-seed.json`, with its libcore and Dalvik source
+path reviewed in `docs/INTEGER_BOXING_SOURCE_MAP_API19.md`. It also remains
+`SOURCE_LOCATED` pending class-initialization and GC boundary closure.
 `source_mapping_queue.py` turns the four owner-indexed Books into
 `evidence/four-game-source-mapping-queue.json`: 779 observed method identities,
-114 shared by at least two games, and only the two resource entries currently
-`SOURCE_LOCATED`. Its event counts are prioritization data, not a definition
+114 shared by at least two games, and three entries currently `SOURCE_LOCATED`
+across pinned Framework and libcore source indexes. Its event counts are prioritization data, not a definition
 of Runtime scope or evidence of source closure.
 Frozen Bubble's earlier Book omitted sequence bounds because its old exported
 event file omitted sequence fields. `rebuild_trace_sequences.py` verified the
@@ -60,6 +64,8 @@ Run the pipeline with:
     python3 tools/reference-lab/workflow.py union --books book-run-1.json book-run-2.json --out book-game.json
     python3 tools/reference-lab/workflow.py corpus-union --books book-game-1.json book-game-2.json --out book-corpus.json
     python3 tools/reference-lab/workflow.py closure --book book-game.json --index source-index.json --out source-manifests.json --require-closed
+    python3 tools/reference-lab/cluster_seed.py --corpus-manifest four-game-corpus-manifest.json --source-index source-index.json --canonical-name 'Lowner/Class;->method()V' --out cluster-seed.json
+    python3 tools/reference-lab/verify_source_index.py --index source-index.json --checkout /path/to/pinned/repository
 
 The TRACE run manifest must identify an instrumented dependency-mapper build
 of android-4.4.4_r2, its image SHA-256, the APK SHA-256, scenario, and
@@ -95,6 +101,16 @@ For a multi-file cluster, closure evidence instead requires an exact
 `source_file_sha256` map for every listed file, every declared dependency edge
 in `reviewed_dependency_edges`, and an empty `unresolved_dependency_edges`
 list. Missing coverage keeps the entry at `SOURCE_LOCATED`.
+Entries never authorize migration. The source index must name a specific
+`semantic_cluster`; its separate `cluster_reviews` record must cover every
+indexed entry, source file and dependency edge at the same revision before the
+cluster reaches `MIGRATION_AUTHORIZED`. The closure CLI can require that state
+with `--require-authorized-cluster`. Broad labels such as `Framework` and
+`libcore` identify owners but do not grant cluster authority.
+An unresolved `blocking_edges` list keeps the entry at `SOURCE_LOCATED` even
+when review fields are present. For a closed semantic cluster, each edge review
+must identify an included source path, a separately closed source cluster, or
+an excluded platform boundary with its observable contract.
 
 The current implementation does not provide a complete Android TRACE event
 producer, Framework source closure, cluster ports, or iOS differential. Its

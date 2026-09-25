@@ -21,6 +21,7 @@ NO GAME-DRIVEN IMPLEMENTATION.
 NO NEW ANDROID-VISIBLE MIGRATION WITHOUT MIGRATION BOOK.
 NO ORIGINAL ANDROID SEMANTICS.
 NO SOURCE PORT WITHOUT MIGRATION BOOK + API19 SOURCE OWNER + SOURCE CLOSURE.
+NOT_OBSERVED != UNUSED.
 
 GAME
 → REFERENCE MAP
@@ -55,6 +56,19 @@ Migration Book → API19 Source Closure → Cluster Source Manifest
 
 A source port starts only after that API19 source owner exists.
 
+`OBSERVED` records a validated reference entry; `SOURCE_LOCATED` records its
+API19 source location; `SOURCE_CLOSED` records review of the semantic owner's
+state, initialization, internal and cross-layer dependencies, and declared
+stopping boundaries. None of these is migration authority by itself.
+`MIGRATION_AUTHORIZED` applies only to a reviewed semantic cluster Source
+Manifest, never to an individual method or a broad module label.
+
+TRACE absence is never evidence that Android source is unused. A REMOVE or
+pruning decision requires source closure for the affected cluster, an explicit
+removal scope, and an identical-trajectory API19 CLEAN differential after
+removal with no divergence. Existing games are discovery and regression probes;
+their observed calls do not define the Android implementation scope.
+
 This context reset does not rewrite existing pre-reference implementations.
 
 Existing regression evidence remains valid, but does not grant those implementations source ownership, migration authority, or CLOSED status.
@@ -66,6 +80,9 @@ Migration Book → API19 Source Closure → Cluster Source Manifest
 A prior REAL_GAME_CONFIRMED result, a passing contract, or an upstream-map entry does not promote an implementation to CLOSED or to a source owner. This reset freezes rewriting for now. It does not keep those implementations permanently.
 
 HLE is not an implementation of Android semantics. A call chain may terminate as HLE only when it reaches an explicitly excluded Linux kernel, Binder/system_server, SurfaceFlinger, AudioFlinger, or real device/service boundary.
+At that boundary the closure records the app-process observable request,
+response, callbacks, lifecycle, and errors. Android-owned behavior before the
+boundary remains in the source cluster.
 
 ## What is not an input
 

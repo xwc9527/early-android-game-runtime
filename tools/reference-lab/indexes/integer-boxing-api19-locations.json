@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "source_repo": "platform/libcore",
+  "revision": "9b24ebf95f897a75c60c9c68d00694406afa6fbc",
+  "source_file_sha256": {
+    "luni/src/main/java/java/lang/Integer.java": "5aae098f5c2fd832bd739fead6f04586ccbb98e6606c22ede64001ae573420a3",
+    "luni/src/main/java/java/lang/Number.java": "ccbc3f77f43e7089cf715c2a40d99d6eecba675071e8b987865619f5f4c0c0b6"
+  },
+  "entries": {
+    "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;": {
+      "owner_cluster": "libcore",
+      "semantic_cluster": "libcore.IntegerBoxing",
+      "source_repo": "platform/libcore",
+      "source_module": "libcore/luni",
+      "source_file": "luni/src/main/java/java/lang/Integer.java",
+      "source_symbol": "Integer.valueOf(int)",
+      "source_files": [
+        "luni/src/main/java/java/lang/Integer.java",
+        "luni/src/main/java/java/lang/Number.java"
+      ],
+      "required_symbols": [
+        "Integer.valueOf(int)",
+        "Integer.SMALL_VALUES",
+        "Integer.<clinit>",
+        "Integer.Integer(int)",
+        "Integer.intValue()",
+        "Number.Number()"
+      ],
+      "data_structures": ["Integer.value", "Integer.SMALL_VALUES[256]"],
+      "init_deps": ["Dalvik class initialization for Integer.<clinit>"],
+      "cross_cluster_deps": [
+        "Dalvik object allocation and constructor invocation",
+        "Dalvik static field and array GC roots"
+      ],
+      "blocking_edges": [
+        "Dalvik class initialization source cluster closure",
+        "Dalvik allocation and static-root source cluster closure",
+        "AGR boot-class Integer ownership and GC integration"
+      ],
+      "closure_reviewed": false
+    }
+  }
+}

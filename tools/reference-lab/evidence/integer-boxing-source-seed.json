@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "baseline": "android-4.4.4_r2",
+  "source_repo": "platform/libcore",
+  "source_index_revision": "9b24ebf95f897a75c60c9c68d00694406afa6fbc",
+  "may_authorize_pruning": false,
+  "seeds": [
+    {
+      "game": "Frozen Bubble",
+      "book": "tools/reference-lab/evidence/frozen-bubble-owned-book-seq.json",
+      "book_sha256": "71770cb672f3321efe08b55f7b9070c17c121fab01c7281e1727a647f13ff256",
+      "apk_sha256": "57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569",
+      "dependency_id": "JAVA_METHOD:ee651e4447951b08",
+      "confidence": "OBSERVED_RUNTIME",
+      "observed_count": 797
+    },
+    {
+      "game": "Gloomy Dungeons 2",
+      "book": "tools/reference-lab/evidence/gloomy-landscape-owned-book.json.gz",
+      "book_sha256": "4e9eb8efc36f48e1d6c00004a8c25f6755582e1e22806354254877f49bb76ea0",
+      "apk_sha256": "40a67842345b879fc4b4be90159787f04664d9530f6a3e676c13fa412ad98733",
+      "dependency_id": "JAVA_METHOD:ee651e4447951b08",
+      "confidence": "OBSERVED_RUNTIME",
+      "observed_count": 10899
+    },
+    {
+      "game": "Vector Pinball",
+      "book": "tools/reference-lab/evidence/vector-owned-book.json",
+      "book_sha256": "4dbdb8300940a12b2485f083956d781d6ea4d335cf458e48876fee6a0e84ed21",
+      "apk_sha256": "627371d260d22ef33523561e3fa892cb45784cf83804ec0a02c73f5478a0d698",
+      "dependency_id": "JAVA_METHOD:ee651e4447951b08",
+      "confidence": "OBSERVED_RUNTIME",
+      "observed_count": 6
+    }
+  ],
+  "manifests": [
+    {
+      "dependency_id": "JAVA_METHOD:ee651e4447951b08",
+      "canonical_name": "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;",
+      "migration_type": "SOURCE_PORT",
+      "status": "SOURCE_LOCATED",
+      "migration_authorized": false,
+      "source_revision": "9b24ebf95f897a75c60c9c68d00694406afa6fbc",
+      "source_files": [
+        "luni/src/main/java/java/lang/Integer.java",
+        "luni/src/main/java/java/lang/Number.java"
+      ],
+      "required_symbols": [
+        "Integer.valueOf(int)",
+        "Integer.SMALL_VALUES",
+        "Integer.<clinit>",
+        "Integer.Integer(int)",
+        "Integer.intValue()",
+        "Number.Number()"
+      ],
+      "data_structures": [
+        "Integer.value",
+        "Integer.SMALL_VALUES[256]"
+      ],
+      "init_deps": [
+        "Dalvik class initialization for Integer.<clinit>"
+      ],
+      "registration_deps": [],
+      "cross_cluster_deps": [
+        "Dalvik object allocation and constructor invocation",
+        "Dalvik static field and array GC roots"
+      ],
+      "excluded_deps": [],
+      "service_boundaries": [],
+      "host_adaptation_points": [],
+      "blocking_edges": [
+        "Dalvik class initialization source cluster closure",
+        "Dalvik allocation and static-root source cluster closure",
+        "AGR boot-class Integer ownership and GC integration"
+      ],
+      "closure_evidence": null,
+      "service_contract": null,
+      "owner_cluster": "libcore",
+      "semantic_cluster": "libcore.IntegerBoxing",
+      "source_repo": "platform/libcore",
+      "source_module": "libcore/luni",
+      "source_file": "luni/src/main/java/java/lang/Integer.java",
+      "source_symbol": "Integer.valueOf(int)"
+    }
+  ],
+  "cluster_source_manifests": {
+    "libcore.IntegerBoxing": {
+      "semantic_cluster": "libcore.IntegerBoxing",
+      "owner_cluster": "libcore",
+      "status": "SOURCE_LOCATED",
+      "migration_authorized": false,
+      "dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "entry_names": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;"
+      ],
+      "source_files": [
+        "luni/src/main/java/java/lang/Integer.java",
+        "luni/src/main/java/java/lang/Number.java"
+      ],
+      "required_symbols": [
+        "Integer.<clinit>",
+        "Integer.Integer(int)",
+        "Integer.SMALL_VALUES",
+        "Integer.intValue()",
+        "Integer.valueOf(int)",
+        "Number.Number()"
+      ],
+      "data_structures": [
+        "Integer.SMALL_VALUES[256]",
+        "Integer.value"
+      ],
+      "init_deps": [
+        "Dalvik class initialization for Integer.<clinit>"
+      ],
+      "registration_deps": [],
+      "cross_cluster_deps": [
+        "Dalvik object allocation and constructor invocation",
+        "Dalvik static field and array GC roots"
+      ],
+      "excluded_deps": [],
+      "service_boundaries": [],
+      "host_adaptation_points": [],
+      "blocking_edges": [
+        "AGR boot-class Integer ownership and GC integration",
+        "Dalvik allocation and static-root source cluster closure",
+        "Dalvik class initialization source cluster closure"
+      ],
+      "closure_evidence": null
+    }
+  }
+}

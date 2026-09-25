@@ -1,9 +1,13 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "baseline": "android-4.4.4_r2",
   "scope": "observed app DEX to boot method calls only",
   "may_authorize_pruning": false,
-  "source_index_revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+  "migration_authorized": false,
+  "source_index_revisions": {
+    "platform/frameworks/base": "63ade05d76785975fc3292ca030abbaa1dda8891",
+    "platform/libcore": "9b24ebf95f897a75c60c9c68d00694406afa6fbc"
+  },
   "methods": [
     {
       "canonical_name": "Landroid/content/res/AssetManager$AssetInputStream;->close()V",
@@ -21,7 +25,10 @@
       "source_mapping_status": "SOURCE_LOCATED",
       "source_file": "core/java/android/content/res/AssetManager.java",
       "source_symbol": "AssetManager.AssetInputStream.close",
-      "source_closure_complete": false
+      "source_closure_complete": false,
+      "source_repo": "platform/frameworks/base",
+      "source_revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "semantic_cluster": "Framework.Resources"
     },
     {
       "canonical_name": "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources;",
@@ -39,7 +46,10 @@
       "source_mapping_status": "SOURCE_LOCATED",
       "source_file": "core/java/android/view/ContextThemeWrapper.java",
       "source_symbol": "ContextThemeWrapper.getResources",
-      "source_closure_complete": false
+      "source_closure_complete": false,
+      "source_repo": "platform/frameworks/base",
+      "source_revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "semantic_cluster": "Framework.Resources"
     },
     {
       "canonical_name": "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;",
@@ -53,10 +63,13 @@
         "libcore"
       ],
       "observed_event_count": 11702,
-      "source_mapping_status": "UNMAPPED",
-      "source_file": null,
-      "source_symbol": null,
-      "source_closure_complete": false
+      "source_mapping_status": "SOURCE_LOCATED",
+      "source_file": "luni/src/main/java/java/lang/Integer.java",
+      "source_symbol": "Integer.valueOf(int)",
+      "source_closure_complete": false,
+      "source_repo": "platform/libcore",
+      "source_revision": "9b24ebf95f897a75c60c9c68d00694406afa6fbc",
+      "semantic_cluster": "libcore.IntegerBoxing"
     },
     {
       "canonical_name": "Ljava/util/Iterator;->hasNext()Z",

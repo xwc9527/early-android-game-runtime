@@ -1,6 +1,26 @@
 # AGR Current State
 
-Updated: 2026-09-24
+Updated: 2026-09-25
+
+## Current reference-migration work
+
+The local `android-4.4.4_r2` CLEAN/TRACE x86 and ARM build pairs are
+`BUILD_VERIFIED`. Four qualified games have paired lifecycle evidence and are
+fixed regression probes. Pixel has no qualified paired TRACE result; no Pixel,
+screenshot, or old-emulator work is active. Reference Lab work is admitted only
+for a concrete source-owner, dependency-closure, or differential evidence gap.
+
+The four-game app-to-boot invoke queue contains 779 observed method identities,
+114 shared by at least two games. Three entries are currently `SOURCE_LOCATED`:
+the two Framework resource entries and libcore `Integer.valueOf(int)`. Their
+semantic clusters remain unclosed and `MIGRATION_AUTHORIZED` is false. No new
+Android-visible source port or CLEAN-to-AGR differential is claimed. The
+current source indexes and manifests are under `tools/reference-lab/indexes`
+and `tools/reference-lab/evidence`; their unresolved edges are explicit.
+
+The older R0 narrative below records an earlier workbench state and is
+superseded for current migration decisions by this section and the validated
+evidence artifacts.
 
 ## Identity
 

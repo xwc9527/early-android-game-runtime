@@ -21,6 +21,7 @@
   "entries": {
     "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources;": {
       "owner_cluster": "Framework",
+      "semantic_cluster": "Framework.Resources",
       "source_repo": "platform/frameworks/base",
       "source_module": "frameworks/base/core",
       "source_file": "core/java/android/view/ContextThemeWrapper.java",
@@ -29,10 +30,12 @@
       "required_symbols": ["ContextThemeWrapper.getResources", "ContextWrapper.getResources", "ContextWrapper.createConfigurationContext", "ContextImpl.getResources", "ContextImpl.createConfigurationContext", "LoadedApk.getResources", "ActivityThread.getTopLevelResources", "ResourcesManager.getTopLevelResources", "ResourcesManager.getDisplayMetricsLocked", "Resources.getAssets", "Resources.updateConfiguration", "ResourcesKey.equals"],
       "data_structures": ["ContextThemeWrapper.mResources", "ContextThemeWrapper.mOverrideConfiguration", "ContextImpl.mResources", "LoadedApk.mResources", "ResourcesManager.mActiveResources", "ResourcesKey"],
       "cross_cluster_deps": ["AssetManager.addAssetPath", "AssetManager.isUpToDate", "DisplayManager display metrics", "CompatibilityInfo"],
+      "blocking_edges": ["Resources and AssetManager lifetime", "configuration/display metrics input contracts"],
       "closure_reviewed": false
     },
     "Landroid/content/res/AssetManager$AssetInputStream;->close()V": {
       "owner_cluster": "Framework",
+      "semantic_cluster": "Framework.Resources",
       "source_repo": "platform/frameworks/base",
       "source_module": "frameworks/base",
       "source_file": "core/java/android/content/res/AssetManager.java",
@@ -42,6 +45,7 @@
       "data_structures": ["AssetInputStream.mAsset", "AssetManager.mNumRefs", "AssetManager.mObject", "Asset*"],
       "registration_deps": ["AndroidRuntime.cpp:register_android_content_AssetManager", "gAssetManagerMethods"],
       "cross_cluster_deps": ["ZipFileRO", "FileMap", "StreamingZipInflater", "InputStream"],
+      "blocking_edges": ["AssetManager JNI init/destroy lifecycle", "ZIP/FileMap/inflater closure", "host filesystem boundary contract"],
       "closure_reviewed": false
     }
   }

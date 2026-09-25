@@ -16,31 +16,83 @@ LIST_FIELDS = (
     "excluded_deps",
     "service_boundaries",
     "host_adaptation_points",
+    "blocking_edges",
 )
+
+
+def reviewed_edge_contracts(item, evidence):
+    """A reviewed edge must stay in-source, reach a closed owner, or stop at a real boundary."""
+    edges = {edge for field in ("init_deps", "registration_deps",
+                                "cross_cluster_deps", "excluded_deps",
+                                "service_boundaries", "host_adaptation_points")
+             for edge in (item.get(field) or [])}
+    reviews = evidence.get("edge_reviews") or {}
+    if not isinstance(reviews, dict) or set(reviews) != edges:
+        return False
+    boundary_edges = set(item.get("excluded_deps") or []) | \
+        set(item.get("service_boundaries") or []) | \
+        set(item.get("host_adaptation_points") or [])
+    for edge, review in reviews.items():
+        if not isinstance(review, dict):
+            return False
+        kind = review.get("disposition")
+        if kind == "IN_CLUSTER":
+            if (review.get("source_repo") != item.get("source_repo") or
+                    review.get("revision") != item.get("source_revision") or
+                    review.get("source_file") not in (item.get("source_files") or []) or
+                    not review.get("source_symbol")):
+                return False
+        elif kind == "SOURCE_CLOSED_EXTERNAL":
+            revision = review.get("revision")
+            digest = review.get("source_manifest_sha256")
+            if (not review.get("semantic_cluster") or not review.get("source_repo") or
+                    not review.get("source_file") or not review.get("source_symbol") or
+                    not isinstance(revision, str) or len(revision) != 40 or
+                    not isinstance(digest, str) or len(digest) != 64):
+                return False
+        elif kind == "EXCLUDED_BOUNDARY":
+            contract = review.get("boundary_contract") or {}
+            if (edge not in boundary_edges or not isinstance(contract, dict) or
+                    not all(contract.get(key) for key in
+                            ("request_schema", "response_schema", "lifecycle",
+                             "error_semantics")) or
+                    not isinstance(contract.get("callbacks"), list)):
+                return False
+        else:
+            return False
+    return True
 
 
 def reviewed_source_set(pinned, index, evidence):
     """A multi-file closure must pin every file and account for every listed edge."""
+    if pinned.get("blocking_edges"):
+        return False
     files = pinned.get("source_files") or []
     if len(files) <= 1:
-        return evidence.get("source_sha256") == index.get("source_sha256")
-    indexed = index.get("source_file_sha256") or {}
-    reviewed = evidence.get("source_file_sha256") or {}
-    if not isinstance(indexed, dict) or not isinstance(reviewed, dict):
-        return False
-    if set(files) != set(reviewed) or not set(files).issubset(indexed):
-        return False
-    if any(reviewed[path] != indexed[path] or
-           not isinstance(reviewed[path], str) or len(reviewed[path]) != 64 or
-           any(char not in "0123456789abcdef" for char in reviewed[path].lower())
-           for path in files):
-        return False
+        if evidence.get("source_sha256") != index.get("source_sha256"):
+            return False
+    else:
+        indexed = index.get("source_file_sha256") or {}
+        reviewed = evidence.get("source_file_sha256") or {}
+        if not isinstance(indexed, dict) or not isinstance(reviewed, dict):
+            return False
+        if set(files) != set(reviewed) or not set(files).issubset(indexed):
+            return False
+        if any(reviewed[path] != indexed[path] or
+               not isinstance(reviewed[path], str) or len(reviewed[path]) != 64 or
+               any(char not in "0123456789abcdef" for char in reviewed[path].lower())
+               for path in files):
+            return False
     edges = {edge for field in ("init_deps", "registration_deps",
                                 "cross_cluster_deps", "excluded_deps",
                                 "service_boundaries", "host_adaptation_points")
              for edge in (pinned.get(field) or [])}
-    return (set(evidence.get("reviewed_dependency_edges") or []) == edges and
-            evidence.get("unresolved_dependency_edges") == [])
+    if len(files) > 1 and (set(evidence.get("reviewed_dependency_edges") or []) != edges or
+                           evidence.get("unresolved_dependency_edges") != []):
+        return False
+    if pinned.get("semantic_cluster"):
+        return reviewed_edge_contracts({**pinned, "source_revision": index.get("revision")}, evidence)
+    return True
 
 
 def close_entry(entry, index, migration_type="SOURCE_PORT"):
@@ -53,6 +105,7 @@ def close_entry(entry, index, migration_type="SOURCE_PORT"):
         "canonical_name": entry["canonical_name"],
         "migration_type": migration_type,
         "status": "UNRESOLVED",
+        "migration_authorized": False,
         "source_revision": index.get("revision"),
     }
     for name in LIST_FIELDS:
@@ -68,7 +121,8 @@ def close_entry(entry, index, migration_type="SOURCE_PORT"):
         return manifest
     for name in LIST_FIELDS:
         manifest[name] = list(pinned.get(name) or [])
-    for name in ("owner_cluster", "source_repo", "source_module", "source_file", "source_symbol"):
+    for name in ("owner_cluster", "semantic_cluster", "source_repo", "source_module",
+                 "source_file", "source_symbol"):
         if pinned.get(name):
             manifest[name] = pinned[name]
     manifest["status"] = "SOURCE_LOCATED" if manifest["source_files"] and manifest["required_symbols"] else "PARTIAL"

@@ -6,7 +6,9 @@ import unittest
 import zipfile
 from pathlib import Path
 
+from cluster_seed import build_seed
 from mapper import build_book, corpus_union, union_books
+from source_mapping_queue import build_queue
 from source_closure import close_entry
 from static_scan import _dex_refs, _elf_refs, apk_identity, scan_apk
 from workflow import manifests, trace_events, validate_book
@@ -15,6 +17,32 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class WorkflowTest(unittest.TestCase):
+    def test_integer_cluster_seed_keeps_probe_scope_and_blocks_authority(self):
+        evidence = ROOT / "tools/reference-lab/evidence"
+        manifest = json.loads((evidence / "four-game-corpus-manifest.json").read_text())
+        index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
+        name = "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;"
+        result = build_seed(manifest, index, name)
+        self.assertEqual(len(result["seeds"]), 3)
+        self.assertEqual(sum(item["observed_count"] for item in result["seeds"]), 11702)
+        self.assertEqual(result["cluster_source_manifests"]["libcore.IntegerBoxing"]["status"],
+                         "SOURCE_LOCATED")
+        self.assertFalse(result["may_authorize_pruning"])
+
+    def test_multi_repo_queue_keeps_source_and_authority_separate(self):
+        root = ROOT / "tools/reference-lab"
+        corpus = json.loads((root / "evidence/four-game-corpus-manifest.json").read_text())
+        indexes = [json.loads((root / "indexes" / name).read_text()) for name in
+                   ("shared-resources-api19-locations.json",
+                    "integer-boxing-api19-locations.json")]
+        queue = build_queue(corpus, indexes)
+        self.assertEqual(len(queue["methods"]), 779)
+        self.assertEqual(sum(item["source_mapping_status"] == "SOURCE_LOCATED"
+                             for item in queue["methods"]), 3)
+        self.assertFalse(queue["migration_authorized"])
+        with self.assertRaisesRegex(ValueError, "duplicate source location"):
+            build_queue(corpus, indexes + indexes[:1])
+
     def test_api19_scan_ignores_64_bit_abi_but_keeps_x86(self):
         elf32 = (ROOT / "App/Resources/libpocbridge.so").read_bytes()
         with tempfile.TemporaryDirectory() as tmp:
@@ -104,10 +132,12 @@ class WorkflowTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 union_books([book, {**book, "apk": {"sha256": "b" * 64}}])
             source = {"revision": "d" * 40, "source_sha256": "c" * 64,
+                      "source_file_sha256": {"core/java/android/app/Activity.java": "c" * 64},
                       "entries": {event["canonical_name"]: {
-                "source_files": ["platform/frameworks/base/core/java/android/app/Activity.java"],
+                "source_files": ["core/java/android/app/Activity.java"],
                 "required_symbols": ["setContentView"],
-                "owner_cluster": "Framework", "source_repo": "platform/frameworks/base",
+                "owner_cluster": "Framework", "semantic_cluster": "Framework.WindowContent",
+                "source_repo": "platform/frameworks/base",
                 "source_file": "core/java/android/app/Activity.java", "source_symbol": "setContentView"}}}
             self.assertEqual(manifests(book, source)["manifests"][0]["status"], "SOURCE_LOCATED")
             source["entries"][event["canonical_name"]]["closure_reviewed"] = True
@@ -118,7 +148,20 @@ class WorkflowTest(unittest.TestCase):
             source["source_sha256"] = "d" * 64
             self.assertEqual(close_entry(book["dependencies"][0], source)["status"], "SOURCE_LOCATED")
             source["source_sha256"] = "c" * 64
-            self.assertIn("Framework", manifests(book, source)["cluster_source_manifests"])
+            cluster = manifests(book, source)["cluster_source_manifests"]["Framework.WindowContent"]
+            self.assertEqual(cluster["status"], "SOURCE_CLOSED")
+            self.assertFalse(cluster["migration_authorized"])
+            source["cluster_reviews"] = {"Framework.WindowContent": {
+                "closure_reviewed": True, "source_revision": "d" * 40,
+                "entry_names": [event["canonical_name"]],
+                "source_file_sha256": {"core/java/android/app/Activity.java": "c" * 64},
+                "reviewed_dependency_edges": [], "unresolved_dependency_edges": [],
+                "reviewed_by": "source-audit", "closure_notes": "Reviewed semantic owner"}}
+            cluster = manifests(book, source)["cluster_source_manifests"]["Framework.WindowContent"]
+            self.assertEqual(cluster["status"], "MIGRATION_AUTHORIZED")
+            source["cluster_reviews"]["Framework.WindowContent"]["source_file_sha256"]["core/java/android/app/Activity.java"] = "e" * 64
+            cluster = manifests(book, source)["cluster_source_manifests"]["Framework.WindowContent"]
+            self.assertEqual(cluster["status"], "SOURCE_CLOSED")
             evidence["apk_sha256"] = "wrong"
             evidence_file.write_text(json.dumps(evidence), encoding="utf-8")
             with self.assertRaises(ValueError):

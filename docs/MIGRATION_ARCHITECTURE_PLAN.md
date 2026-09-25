@@ -29,6 +29,12 @@ Linux kernel or Android system services.
 
 Every component uses one of these decisions:
 
+These labels assign implementation ownership after a Migration Book and
+semantic-cluster Source Closure. They do not authorize migration of a whole
+module, class, or directory. In particular, `Context / Resources = ADAPT AOSP`
+selects the source owner for an admitted cluster, not the amount of Framework
+source to copy.
+
 - **KEEP**: already uses the required upstream implementation or is a host-only
   component with no Android-visible policy.
 - **REPLACE WITH AOSP**: the current implementation duplicates portable AOSP
@@ -39,7 +45,9 @@ Every component uses one of these decisions:
   excluded Linux kernel, Binder/system_server, SurfaceFlinger, AudioFlinger, or
   real device/service boundary. HLE is not how Android semantics are implemented.
 - **REMOVE**: sample-specific or synthetic behavior that is not part of the
-  runtime architecture.
+  runtime architecture. Removal requires a source-closed affected cluster and
+  identical-trajectory API19 CLEAN differential after pruning. Absence from
+  TRACE is not removal evidence.
 
 The pinned upstream baselines are Bionic commit
 `081db840befec895fb86e709ae95832ade2d065c`, Dalvik commit
@@ -286,8 +294,11 @@ from host constants.
 
 Each module exits its phase only after four gates: API19/AOSP contracts,
 identical-case Android 4.4 differential output, stress/lifecycle tests, and a
-synthetic cross-module integration. Real games run after those gates and report
-integration omissions; they do not define the implementation.
+synthetic cross-module integration. Real games may run before those gates as
+reference discovery probes and after them as regression probes. Games reveal
+entries and omissions; AOSP source defines structure, Source Closure selects
+the candidate cluster, and API19 differential decides whether the migration
+holds. A game trajectory never defines the implementation scope.
 
 No module is complete merely because a visible frame exists. No unsupported
 method returns a success placeholder. Capability advertisement is generated

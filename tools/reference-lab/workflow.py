@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 
 from mapper import build_book, corpus_union, union_books, write_book
-from source_closure import close_entry
+from source_closure import close_entry, reviewed_edge_contracts
 from static_scan import apk_identity, scan_apk
 
 
@@ -119,10 +119,14 @@ def validate_source_manifests(document):
     if document.get("schema_version") != 1:
         raise ValueError("unsupported Source Manifest")
     for item in document.get("manifests", []):
+        if item.get("migration_authorized", False) is not False:
+            raise ValueError("entry cannot authorize a cluster migration")
         if item.get("status") not in ("UNRESOLVED", "PARTIAL", "SOURCE_LOCATED",
                                       "SOURCE_CLOSED", "BOUNDARY_CANDIDATE", "BOUNDARY"):
             raise ValueError("invalid source closure status")
         if item["status"] in ("SOURCE_CLOSED", "BOUNDARY"):
+            if item.get("blocking_edges"):
+                raise ValueError("closed source manifest still has blocking edges")
             evidence = item.get("closure_evidence") or {}
             if not all(evidence.get(key) for key in ("reviewed_by", "closure_notes")):
                 raise ValueError("closed source manifest lacks review evidence")
@@ -142,6 +146,8 @@ def validate_source_manifests(document):
                     raise ValueError("closed multi-file source manifest lacks closure coverage")
             elif not evidence.get("source_sha256"):
                 raise ValueError("closed source manifest lacks source digest")
+            if item.get("semantic_cluster") and not reviewed_edge_contracts(item, evidence):
+                raise ValueError("closed semantic cluster has unreviewed source edge")
             if not all(item.get(key) for key in ("owner_cluster", "source_repo",
                                                  "source_file", "source_symbol")):
                 raise ValueError("closed source manifest lacks ownership")
@@ -159,6 +165,105 @@ def validate_source_manifests(document):
                         "lifecycle", "error_semantics")) or
                     not isinstance(contract.get("callbacks"), list)):
                 raise ValueError("closed service boundary lacks transaction contract")
+    for name, cluster in document.get("cluster_source_manifests", {}).items():
+        if cluster.get("semantic_cluster") != name:
+            raise ValueError("cluster identity mismatch")
+        if cluster.get("status") not in ("SOURCE_LOCATED", "SOURCE_CLOSED",
+                                         "MIGRATION_AUTHORIZED"):
+            raise ValueError("invalid cluster status")
+        if cluster.get("migration_authorized") != (
+                cluster["status"] == "MIGRATION_AUTHORIZED"):
+            raise ValueError("cluster authorization mismatch")
+        members = [item for item in document.get("manifests", [])
+                   if item.get("semantic_cluster") == name]
+        if cluster["status"] in ("SOURCE_CLOSED", "MIGRATION_AUTHORIZED") and (
+                not members or cluster.get("blocking_edges") or
+                cluster.get("entry_names") != sorted(item["canonical_name"] for item in members) or
+                not all(item["status"] in ("SOURCE_CLOSED", "BOUNDARY") for item in members)):
+            raise ValueError("cluster claims closure before every entry closes")
+        if cluster["status"] == "MIGRATION_AUTHORIZED":
+            review = cluster.get("closure_evidence") or {}
+            member_hashes = {}
+            for member in members:
+                evidence = member.get("closure_evidence") or {}
+                files = member.get("source_files") or []
+                if len(files) == 1:
+                    member_hashes[files[0]] = evidence.get("source_sha256")
+                else:
+                    member_hashes.update(evidence.get("source_file_sha256") or {})
+            edges = {edge for field in ("init_deps", "registration_deps",
+                                        "cross_cluster_deps", "excluded_deps",
+                                        "service_boundaries", "host_adaptation_points")
+                     for edge in cluster.get(field, [])}
+            if (not members or not all(item["status"] in ("SOURCE_CLOSED", "BOUNDARY")
+                                       for item in members) or
+                    review.get("closure_reviewed") is not True or
+                    review.get("source_revision") != document.get("source_index_revision") or
+                    review.get("entry_names") != sorted(item["canonical_name"] for item in members) or
+                    set((review.get("source_file_sha256") or {}).keys()) !=
+                    set(cluster.get("source_files") or []) or
+                    review.get("source_file_sha256") != member_hashes or
+                    set(review.get("reviewed_dependency_edges") or []) != edges or
+                    review.get("unresolved_dependency_edges") != [] or
+                    not review.get("reviewed_by") or not review.get("closure_notes")):
+                raise ValueError("authorized cluster lacks complete source review")
+
+
+def cluster_manifests(results, index):
+    """Group source entries by reviewed semantic owner, never by broad owner label."""
+    clusters = {}
+    for item in results:
+        name = item.get("semantic_cluster")
+        if not name:
+            continue
+        cluster = clusters.setdefault(name, {
+            "semantic_cluster": name, "owner_cluster": item.get("owner_cluster"),
+            "status": "SOURCE_LOCATED", "migration_authorized": False,
+            "dependency_ids": [], "entry_names": [], "source_files": [],
+            "required_symbols": [], "data_structures": [], "init_deps": [],
+            "registration_deps": [], "cross_cluster_deps": [], "excluded_deps": [],
+            "service_boundaries": [], "host_adaptation_points": [], "blocking_edges": [],
+            "closure_evidence": None,
+        })
+        if cluster["owner_cluster"] != item.get("owner_cluster"):
+            raise ValueError("semantic cluster crosses owner labels")
+        cluster["dependency_ids"].append(item["dependency_id"])
+        cluster["entry_names"].append(item["canonical_name"])
+        for key in ("source_files", "required_symbols", "data_structures", "init_deps",
+                    "registration_deps", "cross_cluster_deps", "excluded_deps",
+                    "service_boundaries", "host_adaptation_points", "blocking_edges"):
+            cluster[key] = sorted(set(cluster[key]) | set(item[key]))
+    reviews = index.get("cluster_reviews") or {}
+    for name, cluster in clusters.items():
+        cluster["dependency_ids"].sort()
+        cluster["entry_names"].sort()
+        members = [item for item in results if item.get("semantic_cluster") == name]
+        known = sorted(key for key, value in (index.get("entries") or {}).items()
+                       if value.get("semantic_cluster") == name)
+        if (cluster["blocking_edges"] or known != cluster["entry_names"] or not all(
+                item["status"] in ("SOURCE_CLOSED", "BOUNDARY") for item in members)):
+            continue
+        cluster["status"] = "SOURCE_CLOSED"
+        review = reviews.get(name) or {}
+        files = cluster["source_files"]
+        edges = {edge for field in ("init_deps", "registration_deps",
+                                    "cross_cluster_deps", "excluded_deps",
+                                    "service_boundaries", "host_adaptation_points")
+                 for edge in cluster[field]}
+        indexed = index.get("source_file_sha256") or {}
+        digests = review.get("source_file_sha256") or {}
+        if (review.get("closure_reviewed") is True and
+                review.get("source_revision") == index.get("revision") and
+                review.get("entry_names") == known and
+                review.get("reviewed_by") and review.get("closure_notes") and
+                isinstance(digests, dict) and set(digests) == set(files) and
+                all(digests[path] == indexed.get(path) for path in files) and
+                set(review.get("reviewed_dependency_edges") or []) == edges and
+                review.get("unresolved_dependency_edges") == []):
+            cluster["status"] = "MIGRATION_AUTHORIZED"
+            cluster["migration_authorized"] = True
+            cluster["closure_evidence"] = review
+    return dict(sorted(clusters.items()))
 
 
 def manifests(book, index):
@@ -169,24 +274,7 @@ def manifests(book, index):
                if dep["confidence"] in ("OBSERVED_RUNTIME", "DYNAMIC_DISCOVERED")]
     if not results:
         raise ValueError("book has no observed TRACE dependencies to close")
-    clusters = {}
-    for item in results:
-        if item["status"] not in ("SOURCE_CLOSED", "BOUNDARY"):
-            continue
-        owner = item["owner_cluster"]
-        cluster = clusters.setdefault(owner, {
-            "owner_cluster": owner, "dependency_ids": [], "source_files": [],
-            "required_symbols": [], "data_structures": [], "init_deps": [],
-            "registration_deps": [], "cross_cluster_deps": [], "excluded_deps": [],
-            "service_boundaries": [], "host_adaptation_points": [],
-        })
-        cluster["dependency_ids"].append(item["dependency_id"])
-        for key in ("source_files", "required_symbols", "data_structures", "init_deps",
-                    "registration_deps", "cross_cluster_deps", "excluded_deps",
-                    "service_boundaries", "host_adaptation_points"):
-            cluster[key] = sorted(set(cluster[key]) | set(item[key]))
-    for cluster in clusters.values():
-        cluster["dependency_ids"].sort()
+    clusters = cluster_manifests(results, index)
     artifact = {"schema_version": 1, "apk": book["apk"], "source_index_revision": index.get("revision"),
                 "manifests": results, "cluster_source_manifests": dict(sorted(clusters.items()))}
     validate_source_manifests(artifact)
@@ -212,6 +300,7 @@ def main():
     closure.add_argument("--index", required=True)
     closure.add_argument("--out", required=True)
     closure.add_argument("--require-closed", action="store_true")
+    closure.add_argument("--require-authorized-cluster")
     verify = sub.add_parser("validate")
     verify.add_argument("--book")
     verify.add_argument("--manifests")
@@ -238,6 +327,9 @@ def main():
         artifact = manifests(load(args.book), load(args.index))
         if args.require_closed and any(item["status"] not in ("SOURCE_CLOSED", "BOUNDARY") for item in artifact["manifests"]):
             raise SystemExit("source closure is incomplete")
+        if args.require_authorized_cluster and artifact["cluster_source_manifests"].get(
+                args.require_authorized_cluster, {}).get("status") != "MIGRATION_AUTHORIZED":
+            raise SystemExit("semantic cluster migration is not authorized")
         save(args.out, artifact)
     else:
         if not args.book and not args.manifests:

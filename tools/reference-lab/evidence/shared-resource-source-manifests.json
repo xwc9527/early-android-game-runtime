@@ -8,6 +8,7 @@
       "canonical_name": "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources;",
       "migration_type": "SOURCE_PORT",
       "status": "SOURCE_LOCATED",
+      "migration_authorized": false,
       "source_revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
       "source_files": [
         "core/java/android/view/ContextThemeWrapper.java",
@@ -52,9 +53,14 @@
       "excluded_deps": [],
       "service_boundaries": [],
       "host_adaptation_points": [],
+      "blocking_edges": [
+        "Resources and AssetManager lifetime",
+        "configuration/display metrics input contracts"
+      ],
       "closure_evidence": null,
       "service_contract": null,
       "owner_cluster": "Framework",
+      "semantic_cluster": "Framework.Resources",
       "source_repo": "platform/frameworks/base",
       "source_module": "frameworks/base/core",
       "source_file": "core/java/android/view/ContextThemeWrapper.java",
@@ -65,6 +71,7 @@
       "canonical_name": "Landroid/content/res/AssetManager$AssetInputStream;->close()V",
       "migration_type": "SOURCE_PORT",
       "status": "SOURCE_LOCATED",
+      "migration_authorized": false,
       "source_revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
       "source_files": [
         "core/java/android/content/res/AssetManager.java",
@@ -109,14 +116,118 @@
       "excluded_deps": [],
       "service_boundaries": [],
       "host_adaptation_points": [],
+      "blocking_edges": [
+        "AssetManager JNI init/destroy lifecycle",
+        "ZIP/FileMap/inflater closure",
+        "host filesystem boundary contract"
+      ],
       "closure_evidence": null,
       "service_contract": null,
       "owner_cluster": "Framework",
+      "semantic_cluster": "Framework.Resources",
       "source_repo": "platform/frameworks/base",
       "source_module": "frameworks/base",
       "source_file": "core/java/android/content/res/AssetManager.java",
       "source_symbol": "AssetManager.AssetInputStream.close"
     }
   ],
-  "source_closure_complete": false
+  "source_closure_complete": false,
+  "source_index_revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+  "cluster_source_manifests": {
+    "Framework.Resources": {
+      "semantic_cluster": "Framework.Resources",
+      "owner_cluster": "Framework",
+      "status": "SOURCE_LOCATED",
+      "migration_authorized": false,
+      "dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
+        "JAVA_METHOD:e5f2639bb82ab850"
+      ],
+      "entry_names": [
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources;"
+      ],
+      "source_files": [
+        "core/java/android/app/ActivityThread.java",
+        "core/java/android/app/ContextImpl.java",
+        "core/java/android/app/LoadedApk.java",
+        "core/java/android/app/ResourcesManager.java",
+        "core/java/android/content/ContextWrapper.java",
+        "core/java/android/content/res/AssetManager.java",
+        "core/java/android/content/res/Resources.java",
+        "core/java/android/content/res/ResourcesKey.java",
+        "core/java/android/view/ContextThemeWrapper.java",
+        "core/jni/android_util_AssetManager.cpp",
+        "include/androidfw/Asset.h",
+        "libs/androidfw/Asset.cpp",
+        "libs/androidfw/AssetManager.cpp"
+      ],
+      "required_symbols": [
+        "ActivityThread.getTopLevelResources",
+        "Asset::close",
+        "Asset::read",
+        "AssetInputStream.close",
+        "AssetInputStream.mark",
+        "AssetInputStream.read",
+        "AssetInputStream.reset",
+        "AssetInputStream.skip",
+        "AssetManager.decRefsLocked",
+        "AssetManager.incRefsLocked",
+        "AssetManager.open",
+        "AssetManager.openNonAsset",
+        "AssetManager::open",
+        "ContextImpl.createConfigurationContext",
+        "ContextImpl.getResources",
+        "ContextThemeWrapper.getResources",
+        "ContextWrapper.createConfigurationContext",
+        "ContextWrapper.getResources",
+        "LoadedApk.getResources",
+        "Resources.getAssets",
+        "Resources.updateConfiguration",
+        "ResourcesKey.equals",
+        "ResourcesManager.getDisplayMetricsLocked",
+        "ResourcesManager.getTopLevelResources",
+        "android_content_AssetManager_destroyAsset",
+        "register_android_content_AssetManager"
+      ],
+      "data_structures": [
+        "Asset*",
+        "AssetInputStream.mAsset",
+        "AssetManager.mNumRefs",
+        "AssetManager.mObject",
+        "ContextImpl.mResources",
+        "ContextThemeWrapper.mOverrideConfiguration",
+        "ContextThemeWrapper.mResources",
+        "LoadedApk.mResources",
+        "ResourcesKey",
+        "ResourcesManager.mActiveResources"
+      ],
+      "init_deps": [],
+      "registration_deps": [
+        "AndroidRuntime.cpp:register_android_content_AssetManager",
+        "gAssetManagerMethods"
+      ],
+      "cross_cluster_deps": [
+        "AssetManager.addAssetPath",
+        "AssetManager.isUpToDate",
+        "CompatibilityInfo",
+        "DisplayManager display metrics",
+        "FileMap",
+        "InputStream",
+        "StreamingZipInflater",
+        "ZipFileRO"
+      ],
+      "excluded_deps": [],
+      "service_boundaries": [],
+      "host_adaptation_points": [],
+      "blocking_edges": [
+        "AssetManager JNI init/destroy lifecycle",
+        "Resources and AssetManager lifetime",
+        "ZIP/FileMap/inflater closure",
+        "configuration/display metrics input contracts",
+        "host filesystem boundary contract"
+      ],
+      "closure_evidence": null
+    }
+  }
 }

@@ -1,6 +1,6 @@
 # AGR 新架构与工程方案
 
-`REFERENCE_MIGRATION_RULES.md` 仍是 Android-visible source ownership 的最高规则。本文是 Phase 3 CLOSED 之后的工程方案。Phase 3 已 CLOSED。当前已实现离线静态扫描、TRACE 事件身份校验、Migration Book 合并和源码索引到 Source Manifest 的工具；TRACE 镜像与事件生产器尚未建立，JNI 索引目前只能定位源码入口，不能证明 Source Closure。CLEAN 启动已有记录，完整 AOSP 树尚未同步。本文不授权原创 Android 语义、游戏缺口补丁或新的 Framework/HLE。
+`REFERENCE_MIGRATION_RULES.md` 仍是 Android-visible source ownership 的最高规则。本文是 Phase 3 CLOSED 之后的工程方案。Phase 3 已 CLOSED。当前已有本机同源 CLEAN/TRACE x86 与 ARM 构建对、四个合格样本的成对回归证据、Migration Book、owner/source mapping 队列及 Source Manifest 工具。实验室是支撑设施：只有源码归属、依赖闭包或差分判定出现具体证据缺口才扩建。已观测入口不等于子簇闭包；闭包不等于迁移授权。当前 Framework 资源和 libcore 整数装箱候选仍是 `SOURCE_LOCATED`。本文不授权原创 Android 语义、游戏缺口补丁或新的 Framework/HLE。
 
 已闭合或稳定的底座保持不动：ARM interpreter、linker/libdl、Bionic、pthread/TLS/futex、EHABI、allocator、APK bootstrap、ClassLoader、JNI、method/field resolution、class init、exception/native binding、GC root/lifetime、HostServices。要改变的是后续 Android Runtime / Framework 能力的发现、裁剪、迁移和修复方式。
 
@@ -22,7 +22,7 @@
 → 修正源码迁移 / Host Adapter
 ```
 
-游戏决定迁什么。Android 4.4.4/API19 源码决定怎么实现。AGR 不允许原创 Android guest-visible semantics。
+游戏发现实际入口和验证优先级；Android 4.4.4/API19 源码与子簇闭包决定候选迁移范围和实现结构。未观测不等于未使用，AGR 不允许原创 Android guest-visible semantics。
 
 禁止：
 
