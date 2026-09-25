@@ -1,10 +1,10 @@
 # Local Reference Lab tooling
 
-This directory contains the offline artifact path. It does not build an API19
-TRACE image. The committed CLEAN boot record cannot serve as TRACE evidence.
-The CLEAN boot image is Android-x86 4.4-r5 and its common source/build base
-with a future AOSP android-4.4.4_r2 TRACE image is unproved. The differential
-gate must use assert_matched_reference before treating them as a pair.
+This directory contains the local API19 source and artifact path. The
+historical committed CLEAN boot record used Android-x86 4.4-r5 and cannot
+pair with an AOSP TRACE image. A matched `android-4.4.4_r2` CLEAN image has
+now been built locally; TRACE is still building. The differential gate must
+use `assert_matched_reference` before treating images as a pair.
 
 Run the pipeline with:
 
@@ -80,6 +80,17 @@ manager, installation, resumed activity, and screenshot. Run it again with
 `--variant TRACE` for the instrumented image; that run also checks TRACE log
 sequence continuity and writes `events.ndjson` plus `trace-run.json` for the
 Migration Book importer. Each probe writes a terminal PASS or FAILED record.
+The optional unpaired CLEAN smoke test omits `--pair`; it cannot establish a
+matched oracle. The current local WSL emulator uses `emulator64-x86` with
+`-qemu -disable-kvm` because its KVM VM creation fails despite `/dev/kvm`
+being present. It needs `-memory 1024` for package management and `-wipe-data`
+to initialize the writable data image. The probe checks the focused game
+window so a lockscreen capture cannot pass. The unpaired AOSP CLEAN cold-start
+run is recorded in `evidence/frozen-bubble-aosp-clean-cold-start.json`: Android
+4.4.4/API19, portable interpreter, successful APK installation, resumed and
+focused Frozen Bubble activity, and a PNG of the game frame. Its
+`UNPAIRED_CLEAN_SMOKE` label withholds pair-level oracle status until the TRACE
+build and pair check finish.
 
 `boot_clean.py --root /agr-reference --apk /path/to/game.apk --component
 package/.Activity` can probe installation and launch in the CLEAN guest. It

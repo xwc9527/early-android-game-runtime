@@ -29,7 +29,8 @@ def adb(serial, *args, timeout=120, text=True):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--pair", required=True, type=Path)
+    parser.add_argument("--pair", type=Path,
+                        help="omit only for an unpaired CLEAN smoke test")
     parser.add_argument("--root", default="/agr-reference", type=Path)
     parser.add_argument("--apk", required=True, type=Path)
     parser.add_argument("--variant", required=True, choices=("CLEAN", "TRACE"))
@@ -37,15 +38,24 @@ def main():
     parser.add_argument("--scenario", default="cold_start")
     parser.add_argument("--boot-timeout", type=int, default=600)
     parser.add_argument("--settle", type=int, default=20)
+    parser.add_argument("--reuse-data", action="store_true")
     args = parser.parse_args()
 
-    pair = json.loads(args.pair.read_text())
-    if pair.get("status") != "BUILD_VERIFIED":
-        raise SystemExit("CLEAN/TRACE pair is not build-verified")
     variant = args.variant.lower()
-    image = pair[variant]
     out = args.root / ("clean-image" if variant == "clean" else "trace-image") / "build-out"
     product = out / "target/product/generic_x86"
+    if args.pair:
+        pair = json.loads(args.pair.read_text())
+        if pair.get("status") != "BUILD_VERIFIED":
+            raise SystemExit("CLEAN/TRACE pair is not build-verified")
+        image = pair[variant]
+        pair_status = "BUILD_VERIFIED"
+    elif variant == "clean":
+        image = {"image_sha256": (out / "system.img.sha256").read_text().split()[0],
+                 "execution_mode": "int:portable"}
+        pair_status = "UNPAIRED_CLEAN_SMOKE"
+    else:
+        raise SystemExit("TRACE probe requires a build-verified pair")
     if hash_file(product / "system.img") != image["image_sha256"]:
         raise SystemExit("system image changed after pair verification")
     if image["execution_mode"] != "int:portable":
@@ -57,24 +67,32 @@ def main():
     record = {"status": "FAILED", "stage": "launch_emulator", "variant": args.variant,
               "baseline": "android-4.4.4_r2", "image_sha256": image["image_sha256"],
               "apk_sha256": apk_hash, "scenario": args.scenario,
-              "execution_mode": "int:portable"}
+              "execution_mode": "int:portable", "pair_status": pair_status,
+              "data_reused": args.reuse_data}
     port = 5554 if variant == "clean" else 5556
     serial = f"emulator-{port}"
-    emulator = args.root / "clean-image/build-out/host/linux-x86/bin/emulator"
+    emulator = args.root / "clean-image/build-out/host/linux-x86/bin/emulator64-x86"
     command = [str(emulator), "-sysdir", str(product), "-system", str(product / "system.img"),
                "-ramdisk", str(product / "ramdisk.img"), "-data", str(result_dir / "userdata.img"),
-               "-no-window", "-no-audio", "-no-boot-anim", "-no-snapshot",
+               "-memory", "1024", "-no-window", "-no-audio", "-no-boot-anim", "-no-snapshot",
                "-ports", f"{port},{port + 1}",
                "-prop", "dalvik.vm.execution-mode=int:portable"]
-    if (product / "kernel").is_file():
-        command += ["-kernel", str(product / "kernel")]
+    if not args.reuse_data:
+        command.append("-wipe-data")
+    kernel = product / "kernel"
+    if not kernel.is_file():
+        kernel = args.root / "aosp-official-sync-4.4.4-r2/prebuilts/qemu-kernel/x86/kernel-qemu"
+    if not kernel.is_file():
+        raise SystemExit("pinned x86 QEMU kernel is missing")
+    command += ["-kernel", str(kernel)]
+    record["kernel_sha256"] = hash_file(kernel)
     if (product / "userdata.img").is_file():
         command += ["-initdata", str(product / "userdata.img")]
-    if os.access("/dev/kvm", os.R_OK | os.W_OK):
-        command += ["-qemu", "-enable-kvm"]
-        record["accel"] = "kvm"
-    else:
-        record["accel"] = "tcg"
+    # WSL exposes /dev/kvm here, but this 2014 emulator's KVM_CREATE_VM ioctl
+    # fails. Its pinned QEMU source supports -disable-kvm for software boot.
+    command += ["-qemu", "-disable-kvm"]
+    record["kvm_device_accessible"] = os.access("/dev/kvm", os.R_OK | os.W_OK)
+    record["accel"] = "tcg"
     record["command"] = command
     process = None
     try:
@@ -104,15 +122,26 @@ def main():
                     ("4.4.4", "19", "int:portable"):
                 raise RuntimeError("guest release, SDK, or execution mode mismatched")
             record["stage"] = "package_manager"
-            packages = adb(serial, "shell", "pm", "list", "packages", timeout=60)
-            if "package:com.android.settings" not in packages:
-                raise RuntimeError("package manager did not list Settings")
+            package_deadline = time.monotonic() + 300
+            while True:
+                try:
+                    packages = adb(serial, "shell", "pm", "list", "packages", timeout=45)
+                    if "package:com.android.settings" in packages:
+                        break
+                except subprocess.SubprocessError:
+                    pass
+                if time.monotonic() >= package_deadline:
+                    raise RuntimeError("package manager did not become ready in 300 seconds")
+                time.sleep(5)
             record["stage"] = "install"
             install = adb(serial, "install", "-r", str(args.apk), timeout=240)
             if "Success" not in install:
                 raise RuntimeError("APK installation did not succeed: " + install.strip())
             record["install_result"] = install.strip()
             adb(serial, "logcat", "-c", timeout=30)
+            adb(serial, "shell", "input", "keyevent", "82", timeout=30)
+            adb(serial, "shell", "input", "swipe", "160", "370", "160", "80", "300",
+                timeout=30)
             record["stage"] = "activity"
             record["activity_result"] = adb(
                 serial, "shell", "am", "start", "-W", "-n", args.component,
@@ -127,8 +156,13 @@ def main():
             if not any("mResumedActivity" in line and package in line
                        for line in record["activity_state"].splitlines()):
                 raise RuntimeError("sample activity is not resumed")
-            adb(serial, "shell", "screencap", "-p", "/sdcard/agr-reference.png", timeout=60)
-            adb(serial, "pull", "/sdcard/agr-reference.png", str(result_dir / "screen.png"),
+            record["window_state"] = adb(
+                serial, "shell", "dumpsys", "window", "windows", timeout=60)
+            if not any("mCurrentFocus" in line and package in line
+                       for line in record["window_state"].splitlines()):
+                raise RuntimeError("sample activity is not the visible focused window")
+            adb(serial, "shell", "screencap", "-p", "/data/local/tmp/agr-reference.png", timeout=60)
+            adb(serial, "pull", "/data/local/tmp/agr-reference.png", str(result_dir / "screen.png"),
                 timeout=60)
             screenshot = result_dir / "screen.png"
             if not screenshot.read_bytes().startswith(b"\x89PNG\r\n\x1a\n"):

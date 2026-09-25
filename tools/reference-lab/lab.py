@@ -12,7 +12,7 @@ ROLES = {
     "CLEAN": {
         "role": "semantic_oracle",
         "instrumented": False,
-        "baseline": "android-x86-4.4-r5",
+        "baseline": "android-4.4.4_r2",
         "oracle_ready": False,
         "may_authorize_implementation": False,
     },
