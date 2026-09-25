@@ -1,0 +1,9 @@
+[
+  {"type": "wait", "delay": 60},
+  {"type": "tap", "x": 125, "y": 65, "delay": 25},
+  {"type": "tap", "x": 160, "y": 250, "delay": 8},
+  {"type": "home", "delay": 5},
+  {"type": "resume", "delay": 12},
+  {"type": "force_stop", "delay": 3},
+  {"type": "relaunch", "delay": 15}
+]

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from lab import assert_matched_reference
 
-TRACE_PATCH_SHA256 = "1340359e595c934aee364fcdf3119b52fef56ef27b13af2ed820b407eaf6393f"
+TRACE_PATCH_SHA256 = "007a79014245d2ec4628668f83c6f9f72529f84bc22421376fe315d00dd14c87"
 
 
 def sha256(path):
@@ -27,7 +27,9 @@ def checked_recorded_hash(path, artifact):
     return actual
 
 
-def record_pair(clean_out, trace_out):
+def record_pair(clean_out, trace_out, arch="x86"):
+    if arch not in ("x86", "arm"):
+        raise ValueError(f"unsupported API19 architecture: {arch}")
     clean_manifest = clean_out / "source-manifest.xml"
     trace_manifest = trace_out / "source-manifest.xml"
     if clean_manifest.read_bytes() != trace_manifest.read_bytes():
@@ -42,14 +44,21 @@ def record_pair(clean_out, trace_out):
     common = {"baseline": "android-4.4.4_r2",
               "source_manifest_sha256": sha256(clean_manifest),
               "build_only_patch_sha256": patch_name,
-              "build_flavor": "aosp_x86-eng", "execution_mode": "int:portable"}
-    product = Path("target/product/generic_x86/system.img")
+              "build_flavor": f"aosp_{arch}-eng", "execution_mode": "int:portable"}
+    product_dir = Path("target/product") / ("generic_x86" if arch == "x86" else "generic")
+    product = product_dir / "system.img"
+    clean_dvm = sha256(clean_out / product_dir / "system/lib/libdvm.so")
+    trace_dvm = sha256(trace_out / product_dir / "system/lib/libdvm.so")
+    if clean_dvm == trace_dvm:
+        raise ValueError("TRACE libdvm is identical to uninstrumented CLEAN libdvm")
     clean = dict(common, variant="CLEAN", instrumented=False,
                  role="semantic_oracle", host_toolchain_sha256=clean_toolchain,
+                 libdvm_sha256=clean_dvm,
                  image_sha256=checked_recorded_hash(clean_out / "system.img.sha256",
                                                     clean_out / product))
     trace = dict(common, variant="TRACE", instrumented=True,
                  role="dependency_mapper", host_toolchain_sha256=trace_toolchain,
+                 libdvm_sha256=trace_dvm,
                  trace_patch_sha256=trace_patch,
                  image_sha256=checked_recorded_hash(trace_out / "system.img.sha256",
                                                     trace_out / product))
@@ -63,8 +72,9 @@ def main():
     parser.add_argument("--clean-out", required=True, type=Path)
     parser.add_argument("--trace-out", required=True, type=Path)
     parser.add_argument("--out", required=True, type=Path)
+    parser.add_argument("--arch", choices=("x86", "arm"), default="x86")
     args = parser.parse_args()
-    pair = record_pair(args.clean_out, args.trace_out)
+    pair = record_pair(args.clean_out, args.trace_out, args.arch)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(pair, indent=2, sort_keys=True) + "\n")
     print(json.dumps({"status": pair["status"], "source_manifest_sha256":

@@ -80,7 +80,12 @@ class WorkflowTest(unittest.TestCase):
             evidence = {"variant": "TRACE", "instrumented": True, "role": "dependency_mapper",
                         "baseline": "android-4.4.4_r2", "image_sha256": "a" * 64,
                         "apk_sha256": identity["sha256"], "scenario": "cold_start",
-                        "events_sha256": hashlib.sha256(events_file.read_bytes()).hexdigest()}
+                        "events_sha256": hashlib.sha256(events_file.read_bytes()).hexdigest(),
+                        "observer_coverage": ["APP_DEX_TO_BOOT_METHOD_INVOKE"],
+                        "observation_scope": "APP_TRIGGERED_OBSERVED_LOWER_BOUND",
+                        "zygote_preload_sha256": "b" * 64,
+                        "runtime_config": {"dalvik.vm.execution-mode": "int:portable"},
+                        "may_authorize_pruning": False}
             evidence_file = root / "trace.json"
             evidence_file.write_text(json.dumps(evidence), encoding="utf-8")
             events = trace_events(events_file, evidence_file, identity)
@@ -130,5 +135,13 @@ class WorkflowTest(unittest.TestCase):
                   "migration_type": "SERVICE_HLE", "closure_reviewed": True,
                   "closure_evidence": {"source_sha256": "f" * 64, "reviewed_by": "source-audit",
                                        "closure_notes": "Service boundary reviewed"}}
+        self.assertEqual(close_entry(entry, {"revision": "e" * 40, "source_sha256": "f" * 64,
+                                             "entries": {entry["canonical_name"]: source}})["status"],
+                         "BOUNDARY_CANDIDATE")
+        source["service_contract"] = {
+            "interface_descriptor": "android.view.IWindowSession",
+            "transaction_code": 5, "request_schema": "relayout inputs",
+            "response_schema": "relayout outputs", "callbacks": [],
+            "lifecycle": "window open to close", "error_semantics": "RemoteException"}
         self.assertEqual(close_entry(entry, {"revision": "e" * 40, "source_sha256": "f" * 64,
                                              "entries": {entry["canonical_name"]: source}})["status"], "BOUNDARY")

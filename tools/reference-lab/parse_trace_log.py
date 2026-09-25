@@ -6,32 +6,43 @@ import json
 import re
 from pathlib import Path
 
-MARKER = "AGRTRACE|v1|"
+MARKER_V1 = "AGRTRACE|v1|"
+MARKER_V2 = "AGRTRACE|v2|"
 PREFIX = re.compile(r"^\S+\s+\S+\s+(\d+)\s+(\d+)\s+")
 
 
-def parse_lines(lines):
+def parse_lines(lines, allowed_pids=None):
     events = []
     sequences = {}
     for line_number, line in enumerate(lines, 1):
         if "AGRTRACE|" not in line:
             continue
-        if MARKER not in line:
+        if MARKER_V1 not in line and MARKER_V2 not in line:
             raise ValueError(f"unsupported TRACE record at line {line_number}")
-        prefix, _, payload = line.partition(MARKER)
-        match = PREFIX.match(prefix)
-        if match is None:
-            raise ValueError(f"TRACE log lacks threadtime pid at line {line_number}")
-        pid, tid = map(int, match.groups())
-        fields = payload.rstrip("\r\n").split("|")
+        if MARKER_V2 in line:
+            _, _, payload = line.partition(MARKER_V2)
+            fields = payload.rstrip("\r\n").split("|")
+            if len(fields) != 9:
+                raise ValueError(f"truncated TRACE record at line {line_number}")
+            pid, tid = map(int, fields[:2])
+            fields = fields[2:]
+        else:
+            prefix, _, payload = line.partition(MARKER_V1)
+            match = PREFIX.match(prefix)
+            if match is None:
+                raise ValueError(f"TRACE log lacks threadtime pid at line {line_number}")
+            pid, tid = map(int, match.groups())
+            fields = payload.rstrip("\r\n").split("|")
+        if allowed_pids is not None and pid not in allowed_pids:
+            continue
         if len(fields) != 7:
             raise ValueError(f"truncated TRACE record at line {line_number}")
         seq, caller, dex_pc, opcode, method_idx, target, resolved = fields
         seq = int(seq)
-        expected = sequences.get(pid, 0) + 1
-        if seq != expected:
-            raise ValueError(f"TRACE sequence gap for pid {pid}: expected {expected}, got {seq}")
-        sequences[pid] = seq
+        seen = sequences.setdefault(pid, set())
+        if seq in seen:
+            raise ValueError(f"duplicate TRACE sequence for pid {pid}: {seq}")
+        seen.add(seq)
         if not all((caller, target, resolved)) or "->" not in target:
             raise ValueError(f"invalid TRACE method at line {line_number}")
         events.append({
@@ -42,6 +53,14 @@ def parse_lines(lines):
         })
     if not events:
         raise ValueError("no AGRTRACE method events found")
+    # Sequence is reserved before ALOGI, so simultaneous threads may reach
+    # logcat in a different order. Completeness is a set property per process.
+    for pid, seen in sequences.items():
+        maximum = max(seen)
+        if len(seen) != maximum or min(seen) != 1:
+            missing = next(number for number in range(1, maximum + 1)
+                           if number not in seen)
+            raise ValueError(f"TRACE sequence gap for pid {pid}: missing {missing}")
     return events
 
 

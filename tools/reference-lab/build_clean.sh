@@ -11,6 +11,12 @@ source_root=$(realpath "$1")
 jdk_root=$(realpath "$2")
 make_root=$(realpath "$3")
 out_dir=$(realpath -m "$4")
+build_target=${AGR_BUILD_TARGET:-aosp_x86-eng}
+case "$build_target" in
+    aosp_x86-eng) product=generic_x86 ;;
+    aosp_arm-eng) product=generic ;;
+    *) echo "unsupported API19 build target: $build_target" >&2; exit 2 ;;
+esac
 test -f "$source_root/build/envsetup.sh"
 test -f "$jdk_root/lib/tools.jar"
 test -x "$make_root/bin/make"
@@ -45,9 +51,9 @@ repo manifest -r -o "$out_dir/source-manifest.xml"
 } > "$out_dir/host-toolchain.txt" 2>&1
 
 source build/envsetup.sh >/dev/null
-lunch aosp_x86-eng
+lunch "$build_target"
 make -j4
 
-test -s "$out_dir/target/product/generic_x86/system.img"
-sha256sum "$out_dir/target/product/generic_x86/system.img" \
+test -s "$out_dir/target/product/$product/system.img"
+sha256sum "$out_dir/target/product/$product/system.img" \
     > "$out_dir/system.img.sha256"

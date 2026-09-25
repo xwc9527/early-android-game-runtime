@@ -127,13 +127,16 @@ def build_book(apk, trace_events, static_items, trace_evidence=None):
         by_id[record["dependency_id"]] = record
     book = {
         "schema_version": 1,
-        "variant": "TRACE" if trace_events else "STATIC_ONLY",
+        "variant": "TRACE" if trace_evidence else "STATIC_ONLY",
         "role": "dependency_mapper",
         "apk": apk,
         "dependencies": sorted(by_id.values(), key=lambda item: item["dependency_id"]),
         "rule": "Confidence levels are not one verified bit. TRACE does not authorize implementation.",
+        "observation_scope": "APP_TRIGGERED_OBSERVED_LOWER_BOUND",
+        "unobserved_dependency_status": "UNKNOWN",
+        "may_authorize_pruning": False,
     }
-    if trace_events:
+    if trace_evidence:
         book["trace_runs"] = [dict(trace_evidence)]
     return book
 
@@ -169,6 +172,7 @@ def union_books(books):
     trace_runs = [run for book in books for run in book.get("trace_runs", [])]
     return {"schema_version": 1, "variant": "UNION", "role": "dependency_mapper",
             "apk": books[0]["apk"], "run_count": len(books),
+            "unobserved_dependency_status": "UNKNOWN", "may_authorize_pruning": False,
             "trace_runs": trace_runs,
             "dependencies": sorted(by_id.values(), key=lambda item: item["dependency_id"])}
 
@@ -190,4 +194,5 @@ def corpus_union(books):
             })
             item["games"][apk] = dep["confidence"]
     return {"schema_version": 1, "variant": "CORPUS_UNION", "games": games,
+            "unobserved_dependency_status": "UNKNOWN", "may_authorize_pruning": False,
             "dependencies": sorted(by_id.values(), key=lambda item: item["dependency_id"])}

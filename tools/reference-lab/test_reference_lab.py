@@ -7,6 +7,7 @@ from lab import assert_matched_reference, assert_not_oracle, describe, ensure_la
 from mapper import build_book, write_book
 from source_closure import close_entry
 from source_index import build_index
+from workflow import validate_source_manifests
 
 EVIDENCE = Path(__file__).with_name("clean_boot_evidence.json")
 
@@ -30,10 +31,16 @@ class ReferenceLabTest(unittest.TestCase):
         common = {"baseline": "android-4.4.4_r2", "source_manifest_sha256": "a" * 64,
                   "host_toolchain_sha256": "b" * 64, "build_only_patch_sha256": "c" * 64,
                   "build_flavor": "aosp_x86-eng", "execution_mode": "int:portable"}
-        clean = dict(common, variant="CLEAN", instrumented=False, image_sha256="d" * 64)
+        clean = dict(common, variant="CLEAN", instrumented=False,
+                     image_sha256="d" * 64, libdvm_sha256="1" * 64)
         trace = dict(common, variant="TRACE", instrumented=True,
-                     image_sha256="e" * 64, trace_patch_sha256="f" * 64)
+                     image_sha256="e" * 64, libdvm_sha256="2" * 64,
+                     trace_patch_sha256="f" * 64)
         assert_matched_reference(clean, trace)
+        arm_common = dict(common, build_flavor="aosp_arm-eng")
+        assert_matched_reference(dict(clean, **arm_common), dict(trace, **arm_common))
+        with self.assertRaisesRegex(ValueError, "Dalvik library"):
+            assert_matched_reference(clean, dict(trace, libdvm_sha256="1" * 64))
         with self.assertRaisesRegex(ValueError, "source_manifest_sha256"):
             assert_matched_reference(clean, dict(trace, source_manifest_sha256="0" * 64))
         with self.assertRaisesRegex(ValueError, "CLEAN image carries"):
@@ -67,7 +74,12 @@ class ReferenceLabTest(unittest.TestCase):
             trace_evidence={"variant": "TRACE", "instrumented": True,
                             "role": "dependency_mapper", "baseline": "android-4.4.4_r2",
                             "apk_sha256": "a" * 64, "image_sha256": "b" * 64,
-                            "scenario": "cold_start", "events_sha256": "c" * 64},
+                            "scenario": "cold_start", "events_sha256": "c" * 64,
+                            "observer_coverage": ["APP_DEX_TO_BOOT_METHOD_INVOKE"],
+                            "observation_scope": "APP_TRIGGERED_OBSERVED_LOWER_BOUND",
+                            "zygote_preload_sha256": "d" * 64,
+                            "runtime_config": {"dalvik.vm.execution-mode": "int:portable"},
+                            "may_authorize_pruning": False},
         )
         names = {item["canonical_name"]: item["confidence"] for item in book["dependencies"]}
         self.assertEqual(names["Activity.setContentView(I)V"], "OBSERVED_RUNTIME")
@@ -114,6 +126,14 @@ class ReferenceLabTest(unittest.TestCase):
         }, {"entries": {}})
         self.assertEqual(manifest["status"], "BOUNDARY_CANDIDATE")
         self.assertEqual(manifest["migration_type"], "SOURCE_PORT")
+        forged = dict(manifest, status="BOUNDARY", migration_type="SERVICE_HLE",
+                      owner_cluster="WindowManager", source_repo="frameworks/base",
+                      source_file="services/java/com/android/server/wm/WindowManagerService.java",
+                      source_symbol="relayoutWindow", source_revision="a" * 40,
+                      closure_evidence={"source_sha256": "b" * 64,
+                                        "reviewed_by": "reviewer", "closure_notes": "reviewed"})
+        with self.assertRaisesRegex(ValueError, "transaction contract"):
+            validate_source_manifests({"schema_version": 1, "manifests": [forged]})
 
     def test_jni_table_index_uses_only_listed_symbols(self):
         with tempfile.TemporaryDirectory() as tmp:

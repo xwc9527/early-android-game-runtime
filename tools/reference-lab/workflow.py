@@ -27,7 +27,8 @@ def save(path, value):
 def trace_events(path, evidence, apk):
     meta = load(evidence)
     required = ("variant", "instrumented", "role", "baseline", "image_sha256",
-                "apk_sha256", "scenario", "events_sha256")
+                "apk_sha256", "scenario", "events_sha256", "observer_coverage",
+                "observation_scope", "zygote_preload_sha256", "runtime_config")
     missing = [name for name in required if not meta.get(name)]
     if missing:
         raise ValueError("TRACE evidence missing " + ", ".join(missing))
@@ -35,6 +36,10 @@ def trace_events(path, evidence, apk):
         raise ValueError("input is not API19 TRACE evidence")
     if meta["baseline"] != "android-4.4.4_r2" or meta["apk_sha256"] != apk["sha256"]:
         raise ValueError("TRACE baseline or APK identity mismatch")
+    if meta["observation_scope"] != "APP_TRIGGERED_OBSERVED_LOWER_BOUND" or \
+            meta.get("may_authorize_pruning") is not False or \
+            meta["runtime_config"].get("dalvik.vm.execution-mode") != "int:portable":
+        raise ValueError("TRACE observation or execution scope is invalid")
     import hashlib
     data = Path(path).read_bytes()
     if hashlib.sha256(data).hexdigest() != meta["events_sha256"]:
@@ -75,6 +80,9 @@ def validate_book(book):
         raise ValueError("unsupported Migration Book")
     if not book.get("apk", {}).get("sha256"):
         raise ValueError("Migration Book missing APK identity")
+    if book.get("may_authorize_pruning", False) is not False or \
+            book.get("unobserved_dependency_status", "UNKNOWN") != "UNKNOWN":
+        raise ValueError("observations cannot authorize pruning or mark unseen code unused")
     runs = book.get("trace_runs", [])
     if not isinstance(runs, list):
         raise ValueError("TRACE run evidence must be a list")
@@ -89,7 +97,11 @@ def validate_book(book):
                 or run.get("role") != "dependency_mapper"
                 or run.get("baseline") != "android-4.4.4_r2"
                 or run.get("apk_sha256") != book["apk"]["sha256"]
-                or not all(run.get(key) for key in ("image_sha256", "scenario", "events_sha256"))):
+                or run.get("observation_scope") != "APP_TRIGGERED_OBSERVED_LOWER_BOUND"
+                or run.get("may_authorize_pruning") is not False
+                or not all(run.get(key) for key in (
+                    "image_sha256", "scenario", "events_sha256", "observer_coverage",
+                    "zygote_preload_sha256", "runtime_config"))):
             raise ValueError("Migration Book TRACE run identity mismatch")
     from mapper import CONFIDENCE, KINDS, dependency_id
     for dep in book.get("dependencies", []):
@@ -122,6 +134,15 @@ def validate_source_manifests(document):
                 raise ValueError("closed source manifest lacks exact source revision")
         if item["status"] == "BOUNDARY" and item.get("migration_type") != "SERVICE_HLE":
             raise ValueError("closed service boundary lacks SERVICE_HLE type")
+        if item["status"] == "BOUNDARY":
+            contract = item.get("service_contract")
+            if (not isinstance(contract, dict) or
+                    contract.get("transaction_code") is None or
+                    not all(contract.get(key) for key in (
+                        "interface_descriptor", "request_schema", "response_schema",
+                        "lifecycle", "error_semantics")) or
+                    not isinstance(contract.get("callbacks"), list)):
+                raise ValueError("closed service boundary lacks transaction contract")
 
 
 def manifests(book, index):
@@ -185,7 +206,7 @@ def main():
         apk = apk_identity(args.apk)
         events = trace_events(args.events, args.trace_evidence, apk) if args.events else []
         artifact = build_book(apk, events, scan_apk(args.apk),
-                              load(args.trace_evidence) if events else None)
+                              load(args.trace_evidence) if args.trace_evidence else None)
         validate_book(artifact)
         write_book(args.out, artifact)
     elif args.command == "union":

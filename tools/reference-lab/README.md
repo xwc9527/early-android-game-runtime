@@ -1,5 +1,8 @@
 # Local Reference Lab tooling
 
+The six current reference review gates and their evidence limits are in
+[`REVIEW-GATES.md`](REVIEW-GATES.md).
+
 This directory contains the local API19 source and artifact path. The
 historical committed CLEAN boot record used Android-x86 4.4-r5 and cannot
 pair with an AOSP TRACE image. A matched `android-4.4.4_r2` CLEAN image has
@@ -68,7 +71,7 @@ the exact Dalvik instrumentation diff and confirms the fully resolved
 manifest matches CLEAN byte for byte before building. It records the TRACE
 patch and output image hash in a separate output directory. The instrumentation
 diff SHA-256 is
-`1340359e595c934aee364fcdf3119b52fef56ef27b13af2ed820b407eaf6393f`.
+`007a79014245d2ec4628668f83c6f9f72529f84bc22421376fe315d00dd14c87`.
 Use the optional `--vm-only` last argument for a Dalvik compilation check
 before the full image build. Once both full builds finish, `record_pair.py
 --clean-out CLEAN_OUT --trace-out TRACE_OUT --out pair.json` checks the image

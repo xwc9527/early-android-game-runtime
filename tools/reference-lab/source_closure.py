@@ -34,6 +34,7 @@ def close_entry(entry, index, migration_type="SOURCE_PORT"):
     for name in LIST_FIELDS:
         manifest[name] = []
     manifest["closure_evidence"] = None
+    manifest["service_contract"] = None
     service_candidate = entry.get("service_boundary") == "HOST_SERVICE_HLE_BOUNDARY"
     if service_candidate:
         manifest["service_boundaries"] = [entry["canonical_name"]]
@@ -65,10 +66,20 @@ def close_entry(entry, index, migration_type="SOURCE_PORT"):
     if manifest["migration_type"] not in MIGRATION_TYPES:
         raise ValueError("unknown migration type: " + manifest["migration_type"])
     if service_candidate:
+        contract = pinned.get("service_contract")
+        if isinstance(contract, dict):
+            manifest["service_contract"] = contract
+        complete_contract = (isinstance(contract, dict) and
+                             contract.get("transaction_code") is not None and
+                             all(contract.get(key) for key in (
+                                 "interface_descriptor", "request_schema", "response_schema",
+                                 "lifecycle", "error_semantics")) and
+                             "callbacks" in contract and
+                             isinstance(contract["callbacks"], list))
         if manifest["status"] == "SOURCE_CLOSED" and manifest["migration_type"] == "SERVICE_HLE":
             if entry["canonical_name"] not in manifest["service_boundaries"]:
                 raise ValueError("reviewed service boundary is not in the source index")
-            manifest["status"] = "BOUNDARY"
+            manifest["status"] = "BOUNDARY" if complete_contract else "BOUNDARY_CANDIDATE"
         else:
             manifest["status"] = "BOUNDARY_CANDIDATE"
     return manifest

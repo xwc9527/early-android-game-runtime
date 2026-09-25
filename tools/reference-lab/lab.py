@@ -61,10 +61,14 @@ def assert_matched_reference(clean, trace):
             raise ValueError("CLEAN and TRACE have no proven common base: " + key)
     if (clean["baseline"] != "android-4.4.4_r2" or
             clean["execution_mode"] != "int:portable" or
-            clean["build_flavor"] != "aosp_x86-eng"):
+            clean["build_flavor"] not in ("aosp_x86-eng", "aosp_arm-eng")):
         raise ValueError("reference pair has an unapproved baseline or execution mode")
     if not clean.get("image_sha256") or not trace.get("image_sha256"):
         raise ValueError("reference pair lacks built image hashes")
+    if not clean.get("libdvm_sha256") or not trace.get("libdvm_sha256"):
+        raise ValueError("reference pair lacks Dalvik library hashes")
+    if clean["libdvm_sha256"] == trace["libdvm_sha256"]:
+        raise ValueError("TRACE Dalvik library matches CLEAN despite instrumentation")
     if not trace.get("trace_patch_sha256"):
         raise ValueError("TRACE image lacks an instrumentation patch identity")
     if clean.get("trace_patch_sha256"):

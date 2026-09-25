@@ -16,6 +16,12 @@ jdk_root=$(realpath "$2")
 make_root=$(realpath "$3")
 out_dir=$(realpath -m "$4")
 clean_out=$(realpath "$5")
+build_target=${AGR_BUILD_TARGET:-aosp_x86-eng}
+case "$build_target" in
+    aosp_x86-eng) product=generic_x86 ;;
+    aosp_arm-eng) product=generic ;;
+    *) echo "unsupported API19 build target: $build_target" >&2; exit 2 ;;
+esac
 test -f "$source_root/build/envsetup.sh"
 test -f "$jdk_root/lib/tools.jar"
 test -x "$make_root/bin/make"
@@ -39,8 +45,8 @@ test "$(git -C build diff -- core/main.mk | sha256sum | cut -d' ' -f1)" = \
     1d5d120d54935eab8ecef496c9e95659c5767ccf5f1c7b5ec9d20e0f294592ef
 test "$(git -C dalvik rev-parse HEAD)" = 36e356c96640775f0a3f167bd2426ea0f0093b8b
 test "$(git -C dalvik diff --binary | sha256sum | cut -d' ' -f1)" = \
-    1340359e595c934aee364fcdf3119b52fef56ef27b13af2ed820b407eaf6393f
-test "$(git -C dalvik status --porcelain | wc -l)" = 4
+    007a79014245d2ec4628668f83c6f9f72529f84bc22421376fe315d00dd14c87
+test "$(git -C dalvik status --porcelain | wc -l)" = 5
 git -C dalvik diff --binary > "$out_dir/dalvik-trace.patch"
 sha256sum "$out_dir/dalvik-trace.patch" > "$out_dir/dalvik-trace.patch.sha256"
 repo manifest -r -o "$out_dir/source-manifest.xml"
@@ -53,16 +59,16 @@ cmp "$out_dir/source-manifest.xml" "$clean_out/source-manifest.xml"
 } > "$out_dir/host-toolchain.txt" 2>&1
 
 source build/envsetup.sh >/dev/null
-lunch aosp_x86-eng
+lunch "$build_target"
 if [[ $# -eq 6 ]]; then
     make -j1 libdvm
-    test -s "$out_dir/target/product/generic_x86/system/lib/libdvm.so"
-    sha256sum "$out_dir/target/product/generic_x86/system/lib/libdvm.so" \
+    test -s "$out_dir/target/product/$product/system/lib/libdvm.so"
+    sha256sum "$out_dir/target/product/$product/system/lib/libdvm.so" \
         > "$out_dir/libdvm.so.sha256"
     exit 0
 fi
 make -j4
 
-test -s "$out_dir/target/product/generic_x86/system.img"
-sha256sum "$out_dir/target/product/generic_x86/system.img" \
+test -s "$out_dir/target/product/$product/system.img"
+sha256sum "$out_dir/target/product/$product/system.img" \
     > "$out_dir/system.img.sha256"

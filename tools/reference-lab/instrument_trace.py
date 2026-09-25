@@ -35,15 +35,37 @@ HOOK = r'''#ifdef AGR_TRACE
                     dexProtoCopyMethodDescriptor(&methodToCall->prototype);
             char* callerProto = dexProtoCopyMethodDescriptor(&curMethod->prototype);
             char* resolvedProto = dexProtoCopyMethodDescriptor(&methodToCall->prototype);
-            static volatile int agrTraceSequence = 0;
-            const unsigned int sequence = __sync_add_and_fetch(&agrTraceSequence, 1);
-            ALOGI("AGRTRACE|v1|%u|%s->%s%s|%u|%u|%u|%s->%s%s|%s->%s%s",
-                    sequence, curMethod->clazz->descriptor, curMethod->name,
-                    callerProto, (unsigned int)(pc - curMethod->insns),
-                    (unsigned int)opcode, (unsigned int)methodIdx,
-                    targetClass, targetName, targetProto,
+            static pthread_mutex_t agrTraceMutex = PTHREAD_MUTEX_INITIALIZER;
+            static unsigned int agrTraceSequence = 0;
+            static int agrTraceFd = -1;
+            pthread_mutex_lock(&agrTraceMutex);
+            if (agrTraceFd < 0) {
+                char path[96];
+                snprintf(path, sizeof(path), "/data/local/tmp/agrtrace/trace-%d.log",
+                        (int)getpid());
+                agrTraceFd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0600);
+            }
+            const unsigned int sequence = ++agrTraceSequence;
+            char* line = NULL;
+            const int length = asprintf(&line,
+                    "AGRTRACE|v2|%d|%d|%u|%s->%s%s|%u|%u|%u|%s->%s%s|%s->%s%s\n",
+                    (int)getpid(), (int)dvmGetSysThreadId(), sequence,
+                    curMethod->clazz->descriptor, curMethod->name, callerProto,
+                    (unsigned int)(pc - curMethod->insns), (unsigned int)opcode,
+                    (unsigned int)methodIdx, targetClass, targetName, targetProto,
                     methodToCall->clazz->descriptor, methodToCall->name,
                     resolvedProto);
+            if (agrTraceFd >= 0 && length > 0) {
+                int written = 0;
+                while (written < length) {
+                    const int result = write(agrTraceFd, line + written,
+                            length - written);
+                    if (result <= 0) break;
+                    written += result;
+                }
+            }
+            free(line);
+            pthread_mutex_unlock(&agrTraceMutex);
             free(targetProto);
             free(callerProto);
             free(resolvedProto);
@@ -74,6 +96,14 @@ def main():
     if original.count(anchor) != 1:
         raise SystemExit("invokeMethod anchor changed")
     template.write_text(original.replace(anchor, anchor + "\n" + HOOK, 1))
+    header = dalvik / "vm/mterp/c/header.cpp"
+    header_text = header.read_text()
+    header_anchor = '#include "Dalvik.h"\n'
+    if header_text.count(header_anchor) != 1:
+        raise SystemExit("mterp header include anchor changed")
+    includes = "#ifdef AGR_TRACE\n#include <fcntl.h>\n#include <pthread.h>\n#include <stdio.h>\n#include <unistd.h>\n#endif\n"
+    header.write_text(header_text.replace(header_anchor,
+                                         header_anchor + includes, 1))
     makefile = dalvik / "vm/Android.mk"
     make_text = makefile.read_text()
     flag_anchor = "LOCAL_MODULE := libdvm\nLOCAL_CFLAGS += $(target_smp_flag)\n"
@@ -88,9 +118,9 @@ def main():
     if portable_asm.exists():
         portable_asm.unlink()  # Generator artifact; the portable VM uses C++.
     generated = mterp / "out/InterpC-x86.cpp"
-    if "AGRTRACE|v1" not in generated.read_text():
+    if "AGRTRACE|v2" not in generated.read_text():
         raise SystemExit("generated x86 interpreter lacks TRACE observer")
-    if "AGRTRACE|v1" not in (mterp / "out/InterpC-portable.cpp").read_text():
+    if "AGRTRACE|v2" not in (mterp / "out/InterpC-portable.cpp").read_text():
         raise SystemExit("generated portable interpreter lacks TRACE observer")
     patch = run("git", "diff", "--binary", cwd=dalvik)
     digest = hashlib.sha256((patch + "\n").encode()).hexdigest()
