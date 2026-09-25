@@ -5,7 +5,7 @@ from pathlib import Path
 
 from lab import assert_matched_reference, assert_not_oracle, describe, ensure_layout
 from mapper import build_book, write_book
-from source_closure import close_entry
+from source_closure import close_entry, external_edge_closed, external_owner_digest
 from source_index import build_index
 from workflow import validate_source_manifests
 
@@ -166,6 +166,26 @@ class ReferenceLabTest(unittest.TestCase):
                  "source_file_sha256": {"A.java": "a" * 64,
                                         "Bridge.cpp": "b" * 64},
                  "entries": {entry["canonical_name"]: pinned}}
+        external_owner = {"source_repo": "platform/frameworks/base", "revision": "c" * 40,
+                          "source_file_sha256": {"Asset.cpp": "d" * 64},
+                          "required_symbols": ["Asset::read"],
+                          "status": "SOURCE_CLOSED", "closure_reviewed": True,
+                          "blocking_edges": [],
+                          "closure_evidence": {"source_file_sha256": {"Asset.cpp": "d" * 64},
+                                               "reviewed_dependency_edges": [],
+                                               "unresolved_dependency_edges": [],
+                                               "reviewed_by": "source-audit",
+                                               "closure_notes": "Asset read closure"}}
+        index["external_cluster_sources"] = {"AndroidNative.Asset": external_owner}
+        pinned["cross_cluster_source_edges"] = [{"edge": "androidfw Asset",
+                                                  "semantic_cluster": "AndroidNative.Asset",
+                                                  "source_repo": "platform/frameworks/base",
+                                                  "revision": "c" * 40,
+                                                  "source_file": "Asset.cpp",
+                                                  "source_symbol": "Asset::read",
+                                                  "source_sha256": "d" * 64,
+                                                  "status": "SOURCE_CLOSED"}]
+        pinned["closure_evidence"]["edge_reviews"]["androidfw Asset"]["source_manifest_sha256"] = external_owner_digest(external_owner)
         complete = close_entry(entry, index)
         self.assertEqual(complete["status"], "SOURCE_CLOSED")
         validate_source_manifests({"schema_version": 1, "manifests": [complete]})
@@ -194,6 +214,38 @@ class ReferenceLabTest(unittest.TestCase):
         pinned["closure_evidence"]["source_file_sha256"]["Bridge.cpp"] = "b" * 64
         pinned["closure_evidence"]["source_file_sha256"].pop("Bridge.cpp")
         self.assertEqual(close_entry(entry, index)["status"], "SOURCE_LOCATED")
+
+    def test_external_edge_requires_closed_owner_record(self):
+        edge = {"semantic_cluster": "Dalvik.GCRoots", "source_repo": "platform/dalvik",
+                "revision": "a" * 40, "source_file": "MarkSweep.cpp",
+                "source_sha256": "b" * 64, "source_symbol": "scanStaticFields",
+                "status": "SOURCE_CLOSED"}
+        owner = {"source_repo": "platform/dalvik", "revision": "a" * 40,
+                 "source_file_sha256": {"MarkSweep.cpp": "b" * 64},
+                 "required_symbols": ["scanStaticFields"],
+                 "internal_deps": ["class roots"],
+                 "status": "SOURCE_LOCATED", "closure_reviewed": False,
+                 "blocking_edges": ["class roots"]}
+        index = {"external_cluster_sources": {"Dalvik.GCRoots": owner}}
+        self.assertFalse(external_edge_closed(edge, index))
+        owner.update(status="SOURCE_CLOSED", closure_reviewed=True, blocking_edges=[],
+                     closure_evidence={"source_file_sha256": {"MarkSweep.cpp": "b" * 64},
+                                       "reviewed_dependency_edges": [],
+                                       "unresolved_dependency_edges": [],
+                                       "reviewed_by": "source-audit",
+                                       "closure_notes": "Class roots and mark traversal reviewed"})
+        self.assertTrue(external_edge_closed(edge, index))
+        owner["closure_evidence"]["unresolved_dependency_edges"] = ["class roots"]
+        self.assertFalse(external_edge_closed(edge, index))
+        owner["closure_evidence"]["unresolved_dependency_edges"] = []
+        owner["excluded_deps"] = ["fork boundary"]
+        self.assertFalse(external_edge_closed(edge, index))
+        owner.pop("excluded_deps")
+        owner["cross_cluster_deps"] = ["Zygote preload"]
+        owner["closure_evidence"]["reviewed_dependency_edges"] = ["Zygote preload"]
+        self.assertFalse(external_edge_closed(edge, index))
+        owner["cross_cluster_source_edges"] = [{**edge, "edge": "Zygote preload"}]
+        self.assertFalse(external_edge_closed(edge, index))  # cyclic owner graph
 
     def test_service_boundary_stops(self):
         manifest = close_entry({

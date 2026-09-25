@@ -11,10 +11,10 @@ screenshot, or old-emulator work is active. Reference Lab work is admitted only
 for a concrete source-owner, dependency-closure, or differential evidence gap.
 
 The four-game app-to-boot invoke queue contains 779 observed method identities,
-114 shared by at least two games. Seven entries are currently `SOURCE_LOCATED`:
-two Framework resource entries and five entries in the libcore integer boxing
-cluster. Their
-semantic clusters remain unclosed and `MIGRATION_AUTHORIZED` is false. No new
+114 shared by at least two games. Two Framework resource entries and
+`Integer.valueOf(int)` are `SOURCE_LOCATED`; four other observed Integer boxing
+method source sets are `SOURCE_CLOSED`. Both semantic clusters remain unclosed
+and `MIGRATION_AUTHORIZED` is false. No new
 Android-visible source port or CLEAN-to-AGR differential is claimed. The
 current source indexes and manifests are under `tools/reference-lab/indexes`
 and `tools/reference-lab/evidence`; their unresolved edges are explicit.

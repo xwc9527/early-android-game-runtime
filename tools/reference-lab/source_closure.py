@@ -4,8 +4,13 @@ The trace entry names the dependency. The index names the source files.
 This step does not invent callees that the index does not contain.
 """
 
+import hashlib
+import json
+
 MIGRATION_TYPES = ("SOURCE_PORT", "AOSP_NATIVE_ADAPT", "HOST_BOUNDARY", "SERVICE_HLE")
 FORBIDDEN = ("ORIGINAL_IMPLEMENTATION", "APPROXIMATION", "GAME_PATCH", "SYNTHETIC_ANDROID_BEHAVIOR")
+EXTERNAL_DEPENDENCY_FIELDS = ("init_deps", "registration_deps", "cross_cluster_deps",
+                              "excluded_deps", "service_boundaries", "host_adaptation_points")
 LIST_FIELDS = (
     "source_files",
     "required_symbols",
@@ -64,11 +69,59 @@ def reviewed_edge_contracts(item, evidence):
     return True
 
 
+def external_edge_closed(edge, index, seen=None):
+    """An edge label alone cannot certify a different semantic owner's closure."""
+    if not isinstance(edge, dict) or edge.get("status") != "SOURCE_CLOSED":
+        return False
+    cluster = edge.get("semantic_cluster")
+    seen = seen or frozenset()
+    if cluster in seen:
+        return False
+    owner = (index.get("external_cluster_sources") or {}).get(cluster)
+    if not isinstance(owner, dict) or owner.get("status") != "SOURCE_CLOSED":
+        return False
+    if owner.get("source_repo") != edge.get("source_repo") or owner.get("revision") != edge.get("revision"):
+        return False
+    files = owner.get("source_file_sha256") or {}
+    if (not isinstance(files, dict) or files.get(edge.get("source_file")) != edge.get("source_sha256")
+            or edge.get("source_symbol") not in (owner.get("required_symbols") or [])):
+        return False
+    if owner.get("blocking_edges") or owner.get("closure_reviewed") is not True:
+        return False
+    cross = owner.get("cross_cluster_deps") or []
+    pinned_cross = owner.get("cross_cluster_source_edges") or []
+    if (set(cross) != {item.get("edge") for item in pinned_cross if isinstance(item, dict)}
+            or len(cross) != len(pinned_cross)
+            or any(not external_edge_closed(item, index, seen | {cluster})
+                   for item in pinned_cross)):
+        return False
+    boundaries = owner.get("boundary_contracts") or {}
+    if set(boundaries) != set(owner.get("excluded_deps") or []):
+        return False
+    for contract in boundaries.values():
+        if (not isinstance(contract, dict) or
+                not all(contract.get(key) for key in
+                        ("request_schema", "response_schema", "lifecycle", "error_semantics")) or
+                not isinstance(contract.get("callbacks"), list)):
+            return False
+    review = owner.get("closure_evidence") or {}
+    deps = {dep for field in EXTERNAL_DEPENDENCY_FIELDS for dep in (owner.get(field) or [])}
+    return (review.get("source_file_sha256") == files
+            and set(review.get("reviewed_dependency_edges") or []) == deps
+            and review.get("unresolved_dependency_edges") == []
+            and bool(review.get("reviewed_by")) and bool(review.get("closure_notes")))
+
+
+def external_owner_digest(owner):
+    return hashlib.sha256(json.dumps(owner, sort_keys=True, separators=(",", ":"),
+                                     ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
 def reviewed_source_set(pinned, index, evidence):
     """A multi-file closure must pin every file and account for every listed edge."""
     if pinned.get("blocking_edges"):
         return False
-    if any(not isinstance(edge, dict) or edge.get("status") != "SOURCE_CLOSED"
+    if any(not external_edge_closed(edge, index)
            for edge in (pinned.get("cross_cluster_source_edges") or [])):
         return False
     files = pinned.get("source_files") or []
@@ -95,7 +148,20 @@ def reviewed_source_set(pinned, index, evidence):
                            evidence.get("unresolved_dependency_edges") != []):
         return False
     if pinned.get("semantic_cluster"):
-        return reviewed_edge_contracts({**pinned, "source_revision": index.get("revision")}, evidence)
+        if not reviewed_edge_contracts({**pinned, "source_revision": index.get("revision")}, evidence):
+            return False
+        by_name = {edge.get("edge"): edge for edge in (pinned.get("cross_cluster_source_edges") or [])
+                   if isinstance(edge, dict)}
+        for name, review in (evidence.get("edge_reviews") or {}).items():
+            if review.get("disposition") != "SOURCE_CLOSED_EXTERNAL":
+                continue
+            edge = by_name.get(name)
+            owner = (index.get("external_cluster_sources") or {}).get(review["semantic_cluster"])
+            if (not edge or not external_edge_closed(edge, index) or not owner or
+                    any(review.get(key) != edge.get(key) for key in
+                        ("semantic_cluster", "source_repo", "revision", "source_file", "source_symbol")) or
+                    review.get("source_manifest_sha256") != external_owner_digest(owner)):
+                return False
     return True
 
 

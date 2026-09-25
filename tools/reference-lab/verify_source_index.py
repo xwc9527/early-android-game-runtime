@@ -33,7 +33,37 @@ def verify(index, checkout, external_checkouts=None):
         if hashlib.sha256(target.read_bytes()).hexdigest() != expected:
             raise ValueError("source file digest differs: " + relative)
     external_count = 0
-    for entry in (index.get("entries") or {}).values():
+    external_file_count = 0
+    for name, owner in (index.get("external_cluster_sources") or {}).items():
+        repo = owner.get("source_repo")
+        if repo not in external_checkouts:
+            raise ValueError("external source checkout is missing: " + str(repo))
+        external = external_checkouts[repo].resolve()
+        external_revision = subprocess.check_output(
+            ["git", "-C", str(external), "rev-parse", "HEAD"],
+            env=environment, text=True).strip()
+        if external_revision != owner.get("revision"):
+            raise ValueError("external cluster revision differs: " + name)
+        files = owner.get("source_file_sha256") or {}
+        if not files or not owner.get("required_symbols"):
+            raise ValueError("external cluster lacks source coverage: " + name)
+        source_texts = []
+        for relative, expected in files.items():
+            target = (external / relative).resolve()
+            if not target.is_relative_to(external) or not target.is_file():
+                raise ValueError("external cluster source file escapes or is missing: " + relative)
+            content = target.read_bytes()
+            if hashlib.sha256(content).hexdigest() != expected:
+                raise ValueError("external cluster source digest differs: " + relative)
+            source_texts.append(content.decode("utf-8", errors="replace"))
+            external_file_count += 1
+        for symbol in owner["required_symbols"]:
+            if not isinstance(symbol, str) or not symbol or not any(
+                    symbol in source for source in source_texts):
+                raise ValueError("external cluster source symbol is missing: " + str(symbol))
+    sources_with_edges = list((index.get("entries") or {}).values()) + list(
+        (index.get("external_cluster_sources") or {}).values())
+    for entry in sources_with_edges:
         for edge in entry.get("cross_cluster_source_edges") or []:
             repo = edge["source_repo"]
             if repo not in external_checkouts:
@@ -49,9 +79,17 @@ def verify(index, checkout, external_checkouts=None):
                 raise ValueError("external source file escapes or is missing")
             if hashlib.sha256(target.read_bytes()).hexdigest() != edge["source_sha256"]:
                 raise ValueError("external source file digest differs")
+            owner = (index.get("external_cluster_sources") or {}).get(edge["semantic_cluster"])
+            if (not owner or owner.get("source_repo") != repo or
+                    owner.get("revision") != edge["revision"] or
+                    owner.get("source_file_sha256", {}).get(edge["source_file"]) != edge["source_sha256"] or
+                    edge["source_symbol"] not in owner.get("required_symbols", [])):
+                raise ValueError("external edge has no matching semantic owner source record")
             external_count += 1
     return {"source_repo": index.get("source_repo"),
             "revision": revision, "verified_files": len(hashes),
+            "verified_external_clusters": len(index.get("external_cluster_sources") or {}),
+            "verified_external_files": external_file_count,
             "verified_external_edges": external_count}
 
 

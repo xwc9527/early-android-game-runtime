@@ -91,7 +91,7 @@
       "dependency_id": "JAVA_METHOD:8410461002917870",
       "canonical_name": "Ljava/lang/Integer;->equals(Ljava/lang/Object;)Z",
       "migration_type": "SOURCE_PORT",
-      "status": "SOURCE_LOCATED",
+      "status": "SOURCE_CLOSED",
       "migration_authorized": false,
       "source_revision": "9b24ebf95f897a75c60c9c68d00694406afa6fbc",
       "source_files": [
@@ -111,11 +111,19 @@
       "excluded_deps": [],
       "service_boundaries": [],
       "host_adaptation_points": [],
-      "blocking_edges": [
-        "AGR boot-class Integer ownership and GC integration"
-      ],
+      "blocking_edges": [],
       "cross_cluster_source_edges": [],
-      "closure_evidence": null,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "Integer.equals checks instanceof Integer and compares the stored final int. The method itself has no source callee or JNI, service, or resource dependency; Number supplies its superclass contract.",
+        "source_file_sha256": {
+          "luni/src/main/java/java/lang/Integer.java": "5aae098f5c2fd832bd739fead6f04586ccbb98e6606c22ede64001ae573420a3",
+          "luni/src/main/java/java/lang/Number.java": "ccbc3f77f43e7089cf715c2a40d99d6eecba675071e8b987865619f5f4c0c0b6"
+        },
+        "reviewed_dependency_edges": [],
+        "unresolved_dependency_edges": [],
+        "edge_reviews": {}
+      },
       "service_contract": null,
       "owner_cluster": "libcore",
       "semantic_cluster": "libcore.IntegerBoxing",
@@ -128,7 +136,7 @@
       "dependency_id": "JAVA_METHOD:8f6ea32d39c838c4",
       "canonical_name": "Ljava/lang/Integer;->floatValue()F",
       "migration_type": "SOURCE_PORT",
-      "status": "SOURCE_LOCATED",
+      "status": "SOURCE_CLOSED",
       "migration_authorized": false,
       "source_revision": "9b24ebf95f897a75c60c9c68d00694406afa6fbc",
       "source_files": [
@@ -148,11 +156,19 @@
       "excluded_deps": [],
       "service_boundaries": [],
       "host_adaptation_points": [],
-      "blocking_edges": [
-        "AGR boot-class Integer ownership and GC integration"
-      ],
+      "blocking_edges": [],
       "cross_cluster_source_edges": [],
-      "closure_evidence": null,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "Integer.floatValue returns the stored final int converted to float; Number declares the abstract conversion contract. No JNI, service, resource, or other source callee is used by this method.",
+        "source_file_sha256": {
+          "luni/src/main/java/java/lang/Integer.java": "5aae098f5c2fd832bd739fead6f04586ccbb98e6606c22ede64001ae573420a3",
+          "luni/src/main/java/java/lang/Number.java": "ccbc3f77f43e7089cf715c2a40d99d6eecba675071e8b987865619f5f4c0c0b6"
+        },
+        "reviewed_dependency_edges": [],
+        "unresolved_dependency_edges": [],
+        "edge_reviews": {}
+      },
       "service_contract": null,
       "owner_cluster": "libcore",
       "semantic_cluster": "libcore.IntegerBoxing",
@@ -165,7 +181,7 @@
       "dependency_id": "JAVA_METHOD:3d3544df507a05e0",
       "canonical_name": "Ljava/lang/Integer;->intValue()I",
       "migration_type": "SOURCE_PORT",
-      "status": "SOURCE_LOCATED",
+      "status": "SOURCE_CLOSED",
       "migration_authorized": false,
       "source_revision": "9b24ebf95f897a75c60c9c68d00694406afa6fbc",
       "source_files": [
@@ -185,11 +201,19 @@
       "excluded_deps": [],
       "service_boundaries": [],
       "host_adaptation_points": [],
-      "blocking_edges": [
-        "AGR boot-class Integer ownership and GC integration"
-      ],
+      "blocking_edges": [],
       "cross_cluster_source_edges": [],
-      "closure_evidence": null,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "Integer.intValue returns the stored final int; Number declares the abstract conversion contract. No JNI, service, resource, or other source callee is used by this method.",
+        "source_file_sha256": {
+          "luni/src/main/java/java/lang/Integer.java": "5aae098f5c2fd832bd739fead6f04586ccbb98e6606c22ede64001ae573420a3",
+          "luni/src/main/java/java/lang/Number.java": "ccbc3f77f43e7089cf715c2a40d99d6eecba675071e8b987865619f5f4c0c0b6"
+        },
+        "reviewed_dependency_edges": [],
+        "unresolved_dependency_edges": [],
+        "edge_reviews": {}
+      },
       "service_contract": null,
       "owner_cluster": "libcore",
       "semantic_cluster": "libcore.IntegerBoxing",
@@ -202,7 +226,7 @@
       "dependency_id": "JAVA_METHOD:8c403e647f6190e1",
       "canonical_name": "Ljava/lang/Integer;->longValue()J",
       "migration_type": "SOURCE_PORT",
-      "status": "SOURCE_LOCATED",
+      "status": "SOURCE_CLOSED",
       "migration_authorized": false,
       "source_revision": "9b24ebf95f897a75c60c9c68d00694406afa6fbc",
       "source_files": [
@@ -222,11 +246,19 @@
       "excluded_deps": [],
       "service_boundaries": [],
       "host_adaptation_points": [],
-      "blocking_edges": [
-        "AGR boot-class Integer ownership and GC integration"
-      ],
+      "blocking_edges": [],
       "cross_cluster_source_edges": [],
-      "closure_evidence": null,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "Integer.longValue returns the stored final int widened to signed long; Number declares the abstract conversion contract. No JNI, service, resource, or other source callee is used by this method.",
+        "source_file_sha256": {
+          "luni/src/main/java/java/lang/Integer.java": "5aae098f5c2fd832bd739fead6f04586ccbb98e6606c22ede64001ae573420a3",
+          "luni/src/main/java/java/lang/Number.java": "ccbc3f77f43e7089cf715c2a40d99d6eecba675071e8b987865619f5f4c0c0b6"
+        },
+        "reviewed_dependency_edges": [],
+        "unresolved_dependency_edges": [],
+        "edge_reviews": {}
+      },
       "service_contract": null,
       "owner_cluster": "libcore",
       "semantic_cluster": "libcore.IntegerBoxing",
@@ -259,7 +291,8 @@
         "Integer.SMALL_VALUES[256]"
       ],
       "init_deps": [
-        "Dalvik class initialization for Integer.<clinit>"
+        "Dalvik class initialization for Integer.<clinit>",
+        "Zygote preloads Integer before app fork"
       ],
       "registration_deps": [],
       "cross_cluster_deps": [
@@ -270,11 +303,22 @@
       "service_boundaries": [],
       "host_adaptation_points": [],
       "blocking_edges": [
+        "Zygote preload and inherited Integer cache source closure",
         "Dalvik class initialization source cluster closure",
         "Dalvik allocation and static-root source cluster closure",
         "AGR boot-class Integer ownership and GC integration"
       ],
       "cross_cluster_source_edges": [
+        {
+          "edge": "Zygote preloads Integer before app fork",
+          "semantic_cluster": "Framework.ZygotePreload",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/java/com/android/internal/os/ZygoteInit.java",
+          "source_symbol": "preloadClasses",
+          "source_sha256": "39396d52716a69a2b02df27a1001af3ac81c762c503c5ae7d420a687b080ab1c",
+          "status": "SOURCE_LOCATED"
+        },
         {
           "edge": "Dalvik class initialization for Integer.<clinit>",
           "semantic_cluster": "Dalvik.ClassInitialization",
@@ -357,7 +401,8 @@
         "Integer.value"
       ],
       "init_deps": [
-        "Dalvik class initialization for Integer.<clinit>"
+        "Dalvik class initialization for Integer.<clinit>",
+        "Zygote preloads Integer before app fork"
       ],
       "registration_deps": [],
       "cross_cluster_deps": [
@@ -370,7 +415,8 @@
       "blocking_edges": [
         "AGR boot-class Integer ownership and GC integration",
         "Dalvik allocation and static-root source cluster closure",
-        "Dalvik class initialization source cluster closure"
+        "Dalvik class initialization source cluster closure",
+        "Zygote preload and inherited Integer cache source closure"
       ],
       "cross_cluster_source_edges": [
         {
@@ -401,6 +447,16 @@
           "source_file": "vm/alloc/MarkSweep.cpp",
           "source_symbol": "scanStaticFields",
           "source_sha256": "bf05e421a49accf1209bb12e83bb2df740d6348d9b6c775f24cebadc6b7b8ab3",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "Zygote preloads Integer before app fork",
+          "semantic_cluster": "Framework.ZygotePreload",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/java/com/android/internal/os/ZygoteInit.java",
+          "source_symbol": "preloadClasses",
+          "source_sha256": "39396d52716a69a2b02df27a1001af3ac81c762c503c5ae7d420a687b080ab1c",
           "status": "SOURCE_LOCATED"
         }
       ],

@@ -32,8 +32,24 @@ class WorkflowTest(unittest.TestCase):
         self.assertEqual(len(cluster["manifests"]), 5)
         self.assertEqual(len(cluster["seeds"]), 8)
         self.assertEqual(sum(item["observed_count"] for item in cluster["seeds"]), 41776)
+        self.assertEqual(sum(item["status"] == "SOURCE_CLOSED" for item in cluster["manifests"]), 4)
+        self.assertEqual(sum(item["status"] == "SOURCE_LOCATED" for item in cluster["manifests"]), 1)
         self.assertEqual(cluster["cluster_source_manifests"]["libcore.IntegerBoxing"]["status"],
                          "SOURCE_LOCATED")
+
+    def test_integer_preload_is_inherited_in_each_qualified_trace(self):
+        evidence = ROOT / "tools/reference-lab/evidence"
+        corpus = json.loads((evidence / "four-game-corpus-manifest.json").read_text())
+        index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
+        preload = index["external_cluster_sources"]["Framework.ZygotePreload"]
+        expected = preload["source_file_sha256"]["preloaded-classes"]
+        edge = index["entries"]["Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;"]["cross_cluster_source_edges"]
+        self.assertEqual(sum(item["semantic_cluster"] == "Framework.ZygotePreload" for item in edge), 1)
+        for probe in corpus:
+            trace = json.loads((ROOT / probe["trace"]).read_text())
+            self.assertEqual(trace["zygote_preload"]["class_state"], "PRELOADED_IN_ZYGOTE")
+            self.assertEqual(trace["zygote_preload"]["configured_classes_sha256"], expected)
+            self.assertNotIn("java.lang.Integer", trace["zygote_preload"]["failed_classes"])
 
     def test_multi_repo_queue_keeps_source_and_authority_separate(self):
         root = ROOT / "tools/reference-lab"

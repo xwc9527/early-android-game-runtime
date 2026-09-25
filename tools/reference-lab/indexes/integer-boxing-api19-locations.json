@@ -6,6 +6,149 @@
     "luni/src/main/java/java/lang/Integer.java": "5aae098f5c2fd832bd739fead6f04586ccbb98e6606c22ede64001ae573420a3",
     "luni/src/main/java/java/lang/Number.java": "ccbc3f77f43e7089cf715c2a40d99d6eecba675071e8b987865619f5f4c0c0b6"
   },
+  "external_cluster_sources": {
+    "Framework.ZygotePreload": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "preloaded-classes": "7705a9f1a69b84415ed5a7bb864e30a99d6b4f4711a2661a79f9dc8450e1098e",
+        "core/java/com/android/internal/os/ZygoteInit.java": "39396d52716a69a2b02df27a1001af3ac81c762c503c5ae7d420a687b080ab1c",
+        "core/java/com/android/internal/os/ZygoteConnection.java": "37156818168d7fc47fdf5e55f6f6f30696ba4be9892820497474827cc130c9e8"
+      },
+      "required_symbols": ["java.lang.Integer", "preloadClasses", "Class.forName(line)", "forkAndSpecialize"],
+      "cross_cluster_deps": ["Dalvik class initialization before app fork"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "Dalvik class initialization before app fork",
+          "semantic_cluster": "Dalvik.ClassInitialization",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/oo/Class.cpp",
+          "source_symbol": "dvmInitClass",
+          "source_sha256": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "excluded_deps": ["Zygote fork and heap inheritance boundary"],
+      "boundary_contracts": {
+        "Zygote fork and heap inheritance boundary": {
+          "request_schema": "preloaded VM class table and strongly reachable heap at fork",
+          "response_schema": "child app process inherits initialized Integer class and cache object identities",
+          "callbacks": [],
+          "lifecycle": "preloadClasses before runSelectLoop and forkAndSpecialize before app entry",
+          "error_semantics": "fatal preload Error prevents normal child startup; failed listed classes remain absent"
+        }
+      },
+      "blocking_edges": ["Dalvik initialization contract before fork", "AGR one-process inherited-state installation review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "Dalvik.ClassInitialization": {
+      "source_repo": "platform/dalvik",
+      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+      "source_file_sha256": {
+        "vm/oo/Class.cpp": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5"
+      },
+      "required_symbols": ["dvmInitClass", "initSFields"],
+      "cross_cluster_deps": ["class verification and dex optimization", "class monitor and cross-thread wait", "method invocation and exception propagation"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "class verification and dex optimization",
+          "semantic_cluster": "Dalvik.ClassVerification",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/analysis/DexVerify.cpp",
+          "source_symbol": "dvmVerifyClass",
+          "source_sha256": "d200aa3d569dcbd38e874cf0c8ec7ae1aca59f4729a9df9e61542a44d9f735da",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "class monitor and cross-thread wait",
+          "semantic_cluster": "Dalvik.Monitor",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/Sync.cpp",
+          "source_symbol": "dvmObjectWait",
+          "source_sha256": "8b100ff9e5037fcc8c7bfbbc152a924b31e22e925b03847765d007db42f91b5d",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "method invocation and exception propagation",
+          "semantic_cluster": "Dalvik.MethodInvocation",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/interp/Stack.cpp",
+          "source_symbol": "dvmCallMethod",
+          "source_sha256": "93ca5f272c9a801cc4c3408924b1bf4af212541a6f6ba577687d867be7d48503",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": ["source closure of verification, monitor, invoke and failure paths", "AGR class-initialization contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "Dalvik.ClassVerification": {
+      "source_repo": "platform/dalvik",
+      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+      "source_file_sha256": {
+        "vm/analysis/DexVerify.cpp": "d200aa3d569dcbd38e874cf0c8ec7ae1aca59f4729a9df9e61542a44d9f735da",
+        "vm/analysis/Optimize.cpp": "a28fd6349afb8d0200b4ac037fbe71b447913132c87f562af90008c4f1f353e4"
+      },
+      "required_symbols": ["dvmVerifyClass", "dvmOptimizeClass"],
+      "blocking_edges": ["verification and optimization source closure", "AGR verifier and dexopt contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "Dalvik.Monitor": {
+      "source_repo": "platform/dalvik",
+      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+      "source_file_sha256": {
+        "vm/Sync.cpp": "8b100ff9e5037fcc8c7bfbbc152a924b31e22e925b03847765d007db42f91b5d"
+      },
+      "required_symbols": ["dvmObjectWait", "dvmObjectNotifyAll"],
+      "blocking_edges": ["monitor ownership and wait/notify source closure", "AGR class-init synchronization contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "Dalvik.MethodInvocation": {
+      "source_repo": "platform/dalvik",
+      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+      "source_file_sha256": {
+        "vm/interp/Stack.cpp": "93ca5f272c9a801cc4c3408924b1bf4af212541a6f6ba577687d867be7d48503"
+      },
+      "required_symbols": ["dvmCallMethod", "dvmCallMethodV"],
+      "blocking_edges": ["method call frame and exception source closure", "AGR <clinit> invoke contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "Dalvik.ObjectAllocation": {
+      "source_repo": "platform/dalvik",
+      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+      "source_file_sha256": {
+        "vm/alloc/Alloc.cpp": "70bb6375a088dab380c31e5ab9959461f1c841f88c5ef163caacd1b26f7da02f",
+        "vm/alloc/Heap.cpp": "304b39f9cc522367f6c53f4ddcff78f372b7a161dc5231c260c1b0c5dec80297",
+        "vm/alloc/HeapSource.cpp": "cc0536e8aea8b0f837a4224bcced175c36b1801e855e026402dcfc15d26a089a"
+      },
+      "required_symbols": ["dvmAllocObject", "dvmMalloc", "dvmHeapSourceAlloc"],
+      "internal_deps": ["heap source allocation and GC trigger", "allocation failure exception propagation"],
+      "blocking_edges": ["source closure of dvmMalloc and heap source", "AGR allocation and OOM contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "Dalvik.GCRoots": {
+      "source_repo": "platform/dalvik",
+      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+      "source_file_sha256": {
+        "vm/alloc/MarkSweep.cpp": "bf05e421a49accf1209bb12e83bb2df740d6348d9b6c775f24cebadc6b7b8ab3",
+        "vm/alloc/Visit.cpp": "fbdcfeeb19903107c3fb3ad6aae213d1c75d1db25aa23f7a66342148d63444f9"
+      },
+      "required_symbols": ["scanStaticFields", "scanClassObject", "scanArrayObject", "dvmHeapMarkRootSet", "dvmVisitRoots"],
+      "internal_deps": ["loaded class root reachability", "markObject heap traversal"],
+      "blocking_edges": ["source closure of class root enumeration and mark traversal", "AGR static-field and array GC contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    }
+  },
   "entries": {
     "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;": {
       "owner_cluster": "libcore",
@@ -27,12 +170,22 @@
         "Number.Number()"
       ],
       "data_structures": ["Integer.value", "Integer.SMALL_VALUES[256]"],
-      "init_deps": ["Dalvik class initialization for Integer.<clinit>"],
+      "init_deps": ["Dalvik class initialization for Integer.<clinit>", "Zygote preloads Integer before app fork"],
       "cross_cluster_deps": [
         "Dalvik object allocation and constructor invocation",
         "Dalvik static field and array GC roots"
       ],
       "cross_cluster_source_edges": [
+        {
+          "edge": "Zygote preloads Integer before app fork",
+          "semantic_cluster": "Framework.ZygotePreload",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/java/com/android/internal/os/ZygoteInit.java",
+          "source_symbol": "preloadClasses",
+          "source_sha256": "39396d52716a69a2b02df27a1001af3ac81c762c503c5ae7d420a687b080ab1c",
+          "status": "SOURCE_LOCATED"
+        },
         {
           "edge": "Dalvik class initialization for Integer.<clinit>",
           "semantic_cluster": "Dalvik.ClassInitialization",
@@ -65,6 +218,7 @@
         }
       ],
       "blocking_edges": [
+        "Zygote preload and inherited Integer cache source closure",
         "Dalvik class initialization source cluster closure",
         "Dalvik allocation and static-root source cluster closure",
         "AGR boot-class Integer ownership and GC integration"
@@ -81,8 +235,19 @@
       "source_files": ["luni/src/main/java/java/lang/Integer.java", "luni/src/main/java/java/lang/Number.java"],
       "required_symbols": ["Integer.intValue()", "Integer.value"],
       "data_structures": ["Integer.value"],
-      "blocking_edges": ["AGR boot-class Integer ownership and GC integration"],
-      "closure_reviewed": false
+      "blocking_edges": [],
+      "closure_reviewed": true,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "Integer.intValue returns the stored final int; Number declares the abstract conversion contract. No JNI, service, resource, or other source callee is used by this method.",
+        "source_file_sha256": {
+          "luni/src/main/java/java/lang/Integer.java": "5aae098f5c2fd832bd739fead6f04586ccbb98e6606c22ede64001ae573420a3",
+          "luni/src/main/java/java/lang/Number.java": "ccbc3f77f43e7089cf715c2a40d99d6eecba675071e8b987865619f5f4c0c0b6"
+        },
+        "reviewed_dependency_edges": [],
+        "unresolved_dependency_edges": [],
+        "edge_reviews": {}
+      }
     },
     "Ljava/lang/Integer;->longValue()J": {
       "owner_cluster": "libcore",
@@ -94,8 +259,19 @@
       "source_files": ["luni/src/main/java/java/lang/Integer.java", "luni/src/main/java/java/lang/Number.java"],
       "required_symbols": ["Integer.longValue()", "Integer.value"],
       "data_structures": ["Integer.value"],
-      "blocking_edges": ["AGR boot-class Integer ownership and GC integration"],
-      "closure_reviewed": false
+      "blocking_edges": [],
+      "closure_reviewed": true,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "Integer.longValue returns the stored final int widened to signed long; Number declares the abstract conversion contract. No JNI, service, resource, or other source callee is used by this method.",
+        "source_file_sha256": {
+          "luni/src/main/java/java/lang/Integer.java": "5aae098f5c2fd832bd739fead6f04586ccbb98e6606c22ede64001ae573420a3",
+          "luni/src/main/java/java/lang/Number.java": "ccbc3f77f43e7089cf715c2a40d99d6eecba675071e8b987865619f5f4c0c0b6"
+        },
+        "reviewed_dependency_edges": [],
+        "unresolved_dependency_edges": [],
+        "edge_reviews": {}
+      }
     },
     "Ljava/lang/Integer;->floatValue()F": {
       "owner_cluster": "libcore",
@@ -107,8 +283,19 @@
       "source_files": ["luni/src/main/java/java/lang/Integer.java", "luni/src/main/java/java/lang/Number.java"],
       "required_symbols": ["Integer.floatValue()", "Integer.value"],
       "data_structures": ["Integer.value"],
-      "blocking_edges": ["AGR boot-class Integer ownership and GC integration"],
-      "closure_reviewed": false
+      "blocking_edges": [],
+      "closure_reviewed": true,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "Integer.floatValue returns the stored final int converted to float; Number declares the abstract conversion contract. No JNI, service, resource, or other source callee is used by this method.",
+        "source_file_sha256": {
+          "luni/src/main/java/java/lang/Integer.java": "5aae098f5c2fd832bd739fead6f04586ccbb98e6606c22ede64001ae573420a3",
+          "luni/src/main/java/java/lang/Number.java": "ccbc3f77f43e7089cf715c2a40d99d6eecba675071e8b987865619f5f4c0c0b6"
+        },
+        "reviewed_dependency_edges": [],
+        "unresolved_dependency_edges": [],
+        "edge_reviews": {}
+      }
     },
     "Ljava/lang/Integer;->equals(Ljava/lang/Object;)Z": {
       "owner_cluster": "libcore",
@@ -120,8 +307,19 @@
       "source_files": ["luni/src/main/java/java/lang/Integer.java", "luni/src/main/java/java/lang/Number.java"],
       "required_symbols": ["Integer.equals(Object)", "Integer.value"],
       "data_structures": ["Integer.value"],
-      "blocking_edges": ["AGR boot-class Integer ownership and GC integration"],
-      "closure_reviewed": false
+      "blocking_edges": [],
+      "closure_reviewed": true,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "Integer.equals checks instanceof Integer and compares the stored final int. The method itself has no source callee or JNI, service, or resource dependency; Number supplies its superclass contract.",
+        "source_file_sha256": {
+          "luni/src/main/java/java/lang/Integer.java": "5aae098f5c2fd832bd739fead6f04586ccbb98e6606c22ede64001ae573420a3",
+          "luni/src/main/java/java/lang/Number.java": "ccbc3f77f43e7089cf715c2a40d99d6eecba675071e8b987865619f5f4c0c0b6"
+        },
+        "reviewed_dependency_edges": [],
+        "unresolved_dependency_edges": [],
+        "edge_reviews": {}
+      }
     }
   }
 }
