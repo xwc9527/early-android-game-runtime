@@ -54,6 +54,18 @@ class ReferenceLabTest(unittest.TestCase):
             self.assertTrue((Path(tmp) / "trace-image").is_dir())
             self.assertNotEqual(document["clean"]["role"], document["trace"]["role"])
 
+    def test_repeated_dependency_edges_are_aggregated(self):
+        base = {"kind": "JAVA_METHOD", "canonical_name": "Ljava/util/Vector;->size()I",
+                "caller": "Lgame/A;->paint()V", "dex_pc": 7, "opcode": 110,
+                "method_idx": 12, "resolved_callee": "Ljava/util/Vector;->size()I",
+                "process_id": 42}
+        events = [dict(base, sequence=sequence) for sequence in (1, 2, 3)]
+        book = build_book({"name": "game"}, events, [], {"variant": "TRACE"})
+        observations = book["dependencies"][0]["observations"]
+        self.assertEqual(len(observations), 1)
+        self.assertEqual((observations[0]["count"], observations[0]["first_seq"],
+                          observations[0]["last_seq"]), (3, 1, 3))
+
     def test_book_does_not_collapse_confidence_or_invent_callees(self):
         book = build_book(
             {"name": "sample"},

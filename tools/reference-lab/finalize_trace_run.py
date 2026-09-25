@@ -33,7 +33,8 @@ def finalize(directory, recover_collector_timeout=False):
         clean = json.loads(clean_path.read_text())
         fields = ("apk_sha256", "scenario", "arch", "execution_mode", "vm_config",
                   "jit_effective", "gpu_mode", "show_window", "data_reused", "accel",
-                  "zygote_preload", "zygote_loaded_libraries", "actions_sha256")
+                  "zygote_preload", "zygote_loaded_libraries", "actions_sha256",
+                  "trace_sink_prep", "force_stop_policy")
         if clean.get("status") != "PASS" or \
                 any(clean.get(field) != record.get(field) for field in fields):
             raise ValueError("matched CLEAN run or runtime configuration differs")
@@ -83,7 +84,7 @@ def finalize(directory, recover_collector_timeout=False):
     if direct_files:
         evidence["direct_trace_sha256"] = {path.name: sha256(path)
                                            for path in direct_files}
-        evidence["trace_transport"] = "guest_per_pid_direct_file_v2"
+        evidence["trace_transport"] = "guest_precreated_direct_file_v2"
     evidence["events_sha256"] = sha256(events_path)
     evidence_path.write_text(json.dumps(evidence, indent=2) + "\n")
     record["event_count"] = len(events)

@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "baseline": "android-4.4.4_r2",
+  "scope": "matched lifecycle states and app DEX to boot invoke lower bound",
+  "may_authorize_pruning": false,
+  "games": [
+    {
+      "name": "Frozen Bubble",
+      "apk_sha256": "57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569",
+      "arch": "x86",
+      "scenario": "paired_gameplay_lifecycle",
+      "clean_probe_sha256": "faac6bc919b9ba20153926eeee5c68a67e6534bdd39a5af38da98b66f9e36b35",
+      "trace_probe_sha256": "57cc1e10acaa51441bbae277137f25df5a1906818f01cc02aef1492d939ffc6e",
+      "book_sha256": "71770cb672f3321efe08b55f7b9070c17c121fab01c7281e1727a647f13ff256",
+      "concordance_sha256": "5a66c1206d5ed9d4d03982fe6e1e4a042e8cbc76c397e552939d54e0eac57819",
+      "concordance": "STATE_CONCORDANT",
+      "trace_event_count": 323824,
+      "observed_unique_dependencies": 88,
+      "observations_missing_sequence_bounds": 0,
+      "observed_owner_clusters": {
+        "Framework": 63,
+        "OWNER_UNRESOLVED_IN_BOOT_JARS": 1,
+        "libcore": 24
+      },
+      "clean_app_native_libraries": [],
+      "clean_lifecycle_steps": [
+        "launch",
+        "00-wait",
+        "01-tap",
+        "02-tap",
+        "03-home",
+        "04-resume",
+        "05-tap",
+        "06-force_stop",
+        "07-relaunch"
+      ],
+      "clean_visual_status": "VISIBLE_CONTENT",
+      "trace_visual_status": "VISIBLE_CONTENT",
+      "app_crash_lines": [],
+      "observation_scope": "APP_TRIGGERED_OBSERVED_LOWER_BOUND",
+      "may_authorize_pruning": false
+    },
+    {
+      "name": "KungFoo Barracuda",
+      "apk_sha256": "097ade628ad0837e312da4ca48afe0906eb99c3b992d497c7da33e2b2267eb22",
+      "arch": "x86",
+      "scenario": "landscape_gameplay_lifecycle",
+      "clean_probe_sha256": "292d35edcdbb6438ee9d7a11753644b8f839ab4f31e2edaacedd1ea5c5b30dee",
+      "trace_probe_sha256": "1b31d58d34ee1ed720576174fc409aff0ed42202fd9239e07bebe2ab45314ba9",
+      "book_sha256": "438b78b41abc5413d52c534c458432101dd0485c86081348417eb60feb2f1104",
+      "concordance_sha256": "7b43054e7fdc25864430ea51f681d88c98892e8ec95922db0c0b283059f44479",
+      "concordance": "STATE_CONCORDANT",
+      "trace_event_count": 6695,
+      "observed_unique_dependencies": 37,
+      "observations_missing_sequence_bounds": 0,
+      "observed_owner_clusters": {
+        "Framework": 26,
+        "libcore": 11
+      },
+      "clean_app_native_libraries": [
+        "/data/app-lib/com.onetwofivegames.kungfoobarracuda-1/libKungFooBarracudaNativeActivity.so"
+      ],
+      "clean_lifecycle_steps": [
+        "launch",
+        "00-wait",
+        "01-tap",
+        "02-tap",
+        "03-wait",
+        "04-home",
+        "05-resume",
+        "06-force_stop",
+        "07-relaunch"
+      ],
+      "clean_visual_status": "VISIBLE_CONTENT",
+      "trace_visual_status": "VISIBLE_CONTENT",
+      "app_crash_lines": [],
+      "observation_scope": "APP_TRIGGERED_OBSERVED_LOWER_BOUND",
+      "may_authorize_pruning": false
+    },
+    {
+      "name": "Gloomy Dungeons 2",
+      "apk_sha256": "40a67842345b879fc4b4be90159787f04664d9530f6a3e676c13fa412ad98733",
+      "arch": "x86",
+      "scenario": "landscape_gameplay_lifecycle",
+      "clean_probe_sha256": "e2cdb6c00a456c22da2703533fb7dc60295bee4c1f910d7e98212a2638eaebdb",
+      "trace_probe_sha256": "4ee5c8b6fca463768c6334ec928cf3ffa7eb300d411e79819947299ea2a7b5c3",
+      "book_sha256": "4e9eb8efc36f48e1d6c00004a8c25f6755582e1e22806354254877f49bb76ea0",
+      "concordance_sha256": "fb4bae64612ca2ab1184709239c27f4894ea14e1baa0f302f7b51fba2a82253a",
+      "concordance": "STATE_CONCORDANT",
+      "trace_event_count": 301482,
+      "observed_unique_dependencies": 672,
+      "observations_missing_sequence_bounds": 0,
+      "observed_owner_clusters": {
+        "Framework": 397,
+        "Framework/ext": 20,
+        "Framework/secondary": 46,
+        "OWNER_UNRESOLVED_IN_BOOT_JARS": 11,
+        "WebView": 8,
+        "libcore": 190
+      },
+      "clean_app_native_libraries": [
+        "/data/app-lib/org.zamedev.gloomydungeons2.opensource-1/librenderer.so"
+      ],
+      "clean_lifecycle_steps": [
+        "launch",
+        "00-wait",
+        "01-tap",
+        "02-tap",
+        "03-swipe",
+        "04-home",
+        "05-resume",
+        "06-force_stop",
+        "07-relaunch"
+      ],
+      "clean_visual_status": "VISIBLE_CONTENT",
+      "trace_visual_status": "VISIBLE_CONTENT",
+      "app_crash_lines": [],
+      "observation_scope": "APP_TRIGGERED_OBSERVED_LOWER_BOUND",
+      "may_authorize_pruning": false
+    },
+    {
+      "name": "Vector Pinball",
+      "apk_sha256": "627371d260d22ef33523561e3fa892cb45784cf83804ec0a02c73f5478a0d698",
+      "arch": "arm",
+      "scenario": "native_lifecycle",
+      "clean_probe_sha256": "d1d898895a0ba2d5eb873b70d920422d76971430730403959a90380b2e3b875f",
+      "trace_probe_sha256": "57a6c47083d8dcaffbbcd6d27f53b4b12ea54593be059f6d88867c7257475079",
+      "book_sha256": "4dbdb8300940a12b2485f083956d781d6ea4d335cf458e48876fee6a0e84ed21",
+      "concordance_sha256": "de879349225e4877de304cf40202c3304e0ecb06bbaf18784a872ee13cb96bcb",
+      "concordance": "STATE_CONCORDANT",
+      "trace_event_count": 362045,
+      "observed_unique_dependencies": 124,
+      "observations_missing_sequence_bounds": 0,
+      "observed_owner_clusters": {
+        "Framework": 44,
+        "libcore": 80
+      },
+      "clean_app_native_libraries": [
+        "/data/app-lib/com.dozingcatsoftware.bouncy-1/libgdx.so"
+      ],
+      "clean_lifecycle_steps": [
+        "launch",
+        "00-wait",
+        "01-tap",
+        "02-tap",
+        "03-home",
+        "04-resume",
+        "05-tap",
+        "06-force_stop",
+        "07-relaunch"
+      ],
+      "clean_visual_status": "VISIBLE_CONTENT",
+      "trace_visual_status": "VISIBLE_CONTENT",
+      "app_crash_lines": [],
+      "observation_scope": "APP_TRIGGERED_OBSERVED_LOWER_BOUND",
+      "may_authorize_pruning": false
+    }
+  ],
+  "shared_observed_dependency_counts_by_game_count": {
+    "1": 665,
+    "2": 88,
+    "3": 24,
+    "4": 2
+  },
+  "distinct_observed_dependencies": 779
+}

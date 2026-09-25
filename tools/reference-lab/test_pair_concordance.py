@@ -24,6 +24,17 @@ class PairConcordanceTest(unittest.TestCase):
         self.assertFalse(result["pruning_authorized"])
         with self.assertRaisesRegex(ValueError, "configuration differs"):
             compare(clean, dict(trace, actions_sha256="wrong"), pair)
+        with self.assertRaisesRegex(ValueError, "skin differs"):
+            compare(dict(clean, skin="480x320"), dict(trace, skin="320x480"), pair)
+        with self.assertRaisesRegex(ValueError, "force_stop_policy differs"):
+            compare(dict(clean, force_stop_policy="home_pause_sigstop_before_kill"),
+                    dict(trace, force_stop_policy="home_pause_3s_before_kill"), pair)
+        with self.assertRaisesRegex(ValueError, "partition_size_mb differs"):
+            compare(dict(clean, partition_size_mb=1024),
+                    dict(trace, partition_size_mb=200), pair)
+        with self.assertRaisesRegex(ValueError, "data_template_sha256 differs"):
+            compare(dict(clean, data_template_sha256="a"),
+                    dict(trace, data_template_sha256="b"), pair)
 
 
 if __name__ == "__main__":

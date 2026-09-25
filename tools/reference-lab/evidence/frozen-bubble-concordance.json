@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "status": "STATE_CONCORDANT",
+  "apk_sha256": "57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569",
+  "scenario": "paired_gameplay_lifecycle",
+  "checked_fields": [
+    "resumed",
+    "focused",
+    "process.alive"
+  ],
+  "mismatches": [],
+  "semantic_equivalence_established": false,
+  "pruning_authorized": false,
+  "scope": "structural runtime state only; game state, timing, audio, and pixels are not equivalent by this check"
+}

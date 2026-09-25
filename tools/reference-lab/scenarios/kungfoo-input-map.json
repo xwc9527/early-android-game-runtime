@@ -1,0 +1,5 @@
+[
+  {"type": "wait", "delay": 60},
+  {"type": "tap", "x": 425, "y": 175, "delay": 15},
+  {"type": "tap", "x": 55, "y": 145, "delay": 15}
+]

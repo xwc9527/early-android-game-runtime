@@ -50,6 +50,7 @@ def parse_lines(lines, allowed_pids=None):
             "caller": caller, "dex_pc": int(dex_pc), "opcode": int(opcode),
             "method_idx": -1 if int(method_idx) == 0xffffffff else int(method_idx),
             "resolved_callee": resolved, "process_id": pid, "thread_id": tid,
+            "sequence": seq,
         })
     if not events:
         raise ValueError("no AGRTRACE method events found")

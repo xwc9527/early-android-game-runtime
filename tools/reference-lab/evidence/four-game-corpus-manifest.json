@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Frozen Bubble",
+    "clean": "tools/reference-lab/evidence/frozen-bubble-paired-clean.json",
+    "trace": "tools/reference-lab/evidence/frozen-bubble-paired-trace.json",
+    "book": "tools/reference-lab/evidence/frozen-bubble-owned-book-seq.json",
+    "concordance": "tools/reference-lab/evidence/frozen-bubble-concordance.json"
+  },
+  {
+    "name": "KungFoo Barracuda",
+    "clean": "tools/reference-lab/evidence/kungfoo-landscape-clean.json",
+    "trace": "tools/reference-lab/evidence/kungfoo-landscape-trace.json",
+    "book": "tools/reference-lab/evidence/kungfoo-landscape-owned-book.json",
+    "concordance": "tools/reference-lab/evidence/kungfoo-landscape-concordance.json"
+  },
+  {
+    "name": "Gloomy Dungeons 2",
+    "clean": "tools/reference-lab/evidence/gloomy-landscape-clean.json",
+    "trace": "tools/reference-lab/evidence/gloomy-landscape-trace.json",
+    "book": "tools/reference-lab/evidence/gloomy-landscape-owned-book.json.gz",
+    "concordance": "tools/reference-lab/evidence/gloomy-landscape-concordance.json"
+  },
+  {
+    "name": "Vector Pinball",
+    "clean": "tools/reference-lab/evidence/vector-paired-clean.json",
+    "trace": "tools/reference-lab/evidence/vector-paired-trace.json",
+    "book": "tools/reference-lab/evidence/vector-owned-book.json",
+    "concordance": "tools/reference-lab/evidence/vector-concordance.json"
+  }
+]

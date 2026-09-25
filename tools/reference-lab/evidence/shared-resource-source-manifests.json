@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "status": "SOURCE_LOCATED_ONLY",
+  "source_revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+  "manifests": [
+    {
+      "dependency_id": "JAVA_METHOD:1348f9e0382f292e",
+      "canonical_name": "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources;",
+      "migration_type": "SOURCE_PORT",
+      "status": "SOURCE_LOCATED",
+      "source_revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_files": [
+        "core/java/android/view/ContextThemeWrapper.java"
+      ],
+      "required_symbols": [
+        "ContextThemeWrapper.getResources"
+      ],
+      "data_structures": [
+        "mResources",
+        "mOverrideConfiguration"
+      ],
+      "init_deps": [],
+      "registration_deps": [],
+      "cross_cluster_deps": [
+        "ContextWrapper.getResources",
+        "Context.createConfigurationContext"
+      ],
+      "excluded_deps": [],
+      "service_boundaries": [],
+      "host_adaptation_points": [],
+      "closure_evidence": null,
+      "service_contract": null,
+      "owner_cluster": "Framework",
+      "source_repo": "platform/frameworks/base",
+      "source_module": "frameworks/base/core",
+      "source_file": "core/java/android/view/ContextThemeWrapper.java",
+      "source_symbol": "ContextThemeWrapper.getResources"
+    },
+    {
+      "dependency_id": "JAVA_METHOD:e5f2639bb82ab850",
+      "canonical_name": "Landroid/content/res/AssetManager$AssetInputStream;->close()V",
+      "migration_type": "SOURCE_PORT",
+      "status": "SOURCE_LOCATED",
+      "source_revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_files": [
+        "core/java/android/content/res/AssetManager.java"
+      ],
+      "required_symbols": [
+        "AssetInputStream.close",
+        "destroyAsset",
+        "decRefsLocked"
+      ],
+      "data_structures": [
+        "AssetInputStream.mAsset",
+        "AssetManager.mNumRefs"
+      ],
+      "init_deps": [],
+      "registration_deps": [],
+      "cross_cluster_deps": [],
+      "excluded_deps": [],
+      "service_boundaries": [],
+      "host_adaptation_points": [],
+      "closure_evidence": null,
+      "service_contract": null,
+      "owner_cluster": "Framework",
+      "source_repo": "platform/frameworks/base",
+      "source_module": "frameworks/base/core",
+      "source_file": "core/java/android/content/res/AssetManager.java",
+      "source_symbol": "AssetManager.AssetInputStream.close"
+    }
+  ],
+  "source_closure_complete": false
+}

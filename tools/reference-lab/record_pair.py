@@ -8,7 +8,7 @@ from pathlib import Path
 
 from lab import assert_matched_reference
 
-TRACE_PATCH_SHA256 = "007a79014245d2ec4628668f83c6f9f72529f84bc22421376fe315d00dd14c87"
+TRACE_PATCH_SHA256 = "54560f1fd7b6d1c689a559480b9ca562293fc3cb20081d73bfc2eaf77e41ce2b"
 
 
 def sha256(path):

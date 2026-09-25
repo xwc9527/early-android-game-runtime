@@ -108,23 +108,41 @@ def build_book(apk, trace_events, static_items, trace_evidence=None):
     if trace_events and not trace_evidence:
         raise ValueError("observed dependencies require TRACE run evidence")
     by_id = {}
+    observation_indexes = {}
     for item in static_items:
         record = from_static(item)
         by_id[record["dependency_id"]] = record
     for event in trace_events:
         record = from_trace_event(event)
         previous = by_id.get(record["dependency_id"])
-        if previous and previous["confidence"] in ("OBSERVED_RUNTIME", "DYNAMIC_DISCOVERED"):
-            previous.setdefault("observations", []).append({
-                "caller": record["caller"], "callsite": record["callsite"],
-                "lifecycle_phase": record["lifecycle_phase"], "origin": record.get("origin"),
-            })
-            continue
-        record["observations"] = [{
-            "caller": record["caller"], "callsite": record["callsite"],
-            "lifecycle_phase": record["lifecycle_phase"], "origin": record.get("origin"),
-        }]
-        by_id[record["dependency_id"]] = record
+        if previous is None or previous["confidence"] not in \
+                ("OBSERVED_RUNTIME", "DYNAMIC_DISCOVERED"):
+            record["observations"] = []
+            by_id[record["dependency_id"]] = record
+            previous = record
+        observation = {
+            "event_type": event["kind"], "caller": record["caller"],
+            "callsite": record["callsite"],
+            "resolved_callee": record.get("resolved_callee"),
+            "process_id": event.get("process_id"),
+            "lifecycle_phase": record["lifecycle_phase"],
+            "origin": record.get("origin"),
+        }
+        key = json.dumps(observation, sort_keys=True)
+        index = observation_indexes.setdefault(record["dependency_id"], {})
+        aggregate = index.get(key)
+        sequence = event.get("sequence")
+        if aggregate is None:
+            aggregate = dict(observation, count=0,
+                             first_seq=sequence, last_seq=sequence)
+            previous["observations"].append(aggregate)
+            index[key] = aggregate
+        aggregate["count"] += 1
+        if sequence is not None:
+            aggregate["first_seq"] = (sequence if aggregate["first_seq"] is None
+                                      else min(sequence, aggregate["first_seq"]))
+            aggregate["last_seq"] = (sequence if aggregate["last_seq"] is None
+                                     else max(sequence, aggregate["last_seq"]))
     book = {
         "schema_version": 1,
         "variant": "TRACE" if trace_evidence else "STATIC_ONLY",

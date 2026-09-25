@@ -1,0 +1,34 @@
+{
+  "variant": "TRACE",
+  "instrumented": true,
+  "role": "dependency_mapper",
+  "baseline": "android-4.4.4_r2",
+  "image_sha256": "8afd6701cba46e9214c811e2dfd12b23a6b0421b28c0008b7d3b93118ea1ea93",
+  "apk_sha256": "40a67842345b879fc4b4be90159787f04664d9530f6a3e676c13fa412ad98733",
+  "scenario": "landscape_gameplay_lifecycle",
+  "events_sha256": "de61fb56dd2891f7331e0207ef7180d53140e88eb4d6e575a2875ac064e57e9b",
+  "process_ids": [
+    2018,
+    2474
+  ],
+  "streamed_logcat_sha256": "65c371eed23c99e13c3d2609e332b44c722bcf95b9abaf5aaaada4e525688777",
+  "direct_trace_sha256": {
+    "trace-all.log": "a873115e9245e392ce727e0a7e60630437bece961905bb82182dbc07be7d981c"
+  },
+  "trace_transport": "guest_precreated_direct_file_v2",
+  "observer_coverage": [
+    "APP_DEX_TO_BOOT_METHOD_INVOKE"
+  ],
+  "observation_scope": "APP_TRIGGERED_OBSERVED_LOWER_BOUND",
+  "zygote_preload_sha256": "4a1c7f0bcc91c48051acd1199ce8e9ac1d9c8b0fb60809d751fea02be9169c86",
+  "runtime_config": {
+    "dalvik.vm.execution-mode": "int:portable",
+    "dalvik.vm.dexopt-flags": "",
+    "dalvik.vm.checkjni": "",
+    "ro.kernel.android.checkjni": "1",
+    "dalvik.vm.jit.codecachesize": "",
+    "dalvik.vm.jit.threshold": "",
+    "dalvik.vm.lib": ""
+  },
+  "may_authorize_pruning": false
+}

@@ -45,6 +45,21 @@ def mapped_libraries(maps):
                    for path in line.split()[5:6] if path.endswith(".so")})
 
 
+def guest_data_space(df_output):
+    for line in df_output.splitlines():
+        fields = line.split()
+        if fields and fields[0] == "/data" and len(fields) >= 4:
+            def to_mb(value):
+                match = re.fullmatch(r"([0-9]+(?:\.[0-9]+)?)([KMG])", value)
+                if match is None:
+                    raise RuntimeError("unrecognized guest df unit: " + value)
+                number = float(match.group(1))
+                return number * {"K": 1 / 1024, "M": 1, "G": 1024}[match.group(2)]
+            return {"total_mb": to_mb(fields[1]), "free_mb": to_mb(fields[3]),
+                    "raw": df_output.strip()}
+    raise RuntimeError("guest df does not report /data")
+
+
 def process_snapshot(serial, package):
     try:
         pid = guest_pid(serial, package)
@@ -52,6 +67,7 @@ def process_snapshot(serial, package):
         return {"alive": False}
     status = adb(serial, "shell", "cat", f"/proc/{pid}/status", timeout=30)
     stat = adb(serial, "shell", "cat", f"/proc/{pid}/stat", timeout=30)
+    maps = adb(serial, "shell", "cat", f"/proc/{pid}/maps", timeout=30)
     fields = stat.rsplit(") ", 1)[-1].split()
     values = {}
     for line in status.splitlines():
@@ -60,7 +76,26 @@ def process_snapshot(serial, package):
             values[key] = value.strip()
     return {"alive": True, "pid": int(pid), "threads": values.get("Threads"),
             "rss": values.get("VmRSS"), "vmsize": values.get("VmSize"),
-            "utime_ticks": int(fields[11]), "stime_ticks": int(fields[12])}
+            "utime_ticks": int(fields[11]), "stime_ticks": int(fields[12]),
+            "app_native_libraries": [path for path in mapped_libraries(maps)
+                                     if path.startswith("/data/app-lib/")]}
+
+
+def seal_then_force_stop(serial, package):
+    # Quiesce the process before AMS kills it. This does not repair a prior
+    # short write or a full data partition; the trace parser and free-space
+    # check must reject those cases. Apply the same intervention to both roles.
+    adb(serial, "shell", "input", "keyevent", "3", timeout=30)
+    time.sleep(3)
+    try:
+        pid = guest_pid(serial, package)
+    except RuntimeError:
+        pid = None
+    if pid is not None:
+        adb(serial, "shell", "kill", "-19", pid, timeout=30)
+        time.sleep(1)
+    adb(serial, "shell", "am", "force-stop", package, timeout=30)
+    return int(pid) if pid is not None else None
 
 
 def app_crash_lines(logcat, package, pids):
@@ -91,16 +126,28 @@ def capture_step(serial, result_dir, package, label, expect_foreground=True,
         raise RuntimeError(f"{label}: sample unexpectedly remains in foreground")
     remote = "/data/local/tmp/agr-reference.png"
     screenshot = result_dir / f"screen-{label}.png"
-    adb(serial, "shell", "screencap", "-p", remote, timeout=60)
-    adb(serial, "pull", remote, str(screenshot), timeout=60)
-    if not screenshot.read_bytes().startswith(b"\x89PNG\r\n\x1a\n"):
-        raise RuntimeError(f"{label}: screenshot is not PNG")
+    screenshot_status = "CAPTURE_FAILED"
+    screenshot_error = None
+    try:
+        adb(serial, "shell", "screencap", "-p", remote, timeout=60)
+        adb(serial, "pull", remote, str(screenshot), timeout=60)
+        if screenshot.read_bytes().startswith(b"\x89PNG\r\n\x1a\n"):
+            screenshot_status = "PNG_CAPTURED"
+        else:
+            screenshot_error = "screencap output is not PNG"
+    except (OSError, subprocess.SubprocessError) as exc:
+        screenshot_error = str(exc)
     process = process_snapshot(serial, package)
     if expect_alive is not None and process["alive"] != expect_alive:
         raise RuntimeError(f"{label}: app process liveness differs from scenario")
     return {"label": label, "resumed": resumed, "focused": focused,
-            "screenshot": str(screenshot), "screenshot_sha256": hash_file(screenshot),
-            "visible_variation": has_visible_variation(screenshot),
+            "screenshot": str(screenshot) if screenshot.is_file() else None,
+            "screenshot_status": screenshot_status,
+            "screenshot_error": screenshot_error,
+            "screenshot_sha256": (hash_file(screenshot) if screenshot_status == "PNG_CAPTURED"
+                                   else None),
+            "visible_variation": (has_visible_variation(screenshot)
+                                  if screenshot_status == "PNG_CAPTURED" else False),
             "process": process,
             "resumed_line": next((line.strip() for line in activity.splitlines()
                                   if "mResumedActivity" in line), ""),
@@ -120,12 +167,26 @@ def main():
     parser.add_argument("--scenario", default="cold_start")
     parser.add_argument("--boot-timeout", type=int, default=600)
     parser.add_argument("--settle", type=int, default=20)
+    parser.add_argument("--port", type=int, help="even emulator console port")
     parser.add_argument("--reuse-data", action="store_true")
     parser.add_argument("--gpu", choices=("auto", "on", "off"), default="auto")
+    parser.add_argument("--partition-size-mb", type=int,
+                        help="required guest data capacity from --data-template, in MB")
+    parser.add_argument("--data-template", type=Path,
+                        help="shared fresh ext4 userdata seed for both variants")
+    parser.add_argument("--skin", help="emulator skin geometry, e.g. 480x320")
     parser.add_argument("--show-window", action="store_true")
     parser.add_argument("--actions", type=Path,
                         help="JSON list of timed tap, swipe, keyevent, home, or resume actions")
     args = parser.parse_args()
+    if args.partition_size_mb is not None and not 200 <= args.partition_size_mb <= 4096:
+        raise SystemExit("partition size must be 200..4096 MB")
+    if args.data_template and not args.data_template.is_file():
+        raise SystemExit("data template is missing")
+    if args.partition_size_mb and (not args.data_template or
+                                   args.data_template.stat().st_size <
+                                   args.partition_size_mb * 1024 * 1024):
+        raise SystemExit("requested partition size requires an equally large data template")
     actions = json.loads(args.actions.read_text()) if args.actions else []
     if not isinstance(actions, list):
         raise SystemExit("actions must be a JSON list")
@@ -180,9 +241,16 @@ def main():
               "package": package, "arch": args.arch,
               "execution_mode": "int:portable", "pair_status": pair_status,
               "data_reused": args.reuse_data,
+              "trace_sink_prep": "precreated_shell_data_file_0666",
+              "partition_size_mb": args.partition_size_mb,
+              "data_template_sha256": (hash_file(args.data_template)
+                                        if args.data_template else None),
+              "force_stop_policy": "home_pause_sigstop_before_kill",
               "actions_sha256": (hash_file(args.actions) if args.actions else
                                  hashlib.sha256(b"[]").hexdigest())}
-    port = 5554 if variant == "clean" else 5556
+    port = args.port if args.port is not None else (5554 if variant == "clean" else 5556)
+    if port < 5554 or port > 5678 or port % 2:
+        raise SystemExit("emulator console port must be even and in 5554..5678")
     serial = f"emulator-{port}"
     emulator = args.root / "clean-image/build-out/host/linux-x86/bin" / \
         ("emulator64-x86" if args.arch == "x86" else "emulator64-arm")
@@ -192,6 +260,10 @@ def main():
                "-gpu", args.gpu,
                "-ports", f"{port},{port + 1}",
                "-prop", "dalvik.vm.execution-mode=int:portable"]
+    if args.skin:
+        if not re.fullmatch(r"[0-9]{3,4}x[0-9]{3,4}", args.skin):
+            raise SystemExit("skin must be WIDTHxHEIGHT")
+        command += ["-skin", args.skin]
     if not args.reuse_data:
         command.append("-wipe-data")
     if not args.show_window:
@@ -199,30 +271,33 @@ def main():
     kernel = product / "kernel"
     if not kernel.is_file():
         kernel = args.root / "aosp-official-sync-4.4.4-r2/prebuilts/qemu-kernel" / \
-            args.arch / "kernel-qemu"
+            args.arch / ("kernel-qemu-armv7" if args.arch == "arm" else "kernel-qemu")
     if not kernel.is_file():
         raise SystemExit("pinned QEMU kernel is missing")
     command += ["-kernel", str(kernel)]
     record["kernel_sha256"] = hash_file(kernel)
-    if (product / "userdata.img").is_file():
-        command += ["-initdata", str(product / "userdata.img")]
-    # WSL exposes /dev/kvm here, but this 2014 emulator's KVM_CREATE_VM ioctl
-    # fails. Its pinned QEMU source supports -disable-kvm for software boot.
-    command += ["-qemu", "-disable-kvm"]
+    init_data = args.data_template or product / "userdata.img"
+    if init_data.is_file():
+        command += ["-initdata", str(init_data)]
+    # WSL exposes /dev/kvm, but x86 KVM_CREATE_VM fails. ARM uses software
+    # emulation by default and its QEMU rejects the -disable-kvm flag.
+    if args.arch == "x86":
+        command += ["-qemu", "-disable-kvm"]
     record["kvm_device_accessible"] = os.access("/dev/kvm", os.R_OK | os.W_OK)
     record["accel"] = "tcg"
     record["gpu_mode"] = args.gpu
+    record["skin"] = args.skin
     record["show_window"] = args.show_window
     record["command"] = command
-    existing = subprocess.run(["pgrep", "-a", "emulator64-x86"],
+    existing = subprocess.run(["ps", "-eo", "args="],
                               capture_output=True, text=True, check=False)
     if f"-ports {port},{port + 1}" in existing.stdout:
         raise SystemExit(f"emulator ports {port},{port + 1} are already owned")
     emulator_env = os.environ.copy()
-    if args.show_window:
+    if args.show_window or args.gpu == "on":
         gl_dir = args.root / "toolchains/legacy-emulator-gl"
         if not (gl_dir / "libGL.so").is_file():
-            raise SystemExit("windowed GPU probe requires a host libGL.so")
+            raise SystemExit("GPU probe requires a host libGL.so")
         emulator_env["LD_LIBRARY_PATH"] = (str(gl_dir) + ":" +
                                             emulator_env.get("LD_LIBRARY_PATH", ""))
         record["host_libgl_sha256"] = hash_file(gl_dir / "libGL.so")
@@ -264,6 +339,11 @@ def main():
             if (record["release"], record["sdk"], record["live_execution_mode"]) != \
                     ("4.4.4", "19", "int:portable"):
                 raise RuntimeError("guest release, SDK, or execution mode mismatched")
+            record["guest_data_space_at_boot"] = guest_data_space(
+                adb(serial, "shell", "df", "/data", timeout=30))
+            if args.partition_size_mb and record["guest_data_space_at_boot"]["total_mb"] < \
+                    args.partition_size_mb * 0.9:
+                raise RuntimeError("guest /data is smaller than the requested partition")
             if boot_logger is None or boot_logger.poll() is not None:
                 raise RuntimeError("streaming boot logcat did not start")
             time.sleep(2)
@@ -311,9 +391,11 @@ def main():
                     raise RuntimeError("matched CLEAN probe is missing for this scenario")
                 clean_record = json.loads(clean_record_path.read_text())
                 matched_fields = ("apk_sha256", "scenario", "arch", "execution_mode",
-                                  "vm_config", "jit_effective", "gpu_mode", "show_window",
+                                  "vm_config", "jit_effective", "gpu_mode", "skin", "show_window",
                                   "data_reused", "accel", "zygote_preload",
-                                  "zygote_loaded_libraries", "actions_sha256")
+                                  "zygote_loaded_libraries", "actions_sha256",
+                                  "trace_sink_prep", "force_stop_policy",
+                                  "partition_size_mb", "data_template_sha256")
                 if clean_record.get("status") != "PASS" or \
                         clean_record.get("pair_status") != "BUILD_VERIFIED" or \
                         any(clean_record.get(key) != record.get(key) for key in matched_fields):
@@ -340,6 +422,8 @@ def main():
             adb(serial, "shell", "chmod", "777", "/data/local/tmp")
             adb(serial, "shell", "mkdir", "-p", "/data/local/tmp/agrtrace")
             adb(serial, "shell", "chmod", "777", "/data/local/tmp/agrtrace")
+            adb(serial, "shell", "touch", "/data/local/tmp/agrtrace/trace.log")
+            adb(serial, "shell", "chmod", "666", "/data/local/tmp/agrtrace/trace.log")
             lifecycle_log = result_dir / ("trace.logcat" if variant == "trace"
                                           else "runtime.logcat")
             trace_stream = lifecycle_log.open("wb")
@@ -354,8 +438,12 @@ def main():
             record["activity_result"] = adb(
                 serial, "shell", "am", "start", "-W", "-n", args.component,
                 timeout=120).strip()
-            if "Status: ok" not in record["activity_result"]:
-                raise RuntimeError("Activity launch did not report Status: ok")
+            if "Status: ok" not in record["activity_result"] and \
+                    "Status: timeout" not in record["activity_result"]:
+                raise RuntimeError("Activity launch did not report ok or timeout")
+            record["activity_launch_status"] = (
+                "TIMEOUT_REQUIRES_RUNTIME_CHECK" if "Status: timeout" in record["activity_result"]
+                else "OK")
             time.sleep(args.settle)
             record["stage"] = "capture"
             record["steps"] = [capture_step(serial, result_dir, package, "launch")]
@@ -380,7 +468,8 @@ def main():
                 elif kind == "home":
                     adb(serial, "shell", "input", "keyevent", "3")
                 elif kind == "force_stop":
-                    adb(serial, "shell", "am", "force-stop", package)
+                    record.setdefault("sealed_process_ids", []).append(
+                        seal_then_force_stop(serial, package))
                 elif kind in ("resume", "relaunch"):
                     adb(serial, "shell", "am", "start", "-W", "-n", args.component)
                 time.sleep(action.get("delay", 2))
@@ -408,15 +497,23 @@ def main():
             record["app_crash_lines"] = app_crash_lines(runtime_log, package, observed_pids)
             if record["app_crash_lines"]:
                 raise RuntimeError("app crash observed during lifecycle scenario")
+            record["guest_data_space_at_end"] = guest_data_space(
+                adb(serial, "shell", "df", "/data", timeout=30))
             if variant == "trace":
+                if record["guest_data_space_at_end"]["free_mb"] < 64:
+                    raise RuntimeError("TRACE_INCOMPLETE: guest /data has under 64 MB free")
                 direct_dir = result_dir / "trace-direct"
                 direct_dir.mkdir(exist_ok=True)
-                direct_files = []
-                for pid in sorted(observed_pids):
-                    target = direct_dir / f"trace-{pid}.log"
-                    adb(serial, "pull", f"/data/local/tmp/agrtrace/trace-{pid}.log",
-                        str(target), timeout=240)
-                    direct_files.append(target)
+                # End the app's writes after the final state capture before
+                # pulling the direct trace. Otherwise adb can copy a partial
+                # last record while the render thread is still appending.
+                record.setdefault("sealed_process_ids", []).append(
+                    seal_then_force_stop(serial, package))
+                record["trace_sink_seal"] = "sigstop_before_force_stop_after_final_capture"
+                target = direct_dir / "trace-all.log"
+                adb(serial, "pull", "/data/local/tmp/agrtrace/trace.log",
+                    str(target), timeout=240)
+                direct_files = [target]
                 with ExitStack() as stack:
                     streams = [stack.enter_context(path.open(errors="replace"))
                                for path in direct_files]
@@ -434,7 +531,7 @@ def main():
                             "streamed_logcat_sha256": hash_file(result_dir / "trace.logcat"),
                             "direct_trace_sha256": {path.name: hash_file(path)
                                                     for path in direct_files},
-                            "trace_transport": "guest_per_pid_direct_file_v2",
+                            "trace_transport": "guest_precreated_direct_file_v2",
                             "observer_coverage": ["APP_DEX_TO_BOOT_METHOD_INVOKE"],
                             "observation_scope": "APP_TRIGGERED_OBSERVED_LOWER_BOUND",
                             "zygote_preload_sha256": hash_file(result_dir / "zygote-preload.json"),

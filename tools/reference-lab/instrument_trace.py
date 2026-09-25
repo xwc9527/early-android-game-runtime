@@ -40,10 +40,8 @@ HOOK = r'''#ifdef AGR_TRACE
             static int agrTraceFd = -1;
             pthread_mutex_lock(&agrTraceMutex);
             if (agrTraceFd < 0) {
-                char path[96];
-                snprintf(path, sizeof(path), "/data/local/tmp/agrtrace/trace-%d.log",
-                        (int)getpid());
-                agrTraceFd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0600);
+                agrTraceFd = open("/data/local/tmp/agrtrace/trace.log",
+                        O_WRONLY | O_APPEND);
             }
             const unsigned int sequence = ++agrTraceSequence;
             char* line = NULL;

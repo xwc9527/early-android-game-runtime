@@ -1,7 +1,8 @@
 [
   {"type": "wait", "delay": 60},
-  {"type": "tap", "x": 145, "y": 425, "delay": 25},
-  {"type": "tap", "x": 155, "y": 270, "delay": 8},
+  {"type": "tap", "x": 415, "y": 275, "delay": 5},
+  {"type": "tap", "x": 415, "y": 275, "delay": 3},
+  {"type": "wait", "delay": 20},
   {"type": "home", "delay": 5},
   {"type": "resume", "delay": 12},
   {"type": "force_stop", "delay": 3},

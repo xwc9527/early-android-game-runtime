@@ -3,11 +3,51 @@
 The six current reference review gates and their evidence limits are in
 [`REVIEW-GATES.md`](REVIEW-GATES.md).
 
+Current paired runtime evidence is under `evidence/*-paired-*.json` with
+matching concordance and TRACE run manifests. Frozen Bubble and Gloomy
+Dungeons 2 pass x86 CLEAN/TRACE lifecycle state checks, and Vector Pinball
+passes on ARMv7 with `libgdx.so` mapped in both guests. KungFoo Barracuda
+passes a native-backed gameplay lifecycle with a scored game-over state.
+Pixel Dungeon passes a GPU-enabled CLEAN lifecycle; the paired
+TRACE run is blocked by guest data capacity on this legacy emulator, while
+graphics capture also fails. The tested 512 MB and 1 GB data templates cause
+system WindowManager faults before APK installation; the diagnostic is in
+`evidence/pixel-reference-carrier-diagnosis.json`. Pixel sample validity and
+gameplay remain undetermined. All reported invoke
+sets remain observed lower bounds, not deletion evidence.
+
+`evidence/four-game-corpus-summary.json` is generated from the four paired
+evidence sets with `runtime_corpus_summary.py` and its adjacent manifest.
+Across these runs, 779 distinct methods were observed: 665 in one game, 88 in
+two, 24 in three, and 2 in all four. These are shared method identities, not
+source-closed clusters. The summary uses owner-indexed Books built from each
+matching CLEAN image's BOOTCLASSPATH. A small number of observed classes
+remain `OWNER_UNRESOLVED_IN_BOOT_JARS`; broad owner assignment is not source
+closure.
+The two common four-game methods are
+`ContextThemeWrapper.getResources()` and `AssetInputStream.close()`; their
+shared use makes the Android resource path a source-review priority, not a
+game-defined implementation boundary.
+`source_mapping_queue.py` turns the four owner-indexed Books into
+`evidence/four-game-source-mapping-queue.json`: 779 observed method identities,
+114 shared by at least two games, and only the two resource entries currently
+`SOURCE_LOCATED`. Its event counts are prioritization data, not a definition
+of Runtime scope or evidence of source closure.
+Frozen Bubble's earlier Book omitted sequence bounds because its old exported
+event file omitted sequence fields. `rebuild_trace_sequences.py` verified the
+original direct-file and event hashes, restored sequence fields from the
+direct records, and regenerated its Book. All 441 aggregate observations now
+have sequence bounds. All four pairs compare only
+structural lifecycle state, not gameplay semantics. Gloomy's landscape
+gameplay path passes CLEAN/TRACE with 301,482 complete direct-file events and
+672 observed method identities.
+
 This directory contains the local API19 source and artifact path. The
 historical committed CLEAN boot record used Android-x86 4.4-r5 and cannot
-pair with an AOSP TRACE image. A matched `android-4.4.4_r2` CLEAN image has
-now been built locally; TRACE is still building. The differential gate must
-use `assert_matched_reference` before treating images as a pair.
+pair with an AOSP TRACE image. Local `android-4.4.4_r2` CLEAN/TRACE x86 and
+ARM build pairs are `BUILD_VERIFIED`. The differential gate calls
+`assert_matched_reference` before treating images as a pair. Runtime evidence
+and observer coverage remain separate gates.
 
 Run the pipeline with:
 
@@ -61,17 +101,21 @@ declared DEX target, and resolved callee. The TRACE guest must run with
 `dalvik.vm.execution-mode=int:portable` so every interpreted call traverses
 this hook; use the same execution mode for CLEAN comparisons. JIT and the x86
 assembly interpreter bypass this C++ hook. `parse_trace_log.py` accepts
-`adb logcat -v threadtime` captures and rejects malformed or missing sequence
-records. This observer covers only method calls. Class, field, JNI, native,
-service, and lifecycle observers are still needed before claiming a complete
-Dependency Mapper. No successful TRACE run has been recorded yet.
+direct guest-file `AGRTRACE|v2` records and rejects malformed, duplicate, or
+missing sequences per game process. The earlier logcat transport lost records
+at high invoke rates and remains diagnostic only. Repeated dependency edges
+are aggregated in Migration Books with count and first/last sequence; raw
+ordered events remain separate. This observer covers only method calls.
+Class, field, JNI, native, service, and lifecycle observers remain necessary
+for a complete Dependency Mapper. `boot_owner_index.py` classifies Java owners
+using exact boot JAR class definitions without claiming source closure.
 
 `build_trace.sh TRACE_ROOT JDK6_ROOT MAKE382_ROOT TRACE_OUT CLEAN_OUT` checks
 the exact Dalvik instrumentation diff and confirms the fully resolved
 manifest matches CLEAN byte for byte before building. It records the TRACE
 patch and output image hash in a separate output directory. The instrumentation
 diff SHA-256 is
-`007a79014245d2ec4628668f83c6f9f72529f84bc22421376fe315d00dd14c87`.
+`54560f1fd7b6d1c689a559480b9ca562293fc3cb20081d73bfc2eaf77e41ce2b`.
 Use the optional `--vm-only` last argument for a Dalvik compilation check
 before the full image build. Once both full builds finish, `record_pair.py
 --clean-out CLEAN_OUT --trace-out TRACE_OUT --out pair.json` checks the image

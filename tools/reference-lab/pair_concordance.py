@@ -22,6 +22,10 @@ def compare(clean, trace, pair):
                 "zygote_loaded_libraries", "gpu_mode", "show_window", "accel")
     if any(clean.get(key) is None or clean[key] != trace.get(key) for key in identity):
         raise ValueError("CLEAN/TRACE input or runtime configuration differs")
+    for key in ("skin", "force_stop_policy", "trace_sink_prep", "partition_size_mb",
+                "data_template_sha256"):
+        if clean.get(key) != trace.get(key):
+            raise ValueError(f"CLEAN/TRACE {key} differs")
     clean_steps = clean.get("steps", [])
     trace_steps = trace.get("steps", [])
     if not clean_steps or len(clean_steps) != len(trace_steps):

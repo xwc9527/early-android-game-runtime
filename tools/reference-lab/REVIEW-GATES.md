@@ -42,13 +42,24 @@ not define the Android runtime or prove that unobserved code is unused.
    resources, services, graphics, input, storage, and audio require separate
    observation paths. `trace-run.json` and Migration Books state
    `APP_TRIGGERED_OBSERVED_LOWER_BOUND` and cannot authorize pruning.
+   `boot_owner_index.py` classifies Java dependencies by the declaring
+   class's exact definition in the CLEAN image's BOOTCLASSPATH JARs. This
+   assigns original AOSP repo and broad owner cluster with JAR hashes; it
+   does not locate a source file or close a subcluster. Unknown classes stay
+   unresolved.
    TRACE event sequence numbers are checked for duplicates and gaps for each
    game process. Thread scheduling can reorder logcat records, so the check
    compares the complete sequence set rather than arrival order. A gap fails
    the trace. The first logcat transport lost records even with guest-side
-   file capture. The current observer writes per-process files directly from
-   Dalvik; host logcat remains runtime diagnostic evidence. A direct-file
+   file capture. The current observer appends directly from Dalvik to a guest
+   file precreated by the probe under API19 SELinux permissions; host logcat
+   remains runtime diagnostic evidence. A direct-file
    transport still must pass the sequence check before it is called complete.
+   The pinned `external/sepolicy/file_contexts` labels `/data/local/tmp` as
+   `shell_data_file`, and `external/sepolicy/untrusted_app.te` grants an app
+   read/write permission on files of that type but only read/search permission
+   on the directory. The probe therefore creates and chmods the file before
+   the app starts, in both CLEAN and TRACE.
 
 5. **Service boundaries.** A source-located service boundary cannot be closed
    as `BOUNDARY` until its reviewed index entry includes the interface
@@ -69,14 +80,34 @@ game semantic equivalence or authorize deletion.
 
 Current game probes are staged evidence. Frozen Bubble has a confirmed game
 frame, input changes, HOME transition, resumed game, and further input on
-CLEAN. KungFoo Barracuda and Gloomy Dungeons 2 reached visible menus after
-loading; menu-to-gameplay scenarios are still being checked. Pixel Dungeon
-exited on the initial non-GPU emulator with `No configs match configSpec`;
-with GPU emulation it remains foreground but the captured frame is black.
-Vector Pinball's normal native path awaits the ARM reference. A single-color
-frame is inconclusive. Sample usability requires runtime lifecycle, input,
+CLEAN. KungFoo Barracuda passes a native-backed gameplay lifecycle after its
+on-screen confirm control starts a scored game loop. Gloomy Dungeons 2 enters
+its tutorial from PLAY on a
+landscape reference and reaches a first-person gameplay scene; the matched
+CLEAN/TRACE path passes structural lifecycle comparison. Pixel
+Dungeon exits on the initial non-GPU emulator with `No configs match
+configSpec`; GPU-enabled headless CLEAN runs pass process and lifecycle checks,
+while ScreenshotClient/BufferQueue capture has failed. A matched TRACE run
+is incomplete because its 200 MB data partition fills during direct event
+writing. Ext4 journal recovery on a copy leaves only six free 4 KB blocks.
+The tested 512 MB and 1 GB data templates trigger system WindowManager
+fatal exceptions before app installation on this legacy emulator. Pixel's
+gameplay validity remains undetermined; it is not a prerequisite for other
+samples. Vector Pinball passes a paired ARM lifecycle with `libgdx.so`
+mapped. A single-color or failed frame capture is inconclusive. Sample
+usability requires runtime lifecycle, input,
 exception, process, and native/graphics evidence; screenshots only support
 those findings.
+
+Old emulator graphics behavior is a reference-carrier fidelity risk. A guest
+process that survives, accrues CPU time, accepts lifecycle transitions, and
+maps expected libraries establishes activity, not correct rendering or game
+semantics. Record host emulator faults, guest fatal signals, graphics driver
+errors, and screenshot transport failures separately. If a reproducible
+graphics limitation prevents the normal path, compare the same pinned API19
+CLEAN/TRACE guest builds on a more reliable carrier before changing Android
+guest code. A carrier change requires fresh matched runtime evidence; old
+emulator runs cannot certify its GPU behavior.
 
 For each game, a usable runtime scenario must establish: SHA-pinned APK
 installation; app process and resumed/focused Activity after launch and a

@@ -45,7 +45,7 @@ test "$(git -C build diff -- core/main.mk | sha256sum | cut -d' ' -f1)" = \
     1d5d120d54935eab8ecef496c9e95659c5767ccf5f1c7b5ec9d20e0f294592ef
 test "$(git -C dalvik rev-parse HEAD)" = 36e356c96640775f0a3f167bd2426ea0f0093b8b
 test "$(git -C dalvik diff --binary | sha256sum | cut -d' ' -f1)" = \
-    007a79014245d2ec4628668f83c6f9f72529f84bc22421376fe315d00dd14c87
+    54560f1fd7b6d1c689a559480b9ca562293fc3cb20081d73bfc2eaf77e41ce2b
 test "$(git -C dalvik status --porcelain | wc -l)" = 5
 git -C dalvik diff --binary > "$out_dir/dalvik-trace.patch"
 sha256sum "$out_dir/dalvik-trace.patch" > "$out_dir/dalvik-trace.patch.sha256"
