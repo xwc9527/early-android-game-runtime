@@ -15,6 +15,19 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class WorkflowTest(unittest.TestCase):
+    def test_api19_scan_ignores_64_bit_abi_but_keeps_x86(self):
+        elf32 = (ROOT / "App/Resources/libpocbridge.so").read_bytes()
+        with tempfile.TemporaryDirectory() as tmp:
+            apk = Path(tmp) / "mixed.apk"
+            with zipfile.ZipFile(apk, "w") as archive:
+                archive.writestr("lib/arm64-v8a/libgame.so", b"\x7fELF\x02" + b"\0" * 60)
+                archive.writestr("lib/x86/libgame.so", elf32)
+            self.assertEqual(
+                {(item["kind"], item["canonical_name"]) for item in scan_apk(apk)},
+                {(item["kind"], item["canonical_name"])
+                 for item in _elf_refs(elf32, "lib/x86/libgame.so")},
+            )
+
     def test_repository_binary_refs_and_apk_scan(self):
         dex = (ROOT / "App/Resources/classes.dex").read_bytes()
         elf = (ROOT / "App/Resources/libpocbridge.so").read_bytes()

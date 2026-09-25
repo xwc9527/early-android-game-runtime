@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "baseline": "android-4.4.4_r2",
+  "samples": [
+    {
+      "id": "kungfoo-barracuda",
+      "package": "com.onetwofivegames.kungfoobarracuda",
+      "version_code": 3,
+      "apk_sha256": "097ade628ad0837e312da4ca48afe0906eb99c3b992d497c7da33e2b2267eb22",
+      "apk": "/agr-reference/samples/fdroid/kungfoo-barracuda.apk",
+      "component": "com.onetwofivegames.kungfoobarracuda/com.onetwofivegames.kungfoobarracuda.KungFooBarracudaNativeActivity",
+      "min_sdk": 16,
+      "native_libraries": [
+        "lib/arm64-v8a/libKungFooBarracudaNativeActivity.so",
+        "lib/armeabi-v7a/libKungFooBarracudaNativeActivity.so",
+        "lib/armeabi/libKungFooBarracudaNativeActivity.so",
+        "lib/mips/libKungFooBarracudaNativeActivity.so",
+        "lib/mips64/libKungFooBarracudaNativeActivity.so",
+        "lib/x86/libKungFooBarracudaNativeActivity.so",
+        "lib/x86_64/libKungFooBarracudaNativeActivity.so"
+      ]
+    },
+    {
+      "id": "gloomy-dungeons-2",
+      "package": "org.zamedev.gloomydungeons2.opensource",
+      "version_code": 1602221800,
+      "apk_sha256": "40a67842345b879fc4b4be90159787f04664d9530f6a3e676c13fa412ad98733",
+      "apk": "/agr-reference/samples/fdroid/gloomy-dungeons-2.apk",
+      "component": "org.zamedev.gloomydungeons2.opensource/zame.game.MainActivity",
+      "min_sdk": 8,
+      "native_libraries": [
+        "lib/arm64-v8a/librenderer.so",
+        "lib/armeabi-v7a/librenderer.so",
+        "lib/armeabi/librenderer.so",
+        "lib/mips/librenderer.so",
+        "lib/mips64/librenderer.so",
+        "lib/x86/librenderer.so",
+        "lib/x86_64/librenderer.so"
+      ]
+    },
+    {
+      "id": "pixel-dungeon",
+      "package": "com.watabou.pixeldungeon",
+      "version_code": 59,
+      "apk_sha256": "c33f4bdc9117f265a2fae7d5182a77462dd0ac7e2c1c1e96e41f70a8eb4635d2",
+      "apk": "/agr-reference/samples/fdroid/pixel-dungeon.apk",
+      "component": "com.watabou.pixeldungeon/com.watabou.pixeldungeon.PixelDungeon",
+      "min_sdk": 8,
+      "native_libraries": []
+    },
+    {
+      "id": "frozen-bubble",
+      "package": "org.jfedor.frozenbubble",
+      "version_code": 8,
+      "apk_sha256": "57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569",
+      "apk": "/agr-reference/samples/fdroid/frozen-bubble.apk",
+      "component": "org.jfedor.frozenbubble/org.jfedor.frozenbubble.FrozenBubble",
+      "min_sdk": 2,
+      "native_libraries": []
+    },
+    {
+      "id": "vector-pinball",
+      "package": "com.dozingcatsoftware.bouncy",
+      "version_code": 4,
+      "apk_sha256": "627371d260d22ef33523561e3fa892cb45784cf83804ec0a02c73f5478a0d698",
+      "apk": "/agr-reference/samples/fdroid/vector-pinball.apk",
+      "component": "com.dozingcatsoftware.bouncy/com.dozingcatsoftware.bouncy.BouncyActivity",
+      "min_sdk": 4,
+      "native_libraries": [
+        "lib/armeabi/libandroidgl20.so",
+        "lib/armeabi/libgdx.so"
+      ]
+    }
+  ]
+}

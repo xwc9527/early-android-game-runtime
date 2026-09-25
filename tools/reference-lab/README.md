@@ -92,6 +92,18 @@ focused Frozen Bubble activity, and a PNG of the game frame. Its
 `UNPAIRED_CLEAN_SMOKE` label withholds pair-level oracle status until the TRACE
 build and pair check finish.
 
+The repository's five locked F-Droid samples are verified with
+`sample_matrix.py --lock Tests/Samples/fdroid.lock.json --apk-dir APK_DIR
+--aapt AAPT --out matrix.json`. The current matrix is in
+`evidence/corpus-sample-matrix.json`. `probe_corpus.py` runs the same bounded
+cold-start first-frame check for each sample; it does not claim gameplay,
+pause/resume, storage, audio, or exit coverage. `build_corpus_books.py` writes
+per-game `STATIC_ONLY` Books and a corpus union; the current count summary is
+`evidence/corpus-static-summary.json`. The source scanner ignores bundled
+64-bit ELF variants because API19 is 32-bit, while the matrix retains their
+names. Vector Pinball's locked APK has only ARM native libraries, so an x86
+guest cannot verify its native gameplay path.
+
 `boot_clean.py --root /agr-reference --apk /path/to/game.apk --component
 package/.Activity` can probe installation and launch in the CLEAN guest. It
 checks the package manager, transfers the APK, then runs `pm install` as

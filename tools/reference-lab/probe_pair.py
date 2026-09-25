@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import signal
 import subprocess
 import time
@@ -61,12 +62,16 @@ def main():
     if image["execution_mode"] != "int:portable":
         raise SystemExit("reference execution mode is not portable")
     apk_hash = hash_file(args.apk)
-    result_dir = args.root / "emulator" / "aosp-r2" / variant / args.scenario
+    package = args.component.split("/")[0]
+    if not re.fullmatch(r"[A-Za-z0-9_.]+", package):
+        raise SystemExit("invalid package in component")
+    result_dir = args.root / "emulator" / "aosp-r2" / variant / package / args.scenario
     result_dir.mkdir(parents=True, exist_ok=True)
     record_path = result_dir / "probe.json"
     record = {"status": "FAILED", "stage": "launch_emulator", "variant": args.variant,
               "baseline": "android-4.4.4_r2", "image_sha256": image["image_sha256"],
               "apk_sha256": apk_hash, "scenario": args.scenario,
+              "package": package,
               "execution_mode": "int:portable", "pair_status": pair_status,
               "data_reused": args.reuse_data}
     port = 5554 if variant == "clean" else 5556
@@ -152,7 +157,6 @@ def main():
             record["stage"] = "capture"
             record["activity_state"] = adb(
                 serial, "shell", "dumpsys", "activity", "activities", timeout=60)
-            package = args.component.split("/")[0]
             if not any("mResumedActivity" in line and package in line
                        for line in record["activity_state"].splitlines()):
                 raise RuntimeError("sample activity is not resumed")

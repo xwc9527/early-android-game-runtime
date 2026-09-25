@@ -209,6 +209,12 @@ def scan_apk(path):
             if member.endswith(".dex"):
                 records.extend(_dex_refs(archive.read(member), member))
             elif member.startswith("lib/") and member.endswith(".so"):
+                # API19 Dalvik and its supported guest ABIs are 32-bit. Modern
+                # F-Droid APKs may bundle 64-bit variants beside the selected
+                # x86/ARM library; retain the ABI list in the sample matrix.
+                abi = member.split("/", 2)[1]
+                if abi in {"arm64-v8a", "x86_64", "mips64"}:
+                    continue
                 records.extend(_elf_refs(archive.read(member), member))
     return records
 

@@ -1,0 +1,37 @@
+{
+  "samples": [
+    {
+      "apk_sha256": "097ade628ad0837e312da4ca48afe0906eb99c3b992d497c7da33e2b2267eb22",
+      "book": "/agr-reference/migration-books/static-corpus/kungfoo-barracuda-static.json",
+      "id": "kungfoo-barracuda",
+      "static_references": 270
+    },
+    {
+      "apk_sha256": "40a67842345b879fc4b4be90159787f04664d9530f6a3e676c13fa412ad98733",
+      "book": "/agr-reference/migration-books/static-corpus/gloomy-dungeons-2-static.json",
+      "id": "gloomy-dungeons-2",
+      "static_references": 11706
+    },
+    {
+      "apk_sha256": "c33f4bdc9117f265a2fae7d5182a77462dd0ac7e2c1c1e96e41f70a8eb4635d2",
+      "book": "/agr-reference/migration-books/static-corpus/pixel-dungeon-static.json",
+      "id": "pixel-dungeon",
+      "static_references": 464
+    },
+    {
+      "apk_sha256": "57f4735297befc68c0a7aa6cd9e442ecd250b1b2b38104324a12b6c2d4e18569",
+      "book": "/agr-reference/migration-books/static-corpus/frozen-bubble-static.json",
+      "id": "frozen-bubble",
+      "static_references": 183
+    },
+    {
+      "apk_sha256": "627371d260d22ef33523561e3fa892cb45784cf83804ec0a02c73f5478a0d698",
+      "book": "/agr-reference/migration-books/static-corpus/vector-pinball-static.json",
+      "id": "vector-pinball",
+      "static_references": 857
+    }
+  ],
+  "source_closure_authorized": false,
+  "union_dependencies": 12563,
+  "variant": "STATIC_ONLY"
+}
