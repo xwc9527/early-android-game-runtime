@@ -74,6 +74,12 @@ before the full image build. Once both full builds finish, `record_pair.py
 --clean-out CLEAN_OUT --trace-out TRACE_OUT --out pair.json` checks the image
 hashes, resolved manifest, host toolchain, and TRACE patch and writes a pair
 record. A verified build pair still needs live boot and sample evidence.
+`probe_pair.py --pair pair.json --apk frozen-bubble.apk --variant CLEAN`
+boots the matched image in portable mode and checks API level, package
+manager, installation, resumed activity, and screenshot. Run it again with
+`--variant TRACE` for the instrumented image; that run also checks TRACE log
+sequence continuity and writes `events.ndjson` plus `trace-run.json` for the
+Migration Book importer. Each probe writes a terminal PASS or FAILED record.
 
 `boot_clean.py --root /agr-reference --apk /path/to/game.apk --component
 package/.Activity` can probe installation and launch in the CLEAN guest. It
