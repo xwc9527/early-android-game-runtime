@@ -4,7 +4,13 @@
   "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
   "source_file_sha256": {
     "core/java/android/view/ContextThemeWrapper.java": "2f8eaadf64c6f8badd5ce34836b50c0c4c43540902e045552e36662e467d6d3e",
-    "core/java/android/content/res/AssetManager.java": "51d78ab16002df592cd19cb7bfb4a06edb882c5a9a1c3798e8f06d02b7df27d7"
+    "core/java/android/content/res/AssetManager.java": "51d78ab16002df592cd19cb7bfb4a06edb882c5a9a1c3798e8f06d02b7df27d7",
+    "core/java/android/content/ContextWrapper.java": "a890909c0bb1d035d65193ac9e5fabe1432d17a251619eedcdff525bb6c3bc00",
+    "core/java/android/app/ContextImpl.java": "bc14c3f5f02d240b89e740aae65cffd2218d89eb05a176e49bad9cf39d7cfa02",
+    "core/jni/android_util_AssetManager.cpp": "4c941ea2cc6a8a32f4beddd5180c2bbe22f76c78bd349a9841e4702c29e90d4e",
+    "libs/androidfw/Asset.cpp": "1206d06bcebd5aa0db8cc52d79ca3094ada13e08f4ac499b16c5cf22b3795da0",
+    "libs/androidfw/AssetManager.cpp": "bae84ddef205f05f37a1029bed454cdefd406e173c4e250df32892dd822a6d53",
+    "include/androidfw/Asset.h": "f1d0f567552c28cde5b369171a82557f4722e608fc90b87e4d7e298f9d7892f4"
   },
   "closure_reviewed": false,
   "entries": {
@@ -14,21 +20,23 @@
       "source_module": "frameworks/base/core",
       "source_file": "core/java/android/view/ContextThemeWrapper.java",
       "source_symbol": "ContextThemeWrapper.getResources",
-      "source_files": ["core/java/android/view/ContextThemeWrapper.java"],
-      "required_symbols": ["ContextThemeWrapper.getResources"],
+      "source_files": ["core/java/android/view/ContextThemeWrapper.java", "core/java/android/content/ContextWrapper.java", "core/java/android/app/ContextImpl.java"],
+      "required_symbols": ["ContextThemeWrapper.getResources", "ContextWrapper.getResources", "ContextWrapper.createConfigurationContext", "ContextImpl.getResources", "ContextImpl.createConfigurationContext"],
       "data_structures": ["mResources", "mOverrideConfiguration"],
-      "cross_cluster_deps": ["ContextWrapper.getResources", "Context.createConfigurationContext"],
+      "cross_cluster_deps": ["ContextImpl constructor", "ResourcesManager.getTopLevelResources", "LoadedApk.getResources"],
       "closure_reviewed": false
     },
     "Landroid/content/res/AssetManager$AssetInputStream;->close()V": {
       "owner_cluster": "Framework",
       "source_repo": "platform/frameworks/base",
-      "source_module": "frameworks/base/core",
+      "source_module": "frameworks/base",
       "source_file": "core/java/android/content/res/AssetManager.java",
       "source_symbol": "AssetManager.AssetInputStream.close",
-      "source_files": ["core/java/android/content/res/AssetManager.java"],
-      "required_symbols": ["AssetInputStream.close", "destroyAsset", "decRefsLocked"],
-      "data_structures": ["AssetInputStream.mAsset", "AssetManager.mNumRefs"],
+      "source_files": ["core/java/android/content/res/AssetManager.java", "core/jni/android_util_AssetManager.cpp", "libs/androidfw/AssetManager.cpp", "libs/androidfw/Asset.cpp", "include/androidfw/Asset.h"],
+      "required_symbols": ["AssetManager.open", "AssetManager.openNonAsset", "AssetInputStream.read", "AssetInputStream.mark", "AssetInputStream.reset", "AssetInputStream.skip", "AssetInputStream.close", "AssetManager.incRefsLocked", "AssetManager.decRefsLocked", "register_android_content_AssetManager", "android_content_AssetManager_destroyAsset", "AssetManager::open", "Asset::read", "Asset::close"],
+      "data_structures": ["AssetInputStream.mAsset", "AssetManager.mNumRefs", "AssetManager.mObject", "Asset*"],
+      "registration_deps": ["AndroidRuntime.cpp:register_android_content_AssetManager", "gAssetManagerMethods"],
+      "cross_cluster_deps": ["ZipFileRO", "FileMap", "StreamingZipInflater", "InputStream"],
       "closure_reviewed": false
     }
   }

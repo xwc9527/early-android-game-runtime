@@ -19,6 +19,30 @@ LIST_FIELDS = (
 )
 
 
+def reviewed_source_set(pinned, index, evidence):
+    """A multi-file closure must pin every file and account for every listed edge."""
+    files = pinned.get("source_files") or []
+    if len(files) <= 1:
+        return evidence.get("source_sha256") == index.get("source_sha256")
+    indexed = index.get("source_file_sha256") or {}
+    reviewed = evidence.get("source_file_sha256") or {}
+    if not isinstance(indexed, dict) or not isinstance(reviewed, dict):
+        return False
+    if set(files) != set(reviewed) or not set(files).issubset(indexed):
+        return False
+    if any(reviewed[path] != indexed[path] or
+           not isinstance(reviewed[path], str) or len(reviewed[path]) != 64 or
+           any(char not in "0123456789abcdef" for char in reviewed[path].lower())
+           for path in files):
+        return False
+    edges = {edge for field in ("init_deps", "registration_deps",
+                                "cross_cluster_deps", "excluded_deps",
+                                "service_boundaries", "host_adaptation_points")
+             for edge in (pinned.get(field) or [])}
+    return (set(evidence.get("reviewed_dependency_edges") or []) == edges and
+            evidence.get("unresolved_dependency_edges") == [])
+
+
 def close_entry(entry, index, migration_type="SOURCE_PORT"):
     if migration_type in FORBIDDEN:
         raise ValueError("forbidden migration type: " + migration_type)
@@ -51,8 +75,8 @@ def close_entry(entry, index, migration_type="SOURCE_PORT"):
     evidence = pinned.get("closure_evidence")
     revision = index.get("revision")
     if (manifest["status"] == "SOURCE_LOCATED" and pinned.get("closure_reviewed") is True
-            and isinstance(evidence, dict) and evidence.get("source_sha256")
-            and evidence["source_sha256"] == index.get("source_sha256")
+            and isinstance(evidence, dict)
+            and reviewed_source_set(pinned, index, evidence)
             and evidence.get("reviewed_by") and evidence.get("closure_notes")
             and isinstance(revision, str) and len(revision) == 40
             and all(char in "0123456789abcdef" for char in revision.lower())

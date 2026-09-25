@@ -130,6 +130,42 @@ class ReferenceLabTest(unittest.TestCase):
         self.assertEqual(closed["migration_type"], "SOURCE_PORT")
         self.assertNotIn("PhoneWindow", json.dumps(closed))
 
+    def test_multifile_closure_requires_all_hashes_and_edges(self):
+        entry = {"dependency_id": "JAVA_METHOD:stream", "canonical_name": "Stream.close"}
+        pinned = {"owner_cluster": "Framework", "source_repo": "platform/frameworks/base",
+                  "source_file": "A.java", "source_symbol": "close",
+                  "source_files": ["A.java", "Bridge.cpp"],
+                  "required_symbols": ["close", "destroyAsset"],
+                  "registration_deps": ["native registration"],
+                  "cross_cluster_deps": ["androidfw Asset"],
+                  "closure_reviewed": True,
+                  "closure_evidence": {"reviewed_by": "source-audit",
+                                       "closure_notes": "Reviewed both owners",
+                                       "source_file_sha256": {"A.java": "a" * 64,
+                                                              "Bridge.cpp": "b" * 64},
+                                       "reviewed_dependency_edges": ["native registration",
+                                                                     "androidfw Asset"],
+                                       "unresolved_dependency_edges": []}}
+        index = {"revision": "c" * 40,
+                 "source_file_sha256": {"A.java": "a" * 64,
+                                        "Bridge.cpp": "b" * 64},
+                 "entries": {entry["canonical_name"]: pinned}}
+        complete = close_entry(entry, index)
+        self.assertEqual(complete["status"], "SOURCE_CLOSED")
+        validate_source_manifests({"schema_version": 1, "manifests": [complete]})
+        pinned["closure_evidence"]["reviewed_dependency_edges"] = ["native registration"]
+        self.assertEqual(close_entry(entry, index)["status"], "SOURCE_LOCATED")
+        pinned["closure_evidence"]["reviewed_dependency_edges"] = ["native registration",
+                                                                     "androidfw Asset"]
+        pinned["closure_evidence"]["unresolved_dependency_edges"] = ["androidfw Asset"]
+        self.assertEqual(close_entry(entry, index)["status"], "SOURCE_LOCATED")
+        pinned["closure_evidence"]["unresolved_dependency_edges"] = []
+        pinned["closure_evidence"]["source_file_sha256"]["Bridge.cpp"] = "d" * 64
+        self.assertEqual(close_entry(entry, index)["status"], "SOURCE_LOCATED")
+        pinned["closure_evidence"]["source_file_sha256"]["Bridge.cpp"] = "b" * 64
+        pinned["closure_evidence"]["source_file_sha256"].pop("Bridge.cpp")
+        self.assertEqual(close_entry(entry, index)["status"], "SOURCE_LOCATED")
+
     def test_service_boundary_stops(self):
         manifest = close_entry({
             "dependency_id": "SERVICE:relayout",

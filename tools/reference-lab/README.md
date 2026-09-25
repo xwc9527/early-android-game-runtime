@@ -28,6 +28,10 @@ The two common four-game methods are
 `ContextThemeWrapper.getResources()` and `AssetInputStream.close()`; their
 shared use makes the Android resource path a source-review priority, not a
 game-defined implementation boundary.
+Their pinned Java/JNI/androidfw source edges, AGR counterpart, and unresolved
+closure boundaries are recorded in
+`docs/RESOURCE_CLUSTER_SOURCE_MAP_API19.md`. Both remain `SOURCE_LOCATED`;
+this review does not authorize a resource-cluster port or pruning.
 `source_mapping_queue.py` turns the four owner-indexed Books into
 `evidence/four-game-source-mapping-queue.json`: 779 observed method identities,
 114 shared by at least two games, and only the two resource entries currently
@@ -87,6 +91,10 @@ evidence and the index's exact 40-character source revision must reflect
 actual API19 source dependency review; the JNI table
 index in this repository only locates entry symbols. Service observations
 remain BOUNDARY_CANDIDATE until the excluded boundary is sourced and reviewed.
+For a multi-file cluster, closure evidence instead requires an exact
+`source_file_sha256` map for every listed file, every declared dependency edge
+in `reviewed_dependency_edges`, and an empty `unresolved_dependency_edges`
+list. Missing coverage keeps the entry at `SOURCE_LOCATED`.
 
 The current implementation does not provide a complete Android TRACE event
 producer, Framework source closure, cluster ports, or iOS differential. Its

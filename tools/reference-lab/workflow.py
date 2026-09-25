@@ -124,8 +124,24 @@ def validate_source_manifests(document):
             raise ValueError("invalid source closure status")
         if item["status"] in ("SOURCE_CLOSED", "BOUNDARY"):
             evidence = item.get("closure_evidence") or {}
-            if not all(evidence.get(key) for key in ("source_sha256", "reviewed_by", "closure_notes")):
+            if not all(evidence.get(key) for key in ("reviewed_by", "closure_notes")):
                 raise ValueError("closed source manifest lacks review evidence")
+            files = item.get("source_files") or []
+            if len(files) > 1:
+                digests = evidence.get("source_file_sha256") or {}
+                edges = {edge for field in ("init_deps", "registration_deps",
+                                            "cross_cluster_deps", "excluded_deps",
+                                            "service_boundaries", "host_adaptation_points")
+                         for edge in (item.get(field) or [])}
+                if (not isinstance(digests, dict) or set(digests) != set(files) or
+                        any(not isinstance(value, str) or len(value) != 64 or
+                            any(c not in "0123456789abcdef" for c in value.lower())
+                            for value in digests.values()) or
+                        set(evidence.get("reviewed_dependency_edges") or []) != edges or
+                        evidence.get("unresolved_dependency_edges") != []):
+                    raise ValueError("closed multi-file source manifest lacks closure coverage")
+            elif not evidence.get("source_sha256"):
+                raise ValueError("closed source manifest lacks source digest")
             if not all(item.get(key) for key in ("owner_cluster", "source_repo",
                                                  "source_file", "source_symbol")):
                 raise ValueError("closed source manifest lacks ownership")

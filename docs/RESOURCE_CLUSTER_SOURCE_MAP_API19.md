@@ -1,0 +1,23 @@
+# API19 Framework resource cluster: source map in progress
+
+Baseline: `platform/frameworks/base@63ade05d76785975fc3292ca030abbaa1dda8891` (`android-4.4.4_r2`). File SHA-256 values are pinned in `tools/reference-lab/indexes/shared-resources-api19-locations.json`. The four qualified game runs are regression probes. Their observed app-to-boot invokes prioritize this review; they are a lower bound and do not define the cluster or authorize removal.
+
+## `ContextThemeWrapper.getResources()` entry
+
+`ContextThemeWrapper.java:73-89` caches `mResources`. Without an override it delegates through `ContextWrapper.getResources()` (`ContextWrapper.java:87-89`) to the base context. With an override it calls `createConfigurationContext(mOverrideConfiguration)`, then reads and caches that context's resources. `ContextWrapper.java:654-655` delegates configuration-context creation to its base. `ContextImpl.java:1911-1920` creates a new `ContextImpl`; its constructor (`1991-2034`) selects `LoadedApk.getResources()` or `ResourcesManager.getTopLevelResources()` according to display, activity token, override configuration, and compatibility information. `ContextImpl.getResources()` (`620-622`) returns its `mResources`.
+
+The owner is Framework, not the game. Closure still needs the `LoadedApk` and `ResourcesManager` creation/cache paths, `Resources`/`AssetManager` lifetime, configuration changes, and any system-service boundary contract reached through those paths. This entry is `SOURCE_LOCATED`, not `SOURCE_CLOSED`.
+
+## `AssetManager.AssetInputStream.close()` entry
+
+`AssetManager.java:304-324` and `402-416` open asset and non-asset streams while holding the manager lock, construct `AssetInputStream`, and increment `mNumRefs`. The stream's `read`, `available`, `mark`, `reset`, and `skip` methods call native asset methods (`AssetManager.java:543-590`). `close()` (`558-566`) takes the same lock, calls `destroyAsset(mAsset)` once, sets the handle to zero, and decrements the manager reference count. `decRefsLocked()` (`765-775`) destroys the native manager when the count reaches zero. Finalization calls `close()` (`AssetManager.java:590-595`).
+
+The JNI owner is `core/jni/android_util_AssetManager.cpp`: `openAsset` (`116-150`) validates access mode and opens an `androidfw::Asset`; `destroyAsset` (`321-334`) deletes the pointer; `readAsset`, `seekAsset`, and length accessors (`337-429`) dispatch to the `Asset` object. `gAssetManagerMethods` (`1622-1651`) binds the Java native names; `register_android_content_AssetManager` (`1728-1780`) registers the table through `AndroidRuntime`, whose registration list includes it (`AndroidRuntime.cpp:1102`). `libs/androidfw/AssetManager.cpp:512-542` resolves `assets/` paths across asset paths. ZIP entries are mapped in `openAssetFromZipLocked` (`1094-1135`) and create either uncompressed or compressed `Asset` objects. `Asset.cpp` owns the concrete file/compressed asset destructors and releases maps, buffers, inflater, and file descriptors.
+
+AGR already vendors byte-identical API19 `Asset.cpp` and `AssetManager.cpp` and exposes `agr_afw_open/read/seek/close` in `Runtime/AndroidFw/agr_androidfw.cpp`. The older `Runtime/DexLoom/AndroidMini/dx_android_framework.c` still has a separate synthetic `AssetManager.open` path that extracts an APK entry into a field-backed `InputStream`; it does not establish this source cluster's Java/JNI ownership. This is a migration gap, not permission to patch a single game or declare the cluster migrated. The `agr_afw_close` path and native `Asset*` lifetime need comparison with the API19 JNI `delete a` path before a differential claim.
+
+Closure still needs the complete `AssetManager` Java lifecycle and native `init/destroy`, the non-asset/resource stream path, JNI registration and handle representation on the target architecture, ZIP/FileMap/inflater dependencies, error and post-close behavior, and an explicit host filesystem boundary. None is presently classified as unused. No production source port or pruning is authorized by this map.
+
+## Admission state
+
+Both four-game-shared entries remain `SOURCE_LOCATED`. The next mainline step is to resolve the listed source edges into complete cluster manifests, then port the source-owned cluster and run a focused CLEAN differential. A new reference-lab capability is justified only if a specific source boundary or differential cannot be decided from this source and the existing four probes.

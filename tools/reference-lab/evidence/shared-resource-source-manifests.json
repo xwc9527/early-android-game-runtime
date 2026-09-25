@@ -10,10 +10,16 @@
       "status": "SOURCE_LOCATED",
       "source_revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
       "source_files": [
-        "core/java/android/view/ContextThemeWrapper.java"
+        "core/java/android/view/ContextThemeWrapper.java",
+        "core/java/android/content/ContextWrapper.java",
+        "core/java/android/app/ContextImpl.java"
       ],
       "required_symbols": [
-        "ContextThemeWrapper.getResources"
+        "ContextThemeWrapper.getResources",
+        "ContextWrapper.getResources",
+        "ContextWrapper.createConfigurationContext",
+        "ContextImpl.getResources",
+        "ContextImpl.createConfigurationContext"
       ],
       "data_structures": [
         "mResources",
@@ -22,8 +28,9 @@
       "init_deps": [],
       "registration_deps": [],
       "cross_cluster_deps": [
-        "ContextWrapper.getResources",
-        "Context.createConfigurationContext"
+        "ContextImpl constructor",
+        "ResourcesManager.getTopLevelResources",
+        "LoadedApk.getResources"
       ],
       "excluded_deps": [],
       "service_boundaries": [],
@@ -43,20 +50,45 @@
       "status": "SOURCE_LOCATED",
       "source_revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
       "source_files": [
-        "core/java/android/content/res/AssetManager.java"
+        "core/java/android/content/res/AssetManager.java",
+        "core/jni/android_util_AssetManager.cpp",
+        "libs/androidfw/AssetManager.cpp",
+        "libs/androidfw/Asset.cpp",
+        "include/androidfw/Asset.h"
       ],
       "required_symbols": [
+        "AssetManager.open",
+        "AssetManager.openNonAsset",
+        "AssetInputStream.read",
+        "AssetInputStream.mark",
+        "AssetInputStream.reset",
+        "AssetInputStream.skip",
         "AssetInputStream.close",
-        "destroyAsset",
-        "decRefsLocked"
+        "AssetManager.incRefsLocked",
+        "AssetManager.decRefsLocked",
+        "register_android_content_AssetManager",
+        "android_content_AssetManager_destroyAsset",
+        "AssetManager::open",
+        "Asset::read",
+        "Asset::close"
       ],
       "data_structures": [
         "AssetInputStream.mAsset",
-        "AssetManager.mNumRefs"
+        "AssetManager.mNumRefs",
+        "AssetManager.mObject",
+        "Asset*"
       ],
       "init_deps": [],
-      "registration_deps": [],
-      "cross_cluster_deps": [],
+      "registration_deps": [
+        "AndroidRuntime.cpp:register_android_content_AssetManager",
+        "gAssetManagerMethods"
+      ],
+      "cross_cluster_deps": [
+        "ZipFileRO",
+        "FileMap",
+        "StreamingZipInflater",
+        "InputStream"
+      ],
       "excluded_deps": [],
       "service_boundaries": [],
       "host_adaptation_points": [],
@@ -64,7 +96,7 @@
       "service_contract": null,
       "owner_cluster": "Framework",
       "source_repo": "platform/frameworks/base",
-      "source_module": "frameworks/base/core",
+      "source_module": "frameworks/base",
       "source_file": "core/java/android/content/res/AssetManager.java",
       "source_symbol": "AssetManager.AssetInputStream.close"
     }
