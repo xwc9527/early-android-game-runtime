@@ -32,13 +32,13 @@ Their pinned Java/JNI/androidfw source edges, AGR counterpart, and unresolved
 closure boundaries are recorded in
 `docs/RESOURCE_CLUSTER_SOURCE_MAP_API19.md`. Both remain `SOURCE_LOCATED`;
 this review does not authorize a resource-cluster port or pruning.
-The three-game `Integer.valueOf(int)` seed is in
+The three-game integer boxing cluster seed is in
 `evidence/integer-boxing-source-seed.json`, with its libcore and Dalvik source
 path reviewed in `docs/INTEGER_BOXING_SOURCE_MAP_API19.md`. It also remains
 `SOURCE_LOCATED` pending class-initialization and GC boundary closure.
 `source_mapping_queue.py` turns the four owner-indexed Books into
 `evidence/four-game-source-mapping-queue.json`: 779 observed method identities,
-114 shared by at least two games, and three entries currently `SOURCE_LOCATED`
+114 shared by at least two games, and seven entries currently `SOURCE_LOCATED`
 across pinned Framework and libcore source indexes. Its event counts are prioritization data, not a definition
 of Runtime scope or evidence of source closure.
 Frozen Bubble's earlier Book omitted sequence bounds because its old exported
@@ -64,7 +64,7 @@ Run the pipeline with:
     python3 tools/reference-lab/workflow.py union --books book-run-1.json book-run-2.json --out book-game.json
     python3 tools/reference-lab/workflow.py corpus-union --books book-game-1.json book-game-2.json --out book-corpus.json
     python3 tools/reference-lab/workflow.py closure --book book-game.json --index source-index.json --out source-manifests.json --require-closed
-    python3 tools/reference-lab/cluster_seed.py --corpus-manifest four-game-corpus-manifest.json --source-index source-index.json --canonical-name 'Lowner/Class;->method()V' --out cluster-seed.json
+    python3 tools/reference-lab/cluster_seed.py --corpus-manifest four-game-corpus-manifest.json --source-index source-index.json --semantic-cluster libcore.IntegerBoxing --out cluster-seed.json
     python3 tools/reference-lab/verify_source_index.py --index source-index.json --checkout /path/to/pinned/repository
 
 The TRACE run manifest must identify an instrumented dependency-mapper build

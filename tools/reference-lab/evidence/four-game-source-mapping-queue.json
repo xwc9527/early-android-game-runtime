@@ -553,10 +553,13 @@
         "libcore"
       ],
       "observed_event_count": 29815,
-      "source_mapping_status": "UNMAPPED",
-      "source_file": null,
-      "source_symbol": null,
-      "source_closure_complete": false
+      "source_mapping_status": "SOURCE_LOCATED",
+      "source_file": "luni/src/main/java/java/lang/Integer.java",
+      "source_symbol": "Integer.intValue()",
+      "source_closure_complete": false,
+      "source_repo": "platform/libcore",
+      "source_revision": "9b24ebf95f897a75c60c9c68d00694406afa6fbc",
+      "semantic_cluster": "libcore.IntegerBoxing"
     },
     {
       "canonical_name": "Landroid/graphics/Rect;->width()I",
@@ -3440,10 +3443,13 @@
         "libcore"
       ],
       "observed_event_count": 182,
-      "source_mapping_status": "UNMAPPED",
-      "source_file": null,
-      "source_symbol": null,
-      "source_closure_complete": false
+      "source_mapping_status": "SOURCE_LOCATED",
+      "source_file": "luni/src/main/java/java/lang/Integer.java",
+      "source_symbol": "Integer.floatValue()",
+      "source_closure_complete": false,
+      "source_repo": "platform/libcore",
+      "source_revision": "9b24ebf95f897a75c60c9c68d00694406afa6fbc",
+      "semantic_cluster": "libcore.IntegerBoxing"
     },
     {
       "canonical_name": "Lorg/xmlpull/v1/XmlPullParser;->getName()Ljava/lang/String;",
@@ -5165,10 +5171,13 @@
         "libcore"
       ],
       "observed_event_count": 48,
-      "source_mapping_status": "UNMAPPED",
-      "source_file": null,
-      "source_symbol": null,
-      "source_closure_complete": false
+      "source_mapping_status": "SOURCE_LOCATED",
+      "source_file": "luni/src/main/java/java/lang/Integer.java",
+      "source_symbol": "Integer.longValue()",
+      "source_closure_complete": false,
+      "source_repo": "platform/libcore",
+      "source_revision": "9b24ebf95f897a75c60c9c68d00694406afa6fbc",
+      "semantic_cluster": "libcore.IntegerBoxing"
     },
     {
       "canonical_name": "Ljava/lang/String;->startsWith(Ljava/lang/String;)Z",
@@ -5600,10 +5609,13 @@
         "libcore"
       ],
       "observed_event_count": 29,
-      "source_mapping_status": "UNMAPPED",
-      "source_file": null,
-      "source_symbol": null,
-      "source_closure_complete": false
+      "source_mapping_status": "SOURCE_LOCATED",
+      "source_file": "luni/src/main/java/java/lang/Integer.java",
+      "source_symbol": "Integer.equals(Object)",
+      "source_closure_complete": false,
+      "source_repo": "platform/libcore",
+      "source_revision": "9b24ebf95f897a75c60c9c68d00694406afa6fbc",
+      "semantic_cluster": "libcore.IntegerBoxing"
     },
     {
       "canonical_name": "Landroid/content/res/Resources;->getDisplayMetrics()Landroid/util/DisplayMetrics;",

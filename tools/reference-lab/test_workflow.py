@@ -6,7 +6,7 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from cluster_seed import build_seed
+from cluster_seed import build_cluster_seed, build_seed
 from mapper import build_book, corpus_union, union_books
 from source_mapping_queue import build_queue
 from source_closure import close_entry
@@ -28,6 +28,12 @@ class WorkflowTest(unittest.TestCase):
         self.assertEqual(result["cluster_source_manifests"]["libcore.IntegerBoxing"]["status"],
                          "SOURCE_LOCATED")
         self.assertFalse(result["may_authorize_pruning"])
+        cluster = build_cluster_seed(manifest, index, "libcore.IntegerBoxing")
+        self.assertEqual(len(cluster["manifests"]), 5)
+        self.assertEqual(len(cluster["seeds"]), 8)
+        self.assertEqual(sum(item["observed_count"] for item in cluster["seeds"]), 41776)
+        self.assertEqual(cluster["cluster_source_manifests"]["libcore.IntegerBoxing"]["status"],
+                         "SOURCE_LOCATED")
 
     def test_multi_repo_queue_keeps_source_and_authority_separate(self):
         root = ROOT / "tools/reference-lab"
@@ -38,7 +44,7 @@ class WorkflowTest(unittest.TestCase):
         queue = build_queue(corpus, indexes)
         self.assertEqual(len(queue["methods"]), 779)
         self.assertEqual(sum(item["source_mapping_status"] == "SOURCE_LOCATED"
-                             for item in queue["methods"]), 3)
+                             for item in queue["methods"]), 7)
         self.assertFalse(queue["migration_authorized"])
         with self.assertRaisesRegex(ValueError, "duplicate source location"):
             build_queue(corpus, indexes + indexes[:1])

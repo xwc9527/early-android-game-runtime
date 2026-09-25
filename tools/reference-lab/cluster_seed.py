@@ -37,7 +37,8 @@ def build_seed(corpus_manifest, source_index, canonical_name):
         if selected is not None and dep["dependency_id"] != selected["dependency_id"]:
             raise ValueError("cross-game dependency ID differs")
         selected = dep
-        seeds.append({"game": probe["name"], "book": path.as_posix(),
+        seeds.append({"game": probe["name"], "canonical_name": canonical_name,
+                      "book": path.as_posix(),
                       "book_sha256": hashlib.sha256(book_path.read_bytes()).hexdigest(),
                       "apk_sha256": book["apk"]["sha256"],
                       "dependency_id": dep["dependency_id"],
@@ -57,16 +58,37 @@ def build_seed(corpus_manifest, source_index, canonical_name):
     return artifact
 
 
+def build_cluster_seed(corpus_manifest, source_index, semantic_cluster):
+    names = sorted(name for name, entry in (source_index.get("entries") or {}).items()
+                   if entry.get("semantic_cluster") == semantic_cluster)
+    if not names:
+        raise ValueError("semantic cluster has no pinned entries")
+    parts = [build_seed(corpus_manifest, source_index, name) for name in names]
+    manifests = [part["manifests"][0] for part in parts]
+    artifact = {"schema_version": 1, "baseline": "android-4.4.4_r2",
+                "source_repo": source_index["source_repo"],
+                "source_index_revision": source_index["revision"],
+                "may_authorize_pruning": False,
+                "seeds": [seed for part in parts for seed in part["seeds"]],
+                "manifests": manifests,
+                "cluster_source_manifests": cluster_manifests(manifests, source_index)}
+    validate_source_manifests(artifact)
+    return artifact
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--corpus-manifest", required=True, type=Path)
     parser.add_argument("--source-index", required=True, type=Path)
-    parser.add_argument("--canonical-name", required=True)
+    selector = parser.add_mutually_exclusive_group(required=True)
+    selector.add_argument("--canonical-name")
+    selector.add_argument("--semantic-cluster")
     parser.add_argument("--out", required=True, type=Path)
     args = parser.parse_args()
-    artifact = build_seed(json.loads(args.corpus_manifest.read_text(encoding="utf-8")),
-                          json.loads(args.source_index.read_text(encoding="utf-8")),
-                          args.canonical_name)
+    corpus = json.loads(args.corpus_manifest.read_text(encoding="utf-8"))
+    index = json.loads(args.source_index.read_text(encoding="utf-8"))
+    artifact = (build_cluster_seed(corpus, index, args.semantic_cluster)
+                if args.semantic_cluster else build_seed(corpus, index, args.canonical_name))
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(artifact, indent=2) + "\n", encoding="utf-8")
 

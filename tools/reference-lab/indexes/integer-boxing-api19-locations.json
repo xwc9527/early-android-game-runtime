@@ -38,6 +38,58 @@
         "AGR boot-class Integer ownership and GC integration"
       ],
       "closure_reviewed": false
+    },
+    "Ljava/lang/Integer;->intValue()I": {
+      "owner_cluster": "libcore",
+      "semantic_cluster": "libcore.IntegerBoxing",
+      "source_repo": "platform/libcore",
+      "source_module": "libcore/luni",
+      "source_file": "luni/src/main/java/java/lang/Integer.java",
+      "source_symbol": "Integer.intValue()",
+      "source_files": ["luni/src/main/java/java/lang/Integer.java", "luni/src/main/java/java/lang/Number.java"],
+      "required_symbols": ["Integer.intValue()", "Integer.value"],
+      "data_structures": ["Integer.value"],
+      "blocking_edges": ["AGR boot-class Integer ownership and GC integration"],
+      "closure_reviewed": false
+    },
+    "Ljava/lang/Integer;->longValue()J": {
+      "owner_cluster": "libcore",
+      "semantic_cluster": "libcore.IntegerBoxing",
+      "source_repo": "platform/libcore",
+      "source_module": "libcore/luni",
+      "source_file": "luni/src/main/java/java/lang/Integer.java",
+      "source_symbol": "Integer.longValue()",
+      "source_files": ["luni/src/main/java/java/lang/Integer.java", "luni/src/main/java/java/lang/Number.java"],
+      "required_symbols": ["Integer.longValue()", "Integer.value"],
+      "data_structures": ["Integer.value"],
+      "blocking_edges": ["AGR boot-class Integer ownership and GC integration"],
+      "closure_reviewed": false
+    },
+    "Ljava/lang/Integer;->floatValue()F": {
+      "owner_cluster": "libcore",
+      "semantic_cluster": "libcore.IntegerBoxing",
+      "source_repo": "platform/libcore",
+      "source_module": "libcore/luni",
+      "source_file": "luni/src/main/java/java/lang/Integer.java",
+      "source_symbol": "Integer.floatValue()",
+      "source_files": ["luni/src/main/java/java/lang/Integer.java", "luni/src/main/java/java/lang/Number.java"],
+      "required_symbols": ["Integer.floatValue()", "Integer.value"],
+      "data_structures": ["Integer.value"],
+      "blocking_edges": ["AGR boot-class Integer ownership and GC integration"],
+      "closure_reviewed": false
+    },
+    "Ljava/lang/Integer;->equals(Ljava/lang/Object;)Z": {
+      "owner_cluster": "libcore",
+      "semantic_cluster": "libcore.IntegerBoxing",
+      "source_repo": "platform/libcore",
+      "source_module": "libcore/luni",
+      "source_file": "luni/src/main/java/java/lang/Integer.java",
+      "source_symbol": "Integer.equals(Object)",
+      "source_files": ["luni/src/main/java/java/lang/Integer.java", "luni/src/main/java/java/lang/Number.java"],
+      "required_symbols": ["Integer.equals(Object)", "Integer.value"],
+      "data_structures": ["Integer.value"],
+      "blocking_edges": ["AGR boot-class Integer ownership and GC integration"],
+      "closure_reviewed": false
     }
   }
 }
