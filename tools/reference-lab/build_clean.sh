@@ -39,7 +39,7 @@ sha256sum "$(dirname "$0")/api19-openjdk6-build.patch" \
 repo manifest -r -o "$out_dir/source-manifest.xml"
 {
     "$JAVA_HOME/bin/java" -version
-    "$make_root/bin/make" --version | head -n 1
+    "$make_root/bin/make" --version
     python --version
     uname -a
 } > "$out_dir/host-toolchain.txt" 2>&1

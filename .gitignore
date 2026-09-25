@@ -22,3 +22,5 @@ App/Resources/batch--*.so
 __pycache__/
 
 /probe.txt
+/queue-stdout.log
+/queue-stderr.log
