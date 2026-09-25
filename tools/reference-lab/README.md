@@ -67,6 +67,10 @@ Run the pipeline with:
     python3 tools/reference-lab/cluster_seed.py --corpus-manifest four-game-corpus-manifest.json --source-index source-index.json --semantic-cluster libcore.IntegerBoxing --out cluster-seed.json
     python3 tools/reference-lab/verify_source_index.py --index source-index.json --checkout /path/to/pinned/repository
 
+For a cross-repository source edge, also pass
+`--external-checkout platform/dalvik=/path/to/pinned/dalvik`. The verifier
+checks the external Git revision and each referenced file digest.
+
 The TRACE run manifest must identify an instrumented dependency-mapper build
 of android-4.4.4_r2, its image SHA-256, the APK SHA-256, scenario, and
 the event file SHA-256. The importer rejects mismatched identity or hashes.

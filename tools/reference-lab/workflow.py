@@ -121,12 +121,24 @@ def validate_source_manifests(document):
     for item in document.get("manifests", []):
         if item.get("migration_authorized", False) is not False:
             raise ValueError("entry cannot authorize a cluster migration")
+        for edge in item.get("cross_cluster_source_edges") or []:
+            if (not isinstance(edge, dict) or not edge.get("edge") or
+                    not edge.get("semantic_cluster") or not edge.get("source_repo") or
+                    not edge.get("source_file") or not edge.get("source_symbol") or
+                    not isinstance(edge.get("revision"), str) or len(edge["revision"]) != 40 or
+                    not isinstance(edge.get("source_sha256"), str) or
+                    len(edge["source_sha256"]) != 64 or
+                    edge.get("status") not in ("SOURCE_LOCATED", "SOURCE_CLOSED")):
+                raise ValueError("invalid cross-cluster source edge")
         if item.get("status") not in ("UNRESOLVED", "PARTIAL", "SOURCE_LOCATED",
                                       "SOURCE_CLOSED", "BOUNDARY_CANDIDATE", "BOUNDARY"):
             raise ValueError("invalid source closure status")
         if item["status"] in ("SOURCE_CLOSED", "BOUNDARY"):
             if item.get("blocking_edges"):
                 raise ValueError("closed source manifest still has blocking edges")
+            if any(edge["status"] != "SOURCE_CLOSED"
+                   for edge in (item.get("cross_cluster_source_edges") or [])):
+                raise ValueError("closed source manifest has open external source edge")
             evidence = item.get("closure_evidence") or {}
             if not all(evidence.get(key) for key in ("reviewed_by", "closure_notes")):
                 raise ValueError("closed source manifest lacks review evidence")
@@ -223,6 +235,7 @@ def cluster_manifests(results, index):
             "required_symbols": [], "data_structures": [], "init_deps": [],
             "registration_deps": [], "cross_cluster_deps": [], "excluded_deps": [],
             "service_boundaries": [], "host_adaptation_points": [], "blocking_edges": [],
+            "cross_cluster_source_edges": [],
             "closure_evidence": None,
         })
         if cluster["owner_cluster"] != item.get("owner_cluster"):
@@ -233,6 +246,12 @@ def cluster_manifests(results, index):
                     "registration_deps", "cross_cluster_deps", "excluded_deps",
                     "service_boundaries", "host_adaptation_points", "blocking_edges"):
             cluster[key] = sorted(set(cluster[key]) | set(item[key]))
+        by_edge = {edge["edge"]: edge for edge in cluster["cross_cluster_source_edges"]}
+        for edge in item.get("cross_cluster_source_edges") or []:
+            if edge["edge"] in by_edge and by_edge[edge["edge"]] != edge:
+                raise ValueError("cross-cluster source edge has conflicting provenance")
+            by_edge[edge["edge"]] = edge
+        cluster["cross_cluster_source_edges"] = [by_edge[key] for key in sorted(by_edge)]
     reviews = index.get("cluster_reviews") or {}
     for name, cluster in clusters.items():
         cluster["dependency_ids"].sort()

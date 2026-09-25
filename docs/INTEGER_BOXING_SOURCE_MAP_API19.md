@@ -6,6 +6,8 @@ The semantic owner is `platform/libcore@9b24ebf95f897a75c60c9c68d00694406afa6fbc
 
 The cross-cluster VM owner is `platform/dalvik@36e356c96640775f0a3f167bd2426ea0f0093b8b`: `vm/oo/Class.cpp:dvmInitClass` runs superclass initialization, initializes static fields, and invokes `<clinit>`; `vm/alloc/Alloc.cpp:dvmAllocObject` allocates initialized-class instances; `vm/alloc/MarkSweep.cpp:scanStaticFields` keeps the `SMALL_VALUES` array reachable. A source port must preserve these class and GC contracts or explicitly depend on a separately closed Dalvik cluster.
 
+All three cross-cluster source edges are pinned in the libcore index and verified against the local Dalvik checkout by `verify_source_index.py`. Each remains `SOURCE_LOCATED`: the exact source file is known, while the dependent Dalvik semantic cluster closure and AGR integration contract are still open.
+
 The current AGR counterpart in `Runtime/DexLoom/AndroidMini/dx_android_framework.c` allocates a fresh boxed object on every `Integer.valueOf` call. `Runtime/DexLoom/VM/dx_vm.c` has static-field GC root scanning but registers a synthetic `Integer` class as already initialized. This is a source-backed difference, not yet a measured API19-to-AGR differential. No production change is authorized while class initialization, static-field identity, and GC integration remain unclosed.
 
 All five seed entries and their cluster remain `SOURCE_LOCATED`; `MIGRATION_AUTHORIZED` is false. Next is closure of the Dalvik contracts and the full boxing cluster Source Manifest. Only then can the source-owned implementation replace the synthetic boxing path and enter a focused CLEAN differential.

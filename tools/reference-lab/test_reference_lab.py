@@ -172,6 +172,9 @@ class ReferenceLabTest(unittest.TestCase):
         pinned["blocking_edges"] = ["unresolved host boundary"]
         self.assertEqual(close_entry(entry, index)["status"], "SOURCE_LOCATED")
         pinned.pop("blocking_edges")
+        pinned["cross_cluster_source_edges"] = [{"status": "SOURCE_LOCATED"}]
+        self.assertEqual(close_entry(entry, index)["status"], "SOURCE_LOCATED")
+        pinned.pop("cross_cluster_source_edges")
         pinned["closure_evidence"]["edge_reviews"].pop("androidfw Asset")
         self.assertEqual(close_entry(entry, index)["status"], "SOURCE_LOCATED")
         pinned["closure_evidence"]["edge_reviews"]["androidfw Asset"] = {

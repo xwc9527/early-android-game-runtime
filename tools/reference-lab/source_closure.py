@@ -17,6 +17,7 @@ LIST_FIELDS = (
     "service_boundaries",
     "host_adaptation_points",
     "blocking_edges",
+    "cross_cluster_source_edges",
 )
 
 
@@ -66,6 +67,9 @@ def reviewed_edge_contracts(item, evidence):
 def reviewed_source_set(pinned, index, evidence):
     """A multi-file closure must pin every file and account for every listed edge."""
     if pinned.get("blocking_edges"):
+        return False
+    if any(not isinstance(edge, dict) or edge.get("status") != "SOURCE_CLOSED"
+           for edge in (pinned.get("cross_cluster_source_edges") or [])):
         return False
     files = pinned.get("source_files") or []
     if len(files) <= 1:

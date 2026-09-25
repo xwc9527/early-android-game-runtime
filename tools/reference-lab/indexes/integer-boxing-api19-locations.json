@@ -32,6 +32,38 @@
         "Dalvik object allocation and constructor invocation",
         "Dalvik static field and array GC roots"
       ],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "Dalvik class initialization for Integer.<clinit>",
+          "semantic_cluster": "Dalvik.ClassInitialization",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/oo/Class.cpp",
+          "source_symbol": "dvmInitClass",
+          "source_sha256": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "Dalvik object allocation and constructor invocation",
+          "semantic_cluster": "Dalvik.ObjectAllocation",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/alloc/Alloc.cpp",
+          "source_symbol": "dvmAllocObject",
+          "source_sha256": "70bb6375a088dab380c31e5ab9959461f1c841f88c5ef163caacd1b26f7da02f",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "Dalvik static field and array GC roots",
+          "semantic_cluster": "Dalvik.GCRoots",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/alloc/MarkSweep.cpp",
+          "source_symbol": "scanStaticFields",
+          "source_sha256": "bf05e421a49accf1209bb12e83bb2df740d6348d9b6c775f24cebadc6b7b8ab3",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
       "blocking_edges": [
         "Dalvik class initialization source cluster closure",
         "Dalvik allocation and static-root source cluster closure",
