@@ -10,8 +10,9 @@ import json
 from pathlib import Path
 
 from mapper import build_book, corpus_union, union_books, write_book
-from source_closure import (close_entry, closure_work_queue, reviewed_edge_contracts,
-                            source_derived_clusters)
+from source_closure import (close_entry, closure_work_queue, prerequisite_relations_allow_closure,
+                            reviewed_edge_contracts, source_derived_clusters,
+                            substrate_prerequisite_targets, validate_prerequisite_relations)
 from static_scan import apk_identity, scan_apk
 
 
@@ -119,6 +120,7 @@ def validate_book(book):
 def validate_source_manifests(document):
     if document.get("schema_version") != 1:
         raise ValueError("unsupported Source Manifest")
+    validate_prerequisite_relations(document)
     for item in document.get("manifests", []):
         if item.get("migration_authorized", False) is not False:
             raise ValueError("entry cannot authorize a cluster migration")
@@ -229,7 +231,8 @@ def validate_source_manifests(document):
     required_derived.update(edge.get("semantic_cluster")
                             for item in derived.values()
                             for edge in (item.get("cross_cluster_source_edges") or []))
-    if not required_derived.issubset(derived):
+    if not (required_derived - substrate_prerequisite_targets(
+            document.get("manifests", []))).issubset(derived):
         raise ValueError("source-derived manifest omits a pinned source edge")
     for name, cluster in derived.items():
         if (cluster.get("semantic_cluster") != name or
@@ -320,6 +323,15 @@ def cluster_manifests(results, index):
                 raise ValueError("cross-cluster source edge has conflicting provenance")
             by_edge[edge["edge"]] = edge
         cluster["cross_cluster_source_edges"] = [by_edge[key] for key in sorted(by_edge)]
+        if any("prerequisite_edges" in item for item in results
+               if item.get("semantic_cluster") == name):
+            merged = {}
+            for item in results:
+                if item.get("semantic_cluster") != name:
+                    continue
+                for edge in item.get("prerequisite_edges") or []:
+                    merged[edge["edge"]] = edge
+            cluster["prerequisite_edges"] = [merged[key] for key in sorted(merged)]
     reviews = index.get("cluster_reviews") or {}
     for name, cluster in clusters.items():
         cluster["dependency_ids"].sort()
@@ -330,6 +342,9 @@ def cluster_manifests(results, index):
         if (cluster["blocking_edges"] or known != cluster["entry_names"] or not all(
                 item["status"] in ("SOURCE_CLOSED", "BOUNDARY") for item in members)):
             continue
+        if not prerequisite_relations_allow_closure(
+                [edge for item in members for edge in (item.get("prerequisite_edges") or [])]):
+            continue
         cluster["status"] = "SOURCE_CLOSED"
         review = reviews.get(name) or {}
         files = cluster["source_files"]
@@ -337,6 +352,8 @@ def cluster_manifests(results, index):
                                     "cross_cluster_deps", "excluded_deps",
                                     "service_boundaries", "host_adaptation_points")
                  for edge in cluster[field]}
+        edges.update(edge["edge"] for edge in cluster.get("prerequisite_edges") or []
+                     if isinstance(edge, dict) and edge.get("edge"))
         indexed = index.get("source_file_sha256") or {}
         digests = review.get("source_file_sha256") or {}
         if (review.get("closure_reviewed") is True and

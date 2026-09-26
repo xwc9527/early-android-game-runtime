@@ -84,6 +84,41 @@ At that boundary the closure records the app-process observable request,
 response, callbacks, lifecycle, and errors. Android-owned behavior before the
 boundary remains in the source cluster.
 
+## Shared runtime substrate
+
+An upper cluster stops at the first edge that enters a confirmed shared runtime substrate owner. Dependencies inside that owner belong to the substrate closure. They are not added to the upper cluster's source closure.
+
+Confirmed substrate owners are:
+
+- `Libcore.BootClassLoading`
+- `Dalvik.BootClassResolution`
+- `Dalvik.ClassInitialization`
+- `Dalvik.ClassVerification`
+- `Dalvik.Monitor`
+- `Dalvik.ThreadState`
+- `Dalvik.MethodInvocation`
+- `Dalvik.ObjectAllocation`
+- `Dalvik.StaticFieldArrayRoots`
+- `Dalvik.JNINativeBinding`
+- `Bionic.PthreadCondition`
+- `Bionic.ClockGettime`
+
+`Framework.ZygotePreload` is not substrate. It remains the Integer startup-environment source owner. `Framework.ZygoteVMOptions` and `AndroidNative.InitZygote` keep their existing narrow source-owner identity. Any additional substrate owner requires explicit confirmation before it is added to this list.
+
+The upper cluster records the crossing on `prerequisite_edges`. This relationship is not an owner source status. Owner records keep `SOURCE_LOCATED` or `SOURCE_CLOSED`. The relationship has exactly three states:
+
+| Relationship | Meaning |
+|---|---|
+| `UNRESOLVED` | The substrate crossing is recorded and recursion stops. The upper cluster cannot close or authorize migration. |
+| `PREREQUISITE_CLOSED` | The public owner is independently closed in its own closure and production contract. The edge satisfies one upper-cluster prerequisite. The upper cluster still does not expand that owner's internals. |
+| `REOPEN_REQUIRED` | Pinned API19 source shows the existing CLOSED or STABLE contract is insufficient or divergent. Recursion stops. The upper cluster cannot close or authorize migration. |
+
+`PREREQUISITE_CLOSED` does not lower `MIGRATION_AUTHORIZED`. The upper cluster still needs its own source files, inline edges, boundary contracts, zero unresolved edges, and cluster review. `UNRESOLVED` and `REOPEN_REQUIRED` block both `SOURCE_CLOSED` and `MIGRATION_AUTHORIZED`.
+
+A private copy of a substrate source file, `SERVICE_HLE`, an excluded HLE boundary, or `GAME_PATCH` cannot satisfy or skip the prerequisite. A substrate defect is repaired by reopening that public owner, then by its own source repair, differential, and CLOSE. The upper cluster references that result afterward. Recording `REOPEN_REQUIRED` is not itself a reopen. A real reopen is a separate step that names the module, evidence, and reopen condition.
+
+Existing Integer and Resources source indexes are not reclassified by this rule's introduction. Both clusters remain `SOURCE_LOCATED` with `MIGRATION_AUTHORIZED=false` until a later change moves their real substrate crossings onto `prerequisite_edges`.
+
 ## What is not an input
 
 These files are history. Active governance and later Work must not read them as production migration input or as a task decision:

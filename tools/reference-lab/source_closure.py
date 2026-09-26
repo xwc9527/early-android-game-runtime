@@ -11,6 +11,26 @@ MIGRATION_TYPES = ("SOURCE_PORT", "AOSP_NATIVE_ADAPT", "HOST_BOUNDARY", "SERVICE
 FORBIDDEN = ("ORIGINAL_IMPLEMENTATION", "APPROXIMATION", "GAME_PATCH", "SYNTHETIC_ANDROID_BEHAVIOR")
 EXTERNAL_DEPENDENCY_FIELDS = ("init_deps", "registration_deps", "cross_cluster_deps",
                               "excluded_deps", "service_boundaries", "host_adaptation_points")
+# Confirmed shared runtime substrate. Adding an owner requires an explicit confirmation.
+SHARED_RUNTIME_SUBSTRATE_OWNERS = frozenset((
+    "Libcore.BootClassLoading",
+    "Dalvik.BootClassResolution",
+    "Dalvik.ClassInitialization",
+    "Dalvik.ClassVerification",
+    "Dalvik.Monitor",
+    "Dalvik.ThreadState",
+    "Dalvik.MethodInvocation",
+    "Dalvik.ObjectAllocation",
+    "Dalvik.StaticFieldArrayRoots",
+    "Dalvik.JNINativeBinding",
+    "Bionic.PthreadCondition",
+    "Bionic.ClockGettime",
+))
+PREREQUISITE_RELATIONSHIPS = ("UNRESOLVED", "PREREQUISITE_CLOSED", "REOPEN_REQUIRED")
+OWNER_SOURCE_STATUSES = ("SOURCE_LOCATED", "SOURCE_CLOSED")
+UPPER_CLOSURE_STATUSES = ("SOURCE_CLOSED", "BOUNDARY", "MIGRATION_AUTHORIZED")
+PREREQUISITE_EDGE_FIELDS = ("edge", "semantic_cluster", "relationship", "owner_source_status",
+                            "source_repo", "revision", "source_file", "source_symbol", "source_sha256")
 LIST_FIELDS = (
     "source_files",
     "required_symbols",
@@ -117,21 +137,147 @@ def external_owner_digest(owner):
                                      ensure_ascii=False).encode("utf-8")).hexdigest()
 
 
+def substrate_prerequisite_targets(manifests):
+    """Owners named by a prerequisite relationship. Legacy documents have none."""
+    targets = set()
+    for item in manifests:
+        if not isinstance(item, dict):
+            continue
+        for edge in item.get("prerequisite_edges") or []:
+            if isinstance(edge, dict) and edge.get("semantic_cluster") in SHARED_RUNTIME_SUBSTRATE_OWNERS:
+                targets.add(edge["semantic_cluster"])
+    return targets
+
+
+def prerequisite_relations_allow_closure(edges):
+    """Missing edges keep the legacy closure path. A declared relationship must be closed."""
+    if not edges:
+        return True
+    return all(isinstance(edge, dict)
+               and edge.get("relationship") == "PREREQUISITE_CLOSED"
+               and edge.get("owner_source_status") == "SOURCE_CLOSED"
+               and edge.get("semantic_cluster") in SHARED_RUNTIME_SUBSTRATE_OWNERS
+               for edge in edges)
+
+
+def validate_prerequisite_edge(edge):
+    """Relationship state stays off the owner SOURCE_LOCATED|SOURCE_CLOSED field."""
+    if not isinstance(edge, dict):
+        raise ValueError("prerequisite edge must be an object")
+    if "status" in edge:
+        raise ValueError("prerequisite relationship must not use owner source status")
+    for key in PREREQUISITE_EDGE_FIELDS:
+        if not edge.get(key):
+            raise ValueError("prerequisite edge lacks " + key)
+    if edge["semantic_cluster"] not in SHARED_RUNTIME_SUBSTRATE_OWNERS:
+        raise ValueError("substrate owner is not confirmed: " + edge["semantic_cluster"])
+    if edge["relationship"] not in PREREQUISITE_RELATIONSHIPS:
+        raise ValueError("invalid prerequisite relationship")
+    if edge["owner_source_status"] not in OWNER_SOURCE_STATUSES:
+        raise ValueError("invalid substrate owner source status")
+    if edge["relationship"] == "PREREQUISITE_CLOSED" and edge["owner_source_status"] != "SOURCE_CLOSED":
+        raise ValueError("closed prerequisite requires a closed substrate owner")
+    if not isinstance(edge["revision"], str) or len(edge["revision"]) != 40:
+        raise ValueError("prerequisite edge lacks exact source revision")
+    if not isinstance(edge["source_sha256"], str) or len(edge["source_sha256"]) != 64:
+        raise ValueError("prerequisite edge lacks source digest")
+    internals = edge.get("internal_clusters", [])
+    if (not isinstance(internals, list) or
+            any(name not in SHARED_RUNTIME_SUBSTRATE_OWNERS for name in internals)):
+        raise ValueError("substrate internal clusters are not confirmed owners")
+
+
+def reject_substrate_bypass(item):
+    """A private file, HLE boundary, or forbidden migration type cannot satisfy the prerequisite."""
+    edges = item.get("prerequisite_edges") or []
+    if not edges:
+        return
+    migration = item.get("migration_type")
+    if migration in FORBIDDEN or migration == "SERVICE_HLE":
+        raise ValueError("migration type cannot bypass a shared substrate prerequisite")
+    if item.get("status") == "BOUNDARY":
+        raise ValueError("service boundary cannot bypass a shared substrate prerequisite")
+    owned = set()
+    for edge in edges:
+        if not isinstance(edge, dict):
+            continue
+        if edge.get("source_file"):
+            owned.add(edge["source_file"])
+        for path in edge.get("owner_source_files") or []:
+            owned.add(path)
+    if owned & set(item.get("source_files") or []):
+        raise ValueError("private source file cannot bypass a shared substrate prerequisite")
+    reviews = (item.get("closure_evidence") or {}).get("edge_reviews") or {}
+    if isinstance(reviews, dict):
+        for review in reviews.values():
+            if (isinstance(review, dict) and
+                    review.get("semantic_cluster") in SHARED_RUNTIME_SUBSTRATE_OWNERS and
+                    review.get("disposition") == "EXCLUDED_BOUNDARY"):
+                raise ValueError("HLE boundary cannot bypass a shared substrate prerequisite")
+
+
+def validate_prerequisite_relations(document):
+    """Validate upper-cluster prerequisite relationships without reclassifying legacy documents."""
+    derived = document.get("source_derived_clusters") or {}
+    items = list(document.get("manifests") or [])
+    items.extend((document.get("cluster_source_manifests") or {}).values())
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        edges = item.get("prerequisite_edges")
+        crossing = [edge for edge in (item.get("cross_cluster_source_edges") or [])
+                    if isinstance(edge, dict) and
+                    edge.get("semantic_cluster") in SHARED_RUNTIME_SUBSTRATE_OWNERS]
+        closed_upper = item.get("status") in UPPER_CLOSURE_STATUSES
+        if edges is None and closed_upper and crossing:
+            raise ValueError("shared substrate crossing requires a prerequisite relationship")
+        if not edges:
+            continue
+        if not isinstance(edges, list):
+            raise ValueError("prerequisite edges must be a list")
+        reject_substrate_bypass(item)
+        seen = {}
+        for edge in edges:
+            validate_prerequisite_edge(edge)
+            name = edge["semantic_cluster"]
+            if name in seen and seen[name] != edge["relationship"]:
+                raise ValueError("conflicting substrate prerequisite relationship")
+            seen[name] = edge["relationship"]
+            absorbed = [name] + list(edge.get("internal_clusters") or [])
+            if any(cluster in derived for cluster in absorbed):
+                raise ValueError("upper cluster absorbed shared substrate internals")
+        if closed_upper and any(edge["relationship"] != "PREREQUISITE_CLOSED" for edge in edges):
+            raise ValueError("substrate prerequisite blocks upper closure")
+        if closed_upper and not {edge.get("semantic_cluster") for edge in crossing}.issubset(
+                {edge["semantic_cluster"] for edge in edges
+                 if edge["relationship"] == "PREREQUISITE_CLOSED"}):
+            raise ValueError("shared substrate crossing requires a closed prerequisite")
+
+
+def _matches_pinned_owner(edge, owner):
+    return (isinstance(owner, dict) and
+            owner.get("source_repo") == edge.get("source_repo") and
+            owner.get("revision") == edge.get("revision") and
+            owner.get("source_file_sha256", {}).get(edge.get("source_file")) == edge.get("source_sha256") and
+            edge.get("source_symbol") in (owner.get("required_symbols") or []))
+
+
 def source_derived_clusters(manifests, index):
-    """Expand only pinned source edges of observed entries, retaining their parent IDs."""
+    """Expand pinned source edges, stopping at a declared shared-substrate prerequisite."""
     owners = index.get("external_cluster_sources") or {}
+    prerequisite_owners = substrate_prerequisite_targets(manifests)
     found = {}
 
     def visit(edge, parent_id, path):
         name = edge.get("semantic_cluster")
         owner = owners.get(name)
+        if name in prerequisite_owners:
+            if not _matches_pinned_owner(edge, owner):
+                raise ValueError("substrate prerequisite differs from pinned owner: " + str(name))
+            return
         if not isinstance(owner, dict):
             raise ValueError("source-derived edge lacks a pinned owner: " + str(name))
-        if (owner.get("source_repo") != edge.get("source_repo") or
-                owner.get("revision") != edge.get("revision") or
-                owner.get("source_file_sha256", {}).get(edge.get("source_file")) !=
-                edge.get("source_sha256") or
-                edge.get("source_symbol") not in (owner.get("required_symbols") or [])):
+        if not _matches_pinned_owner(edge, owner):
             raise ValueError("source-derived edge differs from pinned owner: " + name)
         row = found.setdefault(name, {**owner, "semantic_cluster": name,
                                       "provenance": "SOURCE_DERIVED",
@@ -185,6 +331,8 @@ def closure_work_queue(manifests, derived):
 def reviewed_source_set(pinned, index, evidence):
     """A multi-file closure must pin every file and account for every listed edge."""
     if pinned.get("blocking_edges"):
+        return False
+    if not prerequisite_relations_allow_closure(pinned.get("prerequisite_edges")):
         return False
     if any(not external_edge_closed(edge, index)
            for edge in (pinned.get("cross_cluster_source_edges") or [])):
@@ -260,6 +408,8 @@ def close_entry(entry, index, migration_type="SOURCE_PORT"):
                  "source_file", "source_symbol"):
         if pinned.get(name):
             manifest[name] = pinned[name]
+    if "prerequisite_edges" in pinned:
+        manifest["prerequisite_edges"] = [dict(edge) for edge in pinned.get("prerequisite_edges") or []]
     manifest["status"] = "SOURCE_LOCATED" if manifest["source_files"] and manifest["required_symbols"] else "PARTIAL"
     evidence = pinned.get("closure_evidence")
     revision = index.get("revision")
@@ -295,4 +445,8 @@ def close_entry(entry, index, migration_type="SOURCE_PORT"):
             manifest["status"] = "BOUNDARY" if complete_contract else "BOUNDARY_CANDIDATE"
         else:
             manifest["status"] = "BOUNDARY_CANDIDATE"
+    if manifest.get("prerequisite_edges"):
+        for edge in manifest["prerequisite_edges"]:
+            validate_prerequisite_edge(edge)
+        reject_substrate_bypass(manifest)
     return manifest
