@@ -14,7 +14,7 @@ from source_closure import (
     external_owner_digest,
     source_derived_clusters,
 )
-from substrate_contracts import require_production_contract
+from substrate_contracts import require_exact_crossing_closure, require_production_contract, validate_committed_crossing_closures
 from workflow import cluster_manifests, validate_source_manifests
 
 PHASE3_RUN = "36039287996"
@@ -325,17 +325,17 @@ class SubstratePrerequisiteTest(unittest.TestCase):
             "source_revision": REV,
             "source_owner_digest": contracts["contracts"][0]["source_owner_digest"]}}
         for bound in (contracts, handwritten):
-            with self.assertRaisesRegex(ValueError, "no API19 CLEAN differential authority"):
+            with self.assertRaisesRegex(ValueError, "broad owner closure does not cover the exact crossing"):
                 close_entry(entry, index, contracts=bound, production_evidence=evidence, modules=modules)
         manifest = self._closed_manifest(index)
-        with self.assertRaisesRegex(ValueError, "no API19 CLEAN differential authority"):
+        with self.assertRaisesRegex(ValueError, "broad owner closure does not cover the exact crossing"):
             source_derived_clusters([manifest], index, contracts, evidence, modules)
-        with self.assertRaisesRegex(ValueError, "no API19 CLEAN differential authority"):
+        with self.assertRaisesRegex(ValueError, "broad owner closure does not cover the exact crossing"):
             closure_work_queue([manifest], {}, index, contracts, evidence, modules)
         claimed = {"schema_version": 1, "manifests": [manifest], "source_derived_clusters": {},
                    "closure_work_queue": []}
         claimed["manifests"][0]["status"] = "SOURCE_CLOSED"
-        with self.assertRaisesRegex(ValueError, "no API19 CLEAN differential authority"):
+        with self.assertRaisesRegex(ValueError, "broad owner closure does not cover the exact crossing"):
             validate_source_manifests(claimed, index, contracts, evidence, modules)
 
     def test_unresolved_and_reopen_block_upper_closure_and_authorization(self):
@@ -370,7 +370,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
             "origin_dependency_ids": ["JAVA_METHOD:box"],
             "source_paths": [UPPER + " -> Dalvik.ClassInitialization -> Dalvik.Monitor"]}}
         contracts, modules = self._contract(index)
-        with self.assertRaisesRegex(ValueError, "no API19 CLEAN differential authority"):
+        with self.assertRaisesRegex(ValueError, "broad owner closure does not cover the exact crossing"):
             validate_source_manifests(claimed, index, contracts, modules=modules)
 
     def test_private_file_hle_and_game_patch_cannot_bypass(self):
@@ -567,22 +567,22 @@ class SubstratePrerequisiteTest(unittest.TestCase):
                 close_entry(entry, index, contracts=broken, modules=modules)
         unbound = json.loads(json.dumps(contracts))
         unbound["contracts"][0]["source_owner_digest"] = "f" * 64
-        with self.assertRaisesRegex(ValueError, "does not bind the source owner"):
+        with self.assertRaisesRegex(ValueError, "broad owner closure does not cover the exact crossing"):
             close_entry(entry, index, contracts=unbound, modules=modules)
         unknown = json.loads(json.dumps(contracts))
         unknown["contracts"][0]["closure_run"] = "not-a-recorded-run"
-        with self.assertRaisesRegex(ValueError, "closure run is not a recorded VALID_PASS"):
+        with self.assertRaisesRegex(ValueError, "broad owner closure does not cover the exact crossing"):
             close_entry(entry, index, contracts=unknown, modules=modules)
         invalid = json.loads(json.dumps(contracts))
         invalid["contracts"][0].update({
             "closure_run": "35469009073",
             "tested_commit": "15dcd2223eaead03837a4645fbc5d044fb2b3502",
             "tested_tree": "a372ece3c0b62f694abd268a6adf596c878fe0c4"})
-        with self.assertRaisesRegex(ValueError, "closure run is not a recorded VALID_PASS"):
+        with self.assertRaisesRegex(ValueError, "broad owner closure does not cover the exact crossing"):
             close_entry(entry, index, contracts=invalid, modules=modules)
         mismatched = json.loads(json.dumps(contracts))
         mismatched["contracts"][0]["tested_tree"] = "a" * 40
-        with self.assertRaisesRegex(ValueError, "closure run is not a recorded VALID_PASS"):
+        with self.assertRaisesRegex(ValueError, "broad owner closure does not cover the exact crossing"):
             close_entry(entry, index, contracts=mismatched, modules=modules)
 
     def test_git_identity_is_required_and_clean_authority_stays_absent(self):
@@ -626,14 +626,20 @@ class SubstratePrerequisiteTest(unittest.TestCase):
                 "Dalvik.ClassInitialization", REV, "1" * 64,
                 {"schema_version": 1, "contracts": [], "reopens": []})
 
-    def test_substrate_production_registry_starts_empty(self):
+    def test_whole_owner_production_registry_stays_empty(self):
         registry = json.loads((ROOT / "ci/governance/substrate-production-contracts.json").read_text())
-        self.assertEqual(registry, {"schema_version": 1, "contracts": []})
+        self.assertEqual(registry["contracts"], [])
         self.assertNotIn("reopens", registry)
         encoded = json.dumps(registry)
         self.assertNotIn("PRODUCTION_CLOSED", encoded)
+        self.assertEqual([item["semantic_cluster"] for item in registry["crossing_closures"]],
+                         ["Bionic.PthreadCondition"])
+        self.assertEqual(registry["crossing_closures"][0]["status"], "CROSSING_CLOSED")
+        self.assertEqual(registry["crossing_closures"][0]["closure_target"],
+                         "Dalvik.ThreadState self-suspend crossing")
         for name in SHARED_RUNTIME_SUBSTRATE_OWNERS:
-            self.assertNotIn(name, encoded)
+            if name not in ("Bionic.PthreadCondition", "Dalvik.ThreadState"):
+                self.assertNotIn(name, encoded)
 
     def test_real_integer_crossings_stay_unresolved_and_resources_binding_requires_reopen(self):
         evidence = ROOT / "tools/reference-lab/evidence"
@@ -805,20 +811,18 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         owner = integer_index["external_cluster_sources"]["Dalvik.ThreadState"]
         self.assertEqual(owner["status"], "SOURCE_LOCATED")
         self.assertIs(owner["closure_reviewed"], False)
-        self.assertNotIn("PREREQUISITE_CLOSED", json.dumps(owner))
         self.assertNotIn("waitCond", owner["required_symbols"])
         self.assertNotIn("waitMutex", owner["required_symbols"])
         self.assertEqual([(edge["semantic_cluster"], edge["source_file"], edge["source_symbol"], edge["relationship"])
                           for edge in owner["prerequisite_edges"]], [
-            ("Bionic.PthreadCondition", "libc/bionic/pthread.c", "pthread_cond_wait", "REOPEN_REQUIRED")])
+            ("Bionic.PthreadCondition", "libc/bionic/pthread.c", "pthread_cond_wait", "PREREQUISITE_CLOSED")])
         self.assertEqual(owner["prerequisite_edges"][0]["owner_source_status"], "SOURCE_CLOSED")
         self.assertEqual(owner["cross_cluster_source_edges"][0]["status"], "SOURCE_CLOSED")
         self.assertEqual(owner["cross_cluster_source_edges"][0]["edge"],
                          "self-suspend on the thread suspend-count condition")
         self.assertTrue(all("UNRESOLVED" not in edge for edge in owner["blocking_edges"]))
         self.assertNotIn("UNRESOLVED crossing", owner["closure_evidence"]["closure_notes"])
-        self.assertEqual(owner["closure_evidence"]["unresolved_dependency_edges"],
-                         ["self-suspend on the thread suspend-count condition"])
+        self.assertEqual(owner["closure_evidence"]["unresolved_dependency_edges"], [])
         binding = resource_index["external_cluster_sources"]["Dalvik.JNINativeBinding"]
         thread_edge = next(edge for edge in binding["prerequisite_edges"]
                            if edge["edge"] == "JNI thread state around RegisterNatives")
@@ -880,7 +884,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         thread = index["external_cluster_sources"]["Dalvik.ThreadState"]
         self.assertEqual(thread["status"], "SOURCE_LOCATED")
         self.assertIs(thread["closure_reviewed"], False)
-        self.assertEqual(thread["prerequisite_edges"][0]["relationship"], "REOPEN_REQUIRED")
+        self.assertEqual(thread["prerequisite_edges"][0]["relationship"], "PREREQUISITE_CLOSED")
         self.assertEqual(thread["prerequisite_edges"][0]["owner_source_status"], "SOURCE_CLOSED")
         self.assertEqual(thread["cross_cluster_source_edges"][0]["status"], "SOURCE_CLOSED")
         monitor = index["external_cluster_sources"]["Dalvik.Monitor"]
@@ -1017,6 +1021,84 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         mismatched = cluster_manifests([close_entry(entry, source)], source)
         self.assertEqual(mismatched["Framework.WindowContent"]["status"], "SOURCE_CLOSED")
         self.assertFalse(mismatched["Framework.WindowContent"]["migration_authorized"])
+
+    def test_suspend_crossing_closure_is_exact_and_rejects_substitutes(self):
+        index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text(encoding="utf-8"))
+        registry = json.loads((ROOT / "ci/governance/substrate-production-contracts.json").read_text(encoding="utf-8"))
+        declarer = index["external_cluster_sources"]["Dalvik.ThreadState"]
+        substrate = index["external_cluster_sources"]["Bionic.PthreadCondition"]
+        digest = external_owner_digest(substrate)
+        edge = declarer["prerequisite_edges"][0]
+        crossing = declarer["cross_cluster_source_edges"][0]
+        require_exact_crossing_closure(
+            edge, crossing, declarer, substrate["revision"], digest, registry)
+        validate_committed_crossing_closures(registry)
+        clock = bionic_clock_gettime_source_manifest(index)
+        self.assertTrue(clock["source_derived_clusters"]["Bionic.ClockGettime"]["migration_authorized"])
+        self.assertNotIn("PRODUCTION_CLOSED", json.dumps(substrate))
+
+        def reject(message, registry_copy=None, edge_copy=None, crossing_copy=None, declarer_copy=None):
+            with self.assertRaisesRegex(ValueError, message):
+                require_exact_crossing_closure(
+                    edge_copy or edge, crossing_copy or crossing, declarer_copy or declarer,
+                    substrate["revision"], digest, registry_copy or registry)
+
+        other_edge = json.loads(json.dumps(edge))
+        other_crossing = json.loads(json.dumps(crossing))
+        other_edge["edge"] = "absolute condition timedwait"
+        other_crossing["edge"] = "absolute condition timedwait"
+        reject("crossing closure does not match the prerequisite edge",
+               edge_copy=other_edge, crossing_copy=other_crossing)
+        other_edge = json.loads(json.dumps(edge))
+        other_crossing = json.loads(json.dumps(crossing))
+        other_edge["source_symbol"] = "pthread_cond_timedwait"
+        other_crossing["source_symbol"] = "pthread_cond_timedwait"
+        reject("crossing closure does not match the prerequisite edge",
+               edge_copy=other_edge, crossing_copy=other_crossing)
+        other_edge = json.loads(json.dumps(edge))
+        other_crossing = json.loads(json.dumps(crossing))
+        other_edge["source_sha256"] = "ab" * 32
+        other_crossing["source_sha256"] = "ab" * 32
+        reject("crossing closure does not match the prerequisite edge",
+               edge_copy=other_edge, crossing_copy=other_crossing)
+        moved = json.loads(json.dumps(registry))
+        moved["crossing_closures"][0]["origin"]["source_sha256"] = "cd" * 32
+        reject("crossing closure origin does not match", registry_copy=moved)
+        short = json.loads(json.dumps(registry))
+        short["crossing_closures"][0]["production_scope"] = short["crossing_closures"][0]["production_scope"][:-1]
+        reject("production scope is short of the crossing", registry_copy=short)
+        extra = json.loads(json.dumps(registry))
+        extra["crossing_closures"][0]["production_scope"].append("absolute pthread_cond_timedwait")
+        reject("production scope includes an unverified capability", registry_copy=extra)
+        path = json.loads(json.dumps(registry))
+        path["crossing_closures"][0]["source_path"] = ["pthread_cond_signal"]
+        reject("crossing closure source path does not match", registry_copy=path)
+        tree = json.loads(json.dumps(registry))
+        tree["crossing_closures"][0]["tested_tree"] = "a" * 40
+        reject("tested tree does not match git", registry_copy=tree)
+        commit = json.loads(json.dumps(registry))
+        commit["crossing_closures"][0]["tested_commit"] = "b" * 40
+        reject("tested commit is not in git", registry_copy=commit)
+        differential = json.loads(json.dumps(registry))
+        differential["crossing_closures"][0]["differential"]["agr_probe_sha256"] = "ef" * 32
+        reject("differential does not match", registry_copy=differential)
+        handwritten = {"schema_version": 1, "contracts": [], "crossing_closures": []}
+        reject("no production contract authority", registry_copy=handwritten)
+        broad = {
+            "schema_version": 1,
+            "contracts": [{
+                "semantic_cluster": "Bionic.PthreadCondition",
+                "status": "PRODUCTION_CLOSED",
+                "source_revision": substrate["revision"],
+                "source_owner_digest": digest,
+                "production_module": "pthread",
+                "tested_commit": registry["crossing_closures"][0]["tested_commit"],
+                "tested_tree": registry["crossing_closures"][0]["tested_tree"],
+                "closure_run": registry["crossing_closures"][0]["closure_run"],
+            }],
+            "crossing_closures": [],
+        }
+        reject("broad owner closure does not cover the exact crossing", registry_copy=broad)
 
 
 if __name__ == "__main__":

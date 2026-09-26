@@ -25,6 +25,63 @@
           "closure_run": {"type": "string", "minLength": 1}
         }
       }
+    },
+    "crossing_closures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "semantic_cluster", "status", "edge", "source_repo", "revision",
+          "source_file", "source_symbol", "source_sha256", "origin", "source_path",
+          "production_scope", "production_module", "source_revision", "source_owner_digest",
+          "tested_commit", "tested_tree", "differential", "evidence_dir", "closure_run",
+          "closure_target"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "semantic_cluster": {"type": "string", "minLength": 1},
+          "status": {"const": "CROSSING_CLOSED"},
+          "edge": {"type": "string", "minLength": 1},
+          "source_repo": {"type": "string", "minLength": 1},
+          "revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "source_file": {"type": "string", "minLength": 1},
+          "source_symbol": {"type": "string", "minLength": 1},
+          "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "origin": {
+            "type": "object",
+            "required": ["source_repo", "revision", "source_file", "source_symbol", "source_sha256"],
+            "additionalProperties": false,
+            "properties": {
+              "source_repo": {"type": "string", "minLength": 1},
+              "revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+              "source_file": {"type": "string", "minLength": 1},
+              "source_symbol": {"type": "string", "minLength": 1},
+              "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            }
+          },
+          "source_path": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "production_scope": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "production_module": {"type": "string", "minLength": 1},
+          "source_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "source_owner_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "tested_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "tested_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "evidence_dir": {"type": "string", "minLength": 1},
+          "differential": {
+            "type": "object",
+            "required": ["producer", "result", "source_path_sha256", "agr_probe_sha256"],
+            "additionalProperties": false,
+            "properties": {
+              "producer": {"type": "string", "minLength": 1},
+              "result": {"const": "NO_DIVERGENCE"},
+              "source_path_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "agr_probe_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            }
+          },
+          "closure_run": {"type": "string", "minLength": 1},
+          "closure_target": {"type": "string", "minLength": 1}
+        }
+      }
     }
   }
 }

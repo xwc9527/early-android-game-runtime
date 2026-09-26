@@ -8,7 +8,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from substrate_contracts import require_production_contract
+from substrate_contracts import require_exact_crossing_closure
 
 MIGRATION_TYPES = ("SOURCE_PORT", "AOSP_NATIVE_ADAPT", "HOST_BOUNDARY", "SERVICE_HLE")
 FORBIDDEN = ("ORIGINAL_IMPLEMENTATION", "APPROXIMATION", "GAME_PATCH", "SYNTHETIC_ANDROID_BEHAVIOR")
@@ -362,14 +362,17 @@ def reject_unmatched_owner_prerequisites(owner):
 
 
 def require_prerequisite_closed_authority(prerequisite, crossing, index, contracts=None,
-                                          evidence=None, modules=None):
-    """PREREQUISITE_CLOSED needs a closed source owner, then still lacks CLEAN authority."""
+                                          evidence=None, modules=None, declarer=None):
+    """PREREQUISITE_CLOSED cites one exact crossing closure, not the whole substrate owner."""
+    del evidence
     if not external_edge_closed(crossing, index or {}):
         raise ValueError("source owner is not closed")
     owner = ((index or {}).get("external_cluster_sources") or {}).get(crossing.get("semantic_cluster"))
-    require_production_contract(crossing.get("semantic_cluster"), owner.get("revision") if isinstance(owner, dict) else None,
-                                external_owner_digest(owner) if isinstance(owner, dict) else None,
-                                contracts, evidence, modules)
+    require_exact_crossing_closure(
+        prerequisite, crossing, declarer,
+        owner.get("revision") if isinstance(owner, dict) else None,
+        external_owner_digest(owner) if isinstance(owner, dict) else None,
+        contracts, modules)
 
 
 def _matching_crossing(prerequisite, crossings):
@@ -491,7 +494,7 @@ def _require_closed_relationships(item, index, contracts, evidence, modules):
             matched = _matching_crossing(edge, crossings)
             if matched is None:
                 raise ValueError("prerequisite does not match a crossing source edge")
-            require_prerequisite_closed_authority(edge, matched, index, contracts, evidence, modules)
+            require_prerequisite_closed_authority(edge, matched, index, contracts, evidence, modules, item)
 
 
 def validate_prerequisite_relations(document, index=None, contracts=None, evidence=None, modules=None):
@@ -776,7 +779,8 @@ def source_derived_clusters(manifests, index, contracts=None, evidence=None, mod
         for prerequisite in item.get("prerequisite_edges") or []:
             if (isinstance(prerequisite, dict) and prerequisite.get("relationship") == "PREREQUISITE_CLOSED"
                     and prerequisite_matches_crossing(prerequisite, edge)):
-                require_prerequisite_closed_authority(prerequisite, edge, wrapped, contracts, evidence, modules)
+                require_prerequisite_closed_authority(
+                    prerequisite, edge, wrapped, contracts, evidence, modules, item)
         return True
 
     def stop_before_entering(edge):

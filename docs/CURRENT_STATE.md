@@ -21,9 +21,10 @@ host-boundary evidence. That authorization is not production closure and does
 not close Integer or Resources. The authorized `CLOCK_REALTIME` and
 `CLOCK_MONOTONIC` requests now have a Bionic production port. That port is
 not `PRODUCTION_CLOSED` and it is not a formal CLEAN differential producer.
-The ThreadState self-suspend path's untimed condition wait, normal mutex
-barrier, and broadcast pulse barrier now follow the pinned Bionic operations
-that path reaches. Absolute condition timeouts are outside that path.
+The ThreadState self-suspend crossing has an exact `CROSSING_CLOSED` record.
+That record does not mark `Bionic.PthreadCondition` `PRODUCTION_CLOSED`.
+Absolute condition timeouts stay outside that path. ThreadState itself stays
+`SOURCE_LOCATED`.
 The
 current source indexes and manifests are under `tools/reference-lab/indexes`
 and `tools/reference-lab/evidence`; their unresolved edges are explicit.

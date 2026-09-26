@@ -96,6 +96,7 @@ def main() -> int:
                 contract_tool.require_production_contract(
                     contract.get("semantic_cluster"), contract.get("source_revision"),
                     contract.get("source_owner_digest"), bound)
+            contract_tool.validate_committed_crossing_closures(bound)
         except ValueError as exc:
             errors.append("substrate production contracts: " + str(exc))
     state, registry, closure = load("ci/governance/state.json"), load("ci/governance/modules.json"), load("ci/governance/closure.json")
