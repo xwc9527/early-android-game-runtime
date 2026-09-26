@@ -798,6 +798,31 @@ class SubstratePrerequisiteTest(unittest.TestCase):
                  if edge["semantic_cluster"] != "Dalvik.MethodInvocation"]
         self.assertEqual(other, ["UNRESOLVED", "UNRESOLVED", "UNRESOLVED", "UNRESOLVED"])
 
+    def test_thread_state_source_stays_located(self):
+        integer_index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
+        resource_index = json.loads((ROOT / "tools/reference-lab/indexes/shared-resources-api19-locations.json").read_text())
+        owner = integer_index["external_cluster_sources"]["Dalvik.ThreadState"]
+        self.assertEqual(owner["status"], "SOURCE_LOCATED")
+        self.assertIs(owner["closure_reviewed"], False)
+        self.assertNotIn("PREREQUISITE_CLOSED", json.dumps(owner))
+        self.assertNotIn("waitCond", owner["required_symbols"])
+        self.assertNotIn("waitMutex", owner["required_symbols"])
+        self.assertEqual([(edge["semantic_cluster"], edge["source_file"], edge["source_symbol"], edge["relationship"])
+                          for edge in owner["prerequisite_edges"]], [
+            ("Bionic.PthreadCondition", "libc/bionic/pthread.c", "pthread_cond_wait", "UNRESOLVED")])
+        binding = resource_index["external_cluster_sources"]["Dalvik.JNINativeBinding"]
+        thread_edge = next(edge for edge in binding["prerequisite_edges"]
+                           if edge["edge"] == "JNI thread state around RegisterNatives")
+        self.assertEqual(thread_edge["semantic_cluster"], "Dalvik.ThreadState")
+        self.assertEqual(thread_edge["relationship"], "UNRESOLVED")
+        self.assertEqual(thread_edge["owner_source_status"], "SOURCE_LOCATED")
+        monitor = integer_index["external_cluster_sources"]["Dalvik.Monitor"]
+        monitor_edge = next(edge for edge in monitor["cross_cluster_source_edges"]
+                            if edge["semantic_cluster"] == "Dalvik.ThreadState")
+        self.assertEqual(monitor_edge["status"], "SOURCE_LOCATED")
+        self.assertEqual(monitor_edge["source_symbol"], "dvmChangeStatus")
+        self.assertNotIn("prerequisite_edges", monitor)
+
 
 if __name__ == "__main__":
     unittest.main()
