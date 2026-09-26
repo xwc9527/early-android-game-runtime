@@ -1,6 +1,11 @@
 {
   "absolute_timedwait_on_path": false,
   "branch": "cursor/shared-substrate-prerequisite-da4f",
+  "ci_job_id": 108461516565,
+  "ci_job_name": "governance",
+  "ci_result": "SUSPEND_PATH ok=1",
+  "ci_workflow": "AGR governance",
+  "ci_workflow_run_id": 36262733436,
   "clock_gettime_on_path": false,
   "local_test": "SUSPEND_PATH ok=1",
   "not_changed": [
@@ -9,5 +14,8 @@
     "pthread_mutex_lock_timeout_np"
   ],
   "pthread_cond_signal_on_suspend_condition": false,
-  "source_path": "dvmChangeStatus -> fullSuspendCheck -> pthread_mutex_lock -> pthread_cond_wait -> pthread_cond_broadcast -> __pthread_cond_pulse"
+  "runner": "ubuntu-latest",
+  "source_path": "dvmChangeStatus -> fullSuspendCheck -> pthread_mutex_lock -> pthread_cond_wait -> pthread_cond_broadcast -> __pthread_cond_pulse",
+  "tested_commit": "741545edc903915b5fc7c9dac53f8b016952dc84",
+  "tested_tree": "120663dc01662362c55aee3900c71e09da8d15dd"
 }
