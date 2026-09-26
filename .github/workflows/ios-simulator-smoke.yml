@@ -11,13 +11,6 @@ on:
         description: Run only the realtime and monotonic HostServices probe
         type: boolean
         default: false
-  push:
-    branches:
-      - cursor/shared-substrate-prerequisite-da4f
-    paths:
-      - scripts/probe-host-clock.sh
-      - Tests/HostClock/**
-      - .github/workflows/ios-simulator-smoke.yml
 
 jobs:
   smoke:
@@ -26,10 +19,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Probe HostServices realtime and monotonic clocks
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.host_clock_probe_only)
+        if: inputs.host_clock_probe_only
         run: bash scripts/probe-host-clock.sh
       - name: Build and run Simulator smoke with evidence deadline
-        if: github.event_name != 'push' && !inputs.host_clock_probe_only
+        if: ${{ !inputs.host_clock_probe_only }}
         env:
           SMOKE_TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
         run: python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds "$SMOKE_TIMEOUT_SECONDS"
@@ -43,7 +36,7 @@ jobs:
             !build/artifacts/host-clock/**
           if-no-files-found: warn
       - name: Upload host clock probe evidence
-        if: always() && (github.event_name == 'push' || inputs.host_clock_probe_only)
+        if: always() && inputs.host_clock_probe_only
         uses: actions/upload-artifact@v4
         with:
           name: host-clock-probe
