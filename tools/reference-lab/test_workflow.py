@@ -26,7 +26,7 @@ class WorkflowTest(unittest.TestCase):
         self.assertEqual(committed, generated)
         validate_source_manifests(committed)
         self.assertEqual(len(committed["manifests"]), 2)
-        self.assertEqual(len(committed["source_derived_clusters"]), 6)
+        self.assertEqual(len(committed["source_derived_clusters"]), 7)
         asset = committed["source_derived_clusters"]["AndroidNative.AssetObject"]
         self.assertEqual(asset["status"], "SOURCE_LOCATED")
         self.assertFalse(asset["migration_authorized"])
@@ -40,6 +40,12 @@ class WorkflowTest(unittest.TestCase):
         self.assertTrue(any("AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> "
                             "AndroidNative.FileMap" in path for path in mapped["source_paths"]))
         self.assertIn("Linux file descriptor and mmap boundary", mapped["boundary_contracts"])
+        inflater = committed["source_derived_clusters"]["External.ZlibInflate"]
+        self.assertEqual(inflater["status"], "SOURCE_LOCATED")
+        self.assertTrue(any("AndroidNative.ZipFileRO -> External.ZlibInflate" in path
+                            for path in inflater["source_paths"]))
+        self.assertTrue(any("AndroidNative.StreamingZipInflater -> External.ZlibInflate" in path
+                            for path in inflater["source_paths"]))
 
     def test_integer_cluster_seed_keeps_probe_scope_and_blocks_authority(self):
         evidence = ROOT / "tools/reference-lab/evidence"

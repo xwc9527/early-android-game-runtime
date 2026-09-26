@@ -120,7 +120,7 @@
         "libs/androidfw/ZipFileRO.cpp": "714722531976817a85891ff6dda213b543d9d5a42d18275cf390cd1babc801c9"
       },
       "required_symbols": ["ZipFileRO::open", "ZipFileRO::createEntryFileMap"],
-      "cross_cluster_deps": ["ZIP entry FileMap allocation"],
+      "cross_cluster_deps": ["ZIP entry FileMap allocation", "raw deflate inflate contract"],
       "cross_cluster_source_edges": [
         {
           "edge": "ZIP entry FileMap allocation",
@@ -130,6 +130,16 @@
           "source_file": "libutils/FileMap.cpp",
           "source_symbol": "FileMap::create",
           "source_sha256": "8f811019c8bba09a7972a82cb319871295dbcb644d8625c0a1b3eddfa2f9def1",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "raw deflate inflate contract",
+          "semantic_cluster": "External.ZlibInflate",
+          "source_repo": "platform/external/zlib",
+          "revision": "a5c7131da47c991585a6c6ac0c063b6d7d56e3fc",
+          "source_file": "src/inflate.c",
+          "source_symbol": "inflateInit2_",
+          "source_sha256": "fb9bfa1295e7a6ef1b4a1149eec372dd7dcce407dd4fe9fea9c23a45a6857381",
           "status": "SOURCE_LOCATED"
         }
       ],
@@ -144,7 +154,7 @@
         "libs/androidfw/StreamingZipInflater.cpp": "070e9659fe91130f9abe777eddfd3182c55b6404ac1decf7927d60d58ad5b216"
       },
       "required_symbols": ["StreamingZipInflater::~StreamingZipInflater", "StreamingZipInflater::read", "StreamingZipInflater::readNextChunk"],
-      "cross_cluster_deps": ["mapped compressed bytes"],
+      "cross_cluster_deps": ["mapped compressed bytes", "raw deflate streaming state"],
       "cross_cluster_source_edges": [
         {
           "edge": "mapped compressed bytes",
@@ -154,6 +164,16 @@
           "source_file": "include/utils/FileMap.h",
           "source_symbol": "getDataPtr",
           "source_sha256": "697770c3a36afdb6cec3e1f46068225ed9fd6c9564416f3b6aed92f169ea4f01",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "raw deflate streaming state",
+          "semantic_cluster": "External.ZlibInflate",
+          "source_repo": "platform/external/zlib",
+          "revision": "a5c7131da47c991585a6c6ac0c063b6d7d56e3fc",
+          "source_file": "src/inflate.c",
+          "source_symbol": "inflate",
+          "source_sha256": "fb9bfa1295e7a6ef1b4a1149eec372dd7dcce407dd4fe9fea9c23a45a6857381",
           "status": "SOURCE_LOCATED"
         }
       ],
@@ -180,6 +200,21 @@
         }
       },
       "blocking_edges": ["FileMap alignment, ownership and mmap error source closure", "AGR host VMA and file mapping contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "External.ZlibInflate": {
+      "source_repo": "platform/external/zlib",
+      "revision": "a5c7131da47c991585a6c6ac0c063b6d7d56e3fc",
+      "source_file_sha256": {
+        "src/zlib.h": "726b0569915917b967f87f3f08a1eec039101bf9dcc29d61c0b2b0b8f271b58d",
+        "src/inflate.c": "fb9bfa1295e7a6ef1b4a1149eec372dd7dcce407dd4fe9fea9c23a45a6857381",
+        "src/inffast.c": "fd82c328b310f2f0ecc6a13475889e51c407dd4c5e8a931a36f18ad63f319c35",
+        "src/inftrees.c": "608f96120ac1572002bbce6dcd2625171dae0afbecf4334070288a33e19e5952",
+        "src/zutil.c": "c5e9927d5a1a1dec514ccdcedfa1e0f01664c58bb33166b4997b50b8001f1d6c"
+      },
+      "required_symbols": ["inflateInit2_", "inflate", "inflateEnd", "inflate_fast", "inflate_table", "zcalloc", "zcfree"],
+      "blocking_edges": ["zlib raw-deflate state, allocation and error source closure", "AGR vendored zlib build and ABI contract review"],
       "status": "SOURCE_LOCATED",
       "closure_reviewed": false
     }
