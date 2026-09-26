@@ -218,7 +218,7 @@
           "status": "SOURCE_LOCATED"
         }
       ],
-      "blocking_edges": ["source closure of verification, monitor, invoke, descriptor validation, breakpoint state and failure paths", "AGR class-initialization contract review"],
+      "blocking_edges": ["source closure of verification, monitor, invoke, descriptor validation, breakpoint state and failure paths", "AGR initializing-thread ownership, wait and failure publication contract review"],
       "status": "SOURCE_LOCATED",
       "closure_reviewed": false
     },
@@ -261,7 +261,32 @@
         "vm/Sync.cpp": "8b100ff9e5037fcc8c7bfbbc152a924b31e22e925b03847765d007db42f91b5d"
       },
       "required_symbols": ["dvmObjectWait", "dvmObjectNotifyAll"],
+      "cross_cluster_deps": ["thread wait state and suspension coordination"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "thread wait state and suspension coordination",
+          "semantic_cluster": "Dalvik.ThreadState",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/Thread.cpp",
+          "source_symbol": "dvmChangeStatus",
+          "source_sha256": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
       "blocking_edges": ["monitor ownership and wait/notify source closure", "AGR class-init synchronization contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "Dalvik.ThreadState": {
+      "source_repo": "platform/dalvik",
+      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+      "source_file_sha256": {
+        "vm/Thread.cpp": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
+        "vm/Thread.h": "d31169a50cd6e5504fa017cf9ff77a749ff8fb48636985a2037b140c5301f70a"
+      },
+      "required_symbols": ["dvmChangeStatus", "THREAD_WAIT", "THREAD_TIMED_WAIT", "waitCond", "waitMutex"],
+      "blocking_edges": ["thread status, suspension and wait condition source closure", "AGR thread state and wake contract review"],
       "status": "SOURCE_LOCATED",
       "closure_reviewed": false
     },
