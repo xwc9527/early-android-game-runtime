@@ -810,6 +810,14 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         self.assertEqual([(edge["semantic_cluster"], edge["source_file"], edge["source_symbol"], edge["relationship"])
                           for edge in owner["prerequisite_edges"]], [
             ("Bionic.PthreadCondition", "libc/bionic/pthread.c", "pthread_cond_wait", "REOPEN_REQUIRED")])
+        self.assertEqual(owner["prerequisite_edges"][0]["owner_source_status"], "SOURCE_CLOSED")
+        self.assertEqual(owner["cross_cluster_source_edges"][0]["status"], "SOURCE_CLOSED")
+        self.assertEqual(owner["cross_cluster_source_edges"][0]["edge"],
+                         "self-suspend on the thread suspend-count condition")
+        self.assertTrue(all("UNRESOLVED" not in edge for edge in owner["blocking_edges"]))
+        self.assertNotIn("UNRESOLVED crossing", owner["closure_evidence"]["closure_notes"])
+        self.assertEqual(owner["closure_evidence"]["unresolved_dependency_edges"],
+                         ["self-suspend on the thread suspend-count condition"])
         binding = resource_index["external_cluster_sources"]["Dalvik.JNINativeBinding"]
         thread_edge = next(edge for edge in binding["prerequisite_edges"]
                            if edge["edge"] == "JNI thread state around RegisterNatives")
