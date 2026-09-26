@@ -670,15 +670,46 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         self.assertEqual(zygote_relations, [
             ("Dalvik.ClassInitialization", "UNRESOLVED"),
             ("Libcore.BootClassLoading", "UNRESOLVED")])
-        queued = [(item["semantic_cluster"], item["blocking_edge"], item["relationship"])
-                  for item in integer["closure_work_queue"] if item.get("scope") == "PREREQUISITE"]
-        self.assertEqual(queued, [
-            ("Dalvik.ClassInitialization", "Dalvik class initialization before app fork", "UNRESOLVED"),
-            ("Dalvik.ClassInitialization", "Dalvik class initialization for Integer.<clinit>", "UNRESOLVED"),
-            ("Dalvik.MethodInvocation", "Dalvik constructor invocation", "UNRESOLVED"),
-            ("Dalvik.ObjectAllocation", "Dalvik object allocation", "UNRESOLVED"),
-            ("Dalvik.StaticFieldArrayRoots", "Dalvik static field and array GC roots", "UNRESOLVED"),
-            ("Libcore.BootClassLoading", "libcore Class.forName and boot loader delegation", "UNRESOLVED")])
+        value_of_id = next(item["dependency_id"] for item in integer["manifests"]
+                           if item["canonical_name"] == value_of)
+        zygote_path = value_of + " -> Framework.ZygotePreload"
+        self.assertEqual([
+            (item["scope"], item["semantic_cluster"], item["blocking_edge"],
+             item.get("relationship"), item["origin_dependency_ids"], item["source_paths"])
+            for item in integer["closure_work_queue"]], [
+            ("OBSERVED_ENTRY", "libcore.IntegerBoxing",
+             "AGR boot-class Integer ownership and GC integration", None,
+             [value_of_id], [value_of]),
+            ("OBSERVED_ENTRY", "libcore.IntegerBoxing",
+             "Zygote preload and inherited Integer cache source closure", None,
+             [value_of_id], [value_of]),
+            ("PREREQUISITE", "Dalvik.ClassInitialization",
+             "Dalvik class initialization before app fork", "UNRESOLVED",
+             [value_of_id], [zygote_path]),
+            ("PREREQUISITE", "Dalvik.ClassInitialization",
+             "Dalvik class initialization for Integer.<clinit>", "UNRESOLVED",
+             [value_of_id], [value_of]),
+            ("PREREQUISITE", "Dalvik.MethodInvocation",
+             "Dalvik constructor invocation", "UNRESOLVED",
+             [value_of_id], [value_of]),
+            ("PREREQUISITE", "Dalvik.ObjectAllocation",
+             "Dalvik object allocation", "UNRESOLVED",
+             [value_of_id], [value_of]),
+            ("PREREQUISITE", "Dalvik.StaticFieldArrayRoots",
+             "Dalvik static field and array GC roots", "UNRESOLVED",
+             [value_of_id], [value_of]),
+            ("PREREQUISITE", "Libcore.BootClassLoading",
+             "libcore Class.forName and boot loader delegation", "UNRESOLVED",
+             [value_of_id], [zygote_path]),
+            ("SOURCE_DERIVED", "Framework.ZygotePreload",
+             "AGR one-process inherited-state installation review", None,
+             [value_of_id], [zygote_path])])
+        stale = {
+            "Dalvik class initialization source cluster closure",
+            "Dalvik allocation source cluster closure",
+            "Dalvik initialization contract before fork"}
+        self.assertTrue(stale.isdisjoint(
+            edge for item in integer["closure_work_queue"] for edge in (item["blocking_edge"],)))
         encoded = json.dumps(integer)
         self.assertNotIn("PREREQUISITE_CLOSED", encoded)
         self.assertNotIn("REOPEN_REQUIRED", encoded)

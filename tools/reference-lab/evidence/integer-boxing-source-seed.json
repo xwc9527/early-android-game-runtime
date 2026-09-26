@@ -305,8 +305,6 @@
       "host_adaptation_points": [],
       "blocking_edges": [
         "Zygote preload and inherited Integer cache source closure",
-        "Dalvik class initialization source cluster closure",
-        "Dalvik allocation source cluster closure",
         "AGR boot-class Integer ownership and GC integration"
       ],
       "cross_cluster_source_edges": [
@@ -472,8 +470,6 @@
       "host_adaptation_points": [],
       "blocking_edges": [
         "AGR boot-class Integer ownership and GC integration",
-        "Dalvik allocation source cluster closure",
-        "Dalvik class initialization source cluster closure",
         "Zygote preload and inherited Integer cache source closure"
       ],
       "cross_cluster_source_edges": [
@@ -657,7 +653,6 @@
         }
       },
       "blocking_edges": [
-        "Dalvik initialization contract before fork",
         "AGR one-process inherited-state installation review"
       ],
       "status": "SOURCE_LOCATED",
@@ -679,28 +674,6 @@
       "scope": "OBSERVED_ENTRY",
       "semantic_cluster": "libcore.IntegerBoxing",
       "blocking_edge": "AGR boot-class Integer ownership and GC integration",
-      "origin_dependency_ids": [
-        "JAVA_METHOD:ee651e4447951b08"
-      ],
-      "source_paths": [
-        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;"
-      ]
-    },
-    {
-      "scope": "OBSERVED_ENTRY",
-      "semantic_cluster": "libcore.IntegerBoxing",
-      "blocking_edge": "Dalvik allocation source cluster closure",
-      "origin_dependency_ids": [
-        "JAVA_METHOD:ee651e4447951b08"
-      ],
-      "source_paths": [
-        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;"
-      ]
-    },
-    {
-      "scope": "OBSERVED_ENTRY",
-      "semantic_cluster": "libcore.IntegerBoxing",
-      "blocking_edge": "Dalvik class initialization source cluster closure",
       "origin_dependency_ids": [
         "JAVA_METHOD:ee651e4447951b08"
       ],
@@ -795,17 +768,6 @@
       "scope": "SOURCE_DERIVED",
       "semantic_cluster": "Framework.ZygotePreload",
       "blocking_edge": "AGR one-process inherited-state installation review",
-      "origin_dependency_ids": [
-        "JAVA_METHOD:ee651e4447951b08"
-      ],
-      "source_paths": [
-        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload"
-      ]
-    },
-    {
-      "scope": "SOURCE_DERIVED",
-      "semantic_cluster": "Framework.ZygotePreload",
-      "blocking_edge": "Dalvik initialization contract before fork",
       "origin_dependency_ids": [
         "JAVA_METHOD:ee651e4447951b08"
       ],

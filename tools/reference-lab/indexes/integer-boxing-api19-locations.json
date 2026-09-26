@@ -128,7 +128,7 @@
           "error_semantics": "fatal preload Error prevents normal child startup; failed listed classes remain absent"
         }
       },
-      "blocking_edges": ["Dalvik initialization contract before fork", "AGR one-process inherited-state installation review"],
+      "blocking_edges": ["AGR one-process inherited-state installation review"],
       "status": "SOURCE_LOCATED",
       "closure_reviewed": false
     },
@@ -584,8 +584,6 @@
       ],
       "blocking_edges": [
         "Zygote preload and inherited Integer cache source closure",
-        "Dalvik class initialization source cluster closure",
-        "Dalvik allocation source cluster closure",
         "AGR boot-class Integer ownership and GC integration"
       ],
       "closure_reviewed": false
