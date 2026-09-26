@@ -34,16 +34,36 @@ ERRNO="$ROOT/Runtime/Bionic/agr_bionic_errno_host.cpp"
 PROBE="$ROOT/Tests/BionicClock/bionic_clock_port_probe.cpp"
 IPHONEOS_BIN="$ARTIFACTS/bionic-clock-port-iphoneos"
 SIM_BIN="$ARTIFACTS/bionic-clock-port-iphonesimulator"
+OBJ="$ARTIFACTS/obj"
+mkdir -p "$OBJ"
 
+compile_port() {
+  local SDK="$1" TARGET="$2" MINFLAG="$3" TAG="$4"
+  xcrun --sdk "$SDK" clang -target "$TARGET" "$MINFLAG" -O2 -std=c11 \
+    -I"$ROOT/Runtime/Bionic" -I"$ROOT/Runtime/HostServices" \
+    -c "$CLOCK" -o "$OBJ/$TAG-clock.o"
+  xcrun --sdk "$SDK" clang -target "$TARGET" "$MINFLAG" -O2 -std=c11 \
+    -I"$ROOT/Runtime/HostServices" \
+    -c "$HOST" -o "$OBJ/$TAG-host.o"
+  xcrun --sdk "$SDK" clang++ -target "$TARGET" "$MINFLAG" -O2 -std=c++17 \
+    -I"$ROOT/Runtime/Bionic" \
+    -c "$ERRNO" -o "$OBJ/$TAG-errno.o"
+  xcrun --sdk "$SDK" clang++ -target "$TARGET" "$MINFLAG" -O2 -std=c++17 \
+    -I"$ROOT/Runtime/Bionic" -I"$ROOT/Runtime/HostServices" \
+    -c "$PROBE" -o "$OBJ/$TAG-probe.o"
+}
+
+compile_port iphoneos arm64-apple-ios15.0 -miphoneos-version-min=15.0 iphoneos
 xcrun --sdk iphoneos clang++ -target arm64-apple-ios15.0 -miphoneos-version-min=15.0 -O2 \
-  -std=c++17 -I"$ROOT/Runtime/Bionic" -I"$ROOT/Runtime/HostServices" \
-  "$PROBE" "$CLOCK" "$ERRNO" "$HOST" -o "$IPHONEOS_BIN"
+  "$OBJ/iphoneos-probe.o" "$OBJ/iphoneos-clock.o" "$OBJ/iphoneos-errno.o" "$OBJ/iphoneos-host.o" \
+  -o "$IPHONEOS_BIN"
 echo "IPHONEOS_LINK rc=0" | tee "$ARTIFACTS/iphoneos-link.txt"
 nm "$IPHONEOS_BIN" | grep agr_bionic_clock_gettime | tee -a "$ARTIFACTS/iphoneos-link.txt" || true
 
+compile_port iphonesimulator arm64-apple-ios15.0-simulator -mios-simulator-version-min=15.0 simulator
 xcrun --sdk iphonesimulator clang++ -target arm64-apple-ios15.0-simulator -mios-simulator-version-min=15.0 -O2 \
-  -std=c++17 -I"$ROOT/Runtime/Bionic" -I"$ROOT/Runtime/HostServices" \
-  "$PROBE" "$CLOCK" "$ERRNO" "$HOST" -o "$SIM_BIN"
+  "$OBJ/simulator-probe.o" "$OBJ/simulator-clock.o" "$OBJ/simulator-errno.o" "$OBJ/simulator-host.o" \
+  -o "$SIM_BIN"
 codesign --force --sign - "$SIM_BIN"
 echo "IPHONESIMULATOR_LINK rc=0" | tee "$ARTIFACTS/simulator-link.txt"
 
