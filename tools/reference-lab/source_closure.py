@@ -124,8 +124,6 @@ def source_derived_clusters(manifests, index):
 
     def visit(edge, parent_id, path):
         name = edge.get("semantic_cluster")
-        if name in path:
-            raise ValueError("cyclic source-derived cluster chain")
         owner = owners.get(name)
         if not isinstance(owner, dict):
             raise ValueError("source-derived edge lacks a pinned owner: " + str(name))
@@ -140,11 +138,17 @@ def source_derived_clusters(manifests, index):
                                       "migration_authorized": False,
                                       "origin_dependency_ids": set(),
                                       "source_paths": set(),
+                                      "cycle_paths": set(),
                                       "status": "SOURCE_CLOSED"})
         row["origin_dependency_ids"].add(parent_id)
-        row["source_paths"].add(" -> ".join(path + (name,)))
+        source_path = " -> ".join(path + (name,))
+        row["source_paths"].add(source_path)
         if not external_edge_closed(edge, index):
             row["status"] = "SOURCE_LOCATED"
+        if name in path:
+            row["cycle_paths"].add(source_path)
+            row["status"] = "SOURCE_LOCATED"
+            return
         for child in owner.get("cross_cluster_source_edges") or []:
             visit(child, parent_id, path + (name,))
 
@@ -154,6 +158,7 @@ def source_derived_clusters(manifests, index):
     for row in found.values():
         row["origin_dependency_ids"] = sorted(row["origin_dependency_ids"])
         row["source_paths"] = sorted(row["source_paths"])
+        row["cycle_paths"] = sorted(row["cycle_paths"])
     return dict(sorted(found.items()))
 
 

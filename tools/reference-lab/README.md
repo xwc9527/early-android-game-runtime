@@ -124,7 +124,11 @@ the pinned repository, revision, file hash, and symbol.
 An external `SOURCE_CLOSED` edge requires a separately reviewed owner record
 at the same revision and file hash, with its own nested edges and boundary
 contracts resolved. The closed owner's canonical digest must also match the
-entry edge review. A missing, mismatched, or cyclic owner chain fails closed.
+entry edge review. A missing or mismatched owner fails validation. Cyclic
+source paths are materialized once as `cycle_paths` and remain
+`SOURCE_LOCATED`; the recursive closure check rejects their promotion. A
+separate strongly connected owner review is required before such a chain can
+reach `SOURCE_CLOSED`.
 
 The current implementation does not provide a complete Android TRACE event
 producer, Framework source closure, cluster ports, or iOS differential. Its

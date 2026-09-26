@@ -249,7 +249,7 @@ class ReferenceLabTest(unittest.TestCase):
         owner["cross_cluster_source_edges"] = [{**edge, "edge": "Zygote preload"}]
         self.assertFalse(external_edge_closed(edge, index))  # cyclic owner graph
 
-    def test_derived_source_chain_rejects_missing_or_cyclic_owner(self):
+    def test_derived_source_chain_rejects_missing_and_records_cycle(self):
         edge = {"edge": "class init", "semantic_cluster": "Dalvik.Init",
                 "source_repo": "platform/dalvik", "revision": "a" * 40,
                 "source_file": "Class.cpp", "source_symbol": "dvmInitClass",
@@ -262,8 +262,10 @@ class ReferenceLabTest(unittest.TestCase):
                  "source_file_sha256": {"Class.cpp": "b" * 64},
                  "required_symbols": ["dvmInitClass"], "status": "SOURCE_LOCATED",
                  "cross_cluster_source_edges": [{**edge, "edge": "recursive init"}]}
-        with self.assertRaisesRegex(ValueError, "cyclic"):
-            source_derived_clusters([origin], {"external_cluster_sources": {"Dalvik.Init": owner}})
+        derived = source_derived_clusters([origin], {"external_cluster_sources": {"Dalvik.Init": owner}})
+        self.assertEqual(derived["Dalvik.Init"]["status"], "SOURCE_LOCATED")
+        self.assertEqual(derived["Dalvik.Init"]["cycle_paths"],
+                         ["Integer.valueOf -> Dalvik.Init -> Dalvik.Init"])
 
     def test_service_boundary_stops(self):
         manifest = close_entry({

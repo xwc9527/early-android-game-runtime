@@ -269,6 +269,13 @@ def validate_source_manifests(document):
                 previous = target
         if expected_origins != set(cluster["origin_dependency_ids"]):
             raise ValueError("source-derived path lost its observed parent")
+        actual_cycles = {path for path in cluster["source_paths"]
+                         if len(path.split(" -> ")[1:]) !=
+                         len(set(path.split(" -> ")[1:]))}
+        if set(cluster.get("cycle_paths") or []) != actual_cycles:
+            raise ValueError("source-derived cycle evidence differs from source paths")
+        if actual_cycles and cluster["status"] != "SOURCE_LOCATED":
+            raise ValueError("source-derived cycle cannot claim closure")
         if cluster["status"] == "SOURCE_CLOSED" and (
                 cluster.get("blocking_edges") or
                 cluster.get("closure_reviewed") is not True or

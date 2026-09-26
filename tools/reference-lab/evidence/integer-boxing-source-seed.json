@@ -493,8 +493,10 @@
       ],
       "source_paths": [
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.ClassVerification -> Framework.ZygoteVMOptions -> AndroidNative.InitZygote",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization -> Dalvik.ClassVerification -> Framework.ZygoteVMOptions -> AndroidNative.InitZygote",
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.ClassVerification -> Framework.ZygoteVMOptions -> AndroidNative.InitZygote"
-      ]
+      ],
+      "cycle_paths": []
     },
     "Dalvik.ClassInitialization": {
       "source_repo": "platform/dalvik",
@@ -565,8 +567,10 @@
       ],
       "source_paths": [
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization",
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization"
-      ]
+      ],
+      "cycle_paths": []
     },
     "Dalvik.ClassVerification": {
       "source_repo": "platform/dalvik",
@@ -612,8 +616,10 @@
       ],
       "source_paths": [
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.ClassVerification",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization -> Dalvik.ClassVerification",
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.ClassVerification"
-      ]
+      ],
+      "cycle_paths": []
     },
     "Dalvik.MethodInvocation": {
       "source_repo": "platform/dalvik",
@@ -639,8 +645,10 @@
       ],
       "source_paths": [
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.MethodInvocation",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization -> Dalvik.MethodInvocation",
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.MethodInvocation"
-      ]
+      ],
+      "cycle_paths": []
     },
     "Dalvik.Monitor": {
       "source_repo": "platform/dalvik",
@@ -666,21 +674,31 @@
       ],
       "source_paths": [
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.Monitor",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization -> Dalvik.Monitor",
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.Monitor"
-      ]
+      ],
+      "cycle_paths": []
     },
-    "Dalvik.OOMException": {
+    "Dalvik.ObjectAllocation": {
       "source_repo": "platform/dalvik",
       "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
       "source_file_sha256": {
-        "vm/Exception.cpp": "dc5cc67916f941987f92915d329e50b8195aacb278172c2c44194de1dfd3b4c8",
-        "vm/alloc/Heap.cpp": "304b39f9cc522367f6c53f4ddcff78f372b7a161dc5231c260c1b0c5dec80297",
         "vm/alloc/Alloc.cpp": "70bb6375a088dab380c31e5ab9959461f1c841f88c5ef163caacd1b26f7da02f",
+        "vm/alloc/Heap.cpp": "304b39f9cc522367f6c53f4ddcff78f372b7a161dc5231c260c1b0c5dec80297",
+        "vm/alloc/HeapSource.cpp": "cc0536e8aea8b0f837a4224bcced175c36b1801e855e026402dcfc15d26a089a",
+        "vm/Exception.cpp": "dc5cc67916f941987f92915d329e50b8195aacb278172c2c44194de1dfd3b4c8",
+        "vm/Exception.h": "0b72f4b67252f30d132af044c8dfb3c55b61ff476a33bf6b20a143f2bb0b8084",
         "vm/alloc/Visit.cpp": "fbdcfeeb19903107c3fb3ad6aae213d1c75d1db25aa23f7a66342148d63444f9",
         "vm/Init.cpp": "e82787184690cb66a1c26707e802ad5b07e772bb5ef332ab1ff6b2b344b1c6f5",
-        "vm/Exception.h": "0b72f4b67252f30d132af044c8dfb3c55b61ff476a33bf6b20a143f2bb0b8084"
+        "vm/Thread.cpp": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
+        "vm/Thread.h": "d31169a50cd6e5504fa017cf9ff77a749ff8fb48636985a2037b140c5301f70a"
       },
       "required_symbols": [
+        "dvmAllocObject",
+        "dvmMalloc",
+        "dvmHeapSourceAlloc",
+        "dvmAddTrackedAlloc",
+        "tryMalloc",
         "dvmThrowOutOfMemoryError",
         "dvmThrowException",
         "dvmThrowChainedException",
@@ -689,67 +707,35 @@
         "outOfMemoryObj",
         "dvmCreateStockExceptions",
         "createStockException",
-        "dvmVisitRoots"
-      ],
-      "internal_deps": [
-        "normal OOME construction when thread is rooted",
-        "stock exception initialization after Java constructors become available",
-        "preallocated OOME VM-internal GC root",
-        "preallocated OOME fallback on recursive allocation failure"
-      ],
-      "blocking_edges": [
-        "exception creation and thread-list/recursion state source closure",
-        "AGR pending-exception and preallocated OOME contract review"
-      ],
-      "status": "SOURCE_LOCATED",
-      "closure_reviewed": false,
-      "semantic_cluster": "Dalvik.OOMException",
-      "provenance": "SOURCE_DERIVED",
-      "migration_authorized": false,
-      "origin_dependency_ids": [
-        "JAVA_METHOD:ee651e4447951b08"
-      ],
-      "source_paths": [
-        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.OOMException"
-      ]
-    },
-    "Dalvik.ObjectAllocation": {
-      "source_repo": "platform/dalvik",
-      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
-      "source_file_sha256": {
-        "vm/alloc/Alloc.cpp": "70bb6375a088dab380c31e5ab9959461f1c841f88c5ef163caacd1b26f7da02f",
-        "vm/alloc/Heap.cpp": "304b39f9cc522367f6c53f4ddcff78f372b7a161dc5231c260c1b0c5dec80297",
-        "vm/alloc/HeapSource.cpp": "cc0536e8aea8b0f837a4224bcced175c36b1801e855e026402dcfc15d26a089a"
-      },
-      "required_symbols": [
-        "dvmAllocObject",
-        "dvmMalloc",
-        "dvmHeapSourceAlloc",
-        "dvmAddTrackedAlloc",
-        "tryMalloc"
+        "dvmVisitRoots",
+        "dvmIsOnThreadList",
+        "throwingOOME"
       ],
       "internal_deps": [
         "heap source allocation and GC trigger",
-        "tracked allocation root"
+        "tracked allocation root",
+        "allocation failure OOME propagation",
+        "thread-list membership and throwingOOME recursion guard",
+        "stock exception initialization and VM-internal GC root"
       ],
       "cross_cluster_deps": [
-        "allocation failure OutOfMemoryError propagation"
+        "exception class initialization"
       ],
       "cross_cluster_source_edges": [
         {
-          "edge": "allocation failure OutOfMemoryError propagation",
-          "semantic_cluster": "Dalvik.OOMException",
+          "edge": "exception class initialization",
+          "semantic_cluster": "Dalvik.ClassInitialization",
           "source_repo": "platform/dalvik",
           "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
-          "source_file": "vm/Exception.cpp",
-          "source_symbol": "dvmThrowOutOfMemoryError",
-          "source_sha256": "dc5cc67916f941987f92915d329e50b8195aacb278172c2c44194de1dfd3b4c8",
+          "source_file": "vm/oo/Class.cpp",
+          "source_symbol": "dvmInitClass",
+          "source_sha256": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5",
           "status": "SOURCE_LOCATED"
         }
       ],
       "blocking_edges": [
-        "heap source, tracked-root, and OOME source closure",
-        "AGR allocation and OOM contract review"
+        "heap source, exception construction and pending-exception source closure",
+        "AGR allocation, OOM and stock-exception contract review"
       ],
       "status": "SOURCE_LOCATED",
       "closure_reviewed": false,
@@ -761,7 +747,8 @@
       ],
       "source_paths": [
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation"
-      ]
+      ],
+      "cycle_paths": []
     },
     "Dalvik.StaticFieldArrayRoots": {
       "source_repo": "platform/dalvik",
@@ -802,7 +789,8 @@
       ],
       "source_paths": [
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.StaticFieldArrayRoots"
-      ]
+      ],
+      "cycle_paths": []
     },
     "Framework.ZygotePreload": {
       "source_repo": "platform/frameworks/base",
@@ -859,7 +847,8 @@
       ],
       "source_paths": [
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload"
-      ]
+      ],
+      "cycle_paths": []
     },
     "Framework.ZygoteVMOptions": {
       "source_repo": "platform/frameworks/base",
@@ -912,8 +901,10 @@
       ],
       "source_paths": [
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.ClassVerification -> Framework.ZygoteVMOptions",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization -> Dalvik.ClassVerification -> Framework.ZygoteVMOptions",
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.ClassVerification -> Framework.ZygoteVMOptions"
-      ]
+      ],
+      "cycle_paths": []
     }
   }
 }
