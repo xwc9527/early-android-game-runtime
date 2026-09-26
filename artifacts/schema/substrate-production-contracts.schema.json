@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "contracts", "reopens"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": 1},
+    "contracts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "semantic_cluster", "status", "source_revision", "source_owner_digest",
+          "production_module", "tested_commit", "tested_tree",
+          "closure_evidence", "closure_run", "clean_differential"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "semantic_cluster": {"type": "string", "minLength": 1},
+          "status": {"const": "PRODUCTION_CLOSED"},
+          "source_revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "source_owner_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "production_module": {"type": "string", "minLength": 1},
+          "tested_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "tested_tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+          "closure_evidence": {"type": "string", "minLength": 1},
+          "closure_run": {"type": "string", "minLength": 1},
+          "clean_differential": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "reopens": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["semantic_cluster", "reason", "evidence"],
+        "additionalProperties": false,
+        "properties": {
+          "semantic_cluster": {"type": "string", "minLength": 1},
+          "reason": {"type": "string", "minLength": 1},
+          "evidence": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

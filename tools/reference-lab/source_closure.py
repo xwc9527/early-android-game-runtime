@@ -7,6 +7,8 @@ This step does not invent callees that the index does not contain.
 import hashlib
 import json
 
+from substrate_contracts import require_production_contract
+
 MIGRATION_TYPES = ("SOURCE_PORT", "AOSP_NATIVE_ADAPT", "HOST_BOUNDARY", "SERVICE_HLE")
 FORBIDDEN = ("ORIGINAL_IMPLEMENTATION", "APPROXIMATION", "GAME_PATCH", "SYNTHETIC_ANDROID_BEHAVIOR")
 EXTERNAL_DEPENDENCY_FIELDS = ("init_deps", "registration_deps", "cross_cluster_deps",
@@ -224,15 +226,37 @@ def reject_unmatched_owner_prerequisites(owner):
             raise ValueError("prerequisite does not match a crossing source edge")
 
 
-def prerequisite_relations_allow_closure(edges):
-    """Missing edges keep the legacy closure path. A declared relationship must be closed."""
+def require_prerequisite_closed_authority(prerequisite, crossing, index, contracts=None,
+                                          evidence=None, modules=None):
+    """PREREQUISITE_CLOSED needs a closed source owner and cited production evidence."""
+    if not external_edge_closed(crossing, index or {}):
+        raise ValueError("source owner is not closed")
+    owner = ((index or {}).get("external_cluster_sources") or {}).get(crossing.get("semantic_cluster"))
+    require_production_contract(crossing.get("semantic_cluster"), owner.get("revision") if isinstance(owner, dict) else None,
+                                external_owner_digest(owner) if isinstance(owner, dict) else None,
+                                contracts, evidence, modules)
+
+
+def _matching_crossing(prerequisite, crossings):
+    return next((crossing for crossing in crossings or []
+                 if isinstance(crossing, dict) and prerequisite_matches_crossing(prerequisite, crossing)), None)
+
+
+def prerequisite_relations_allow_closure(edges, crossings=None, index=None, contracts=None,
+                                         evidence=None, modules=None):
+    """Missing edges keep the legacy closure path. A closed relationship must cite production authority."""
     if not edges:
         return True
-    return all(isinstance(edge, dict)
-               and edge.get("relationship") == "PREREQUISITE_CLOSED"
-               and edge.get("owner_source_status") == "SOURCE_CLOSED"
-               and edge.get("semantic_cluster") in SHARED_RUNTIME_SUBSTRATE_OWNERS
-               for edge in edges)
+    for edge in edges:
+        if (not isinstance(edge, dict) or edge.get("relationship") != "PREREQUISITE_CLOSED"
+                or edge.get("owner_source_status") != "SOURCE_CLOSED"
+                or edge.get("semantic_cluster") not in SHARED_RUNTIME_SUBSTRATE_OWNERS):
+            return False
+        matched = _matching_crossing(edge, crossings)
+        if matched is None:
+            raise ValueError("prerequisite does not match a crossing source edge")
+        require_prerequisite_closed_authority(edge, matched, index, contracts, evidence, modules)
+    return True
 
 
 def validate_prerequisite_edge(edge):
@@ -325,7 +349,17 @@ def _reject_absorbed_owner_crossings(cluster, derived):
                 raise ValueError("upper cluster absorbed shared substrate internals")
 
 
-def validate_prerequisite_relations(document):
+def _require_closed_relationships(item, index, contracts, evidence, modules):
+    crossings = [edge for edge in (item.get("cross_cluster_source_edges") or []) if isinstance(edge, dict)]
+    for edge in item.get("prerequisite_edges") or []:
+        if isinstance(edge, dict) and edge.get("relationship") == "PREREQUISITE_CLOSED":
+            matched = _matching_crossing(edge, crossings)
+            if matched is None:
+                raise ValueError("prerequisite does not match a crossing source edge")
+            require_prerequisite_closed_authority(edge, matched, index, contracts, evidence, modules)
+
+
+def validate_prerequisite_relations(document, index=None, contracts=None, evidence=None, modules=None):
     """Validate upper-cluster prerequisite relationships without reclassifying legacy documents."""
     derived = document.get("source_derived_clusters") or {}
     items = list(document.get("manifests") or [])
@@ -358,6 +392,7 @@ def validate_prerequisite_relations(document):
                 if name in seen and seen[name] != edge["relationship"]:
                     raise ValueError("conflicting substrate prerequisite relationship")
                 seen[name] = edge["relationship"]
+            _require_closed_relationships(item, index, contracts, evidence, modules)
             by_owner = {}
             for source_edge in crossings:
                 if source_edge.get("semantic_cluster") in SHARED_RUNTIME_SUBSTRATE_OWNERS:
@@ -393,6 +428,7 @@ def validate_prerequisite_relations(document):
         if not isinstance(cluster, dict) or not cluster.get("prerequisite_edges"):
             continue
         reject_unmatched_owner_prerequisites(cluster)
+        _require_closed_relationships(cluster, index, contracts, evidence, modules)
         _reject_absorbed_owner_crossings(cluster, derived)
 
 
@@ -404,10 +440,19 @@ def _matches_pinned_owner(edge, owner):
             edge.get("source_symbol") in (owner.get("required_symbols") or []))
 
 
-def source_derived_clusters(manifests, index):
+def source_derived_clusters(manifests, index, contracts=None, evidence=None, modules=None):
     """Expand pinned source edges. Stop keys belong to the owner that declares them."""
     owners = index.get("external_cluster_sources") or {}
     found = {}
+
+    def stop_authorized(item, edge):
+        if crossing_identity(edge) not in matching_stop_keys(item):
+            return False
+        for prerequisite in item.get("prerequisite_edges") or []:
+            if (isinstance(prerequisite, dict) and prerequisite.get("relationship") == "PREREQUISITE_CLOSED"
+                    and prerequisite_matches_crossing(prerequisite, edge)):
+                require_prerequisite_closed_authority(prerequisite, edge, index, contracts, evidence, modules)
+        return True
 
     def stop_before_entering(edge):
         name = edge.get("semantic_cluster")
@@ -438,17 +483,15 @@ def source_derived_clusters(manifests, index):
             row["cycle_paths"].add(source_path)
             row["status"] = "SOURCE_LOCATED"
             return
-        stops = matching_stop_keys(owner)
         for child in owner.get("cross_cluster_source_edges") or []:
-            if crossing_identity(child) in stops:
+            if stop_authorized(owner, child):
                 stop_before_entering(child)
                 continue
             visit(child, parent_id, path + (name,))
 
     for manifest in manifests:
-        stop_keys = matching_stop_keys(manifest)
         for edge in manifest.get("cross_cluster_source_edges") or []:
-            if crossing_identity(edge) in stop_keys:
+            if stop_authorized(manifest, edge):
                 stop_before_entering(edge)
                 continue
             visit(edge, manifest["dependency_id"], (manifest["canonical_name"],))
@@ -459,7 +502,7 @@ def source_derived_clusters(manifests, index):
     return dict(sorted(found.items()))
 
 
-def closure_work_queue(manifests, derived):
+def closure_work_queue(manifests, derived, index=None, contracts=None, evidence=None, modules=None):
     """Turn denied source-closure gates into traceable next-edge work."""
     queue = []
     for item in manifests:
@@ -468,7 +511,10 @@ def closure_work_queue(manifests, derived):
                           "blocking_edge": edge, "origin_dependency_ids": [item["dependency_id"]],
                           "source_paths": [item["canonical_name"]]})
         for edge in item.get("prerequisite_edges") or []:
-            if not isinstance(edge, dict) or edge.get("relationship") == "PREREQUISITE_CLOSED":
+            if not isinstance(edge, dict):
+                continue
+            if edge.get("relationship") == "PREREQUISITE_CLOSED":
+                _require_closed_relationships(item, index, contracts, evidence, modules)
                 continue
             if edge.get("relationship") not in ("UNRESOLVED", "REOPEN_REQUIRED"):
                 continue
@@ -484,7 +530,10 @@ def closure_work_queue(manifests, derived):
                               "origin_dependency_ids": owner["origin_dependency_ids"],
                               "source_paths": owner["source_paths"]})
         for edge in owner.get("prerequisite_edges") or []:
-            if not isinstance(edge, dict) or edge.get("relationship") == "PREREQUISITE_CLOSED":
+            if not isinstance(edge, dict):
+                continue
+            if edge.get("relationship") == "PREREQUISITE_CLOSED":
+                _require_closed_relationships(owner, index, contracts, evidence, modules)
                 continue
             if edge.get("relationship") not in ("UNRESOLVED", "REOPEN_REQUIRED"):
                 continue
@@ -500,11 +549,13 @@ def closure_work_queue(manifests, derived):
                                            item["blocking_edge"]))
 
 
-def reviewed_source_set(pinned, index, evidence):
+def reviewed_source_set(pinned, index, evidence, contracts=None, production_evidence=None, modules=None):
     """A multi-file closure must pin every file and account for every listed edge."""
     if pinned.get("blocking_edges"):
         return False
-    if not prerequisite_relations_allow_closure(pinned.get("prerequisite_edges")):
+    if not prerequisite_relations_allow_closure(
+            pinned.get("prerequisite_edges"), pinned.get("cross_cluster_source_edges"),
+            index, contracts, production_evidence, modules):
         return False
     if any(not external_edge_closed(edge, index)
            for edge in (pinned.get("cross_cluster_source_edges") or [])):
@@ -550,7 +601,8 @@ def reviewed_source_set(pinned, index, evidence):
     return True
 
 
-def close_entry(entry, index, migration_type="SOURCE_PORT"):
+def close_entry(entry, index, migration_type="SOURCE_PORT", contracts=None,
+               production_evidence=None, modules=None):
     if migration_type in FORBIDDEN:
         raise ValueError("forbidden migration type: " + migration_type)
     if migration_type not in MIGRATION_TYPES:
@@ -587,7 +639,7 @@ def close_entry(entry, index, migration_type="SOURCE_PORT"):
     revision = index.get("revision")
     if (manifest["status"] == "SOURCE_LOCATED" and pinned.get("closure_reviewed") is True
             and isinstance(evidence, dict)
-            and reviewed_source_set(pinned, index, evidence)
+            and reviewed_source_set(pinned, index, evidence, contracts, production_evidence, modules)
             and evidence.get("reviewed_by") and evidence.get("closure_notes")
             and isinstance(revision, str) and len(revision) == 40
             and all(char in "0123456789abcdef" for char in revision.lower())
@@ -621,4 +673,5 @@ def close_entry(entry, index, migration_type="SOURCE_PORT"):
         for edge in manifest["prerequisite_edges"]:
             validate_prerequisite_edge(edge)
         reject_substrate_bypass(manifest)
+        _require_closed_relationships(manifest, index, contracts, production_evidence, modules)
     return manifest
