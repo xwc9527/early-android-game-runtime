@@ -228,7 +228,7 @@ def reject_unmatched_owner_prerequisites(owner):
 
 def require_prerequisite_closed_authority(prerequisite, crossing, index, contracts=None,
                                           evidence=None, modules=None):
-    """PREREQUISITE_CLOSED needs a closed source owner and cited production evidence."""
+    """PREREQUISITE_CLOSED needs a closed source owner, then still lacks CLEAN authority."""
     if not external_edge_closed(crossing, index or {}):
         raise ValueError("source owner is not closed")
     owner = ((index or {}).get("external_cluster_sources") or {}).get(crossing.get("semantic_cluster"))

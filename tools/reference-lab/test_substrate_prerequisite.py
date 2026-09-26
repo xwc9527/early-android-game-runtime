@@ -1,4 +1,5 @@
 import json
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -12,7 +13,12 @@ from source_closure import (
     external_owner_digest,
     source_derived_clusters,
 )
+from substrate_contracts import require_production_contract
 from workflow import cluster_manifests, validate_source_manifests
+
+PHASE3_RUN = "36039287996"
+PHASE3_COMMIT = "851a025a14a75429c975da43853269f9d98ed8ef"
+PHASE3_TREE = "9ece3c2b0f1bea5d8275bde75f13d91b5b3e63d6"
 
 ROOT = Path(__file__).resolve().parents[2]
 REV = "c" * 40
@@ -284,93 +290,54 @@ class SubstratePrerequisiteTest(unittest.TestCase):
                  "entries": {UPPER: pinned}}
         return index
 
-    def _authority(self, index, cluster="Dalvik.ClassInitialization"):
+    def _contract(self, index, cluster="Dalvik.ClassInitialization", **overrides):
         owner = index["external_cluster_sources"][cluster]
-        digest = external_owner_digest(owner)
-        commit = "d" * 40
-        tree = "e" * 40
-        closure_ref = "synthetic/" + cluster + "-closure.json"
-        clean_ref = "synthetic/" + cluster + "-clean.json"
         contract = {"semantic_cluster": cluster, "status": "PRODUCTION_CLOSED",
-                    "source_revision": owner["revision"], "source_owner_digest": digest,
-                    "production_module": "SyntheticSubstrate", "tested_commit": commit,
-                    "tested_tree": tree, "closure_evidence": closure_ref,
-                    "closure_run": "synthetic-run", "clean_differential": clean_ref}
-        evidence = {closure_ref: {
-            "semantic_cluster": cluster, "run_id": "synthetic-run", "tested_commit": commit,
-            "tested_tree": tree, "classification": "VALID_PASS",
-            "source_revision": owner["revision"], "source_owner_digest": digest},
-            clean_ref: {
-                "kind": "API19_CLEAN_DIFFERENTIAL", "result": "NO_DIVERGENCE",
-                "semantic_cluster": cluster, "tested_commit": commit, "tested_tree": tree,
-                "source_revision": owner["revision"], "source_owner_digest": digest}}
-        return {"schema_version": 1, "contracts": [contract], "reopens": []}, evidence, ["SyntheticSubstrate"]
+                    "source_revision": owner["revision"],
+                    "source_owner_digest": external_owner_digest(owner),
+                    "production_module": "SyntheticSubstrate",
+                    "tested_commit": PHASE3_COMMIT, "tested_tree": PHASE3_TREE,
+                    "closure_run": PHASE3_RUN}
+        contract.update(overrides)
+        return {"schema_version": 1, "contracts": [contract], "reopens": []}, ["SyntheticSubstrate"]
 
-    def _document(self, index, review=True):
-        if review:
-            index = json.loads(json.dumps(index))
-            index["cluster_reviews"] = {CLUSTER: {
-                "closure_reviewed": True, "source_revision": REV, "entry_names": [UPPER],
-                "source_file_sha256": {BOX: SHA_BOX},
-                "reviewed_dependency_edges": ["class initialization"],
-                "unresolved_dependency_edges": [], "reviewed_by": "source-audit",
-                "closure_notes": "Upper cluster reviewed without absorbing substrate internals"}}
-        contracts, evidence, modules = None, None, None
-        closed = [edge for entry in (index.get("entries") or {}).values()
-                  for edge in (entry.get("prerequisite_edges") or [])
-                  if isinstance(edge, dict) and edge.get("relationship") == "PREREQUISITE_CLOSED"]
-        if closed:
-            contracts, evidence, modules = self._authority(index, closed[0]["semantic_cluster"])
-        entry = {"dependency_id": "JAVA_METHOD:box", "canonical_name": UPPER}
-        manifest = close_entry(entry, index, contracts=contracts, production_evidence=evidence, modules=modules)
-        derived = source_derived_clusters([manifest], index, contracts, evidence, modules)
-        clusters = cluster_manifests([manifest], index, contracts, evidence, modules)
-        document = {"schema_version": 1, "source_index_revision": REV, "manifests": [manifest],
-                    "cluster_source_manifests": clusters, "source_derived_clusters": derived,
-                    "closure_work_queue": closure_work_queue(
-                        [manifest], derived, index, contracts, evidence, modules)}
-        return manifest, clusters, derived, document, index, contracts, evidence, modules
+    def _closed_manifest(self, index):
+        pinned = index["entries"][UPPER]
+        return {"dependency_id": "JAVA_METHOD:box", "canonical_name": UPPER,
+                "semantic_cluster": CLUSTER, "status": "SOURCE_LOCATED",
+                "migration_authorized": False,
+                "cross_cluster_source_edges": pinned["cross_cluster_source_edges"],
+                "prerequisite_edges": pinned["prerequisite_edges"]}
 
-    def test_closed_prerequisite_satisfies_one_edge_without_lowering_authorization(self):
+    def test_prerequisite_closed_stays_rejected_without_clean_producer(self):
         index = self._closed_substrate_index()
         self.assertTrue(external_edge_closed(
             index["entries"][UPPER]["cross_cluster_source_edges"][0], index))
-        manifest, clusters, derived, _, _, contracts, evidence, modules = self._document(index, review=False)
-        self.assertEqual(manifest["status"], "SOURCE_CLOSED")
-        self.assertFalse(manifest["migration_authorized"])
-        self.assertEqual(derived, {})
-        self.assertEqual(clusters[CLUSTER]["status"], "SOURCE_CLOSED")
-        self.assertFalse(clusters[CLUSTER]["migration_authorized"])
-        index["source_sha256"] = "8" * 64
-        self.assertEqual(close_entry(
-            {"dependency_id": "JAVA_METHOD:box", "canonical_name": UPPER}, index,
-            contracts=contracts, production_evidence=evidence, modules=modules)["status"],
-            "SOURCE_LOCATED")
-        index["source_sha256"] = SHA_BOX
-        _, authorized_clusters, _, document, authorized_index, authorized_contracts, authorized_evidence, authorized_modules = self._document(index, review=True)
-        self.assertEqual(authorized_clusters[CLUSTER]["status"], "MIGRATION_AUTHORIZED")
-        self.assertTrue(authorized_clusters[CLUSTER]["migration_authorized"])
-        self.assertFalse(any(item.get("scope") == "PREREQUISITE" for item in document["closure_work_queue"]))
-        validate_source_manifests(document, authorized_index, authorized_contracts,
-                                  authorized_evidence, authorized_modules)
-        incomplete = json.loads(json.dumps(index))
-        incomplete["cluster_reviews"] = {CLUSTER: {
-            "closure_reviewed": True, "source_revision": REV, "entry_names": [UPPER],
-            "source_file_sha256": {BOX: SHA_BOX}, "reviewed_dependency_edges": [],
-            "unresolved_dependency_edges": [], "reviewed_by": "source-audit",
-            "closure_notes": "Upper review omitted the prerequisite edge"}}
-        bound_contracts, bound_evidence, bound_modules = self._authority(incomplete)
-        incomplete_clusters = cluster_manifests(
-            [close_entry({"dependency_id": "JAVA_METHOD:box", "canonical_name": UPPER}, incomplete,
-                         contracts=bound_contracts, production_evidence=bound_evidence,
-                         modules=bound_modules)],
-            incomplete, bound_contracts, bound_evidence, bound_modules)
-        self.assertEqual(incomplete_clusters[CLUSTER]["status"], "SOURCE_CLOSED")
-        self.assertFalse(incomplete_clusters[CLUSTER]["migration_authorized"])
+        entry = {"dependency_id": "JAVA_METHOD:box", "canonical_name": UPPER}
+        contracts, modules = self._contract(index)
+        handwritten = json.loads(json.dumps(contracts))
+        handwritten["contracts"][0]["clean_differential"] = "synthetic/clean.json"
+        evidence = {"synthetic/clean.json": {
+            "kind": "API19_CLEAN_DIFFERENTIAL", "result": "NO_DIVERGENCE",
+            "semantic_cluster": "Dalvik.ClassInitialization",
+            "tested_commit": PHASE3_COMMIT, "tested_tree": PHASE3_TREE,
+            "source_revision": REV,
+            "source_owner_digest": contracts["contracts"][0]["source_owner_digest"]}}
+        for bound in (contracts, handwritten):
+            with self.assertRaisesRegex(ValueError, "no API19 CLEAN differential authority"):
+                close_entry(entry, index, contracts=bound, production_evidence=evidence, modules=modules)
+        manifest = self._closed_manifest(index)
+        with self.assertRaisesRegex(ValueError, "no API19 CLEAN differential authority"):
+            source_derived_clusters([manifest], index, contracts, evidence, modules)
+        with self.assertRaisesRegex(ValueError, "no API19 CLEAN differential authority"):
+            closure_work_queue([manifest], {}, index, contracts, evidence, modules)
+        claimed = {"schema_version": 1, "manifests": [manifest], "source_derived_clusters": {},
+                   "closure_work_queue": []}
+        claimed["manifests"][0]["status"] = "SOURCE_CLOSED"
+        with self.assertRaisesRegex(ValueError, "no API19 CLEAN differential authority"):
+            validate_source_manifests(claimed, index, contracts, evidence, modules)
 
     def test_unresolved_and_reopen_block_upper_closure_and_authorization(self):
-        _, _, _, closed, closed_index, closed_contracts, closed_evidence, closed_modules = self._document(
-            self._closed_substrate_index(), review=True)
         for relationship in ("UNRESOLVED", "REOPEN_REQUIRED"):
             index = self._closed_substrate_index(relationship)
             manifest = close_entry({"dependency_id": "JAVA_METHOD:box", "canonical_name": UPPER}, index)
@@ -380,29 +347,30 @@ class SubstratePrerequisiteTest(unittest.TestCase):
             clusters = cluster_manifests([manifest], index)
             self.assertEqual(clusters[CLUSTER]["status"], "SOURCE_LOCATED")
             self.assertFalse(clusters[CLUSTER]["migration_authorized"])
-            forged = json.loads(json.dumps(closed))
-            for item in (forged["manifests"][0], forged["cluster_source_manifests"][CLUSTER]):
-                item["prerequisite_edges"][0]["relationship"] = relationship
-                item["prerequisite_edges"][0]["owner_source_status"] = "SOURCE_CLOSED"
+            forged = {"schema_version": 1, "manifests": [json.loads(json.dumps(manifest))],
+                      "source_derived_clusters": {}, "closure_work_queue": []}
+            forged["manifests"][0]["status"] = "SOURCE_CLOSED"
             with self.assertRaisesRegex(ValueError, "blocks upper closure"):
-                validate_source_manifests(forged, closed_index, closed_contracts,
-                                          closed_evidence, closed_modules)
+                validate_source_manifests(forged, index)
 
     def test_closed_upper_cluster_cannot_absorb_substrate_without_relationship(self):
-        _, _, _, document, index, contracts, evidence, modules = self._document(
-            self._closed_substrate_index(), review=True)
-        forged = json.loads(json.dumps(document))
-        forged["manifests"][0].pop("prerequisite_edges")
-        forged["cluster_source_manifests"][CLUSTER].pop("prerequisite_edges")
+        index = self._closed_substrate_index()
+        document = {"schema_version": 1, "manifests": [{
+            "status": "SOURCE_CLOSED", "dependency_id": "JAVA_METHOD:box",
+            "canonical_name": UPPER, "semantic_cluster": CLUSTER,
+            "cross_cluster_source_edges": index["entries"][UPPER]["cross_cluster_source_edges"]}],
+            "source_derived_clusters": {}, "closure_work_queue": []}
         with self.assertRaisesRegex(ValueError, "requires a prerequisite relationship"):
-            validate_source_manifests(forged, index, contracts, evidence, modules)
-        absorbed = json.loads(json.dumps(document))
-        absorbed["source_derived_clusters"] = {"Dalvik.Monitor": {
+            validate_source_manifests(document, index)
+        claimed = json.loads(json.dumps(document))
+        claimed["manifests"][0]["prerequisite_edges"] = index["entries"][UPPER]["prerequisite_edges"]
+        claimed["source_derived_clusters"] = {"Dalvik.Monitor": {
             "semantic_cluster": "Dalvik.Monitor",
             "origin_dependency_ids": ["JAVA_METHOD:box"],
             "source_paths": [UPPER + " -> Dalvik.ClassInitialization -> Dalvik.Monitor"]}}
-        with self.assertRaisesRegex(ValueError, "absorbed shared substrate internals"):
-            validate_source_manifests(absorbed, index, contracts, evidence, modules)
+        contracts, modules = self._contract(index)
+        with self.assertRaisesRegex(ValueError, "no API19 CLEAN differential authority"):
+            validate_source_manifests(claimed, index, contracts, modules=modules)
 
     def test_private_file_hle_and_game_patch_cannot_bypass(self):
         prereq = _prerequisite("UNRESOLVED", "SOURCE_LOCATED")
@@ -585,40 +553,81 @@ class SubstratePrerequisiteTest(unittest.TestCase):
 
     def test_production_contract_missing_binding_is_rejected(self):
         index = self._closed_substrate_index()
-        contracts, evidence, modules = self._authority(index)
+        contracts, modules = self._contract(index)
         entry = {"dependency_id": "JAVA_METHOD:box", "canonical_name": UPPER}
         for key, message in (
                 ("source_owner_digest", "lacks source owner digest"),
                 ("tested_commit", "lacks tested commit"),
                 ("tested_tree", "lacks tested tree"),
-                ("clean_differential", "lacks clean differential")):
+                ("closure_run", "lacks closure run")):
             broken = json.loads(json.dumps(contracts))
             broken["contracts"][0].pop(key)
             with self.assertRaisesRegex(ValueError, message):
-                close_entry(entry, index, contracts=broken, production_evidence=evidence, modules=modules)
-        unbound = json.loads(json.dumps(evidence))
-        unbound[contracts["contracts"][0]["closure_evidence"]]["source_owner_digest"] = "f" * 64
+                close_entry(entry, index, contracts=broken, modules=modules)
+        unbound = json.loads(json.dumps(contracts))
+        unbound["contracts"][0]["source_owner_digest"] = "f" * 64
         with self.assertRaisesRegex(ValueError, "does not bind the source owner"):
-            close_entry(entry, index, contracts=contracts, production_evidence=unbound, modules=modules)
-        missing = dict(evidence)
-        missing.pop(contracts["contracts"][0]["clean_differential"])
-        with self.assertRaisesRegex(ValueError, "evidence is missing"):
-            close_entry(entry, index, contracts=contracts, production_evidence=missing, modules=modules)
+            close_entry(entry, index, contracts=unbound, modules=modules)
+        unknown = json.loads(json.dumps(contracts))
+        unknown["contracts"][0]["closure_run"] = "not-a-recorded-run"
+        with self.assertRaisesRegex(ValueError, "closure run is not a recorded VALID_PASS"):
+            close_entry(entry, index, contracts=unknown, modules=modules)
+        invalid = json.loads(json.dumps(contracts))
+        invalid["contracts"][0].update({
+            "closure_run": "35469009073",
+            "tested_commit": "15dcd2223eaead03837a4645fbc5d044fb2b3502",
+            "tested_tree": "a372ece3c0b62f694abd268a6adf596c878fe0c4"})
+        with self.assertRaisesRegex(ValueError, "closure run is not a recorded VALID_PASS"):
+            close_entry(entry, index, contracts=invalid, modules=modules)
+        mismatched = json.loads(json.dumps(contracts))
+        mismatched["contracts"][0]["tested_tree"] = "a" * 40
+        with self.assertRaisesRegex(ValueError, "closure run is not a recorded VALID_PASS"):
+            close_entry(entry, index, contracts=mismatched, modules=modules)
 
-    def test_bound_production_contract_closes_prerequisite_without_queueing_it(self):
-        manifest, _, derived, document, index, contracts, evidence, modules = self._document(
-            self._closed_substrate_index(), review=False)
-        self.assertEqual(manifest["status"], "SOURCE_CLOSED")
-        self.assertEqual(derived, {})
-        self.assertFalse(any(item.get("scope") == "PREREQUISITE" for item in document["closure_work_queue"]))
-        validate_source_manifests(document, index, contracts, evidence, modules)
-        reopened = json.loads(json.dumps(contracts))
-        reopened["reopens"] = [{"semantic_cluster": "Dalvik.ClassInitialization",
+    def test_git_identity_is_required_and_clean_authority_stays_absent(self):
+        index = self._closed_substrate_index()
+        owner = index["external_cluster_sources"]["Dalvik.ClassInitialization"]
+        digest = external_owner_digest(owner)
+
+        def bound(commit, tree, run_id="injected-run"):
+            contracts, modules = self._contract(
+                index, tested_commit=commit, tested_tree=tree, closure_run=run_id)
+            return contracts, modules
+
+        missing = "b" * 40
+        contracts, modules = bound(missing, "a" * 40)
+        with self.assertRaisesRegex(ValueError, "tested commit is not in git"):
+            require_production_contract(
+                "Dalvik.ClassInitialization", owner["revision"], digest, contracts,
+                modules=modules, ledger={"attempts": [{
+                    "run_id": "injected-run", "classification": "VALID_PASS",
+                    "tested_commit": missing, "tested_tree": "a" * 40}]})
+        head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+        contracts, modules = bound(head, "a" * 40)
+        row = {"run_id": "injected-run", "classification": "VALID_PASS",
+               "tested_commit": head, "tested_tree": "a" * 40}
+        with self.assertRaisesRegex(ValueError, "closure run is not a recorded VALID_PASS"):
+            require_production_contract(
+                "Dalvik.ClassInitialization", owner["revision"], digest, contracts,
+                modules=modules, ledger={"attempts": [row, dict(row)]})
+        with self.assertRaisesRegex(ValueError, "tested tree does not match git"):
+            require_production_contract(
+                "Dalvik.ClassInitialization", owner["revision"], digest, contracts,
+                modules=modules, ledger={"attempts": [row]})
+        contracts, modules = self._contract(index)
+        with self.assertRaisesRegex(ValueError, "no API19 CLEAN differential authority"):
+            require_production_contract(
+                "Dalvik.ClassInitialization", owner["revision"], digest, contracts, modules=modules)
+
+    def test_reopen_blocks_closed_prerequisite(self):
+        index = self._closed_substrate_index()
+        contracts, modules = self._contract(index)
+        contracts["reopens"] = [{"semantic_cluster": "Dalvik.ClassInitialization",
                                 "reason": "synthetic contract reopen",
                                 "evidence": "synthetic reopen evidence"}]
         with self.assertRaisesRegex(ValueError, "reopen blocks closed prerequisite"):
             close_entry({"dependency_id": "JAVA_METHOD:box", "canonical_name": UPPER}, index,
-                        contracts=reopened, production_evidence=evidence, modules=modules)
+                        contracts=contracts, modules=modules)
 
     def test_substrate_production_registry_starts_empty(self):
         registry = json.loads((ROOT / "ci/governance/substrate-production-contracts.json").read_text())
