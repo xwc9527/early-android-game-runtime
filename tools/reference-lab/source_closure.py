@@ -91,31 +91,109 @@ def reviewed_edge_contracts(item, evidence):
     return True
 
 
-def external_edge_closed(edge, index, seen=None):
-    """An edge label alone cannot certify a different semantic owner's closure."""
-    if not isinstance(edge, dict) or edge.get("status") != "SOURCE_CLOSED":
-        return False
-    cluster = edge.get("semantic_cluster")
-    seen = seen or frozenset()
-    if cluster in seen:
-        return False
-    owner = (index.get("external_cluster_sources") or {}).get(cluster)
+def _canonical_owner(owner):
+    return json.dumps(owner, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def unified_substrate_catalog(indexes):
+    """Merge confirmed substrate owners. A disagreeing duplicate fails closed."""
+    merged = {}
+    for index in indexes:
+        for name, owner in ((index or {}).get("external_cluster_sources") or {}).items():
+            if name not in SHARED_RUNTIME_SUBSTRATE_OWNERS:
+                continue
+            if not isinstance(owner, dict):
+                raise ValueError("substrate owner definition conflict: " + name)
+            current = merged.get(name)
+            if current is None:
+                merged[name] = owner
+            elif _canonical_owner(current) != _canonical_owner(owner):
+                raise ValueError("substrate owner definition conflict: " + name)
+    return merged
+
+
+def closure_owners(index, catalog=None):
+    """Index-local owners, with a confirmed substrate catalog filling missing owners."""
+    owners = dict(((index or {}).get("external_cluster_sources") or {}))
+    for name, owner in (catalog or {}).items():
+        if name not in SHARED_RUNTIME_SUBSTRATE_OWNERS:
+            raise ValueError("substrate catalog contains an unconfirmed owner: " + str(name))
+        current = owners.get(name)
+        if current is None:
+            owners[name] = owner
+        elif _canonical_owner(current) != _canonical_owner(owner):
+            raise ValueError("substrate owner definition conflict: " + name)
+    return owners
+
+
+def strongly_connected_components(owners):
+    """Deterministic Tarjan components. Each component and the result are sorted."""
+    nodes = sorted(owners)
+    adjacency = {}
+    for name in nodes:
+        targets = []
+        for edge in (owners.get(name) or {}).get("cross_cluster_source_edges") or []:
+            if not isinstance(edge, dict):
+                continue
+            target = edge.get("semantic_cluster")
+            if target in owners and target not in targets:
+                targets.append(target)
+        adjacency[name] = sorted(targets)
+    index_of = {}
+    low = {}
+    stack = []
+    on_stack = set()
+    components = []
+    counter = 0
+
+    def connect(node):
+        nonlocal counter
+        index_of[node] = counter
+        low[node] = counter
+        counter += 1
+        stack.append(node)
+        on_stack.add(node)
+        for target in adjacency[node]:
+            if target not in index_of:
+                connect(target)
+                low[node] = min(low[node], low[target])
+            elif target in on_stack:
+                low[node] = min(low[node], index_of[target])
+        if low[node] == index_of[node]:
+            component = []
+            while True:
+                item = stack.pop()
+                on_stack.remove(item)
+                component.append(item)
+                if item == node:
+                    break
+            components.append(tuple(sorted(component)))
+
+    for node in nodes:
+        if node not in index_of:
+            connect(node)
+    return tuple(sorted(components))
+
+
+def component_containing(name, owners):
+    for component in strongly_connected_components(owners):
+        if name in component:
+            return component
+    return (name,)
+
+
+def locally_source_reviewed(owner):
+    """Local files, symbols, review, boundaries, and dependency accounting. Edges stay outside."""
     if not isinstance(owner, dict) or owner.get("status") != "SOURCE_CLOSED":
-        return False
-    if owner.get("source_repo") != edge.get("source_repo") or owner.get("revision") != edge.get("revision"):
-        return False
-    files = owner.get("source_file_sha256") or {}
-    if (not isinstance(files, dict) or files.get(edge.get("source_file")) != edge.get("source_sha256")
-            or edge.get("source_symbol") not in (owner.get("required_symbols") or [])):
         return False
     if owner.get("blocking_edges") or owner.get("closure_reviewed") is not True:
         return False
+    files = owner.get("source_file_sha256") or {}
     cross = owner.get("cross_cluster_deps") or []
     pinned_cross = owner.get("cross_cluster_source_edges") or []
-    if (set(cross) != {item.get("edge") for item in pinned_cross if isinstance(item, dict)}
-            or len(cross) != len(pinned_cross)
-            or any(not external_edge_closed(item, index, seen | {cluster})
-                   for item in pinned_cross)):
+    if (not isinstance(files, dict) or
+            set(cross) != {item.get("edge") for item in pinned_cross if isinstance(item, dict)} or
+            len(cross) != len(pinned_cross)):
         return False
     boundaries = owner.get("boundary_contracts") or {}
     if set(boundaries) != set(owner.get("excluded_deps") or []):
@@ -132,6 +210,62 @@ def external_edge_closed(edge, index, seen=None):
             and set(review.get("reviewed_dependency_edges") or []) == deps
             and review.get("unresolved_dependency_edges") == []
             and bool(review.get("reviewed_by")) and bool(review.get("closure_notes")))
+
+
+def _internal_scc_edge_ready(edge, target, owner):
+    reviewed = set((owner.get("closure_evidence") or {}).get("reviewed_dependency_edges") or [])
+    return (isinstance(edge, dict) and edge.get("status") == "SOURCE_CLOSED"
+            and edge.get("edge") in reviewed
+            and _matches_pinned_owner(edge, target))
+
+
+def _unresolved_outside_component(owner, component):
+    for edge in owner.get("prerequisite_edges") or []:
+        if not isinstance(edge, dict):
+            return True
+        if (edge.get("relationship") in ("UNRESOLVED", "REOPEN_REQUIRED")
+                and edge.get("semantic_cluster") not in component):
+            return True
+    return False
+
+
+def component_source_closed(component, owners, evaluating=None):
+    """SCC source closure. Internal cycles stay dependencies; outgoing edges use the ordinary rule."""
+    evaluating = evaluating or frozenset()
+    if not component or component in evaluating:
+        return False
+    nested = evaluating | {component}
+    wrapped = {"external_cluster_sources": owners}
+    for name in component:
+        owner = owners.get(name)
+        if not locally_source_reviewed(owner) or _unresolved_outside_component(owner, component):
+            return False
+        for edge in owner.get("cross_cluster_source_edges") or []:
+            if not isinstance(edge, dict):
+                return False
+            target = edge.get("semantic_cluster")
+            if target in component:
+                if not _internal_scc_edge_ready(edge, owners.get(target), owner):
+                    return False
+            elif not external_edge_closed(edge, wrapped, evaluating=nested):
+                return False
+    return True
+
+
+def external_edge_closed(edge, index, seen=None, catalog=None, evaluating=None):
+    """An edge label alone cannot certify a different semantic owner's closure.
+
+    ``seen`` no longer rejects a strongly connected component. Re-entering a
+    component that is already under evaluation fails closed.
+    """
+    del seen
+    if not isinstance(edge, dict) or edge.get("status") != "SOURCE_CLOSED":
+        return False
+    owners = closure_owners(index, catalog)
+    cluster = edge.get("semantic_cluster")
+    if not _matches_pinned_owner(edge, owners.get(cluster)):
+        return False
+    return component_source_closed(component_containing(cluster, owners), owners, evaluating)
 
 
 def external_owner_digest(owner):
@@ -440,9 +574,11 @@ def _matches_pinned_owner(edge, owner):
             edge.get("source_symbol") in (owner.get("required_symbols") or []))
 
 
-def source_derived_clusters(manifests, index, contracts=None, evidence=None, modules=None):
+def source_derived_clusters(manifests, index, contracts=None, evidence=None, modules=None,
+                            catalog=None):
     """Expand pinned source edges. Stop keys belong to the owner that declares them."""
-    owners = index.get("external_cluster_sources") or {}
+    owners = closure_owners(index, catalog)
+    wrapped = {"external_cluster_sources": owners}
     found = {}
 
     def stop_authorized(item, edge):
@@ -451,7 +587,7 @@ def source_derived_clusters(manifests, index, contracts=None, evidence=None, mod
         for prerequisite in item.get("prerequisite_edges") or []:
             if (isinstance(prerequisite, dict) and prerequisite.get("relationship") == "PREREQUISITE_CLOSED"
                     and prerequisite_matches_crossing(prerequisite, edge)):
-                require_prerequisite_closed_authority(prerequisite, edge, index, contracts, evidence, modules)
+                require_prerequisite_closed_authority(prerequisite, edge, wrapped, contracts, evidence, modules)
         return True
 
     def stop_before_entering(edge):
@@ -477,11 +613,10 @@ def source_derived_clusters(manifests, index, contracts=None, evidence=None, mod
         row["origin_dependency_ids"].add(parent_id)
         source_path = " -> ".join(path + (name,))
         row["source_paths"].add(source_path)
-        if not external_edge_closed(edge, index):
+        if not external_edge_closed(edge, wrapped):
             row["status"] = "SOURCE_LOCATED"
         if name in path:
             row["cycle_paths"].add(source_path)
-            row["status"] = "SOURCE_LOCATED"
             return
         for child in owner.get("cross_cluster_source_edges") or []:
             if stop_authorized(owner, child):

@@ -126,10 +126,14 @@ An external `SOURCE_CLOSED` edge requires a separately reviewed owner record
 at the same revision and file hash, with its own nested edges and boundary
 contracts resolved. The closed owner's canonical digest must also match the
 entry edge review. A missing or mismatched owner fails validation. Cyclic
-source paths are materialized once as `cycle_paths` and remain
-`SOURCE_LOCATED`; the recursive closure check rejects their promotion. A
-separate strongly connected owner review is required before such a chain can
-reach `SOURCE_CLOSED`.
+source paths stay in `cycle_paths`. A cycle does not itself reject source
+closure. Tarjan review of the confirmed substrate graph can mark a component
+`SOURCE_CLOSED` only when every member has completed local review, every
+internal edge is exact and covered by that review, and every edge leaving the
+component passes ordinary source closure. One local blocker, unaudited edge,
+or unresolved dependency outside the component keeps the whole component
+`SOURCE_LOCATED`. That status is source closure only. It does not write
+`PREREQUISITE_CLOSED` and it does not satisfy production or CLEAN authority.
 `closure_work_queue` enumerates every blocking edge on observed entries and
 reachable source-derived owners, preserving origin dependency IDs and source
 paths. Validation rejects a queue that omits or invents a denied gate.

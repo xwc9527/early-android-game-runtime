@@ -10,7 +10,8 @@ import json
 from pathlib import Path
 
 from mapper import build_book, corpus_union, union_books, write_book
-from source_closure import (close_entry, closure_work_queue, prerequisite_relations_allow_closure,
+from source_closure import (close_entry, closure_owners, closure_work_queue, component_containing,
+                            component_source_closed, prerequisite_relations_allow_closure,
                             required_derived_names, reviewed_edge_contracts, source_derived_clusters,
                             validate_prerequisite_relations)
 from static_scan import apk_identity, scan_apk
@@ -272,7 +273,11 @@ def validate_source_manifests(document, index=None, contracts=None, production_e
         if set(cluster.get("cycle_paths") or []) != actual_cycles:
             raise ValueError("source-derived cycle evidence differs from source paths")
         if actual_cycles and cluster["status"] != "SOURCE_LOCATED":
-            raise ValueError("source-derived cycle cannot claim closure")
+            owners = closure_owners(index)
+            component = component_containing(name, owners)
+            if not (cluster["status"] == "SOURCE_CLOSED" and
+                    component_source_closed(component, owners)):
+                raise ValueError("source-derived cycle cannot claim closure")
         if cluster["status"] == "SOURCE_CLOSED" and (
                 cluster.get("blocking_edges") or
                 cluster.get("closure_reviewed") is not True or
