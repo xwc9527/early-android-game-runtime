@@ -26,7 +26,7 @@ class WorkflowTest(unittest.TestCase):
         self.assertEqual(committed, generated)
         validate_source_manifests(committed)
         self.assertEqual(len(committed["manifests"]), 2)
-        self.assertEqual(len(committed["source_derived_clusters"]), 10)
+        self.assertEqual(len(committed["source_derived_clusters"]), 14)
         asset = committed["source_derived_clusters"]["AndroidNative.AssetObject"]
         self.assertEqual(asset["status"], "SOURCE_LOCATED")
         self.assertFalse(asset["migration_authorized"])
@@ -51,6 +51,17 @@ class WorkflowTest(unittest.TestCase):
                             "AndroidNative.JNIHelp -> Dalvik.JNINativeBinding" in path
                             for path in binding["source_paths"]))
         self.assertFalse(binding["migration_authorized"])
+        context = committed["source_derived_clusters"]["Framework.ContextResourceDispatch"]
+        self.assertEqual(context["status"], "SOURCE_LOCATED")
+        cache = committed["source_derived_clusters"]["Framework.ResourcesManagerCache"]
+        self.assertTrue(any("Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> "
+                            "Framework.ResourcesManagerCache" in path
+                            for path in cache["source_paths"]))
+        self.assertTrue(any("Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache"
+                            in path for path in cache["source_paths"]))
+        paths = committed["source_derived_clusters"]["Framework.AssetManagerPaths"]
+        self.assertTrue(any("Framework.ResourcesManagerCache -> Framework.AssetManagerPaths"
+                            in path for path in paths["source_paths"]))
 
     def test_integer_cluster_seed_keeps_probe_scope_and_blocks_authority(self):
         evidence = ROOT / "tools/reference-lab/evidence"

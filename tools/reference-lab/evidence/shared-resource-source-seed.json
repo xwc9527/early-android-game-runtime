@@ -217,7 +217,18 @@
         "Resources and AssetManager lifetime",
         "configuration/display metrics input contracts"
       ],
-      "cross_cluster_source_edges": [],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "Context resources base and override dispatch",
+          "semantic_cluster": "Framework.ContextResourceDispatch",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/java/android/view/ContextThemeWrapper.java",
+          "source_symbol": "getResources()",
+          "source_sha256": "2f8eaadf64c6f8badd5ce34836b50c0c4c43540902e045552e36662e467d6d3e",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
       "closure_evidence": null,
       "service_contract": null,
       "owner_cluster": "Framework",
@@ -332,6 +343,16 @@
           "source_symbol": "AssetInputStream",
           "source_sha256": "51d78ab16002df592cd19cb7bfb4a06edb882c5a9a1c3798e8f06d02b7df27d7",
           "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "Context resources base and override dispatch",
+          "semantic_cluster": "Framework.ContextResourceDispatch",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/java/android/view/ContextThemeWrapper.java",
+          "source_symbol": "getResources()",
+          "source_sha256": "2f8eaadf64c6f8badd5ce34836b50c0c4c43540902e045552e36662e467d6d3e",
+          "status": "SOURCE_LOCATED"
         }
       ],
       "closure_evidence": null
@@ -400,10 +421,13 @@
       "provenance": "SOURCE_DERIVED",
       "migration_authorized": false,
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject"
       ],
       "cycle_paths": []
     },
@@ -444,12 +468,19 @@
       "provenance": "SOURCE_DERIVED",
       "migration_authorized": false,
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
         "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.FileMap",
         "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> AndroidNative.FileMap",
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> AndroidNative.FileMap"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> AndroidNative.FileMap"
       ],
       "cycle_paths": []
     },
@@ -491,10 +522,13 @@
       "provenance": "SOURCE_DERIVED",
       "migration_authorized": false,
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp"
       ],
       "cycle_paths": []
     },
@@ -545,10 +579,13 @@
       "provenance": "SOURCE_DERIVED",
       "migration_authorized": false,
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater"
       ],
       "cycle_paths": []
     },
@@ -598,10 +635,13 @@
       "provenance": "SOURCE_DERIVED",
       "migration_authorized": false,
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO"
       ],
       "cycle_paths": []
     },
@@ -627,10 +667,13 @@
       "provenance": "SOURCE_DERIVED",
       "migration_authorized": false,
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding"
       ],
       "cycle_paths": []
     },
@@ -663,11 +706,16 @@
       "provenance": "SOURCE_DERIVED",
       "migration_authorized": false,
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
         "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> External.ZlibInflate",
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> External.ZlibInflate"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> External.ZlibInflate",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> External.ZlibInflate",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> External.ZlibInflate",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> External.ZlibInflate",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> External.ZlibInflate"
       ],
       "cycle_paths": []
     },
@@ -679,6 +727,7 @@
       },
       "required_symbols": [
         "android_content_AssetManager_destroyAsset",
+        "android_content_AssetManager_addAssetPath",
         "gAssetManagerMethods",
         "register_android_content_AssetManager",
         "delete a"
@@ -719,10 +768,58 @@
       "provenance": "SOURCE_DERIVED",
       "migration_authorized": false,
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI"
+      ],
+      "cycle_paths": []
+    },
+    "Framework.AssetManagerPaths": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "core/java/android/content/res/AssetManager.java": "51d78ab16002df592cd19cb7bfb4a06edb882c5a9a1c3798e8f06d02b7df27d7",
+        "libs/androidfw/AssetManager.cpp": "bae84ddef205f05f37a1029bed454cdefd406e173c4e250df32892dd822a6d53"
+      },
+      "required_symbols": [
+        "addAssetPath",
+        "addAssetPathNative",
+        "AssetManager::addAssetPath"
+      ],
+      "cross_cluster_deps": [
+        "AssetManager JNI addAssetPath binding"
+      ],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "AssetManager JNI addAssetPath binding",
+          "semantic_cluster": "Framework.AssetManagerJNI",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/jni/android_util_AssetManager.cpp",
+          "source_symbol": "android_content_AssetManager_addAssetPath",
+          "source_sha256": "4c941ea2cc6a8a32f4beddd5180c2bbe22f76c78bd349a9841e4702c29e90d4e",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": [
+        "asset path cookie, package ZIP selection and manager lifetime source closure",
+        "AGR asset path and package identity contract review"
+      ],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false,
+      "semantic_cluster": "Framework.AssetManagerPaths",
+      "provenance": "SOURCE_DERIVED",
+      "migration_authorized": false,
+      "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e"
+      ],
+      "source_paths": [
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths"
       ],
       "cycle_paths": []
     },
@@ -771,6 +868,108 @@
       ],
       "cycle_paths": []
     },
+    "Framework.ContextResourceDispatch": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "core/java/android/view/ContextThemeWrapper.java": "2f8eaadf64c6f8badd5ce34836b50c0c4c43540902e045552e36662e467d6d3e",
+        "core/java/android/content/ContextWrapper.java": "a890909c0bb1d035d65193ac9e5fabe1432d17a251619eedcdff525bb6c3bc00",
+        "core/java/android/app/ContextImpl.java": "bc14c3f5f02d240b89e740aae65cffd2218d89eb05a176e49bad9cf39d7cfa02"
+      },
+      "required_symbols": [
+        "getResources()",
+        "createConfigurationContext",
+        "mOverrideConfiguration",
+        "mResources",
+        "packageInfo.getResources"
+      ],
+      "cross_cluster_deps": [
+        "LoadedApk package resources",
+        "ResourcesManager configuration/display cache"
+      ],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "LoadedApk package resources",
+          "semantic_cluster": "Framework.LoadedApkResources",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/java/android/app/LoadedApk.java",
+          "source_symbol": "getResources(ActivityThread mainThread)",
+          "source_sha256": "2d862422d943952091aadd33770895b4bc773cb508e4dc8c3bc112c6b1ecf457",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "ResourcesManager configuration/display cache",
+          "semantic_cluster": "Framework.ResourcesManagerCache",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/java/android/app/ResourcesManager.java",
+          "source_symbol": "getTopLevelResources",
+          "source_sha256": "2a6322cab0801dc65af8135c2b3aae09afa5539a598642b413b89dbab7c65244",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": [
+        "base versus override Context resource ownership source closure",
+        "AGR Context resource identity contract review"
+      ],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false,
+      "semantic_cluster": "Framework.ContextResourceDispatch",
+      "provenance": "SOURCE_DERIVED",
+      "migration_authorized": false,
+      "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e"
+      ],
+      "source_paths": [
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch"
+      ],
+      "cycle_paths": []
+    },
+    "Framework.LoadedApkResources": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "core/java/android/app/LoadedApk.java": "2d862422d943952091aadd33770895b4bc773cb508e4dc8c3bc112c6b1ecf457",
+        "core/java/android/app/ActivityThread.java": "4373bb6a1b9097c136ddab729cafc9884f9c5a70fdf41b43bfd4ba7b083229ae"
+      },
+      "required_symbols": [
+        "getResources(ActivityThread mainThread)",
+        "getTopLevelResources",
+        "mResources"
+      ],
+      "cross_cluster_deps": [
+        "ResourcesManager shared cache"
+      ],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "ResourcesManager shared cache",
+          "semantic_cluster": "Framework.ResourcesManagerCache",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/java/android/app/ResourcesManager.java",
+          "source_symbol": "getTopLevelResources",
+          "source_sha256": "2a6322cab0801dc65af8135c2b3aae09afa5539a598642b413b89dbab7c65244",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": [
+        "package resource cache and ActivityThread delegation source closure",
+        "AGR LoadedApk identity and configuration contract review"
+      ],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false,
+      "semantic_cluster": "Framework.LoadedApkResources",
+      "provenance": "SOURCE_DERIVED",
+      "migration_authorized": false,
+      "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e"
+      ],
+      "source_paths": [
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources"
+      ],
+      "cycle_paths": []
+    },
     "Framework.NativeRegistration": {
       "source_repo": "platform/frameworks/base",
       "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
@@ -808,10 +1007,61 @@
       "provenance": "SOURCE_DERIVED",
       "migration_authorized": false,
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration"
+      ],
+      "cycle_paths": []
+    },
+    "Framework.ResourcesManagerCache": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "core/java/android/app/ResourcesManager.java": "2a6322cab0801dc65af8135c2b3aae09afa5539a598642b413b89dbab7c65244",
+        "core/java/android/content/res/ResourcesKey.java": "10915d4a7b2c861cfbca65074d3b56a6dba6c2d71dc3853ad846e78cc732f4be",
+        "core/java/android/content/res/Resources.java": "c8d44ddddcd86d1e1f52bb107a35c6f7428fc40d45c9bc0246f30ef71282e4bd"
+      },
+      "required_symbols": [
+        "getTopLevelResources",
+        "getDisplayMetricsLocked",
+        "mActiveResources",
+        "ResourcesKey",
+        "updateConfiguration"
+      ],
+      "cross_cluster_deps": [
+        "AssetManager package path installation"
+      ],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "AssetManager package path installation",
+          "semantic_cluster": "Framework.AssetManagerPaths",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/java/android/content/res/AssetManager.java",
+          "source_symbol": "addAssetPath",
+          "source_sha256": "51d78ab16002df592cd19cb7bfb4a06edb882c5a9a1c3798e8f06d02b7df27d7",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": [
+        "ResourcesKey cache, weak lifetime, configuration and display input source closure",
+        "AGR Resources cache and display metrics contract review"
+      ],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false,
+      "semantic_cluster": "Framework.ResourcesManagerCache",
+      "provenance": "SOURCE_DERIVED",
+      "migration_authorized": false,
+      "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e"
+      ],
+      "source_paths": [
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache"
       ],
       "cycle_paths": []
     }
@@ -877,10 +1127,13 @@
       "semantic_cluster": "AndroidNative.AssetObject",
       "blocking_edge": "AGR Asset destructor and allocation lifetime contract review",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject"
       ]
     },
     {
@@ -888,10 +1141,13 @@
       "semantic_cluster": "AndroidNative.AssetObject",
       "blocking_edge": "ZIP/FileMap/inflater and filesystem boundary source closure",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject"
       ]
     },
     {
@@ -899,12 +1155,19 @@
       "semantic_cluster": "AndroidNative.FileMap",
       "blocking_edge": "AGR host VMA and file mapping contract review",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
         "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.FileMap",
         "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> AndroidNative.FileMap",
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> AndroidNative.FileMap"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> AndroidNative.FileMap"
       ]
     },
     {
@@ -912,12 +1175,19 @@
       "semantic_cluster": "AndroidNative.FileMap",
       "blocking_edge": "FileMap alignment, ownership and mmap error source closure",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
         "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.FileMap",
         "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> AndroidNative.FileMap",
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> AndroidNative.FileMap"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> AndroidNative.FileMap",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> AndroidNative.FileMap"
       ]
     },
     {
@@ -925,10 +1195,13 @@
       "semantic_cluster": "AndroidNative.JNIHelp",
       "blocking_edge": "AGR JNI native registration contract review",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp"
       ]
     },
     {
@@ -936,10 +1209,13 @@
       "semantic_cluster": "AndroidNative.JNIHelp",
       "blocking_edge": "nativehelper class lookup, method table and fatal failure source closure",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp"
       ]
     },
     {
@@ -947,10 +1223,13 @@
       "semantic_cluster": "AndroidNative.StreamingZipInflater",
       "blocking_edge": "AGR compressed Asset lifetime contract review",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater"
       ]
     },
     {
@@ -958,10 +1237,13 @@
       "semantic_cluster": "AndroidNative.StreamingZipInflater",
       "blocking_edge": "zlib state, streaming read/seek and error source closure",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater"
       ]
     },
     {
@@ -969,10 +1251,13 @@
       "semantic_cluster": "AndroidNative.ZipFileRO",
       "blocking_edge": "AGR ZIP and APK asset path contract review",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO"
       ]
     },
     {
@@ -980,10 +1265,13 @@
       "semantic_cluster": "AndroidNative.ZipFileRO",
       "blocking_edge": "ZIP directory, entry mapping and error source closure",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO"
       ]
     },
     {
@@ -991,10 +1279,13 @@
       "semantic_cluster": "Dalvik.JNINativeBinding",
       "blocking_edge": "AGR native binding and JNI table contract review",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding"
       ]
     },
     {
@@ -1002,10 +1293,13 @@
       "semantic_cluster": "Dalvik.JNINativeBinding",
       "blocking_edge": "Dalvik native method lookup, binding, repeat registration and failure source closure",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding"
       ]
     },
     {
@@ -1013,11 +1307,16 @@
       "semantic_cluster": "External.ZlibInflate",
       "blocking_edge": "AGR vendored zlib build and ABI contract review",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
         "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> External.ZlibInflate",
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> External.ZlibInflate"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> External.ZlibInflate",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> External.ZlibInflate",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> External.ZlibInflate",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> External.ZlibInflate",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> External.ZlibInflate"
       ]
     },
     {
@@ -1025,11 +1324,16 @@
       "semantic_cluster": "External.ZlibInflate",
       "blocking_edge": "zlib raw-deflate state, allocation and error source closure",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
         "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> External.ZlibInflate",
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> External.ZlibInflate"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> External.ZlibInflate",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> External.ZlibInflate",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> External.ZlibInflate",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> External.ZlibInflate",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> External.ZlibInflate"
       ]
     },
     {
@@ -1037,10 +1341,13 @@
       "semantic_cluster": "Framework.AssetManagerJNI",
       "blocking_edge": "AGR JNI Asset handle ownership contract review",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI"
       ]
     },
     {
@@ -1048,10 +1355,37 @@
       "semantic_cluster": "Framework.AssetManagerJNI",
       "blocking_edge": "JNI init/destroy, registration and 32-bit handle source closure",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Framework.AssetManagerPaths",
+      "blocking_edge": "AGR asset path and package identity contract review",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e"
+      ],
+      "source_paths": [
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Framework.AssetManagerPaths",
+      "blocking_edge": "asset path cookie, package ZIP selection and manager lifetime source closure",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e"
+      ],
+      "source_paths": [
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths"
       ]
     },
     {
@@ -1078,13 +1412,60 @@
     },
     {
       "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Framework.ContextResourceDispatch",
+      "blocking_edge": "AGR Context resource identity contract review",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e"
+      ],
+      "source_paths": [
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Framework.ContextResourceDispatch",
+      "blocking_edge": "base versus override Context resource ownership source closure",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e"
+      ],
+      "source_paths": [
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Framework.LoadedApkResources",
+      "blocking_edge": "AGR LoadedApk identity and configuration contract review",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e"
+      ],
+      "source_paths": [
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Framework.LoadedApkResources",
+      "blocking_edge": "package resource cache and ActivityThread delegation source closure",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e"
+      ],
+      "source_paths": [
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
       "semantic_cluster": "Framework.NativeRegistration",
       "blocking_edge": "AGR Framework JNI registration contract review",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration"
       ]
     },
     {
@@ -1092,10 +1473,37 @@
       "semantic_cluster": "Framework.NativeRegistration",
       "blocking_edge": "AndroidRuntime registration order, class lookup and failure source closure",
       "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"
       ],
       "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration"
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Framework.ResourcesManagerCache",
+      "blocking_edge": "AGR Resources cache and display metrics contract review",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e"
+      ],
+      "source_paths": [
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Framework.ResourcesManagerCache",
+      "blocking_edge": "ResourcesKey cache, weak lifetime, configuration and display input source closure",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e"
+      ],
+      "source_paths": [
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache"
       ]
     }
   ]

@@ -19,6 +19,118 @@
   },
   "closure_reviewed": false,
   "external_cluster_sources": {
+    "Framework.ContextResourceDispatch": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "core/java/android/view/ContextThemeWrapper.java": "2f8eaadf64c6f8badd5ce34836b50c0c4c43540902e045552e36662e467d6d3e",
+        "core/java/android/content/ContextWrapper.java": "a890909c0bb1d035d65193ac9e5fabe1432d17a251619eedcdff525bb6c3bc00",
+        "core/java/android/app/ContextImpl.java": "bc14c3f5f02d240b89e740aae65cffd2218d89eb05a176e49bad9cf39d7cfa02"
+      },
+      "required_symbols": ["getResources()", "createConfigurationContext", "mOverrideConfiguration", "mResources", "packageInfo.getResources"],
+      "cross_cluster_deps": ["LoadedApk package resources", "ResourcesManager configuration/display cache"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "LoadedApk package resources",
+          "semantic_cluster": "Framework.LoadedApkResources",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/java/android/app/LoadedApk.java",
+          "source_symbol": "getResources(ActivityThread mainThread)",
+          "source_sha256": "2d862422d943952091aadd33770895b4bc773cb508e4dc8c3bc112c6b1ecf457",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "ResourcesManager configuration/display cache",
+          "semantic_cluster": "Framework.ResourcesManagerCache",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/java/android/app/ResourcesManager.java",
+          "source_symbol": "getTopLevelResources",
+          "source_sha256": "2a6322cab0801dc65af8135c2b3aae09afa5539a598642b413b89dbab7c65244",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": ["base versus override Context resource ownership source closure", "AGR Context resource identity contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "Framework.LoadedApkResources": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "core/java/android/app/LoadedApk.java": "2d862422d943952091aadd33770895b4bc773cb508e4dc8c3bc112c6b1ecf457",
+        "core/java/android/app/ActivityThread.java": "4373bb6a1b9097c136ddab729cafc9884f9c5a70fdf41b43bfd4ba7b083229ae"
+      },
+      "required_symbols": ["getResources(ActivityThread mainThread)", "getTopLevelResources", "mResources"],
+      "cross_cluster_deps": ["ResourcesManager shared cache"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "ResourcesManager shared cache",
+          "semantic_cluster": "Framework.ResourcesManagerCache",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/java/android/app/ResourcesManager.java",
+          "source_symbol": "getTopLevelResources",
+          "source_sha256": "2a6322cab0801dc65af8135c2b3aae09afa5539a598642b413b89dbab7c65244",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": ["package resource cache and ActivityThread delegation source closure", "AGR LoadedApk identity and configuration contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "Framework.ResourcesManagerCache": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "core/java/android/app/ResourcesManager.java": "2a6322cab0801dc65af8135c2b3aae09afa5539a598642b413b89dbab7c65244",
+        "core/java/android/content/res/ResourcesKey.java": "10915d4a7b2c861cfbca65074d3b56a6dba6c2d71dc3853ad846e78cc732f4be",
+        "core/java/android/content/res/Resources.java": "c8d44ddddcd86d1e1f52bb107a35c6f7428fc40d45c9bc0246f30ef71282e4bd"
+      },
+      "required_symbols": ["getTopLevelResources", "getDisplayMetricsLocked", "mActiveResources", "ResourcesKey", "updateConfiguration"],
+      "cross_cluster_deps": ["AssetManager package path installation"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "AssetManager package path installation",
+          "semantic_cluster": "Framework.AssetManagerPaths",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/java/android/content/res/AssetManager.java",
+          "source_symbol": "addAssetPath",
+          "source_sha256": "51d78ab16002df592cd19cb7bfb4a06edb882c5a9a1c3798e8f06d02b7df27d7",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": ["ResourcesKey cache, weak lifetime, configuration and display input source closure", "AGR Resources cache and display metrics contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "Framework.AssetManagerPaths": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "core/java/android/content/res/AssetManager.java": "51d78ab16002df592cd19cb7bfb4a06edb882c5a9a1c3798e8f06d02b7df27d7",
+        "libs/androidfw/AssetManager.cpp": "bae84ddef205f05f37a1029bed454cdefd406e173c4e250df32892dd822a6d53"
+      },
+      "required_symbols": ["addAssetPath", "addAssetPathNative", "AssetManager::addAssetPath"],
+      "cross_cluster_deps": ["AssetManager JNI addAssetPath binding"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "AssetManager JNI addAssetPath binding",
+          "semantic_cluster": "Framework.AssetManagerJNI",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/jni/android_util_AssetManager.cpp",
+          "source_symbol": "android_content_AssetManager_addAssetPath",
+          "source_sha256": "4c941ea2cc6a8a32f4beddd5180c2bbe22f76c78bd349a9841e4702c29e90d4e",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": ["asset path cookie, package ZIP selection and manager lifetime source closure", "AGR asset path and package identity contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
     "Framework.AssetStreamLifecycle": {
       "source_repo": "platform/frameworks/base",
       "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
@@ -49,7 +161,7 @@
       "source_file_sha256": {
         "core/jni/android_util_AssetManager.cpp": "4c941ea2cc6a8a32f4beddd5180c2bbe22f76c78bd349a9841e4702c29e90d4e"
       },
-      "required_symbols": ["android_content_AssetManager_destroyAsset", "gAssetManagerMethods", "register_android_content_AssetManager", "delete a"],
+      "required_symbols": ["android_content_AssetManager_destroyAsset", "android_content_AssetManager_addAssetPath", "gAssetManagerMethods", "register_android_content_AssetManager", "delete a"],
       "cross_cluster_deps": ["androidfw Asset object destruction", "AndroidRuntime AssetManager native registration"],
       "cross_cluster_source_edges": [
         {
@@ -301,6 +413,18 @@
       "required_symbols": ["ContextThemeWrapper.getResources", "ContextWrapper.getResources", "ContextWrapper.createConfigurationContext", "ContextImpl.getResources", "ContextImpl.createConfigurationContext", "LoadedApk.getResources", "ActivityThread.getTopLevelResources", "ResourcesManager.getTopLevelResources", "ResourcesManager.getDisplayMetricsLocked", "Resources.getAssets", "Resources.updateConfiguration", "ResourcesKey.equals"],
       "data_structures": ["ContextThemeWrapper.mResources", "ContextThemeWrapper.mOverrideConfiguration", "ContextImpl.mResources", "LoadedApk.mResources", "ResourcesManager.mActiveResources", "ResourcesKey"],
       "cross_cluster_deps": ["AssetManager.addAssetPath", "AssetManager.isUpToDate", "DisplayManager display metrics", "CompatibilityInfo"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "Context resources base and override dispatch",
+          "semantic_cluster": "Framework.ContextResourceDispatch",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/java/android/view/ContextThemeWrapper.java",
+          "source_symbol": "getResources()",
+          "source_sha256": "2f8eaadf64c6f8badd5ce34836b50c0c4c43540902e045552e36662e467d6d3e",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
       "blocking_edges": ["Resources and AssetManager lifetime", "configuration/display metrics input contracts"],
       "closure_reviewed": false
     },
