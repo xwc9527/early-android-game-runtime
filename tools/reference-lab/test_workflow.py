@@ -26,7 +26,9 @@ class WorkflowTest(unittest.TestCase):
         self.assertEqual(committed, generated)
         validate_source_manifests(committed)
         self.assertEqual(len(committed["manifests"]), 2)
-        self.assertEqual(len(committed["source_derived_clusters"]), 16)
+        self.assertEqual(len(committed["source_derived_clusters"]), 15)
+        self.assertEqual(len(committed["closure_work_queue"]), 36)
+        self.assertNotIn("Dalvik.JNINativeBinding", committed["source_derived_clusters"])
         asset = committed["source_derived_clusters"]["AndroidNative.AssetObject"]
         self.assertEqual(asset["status"], "SOURCE_LOCATED")
         self.assertFalse(asset["migration_authorized"])
@@ -46,11 +48,32 @@ class WorkflowTest(unittest.TestCase):
                             for path in inflater["source_paths"]))
         self.assertTrue(any("AndroidNative.StreamingZipInflater -> External.ZlibInflate" in path
                             for path in inflater["source_paths"]))
-        binding = committed["source_derived_clusters"]["Dalvik.JNINativeBinding"]
+        jni_help = committed["source_derived_clusters"]["AndroidNative.JNIHelp"]
+        self.assertEqual(jni_help["status"], "SOURCE_LOCATED")
+        self.assertFalse(jni_help["migration_authorized"])
+        self.assertEqual(jni_help["blocking_edges"], [
+            "nativehelper class lookup, method table and fatal failure source closure",
+            "AGR JNI native registration contract review"])
+        self.assertEqual([(edge["edge"], edge["semantic_cluster"], edge["relationship"],
+                           edge["owner_source_status"])
+                          for edge in jni_help["prerequisite_edges"]], [
+            ("Dalvik RegisterNatives method binding", "Dalvik.JNINativeBinding",
+             "UNRESOLVED", "SOURCE_LOCATED")])
         self.assertTrue(any("Framework.AssetManagerJNI -> Framework.NativeRegistration -> "
-                            "AndroidNative.JNIHelp -> Dalvik.JNINativeBinding" in path
-                            for path in binding["source_paths"]))
-        self.assertFalse(binding["migration_authorized"])
+                            "AndroidNative.JNIHelp" in path
+                            for path in jni_help["source_paths"]))
+        self.assertFalse(any("Dalvik.JNINativeBinding" in path for path in jni_help["source_paths"]))
+        binding_rows = [item for item in committed["closure_work_queue"]
+                        if item["semantic_cluster"] == "Dalvik.JNINativeBinding"]
+        self.assertEqual([(item["scope"], item["blocking_edge"], item.get("relationship"))
+                          for item in binding_rows], [
+            ("PREREQUISITE", "Dalvik RegisterNatives method binding", "UNRESOLVED")])
+        jni_rows = [(item["scope"], item["blocking_edge"])
+                    for item in committed["closure_work_queue"]
+                    if item["semantic_cluster"] == "AndroidNative.JNIHelp"]
+        self.assertEqual(jni_rows, [
+            ("SOURCE_DERIVED", "AGR JNI native registration contract review"),
+            ("SOURCE_DERIVED", "nativehelper class lookup, method table and fatal failure source closure")])
         context = committed["source_derived_clusters"]["Framework.ContextResourceDispatch"]
         self.assertEqual(context["status"], "SOURCE_LOCATED")
         cache = committed["source_derived_clusters"]["Framework.ResourcesManagerCache"]

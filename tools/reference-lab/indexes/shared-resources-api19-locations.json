@@ -302,6 +302,19 @@
           "status": "SOURCE_LOCATED"
         }
       ],
+      "prerequisite_edges": [
+        {
+          "edge": "Dalvik RegisterNatives method binding",
+          "semantic_cluster": "Dalvik.JNINativeBinding",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/Jni.cpp",
+          "source_symbol": "RegisterNatives",
+          "source_sha256": "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed"
+        }
+      ],
       "blocking_edges": ["nativehelper class lookup, method table and fatal failure source closure", "AGR JNI native registration contract review"],
       "status": "SOURCE_LOCATED",
       "closure_reviewed": false

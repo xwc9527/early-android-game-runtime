@@ -634,7 +634,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         for name in SHARED_RUNTIME_SUBSTRATE_OWNERS:
             self.assertNotIn(name, encoded)
 
-    def test_real_integer_crossings_are_unresolved_and_resources_stay_unclassified(self):
+    def test_real_integer_and_resources_jni_crossings_are_unresolved(self):
         evidence = ROOT / "tools/reference-lab/evidence"
         corpus = json.loads((evidence / "four-game-corpus-manifest.json").read_text())
         integer_index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
@@ -716,9 +716,29 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         resources_cluster = resources["cluster_source_manifests"]["Framework.Resources"]
         self.assertEqual(resources_cluster["status"], "SOURCE_LOCATED")
         self.assertFalse(resources_cluster["migration_authorized"])
-        self.assertEqual(len(resources["source_derived_clusters"]), 16)
+        self.assertEqual(len(resources["source_derived_clusters"]), 15)
+        self.assertNotIn("Dalvik.JNINativeBinding", resources["source_derived_clusters"])
+        jni_help = resources["source_derived_clusters"]["AndroidNative.JNIHelp"]
+        self.assertEqual(jni_help["blocking_edges"], [
+            "nativehelper class lookup, method table and fatal failure source closure",
+            "AGR JNI native registration contract review"])
+        self.assertEqual([(edge["semantic_cluster"], edge["edge"], edge["relationship"],
+                           edge["owner_source_status"])
+                          for edge in jni_help["prerequisite_edges"]], [
+            ("Dalvik.JNINativeBinding", "Dalvik RegisterNatives method binding",
+             "UNRESOLVED", "SOURCE_LOCATED")])
+        self.assertEqual(len(resources["closure_work_queue"]), 36)
+        self.assertEqual([
+            (item["scope"], item["semantic_cluster"], item["blocking_edge"], item.get("relationship"))
+            for item in resources["closure_work_queue"]
+            if item["semantic_cluster"] in ("AndroidNative.JNIHelp", "Dalvik.JNINativeBinding")], [
+            ("PREREQUISITE", "Dalvik.JNINativeBinding",
+             "Dalvik RegisterNatives method binding", "UNRESOLVED"),
+            ("SOURCE_DERIVED", "AndroidNative.JNIHelp",
+             "AGR JNI native registration contract review", None),
+            ("SOURCE_DERIVED", "AndroidNative.JNIHelp",
+             "nativehelper class lookup, method table and fatal failure source closure", None)])
         resources_encoded = json.dumps(resources)
-        self.assertNotIn("prerequisite_edges", resources_encoded)
         self.assertNotIn("PREREQUISITE_CLOSED", resources_encoded)
         self.assertNotIn("REOPEN_REQUIRED", resources_encoded)
 

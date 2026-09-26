@@ -512,6 +512,19 @@
           "status": "SOURCE_LOCATED"
         }
       ],
+      "prerequisite_edges": [
+        {
+          "edge": "Dalvik RegisterNatives method binding",
+          "semantic_cluster": "Dalvik.JNINativeBinding",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/Jni.cpp",
+          "source_symbol": "RegisterNatives",
+          "source_sha256": "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed"
+        }
+      ],
       "blocking_edges": [
         "nativehelper class lookup, method table and fatal failure source closure",
         "AGR JNI native registration contract review"
@@ -642,38 +655,6 @@
         "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO",
         "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO",
         "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO"
-      ],
-      "cycle_paths": []
-    },
-    "Dalvik.JNINativeBinding": {
-      "source_repo": "platform/dalvik",
-      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
-      "source_file_sha256": {
-        "vm/Jni.cpp": "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed"
-      },
-      "required_symbols": [
-        "RegisterNatives",
-        "dvmRegisterJNIMethod",
-        "JNI_ERR",
-        "JNI_OK"
-      ],
-      "blocking_edges": [
-        "Dalvik native method lookup, binding, repeat registration and failure source closure",
-        "AGR native binding and JNI table contract review"
-      ],
-      "status": "SOURCE_LOCATED",
-      "closure_reviewed": false,
-      "semantic_cluster": "Dalvik.JNINativeBinding",
-      "provenance": "SOURCE_DERIVED",
-      "migration_authorized": false,
-      "origin_dependency_ids": [
-        "JAVA_METHOD:1348f9e0382f292e",
-        "JAVA_METHOD:e5f2639bb82ab850"
-      ],
-      "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding",
-        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding",
-        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding"
       ],
       "cycle_paths": []
     },
@@ -1246,6 +1227,21 @@
       ]
     },
     {
+      "scope": "PREREQUISITE",
+      "semantic_cluster": "Dalvik.JNINativeBinding",
+      "blocking_edge": "Dalvik RegisterNatives method binding",
+      "relationship": "UNRESOLVED",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:1348f9e0382f292e",
+        "JAVA_METHOD:e5f2639bb82ab850"
+      ],
+      "source_paths": [
+        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp",
+        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp"
+      ]
+    },
+    {
       "scope": "SOURCE_DERIVED",
       "semantic_cluster": "AndroidNative.AssetObject",
       "blocking_edge": "AGR Asset destructor and allocation lifetime contract review",
@@ -1395,34 +1391,6 @@
         "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO",
         "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO",
         "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> AndroidNative.AssetObject -> AndroidNative.ZipFileRO"
-      ]
-    },
-    {
-      "scope": "SOURCE_DERIVED",
-      "semantic_cluster": "Dalvik.JNINativeBinding",
-      "blocking_edge": "AGR native binding and JNI table contract review",
-      "origin_dependency_ids": [
-        "JAVA_METHOD:1348f9e0382f292e",
-        "JAVA_METHOD:e5f2639bb82ab850"
-      ],
-      "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding",
-        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding",
-        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding"
-      ]
-    },
-    {
-      "scope": "SOURCE_DERIVED",
-      "semantic_cluster": "Dalvik.JNINativeBinding",
-      "blocking_edge": "Dalvik native method lookup, binding, repeat registration and failure source closure",
-      "origin_dependency_ids": [
-        "JAVA_METHOD:1348f9e0382f292e",
-        "JAVA_METHOD:e5f2639bb82ab850"
-      ],
-      "source_paths": [
-        "Landroid/content/res/AssetManager$AssetInputStream;->close()V -> Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding",
-        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.LoadedApkResources -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding",
-        "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources; -> Framework.ContextResourceDispatch -> Framework.ResourcesManagerCache -> Framework.AssetManagerPaths -> Framework.AssetManagerJNI -> Framework.NativeRegistration -> AndroidNative.JNIHelp -> Dalvik.JNINativeBinding"
       ]
     },
     {
