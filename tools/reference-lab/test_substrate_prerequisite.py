@@ -817,6 +817,11 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         self.assertEqual(owner["closure_evidence"]["source_file_sha256"], owner["source_file_sha256"])
         self.assertEqual(owner["closure_evidence"]["reviewed_dependency_edges"],
                          ["self-suspend on the thread suspend-count condition"])
+        register_natives = next(item for item in owner["internal_deps"]
+                                 if "ScopedJniThreadState" in item)
+        for symbol in ("THREAD_RUNNING", "THREAD_NATIVE"):
+            self.assertIn(symbol, register_natives)
+            self.assertIn(symbol, owner["required_symbols"])
         self.assertNotIn("waitCond", owner["required_symbols"])
         self.assertNotIn("waitMutex", owner["required_symbols"])
         self.assertEqual([(edge["semantic_cluster"], edge["source_file"], edge["source_symbol"], edge["relationship"])
@@ -1122,6 +1127,8 @@ class SubstratePrerequisiteTest(unittest.TestCase):
                          ["DALVIK_JNI_NATIVE_BINDING:register-natives-thread-state"])
         self.assertEqual(thread["source_paths"], ["Dalvik.JNINativeBinding -> Dalvik.ThreadState"])
         self.assertEqual(thread["prerequisite_edges"][0]["relationship"], "PREREQUISITE_CLOSED")
+        for symbol in ("THREAD_RUNNING", "THREAD_NATIVE"):
+            self.assertIn(symbol, thread["required_symbols"])
         self.assertEqual(authorized, json.loads((
             ROOT / "tools/reference-lab/evidence/dalvik-threadstate-production-disposition/source-manifest.json"
         ).read_text(encoding="utf-8")))

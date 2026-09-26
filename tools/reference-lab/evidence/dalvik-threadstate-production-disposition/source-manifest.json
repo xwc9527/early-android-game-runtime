@@ -36,6 +36,7 @@
         "dvmThreadSelf",
         "fullSuspendCheck",
         "THREAD_RUNNING",
+        "THREAD_NATIVE",
         "THREAD_WAIT",
         "THREAD_TIMED_WAIT",
         "THREAD_SUSPENDED",

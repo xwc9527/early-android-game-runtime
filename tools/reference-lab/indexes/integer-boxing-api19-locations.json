@@ -319,7 +319,7 @@
         "vm/Thread.cpp": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
         "vm/Thread.h": "d31169a50cd6e5504fa017cf9ff77a749ff8fb48636985a2037b140c5301f70a"
       },
-      "required_symbols": ["dvmChangeStatus", "dvmThreadSelf", "fullSuspendCheck", "THREAD_RUNNING", "THREAD_WAIT", "THREAD_TIMED_WAIT", "THREAD_SUSPENDED", "suspendCount", "dbgSuspendCount"],
+      "required_symbols": ["dvmChangeStatus", "dvmThreadSelf", "fullSuspendCheck", "THREAD_RUNNING", "THREAD_NATIVE", "THREAD_WAIT", "THREAD_TIMED_WAIT", "THREAD_SUSPENDED", "suspendCount", "dbgSuspendCount"],
       "internal_deps": ["equal old and new status returns the old status without a store", "THREAD_RUNNING is published with android_atomic_acquire_store before suspendCount is read", "a nonzero suspendCount then enters fullSuspendCheck", "every other status, including THREAD_WAIT and THREAD_TIMED_WAIT, is published with android_atomic_release_store and does not check suspension", "dvmChangeStatus rejects THREAD_SUSPENDED as a requested status", "fullSuspendCheck stores THREAD_SUSPENDED, waits while suspendCount is nonzero, then restores the previous status", "a NULL self is resolved with dvmThreadSelf through pthread_getspecific", "RegisterNatives enters through ScopedJniThreadState, which calls dvmChangeStatus(THREAD_RUNNING) and leaves with dvmChangeStatus(THREAD_NATIVE)", "waitCond and waitMutex are Thread fields initialized in Thread.cpp and are not read or written by dvmChangeStatus or fullSuspendCheck"],
       "cross_cluster_deps": ["self-suspend on the thread suspend-count condition"],
       "cross_cluster_source_edges": [
