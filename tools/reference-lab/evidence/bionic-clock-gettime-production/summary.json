@@ -1,0 +1,22 @@
+{
+  "authorized_requests": [
+    "CLOCK_REALTIME",
+    "CLOCK_MONOTONIC"
+  ],
+  "branch": "cursor/shared-substrate-prerequisite-da4f",
+  "focused_differential": "authorized realtime and monotonic success shape matches the reused CLEAN 0/1 excerpts; absolute timestamps are not equal",
+  "host_contract_test": "CONTRACT_OK",
+  "legacy_remaining": "Apple clock ids other than 0 and 1, every non-Apple clock_gettime, and gettimeofday still use the pre-reference synthetic counter",
+  "not_claimed": [
+    "PRODUCTION_CLOSED",
+    "PREREQUISITE_CLOSED",
+    "clocks 2-9",
+    "CPU clocks",
+    "encoded thread clocks"
+  ],
+  "owner_path": "API19 Bionic.ClockGettime -> Runtime/Bionic/agr_bionic_clock.c -> excluded Linux kernel boundary adapter -> agr_host_services.clock_ns -> Darwin",
+  "production_probe_result": "PROBE_DONE ok=1 through agr_bionic_clock_gettime",
+  "production_probe_run": 36260882439,
+  "tested_commit": "cd78510bbee5fe9d0d4a726f93a6142768c311e4",
+  "tested_tree": "12402a0fcd1f047f39b58da3123be1306c3f15f2"
+}

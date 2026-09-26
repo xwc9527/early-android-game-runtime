@@ -15,15 +15,6 @@ on:
         description: Run the production Bionic realtime and monotonic clock port
         type: boolean
         default: false
-  push:
-    branches:
-      - cursor/shared-substrate-prerequisite-da4f
-    paths:
-      - scripts/probe-bionic-clock.sh
-      - Tests/BionicClock/**
-      - Runtime/Bionic/agr_bionic_clock.c
-      - Runtime/Bionic/agr_bionic_clock.h
-      - .github/workflows/ios-simulator-smoke.yml
 
 jobs:
   smoke:
@@ -35,10 +26,10 @@ jobs:
         if: inputs.host_clock_probe_only
         run: bash scripts/probe-host-clock.sh
       - name: Probe production Bionic realtime and monotonic clocks
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.bionic_clock_port_only)
+        if: inputs.bionic_clock_port_only
         run: bash scripts/probe-bionic-clock.sh
       - name: Build and run Simulator smoke with evidence deadline
-        if: github.event_name != 'push' && !inputs.host_clock_probe_only && !inputs.bionic_clock_port_only
+        if: ${{ !inputs.host_clock_probe_only && !inputs.bionic_clock_port_only }}
         env:
           SMOKE_TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
         run: python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds "$SMOKE_TIMEOUT_SECONDS"
@@ -60,7 +51,7 @@ jobs:
           path: build/artifacts/host-clock
           if-no-files-found: error
       - name: Upload production Bionic clock probe evidence
-        if: always() && (github.event_name == 'push' || inputs.bionic_clock_port_only)
+        if: always() && inputs.bionic_clock_port_only
         uses: actions/upload-artifact@v4
         with:
           name: bionic-clock-port
