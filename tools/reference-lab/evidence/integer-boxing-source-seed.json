@@ -853,6 +853,7 @@
       },
       "required_symbols": [
         "java.lang.Integer",
+        "java.lang.Number",
         "preloadClasses",
         "Class.forName(line)",
         "forkAndSpecialize"
