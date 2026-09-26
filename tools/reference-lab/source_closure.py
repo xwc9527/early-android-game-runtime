@@ -117,6 +117,46 @@ def external_owner_digest(owner):
                                      ensure_ascii=False).encode("utf-8")).hexdigest()
 
 
+def source_derived_clusters(manifests, index):
+    """Expand only pinned source edges of observed entries, retaining their parent IDs."""
+    owners = index.get("external_cluster_sources") or {}
+    found = {}
+
+    def visit(edge, parent_id, path):
+        name = edge.get("semantic_cluster")
+        if name in path:
+            raise ValueError("cyclic source-derived cluster chain")
+        owner = owners.get(name)
+        if not isinstance(owner, dict):
+            raise ValueError("source-derived edge lacks a pinned owner: " + str(name))
+        if (owner.get("source_repo") != edge.get("source_repo") or
+                owner.get("revision") != edge.get("revision") or
+                owner.get("source_file_sha256", {}).get(edge.get("source_file")) !=
+                edge.get("source_sha256") or
+                edge.get("source_symbol") not in (owner.get("required_symbols") or [])):
+            raise ValueError("source-derived edge differs from pinned owner: " + name)
+        row = found.setdefault(name, {**owner, "semantic_cluster": name,
+                                      "provenance": "SOURCE_DERIVED",
+                                      "migration_authorized": False,
+                                      "origin_dependency_ids": set(),
+                                      "source_paths": set(),
+                                      "status": "SOURCE_CLOSED"})
+        row["origin_dependency_ids"].add(parent_id)
+        row["source_paths"].add(" -> ".join(path + (name,)))
+        if not external_edge_closed(edge, index):
+            row["status"] = "SOURCE_LOCATED"
+        for child in owner.get("cross_cluster_source_edges") or []:
+            visit(child, parent_id, path + (name,))
+
+    for manifest in manifests:
+        for edge in manifest.get("cross_cluster_source_edges") or []:
+            visit(edge, manifest["dependency_id"], (manifest["canonical_name"],))
+    for row in found.values():
+        row["origin_dependency_ids"] = sorted(row["origin_dependency_ids"])
+        row["source_paths"] = sorted(row["source_paths"])
+    return dict(sorted(found.items()))
+
+
 def reviewed_source_set(pinned, index, evidence):
     """A multi-file closure must pin every file and account for every listed edge."""
     if pinned.get("blocking_edges"):

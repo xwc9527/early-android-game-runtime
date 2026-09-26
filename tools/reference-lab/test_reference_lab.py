@@ -5,7 +5,8 @@ from pathlib import Path
 
 from lab import assert_matched_reference, assert_not_oracle, describe, ensure_layout
 from mapper import build_book, write_book
-from source_closure import close_entry, external_edge_closed, external_owner_digest
+from source_closure import (close_entry, external_edge_closed, external_owner_digest,
+                            source_derived_clusters)
 from source_index import build_index
 from workflow import validate_source_manifests
 
@@ -216,7 +217,7 @@ class ReferenceLabTest(unittest.TestCase):
         self.assertEqual(close_entry(entry, index)["status"], "SOURCE_LOCATED")
 
     def test_external_edge_requires_closed_owner_record(self):
-        edge = {"semantic_cluster": "Dalvik.GCRoots", "source_repo": "platform/dalvik",
+        edge = {"semantic_cluster": "Dalvik.StaticFieldArrayRoots", "source_repo": "platform/dalvik",
                 "revision": "a" * 40, "source_file": "MarkSweep.cpp",
                 "source_sha256": "b" * 64, "source_symbol": "scanStaticFields",
                 "status": "SOURCE_CLOSED"}
@@ -226,7 +227,7 @@ class ReferenceLabTest(unittest.TestCase):
                  "internal_deps": ["class roots"],
                  "status": "SOURCE_LOCATED", "closure_reviewed": False,
                  "blocking_edges": ["class roots"]}
-        index = {"external_cluster_sources": {"Dalvik.GCRoots": owner}}
+        index = {"external_cluster_sources": {"Dalvik.StaticFieldArrayRoots": owner}}
         self.assertFalse(external_edge_closed(edge, index))
         owner.update(status="SOURCE_CLOSED", closure_reviewed=True, blocking_edges=[],
                      closure_evidence={"source_file_sha256": {"MarkSweep.cpp": "b" * 64},
@@ -246,6 +247,22 @@ class ReferenceLabTest(unittest.TestCase):
         self.assertFalse(external_edge_closed(edge, index))
         owner["cross_cluster_source_edges"] = [{**edge, "edge": "Zygote preload"}]
         self.assertFalse(external_edge_closed(edge, index))  # cyclic owner graph
+
+    def test_derived_source_chain_rejects_missing_or_cyclic_owner(self):
+        edge = {"edge": "class init", "semantic_cluster": "Dalvik.Init",
+                "source_repo": "platform/dalvik", "revision": "a" * 40,
+                "source_file": "Class.cpp", "source_symbol": "dvmInitClass",
+                "source_sha256": "b" * 64, "status": "SOURCE_LOCATED"}
+        origin = {"dependency_id": "JAVA_METHOD:1", "canonical_name": "Integer.valueOf",
+                  "cross_cluster_source_edges": [edge]}
+        with self.assertRaisesRegex(ValueError, "lacks a pinned owner"):
+            source_derived_clusters([origin], {})
+        owner = {"source_repo": "platform/dalvik", "revision": "a" * 40,
+                 "source_file_sha256": {"Class.cpp": "b" * 64},
+                 "required_symbols": ["dvmInitClass"], "status": "SOURCE_LOCATED",
+                 "cross_cluster_source_edges": [{**edge, "edge": "recursive init"}]}
+        with self.assertRaisesRegex(ValueError, "cyclic"):
+            source_derived_clusters([origin], {"external_cluster_sources": {"Dalvik.Init": owner}})
 
     def test_service_boundary_stops(self):
         manifest = close_entry({

@@ -115,6 +115,14 @@ An unresolved `blocking_edges` list keeps the entry at `SOURCE_LOCATED` even
 when review fields are present. For a closed semantic cluster, each edge review
 must identify an included source path, a separately closed source cluster, or
 an excluded platform boundary with its observable contract.
+`source_derived_clusters` in a Source Manifest expands pinned source edges
+recursively from observed Migration Book entries. Each derived owner retains
+its original observed dependency ID and full source path; it is explicitly
+`SOURCE_DERIVED`, never a new TRACE observation or migration authorization.
+An external `SOURCE_CLOSED` edge requires a separately reviewed owner record
+at the same revision and file hash, with its own nested edges and boundary
+contracts resolved. The closed owner's canonical digest must also match the
+entry edge review. A missing, mismatched, or cyclic owner chain fails closed.
 
 The current implementation does not provide a complete Android TRACE event
 producer, Framework source closure, cluster ports, or iOS differential. Its

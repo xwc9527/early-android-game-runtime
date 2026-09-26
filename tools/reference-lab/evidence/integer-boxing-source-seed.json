@@ -305,7 +305,7 @@
       "blocking_edges": [
         "Zygote preload and inherited Integer cache source closure",
         "Dalvik class initialization source cluster closure",
-        "Dalvik allocation and static-root source cluster closure",
+        "Dalvik allocation source cluster closure",
         "AGR boot-class Integer ownership and GC integration"
       ],
       "cross_cluster_source_edges": [
@@ -341,13 +341,13 @@
         },
         {
           "edge": "Dalvik static field and array GC roots",
-          "semantic_cluster": "Dalvik.GCRoots",
+          "semantic_cluster": "Dalvik.StaticFieldArrayRoots",
           "source_repo": "platform/dalvik",
           "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
           "source_file": "vm/alloc/MarkSweep.cpp",
           "source_symbol": "scanStaticFields",
           "source_sha256": "bf05e421a49accf1209bb12e83bb2df740d6348d9b6c775f24cebadc6b7b8ab3",
-          "status": "SOURCE_LOCATED"
+          "status": "SOURCE_CLOSED"
         }
       ],
       "closure_evidence": null,
@@ -414,7 +414,7 @@
       "host_adaptation_points": [],
       "blocking_edges": [
         "AGR boot-class Integer ownership and GC integration",
-        "Dalvik allocation and static-root source cluster closure",
+        "Dalvik allocation source cluster closure",
         "Dalvik class initialization source cluster closure",
         "Zygote preload and inherited Integer cache source closure"
       ],
@@ -441,13 +441,13 @@
         },
         {
           "edge": "Dalvik static field and array GC roots",
-          "semantic_cluster": "Dalvik.GCRoots",
+          "semantic_cluster": "Dalvik.StaticFieldArrayRoots",
           "source_repo": "platform/dalvik",
           "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
           "source_file": "vm/alloc/MarkSweep.cpp",
           "source_symbol": "scanStaticFields",
           "source_sha256": "bf05e421a49accf1209bb12e83bb2df740d6348d9b6c775f24cebadc6b7b8ab3",
-          "status": "SOURCE_LOCATED"
+          "status": "SOURCE_CLOSED"
         },
         {
           "edge": "Zygote preloads Integer before app fork",
@@ -461,6 +461,440 @@
         }
       ],
       "closure_evidence": null
+    }
+  },
+  "source_derived_clusters": {
+    "AndroidNative.InitZygote": {
+      "source_repo": "platform/system/core",
+      "revision": "efbf36f2dad8f083de6f48dbb682461d7cfa9781",
+      "source_file_sha256": {
+        "rootdir/init.rc": "bee8a02165d9e4af8ac774bdea752f1841617a082aba68c70862698e969f7b91"
+      },
+      "required_symbols": [
+        "service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-system-server"
+      ],
+      "blocking_edges": [],
+      "status": "SOURCE_CLOSED",
+      "closure_reviewed": true,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "The pinned init.rc Zygote service command matches line 497 of the built TRACE ramdisk init.rc. It passes -Xzygote and no -Xverify or -Xdexopt override; this narrow launch-argument contract does not close init process policy.",
+        "source_file_sha256": {
+          "rootdir/init.rc": "bee8a02165d9e4af8ac774bdea752f1841617a082aba68c70862698e969f7b91"
+        },
+        "reviewed_dependency_edges": [],
+        "unresolved_dependency_edges": []
+      },
+      "semantic_cluster": "AndroidNative.InitZygote",
+      "provenance": "SOURCE_DERIVED",
+      "migration_authorized": false,
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.ClassVerification -> Framework.ZygoteVMOptions -> AndroidNative.InitZygote",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.ClassVerification -> Framework.ZygoteVMOptions -> AndroidNative.InitZygote"
+      ]
+    },
+    "Dalvik.ClassInitialization": {
+      "source_repo": "platform/dalvik",
+      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+      "source_file_sha256": {
+        "vm/oo/Class.cpp": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5"
+      },
+      "required_symbols": [
+        "dvmInitClass",
+        "initSFields",
+        "validateSuperDescriptors",
+        "throwEarlierClassFailure",
+        "dvmFlushBreakpoints"
+      ],
+      "internal_deps": [
+        "superclass descriptor validation before class initialization",
+        "earlier class failure replay",
+        "breakpoint flush after verification and optimization"
+      ],
+      "cross_cluster_deps": [
+        "class verification and dex optimization",
+        "class monitor and cross-thread wait",
+        "method invocation and exception propagation"
+      ],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "class verification and dex optimization",
+          "semantic_cluster": "Dalvik.ClassVerification",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/analysis/DexVerify.cpp",
+          "source_symbol": "dvmVerifyClass",
+          "source_sha256": "d200aa3d569dcbd38e874cf0c8ec7ae1aca59f4729a9df9e61542a44d9f735da",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "class monitor and cross-thread wait",
+          "semantic_cluster": "Dalvik.Monitor",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/Sync.cpp",
+          "source_symbol": "dvmObjectWait",
+          "source_sha256": "8b100ff9e5037fcc8c7bfbbc152a924b31e22e925b03847765d007db42f91b5d",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "method invocation and exception propagation",
+          "semantic_cluster": "Dalvik.MethodInvocation",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/interp/Stack.cpp",
+          "source_symbol": "dvmCallMethod",
+          "source_sha256": "93ca5f272c9a801cc4c3408924b1bf4af212541a6f6ba577687d867be7d48503",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": [
+        "source closure of verification, monitor, invoke, descriptor validation, breakpoint flush and failure paths",
+        "AGR class-initialization contract review"
+      ],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false,
+      "semantic_cluster": "Dalvik.ClassInitialization",
+      "provenance": "SOURCE_DERIVED",
+      "migration_authorized": false,
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization"
+      ]
+    },
+    "Dalvik.ClassVerification": {
+      "source_repo": "platform/dalvik",
+      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+      "source_file_sha256": {
+        "vm/analysis/DexVerify.cpp": "d200aa3d569dcbd38e874cf0c8ec7ae1aca59f4729a9df9e61542a44d9f735da",
+        "vm/analysis/Optimize.cpp": "a28fd6349afb8d0200b4ac037fbe71b447913132c87f562af90008c4f1f353e4",
+        "vm/analysis/DexPrepare.cpp": "5e0b8c4f529fcf2eea2a439c850a740ef8070e348b1c1896cc0074a79e7d2b90",
+        "vm/Init.cpp": "e82787184690cb66a1c26707e802ad5b07e772bb5ef332ab1ff6b2b344b1c6f5"
+      },
+      "required_symbols": [
+        "dvmVerifyClass",
+        "dvmOptimizeClass",
+        "classVerifyMode",
+        "dexOptMode"
+      ],
+      "cross_cluster_deps": [
+        "effective Zygote verify/dexopt mode"
+      ],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "effective Zygote verify/dexopt mode",
+          "semantic_cluster": "Framework.ZygoteVMOptions",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/jni/AndroidRuntime.cpp",
+          "source_symbol": "dalvik.vm.dexopt-flags",
+          "source_sha256": "0995fec72ea226f84c2a82b47a5d795df5a6a5478cc264137d19f1cab2bcf3b8",
+          "status": "SOURCE_CLOSED"
+        }
+      ],
+      "blocking_edges": [
+        "verification and optimization source closure",
+        "AGR verifier and dexopt contract review"
+      ],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false,
+      "semantic_cluster": "Dalvik.ClassVerification",
+      "provenance": "SOURCE_DERIVED",
+      "migration_authorized": false,
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.ClassVerification",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.ClassVerification"
+      ]
+    },
+    "Dalvik.MethodInvocation": {
+      "source_repo": "platform/dalvik",
+      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+      "source_file_sha256": {
+        "vm/interp/Stack.cpp": "93ca5f272c9a801cc4c3408924b1bf4af212541a6f6ba577687d867be7d48503"
+      },
+      "required_symbols": [
+        "dvmCallMethod",
+        "dvmCallMethodV"
+      ],
+      "blocking_edges": [
+        "method call frame and exception source closure",
+        "AGR <clinit> invoke contract review"
+      ],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false,
+      "semantic_cluster": "Dalvik.MethodInvocation",
+      "provenance": "SOURCE_DERIVED",
+      "migration_authorized": false,
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.MethodInvocation",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.MethodInvocation"
+      ]
+    },
+    "Dalvik.Monitor": {
+      "source_repo": "platform/dalvik",
+      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+      "source_file_sha256": {
+        "vm/Sync.cpp": "8b100ff9e5037fcc8c7bfbbc152a924b31e22e925b03847765d007db42f91b5d"
+      },
+      "required_symbols": [
+        "dvmObjectWait",
+        "dvmObjectNotifyAll"
+      ],
+      "blocking_edges": [
+        "monitor ownership and wait/notify source closure",
+        "AGR class-init synchronization contract review"
+      ],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false,
+      "semantic_cluster": "Dalvik.Monitor",
+      "provenance": "SOURCE_DERIVED",
+      "migration_authorized": false,
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.Monitor",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.Monitor"
+      ]
+    },
+    "Dalvik.OOMException": {
+      "source_repo": "platform/dalvik",
+      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+      "source_file_sha256": {
+        "vm/Exception.cpp": "dc5cc67916f941987f92915d329e50b8195aacb278172c2c44194de1dfd3b4c8"
+      },
+      "required_symbols": [
+        "dvmThrowOutOfMemoryError"
+      ],
+      "blocking_edges": [
+        "exception class creation and pending-exception source closure",
+        "AGR preallocated OOME contract review"
+      ],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false,
+      "semantic_cluster": "Dalvik.OOMException",
+      "provenance": "SOURCE_DERIVED",
+      "migration_authorized": false,
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.OOMException"
+      ]
+    },
+    "Dalvik.ObjectAllocation": {
+      "source_repo": "platform/dalvik",
+      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+      "source_file_sha256": {
+        "vm/alloc/Alloc.cpp": "70bb6375a088dab380c31e5ab9959461f1c841f88c5ef163caacd1b26f7da02f",
+        "vm/alloc/Heap.cpp": "304b39f9cc522367f6c53f4ddcff78f372b7a161dc5231c260c1b0c5dec80297",
+        "vm/alloc/HeapSource.cpp": "cc0536e8aea8b0f837a4224bcced175c36b1801e855e026402dcfc15d26a089a"
+      },
+      "required_symbols": [
+        "dvmAllocObject",
+        "dvmMalloc",
+        "dvmHeapSourceAlloc",
+        "dvmAddTrackedAlloc",
+        "tryMalloc"
+      ],
+      "internal_deps": [
+        "heap source allocation and GC trigger",
+        "tracked allocation root"
+      ],
+      "cross_cluster_deps": [
+        "allocation failure OutOfMemoryError propagation"
+      ],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "allocation failure OutOfMemoryError propagation",
+          "semantic_cluster": "Dalvik.OOMException",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/Exception.cpp",
+          "source_symbol": "dvmThrowOutOfMemoryError",
+          "source_sha256": "dc5cc67916f941987f92915d329e50b8195aacb278172c2c44194de1dfd3b4c8",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": [
+        "heap source, tracked-root, and OOME source closure",
+        "AGR allocation and OOM contract review"
+      ],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false,
+      "semantic_cluster": "Dalvik.ObjectAllocation",
+      "provenance": "SOURCE_DERIVED",
+      "migration_authorized": false,
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation"
+      ]
+    },
+    "Dalvik.StaticFieldArrayRoots": {
+      "source_repo": "platform/dalvik",
+      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+      "source_file_sha256": {
+        "vm/alloc/MarkSweep.cpp": "bf05e421a49accf1209bb12e83bb2df740d6348d9b6c775f24cebadc6b7b8ab3",
+        "vm/alloc/Visit.cpp": "fbdcfeeb19903107c3fb3ad6aae213d1c75d1db25aa23f7a66342148d63444f9"
+      },
+      "required_symbols": [
+        "scanStaticFields",
+        "scanClassObject",
+        "scanArrayObject",
+        "dvmHeapMarkRootSet",
+        "dvmVisitRoots"
+      ],
+      "internal_deps": [
+        "loaded class root reachability",
+        "markObject heap traversal"
+      ],
+      "blocking_edges": [],
+      "status": "SOURCE_CLOSED",
+      "closure_reviewed": true,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "Path-scoped root closure: dvmVisitRoots marks loaded class objects; scanClassObject visits reference static fields; scanArrayObject marks reference array elements. No source edge crosses this narrow root path before the heap mark primitive. AGR lifetime-host verifies the corresponding static-array reachability in minor, major, and incremental collection, plus release after dropping the root. This does not close general GC policy or allocation failure semantics.",
+        "source_file_sha256": {
+          "vm/alloc/MarkSweep.cpp": "bf05e421a49accf1209bb12e83bb2df740d6348d9b6c775f24cebadc6b7b8ab3",
+          "vm/alloc/Visit.cpp": "fbdcfeeb19903107c3fb3ad6aae213d1c75d1db25aa23f7a66342148d63444f9"
+        },
+        "reviewed_dependency_edges": [],
+        "unresolved_dependency_edges": []
+      },
+      "semantic_cluster": "Dalvik.StaticFieldArrayRoots",
+      "provenance": "SOURCE_DERIVED",
+      "migration_authorized": false,
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.StaticFieldArrayRoots"
+      ]
+    },
+    "Framework.ZygotePreload": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "preloaded-classes": "7705a9f1a69b84415ed5a7bb864e30a99d6b4f4711a2661a79f9dc8450e1098e",
+        "core/java/com/android/internal/os/ZygoteInit.java": "39396d52716a69a2b02df27a1001af3ac81c762c503c5ae7d420a687b080ab1c",
+        "core/java/com/android/internal/os/ZygoteConnection.java": "37156818168d7fc47fdf5e55f6f6f30696ba4be9892820497474827cc130c9e8"
+      },
+      "required_symbols": [
+        "java.lang.Integer",
+        "preloadClasses",
+        "Class.forName(line)",
+        "forkAndSpecialize"
+      ],
+      "cross_cluster_deps": [
+        "Dalvik class initialization before app fork"
+      ],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "Dalvik class initialization before app fork",
+          "semantic_cluster": "Dalvik.ClassInitialization",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/oo/Class.cpp",
+          "source_symbol": "dvmInitClass",
+          "source_sha256": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "excluded_deps": [
+        "Zygote fork and heap inheritance boundary"
+      ],
+      "boundary_contracts": {
+        "Zygote fork and heap inheritance boundary": {
+          "request_schema": "preloaded VM class table and strongly reachable heap at fork",
+          "response_schema": "child app process inherits initialized Integer class and cache object identities",
+          "callbacks": [],
+          "lifecycle": "preloadClasses before runSelectLoop and forkAndSpecialize before app entry",
+          "error_semantics": "fatal preload Error prevents normal child startup; failed listed classes remain absent"
+        }
+      },
+      "blocking_edges": [
+        "Dalvik initialization contract before fork",
+        "AGR one-process inherited-state installation review"
+      ],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false,
+      "semantic_cluster": "Framework.ZygotePreload",
+      "provenance": "SOURCE_DERIVED",
+      "migration_authorized": false,
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload"
+      ]
+    },
+    "Framework.ZygoteVMOptions": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "core/jni/AndroidRuntime.cpp": "0995fec72ea226f84c2a82b47a5d795df5a6a5478cc264137d19f1cab2bcf3b8",
+        "cmds/app_process/app_main.cpp": "204dace8d98c12ed98c8c3fda7b38ebdc07bf8240967fce3fbbe300898a9f43e"
+      },
+      "required_symbols": [
+        "dalvik.vm.dexopt-flags",
+        "-Xverify:none",
+        "-Xdexopt:verified",
+        "addVmArguments"
+      ],
+      "cross_cluster_deps": [
+        "init.rc Zygote VM argument list"
+      ],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "init.rc Zygote VM argument list",
+          "semantic_cluster": "AndroidNative.InitZygote",
+          "source_repo": "platform/system/core",
+          "revision": "efbf36f2dad8f083de6f48dbb682461d7cfa9781",
+          "source_file": "rootdir/init.rc",
+          "source_symbol": "service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-system-server",
+          "source_sha256": "bee8a02165d9e4af8ac774bdea752f1841617a082aba68c70862698e969f7b91",
+          "status": "SOURCE_CLOSED"
+        }
+      ],
+      "blocking_edges": [],
+      "status": "SOURCE_CLOSED",
+      "closure_reviewed": true,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "The four qualified paired traces record an empty dalvik.vm.dexopt-flags property. AndroidRuntime adds verify/dexopt VM overrides only for a nonempty property; app_process forwards the pinned init.rc VM arguments, which contain no such override. The Dalvik defaults therefore select VERIFY_MODE_ALL and OPTIMIZE_MODE_VERIFIED for this reference configuration.",
+        "source_file_sha256": {
+          "core/jni/AndroidRuntime.cpp": "0995fec72ea226f84c2a82b47a5d795df5a6a5478cc264137d19f1cab2bcf3b8",
+          "cmds/app_process/app_main.cpp": "204dace8d98c12ed98c8c3fda7b38ebdc07bf8240967fce3fbbe300898a9f43e"
+        },
+        "reviewed_dependency_edges": [
+          "init.rc Zygote VM argument list"
+        ],
+        "unresolved_dependency_edges": []
+      },
+      "semantic_cluster": "Framework.ZygoteVMOptions",
+      "provenance": "SOURCE_DERIVED",
+      "migration_authorized": false,
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.ClassVerification -> Framework.ZygoteVMOptions",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.ClassVerification -> Framework.ZygoteVMOptions"
+      ]
     }
   }
 }

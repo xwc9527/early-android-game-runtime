@@ -9,9 +9,9 @@ from pathlib import Path
 from cluster_seed import build_cluster_seed, build_seed
 from mapper import build_book, corpus_union, union_books
 from source_mapping_queue import build_queue
-from source_closure import close_entry
+from source_closure import close_entry, external_edge_closed
 from static_scan import _dex_refs, _elf_refs, apk_identity, scan_apk
-from workflow import manifests, trace_events, validate_book
+from workflow import manifests, trace_events, validate_book, validate_source_manifests
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -36,6 +36,36 @@ class WorkflowTest(unittest.TestCase):
         self.assertEqual(sum(item["status"] == "SOURCE_LOCATED" for item in cluster["manifests"]), 1)
         self.assertEqual(cluster["cluster_source_manifests"]["libcore.IntegerBoxing"]["status"],
                          "SOURCE_LOCATED")
+        value_of = index["entries"]["Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;"]
+        root_edge = next(item for item in value_of["cross_cluster_source_edges"]
+                         if item["semantic_cluster"] == "Dalvik.StaticFieldArrayRoots")
+        self.assertTrue(external_edge_closed(root_edge, index))
+        self.assertFalse(cluster["cluster_source_manifests"]["libcore.IntegerBoxing"]["migration_authorized"])
+        derived = cluster["source_derived_clusters"]
+        self.assertEqual(len(derived), 10)
+        self.assertEqual(derived["Dalvik.StaticFieldArrayRoots"]["status"], "SOURCE_CLOSED")
+        self.assertEqual(derived["Framework.ZygoteVMOptions"]["status"], "SOURCE_CLOSED")
+        self.assertEqual(derived["AndroidNative.InitZygote"]["status"], "SOURCE_CLOSED")
+        self.assertFalse(any(item["migration_authorized"] for item in derived.values()))
+        self.assertTrue(all(item["origin_dependency_ids"] and item["source_paths"]
+                            for item in derived.values()))
+        forged = json.loads(json.dumps(cluster))
+        forged["source_derived_clusters"]["Dalvik.StaticFieldArrayRoots"]["source_paths"] = [
+            "Unrelated.method -> Dalvik.StaticFieldArrayRoots"]
+        with self.assertRaisesRegex(ValueError, "observed parent"):
+            validate_source_manifests(forged)
+        forged = json.loads(json.dumps(cluster))
+        root = forged["source_derived_clusters"]["Dalvik.StaticFieldArrayRoots"]
+        root["source_paths"] = [path.replace(" -> Dalvik.StaticFieldArrayRoots",
+                                             " -> Dalvik.Monitor -> Dalvik.StaticFieldArrayRoots")
+                                for path in root["source_paths"]]
+        with self.assertRaisesRegex(ValueError, "pinned source edge"):
+            validate_source_manifests(forged)
+        forged = json.loads(json.dumps(cluster))
+        forged["source_derived_clusters"]["Dalvik.StaticFieldArrayRoots"]["source_file_sha256"][
+            "vm/alloc/MarkSweep.cpp"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "pinned source edge"):
+            validate_source_manifests(forged)
 
     def test_integer_preload_is_inherited_in_each_qualified_trace(self):
         evidence = ROOT / "tools/reference-lab/evidence"

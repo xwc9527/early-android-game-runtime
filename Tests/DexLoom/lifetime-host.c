@@ -39,6 +39,8 @@ int main(void) {
     DxClass *object_class;
     DxClass holder;
     DxObject *object;
+    DxObject *cache_array;
+    DxObject *cache_entry;
     DxObject *mirror;
     DxValue static_slot;
     jobject local;
@@ -64,6 +66,22 @@ int main(void) {
     expect(dx_vm_gc(vm) == DX_OK && on_heap(vm, object), "a static field keeps the object");
     holder.static_fields[0] = DX_NULL_VALUE;
     expect(dx_vm_gc(vm) == DX_OK && !on_heap(vm, object), "dropping the static root lets GC free the object");
+    cache_array = dx_vm_alloc_array(vm, 1);
+    cache_entry = dx_vm_alloc_object(vm, object_class);
+    if (!cache_array || !cache_entry || !cache_array->array_elements) return 1;
+    cache_array->array_elements[0] = DX_OBJ_VALUE(cache_entry);
+    holder.static_fields[0] = DX_OBJ_VALUE(cache_array);
+    expect(dx_vm_gc_minor(vm) == DX_OK && on_heap(vm, cache_array) && on_heap(vm, cache_entry),
+           "minor GC retains an object through a static array root");
+    expect(dx_vm_gc(vm) == DX_OK && on_heap(vm, cache_array) && on_heap(vm, cache_entry),
+           "major GC retains an object through a static array root");
+    dx_vm_gc_step(vm);
+    for (i = 0; i < 1000 && vm->gc_phase != DX_GC_IDLE; i++) dx_vm_gc_step(vm);
+    expect(vm->gc_phase == DX_GC_IDLE && on_heap(vm, cache_array) && on_heap(vm, cache_entry),
+           "incremental GC retains an object through a static array root");
+    holder.static_fields[0] = DX_NULL_VALUE;
+    expect(dx_vm_gc(vm) == DX_OK && !on_heap(vm, cache_array) && !on_heap(vm, cache_entry),
+           "dropping the static array root releases its elements");
     mirror = dx_vm_class_mirror(vm, object_class);
     expect(dx_vm_gc(vm) == DX_OK && on_heap(vm, mirror), "the class mirror global ref keeps the Class object");
     object = dx_vm_alloc_object(vm, object_class);

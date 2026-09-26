@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 
 from mapper import build_book, corpus_union, union_books, write_book
-from source_closure import close_entry, reviewed_edge_contracts
+from source_closure import close_entry, reviewed_edge_contracts, source_derived_clusters
 from static_scan import apk_identity, scan_apk
 
 
@@ -219,6 +219,54 @@ def validate_source_manifests(document):
                     review.get("unresolved_dependency_edges") != [] or
                     not review.get("reviewed_by") or not review.get("closure_notes")):
                 raise ValueError("authorized cluster lacks complete source review")
+    origins = {item["dependency_id"]: item
+               for item in document.get("manifests", [])}
+    derived = document.get("source_derived_clusters", {})
+    for name, cluster in derived.items():
+        if (cluster.get("semantic_cluster") != name or
+                cluster.get("provenance") != "SOURCE_DERIVED" or
+                cluster.get("migration_authorized") is not False or
+                cluster.get("status") not in ("SOURCE_LOCATED", "SOURCE_CLOSED") or
+                not set(cluster.get("origin_dependency_ids") or []).issubset(origins) or
+                not cluster.get("origin_dependency_ids") or
+                not cluster.get("source_paths") or
+                not cluster.get("source_repo") or not cluster.get("revision") or
+                not cluster.get("source_file_sha256") or
+                not cluster.get("required_symbols")):
+            raise ValueError("invalid source-derived cluster provenance")
+        expected_origins = set()
+        for path in cluster["source_paths"]:
+            nodes = path.split(" -> ")
+            if len(nodes) < 2 or nodes[-1] != name:
+                raise ValueError("source-derived path lost its observed parent")
+            parents = [dependency_id for dependency_id, item in origins.items()
+                       if item["canonical_name"] == nodes[0]]
+            if not parents:
+                raise ValueError("source-derived path lost its observed parent")
+            expected_origins.update(parents)
+            previous = origins[parents[0]]
+            for node in nodes[1:]:
+                edges = previous.get("cross_cluster_source_edges") or []
+                target = derived.get(node)
+                if not isinstance(target, dict):
+                    raise ValueError("source-derived path has no pinned source edge")
+                if not any(edge.get("semantic_cluster") == node and
+                           edge.get("source_repo") == target.get("source_repo") and
+                           edge.get("revision") == target.get("revision") and
+                           (target.get("source_file_sha256") or {}).get(edge.get("source_file")) ==
+                           edge.get("source_sha256") and
+                           edge.get("source_symbol") in (target.get("required_symbols") or [])
+                           for edge in edges):
+                    raise ValueError("source-derived path has no pinned source edge")
+                previous = target
+        if expected_origins != set(cluster["origin_dependency_ids"]):
+            raise ValueError("source-derived path lost its observed parent")
+        if cluster["status"] == "SOURCE_CLOSED" and (
+                cluster.get("blocking_edges") or
+                cluster.get("closure_reviewed") is not True or
+                not (cluster.get("closure_evidence") or {}).get("reviewed_by") or
+                (cluster.get("closure_evidence") or {}).get("unresolved_dependency_edges") != []):
+            raise ValueError("source-derived cluster claims closure without review")
 
 
 def cluster_manifests(results, index):
@@ -295,7 +343,8 @@ def manifests(book, index):
         raise ValueError("book has no observed TRACE dependencies to close")
     clusters = cluster_manifests(results, index)
     artifact = {"schema_version": 1, "apk": book["apk"], "source_index_revision": index.get("revision"),
-                "manifests": results, "cluster_source_manifests": dict(sorted(clusters.items()))}
+                "manifests": results, "cluster_source_manifests": dict(sorted(clusters.items())),
+                "source_derived_clusters": source_derived_clusters(results, index)}
     validate_source_manifests(artifact)
     return artifact
 
