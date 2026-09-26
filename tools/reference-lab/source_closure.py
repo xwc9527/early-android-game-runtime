@@ -154,7 +154,7 @@ def prerequisite_matches_crossing(prerequisite, crossing):
 
 
 def matching_stop_keys(item):
-    """Stop keys belong to one upper item and only to crossings that item actually has."""
+    """Stop keys belong to one owner and only to crossings that owner actually has."""
     if not isinstance(item, dict):
         return set()
     crossings = [edge for edge in (item.get("cross_cluster_source_edges") or [])
@@ -163,8 +163,33 @@ def matching_stop_keys(item):
             if any(prerequisite_matches_crossing(edge, crossing) for crossing in crossings)}
 
 
+def path_absorbs_stopped_edge(paths, owner_label, stopped_child, cluster_name):
+    """Absorption is the declaring owner's own hop into the stopped child, not another path."""
+    if not owner_label or not stopped_child or not cluster_name:
+        return False
+    for path in paths or []:
+        nodes = path.split(" -> ")
+        for index, node in enumerate(nodes):
+            if node != owner_label:
+                continue
+            tail = nodes[index + 1:]
+            if tail and tail[0] == stopped_child and cluster_name in tail:
+                return True
+    return False
+
+
+def _declaring_labels(item):
+    labels = []
+    if item.get("canonical_name"):
+        labels.append(item["canonical_name"])
+    for name in item.get("entry_names") or []:
+        if name not in labels:
+            labels.append(name)
+    return labels
+
+
 def required_derived_names(manifests, derived):
-    """A stopped crossing is absent only for the origin that declared that exact edge."""
+    """A nested stop comes from that derived owner, not from an ancestor's stop keys."""
     required = set()
     manifests = [item for item in manifests if isinstance(item, dict)]
     for item in manifests:
@@ -172,18 +197,31 @@ def required_derived_names(manifests, derived):
         for edge in item.get("cross_cluster_source_edges") or []:
             if crossing_identity(edge) not in stops:
                 required.add(edge.get("semantic_cluster"))
-    by_id = {item.get("dependency_id"): item for item in manifests if item.get("dependency_id")}
     for cluster in (derived or {}).values():
         if not isinstance(cluster, dict):
             continue
+        stops = matching_stop_keys(cluster)
         reached = set(cluster.get("origin_dependency_ids") or [])
         for edge in cluster.get("cross_cluster_source_edges") or []:
-            identity = crossing_identity(edge)
-            truncators = {dep_id for dep_id in reached
-                          if identity in matching_stop_keys(by_id.get(dep_id) or {})}
-            if truncators != reached or not reached:
-                required.add(edge.get("semantic_cluster"))
+            if crossing_identity(edge) in stops and reached:
+                continue
+            required.add(edge.get("semantic_cluster"))
     return required
+
+
+def reject_unmatched_owner_prerequisites(owner):
+    """A derived owner's relationships match only that owner's own crossings."""
+    edges = owner.get("prerequisite_edges") if isinstance(owner, dict) else None
+    if not edges:
+        return
+    if not isinstance(edges, list):
+        raise ValueError("prerequisite edges must be a list")
+    crossings = [edge for edge in (owner.get("cross_cluster_source_edges") or [])
+                 if isinstance(edge, dict)]
+    for edge in edges:
+        validate_prerequisite_edge(edge)
+        if not any(prerequisite_matches_crossing(edge, crossing) for crossing in crossings):
+            raise ValueError("prerequisite does not match a crossing source edge")
 
 
 def prerequisite_relations_allow_closure(edges):
@@ -253,6 +291,40 @@ def reject_substrate_bypass(item):
                 raise ValueError("HLE boundary cannot bypass a shared substrate prerequisite")
 
 
+def _reached_prerequisite_blocks_closure(derived, origin_ids):
+    """A reached derived owner with an open prerequisite blocks the upper closure that reached it."""
+    for cluster in derived.values():
+        if not isinstance(cluster, dict):
+            continue
+        if not origin_ids & set(cluster.get("origin_dependency_ids") or []):
+            continue
+        if any(isinstance(edge, dict) and edge.get("relationship") in ("UNRESOLVED", "REOPEN_REQUIRED")
+               for edge in (cluster.get("prerequisite_edges") or [])):
+            return True
+    return False
+
+
+def _reject_absorbed_owner_crossings(cluster, derived):
+    """A derived owner's stop covers only hops that leave that owner."""
+    stops = matching_stop_keys(cluster)
+    owner_name = cluster.get("semantic_cluster")
+    for source_edge in cluster.get("cross_cluster_source_edges") or []:
+        if not isinstance(source_edge, dict) or crossing_identity(source_edge) not in stops:
+            continue
+        stopped_child = source_edge.get("semantic_cluster")
+        absorbed = [stopped_child]
+        for edge in cluster.get("prerequisite_edges") or []:
+            if isinstance(edge, dict) and prerequisite_matches_crossing(edge, source_edge):
+                absorbed.extend(edge.get("internal_clusters") or [])
+        for cluster_name in absorbed:
+            row = derived.get(cluster_name)
+            if not isinstance(row, dict):
+                continue
+            if path_absorbs_stopped_edge(row.get("source_paths"), owner_name,
+                                          stopped_child, cluster_name):
+                raise ValueError("upper cluster absorbed shared substrate internals")
+
+
 def validate_prerequisite_relations(document):
     """Validate upper-cluster prerequisite relationships without reclassifying legacy documents."""
     derived = document.get("source_derived_clusters") or {}
@@ -268,49 +340,60 @@ def validate_prerequisite_relations(document):
         closed_upper = item.get("status") in UPPER_CLOSURE_STATUSES
         if edges is None and closed_upper and crossing:
             raise ValueError("shared substrate crossing requires a prerequisite relationship")
-        if not edges:
-            continue
-        if not isinstance(edges, list):
-            raise ValueError("prerequisite edges must be a list")
-        reject_substrate_bypass(item)
-        crossings = [edge for edge in (item.get("cross_cluster_source_edges") or [])
-                     if isinstance(edge, dict)]
-        seen = {}
-        for edge in edges:
-            validate_prerequisite_edge(edge)
-            if not any(prerequisite_matches_crossing(edge, crossing) for crossing in crossings):
-                raise ValueError("prerequisite does not match a crossing source edge")
-            name = edge["semantic_cluster"]
-            if name in seen and seen[name] != edge["relationship"]:
-                raise ValueError("conflicting substrate prerequisite relationship")
-            seen[name] = edge["relationship"]
         origin_ids = set(item.get("dependency_ids") or [])
         if item.get("dependency_id"):
             origin_ids.add(item["dependency_id"])
-        by_owner = {}
-        for source_edge in crossings:
-            if source_edge.get("semantic_cluster") in SHARED_RUNTIME_SUBSTRATE_OWNERS:
-                by_owner.setdefault(source_edge["semantic_cluster"], []).append(source_edge)
-        stops = matching_stop_keys(item)
-        fully_truncated = {owner for owner, owner_edges in by_owner.items()
-                           if owner_edges and all(crossing_identity(source_edge) in stops
-                                                  for source_edge in owner_edges)}
-        for edge in edges:
-            if edge["semantic_cluster"] not in fully_truncated:
-                continue
-            absorbed = [edge["semantic_cluster"]] + list(edge.get("internal_clusters") or [])
-            for cluster_name in absorbed:
-                row = derived.get(cluster_name)
-                if (isinstance(row, dict) and
-                        origin_ids & set(row.get("origin_dependency_ids") or [])):
-                    raise ValueError("upper cluster absorbed shared substrate internals")
-        if closed_upper and any(edge["relationship"] != "PREREQUISITE_CLOSED" for edge in edges):
+        if edges:
+            if not isinstance(edges, list):
+                raise ValueError("prerequisite edges must be a list")
+            reject_substrate_bypass(item)
+            crossings = [edge for edge in (item.get("cross_cluster_source_edges") or [])
+                         if isinstance(edge, dict)]
+            seen = {}
+            for edge in edges:
+                validate_prerequisite_edge(edge)
+                if not any(prerequisite_matches_crossing(edge, crossing) for crossing in crossings):
+                    raise ValueError("prerequisite does not match a crossing source edge")
+                name = edge["semantic_cluster"]
+                if name in seen and seen[name] != edge["relationship"]:
+                    raise ValueError("conflicting substrate prerequisite relationship")
+                seen[name] = edge["relationship"]
+            by_owner = {}
+            for source_edge in crossings:
+                if source_edge.get("semantic_cluster") in SHARED_RUNTIME_SUBSTRATE_OWNERS:
+                    by_owner.setdefault(source_edge["semantic_cluster"], []).append(source_edge)
+            stops = matching_stop_keys(item)
+            fully_truncated = {owner for owner, owner_edges in by_owner.items()
+                               if owner_edges and all(crossing_identity(source_edge) in stops
+                                                      for source_edge in owner_edges)}
+            labels = _declaring_labels(item)
+            for edge in edges:
+                if edge["semantic_cluster"] not in fully_truncated:
+                    continue
+                stopped_child = edge["semantic_cluster"]
+                absorbed = [stopped_child] + list(edge.get("internal_clusters") or [])
+                for cluster_name in absorbed:
+                    row = derived.get(cluster_name)
+                    if not isinstance(row, dict):
+                        continue
+                    if any(path_absorbs_stopped_edge(row.get("source_paths"), label,
+                                                     stopped_child, cluster_name)
+                           for label in labels):
+                        raise ValueError("upper cluster absorbed shared substrate internals")
+            if closed_upper and any(edge["relationship"] != "PREREQUISITE_CLOSED" for edge in edges):
+                raise ValueError("substrate prerequisite blocks upper closure")
+            if closed_upper and not {edge.get("semantic_cluster") for edge in crossings
+                                     if edge.get("semantic_cluster") in SHARED_RUNTIME_SUBSTRATE_OWNERS}.issubset(
+                    {edge["semantic_cluster"] for edge in edges
+                     if edge["relationship"] == "PREREQUISITE_CLOSED"}):
+                raise ValueError("shared substrate crossing requires a closed prerequisite")
+        if closed_upper and _reached_prerequisite_blocks_closure(derived, origin_ids):
             raise ValueError("substrate prerequisite blocks upper closure")
-        if closed_upper and not {edge.get("semantic_cluster") for edge in crossings
-                                 if edge.get("semantic_cluster") in SHARED_RUNTIME_SUBSTRATE_OWNERS}.issubset(
-                {edge["semantic_cluster"] for edge in edges
-                 if edge["relationship"] == "PREREQUISITE_CLOSED"}):
-            raise ValueError("shared substrate crossing requires a closed prerequisite")
+    for cluster in derived.values():
+        if not isinstance(cluster, dict) or not cluster.get("prerequisite_edges"):
+            continue
+        reject_unmatched_owner_prerequisites(cluster)
+        _reject_absorbed_owner_crossings(cluster, derived)
 
 
 def _matches_pinned_owner(edge, owner):
@@ -322,21 +405,23 @@ def _matches_pinned_owner(edge, owner):
 
 
 def source_derived_clusters(manifests, index):
-    """Expand pinned source edges. A prerequisite stops only its own origin's exact crossing."""
+    """Expand pinned source edges. Stop keys belong to the owner that declares them."""
     owners = index.get("external_cluster_sources") or {}
     found = {}
 
-    def visit(edge, parent_id, path, stop_keys):
+    def stop_before_entering(edge):
+        name = edge.get("semantic_cluster")
+        if not _matches_pinned_owner(edge, owners.get(name)):
+            raise ValueError("substrate prerequisite differs from pinned owner: " + str(name))
+
+    def visit(edge, parent_id, path):
         name = edge.get("semantic_cluster")
         owner = owners.get(name)
-        if crossing_identity(edge) in stop_keys:
-            if not _matches_pinned_owner(edge, owner):
-                raise ValueError("substrate prerequisite differs from pinned owner: " + str(name))
-            return
         if not isinstance(owner, dict):
             raise ValueError("source-derived edge lacks a pinned owner: " + str(name))
         if not _matches_pinned_owner(edge, owner):
             raise ValueError("source-derived edge differs from pinned owner: " + name)
+        reject_unmatched_owner_prerequisites(owner)
         row = found.setdefault(name, {**owner, "semantic_cluster": name,
                                       "provenance": "SOURCE_DERIVED",
                                       "migration_authorized": False,
@@ -353,13 +438,20 @@ def source_derived_clusters(manifests, index):
             row["cycle_paths"].add(source_path)
             row["status"] = "SOURCE_LOCATED"
             return
+        stops = matching_stop_keys(owner)
         for child in owner.get("cross_cluster_source_edges") or []:
-            visit(child, parent_id, path + (name,), stop_keys)
+            if crossing_identity(child) in stops:
+                stop_before_entering(child)
+                continue
+            visit(child, parent_id, path + (name,))
 
     for manifest in manifests:
         stop_keys = matching_stop_keys(manifest)
         for edge in manifest.get("cross_cluster_source_edges") or []:
-            visit(edge, manifest["dependency_id"], (manifest["canonical_name"],), stop_keys)
+            if crossing_identity(edge) in stop_keys:
+                stop_before_entering(edge)
+                continue
+            visit(edge, manifest["dependency_id"], (manifest["canonical_name"],))
     for row in found.values():
         row["origin_dependency_ids"] = sorted(row["origin_dependency_ids"])
         row["source_paths"] = sorted(row["source_paths"])
@@ -385,13 +477,25 @@ def closure_work_queue(manifests, derived):
                           "origin_dependency_ids": [item["dependency_id"]],
                           "source_paths": [item.get("canonical_name")]})
     for name, owner in derived.items():
-        if owner["status"] == "SOURCE_CLOSED":
-            continue
-        for edge in owner.get("blocking_edges") or []:
-            queue.append({"scope": "SOURCE_DERIVED", "semantic_cluster": name,
-                          "blocking_edge": edge,
-                          "origin_dependency_ids": owner["origin_dependency_ids"],
-                          "source_paths": owner["source_paths"]})
+        if owner["status"] != "SOURCE_CLOSED":
+            for edge in owner.get("blocking_edges") or []:
+                queue.append({"scope": "SOURCE_DERIVED", "semantic_cluster": name,
+                              "blocking_edge": edge,
+                              "origin_dependency_ids": owner["origin_dependency_ids"],
+                              "source_paths": owner["source_paths"]})
+        for edge in owner.get("prerequisite_edges") or []:
+            if not isinstance(edge, dict) or edge.get("relationship") == "PREREQUISITE_CLOSED":
+                continue
+            if edge.get("relationship") not in ("UNRESOLVED", "REOPEN_REQUIRED"):
+                continue
+            if not any(prerequisite_matches_crossing(edge, crossing)
+                       for crossing in (owner.get("cross_cluster_source_edges") or [])
+                       if isinstance(crossing, dict)):
+                continue
+            queue.append({"scope": "PREREQUISITE", "semantic_cluster": edge.get("semantic_cluster"),
+                          "blocking_edge": edge.get("edge"), "relationship": edge.get("relationship"),
+                          "origin_dependency_ids": list(owner["origin_dependency_ids"]),
+                          "source_paths": list(owner["source_paths"])})
     return sorted(queue, key=lambda item: (item["scope"], item["semantic_cluster"] or "",
                                            item["blocking_edge"]))
 

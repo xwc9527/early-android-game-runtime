@@ -86,7 +86,7 @@ boundary remains in the source cluster.
 
 ## Shared runtime substrate
 
-An upper cluster stops only on a prerequisite that names one of its own crossing edges. The stop is bound to that upper cluster or origin and to the exact crossing. It does not stop other clusters, and it does not stop a different edge that merely targets the same substrate owner. Dependencies behind the stopped edge belong to the substrate closure.
+An upper cluster stops only on a prerequisite that names one of its own crossing edges. A source-derived owner may carry `prerequisite_edges` for its own `cross_cluster_source_edges` only. The stop is bound to that current owner, the exact crossing, and the origin that reached the owner. Observed-entry stop keys do not propagate down the recursive tree, and a different owner is not stopped merely because it targets the same substrate owner. Dependencies behind the stopped edge belong to the substrate closure. `Framework.ZygotePreload` remains in the upper closure when it is the derived owner; only the substrate crossings it declares are truncated.
 
 Confirmed substrate owners are:
 
@@ -113,7 +113,7 @@ The upper cluster records the crossing on `prerequisite_edges`. This relationshi
 | `PREREQUISITE_CLOSED` | The public owner is independently closed in its own closure and production contract. The edge satisfies one upper-cluster prerequisite and is not a work-queue blocker. The declaring origin still does not expand that edge. |
 | `REOPEN_REQUIRED` | Pinned API19 source shows the existing CLOSED or STABLE contract is insufficient or divergent. Recursion stops for the declaring origin, and the closure work queue keeps this blocker. The upper cluster cannot close or authorize migration. |
 
-The prerequisite record must repeat the crossing edge's edge name, owner, repository, revision, file, symbol, and SHA-256. A record that does not match one of that upper item's crossing source edges is rejected.
+The prerequisite record must repeat the crossing edge's edge name, owner, repository, revision, file, symbol, and SHA-256. A record that does not match one crossing source edge of the owner that declares it is rejected. `UNRESOLVED` and `REOPEN_REQUIRED` work items copy that declaring owner's `origin_dependency_ids` and full `source_paths`. `PREREQUISITE_CLOSED` does not enter the work queue.
 
 `PREREQUISITE_CLOSED` does not lower `MIGRATION_AUTHORIZED`. The upper cluster still needs its own source files, inline edges, boundary contracts, zero unresolved edges, and cluster review. `UNRESOLVED` and `REOPEN_REQUIRED` block both `SOURCE_CLOSED` and `MIGRATION_AUTHORIZED`.
 

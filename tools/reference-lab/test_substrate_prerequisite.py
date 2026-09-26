@@ -4,6 +4,7 @@ from pathlib import Path
 
 from cluster_seed import build_cluster_seed
 from source_closure import (
+    CROSSING_FIELDS,
     SHARED_RUNTIME_SUBSTRATE_OWNERS,
     close_entry,
     closure_work_queue,
@@ -44,6 +45,15 @@ def _owner(filename, digest, symbols, deps=None, edges=None, blocking=None, stat
     if blocking:
         owner["blocking_edges"] = blocking
     return owner
+
+
+def _relation(edge, relationship, owner_status, internals=None):
+    relation = {field: edge[field] for field in CROSSING_FIELDS}
+    relation["relationship"] = relationship
+    relation["owner_source_status"] = owner_status
+    if internals is not None:
+        relation["internal_clusters"] = list(internals)
+    return relation
 
 
 def _prerequisite(relationship, owner_status="SOURCE_CLOSED"):
@@ -116,18 +126,19 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         manifest = self._expansion_manifest("PREREQUISITE_CLOSED")
         stopped = source_derived_clusters([manifest], index)
         self.assertIn("Framework.ZygotePreload", stopped)
-        for name in ("Dalvik.ClassInitialization", "Dalvik.Monitor", "Dalvik.MethodInvocation",
-                     "Bionic.PthreadCondition", "Bionic.ClockGettime"):
-            self.assertNotIn(name, stopped)
+        direct = manifest["canonical_name"] + " -> Dalvik.ClassInitialization"
+        nested = manifest["canonical_name"] + " -> Framework.ZygotePreload -> Dalvik.ClassInitialization"
+        self.assertNotIn(direct, stopped["Dalvik.ClassInitialization"]["source_paths"])
+        self.assertIn(nested, stopped["Dalvik.ClassInitialization"]["source_paths"])
+        self.assertIn("Bionic.ClockGettime", stopped)
         queue = closure_work_queue([manifest], stopped)
         self.assertTrue(any(item["semantic_cluster"] == "Framework.ZygotePreload" for item in queue))
-        self.assertFalse(any(item["blocking_edge"] == "class-init wait" for item in queue))
-        self.assertFalse(any(item["blocking_edge"] == "clock_gettime" for item in queue))
+        self.assertTrue(any(item["blocking_edge"] == "class-init wait" for item in queue))
         self.assertFalse(any(item.get("scope") == "PREREQUISITE" for item in queue))
         bare = dict(manifest)
         bare.pop("prerequisite_edges")
         walked = source_derived_clusters([bare], index)
-        self.assertIn("Dalvik.ClassInitialization", walked)
+        self.assertIn(direct, walked["Dalvik.ClassInitialization"]["source_paths"])
         self.assertIn("Bionic.ClockGettime", walked)
         self.assertIn("Dalvik.MethodInvocation", walked)
         validate_source_manifests({
@@ -140,8 +151,11 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         manifest["prerequisite_edges"][0]["owner_source_status"] = "SOURCE_LOCATED"
         stopped = source_derived_clusters([manifest], index)
         self.assertIn("Framework.ZygotePreload", stopped)
-        self.assertNotIn("Bionic.PthreadCondition", stopped)
-        self.assertNotIn("Dalvik.ClassInitialization", stopped)
+        direct = manifest["canonical_name"] + " -> Dalvik.ClassInitialization"
+        nested = manifest["canonical_name"] + " -> Framework.ZygotePreload -> Dalvik.ClassInitialization"
+        self.assertNotIn(direct, stopped["Dalvik.ClassInitialization"]["source_paths"])
+        self.assertIn(nested, stopped["Dalvik.ClassInitialization"]["source_paths"])
+        self.assertIn("Bionic.PthreadCondition", stopped)
         queue = closure_work_queue([manifest], stopped)
         blockers = [item for item in queue if item.get("scope") == "PREREQUISITE"]
         self.assertEqual(blockers, [{
@@ -157,7 +171,10 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         index, _ = self._expansion_index()
         manifest = self._expansion_manifest("REOPEN_REQUIRED")
         stopped = source_derived_clusters([manifest], index)
-        self.assertNotIn("Dalvik.ClassInitialization", stopped)
+        direct = manifest["canonical_name"] + " -> Dalvik.ClassInitialization"
+        nested = manifest["canonical_name"] + " -> Framework.ZygotePreload -> Dalvik.ClassInitialization"
+        self.assertNotIn(direct, stopped["Dalvik.ClassInitialization"]["source_paths"])
+        self.assertIn(nested, stopped["Dalvik.ClassInitialization"]["source_paths"])
         queue = closure_work_queue([manifest], stopped)
         self.assertTrue(any(item.get("scope") == "PREREQUISITE" and
                             item["relationship"] == "REOPEN_REQUIRED" and
@@ -181,14 +198,17 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         expanded["canonical_name"] = "Lexample/Expanded;->valueOf()V"
         expanded["semantic_cluster"] = "libcore.Expanded"
         derived = source_derived_clusters([stopped, expanded], index)
+        class_paths = derived["Dalvik.ClassInitialization"]["source_paths"]
         self.assertIn("JAVA_METHOD:expanded", derived["Dalvik.ClassInitialization"]["origin_dependency_ids"])
-        self.assertNotIn("JAVA_METHOD:stopped", derived["Dalvik.ClassInitialization"]["origin_dependency_ids"])
+        self.assertIn("JAVA_METHOD:stopped", derived["Dalvik.ClassInitialization"]["origin_dependency_ids"])
+        self.assertNotIn("Lexample/Stopped;->valueOf()V -> Dalvik.ClassInitialization", class_paths)
+        self.assertIn("Lexample/Stopped;->valueOf()V -> Framework.ZygotePreload -> Dalvik.ClassInitialization",
+                      class_paths)
+        self.assertIn("Lexample/Expanded;->valueOf()V -> Dalvik.ClassInitialization", class_paths)
         self.assertIn("JAVA_METHOD:expanded", derived["Bionic.ClockGettime"]["origin_dependency_ids"])
-        self.assertNotIn("JAVA_METHOD:stopped", derived["Dalvik.Monitor"]["origin_dependency_ids"])
+        self.assertIn("JAVA_METHOD:stopped", derived["Dalvik.Monitor"]["origin_dependency_ids"])
         self.assertTrue(any(path.startswith("Lexample/Expanded;->valueOf()V")
                             for path in derived["Dalvik.MethodInvocation"]["source_paths"]))
-        self.assertFalse(any("Lexample/Stopped;->valueOf()V" in path
-                             for path in derived["Dalvik.ClassInitialization"]["source_paths"]))
         self.assertTrue(any(path.startswith("Lexample/Stopped;->valueOf()V")
                             for path in derived["Framework.ZygotePreload"]["source_paths"]))
         queue = closure_work_queue([stopped, expanded], derived)
@@ -348,7 +368,8 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         absorbed = json.loads(json.dumps(document))
         absorbed["source_derived_clusters"] = {"Dalvik.Monitor": {
             "semantic_cluster": "Dalvik.Monitor",
-            "origin_dependency_ids": ["JAVA_METHOD:box"]}}
+            "origin_dependency_ids": ["JAVA_METHOD:box"],
+            "source_paths": [UPPER + " -> Dalvik.ClassInitialization -> Dalvik.Monitor"]}}
         with self.assertRaisesRegex(ValueError, "absorbed shared substrate internals"):
             validate_source_manifests(absorbed)
 
@@ -408,6 +429,121 @@ class SubstratePrerequisiteTest(unittest.TestCase):
             validate_source_manifests({"schema_version": 1, "manifests": [{
                 "status": "SOURCE_LOCATED", "prerequisite_edges": [open_owner]}],
                 "source_derived_clusters": {}})
+
+    def _zygote_owner_index(self, relationship, owner_status):
+        index, zygote_edge = self._expansion_index()
+        zygote = index["external_cluster_sources"]["Framework.ZygotePreload"]
+        class_edge = zygote["cross_cluster_source_edges"][0]
+        boot_edge = _edge("boot class loading", "Libcore.BootClassLoading",
+                          "java/lang/Class.java", "forName", "a" * 64)
+        boot_edge["source_repo"] = "platform/libcore"
+        resolve_edge = _edge("boot class resolution", "Dalvik.BootClassResolution",
+                             CLASS_CPP, "dvmFindClass", "b" * 64)
+        zygote["cross_cluster_source_edges"] = [class_edge, boot_edge]
+        zygote["prerequisite_edges"] = [
+            _relation(class_edge, relationship, owner_status, [
+                "Dalvik.Monitor", "Dalvik.MethodInvocation",
+                "Bionic.PthreadCondition", "Bionic.ClockGettime"]),
+            _relation(boot_edge, relationship, owner_status, ["Dalvik.BootClassResolution"]),
+        ]
+        index["external_cluster_sources"]["Libcore.BootClassLoading"] = {
+            "source_repo": "platform/libcore", "revision": REV,
+            "source_file_sha256": {"java/lang/Class.java": "a" * 64},
+            "required_symbols": ["forName"], "status": "SOURCE_LOCATED",
+            "blocking_edges": ["boot class"],
+            "cross_cluster_source_edges": [resolve_edge]}
+        index["external_cluster_sources"]["Dalvik.BootClassResolution"] = _owner(
+            CLASS_CPP, "b" * 64, ["dvmFindClass"], blocking=["boot resolution"])
+        other_edge = {"edge": "other host", "semantic_cluster": "Framework.OtherHost",
+                      "source_repo": "platform/frameworks/base", "revision": REV,
+                      "source_file": "Other.java", "source_symbol": "preload",
+                      "source_sha256": "c" * 64, "status": "SOURCE_LOCATED"}
+        index["external_cluster_sources"]["Framework.OtherHost"] = {
+            "source_repo": "platform/frameworks/base", "revision": REV,
+            "source_file_sha256": {"Other.java": "c" * 64},
+            "required_symbols": ["preload"], "status": "SOURCE_LOCATED",
+            "cross_cluster_source_edges": [dict(class_edge)]}
+        second = "Lexample/Second;->valueOf()V"
+        other = "Lexample/Other;->valueOf()V"
+        manifests = [
+            {"dependency_id": "JAVA_METHOD:box", "canonical_name": UPPER,
+             "semantic_cluster": CLUSTER, "status": "SOURCE_LOCATED",
+             "migration_authorized": False, "cross_cluster_source_edges": [zygote_edge]},
+            {"dependency_id": "JAVA_METHOD:second", "canonical_name": second,
+             "semantic_cluster": "libcore.Second", "status": "SOURCE_LOCATED",
+             "migration_authorized": False, "cross_cluster_source_edges": [zygote_edge]},
+            {"dependency_id": "JAVA_METHOD:other", "canonical_name": other,
+             "semantic_cluster": "libcore.Other", "status": "SOURCE_LOCATED",
+             "migration_authorized": False, "cross_cluster_source_edges": [other_edge]},
+        ]
+        return index, manifests, second
+
+    def test_derived_owner_prerequisite_stops_only_its_own_crossings(self):
+        cases = (("UNRESOLVED", "SOURCE_LOCATED"),
+                 ("REOPEN_REQUIRED", "SOURCE_LOCATED"),
+                 ("PREREQUISITE_CLOSED", "SOURCE_CLOSED"))
+        for relationship, owner_status in cases:
+            index, manifests, second = self._zygote_owner_index(relationship, owner_status)
+            derived = source_derived_clusters(manifests, index)
+            zygote = derived["Framework.ZygotePreload"]
+            self.assertEqual(zygote["origin_dependency_ids"],
+                             ["JAVA_METHOD:box", "JAVA_METHOD:second"])
+            self.assertEqual(zygote["source_paths"], [
+                UPPER + " -> Framework.ZygotePreload",
+                second + " -> Framework.ZygotePreload"])
+            walked = " ".join(path for row in derived.values() for path in row["source_paths"])
+            self.assertNotIn("Framework.ZygotePreload -> Dalvik.ClassInitialization", walked)
+            self.assertNotIn("Framework.ZygotePreload -> Libcore.BootClassLoading", walked)
+            self.assertNotIn("Libcore.BootClassLoading", derived)
+            self.assertNotIn("Dalvik.BootClassResolution", derived)
+            self.assertEqual(derived["Dalvik.ClassInitialization"]["origin_dependency_ids"],
+                             ["JAVA_METHOD:other"])
+            self.assertTrue(all("Framework.OtherHost -> Dalvik.ClassInitialization" in path
+                                for path in derived["Dalvik.ClassInitialization"]["source_paths"]))
+            self.assertNotIn("JAVA_METHOD:box", derived["Dalvik.Monitor"]["origin_dependency_ids"])
+            self.assertNotIn("JAVA_METHOD:second", derived["Bionic.ClockGettime"]["origin_dependency_ids"])
+            queue = closure_work_queue(manifests, derived)
+            blockers = [item for item in queue if item.get("scope") == "PREREQUISITE"]
+            if relationship == "PREREQUISITE_CLOSED":
+                self.assertEqual(blockers, [])
+            else:
+                self.assertEqual(blockers, [
+                    {"scope": "PREREQUISITE", "semantic_cluster": "Dalvik.ClassInitialization",
+                     "blocking_edge": "class initialization", "relationship": relationship,
+                     "origin_dependency_ids": list(zygote["origin_dependency_ids"]),
+                     "source_paths": list(zygote["source_paths"])},
+                    {"scope": "PREREQUISITE", "semantic_cluster": "Libcore.BootClassLoading",
+                     "blocking_edge": "boot class loading", "relationship": relationship,
+                     "origin_dependency_ids": list(zygote["origin_dependency_ids"]),
+                     "source_paths": list(zygote["source_paths"])}])
+            document = {"schema_version": 1, "manifests": manifests,
+                        "source_derived_clusters": derived, "closure_work_queue": queue}
+            validate_source_manifests(document)
+            if relationship == "PREREQUISITE_CLOSED":
+                continue
+            blocked = json.loads(json.dumps(document))
+            blocked["manifests"][0]["status"] = "SOURCE_CLOSED"
+            with self.assertRaisesRegex(ValueError, "blocks upper closure"):
+                validate_source_manifests(blocked)
+            other_closed = json.loads(json.dumps(document))
+            other_closed["manifests"][2]["status"] = "SOURCE_CLOSED"
+            with self.assertRaises(ValueError) as caught:
+                validate_source_manifests(other_closed)
+            self.assertNotIn("blocks upper closure", str(caught.exception))
+        index, manifests, _ = self._zygote_owner_index("UNRESOLVED", "SOURCE_LOCATED")
+        index["external_cluster_sources"]["Framework.ZygotePreload"]["prerequisite_edges"][0][
+            "source_sha256"] = "9" * 64
+        with self.assertRaisesRegex(ValueError, "does not match a crossing source edge"):
+            source_derived_clusters(manifests, index)
+        reopen_index, reopen_manifests, _ = self._zygote_owner_index(
+            "REOPEN_REQUIRED", "SOURCE_LOCATED")
+        derived = source_derived_clusters(reopen_manifests, reopen_index)
+        derived["Dalvik.ClassInitialization"]["source_paths"].append(
+            UPPER + " -> Framework.ZygotePreload -> Dalvik.ClassInitialization")
+        with self.assertRaisesRegex(ValueError, "absorbed shared substrate internals"):
+            validate_source_manifests({
+                "schema_version": 1, "manifests": reopen_manifests,
+                "source_derived_clusters": derived, "closure_work_queue": []})
 
     def test_real_integer_and_resources_artifacts_stay_unclassified(self):
         evidence = ROOT / "tools/reference-lab/evidence"
