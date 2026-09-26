@@ -18,6 +18,172 @@
     "include/androidfw/Asset.h": "f1d0f567552c28cde5b369171a82557f4722e608fc90b87e4d7e298f9d7892f4"
   },
   "closure_reviewed": false,
+  "external_cluster_sources": {
+    "Framework.AssetStreamLifecycle": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "core/java/android/content/res/AssetManager.java": "51d78ab16002df592cd19cb7bfb4a06edb882c5a9a1c3798e8f06d02b7df27d7"
+      },
+      "required_symbols": ["AssetInputStream", "destroyAsset(mAsset)", "decRefsLocked", "mNumRefs", "destroy()"],
+      "cross_cluster_deps": ["AssetManager JNI stream destruction"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "AssetManager JNI stream destruction",
+          "semantic_cluster": "Framework.AssetManagerJNI",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/jni/android_util_AssetManager.cpp",
+          "source_symbol": "android_content_AssetManager_destroyAsset",
+          "source_sha256": "4c941ea2cc6a8a32f4beddd5180c2bbe22f76c78bd349a9841e4702c29e90d4e",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": ["Java stream open/read/close and manager reference lifecycle source closure", "AGR Java AssetInputStream ownership contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "Framework.AssetManagerJNI": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "core/jni/android_util_AssetManager.cpp": "4c941ea2cc6a8a32f4beddd5180c2bbe22f76c78bd349a9841e4702c29e90d4e"
+      },
+      "required_symbols": ["android_content_AssetManager_destroyAsset", "gAssetManagerMethods", "register_android_content_AssetManager", "delete a"],
+      "cross_cluster_deps": ["androidfw Asset object destruction"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "androidfw Asset object destruction",
+          "semantic_cluster": "AndroidNative.AssetObject",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "libs/androidfw/Asset.cpp",
+          "source_symbol": "Asset::~Asset",
+          "source_sha256": "1206d06bcebd5aa0db8cc52d79ca3094ada13e08f4ac499b16c5cf22b3795da0",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": ["JNI init/destroy, registration and 32-bit handle source closure", "AGR JNI Asset handle ownership contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "AndroidNative.AssetObject": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "libs/androidfw/Asset.cpp": "1206d06bcebd5aa0db8cc52d79ca3094ada13e08f4ac499b16c5cf22b3795da0",
+        "libs/androidfw/AssetManager.cpp": "bae84ddef205f05f37a1029bed454cdefd406e173c4e250df32892dd822a6d53",
+        "include/androidfw/Asset.h": "f1d0f567552c28cde5b369171a82557f4722e608fc90b87e4d7e298f9d7892f4"
+      },
+      "required_symbols": ["Asset::~Asset", "_FileAsset::~_FileAsset", "_CompressedAsset::~_CompressedAsset", "AssetManager::open", "openAssetFromZipLocked"],
+      "cross_cluster_deps": ["ZIP entry lookup and mapping", "streamed deflate lifetime", "mapped asset bytes"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "ZIP entry lookup and mapping",
+          "semantic_cluster": "AndroidNative.ZipFileRO",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "libs/androidfw/ZipFileRO.cpp",
+          "source_symbol": "ZipFileRO::createEntryFileMap",
+          "source_sha256": "714722531976817a85891ff6dda213b543d9d5a42d18275cf390cd1babc801c9",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "streamed deflate lifetime",
+          "semantic_cluster": "AndroidNative.StreamingZipInflater",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "libs/androidfw/StreamingZipInflater.cpp",
+          "source_symbol": "StreamingZipInflater::~StreamingZipInflater",
+          "source_sha256": "070e9659fe91130f9abe777eddfd3182c55b6404ac1decf7927d60d58ad5b216",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "mapped asset bytes",
+          "semantic_cluster": "AndroidNative.FileMap",
+          "source_repo": "platform/system/core",
+          "revision": "efbf36f2dad8f083de6f48dbb682461d7cfa9781",
+          "source_file": "libutils/FileMap.cpp",
+          "source_symbol": "FileMap::~FileMap",
+          "source_sha256": "8f811019c8bba09a7972a82cb319871295dbcb644d8625c0a1b3eddfa2f9def1",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": ["ZIP/FileMap/inflater and filesystem boundary source closure", "AGR Asset destructor and allocation lifetime contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "AndroidNative.ZipFileRO": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "libs/androidfw/ZipFileRO.cpp": "714722531976817a85891ff6dda213b543d9d5a42d18275cf390cd1babc801c9"
+      },
+      "required_symbols": ["ZipFileRO::open", "ZipFileRO::createEntryFileMap"],
+      "cross_cluster_deps": ["ZIP entry FileMap allocation"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "ZIP entry FileMap allocation",
+          "semantic_cluster": "AndroidNative.FileMap",
+          "source_repo": "platform/system/core",
+          "revision": "efbf36f2dad8f083de6f48dbb682461d7cfa9781",
+          "source_file": "libutils/FileMap.cpp",
+          "source_symbol": "FileMap::create",
+          "source_sha256": "8f811019c8bba09a7972a82cb319871295dbcb644d8625c0a1b3eddfa2f9def1",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": ["ZIP directory, entry mapping and error source closure", "AGR ZIP and APK asset path contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "AndroidNative.StreamingZipInflater": {
+      "source_repo": "platform/frameworks/base",
+      "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+      "source_file_sha256": {
+        "libs/androidfw/StreamingZipInflater.cpp": "070e9659fe91130f9abe777eddfd3182c55b6404ac1decf7927d60d58ad5b216"
+      },
+      "required_symbols": ["StreamingZipInflater::~StreamingZipInflater", "StreamingZipInflater::read", "StreamingZipInflater::readNextChunk"],
+      "cross_cluster_deps": ["mapped compressed bytes"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "mapped compressed bytes",
+          "semantic_cluster": "AndroidNative.FileMap",
+          "source_repo": "platform/system/core",
+          "revision": "efbf36f2dad8f083de6f48dbb682461d7cfa9781",
+          "source_file": "include/utils/FileMap.h",
+          "source_symbol": "getDataPtr",
+          "source_sha256": "697770c3a36afdb6cec3e1f46068225ed9fd6c9564416f3b6aed92f169ea4f01",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": ["zlib state, streaming read/seek and error source closure", "AGR compressed Asset lifetime contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "AndroidNative.FileMap": {
+      "source_repo": "platform/system/core",
+      "revision": "efbf36f2dad8f083de6f48dbb682461d7cfa9781",
+      "source_file_sha256": {
+        "libutils/FileMap.cpp": "8f811019c8bba09a7972a82cb319871295dbcb644d8625c0a1b3eddfa2f9def1",
+        "include/utils/FileMap.h": "697770c3a36afdb6cec3e1f46068225ed9fd6c9564416f3b6aed92f169ea4f01"
+      },
+      "required_symbols": ["FileMap::create", "FileMap::~FileMap", "getDataPtr", "getDataLength", "mmap", "munmap"],
+      "excluded_deps": ["Linux file descriptor and mmap boundary"],
+      "boundary_contracts": {
+        "Linux file descriptor and mmap boundary": {
+          "request_schema": "file descriptor, aligned file offset, length, protection and mapping flags",
+          "response_schema": "mapped bytes and mapped length or errno-style failure",
+          "callbacks": [],
+          "lifecycle": "mapping retained by FileMap until destructor releases it",
+          "error_semantics": "failed mmap leaves no live mapping; FileMap create reports failure"
+        }
+      },
+      "blocking_edges": ["FileMap alignment, ownership and mmap error source closure", "AGR host VMA and file mapping contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    }
+  },
   "entries": {
     "Landroid/view/ContextThemeWrapper;->getResources()Landroid/content/res/Resources;": {
       "owner_cluster": "Framework",
@@ -45,6 +211,18 @@
       "data_structures": ["AssetInputStream.mAsset", "AssetManager.mNumRefs", "AssetManager.mObject", "Asset*"],
       "registration_deps": ["AndroidRuntime.cpp:register_android_content_AssetManager", "gAssetManagerMethods"],
       "cross_cluster_deps": ["ZipFileRO", "FileMap", "StreamingZipInflater", "InputStream"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "AssetInputStream Java manager lifecycle",
+          "semantic_cluster": "Framework.AssetStreamLifecycle",
+          "source_repo": "platform/frameworks/base",
+          "revision": "63ade05d76785975fc3292ca030abbaa1dda8891",
+          "source_file": "core/java/android/content/res/AssetManager.java",
+          "source_symbol": "AssetInputStream",
+          "source_sha256": "51d78ab16002df592cd19cb7bfb4a06edb882c5a9a1c3798e8f06d02b7df27d7",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
       "blocking_edges": ["AssetManager JNI init/destroy lifecycle", "ZIP/FileMap/inflater closure", "host filesystem boundary contract"],
       "closure_reviewed": false
     }

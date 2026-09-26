@@ -17,6 +17,30 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class WorkflowTest(unittest.TestCase):
+    def test_resource_asset_lifetime_chain_remains_source_located(self):
+        evidence = ROOT / "tools/reference-lab/evidence"
+        corpus = json.loads((evidence / "four-game-corpus-manifest.json").read_text())
+        index = json.loads((ROOT / "tools/reference-lab/indexes/shared-resources-api19-locations.json").read_text())
+        generated = build_cluster_seed(corpus, index, "Framework.Resources")
+        committed = json.loads((evidence / "shared-resource-source-seed.json").read_text())
+        self.assertEqual(committed, generated)
+        validate_source_manifests(committed)
+        self.assertEqual(len(committed["manifests"]), 2)
+        self.assertEqual(len(committed["source_derived_clusters"]), 6)
+        asset = committed["source_derived_clusters"]["AndroidNative.AssetObject"]
+        self.assertEqual(asset["status"], "SOURCE_LOCATED")
+        self.assertFalse(asset["migration_authorized"])
+        self.assertTrue(any("Framework.AssetStreamLifecycle -> Framework.AssetManagerJNI -> "
+                            "AndroidNative.AssetObject" in path for path in asset["source_paths"]))
+        self.assertTrue(any(item["semantic_cluster"] == "AndroidNative.AssetObject"
+                            for item in committed["closure_work_queue"]))
+        mapped = committed["source_derived_clusters"]["AndroidNative.FileMap"]
+        self.assertTrue(any("AndroidNative.AssetObject -> AndroidNative.ZipFileRO -> "
+                            "AndroidNative.FileMap" in path for path in mapped["source_paths"]))
+        self.assertTrue(any("AndroidNative.AssetObject -> AndroidNative.StreamingZipInflater -> "
+                            "AndroidNative.FileMap" in path for path in mapped["source_paths"]))
+        self.assertIn("Linux file descriptor and mmap boundary", mapped["boundary_contracts"])
+
     def test_integer_cluster_seed_keeps_probe_scope_and_blocks_authority(self):
         evidence = ROOT / "tools/reference-lab/evidence"
         manifest = json.loads((evidence / "four-game-corpus-manifest.json").read_text())
