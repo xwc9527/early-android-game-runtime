@@ -1,0 +1,6 @@
+reference-lab unittest discover: 76 tests, 74 passed, 2 failed.
+The two failures are test_real_integer_crossings_stay_unresolved_and_resources_binding_requires_reopen and test_resource_asset_lifetime_chain_remains_source_located.
+A key-by-key comparison after removing seeds[*].book_sha256 found no other difference. Those hashes differ because the Windows checkout is CRLF. The committed seeds were not rewritten.
+test_thread_state_source_derived_review_authorizes_only_the_jni_crossing passed, including the negative cases.
+test_clock_gettime_source_derived_review_authorizes_only_the_two_host_clocks passed.
+ci/validate-governance.py --mode working: passed true, errors [], warnings STABLE_MODULE_MODIFIED_WITHOUT_REOPEN_REASON for NativeActivityInput and DEXRuntimeLifecycle. Those warnings are the existing branch-versus-baseline set.

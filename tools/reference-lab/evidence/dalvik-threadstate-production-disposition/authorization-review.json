@@ -1,0 +1,22 @@
+{
+  "semantic_cluster": "Dalvik.ThreadState",
+  "closure_reviewed": true,
+  "reviewed_by": "api19-source-audit",
+  "closure_notes": "The review covers only the JNINativeBinding crossing RegisterNatives through ScopedJniThreadState into dvmChangeStatus. It binds platform/dalvik revision 36e356c96640775f0a3f167bd2426ea0f0093b8b, the closed Thread.cpp and Thread.h SHA-256 set, the reviewed dependency self-suspend on the thread suspend-count condition, and the closed prerequisite. jni_RegisterNatives does not publish THREAD_RUNNING or THREAD_NATIVE, does not read suspendCount, and does not enter the self-suspend path. DxJavaThreadState is a separate host execution enum and is not this owner. This record is not PRODUCTION_CLOSED or PREREQUISITE_CLOSED and does not start a production port.",
+  "source_repo": "platform/dalvik",
+  "source_revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+  "source_file_sha256": {
+    "vm/Thread.cpp": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
+    "vm/Thread.h": "d31169a50cd6e5504fa017cf9ff77a749ff8fb48636985a2037b140c5301f70a"
+  },
+  "reviewed_dependency_edges": [
+    "self-suspend on the thread suspend-count condition"
+  ],
+  "unresolved_dependency_edges": [],
+  "origin_dependency_ids": [
+    "DALVIK_JNI_NATIVE_BINDING:register-natives-thread-state"
+  ],
+  "source_paths": [
+    "Dalvik.JNINativeBinding -> Dalvik.ThreadState"
+  ]
+}

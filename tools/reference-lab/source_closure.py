@@ -698,6 +698,9 @@ def require_source_derived_review(row, review):
         raise ValueError("handwritten source-derived authorization")
     if review.get("semantic_cluster") != row.get("semantic_cluster"):
         raise ValueError("source-derived review does not match owner")
+    for edge in row.get("prerequisite_edges") or []:
+        if not isinstance(edge, dict) or edge.get("relationship") != "PREREQUISITE_CLOSED":
+            raise ValueError("source-derived owner prerequisite is not closed")
     if (row.get("status") not in ("SOURCE_CLOSED", "MIGRATION_AUTHORIZED") or
             row.get("blocking_edges") or row.get("closure_reviewed") is not True or
             (row.get("closure_evidence") or {}).get("unresolved_dependency_edges") != [] or
@@ -717,6 +720,10 @@ def require_source_derived_review(row, review):
             set(review.get("reviewed_dependency_edges") or []) != edges or
             set(closure.get("reviewed_dependency_edges") or []) != edges):
         raise ValueError("source-derived review does not match owner")
+    if "origin_dependency_ids" in review or "source_paths" in review:
+        if (list(review.get("origin_dependency_ids") or []) != list(row.get("origin_dependency_ids") or []) or
+                list(review.get("source_paths") or []) != list(row.get("source_paths") or [])):
+            raise ValueError("source-derived review does not match origin")
     _require_host_boundary_evidence(row["semantic_cluster"], row, review)
 
 
@@ -755,6 +762,36 @@ def bionic_clock_gettime_source_manifest(index):
     artifact = {
         "schema_version": 1,
         "scope": "Bionic.PthreadCondition clock_gettime crossing",
+        "source_index_revision": index.get("revision"),
+        "manifests": [parent],
+        "cluster_source_manifests": {},
+        "source_derived_clusters": derived,
+        "closure_work_queue": closure_work_queue([parent], derived, index),
+    }
+    from workflow import validate_source_manifests
+    validate_source_manifests(artifact, index)
+    return artifact
+
+
+def dalvik_thread_state_source_manifest(index, binding):
+    """Manifest for the JNINativeBinding thread-state crossing. Authorization stays generic."""
+    edges = (binding or {}).get("cross_cluster_source_edges") or []
+    edge = next((item for item in edges
+                 if isinstance(item, dict) and item.get("edge") == "JNI thread state around RegisterNatives"
+                 and item.get("semantic_cluster") == "Dalvik.ThreadState"), None)
+    if edge is None:
+        raise ValueError("JNI thread state crossing is missing")
+    parent = {
+        "dependency_id": "DALVIK_JNI_NATIVE_BINDING:register-natives-thread-state",
+        "canonical_name": "Dalvik.JNINativeBinding",
+        "status": "SOURCE_LOCATED",
+        "migration_authorized": False,
+        "cross_cluster_source_edges": [dict(edge)],
+    }
+    derived = source_derived_clusters([parent], index)
+    artifact = {
+        "schema_version": 1,
+        "scope": "Dalvik.JNINativeBinding JNI thread state crossing",
         "source_index_revision": index.get("revision"),
         "manifests": [parent],
         "cluster_source_manifests": {},

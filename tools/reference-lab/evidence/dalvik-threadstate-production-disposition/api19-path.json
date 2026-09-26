@@ -1,0 +1,25 @@
+{
+  "path": [
+    "RegisterNatives constructs ScopedJniThreadState",
+    "constructor calls dvmChangeStatus(self, THREAD_RUNNING)",
+    "dvmChangeStatus equal status returns the old status without a store",
+    "THREAD_RUNNING uses android_atomic_acquire_store",
+    "if suspendCount != 0, fullSuspendCheck enters the closed self-suspend path",
+    "RegisterNatives body runs while the published status is THREAD_RUNNING",
+    "destructor calls dvmChangeStatus(self, THREAD_NATIVE)",
+    "THREAD_NATIVE uses android_atomic_release_store"
+  ],
+  "thread_status": {
+    "UNDEFINED": -1,
+    "ZOMBIE": 0,
+    "RUNNING": 1,
+    "TIMED_WAIT": 2,
+    "MONITOR": 3,
+    "WAIT": 4,
+    "INITIALIZING": 5,
+    "STARTING": 6,
+    "NATIVE": 7,
+    "VMWAIT": 8,
+    "SUSPENDED": 9
+  }
+}

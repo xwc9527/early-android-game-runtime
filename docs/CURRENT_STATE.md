@@ -24,11 +24,13 @@ not `PRODUCTION_CLOSED` and it is not a formal CLEAN differential producer.
 The ThreadState self-suspend crossing has an exact `CROSSING_CLOSED` record.
 That record does not mark `Bionic.PthreadCondition` `PRODUCTION_CLOSED`.
 Absolute condition timeouts stay outside that path. `Dalvik.ThreadState` is
-now `SOURCE_CLOSED` for that source path. It is not `MIGRATION_AUTHORIZED`.
-`Dalvik.JNINativeBinding` stays `SOURCE_LOCATED`, and its thread-state
-prerequisite stays `UNRESOLVED`.
-The
-current source indexes and manifests are under `tools/reference-lab/indexes`
+`SOURCE_CLOSED` for that source path. The source-derived manifest reached from
+`JNI thread state around RegisterNatives` is `MIGRATION_AUTHORIZED`. That
+authorization is not a production port. `Dalvik.JNINativeBinding` stays
+`SOURCE_LOCATED`, and that prerequisite is `REOPEN_REQUIRED` because
+`jni_RegisterNatives` does not publish Dalvik `THREAD_RUNNING` or
+`THREAD_NATIVE`.
+The current source indexes and manifests are under `tools/reference-lab/indexes`
 and `tools/reference-lab/evidence`; their unresolved edges are explicit.
 
 The older R0 narrative below records an earlier workbench state and is
@@ -72,7 +74,7 @@ Earlier merged Runtime contracts (linker, pthread, EHABI, allocator, APK bootstr
 
 ## Current blocker
 
-`Dalvik.JNINativeBinding` source closure is not `SOURCE_CLOSED`. `RegisterNatives` crosses `Dalvik.ThreadState`, `Dalvik.ClassInitialization`, `Dalvik.ObjectAllocation`, `Dalvik.MethodInvocation`, and `Dalvik.Monitor`, and those relationships are `UNRESOLVED`. The CLEAN differential result `DIVERGED` is not a closure PASS. Do not repair production until that source closure passes.
+`Dalvik.ThreadState` is migration-authorized for the RegisterNatives thread-state crossing, and that production port has not started. `jni_RegisterNatives` still has no Dalvik thread-status owner, so `JNI thread state around RegisterNatives` is `REOPEN_REQUIRED`. `Dalvik.JNINativeBinding` stays `SOURCE_LOCATED`. Class initialization, object allocation, method invocation, and monitor relationships stay `UNRESOLVED`.
 
 ## Next architecture milestone
 

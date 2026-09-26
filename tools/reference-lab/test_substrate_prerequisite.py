@@ -8,6 +8,7 @@ from source_closure import (
     CROSSING_FIELDS,
     SHARED_RUNTIME_SUBSTRATE_OWNERS,
     bionic_clock_gettime_source_manifest,
+    dalvik_thread_state_source_manifest,
     close_entry,
     closure_work_queue,
     external_edge_closed,
@@ -764,7 +765,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
                      for edge in owner["prerequisite_edges"]]
         self.assertEqual(crossings, [
             ("Dalvik.ThreadState", "vm/Thread.cpp", "dvmChangeStatus",
-             "UNRESOLVED", "SOURCE_CLOSED"),
+             "REOPEN_REQUIRED", "SOURCE_CLOSED"),
             ("Dalvik.ClassInitialization", "vm/oo/Class.cpp", "dvmInitClass",
              "UNRESOLVED", "SOURCE_LOCATED"),
             ("Dalvik.ObjectAllocation", "vm/alloc/Alloc.cpp", "dvmAllocObject",
@@ -803,7 +804,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         self.assertEqual(constructor["owner_source_status"], "SOURCE_LOCATED")
         other = [edge["relationship"] for edge in binding["prerequisite_edges"]
                  if edge["semantic_cluster"] != "Dalvik.MethodInvocation"]
-        self.assertEqual(other, ["UNRESOLVED", "UNRESOLVED", "UNRESOLVED", "UNRESOLVED"])
+        self.assertEqual(other, ["REOPEN_REQUIRED", "UNRESOLVED", "UNRESOLVED", "UNRESOLVED"])
 
     def test_thread_state_source_is_closed_without_migration_authority(self):
         integer_index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
@@ -832,7 +833,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         thread_edge = next(edge for edge in binding["prerequisite_edges"]
                            if edge["edge"] == "JNI thread state around RegisterNatives")
         self.assertEqual(thread_edge["semantic_cluster"], "Dalvik.ThreadState")
-        self.assertEqual(thread_edge["relationship"], "UNRESOLVED")
+        self.assertEqual(thread_edge["relationship"], "REOPEN_REQUIRED")
         self.assertEqual(thread_edge["owner_source_status"], "SOURCE_CLOSED")
         monitor = integer_index["external_cluster_sources"]["Dalvik.Monitor"]
         self.assertEqual(monitor["status"], "SOURCE_LOCATED")
@@ -1105,6 +1106,54 @@ class SubstratePrerequisiteTest(unittest.TestCase):
             "crossing_closures": [],
         }
         reject("broad owner closure does not cover the exact crossing", registry_copy=broad)
+
+    def test_thread_state_source_derived_review_authorizes_only_the_jni_crossing(self):
+        index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text(encoding="utf-8"))
+        binding_index = json.loads((ROOT / "tools/reference-lab/indexes/shared-resources-api19-locations.json").read_text(encoding="utf-8"))
+        binding = binding_index["external_cluster_sources"]["Dalvik.JNINativeBinding"]
+        authorized = dalvik_thread_state_source_manifest(index, binding)
+        thread = authorized["source_derived_clusters"]["Dalvik.ThreadState"]
+        self.assertEqual(set(authorized["source_derived_clusters"]), {"Dalvik.ThreadState"})
+        self.assertEqual(thread["status"], "MIGRATION_AUTHORIZED")
+        self.assertIs(thread["migration_authorized"], True)
+        self.assertEqual(thread["provenance"], "SOURCE_DERIVED")
+        self.assertNotIn("migration_authorized", thread["migration_review"])
+        self.assertEqual(thread["origin_dependency_ids"],
+                         ["DALVIK_JNI_NATIVE_BINDING:register-natives-thread-state"])
+        self.assertEqual(thread["source_paths"], ["Dalvik.JNINativeBinding -> Dalvik.ThreadState"])
+        self.assertEqual(thread["prerequisite_edges"][0]["relationship"], "PREREQUISITE_CLOSED")
+        self.assertEqual(authorized, json.loads((
+            ROOT / "tools/reference-lab/evidence/dalvik-threadstate-production-disposition/source-manifest.json"
+        ).read_text(encoding="utf-8")))
+        self.assertEqual(binding["status"], "SOURCE_LOCATED")
+        self.assertEqual(binding["prerequisite_edges"][0]["relationship"], "REOPEN_REQUIRED")
+        clock = bionic_clock_gettime_source_manifest(index)
+        self.assertEqual(set(clock["source_derived_clusters"]), {"Bionic.ClockGettime"})
+        self.assertTrue(clock["source_derived_clusters"]["Bionic.ClockGettime"]["migration_authorized"])
+
+        def reject(mutate, message):
+            bad_index = json.loads(json.dumps(index))
+            bad_binding = json.loads(json.dumps(binding))
+            mutate(bad_index, bad_binding)
+            with self.assertRaisesRegex(ValueError, message):
+                dalvik_thread_state_source_manifest(bad_index, bad_binding)
+
+        reject(lambda doc, _binding: doc["external_cluster_sources"]["Dalvik.ThreadState"].__setitem__(
+            "status", "SOURCE_LOCATED"), "source-derived owner is not closed")
+        reject(lambda doc, _binding: doc["external_cluster_sources"]["Dalvik.ThreadState"][
+            "prerequisite_edges"][0].__setitem__("relationship", "UNRESOLVED"),
+               "source-derived owner prerequisite is not closed")
+        reject(lambda doc, _binding: doc["source_derived_reviews"]["Dalvik.ThreadState"].__setitem__(
+            "source_revision", "0" * 40), "does not match owner")
+        reject(lambda doc, _binding: doc["source_derived_reviews"]["Dalvik.ThreadState"][
+            "source_file_sha256"].__setitem__("vm/Thread.cpp", "0" * 64), "does not match owner")
+        reject(lambda doc, _binding: doc["source_derived_reviews"]["Dalvik.ThreadState"].__setitem__(
+            "source_paths", ["Dalvik.Monitor -> Dalvik.ThreadState"]), "does not match origin")
+        reject(lambda doc, _binding: doc["external_cluster_sources"]["Dalvik.ThreadState"][
+            "closure_evidence"].__setitem__("unresolved_dependency_edges", ["extra"]),
+               "source-derived owner is not closed")
+        reject(lambda doc, _binding: doc["source_derived_reviews"]["Dalvik.ThreadState"].__setitem__(
+            "migration_authorized", True), "handwritten source-derived authorization")
 
 
 if __name__ == "__main__":
