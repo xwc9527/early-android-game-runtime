@@ -1,0 +1,28 @@
+{
+  "baseline": "android-4.4.4_r2",
+  "clean": {
+    "callback_aidl_sha256": "644756e289a4feafe6d3a1e10f8ae0ac1fc9d7e52a8266dcd5a5aad26c2075e2",
+    "callback_oneway": true,
+    "display_aidl_sha256": "453a0b9b66b250331cd7ae69c6b6beeeb6d320b0de44f9995b48c8542ae12de5",
+    "interface_descriptor": "android.hardware.display.IDisplayManager",
+    "transactions": {
+      "getDisplayInfo": 1,
+      "onDisplayEvent_callback": 1,
+      "registerCallback": 3
+    }
+  },
+  "first_call_transaction": 1,
+  "ibinder_source_sha256": "dcf33d83636f9f406c132f21ab50986a52100d5085334efc12feaa1244b65726",
+  "schema_version": 1,
+  "trace": {
+    "callback_aidl_sha256": "644756e289a4feafe6d3a1e10f8ae0ac1fc9d7e52a8266dcd5a5aad26c2075e2",
+    "callback_oneway": true,
+    "display_aidl_sha256": "453a0b9b66b250331cd7ae69c6b6beeeb6d320b0de44f9995b48c8542ae12de5",
+    "interface_descriptor": "android.hardware.display.IDisplayManager",
+    "transactions": {
+      "getDisplayInfo": 1,
+      "onDisplayEvent_callback": 1,
+      "registerCallback": 3
+    }
+  }
+}

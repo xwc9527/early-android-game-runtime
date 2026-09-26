@@ -26,7 +26,7 @@ class WorkflowTest(unittest.TestCase):
         self.assertEqual(committed, generated)
         validate_source_manifests(committed)
         self.assertEqual(len(committed["manifests"]), 2)
-        self.assertEqual(len(committed["source_derived_clusters"]), 14)
+        self.assertEqual(len(committed["source_derived_clusters"]), 16)
         asset = committed["source_derived_clusters"]["AndroidNative.AssetObject"]
         self.assertEqual(asset["status"], "SOURCE_LOCATED")
         self.assertFalse(asset["migration_authorized"])
@@ -62,6 +62,16 @@ class WorkflowTest(unittest.TestCase):
         paths = committed["source_derived_clusters"]["Framework.AssetManagerPaths"]
         self.assertTrue(any("Framework.ResourcesManagerCache -> Framework.AssetManagerPaths"
                             in path for path in paths["source_paths"]))
+        display = committed["source_derived_clusters"]["Framework.DisplayMetricsBridge"]
+        boundary = display["boundary_contracts"][
+            "IDisplayManager.getDisplayInfo Binder service boundary"]
+        self.assertEqual(boundary["service_name"], "display")
+        self.assertEqual(display["status"], "SOURCE_LOCATED")
+        self.assertEqual(boundary["get_display_info_transaction_code"], 1)
+        self.assertEqual(boundary["register_callback_transaction_code"], 3)
+        self.assertEqual(boundary["on_display_event_callback_code"], 1)
+        self.assertTrue(boundary["on_display_event_oneway"])
+        self.assertIn("Framework.CompatibilityScale", committed["source_derived_clusters"])
 
     def test_integer_cluster_seed_keeps_probe_scope_and_blocks_authority(self):
         evidence = ROOT / "tools/reference-lab/evidence"
