@@ -71,7 +71,7 @@
         "core/java/com/android/internal/os/ZygoteConnection.java": "37156818168d7fc47fdf5e55f6f6f30696ba4be9892820497474827cc130c9e8"
       },
       "required_symbols": ["java.lang.Integer", "java.lang.Number", "java.lang.Comparable", "preloadClasses", "Class.forName(line)", "forkAndSpecialize"],
-      "cross_cluster_deps": ["Dalvik class initialization before app fork"],
+      "cross_cluster_deps": ["Dalvik class initialization before app fork", "libcore Class.forName and boot loader delegation"],
       "cross_cluster_source_edges": [
         {
           "edge": "Dalvik class initialization before app fork",
@@ -81,6 +81,16 @@
           "source_file": "vm/oo/Class.cpp",
           "source_symbol": "dvmInitClass",
           "source_sha256": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "libcore Class.forName and boot loader delegation",
+          "semantic_cluster": "Libcore.BootClassLoading",
+          "source_repo": "platform/libcore",
+          "revision": "9b24ebf95f897a75c60c9c68d00694406afa6fbc",
+          "source_file": "libdvm/src/main/java/java/lang/Class.java",
+          "source_symbol": "forName(String className)",
+          "source_sha256": "44c31dc402d679c1b6a19d3d9d027d20018686f54f4876e4b0808315a91aefed",
           "status": "SOURCE_LOCATED"
         }
       ],
@@ -95,6 +105,71 @@
         }
       },
       "blocking_edges": ["Dalvik initialization contract before fork", "AGR one-process inherited-state installation review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "Libcore.BootClassLoading": {
+      "source_repo": "platform/libcore",
+      "revision": "9b24ebf95f897a75c60c9c68d00694406afa6fbc",
+      "source_file_sha256": {
+        "libdvm/src/main/java/java/lang/Class.java": "44c31dc402d679c1b6a19d3d9d027d20018686f54f4876e4b0808315a91aefed",
+        "libdvm/src/main/java/java/lang/ClassLoader.java": "9a5bc7ab53ebbd7460de695b79368e6e46d04e7eefd592da87df2f0ee4562148",
+        "libdvm/src/main/java/java/lang/VMClassLoader.java": "2ba6abfebef41ff4e112b48f033d873d5ce1507a8e25fecc39986d618df46ce6",
+        "libdvm/src/main/java/dalvik/system/VMStack.java": "0441596d811605022245dfd77f6504634d34fbe0f1ea3fe03fda7f8d4296623b"
+      },
+      "required_symbols": ["forName(String className)", "getCallingClassLoader", "createSystemClassLoader", "BootClassLoader", "VMClassLoader.loadClass"],
+      "cross_cluster_deps": ["Dalvik native Class.forName and boot class resolution"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "Dalvik native Class.forName and boot class resolution",
+          "semantic_cluster": "Dalvik.BootClassResolution",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/native/java_lang_Class.cpp",
+          "source_symbol": "Dalvik_java_lang_Class_classForName",
+          "source_sha256": "a838dc9fcc3d3332eb0c0ca9cb400deb7b27eff8a74eab0c655cfb6a845c830f",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": ["loader delegation and failure semantics source closure", "AGR defining-versus-initiating loader contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "Dalvik.BootClassResolution": {
+      "source_repo": "platform/dalvik",
+      "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+      "source_file_sha256": {
+        "vm/native/java_lang_Class.cpp": "a838dc9fcc3d3332eb0c0ca9cb400deb7b27eff8a74eab0c655cfb6a845c830f",
+        "vm/native/java_lang_VMClassLoader.cpp": "5d1160c2d7583740a659ca3dd9ba5c89b3336418680d8ae971a3f303507b07c0",
+        "vm/native/dalvik_system_VMStack.cpp": "52c06c61862cbe066ef5fd5e3668ba2768f618f2207825b89921d5547dc29325",
+        "vm/native/InternalNative.cpp": "63701ccf0181896f084f78484159cac5ff7d8d7fd0b0b8dc5dc31964449efac2",
+        "vm/oo/Class.cpp": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5"
+      },
+      "required_symbols": ["Dalvik_java_lang_Class_classForName", "Dalvik_java_lang_VMClassLoader_loadClass", "Dalvik_dalvik_system_VMStack_getCallingClassLoader", "dvmFindClassByName", "findClassFromLoaderNoInit", "validateSuperDescriptors"],
+      "cross_cluster_deps": ["boot class initialization after lookup", "loader delegation invokes ClassLoader.loadClass"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "boot class initialization after lookup",
+          "semantic_cluster": "Dalvik.ClassInitialization",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/oo/Class.cpp",
+          "source_symbol": "dvmInitClass",
+          "source_sha256": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "loader delegation invokes ClassLoader.loadClass",
+          "semantic_cluster": "Dalvik.MethodInvocation",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/interp/Stack.cpp",
+          "source_symbol": "dvmCallMethod",
+          "source_sha256": "93ca5f272c9a801cc4c3408924b1bf4af212541a6f6ba577687d867be7d48503",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "blocking_edges": ["boot lookup, loader table, descriptor validation and exception source closure", "AGR boot class identity and loader contract review"],
       "status": "SOURCE_LOCATED",
       "closure_reviewed": false
     },

@@ -42,8 +42,17 @@ class WorkflowTest(unittest.TestCase):
         self.assertTrue(external_edge_closed(root_edge, index))
         self.assertFalse(cluster["cluster_source_manifests"]["libcore.IntegerBoxing"]["migration_authorized"])
         derived = cluster["source_derived_clusters"]
-        self.assertEqual(len(derived), 9)
+        self.assertEqual(len(derived), 11)
         self.assertNotIn("Dalvik.OOMException", derived)
+        self.assertEqual(derived["Libcore.BootClassLoading"]["status"], "SOURCE_LOCATED")
+        self.assertEqual(derived["Dalvik.BootClassResolution"]["status"], "SOURCE_LOCATED")
+        self.assertTrue(any("Framework.ZygotePreload -> Libcore.BootClassLoading -> "
+                            "Dalvik.BootClassResolution" in path
+                            for path in derived["Dalvik.BootClassResolution"]["source_paths"]))
+        self.assertTrue(any("Dalvik.BootClassResolution -> Dalvik.ClassInitialization" in path
+                            for path in derived["Dalvik.ClassInitialization"]["source_paths"]))
+        self.assertTrue(any("Dalvik.BootClassResolution -> Dalvik.MethodInvocation" in path
+                            for path in derived["Dalvik.MethodInvocation"]["source_paths"]))
         self.assertEqual(derived["Dalvik.StaticFieldArrayRoots"]["status"], "SOURCE_CLOSED")
         self.assertEqual(derived["Framework.ZygoteVMOptions"]["status"], "SOURCE_CLOSED")
         self.assertEqual(derived["AndroidNative.InitZygote"]["status"], "SOURCE_CLOSED")
@@ -53,6 +62,8 @@ class WorkflowTest(unittest.TestCase):
         queue = cluster["closure_work_queue"]
         self.assertTrue(any(item["scope"] == "SOURCE_DERIVED" and
                             item["semantic_cluster"] == "Dalvik.ClassVerification"
+                            for item in queue))
+        self.assertTrue(any(item["semantic_cluster"] == "Dalvik.BootClassResolution"
                             for item in queue))
         self.assertFalse(any(item["semantic_cluster"] == "Dalvik.StaticFieldArrayRoots"
                              for item in queue))
