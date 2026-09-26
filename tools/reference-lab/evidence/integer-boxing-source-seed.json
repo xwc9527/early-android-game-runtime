@@ -524,19 +524,23 @@
       "source_repo": "platform/dalvik",
       "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
       "source_file_sha256": {
-        "vm/oo/Class.cpp": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5"
+        "vm/oo/Class.cpp": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5",
+        "vm/interp/Interp.cpp": "74290432f2142ca123c08c25b21cf4127487781605ff15fdd0a6673eba3994f9"
       },
       "required_symbols": [
         "dvmInitClass",
         "initSFields",
         "validateSuperDescriptors",
         "throwEarlierClassFailure",
-        "dvmFlushBreakpoints"
+        "dvmFlushBreakpoints",
+        "dvmBreakpointStartup",
+        "dvmBreakpointSetFlush"
       ],
       "internal_deps": [
         "superclass descriptor validation before class initialization",
         "earlier class failure replay",
-        "breakpoint flush after verification and optimization"
+        "breakpoint flush after verification and optimization",
+        "breakpoint set initialized at VM startup"
       ],
       "cross_cluster_deps": [
         "class verification and dex optimization",
@@ -576,7 +580,7 @@
         }
       ],
       "blocking_edges": [
-        "source closure of verification, monitor, invoke, descriptor validation, breakpoint flush and failure paths",
+        "source closure of verification, monitor, invoke, descriptor validation, breakpoint state and failure paths",
         "AGR class-initialization contract review"
       ],
       "status": "SOURCE_LOCATED",
