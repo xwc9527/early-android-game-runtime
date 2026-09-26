@@ -634,7 +634,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         for name in SHARED_RUNTIME_SUBSTRATE_OWNERS:
             self.assertNotIn(name, encoded)
 
-    def test_real_integer_and_resources_jni_crossings_are_unresolved(self):
+    def test_real_integer_crossings_stay_unresolved_and_resources_binding_requires_reopen(self):
         evidence = ROOT / "tools/reference-lab/evidence"
         corpus = json.loads((evidence / "four-game-corpus-manifest.json").read_text())
         integer_index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
@@ -726,21 +726,25 @@ class SubstratePrerequisiteTest(unittest.TestCase):
                            edge["owner_source_status"])
                           for edge in jni_help["prerequisite_edges"]], [
             ("Dalvik.JNINativeBinding", "Dalvik RegisterNatives method binding",
-             "UNRESOLVED", "SOURCE_LOCATED")])
+             "REOPEN_REQUIRED", "SOURCE_LOCATED")])
         self.assertEqual(len(resources["closure_work_queue"]), 36)
         self.assertEqual([
             (item["scope"], item["semantic_cluster"], item["blocking_edge"], item.get("relationship"))
             for item in resources["closure_work_queue"]
             if item["semantic_cluster"] in ("AndroidNative.JNIHelp", "Dalvik.JNINativeBinding")], [
             ("PREREQUISITE", "Dalvik.JNINativeBinding",
-             "Dalvik RegisterNatives method binding", "UNRESOLVED"),
+             "Dalvik RegisterNatives method binding", "REOPEN_REQUIRED"),
             ("SOURCE_DERIVED", "AndroidNative.JNIHelp",
              "AGR JNI native registration contract review", None),
             ("SOURCE_DERIVED", "AndroidNative.JNIHelp",
              "nativehelper class lookup, method table and fatal failure source closure", None)])
         resources_encoded = json.dumps(resources)
         self.assertNotIn("PREREQUISITE_CLOSED", resources_encoded)
-        self.assertNotIn("REOPEN_REQUIRED", resources_encoded)
+        self.assertEqual([
+            (item["semantic_cluster"], item["blocking_edge"])
+            for item in resources["closure_work_queue"]
+            if item.get("relationship") == "REOPEN_REQUIRED"], [
+            ("Dalvik.JNINativeBinding", "Dalvik RegisterNatives method binding")])
 
 
 if __name__ == "__main__":

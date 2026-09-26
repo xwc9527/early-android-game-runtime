@@ -306,7 +306,7 @@
         {
           "edge": "Dalvik RegisterNatives method binding",
           "semantic_cluster": "Dalvik.JNINativeBinding",
-          "relationship": "UNRESOLVED",
+          "relationship": "REOPEN_REQUIRED",
           "owner_source_status": "SOURCE_LOCATED",
           "source_repo": "platform/dalvik",
           "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",

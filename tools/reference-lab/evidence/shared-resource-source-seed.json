@@ -516,7 +516,7 @@
         {
           "edge": "Dalvik RegisterNatives method binding",
           "semantic_cluster": "Dalvik.JNINativeBinding",
-          "relationship": "UNRESOLVED",
+          "relationship": "REOPEN_REQUIRED",
           "owner_source_status": "SOURCE_LOCATED",
           "source_repo": "platform/dalvik",
           "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
@@ -1230,7 +1230,7 @@
       "scope": "PREREQUISITE",
       "semantic_cluster": "Dalvik.JNINativeBinding",
       "blocking_edge": "Dalvik RegisterNatives method binding",
-      "relationship": "UNRESOLVED",
+      "relationship": "REOPEN_REQUIRED",
       "origin_dependency_ids": [
         "JAVA_METHOD:1348f9e0382f292e",
         "JAVA_METHOD:e5f2639bb82ab850"

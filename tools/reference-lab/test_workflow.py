@@ -58,7 +58,7 @@ class WorkflowTest(unittest.TestCase):
                            edge["owner_source_status"])
                           for edge in jni_help["prerequisite_edges"]], [
             ("Dalvik RegisterNatives method binding", "Dalvik.JNINativeBinding",
-             "UNRESOLVED", "SOURCE_LOCATED")])
+             "REOPEN_REQUIRED", "SOURCE_LOCATED")])
         self.assertTrue(any("Framework.AssetManagerJNI -> Framework.NativeRegistration -> "
                             "AndroidNative.JNIHelp" in path
                             for path in jni_help["source_paths"]))
@@ -67,7 +67,7 @@ class WorkflowTest(unittest.TestCase):
                         if item["semantic_cluster"] == "Dalvik.JNINativeBinding"]
         self.assertEqual([(item["scope"], item["blocking_edge"], item.get("relationship"))
                           for item in binding_rows], [
-            ("PREREQUISITE", "Dalvik RegisterNatives method binding", "UNRESOLVED")])
+            ("PREREQUISITE", "Dalvik RegisterNatives method binding", "REOPEN_REQUIRED")])
         jni_rows = [(item["scope"], item["blocking_edge"])
                     for item in committed["closure_work_queue"]
                     if item["semantic_cluster"] == "AndroidNative.JNIHelp"]

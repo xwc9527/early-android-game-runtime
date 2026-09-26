@@ -82,6 +82,16 @@
       "reopen_reason": null
     },
     {
+      "name": "DalvikJNI",
+      "status": "stable",
+      "paths": [
+        "Runtime/DexLoom/VM/dx_jni.c",
+        "Runtime/DexLoom/Include/dx_jni.h"
+      ],
+      "gate": "phase3a-jni",
+      "reopen_reason": null
+    },
+    {
       "name": "Framework",
       "status": "not_started",
       "paths": [
