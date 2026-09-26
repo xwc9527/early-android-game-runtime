@@ -355,7 +355,7 @@
           "error_semantics": "Bionic syscall wrapper maps negative kernel errno through __set_errno and returns -1"
         }
       },
-      "blocking_edges": ["Bionic clock id, timespec and errno source closure", "AGR host clock conversion contract review"],
+      "blocking_edges": ["Bionic clock id, timespec and errno source closure", "AGR clock ID translation, real host clock and errno contract review"],
       "status": "SOURCE_LOCATED",
       "closure_reviewed": false
     },

@@ -547,7 +547,7 @@
       },
       "blocking_edges": [
         "Bionic clock id, timespec and errno source closure",
-        "AGR host clock conversion contract review"
+        "AGR clock ID translation, real host clock and errno contract review"
       ],
       "status": "SOURCE_LOCATED",
       "closure_reviewed": false,
@@ -1315,7 +1315,7 @@
     {
       "scope": "SOURCE_DERIVED",
       "semantic_cluster": "Bionic.ClockGettime",
-      "blocking_edge": "AGR host clock conversion contract review",
+      "blocking_edge": "AGR clock ID translation, real host clock and errno contract review",
       "origin_dependency_ids": [
         "JAVA_METHOD:ee651e4447951b08"
       ],
