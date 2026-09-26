@@ -649,22 +649,27 @@
       "source_file_sha256": {
         "vm/interp/Stack.cpp": "93ca5f272c9a801cc4c3408924b1bf4af212541a6f6ba577687d867be7d48503",
         "vm/mterp/c/OP_INVOKE_DIRECT.cpp": "706b82570326341da630dd324d115d95e370551afe32ee09dc6d10750018d9ed",
+        "vm/mterp/c/OP_INVOKE_OBJECT_INIT_RANGE.cpp": "a6e9a07f05ce9e09df229d8dc3bd337ebfbd160e6875b18156d88b0967d29404",
         "vm/mterp/c/gotoTargets.cpp": "e7d99ea828fc2fdfd0c574d5f6b2bcbae3c4d3d8ea17fa661c8908b644592219",
+        "vm/analysis/Optimize.cpp": "a28fd6349afb8d0200b4ac037fbe71b447913132c87f562af90008c4f1f353e4",
         "vm/mterp/out/InterpC-portable.cpp": "7350a2dd50d2d7376ad9668494ebd43915f0ef20e43c0cd84fd2a0d99d24f556"
       },
       "required_symbols": [
         "dvmCallMethod",
         "dvmCallMethodV",
         "OP_INVOKE_DIRECT",
+        "OP_INVOKE_OBJECT_INIT_RANGE",
+        "rewriteInvokeObjectInit",
         "GOTO_TARGET(invokeDirect",
         "GOTO_TARGET(invokeMethod"
       ],
       "internal_deps": [
         "VM-internal <clinit> call frame",
-        "portable DEX invoke-direct constructor resolution and call frame"
+        "portable DEX invoke-direct constructor resolution and call frame",
+        "dexopt rewrite of Object.<init>()V inside superclass constructor"
       ],
       "blocking_edges": [
-        "method call frame, invoke-direct resolution and exception source closure",
+        "method call frame, invoke-direct and optimized Object constructor resolution, exception source closure",
         "AGR <clinit> and constructor invoke contract review"
       ],
       "status": "SOURCE_LOCATED",
