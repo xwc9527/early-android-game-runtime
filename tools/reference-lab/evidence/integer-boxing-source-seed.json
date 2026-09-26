@@ -603,15 +603,24 @@
       "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
       "source_file_sha256": {
         "vm/analysis/DexVerify.cpp": "d200aa3d569dcbd38e874cf0c8ec7ae1aca59f4729a9df9e61542a44d9f735da",
+        "vm/analysis/CodeVerify.cpp": "2c1089f6602b6dcf8e702079d1ed489d5f2d3778a86138d807fb25e3bd718f08",
         "vm/analysis/Optimize.cpp": "a28fd6349afb8d0200b4ac037fbe71b447913132c87f562af90008c4f1f353e4",
         "vm/analysis/DexPrepare.cpp": "5e0b8c4f529fcf2eea2a439c850a740ef8070e348b1c1896cc0074a79e7d2b90",
         "vm/Init.cpp": "e82787184690cb66a1c26707e802ad5b07e772bb5ef332ab1ff6b2b344b1c6f5"
       },
       "required_symbols": [
         "dvmVerifyClass",
+        "verifyMethod",
+        "dvmCreateUninitInstanceMap",
+        "dvmVerifyCodeFlow",
         "dvmOptimizeClass",
         "classVerifyMode",
         "dexOptMode"
+      ],
+      "internal_deps": [
+        "per-method instruction and control-flow verification",
+        "uninitialized-instance tracking",
+        "essential volatile field optimization before class initialization"
       ],
       "cross_cluster_deps": [
         "effective Zygote verify/dexopt mode"
