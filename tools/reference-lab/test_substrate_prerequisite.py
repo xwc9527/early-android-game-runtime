@@ -764,7 +764,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
                      for edge in owner["prerequisite_edges"]]
         self.assertEqual(crossings, [
             ("Dalvik.ThreadState", "vm/Thread.cpp", "dvmChangeStatus",
-             "UNRESOLVED", "SOURCE_LOCATED"),
+             "UNRESOLVED", "SOURCE_CLOSED"),
             ("Dalvik.ClassInitialization", "vm/oo/Class.cpp", "dvmInitClass",
              "UNRESOLVED", "SOURCE_LOCATED"),
             ("Dalvik.ObjectAllocation", "vm/alloc/Alloc.cpp", "dvmAllocObject",
@@ -805,12 +805,17 @@ class SubstratePrerequisiteTest(unittest.TestCase):
                  if edge["semantic_cluster"] != "Dalvik.MethodInvocation"]
         self.assertEqual(other, ["UNRESOLVED", "UNRESOLVED", "UNRESOLVED", "UNRESOLVED"])
 
-    def test_thread_state_source_stays_located(self):
+    def test_thread_state_source_is_closed_without_migration_authority(self):
         integer_index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
         resource_index = json.loads((ROOT / "tools/reference-lab/indexes/shared-resources-api19-locations.json").read_text())
         owner = integer_index["external_cluster_sources"]["Dalvik.ThreadState"]
-        self.assertEqual(owner["status"], "SOURCE_LOCATED")
-        self.assertIs(owner["closure_reviewed"], False)
+        self.assertEqual(owner["status"], "SOURCE_CLOSED")
+        self.assertIs(owner["closure_reviewed"], True)
+        self.assertNotIn("migration_authorized", owner)
+        self.assertEqual(owner["blocking_edges"], [])
+        self.assertEqual(owner["closure_evidence"]["source_file_sha256"], owner["source_file_sha256"])
+        self.assertEqual(owner["closure_evidence"]["reviewed_dependency_edges"],
+                         ["self-suspend on the thread suspend-count condition"])
         self.assertNotIn("waitCond", owner["required_symbols"])
         self.assertNotIn("waitMutex", owner["required_symbols"])
         self.assertEqual([(edge["semantic_cluster"], edge["source_file"], edge["source_symbol"], edge["relationship"])
@@ -828,11 +833,12 @@ class SubstratePrerequisiteTest(unittest.TestCase):
                            if edge["edge"] == "JNI thread state around RegisterNatives")
         self.assertEqual(thread_edge["semantic_cluster"], "Dalvik.ThreadState")
         self.assertEqual(thread_edge["relationship"], "UNRESOLVED")
-        self.assertEqual(thread_edge["owner_source_status"], "SOURCE_LOCATED")
+        self.assertEqual(thread_edge["owner_source_status"], "SOURCE_CLOSED")
         monitor = integer_index["external_cluster_sources"]["Dalvik.Monitor"]
+        self.assertEqual(monitor["status"], "SOURCE_LOCATED")
         monitor_edge = next(edge for edge in monitor["cross_cluster_source_edges"]
                             if edge["semantic_cluster"] == "Dalvik.ThreadState")
-        self.assertEqual(monitor_edge["status"], "SOURCE_LOCATED")
+        self.assertEqual(monitor_edge["status"], "SOURCE_CLOSED")
         self.assertEqual(monitor_edge["source_symbol"], "dvmChangeStatus")
         self.assertNotIn("prerequisite_edges", monitor)
 
@@ -882,8 +888,8 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         self.assertEqual(owner["closure_evidence"]["unresolved_dependency_edges"], [])
         self.assertEqual(owner["closure_evidence"]["source_file_sha256"], owner["source_file_sha256"])
         thread = index["external_cluster_sources"]["Dalvik.ThreadState"]
-        self.assertEqual(thread["status"], "SOURCE_LOCATED")
-        self.assertIs(thread["closure_reviewed"], False)
+        self.assertEqual(thread["status"], "SOURCE_CLOSED")
+        self.assertIs(thread["closure_reviewed"], True)
         self.assertEqual(thread["prerequisite_edges"][0]["relationship"], "PREREQUISITE_CLOSED")
         self.assertEqual(thread["prerequisite_edges"][0]["owner_source_status"], "SOURCE_CLOSED")
         self.assertEqual(thread["cross_cluster_source_edges"][0]["status"], "SOURCE_CLOSED")
@@ -945,7 +951,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
             "semantic_cluster": "Dalvik.ThreadState"}
         edge = next(item for item in located["external_cluster_sources"]["Dalvik.Monitor"]["cross_cluster_source_edges"]
                     if item["semantic_cluster"] == "Dalvik.ThreadState")
-        with self.assertRaisesRegex(ValueError, "source-derived owner is not closed"):
+        with self.assertRaisesRegex(ValueError, "incomplete"):
             source_derived_clusters([{
                 "dependency_id": "DALVIK_MONITOR:thread-state",
                 "canonical_name": "Dalvik.Monitor",

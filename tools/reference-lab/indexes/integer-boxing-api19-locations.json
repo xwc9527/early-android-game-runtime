@@ -295,7 +295,7 @@
           "source_file": "vm/Thread.cpp",
           "source_symbol": "dvmChangeStatus",
           "source_sha256": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
-          "status": "SOURCE_LOCATED"
+          "status": "SOURCE_CLOSED"
         },
         {
           "edge": "Bionic pthread condition and mutex semantics",
@@ -347,14 +347,17 @@
           "source_sha256": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d"
         }
       ],
-      "blocking_edges": [
-        "ThreadState source review remains unreviewed"
-      ],
-      "status": "SOURCE_LOCATED",
-      "closure_reviewed": false,
+      "blocking_edges": [],
+      "status": "SOURCE_CLOSED",
+      "closure_reviewed": true,
       "closure_evidence": {
         "reviewed_by": "api19-source-audit",
-        "closure_notes": "Review does not pass. dvmChangeStatus at Thread.cpp:2905 reads the old status and returns it when the new status is the same. THREAD_RUNNING is stored first with android_atomic_acquire_store, then suspendCount is observed; a nonzero count calls fullSuspendCheck. fullSuspendCheck locks gDvm.threadSuspendCountLock through dvmLockMutex, stores THREAD_SUSPENDED, and waits in dvmWaitCond until suspendCount is zero. That wait is pthread_cond_wait on gDvm.threadSuspendCountCond and stops at Bionic.PthreadCondition. The paired pthread_mutex_lock and pthread_mutex_unlock are required symbols of that same owner and are not a second cluster. After the wait, dbgSuspendCount is asserted zero, the previous status is restored, and the lock is released. A non-RUNNING request, including THREAD_WAIT and THREAD_TIMED_WAIT, uses android_atomic_release_store and asserts the request is not THREAD_SUSPENDED. It does not touch waitCond or waitMutex. Those fields are initialized at Thread.cpp:939 and the wait, interrupt, and signal protocol is in Sync.cpp, which this path does not call. dvmThreadStartup initializes the suspend lock and condition before any transition. ScopedJniThreadState around RegisterNatives only performs the RUNNING enter and THREAD_NATIVE exit. The cutils acquire and release stores are the status-word barriers inside this owner. The self-suspend crossing is an exact prerequisite relationship and does not make this owner SOURCE_CLOSED.",
+        "closure_notes": "Review passes for the pinned status path. vm/Thread.cpp ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7 and vm/Thread.h d31169a50cd6e5504fa017cf9ff77a749ff8fb48636985a2037b140c5301f70a match platform/dalvik 36e356c96640775f0a3f167bd2426ea0f0093b8b. dvmChangeStatus at Thread.cpp:2905 returns the old status without a store when it equals the new status. A NULL self is resolved by dvmThreadSelf through pthread_getspecific. THREAD_RUNNING is published with android_atomic_acquire_store before suspendCount is read, and a nonzero count calls fullSuspendCheck at Thread.cpp:2845. fullSuspendCheck stores THREAD_SUSPENDED, waits in dvmWaitCond while suspendCount is nonzero, asserts dbgSuspendCount is zero, restores the previous status, and unlocks. That wait is the single cross-cluster edge, already PREREQUISITE_CLOSED. A non-RUNNING request, including THREAD_WAIT and THREAD_TIMED_WAIT, uses android_atomic_release_store and asserts the request is not THREAD_SUSPENDED. RegisterNatives at Jni.cpp:2459 enters through ScopedJniThreadState, which calls dvmChangeStatus(THREAD_RUNNING) at Jni.cpp:229 and leaves with dvmChangeStatus(THREAD_NATIVE) at Jni.cpp:233. waitCond and waitMutex are initialized at Thread.cpp:939 and are not read by dvmChangeStatus or fullSuspendCheck. The Sync.cpp wait, interrupt, and signal protocol is not on this path. This record is source closure only. It is not MIGRATION_AUTHORIZED and does not close the JNINativeBinding prerequisite.",
+        "source_file_sha256": {
+          "vm/Thread.cpp": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
+          "vm/Thread.h": "d31169a50cd6e5504fa017cf9ff77a749ff8fb48636985a2037b140c5301f70a"
+        },
+        "reviewed_dependency_edges": ["self-suspend on the thread suspend-count condition"],
         "unresolved_dependency_edges": []
       }
     },

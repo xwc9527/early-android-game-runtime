@@ -5,3 +5,4 @@ evidence/bionic-clock-gettime-source-manifest.json text eol=lf
 evidence/bionic-clock-gettime-production/** text eol=lf
 evidence/bionic-pthread-threadstate/** text eol=lf
 evidence/bionic-pthread-threadstate-closure/** text eol=lf
+evidence/dalvik-threadstate-source-closure/** text eol=lf

@@ -23,8 +23,10 @@ not close Integer or Resources. The authorized `CLOCK_REALTIME` and
 not `PRODUCTION_CLOSED` and it is not a formal CLEAN differential producer.
 The ThreadState self-suspend crossing has an exact `CROSSING_CLOSED` record.
 That record does not mark `Bionic.PthreadCondition` `PRODUCTION_CLOSED`.
-Absolute condition timeouts stay outside that path. ThreadState itself stays
-`SOURCE_LOCATED`.
+Absolute condition timeouts stay outside that path. `Dalvik.ThreadState` is
+now `SOURCE_CLOSED` for that source path. It is not `MIGRATION_AUTHORIZED`.
+`Dalvik.JNINativeBinding` stays `SOURCE_LOCATED`, and its thread-state
+prerequisite stays `UNRESOLVED`.
 The
 current source indexes and manifests are under `tools/reference-lab/indexes`
 and `tools/reference-lab/evidence`; their unresolved edges are explicit.

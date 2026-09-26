@@ -1,0 +1,10 @@
+{
+  "owner": "Dalvik.ThreadState",
+  "before": "SOURCE_LOCATED",
+  "after": "SOURCE_CLOSED",
+  "migration_authorized": false,
+  "jni_native_binding": "SOURCE_LOCATED",
+  "jni_thread_state_relationship": "UNRESOLVED",
+  "jni_thread_state_owner_source_status": "SOURCE_CLOSED",
+  "next_blocker": "Dalvik.JNINativeBinding remains SOURCE_LOCATED. JNI thread state around RegisterNatives stays UNRESOLVED until a ThreadState production contract is reviewed."
+}

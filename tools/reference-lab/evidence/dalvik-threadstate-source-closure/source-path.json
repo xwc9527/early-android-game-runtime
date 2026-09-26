@@ -1,0 +1,19 @@
+{
+  "path": [
+    "RegisterNatives Jni.cpp:2459",
+    "ScopedJniThreadState Jni.cpp:229 dvmChangeStatus(THREAD_RUNNING)",
+    "dvmChangeStatus Thread.cpp:2905",
+    "android_atomic_acquire_store",
+    "fullSuspendCheck Thread.cpp:2845 when suspendCount != 0",
+    "dvmWaitCond threadSuspendCountCond",
+    "self-suspend on the thread suspend-count condition",
+    "ScopedJniThreadState destructor Jni.cpp:233 dvmChangeStatus(THREAD_NATIVE)",
+    "android_atomic_release_store"
+  ],
+  "not_on_path": [
+    "Sync.cpp wait/interrupt/signal",
+    "thread->waitCond",
+    "thread->waitMutex",
+    "Java Thread API"
+  ]
+}

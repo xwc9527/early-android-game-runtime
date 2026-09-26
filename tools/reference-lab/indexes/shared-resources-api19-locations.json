@@ -350,7 +350,7 @@
           "source_file": "vm/Thread.cpp",
           "source_symbol": "dvmChangeStatus",
           "source_sha256": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
-          "status": "SOURCE_LOCATED"
+          "status": "SOURCE_CLOSED"
         },
         {
           "edge": "exception class initialization",
@@ -398,7 +398,7 @@
           "edge": "JNI thread state around RegisterNatives",
           "semantic_cluster": "Dalvik.ThreadState",
           "relationship": "UNRESOLVED",
-          "owner_source_status": "SOURCE_LOCATED",
+          "owner_source_status": "SOURCE_CLOSED",
           "source_repo": "platform/dalvik",
           "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
           "source_file": "vm/Thread.cpp",
