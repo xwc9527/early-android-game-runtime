@@ -388,17 +388,126 @@
       "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
       "source_file_sha256": {
         "vm/interp/Stack.cpp": "93ca5f272c9a801cc4c3408924b1bf4af212541a6f6ba577687d867be7d48503",
+        "vm/interp/Interp.cpp": "74290432f2142ca123c08c25b21cf4127487781605ff15fdd0a6673eba3994f9",
+        "vm/mterp/c/header.cpp": "1d10780cbcb5e24e6b4469b4f2d15d1319c93814df5fae360d3855f884af45fe",
         "vm/mterp/c/OP_INVOKE_DIRECT.cpp": "706b82570326341da630dd324d115d95e370551afe32ee09dc6d10750018d9ed",
         "vm/mterp/c/OP_INVOKE_OBJECT_INIT_RANGE.cpp": "a6e9a07f05ce9e09df229d8dc3bd337ebfbd160e6875b18156d88b0967d29404",
         "vm/mterp/c/gotoTargets.cpp": "e7d99ea828fc2fdfd0c574d5f6b2bcbae3c4d3d8ea17fa661c8908b644592219",
+        "vm/mterp/out/InterpC-portable.cpp": "7350a2dd50d2d7376ad9668494ebd43915f0ef20e43c0cd84fd2a0d99d24f556",
         "vm/analysis/Optimize.cpp": "a28fd6349afb8d0200b4ac037fbe71b447913132c87f562af90008c4f1f353e4",
-        "vm/mterp/out/InterpC-portable.cpp": "7350a2dd50d2d7376ad9668494ebd43915f0ef20e43c0cd84fd2a0d99d24f556"
+        "vm/oo/Resolve.cpp": "3e6c5968ed4f799ba059b8e768800d182b6ee91cfd9bd51204851a104a8e0591",
+        "vm/oo/Object.h": "484caed3838449e6de6cb7924bbe197b0027df27560472a7d736fe6a2a201e9c",
+        "vm/oo/Object.cpp": "2dae8cfe46a065903c9aace88290e9748201c682ef1bb548656bb8948f42c057",
+        "vm/Exception.h": "0b72f4b67252f30d132af044c8dfb3c55b61ff476a33bf6b20a143f2bb0b8084",
+        "vm/Exception.cpp": "dc5cc67916f941987f92915d329e50b8195aacb278172c2c44194de1dfd3b4c8",
+        "vm/alloc/MarkSweep.cpp": "bf05e421a49accf1209bb12e83bb2df740d6348d9b6c775f24cebadc6b7b8ab3"
       },
-      "required_symbols": ["dvmCallMethod", "dvmCallMethodV", "OP_INVOKE_DIRECT", "OP_INVOKE_OBJECT_INIT_RANGE", "rewriteInvokeObjectInit", "GOTO_TARGET(invokeDirect", "GOTO_TARGET(invokeMethod"],
-      "internal_deps": ["VM-internal <clinit> call frame", "portable DEX invoke-direct constructor resolution and call frame", "dexopt rewrite of Object.<init>()V inside superclass constructor"],
-      "blocking_edges": ["method call frame, invoke-direct and optimized Object constructor resolution, exception source closure", "AGR <clinit> and constructor invoke contract review"],
+      "required_symbols": ["dvmCallMethod", "dvmCallMethodV", "dvmInterpret", "dvmPopFrame", "dvmHandleStackOverflow", "dvmResolveMethod", "dvmFindDirectMethod", "dvmOptResolveMethod", "OP_INVOKE_DIRECT", "OP_INVOKE_OBJECT_INIT_RANGE", "rewriteInvokeObjectInit", "GOTO_TARGET(invokeDirect", "GOTO_TARGET(invokeMethod", "checkForNull", "dvmSetFinalizable"],
+      "internal_deps": ["dvmCallMethod copies arguments from the shorty and calls dvmInterpret or the installed native function, then dvmPopFrame", "dvmInterpret returns the callee retval and leaves a pending exception in place", "METHOD_DIRECT lookup stays on the declaring class and does not call dvmInitClass", "METHOD_STATIC resolution calls dvmInitClass, and invoke-direct does not use that branch", "ClassInitialization calls dvmCallMethod for <clinit>; this owner does not call <clinit>", "OP_INVOKE_OBJECT_INIT_RANGE marks a finalizable receiver and otherwise skips the empty Object.<init>()V body", "dvmSetFinalizable calls dvmCallMethod and does not enter static-field root scanning", "rewriteInvokeObjectInit replaces Object.<init>()V invoke-direct with invoke-object-init-range"],
+      "cross_cluster_deps": ["unresolved method declaring class", "thrown exception class initialization", "thrown exception object allocation", "JNI-installed native call bridge"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "unresolved method declaring class",
+          "semantic_cluster": "Dalvik.BootClassResolution",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/oo/Class.cpp",
+          "source_symbol": "dvmFindClassNoInit",
+          "source_sha256": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "thrown exception class initialization",
+          "semantic_cluster": "Dalvik.ClassInitialization",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/oo/Class.cpp",
+          "source_symbol": "dvmInitClass",
+          "source_sha256": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "thrown exception object allocation",
+          "semantic_cluster": "Dalvik.ObjectAllocation",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/alloc/Alloc.cpp",
+          "source_symbol": "dvmAllocObject",
+          "source_sha256": "70bb6375a088dab380c31e5ab9959461f1c841f88c5ef163caacd1b26f7da02f",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "JNI-installed native call bridge",
+          "semantic_cluster": "Dalvik.JNINativeBinding",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/Jni.cpp",
+          "source_symbol": "dvmCallJNIMethod",
+          "source_sha256": "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "prerequisite_edges": [
+        {
+          "edge": "unresolved method declaring class",
+          "semantic_cluster": "Dalvik.BootClassResolution",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/oo/Class.cpp",
+          "source_symbol": "dvmFindClassNoInit",
+          "source_sha256": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5"
+        },
+        {
+          "edge": "thrown exception class initialization",
+          "semantic_cluster": "Dalvik.ClassInitialization",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/oo/Class.cpp",
+          "source_symbol": "dvmInitClass",
+          "source_sha256": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5"
+        },
+        {
+          "edge": "thrown exception object allocation",
+          "semantic_cluster": "Dalvik.ObjectAllocation",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/alloc/Alloc.cpp",
+          "source_symbol": "dvmAllocObject",
+          "source_sha256": "70bb6375a088dab380c31e5ab9959461f1c841f88c5ef163caacd1b26f7da02f"
+        },
+        {
+          "edge": "JNI-installed native call bridge",
+          "semantic_cluster": "Dalvik.JNINativeBinding",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/Jni.cpp",
+          "source_symbol": "dvmCallJNIMethod",
+          "source_sha256": "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed"
+        }
+      ],
+      "blocking_edges": [
+        "UNRESOLVED declaring-class lookup, thrown-exception initialization and allocation, and the JNI native bridge"
+      ],
       "status": "SOURCE_LOCATED",
-      "closure_reviewed": false
+      "closure_reviewed": false,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "Review does not pass. dvmCallMethodV builds a break frame, copies shorty arguments, runs dvmInterpret or method->nativeFunc, and always pops the frame. A pending exception is left on the thread. invoke-direct resolves with METHOD_DIRECT, so dvmResolveMethod does not call dvmInitClass; that call exists only on the METHOD_STATIC branch. An unresolved method enters dvmFindClassNoInit and stops at Dalvik.BootClassResolution. Null this, a missing direct method, and stack overflow throw through dvmThrowChainedException, which enters dvmInitClass and dvmAllocObject. Those two crossings stay UNRESOLVED. A JNI callee's nativeFunc is dvmCallJNIMethod; internal natives use the same slot and are not that owner. The class-link monitor inside findClassNoInit stays behind the BootClassResolution stop. dvmSetFinalizable only reenters dvmCallMethod. MarkSweep.cpp is pinned for that function and does not bring scanStaticFields into this owner. Interp.cpp is pinned for dvmInterpret and does not absorb ClassInitialization. These UNRESOLVED crossings block SOURCE_CLOSED.",
+        "unresolved_dependency_edges": [
+          "unresolved method declaring class",
+          "thrown exception class initialization",
+          "thrown exception object allocation",
+          "JNI-installed native call bridge"
+        ]
+      }
     },
     "Dalvik.ObjectAllocation": {
       "source_repo": "platform/dalvik",

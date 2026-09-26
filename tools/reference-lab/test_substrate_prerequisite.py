@@ -775,6 +775,29 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         self.assertEqual(help_edge["relationship"], "REOPEN_REQUIRED")
         self.assertEqual(help_edge["owner_source_status"], "SOURCE_LOCATED")
 
+    def test_method_invocation_source_stays_located(self):
+        integer_index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
+        resource_index = json.loads((ROOT / "tools/reference-lab/indexes/shared-resources-api19-locations.json").read_text())
+        owner = integer_index["external_cluster_sources"]["Dalvik.MethodInvocation"]
+        self.assertEqual(owner["status"], "SOURCE_LOCATED")
+        self.assertIs(owner["closure_reviewed"], False)
+        self.assertNotIn("PREREQUISITE_CLOSED", json.dumps(owner))
+        self.assertEqual([(edge["semantic_cluster"], edge["source_symbol"], edge["relationship"])
+                          for edge in owner["prerequisite_edges"]], [
+            ("Dalvik.BootClassResolution", "dvmFindClassNoInit", "UNRESOLVED"),
+            ("Dalvik.ClassInitialization", "dvmInitClass", "UNRESOLVED"),
+            ("Dalvik.ObjectAllocation", "dvmAllocObject", "UNRESOLVED"),
+            ("Dalvik.JNINativeBinding", "dvmCallJNIMethod", "UNRESOLVED")])
+        binding = resource_index["external_cluster_sources"]["Dalvik.JNINativeBinding"]
+        constructor = next(edge for edge in binding["prerequisite_edges"]
+                           if edge["edge"] == "exception constructor invocation")
+        self.assertEqual(constructor["semantic_cluster"], "Dalvik.MethodInvocation")
+        self.assertEqual(constructor["relationship"], "UNRESOLVED")
+        self.assertEqual(constructor["owner_source_status"], "SOURCE_LOCATED")
+        other = [edge["relationship"] for edge in binding["prerequisite_edges"]
+                 if edge["semantic_cluster"] != "Dalvik.MethodInvocation"]
+        self.assertEqual(other, ["UNRESOLVED", "UNRESOLVED", "UNRESOLVED", "UNRESOLVED"])
+
 
 if __name__ == "__main__":
     unittest.main()
