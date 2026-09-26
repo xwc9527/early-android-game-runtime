@@ -1,0 +1,13 @@
+{
+  "absolute_timedwait_on_path": false,
+  "branch": "cursor/shared-substrate-prerequisite-da4f",
+  "clock_gettime_on_path": false,
+  "local_test": "SUSPEND_PATH ok=1",
+  "not_changed": [
+    "Bionic.ClockGettime production port",
+    "absolute pthread_cond_timedwait",
+    "pthread_mutex_lock_timeout_np"
+  ],
+  "pthread_cond_signal_on_suspend_condition": false,
+  "source_path": "dvmChangeStatus -> fullSuspendCheck -> pthread_mutex_lock -> pthread_cond_wait -> pthread_cond_broadcast -> __pthread_cond_pulse"
+}

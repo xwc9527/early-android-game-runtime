@@ -13,6 +13,12 @@ ${CXX:-c++} -std=c++17 -O2 -pthread -Wall -Wextra -Werror \
 echo 'Running bounded KitKat sync contract'
 python3 -c 'import subprocess; subprocess.run(["build/bionic-thread-tests/bionic-sync"], check=True, timeout=60)'
 ${CXX:-c++} -std=c++17 -O2 -pthread -Wall -Wextra -Werror \
+  Runtime/Bionic/agr_futex_host.cpp Runtime/Bionic/agr_bionic_sync.cpp \
+  Tests/bionic_suspend_cond_test.cpp \
+  -o build/bionic-thread-tests/bionic-suspend-cond
+echo 'Running ThreadState suspend-count wait and broadcast'
+python3 -c 'import subprocess; subprocess.run(["build/bionic-thread-tests/bionic-suspend-cond"], check=True, timeout=60)'
+${CXX:-c++} -std=c++17 -O2 -pthread -Wall -Wextra -Werror \
   Runtime/Bionic/agr_bionic_tls.cpp Tests/bionic_tls_contract_test.cpp \
   -o build/bionic-thread-tests/bionic-tls
 echo 'Running bounded KitKat TLS contract'
