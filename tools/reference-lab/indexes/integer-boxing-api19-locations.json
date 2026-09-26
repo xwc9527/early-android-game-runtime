@@ -380,7 +380,7 @@
           "source_file": "libc/arch-x86/syscalls/clock_gettime.S",
           "source_symbol": "clock_gettime",
           "source_sha256": "731838cb7c57328dec3443e1d13f8fd6f243096b83c934d1bcafbcb02fae3051",
-          "status": "SOURCE_LOCATED"
+          "status": "SOURCE_CLOSED"
         }
       ],
       "excluded_deps": ["Linux futex wait/wake boundary"],
@@ -402,22 +402,51 @@
       "revision": "081db840befec895fb86e709ae95832ade2d065c",
       "source_file_sha256": {
         "libc/arch-x86/syscalls/clock_gettime.S": "731838cb7c57328dec3443e1d13f8fd6f243096b83c934d1bcafbcb02fae3051",
-        "libc/arch-arm/syscalls/clock_gettime.S": "8655a9bb334957a2f2b21168cc39a660e218e18655b9bd9e32e10e504f8e5215"
+        "libc/arch-arm/syscalls/clock_gettime.S": "8655a9bb334957a2f2b21168cc39a660e218e18655b9bd9e32e10e504f8e5215",
+        "libc/bionic/__set_errno.cpp": "92c665df1882423e160598585513f2088953ebd36c895c7bafde43d7b09ddac8",
+        "libc/kernel/common/linux/err.h": "fe11636349213df4a2c89372ef0025b0a26adf7340e227c9aaaa91db1722682e",
+        "libc/kernel/common/linux/time.h": "cb155387ab5e7daa1ff0e3c814309cc7f08e2237a9270b7adbcf4da520042dca",
+        "libc/include/time.h": "81ab935505ccba4ef4aaa887bdfa9716bfb64ac9d2747a6f6944f061705b702e",
+        "libc/include/sys/types.h": "937090dd11b20095209c0f07489678b65fdf21670f983de60a14a76e66591f84",
+        "libc/kernel/arch-x86/asm/unistd_32.h": "51d906e6ca361519b36e7467b08063411fcc3e6240d384748a1369ad63682a3c",
+        "libc/kernel/arch-arm/asm/unistd.h": "4d46fd8e8fcb116d1f67eaa1ea51d60765831b5080aeff8e58e7d2e6091c5818",
+        "libc/kernel/arch-x86/asm/posix_types_32.h": "9ae91d29d49b6b539139f12e69db1344e0d41323e8c03c5acc3f986587b5596d",
+        "libc/kernel/arch-arm/asm/posix_types.h": "88f11cb6bd76df5a6032cf5975a26823acab3cda1fdf81c79536786351101da8"
       },
-      "required_symbols": ["clock_gettime", "__NR_clock_gettime", "__set_errno"],
+      "required_symbols": ["clock_gettime", "__NR_clock_gettime", "__set_errno", "MAX_ERRNO", "CLOCK_REALTIME", "CLOCK_MONOTONIC"],
+      "internal_deps": ["both wrappers pass the caller's clock id and timespec pointer through to the syscall and do not branch on the id", "x86 loads the id into ebx and the pointer into ecx, then uses int $0x80 with __NR_clock_gettime", "ARM EABI leaves the id in r0 and the pointer in r1, saves r7, and uses swi #0", "a syscall result outside [-MAX_ERRNO, -1] is returned unchanged", "a result inside that range is negated and passed to __set_errno, which stores errno and returns -1", "x86 then forces eax to -1; ARM returns the value from __set_errno", "CLOCK_REALTIME is 0 and CLOCK_MONOTONIC is 1; pthread_cond_timedwait passes the former and the monotonic timed waits pass the latter", "an unrecognized clock id is not checked in the wrapper", "time_t is __kernel_time_t, typedef long in the x86 32-bit and ARM posix type headers, and timespec is tv_sec plus long tv_nsec"],
       "excluded_deps": ["Linux clock_gettime kernel boundary"],
       "boundary_contracts": {
         "Linux clock_gettime kernel boundary": {
-          "request_schema": "clock id including CLOCK_REALTIME or CLOCK_MONOTONIC and guest timespec output address",
-          "response_schema": "guest timespec seconds/nanoseconds or syscall failure",
+          "request_schema": "32-bit clock_gettime syscall number, the caller's clock id unchanged, and a pointer to a timespec of time_t tv_sec plus long tv_nsec",
+          "response_schema": "kernel writes tv_sec and tv_nsec and returns 0, or returns a negative errno and does not complete a successful sample",
           "callbacks": [],
-          "lifecycle": "sample clock before translating absolute pthread condition timeout",
-          "error_semantics": "Bionic syscall wrapper maps negative kernel errno through __set_errno and returns -1"
+          "lifecycle": "one int $0x80 on x86 or one swi #0 on ARM; the wrapper does not retry",
+          "error_semantics": "kernel failure is a return in [-MAX_ERRNO, -1]; MAX_ERRNO is 4095"
         }
       },
-      "blocking_edges": ["Bionic clock id, timespec and errno source closure", "AGR clock ID translation, real host clock and errno contract review"],
-      "status": "SOURCE_LOCATED",
-      "closure_reviewed": false
+      "blocking_edges": [],
+      "status": "SOURCE_CLOSED",
+      "closure_reviewed": true,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "The x86 and ARM stubs are the gensyscalls.py templates. They do not interpret clock ids or timespec fields. __set_errno stores the positive errno and returns -1, so both architectures have the same libc return on the error path. The Linux syscall instruction is the excluded kernel boundary. Bionic's errno store and -1 return stay in this owner and are not part of that boundary. pthread_cond_timedwait's choice of CLOCK_REALTIME or CLOCK_MONOTONIC is the caller's argument, already recorded on Bionic.PthreadCondition. This source record does not review Runtime/NativeCore/agr_runtime.c.",
+        "source_file_sha256": {
+          "libc/arch-x86/syscalls/clock_gettime.S": "731838cb7c57328dec3443e1d13f8fd6f243096b83c934d1bcafbcb02fae3051",
+          "libc/arch-arm/syscalls/clock_gettime.S": "8655a9bb334957a2f2b21168cc39a660e218e18655b9bd9e32e10e504f8e5215",
+          "libc/bionic/__set_errno.cpp": "92c665df1882423e160598585513f2088953ebd36c895c7bafde43d7b09ddac8",
+          "libc/kernel/common/linux/err.h": "fe11636349213df4a2c89372ef0025b0a26adf7340e227c9aaaa91db1722682e",
+          "libc/kernel/common/linux/time.h": "cb155387ab5e7daa1ff0e3c814309cc7f08e2237a9270b7adbcf4da520042dca",
+          "libc/include/time.h": "81ab935505ccba4ef4aaa887bdfa9716bfb64ac9d2747a6f6944f061705b702e",
+          "libc/include/sys/types.h": "937090dd11b20095209c0f07489678b65fdf21670f983de60a14a76e66591f84",
+          "libc/kernel/arch-x86/asm/unistd_32.h": "51d906e6ca361519b36e7467b08063411fcc3e6240d384748a1369ad63682a3c",
+          "libc/kernel/arch-arm/asm/unistd.h": "4d46fd8e8fcb116d1f67eaa1ea51d60765831b5080aeff8e58e7d2e6091c5818",
+          "libc/kernel/arch-x86/asm/posix_types_32.h": "9ae91d29d49b6b539139f12e69db1344e0d41323e8c03c5acc3f986587b5596d",
+          "libc/kernel/arch-arm/asm/posix_types.h": "88f11cb6bd76df5a6032cf5975a26823acab3cda1fdf81c79536786351101da8"
+        },
+        "reviewed_dependency_edges": ["Linux clock_gettime kernel boundary"],
+        "unresolved_dependency_edges": []
+      }
     },
     "Dalvik.MethodInvocation": {
       "source_repo": "platform/dalvik",

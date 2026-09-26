@@ -823,6 +823,29 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         self.assertEqual(monitor_edge["source_symbol"], "dvmChangeStatus")
         self.assertNotIn("prerequisite_edges", monitor)
 
+    def test_clock_gettime_source_is_closed_without_a_production_relationship(self):
+        index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
+        owner = index["external_cluster_sources"]["Bionic.ClockGettime"]
+        self.assertEqual(owner["status"], "SOURCE_CLOSED")
+        self.assertIs(owner["closure_reviewed"], True)
+        self.assertEqual(owner["blocking_edges"], [])
+        self.assertNotIn("cross_cluster_source_edges", owner)
+        self.assertNotIn("PREREQUISITE_CLOSED", json.dumps(owner))
+        self.assertEqual(owner["excluded_deps"], ["Linux clock_gettime kernel boundary"])
+        contract = owner["boundary_contracts"]["Linux clock_gettime kernel boundary"]
+        self.assertEqual(set(contract), {"request_schema", "response_schema", "callbacks", "lifecycle", "error_semantics"})
+        self.assertEqual(contract["callbacks"], [])
+        self.assertNotIn("__set_errno", contract["error_semantics"])
+        self.assertEqual(owner["closure_evidence"]["unresolved_dependency_edges"], [])
+        self.assertEqual(owner["closure_evidence"]["source_file_sha256"], owner["source_file_sha256"])
+        pthread = index["external_cluster_sources"]["Bionic.PthreadCondition"]
+        self.assertEqual(pthread["status"], "SOURCE_LOCATED")
+        self.assertIs(pthread["closure_reviewed"], False)
+        clock_edge = pthread["cross_cluster_source_edges"][0]
+        self.assertEqual(clock_edge["edge"], "clock_gettime for absolute condition timeouts")
+        self.assertEqual(clock_edge["status"], "SOURCE_CLOSED")
+        self.assertNotIn("prerequisite_edges", pthread)
+
 
 if __name__ == "__main__":
     unittest.main()
