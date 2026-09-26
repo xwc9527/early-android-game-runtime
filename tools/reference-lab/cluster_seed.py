@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 from runtime_corpus_summary import load_json
-from source_closure import close_entry, source_derived_clusters
+from source_closure import close_entry, closure_work_queue, source_derived_clusters
 from workflow import cluster_manifests, validate_book, validate_source_manifests
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -48,13 +48,15 @@ def build_seed(corpus_manifest, source_index, canonical_name):
     if selected is None:
         raise ValueError("no qualified probe observed the source entry")
     source_manifest = close_entry(selected, source_index)
+    derived = source_derived_clusters([source_manifest], source_index)
     artifact = {"schema_version": 1, "baseline": "android-4.4.4_r2",
                 "source_repo": source_index["source_repo"],
                 "source_index_revision": source_index["revision"],
                 "may_authorize_pruning": False, "seeds": seeds,
                 "manifests": [source_manifest],
                 "cluster_source_manifests": cluster_manifests([source_manifest], source_index),
-                "source_derived_clusters": source_derived_clusters([source_manifest], source_index)}
+                "source_derived_clusters": derived,
+                "closure_work_queue": closure_work_queue([source_manifest], derived)}
     validate_source_manifests(artifact)
     return artifact
 
@@ -66,6 +68,7 @@ def build_cluster_seed(corpus_manifest, source_index, semantic_cluster):
         raise ValueError("semantic cluster has no pinned entries")
     parts = [build_seed(corpus_manifest, source_index, name) for name in names]
     manifests = [part["manifests"][0] for part in parts]
+    derived = source_derived_clusters(manifests, source_index)
     artifact = {"schema_version": 1, "baseline": "android-4.4.4_r2",
                 "source_repo": source_index["source_repo"],
                 "source_index_revision": source_index["revision"],
@@ -73,7 +76,8 @@ def build_cluster_seed(corpus_manifest, source_index, semantic_cluster):
                 "seeds": [seed for part in parts for seed in part["seeds"]],
                 "manifests": manifests,
                 "cluster_source_manifests": cluster_manifests(manifests, source_index),
-                "source_derived_clusters": source_derived_clusters(manifests, source_index)}
+                "source_derived_clusters": derived,
+                "closure_work_queue": closure_work_queue(manifests, derived)}
     validate_source_manifests(artifact)
     return artifact
 

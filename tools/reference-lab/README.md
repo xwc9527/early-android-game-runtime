@@ -129,6 +129,9 @@ source paths are materialized once as `cycle_paths` and remain
 `SOURCE_LOCATED`; the recursive closure check rejects their promotion. A
 separate strongly connected owner review is required before such a chain can
 reach `SOURCE_CLOSED`.
+`closure_work_queue` enumerates every blocking edge on observed entries and
+reachable source-derived owners, preserving origin dependency IDs and source
+paths. Validation rejects a queue that omits or invents a denied gate.
 
 The current implementation does not provide a complete Android TRACE event
 producer, Framework source closure, cluster ports, or iOS differential. Its

@@ -50,6 +50,20 @@ class WorkflowTest(unittest.TestCase):
         self.assertFalse(any(item["migration_authorized"] for item in derived.values()))
         self.assertTrue(all(item["origin_dependency_ids"] and item["source_paths"]
                             for item in derived.values()))
+        queue = cluster["closure_work_queue"]
+        self.assertTrue(any(item["scope"] == "SOURCE_DERIVED" and
+                            item["semantic_cluster"] == "Dalvik.ClassVerification"
+                            for item in queue))
+        self.assertFalse(any(item["semantic_cluster"] == "Dalvik.StaticFieldArrayRoots"
+                             for item in queue))
+        forged = json.loads(json.dumps(cluster))
+        forged["closure_work_queue"].pop()
+        with self.assertRaisesRegex(ValueError, "differs from denied gates"):
+            validate_source_manifests(forged)
+        forged = json.loads(json.dumps(cluster))
+        forged.pop("closure_work_queue")
+        with self.assertRaisesRegex(ValueError, "differs from denied gates"):
+            validate_source_manifests(forged)
         forged = json.loads(json.dumps(cluster))
         forged.pop("source_derived_clusters")
         with self.assertRaisesRegex(ValueError, "omits a pinned source edge"):

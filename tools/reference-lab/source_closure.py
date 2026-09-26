@@ -162,6 +162,26 @@ def source_derived_clusters(manifests, index):
     return dict(sorted(found.items()))
 
 
+def closure_work_queue(manifests, derived):
+    """Turn denied source-closure gates into traceable next-edge work."""
+    queue = []
+    for item in manifests:
+        for edge in item.get("blocking_edges") or []:
+            queue.append({"scope": "OBSERVED_ENTRY", "semantic_cluster": item.get("semantic_cluster"),
+                          "blocking_edge": edge, "origin_dependency_ids": [item["dependency_id"]],
+                          "source_paths": [item["canonical_name"]]})
+    for name, owner in derived.items():
+        if owner["status"] == "SOURCE_CLOSED":
+            continue
+        for edge in owner.get("blocking_edges") or []:
+            queue.append({"scope": "SOURCE_DERIVED", "semantic_cluster": name,
+                          "blocking_edge": edge,
+                          "origin_dependency_ids": owner["origin_dependency_ids"],
+                          "source_paths": owner["source_paths"]})
+    return sorted(queue, key=lambda item: (item["scope"], item["semantic_cluster"] or "",
+                                           item["blocking_edge"]))
+
+
 def reviewed_source_set(pinned, index, evidence):
     """A multi-file closure must pin every file and account for every listed edge."""
     if pinned.get("blocking_edges"):

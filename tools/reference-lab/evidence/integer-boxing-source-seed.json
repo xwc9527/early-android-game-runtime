@@ -959,5 +959,201 @@
       ],
       "cycle_paths": []
     }
-  }
+  },
+  "closure_work_queue": [
+    {
+      "scope": "OBSERVED_ENTRY",
+      "semantic_cluster": "libcore.IntegerBoxing",
+      "blocking_edge": "AGR boot-class Integer ownership and GC integration",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;"
+      ]
+    },
+    {
+      "scope": "OBSERVED_ENTRY",
+      "semantic_cluster": "libcore.IntegerBoxing",
+      "blocking_edge": "Dalvik allocation source cluster closure",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;"
+      ]
+    },
+    {
+      "scope": "OBSERVED_ENTRY",
+      "semantic_cluster": "libcore.IntegerBoxing",
+      "blocking_edge": "Dalvik class initialization source cluster closure",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;"
+      ]
+    },
+    {
+      "scope": "OBSERVED_ENTRY",
+      "semantic_cluster": "libcore.IntegerBoxing",
+      "blocking_edge": "Zygote preload and inherited Integer cache source closure",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Dalvik.ClassInitialization",
+      "blocking_edge": "AGR class-initialization contract review",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Dalvik.ClassInitialization",
+      "blocking_edge": "source closure of verification, monitor, invoke, descriptor validation, breakpoint state and failure paths",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Dalvik.ClassVerification",
+      "blocking_edge": "AGR verifier and dexopt contract review",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.ClassVerification",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization -> Dalvik.ClassVerification",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.ClassVerification"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Dalvik.ClassVerification",
+      "blocking_edge": "verification and optimization source closure",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.ClassVerification",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization -> Dalvik.ClassVerification",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.ClassVerification"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Dalvik.MethodInvocation",
+      "blocking_edge": "AGR <clinit> and constructor invoke contract review",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.MethodInvocation",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.MethodInvocation",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization -> Dalvik.MethodInvocation",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.MethodInvocation"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Dalvik.MethodInvocation",
+      "blocking_edge": "method call frame, invoke-direct and optimized Object constructor resolution, exception source closure",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.MethodInvocation",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.MethodInvocation",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization -> Dalvik.MethodInvocation",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.MethodInvocation"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Dalvik.Monitor",
+      "blocking_edge": "AGR class-init synchronization contract review",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.Monitor",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization -> Dalvik.Monitor",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.Monitor"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Dalvik.Monitor",
+      "blocking_edge": "monitor ownership and wait/notify source closure",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.Monitor",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization -> Dalvik.Monitor",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.Monitor"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Dalvik.ObjectAllocation",
+      "blocking_edge": "AGR allocation, OOM and stock-exception contract review",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Dalvik.ObjectAllocation",
+      "blocking_edge": "heap source, exception construction and pending-exception source closure",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Framework.ZygotePreload",
+      "blocking_edge": "AGR one-process inherited-state installation review",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Framework.ZygotePreload",
+      "blocking_edge": "Dalvik initialization contract before fork",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload"
+      ]
+    }
+  ]
 }

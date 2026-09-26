@@ -10,7 +10,8 @@ import json
 from pathlib import Path
 
 from mapper import build_book, corpus_union, union_books, write_book
-from source_closure import close_entry, reviewed_edge_contracts, source_derived_clusters
+from source_closure import (close_entry, closure_work_queue, reviewed_edge_contracts,
+                            source_derived_clusters)
 from static_scan import apk_identity, scan_apk
 
 
@@ -282,6 +283,10 @@ def validate_source_manifests(document):
                 not (cluster.get("closure_evidence") or {}).get("reviewed_by") or
                 (cluster.get("closure_evidence") or {}).get("unresolved_dependency_edges") != []):
             raise ValueError("source-derived cluster claims closure without review")
+    expected_queue = closure_work_queue(document.get("manifests", []), derived)
+    if (expected_queue and "closure_work_queue" not in document) or (
+            "closure_work_queue" in document and document["closure_work_queue"] != expected_queue):
+        raise ValueError("source-closure work queue differs from denied gates")
 
 
 def cluster_manifests(results, index):
@@ -357,9 +362,11 @@ def manifests(book, index):
     if not results:
         raise ValueError("book has no observed TRACE dependencies to close")
     clusters = cluster_manifests(results, index)
+    derived = source_derived_clusters(results, index)
     artifact = {"schema_version": 1, "apk": book["apk"], "source_index_revision": index.get("revision"),
                 "manifests": results, "cluster_source_manifests": dict(sorted(clusters.items())),
-                "source_derived_clusters": source_derived_clusters(results, index)}
+                "source_derived_clusters": derived,
+                "closure_work_queue": closure_work_queue(results, derived)}
     validate_source_manifests(artifact)
     return artifact
 
