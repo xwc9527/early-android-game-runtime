@@ -123,6 +123,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         self.assertTrue(any(item["semantic_cluster"] == "Framework.ZygotePreload" for item in queue))
         self.assertFalse(any(item["blocking_edge"] == "class-init wait" for item in queue))
         self.assertFalse(any(item["blocking_edge"] == "clock_gettime" for item in queue))
+        self.assertFalse(any(item.get("scope") == "PREREQUISITE" for item in queue))
         bare = dict(manifest)
         bare.pop("prerequisite_edges")
         walked = source_derived_clusters([bare], index)
@@ -141,6 +142,87 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         self.assertIn("Framework.ZygotePreload", stopped)
         self.assertNotIn("Bionic.PthreadCondition", stopped)
         self.assertNotIn("Dalvik.ClassInitialization", stopped)
+        queue = closure_work_queue([manifest], stopped)
+        blockers = [item for item in queue if item.get("scope") == "PREREQUISITE"]
+        self.assertEqual(blockers, [{
+            "scope": "PREREQUISITE", "semantic_cluster": "Dalvik.ClassInitialization",
+            "blocking_edge": "class initialization", "relationship": "UNRESOLVED",
+            "origin_dependency_ids": [manifest["dependency_id"]],
+            "source_paths": [manifest["canonical_name"]]}])
+        validate_source_manifests({
+            "schema_version": 1, "manifests": [manifest], "source_derived_clusters": stopped,
+            "closure_work_queue": queue})
+
+    def test_reopen_prerequisite_stays_in_the_work_queue(self):
+        index, _ = self._expansion_index()
+        manifest = self._expansion_manifest("REOPEN_REQUIRED")
+        stopped = source_derived_clusters([manifest], index)
+        self.assertNotIn("Dalvik.ClassInitialization", stopped)
+        queue = closure_work_queue([manifest], stopped)
+        self.assertTrue(any(item.get("scope") == "PREREQUISITE" and
+                            item["relationship"] == "REOPEN_REQUIRED" and
+                            item["blocking_edge"] == "class initialization" and
+                            item["origin_dependency_ids"] == [manifest["dependency_id"]]
+                            for item in queue))
+        self.assertFalse(any(item.get("relationship") == "PREREQUISITE_CLOSED" for item in queue))
+        validate_source_manifests({
+            "schema_version": 1, "manifests": [manifest], "source_derived_clusters": stopped,
+            "closure_work_queue": queue})
+
+    def test_only_the_declaring_origin_stops_at_its_exact_edge(self):
+        index, _ = self._expansion_index()
+        stopped = self._expansion_manifest("PREREQUISITE_CLOSED")
+        stopped["dependency_id"] = "JAVA_METHOD:stopped"
+        stopped["canonical_name"] = "Lexample/Stopped;->valueOf()V"
+        stopped["semantic_cluster"] = "libcore.Stopped"
+        expanded = self._expansion_manifest("PREREQUISITE_CLOSED")
+        expanded.pop("prerequisite_edges")
+        expanded["dependency_id"] = "JAVA_METHOD:expanded"
+        expanded["canonical_name"] = "Lexample/Expanded;->valueOf()V"
+        expanded["semantic_cluster"] = "libcore.Expanded"
+        derived = source_derived_clusters([stopped, expanded], index)
+        self.assertIn("JAVA_METHOD:expanded", derived["Dalvik.ClassInitialization"]["origin_dependency_ids"])
+        self.assertNotIn("JAVA_METHOD:stopped", derived["Dalvik.ClassInitialization"]["origin_dependency_ids"])
+        self.assertIn("JAVA_METHOD:expanded", derived["Bionic.ClockGettime"]["origin_dependency_ids"])
+        self.assertNotIn("JAVA_METHOD:stopped", derived["Dalvik.Monitor"]["origin_dependency_ids"])
+        self.assertTrue(any(path.startswith("Lexample/Expanded;->valueOf()V")
+                            for path in derived["Dalvik.MethodInvocation"]["source_paths"]))
+        self.assertFalse(any("Lexample/Stopped;->valueOf()V" in path
+                             for path in derived["Dalvik.ClassInitialization"]["source_paths"]))
+        self.assertTrue(any(path.startswith("Lexample/Stopped;->valueOf()V")
+                            for path in derived["Framework.ZygotePreload"]["source_paths"]))
+        queue = closure_work_queue([stopped, expanded], derived)
+        self.assertFalse(any(item.get("scope") == "PREREQUISITE" for item in queue))
+        validate_source_manifests({
+            "schema_version": 1, "manifests": [stopped, expanded],
+            "source_derived_clusters": derived, "closure_work_queue": queue})
+        index["external_cluster_sources"]["Dalvik.ClassInitialization"]["required_symbols"].append(
+            "initSFields")
+        other = _edge("late class init", "Dalvik.ClassInitialization", CLASS_CPP,
+                      "initSFields", SHA_CLASS)
+        same = self._expansion_manifest("UNRESOLVED")
+        same["prerequisite_edges"][0]["owner_source_status"] = "SOURCE_LOCATED"
+        same["cross_cluster_source_edges"].append(other)
+        walked = source_derived_clusters([same], index)
+        self.assertIn(same["dependency_id"], walked["Dalvik.ClassInitialization"]["origin_dependency_ids"])
+        self.assertIn(same["dependency_id"], walked["Bionic.PthreadCondition"]["origin_dependency_ids"])
+
+    def test_prerequisite_must_match_the_crossing_edge(self):
+        manifest = self._expansion_manifest("UNRESOLVED")
+        manifest["prerequisite_edges"][0]["owner_source_status"] = "SOURCE_LOCATED"
+        manifest["prerequisite_edges"][0]["source_sha256"] = "9" * 64
+        stopped = source_derived_clusters([manifest], self._expansion_index()[0])
+        with self.assertRaisesRegex(ValueError, "does not match a crossing source edge"):
+            validate_source_manifests({
+                "schema_version": 1, "manifests": [manifest], "source_derived_clusters": stopped,
+                "closure_work_queue": closure_work_queue([manifest], stopped)})
+        invented = self._expansion_manifest("REOPEN_REQUIRED")
+        invented["prerequisite_edges"][0]["semantic_cluster"] = "Dalvik.MethodInvocation"
+        invented["prerequisite_edges"][0]["source_symbol"] = "dvmCallMethod"
+        with self.assertRaisesRegex(ValueError, "does not match a crossing source edge"):
+            validate_source_manifests({
+                "schema_version": 1, "manifests": [invented], "source_derived_clusters": {},
+                "closure_work_queue": []})
 
     def test_prerequisite_pin_must_match_owner(self):
         index, _ = self._expansion_index()
@@ -264,7 +346,9 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "requires a prerequisite relationship"):
             validate_source_manifests(forged)
         absorbed = json.loads(json.dumps(document))
-        absorbed["source_derived_clusters"] = {"Dalvik.Monitor": {"semantic_cluster": "Dalvik.Monitor"}}
+        absorbed["source_derived_clusters"] = {"Dalvik.Monitor": {
+            "semantic_cluster": "Dalvik.Monitor",
+            "origin_dependency_ids": ["JAVA_METHOD:box"]}}
         with self.assertRaisesRegex(ValueError, "absorbed shared substrate internals"):
             validate_source_manifests(absorbed)
 

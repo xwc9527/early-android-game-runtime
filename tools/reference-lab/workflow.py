@@ -11,8 +11,8 @@ from pathlib import Path
 
 from mapper import build_book, corpus_union, union_books, write_book
 from source_closure import (close_entry, closure_work_queue, prerequisite_relations_allow_closure,
-                            reviewed_edge_contracts, source_derived_clusters,
-                            substrate_prerequisite_targets, validate_prerequisite_relations)
+                            required_derived_names, reviewed_edge_contracts, source_derived_clusters,
+                            validate_prerequisite_relations)
 from static_scan import apk_identity, scan_apk
 
 
@@ -225,14 +225,7 @@ def validate_source_manifests(document):
     origins = {item["dependency_id"]: item
                for item in document.get("manifests", [])}
     derived = document.get("source_derived_clusters", {})
-    required_derived = {edge.get("semantic_cluster")
-                        for item in document.get("manifests", [])
-                        for edge in (item.get("cross_cluster_source_edges") or [])}
-    required_derived.update(edge.get("semantic_cluster")
-                            for item in derived.values()
-                            for edge in (item.get("cross_cluster_source_edges") or []))
-    if not (required_derived - substrate_prerequisite_targets(
-            document.get("manifests", []))).issubset(derived):
+    if not required_derived_names(document.get("manifests", []), derived).issubset(derived):
         raise ValueError("source-derived manifest omits a pinned source edge")
     for name, cluster in derived.items():
         if (cluster.get("semantic_cluster") != name or

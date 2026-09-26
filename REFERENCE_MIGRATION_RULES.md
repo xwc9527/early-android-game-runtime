@@ -86,7 +86,7 @@ boundary remains in the source cluster.
 
 ## Shared runtime substrate
 
-An upper cluster stops at the first edge that enters a confirmed shared runtime substrate owner. Dependencies inside that owner belong to the substrate closure. They are not added to the upper cluster's source closure.
+An upper cluster stops only on a prerequisite that names one of its own crossing edges. The stop is bound to that upper cluster or origin and to the exact crossing. It does not stop other clusters, and it does not stop a different edge that merely targets the same substrate owner. Dependencies behind the stopped edge belong to the substrate closure.
 
 Confirmed substrate owners are:
 
@@ -109,9 +109,11 @@ The upper cluster records the crossing on `prerequisite_edges`. This relationshi
 
 | Relationship | Meaning |
 |---|---|
-| `UNRESOLVED` | The substrate crossing is recorded and recursion stops. The upper cluster cannot close or authorize migration. |
-| `PREREQUISITE_CLOSED` | The public owner is independently closed in its own closure and production contract. The edge satisfies one upper-cluster prerequisite. The upper cluster still does not expand that owner's internals. |
-| `REOPEN_REQUIRED` | Pinned API19 source shows the existing CLOSED or STABLE contract is insufficient or divergent. Recursion stops. The upper cluster cannot close or authorize migration. |
+| `UNRESOLVED` | The exact crossing is recorded, recursion stops for that origin only, and the closure work queue keeps this blocker. The upper cluster cannot close or authorize migration. |
+| `PREREQUISITE_CLOSED` | The public owner is independently closed in its own closure and production contract. The edge satisfies one upper-cluster prerequisite and is not a work-queue blocker. The declaring origin still does not expand that edge. |
+| `REOPEN_REQUIRED` | Pinned API19 source shows the existing CLOSED or STABLE contract is insufficient or divergent. Recursion stops for the declaring origin, and the closure work queue keeps this blocker. The upper cluster cannot close or authorize migration. |
+
+The prerequisite record must repeat the crossing edge's edge name, owner, repository, revision, file, symbol, and SHA-256. A record that does not match one of that upper item's crossing source edges is rejected.
 
 `PREREQUISITE_CLOSED` does not lower `MIGRATION_AUTHORIZED`. The upper cluster still needs its own source files, inline edges, boundary contracts, zero unresolved edges, and cluster review. `UNRESOLVED` and `REOPEN_REQUIRED` block both `SOURCE_CLOSED` and `MIGRATION_AUTHORIZED`.
 
