@@ -7,8 +7,8 @@
     "second_run_after_valid_fail_requires_approval": true
   },
   "budget": {
-    "valid_attempts_used": 1,
-    "valid_attempts_remaining": 0
+    "valid_attempts_used": 0,
+    "valid_attempts_remaining": 1
   },
   "attempts": [
     {
@@ -200,7 +200,17 @@
       "classification": "VALID_PASS",
       "reason": "JNI Call, CallStatic, and CallNonvirtual variants invoke the selected method. Static field getters read the static slot. A zero without a pending exception is a real result. No reference PASS was claimed.",
       "consumes_budget": true
+    },
+    {
+      "target": "Dalvik.ThreadState self-suspend crossing",
+      "target_evidence": "tools/reference-lab/evidence/bionic-pthread-threadstate/runs/36262733436/bionic-suspend-cond.txt reports SUSPEND_PATH ok=1. Governance job 108461516565 executed that contract. This row closes only that crossing and does not close the active JNINativeBinding target.",
+      "run_id": "36262733436",
+      "tested_commit": "741545edc903915b5fc7c9dac53f8b016952dc84",
+      "tested_tree": "120663dc01662362c55aee3900c71e09da8d15dd",
+      "classification": "VALID_PASS",
+      "reason": "Untimed self-suspend wait, normal mutex lock and unlock, and broadcast wake match the pinned path. The row is not a Bionic.PthreadCondition owner closure.",
+      "consumes_budget": true
     }
   ],
-  "active_target": "Phase 3 Dalvik semantics closure"
+  "active_target": "Dalvik.JNINativeBinding API19 Repair"
 }

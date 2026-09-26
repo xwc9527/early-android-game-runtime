@@ -33,6 +33,7 @@
 #include "agr_bionic_sync.h"
 #include "agr_bionic_errno.h"
 
+#include <atomic>
 #include <climits>
 
 namespace {
@@ -64,6 +65,9 @@ bool exchange(agr_bionic_sync *s, uint32_t a, uint32_t next, uint32_t *old) {
 }
 uint32_t tid(agr_bionic_sync *s) {
   return s->current_tid ? s->current_tid(s->opaque) & 0xffffu : 0;
+}
+void full_barrier() {
+  std::atomic_thread_fence(std::memory_order_seq_cst);
 }
 }
 
@@ -117,15 +121,17 @@ extern "C" int32_t agr_bionic_mutex_lock(agr_bionic_sync *s, uint32_t a) {
   if (type == 0) {
     bool won = false;
     if (!cas(s, a, shared, shared | kUncontended, &won)) return AGR_ANDROID_EFAULT;
-    if (won) return 0;
-    for (;;) {
-      uint32_t previous = 0;
-      if (!exchange(s, a, shared | kContended, &previous)) return AGR_ANDROID_EFAULT;
-      if (previous == shared) return 0;
+    if (!won) {
       if (!s->wait) return AGR_ANDROID_ENOSYS;
-      int32_t rc = s->wait(s->opaque, a, shared | kContended, UINT64_MAX);
-      if (rc != 0 && rc != -AGR_ANDROID_EAGAIN && rc != -AGR_ANDROID_EINTR) return -rc;
+      for (;;) {
+        uint32_t previous = 0;
+        if (!exchange(s, a, shared | kContended, &previous)) return AGR_ANDROID_EFAULT;
+        if (previous == shared) break;
+        s->wait(s->opaque, a, shared | kContended, UINT64_MAX);
+      }
     }
+    full_barrier();
+    return 0;
   }
   if (type != kRecursive && type != kErrorcheck) return AGR_ANDROID_EINVAL;
   const uint32_t self = tid(s);
@@ -193,6 +199,7 @@ extern "C" int32_t agr_bionic_mutex_unlock(agr_bionic_sync *s, uint32_t a) {
   const uint32_t type = value & kType, shared = value & kShared;
   if (type == 0) {
     uint32_t previous = 0;
+    full_barrier();
     if (!s->fetch_sub || s->fetch_sub(s->opaque, a, 1, &previous) != 0) return AGR_ANDROID_EFAULT;
     if (previous != (shared | kUncontended)) {
       if (!store(s, a, shared)) return AGR_ANDROID_EFAULT;
@@ -242,6 +249,7 @@ static int32_t pulse(agr_bionic_sync *s, uint32_t a, uint32_t count) {
     if (won) break;
     if (!load(s, a, &old)) return AGR_ANDROID_EFAULT;
   }
+  full_barrier();
   if (s->wake) s->wake(s->opaque, a, count);
   return 0;
 }
@@ -257,11 +265,9 @@ extern "C" int32_t agr_bionic_cond_wait_relative(agr_bionic_sync *s,
   uint32_t old = 0;
   if (!cond || !mutex || !load(s, cond, &old)) return AGR_ANDROID_EINVAL;
   if (!s->wait) return AGR_ANDROID_ENOSYS;
-  int32_t rc = agr_bionic_mutex_unlock(s, mutex);
-  if (rc != 0) return rc;
+  agr_bionic_mutex_unlock(s, mutex);
   const int32_t waited = s->wait(s->opaque, cond, old, timeout_ns);
-  rc = agr_bionic_mutex_lock(s, mutex);
-  if (rc != 0) return rc;
+  agr_bionic_mutex_lock(s, mutex);
   if (waited == -AGR_ANDROID_ETIMEDOUT) return AGR_ANDROID_ETIMEDOUT;
   // KitKat __pthread_cond_timedwait_relative only exposes ETIMEDOUT from
   // __futex_wait_ex; all other wake/error results return 0 after relocking.

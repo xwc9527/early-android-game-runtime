@@ -1,0 +1,3 @@
+x86 /var/tmp/agr-clock-probe/x86/probe.out sha256=32f9be5b527815860dfcf0e754c029d228640e20953a8ec60bca516919935fc3 bytes=4643
+arm /var/tmp/agr-clock-probe/arm/probe.out sha256=b12fbbca894a1e59e18cad519b752ffd089950af04c51bfecb4dd8d188931cbd bytes=4627
+excerpt=clock ids 0 and 1 only; the full probe files were not copied and were not rerun

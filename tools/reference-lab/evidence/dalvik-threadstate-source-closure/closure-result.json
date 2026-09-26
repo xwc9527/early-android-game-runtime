@@ -1,0 +1,12 @@
+{
+  "locally_source_reviewed": true,
+  "status": "SOURCE_CLOSED",
+  "closure_reviewed": true,
+  "migration_authorized": false,
+  "blocking_edges": [],
+  "reviewed_dependency_edges": [
+    "self-suspend on the thread suspend-count condition"
+  ],
+  "unresolved_dependency_edges": [],
+  "prerequisite_relationship": "PREREQUISITE_CLOSED"
+}

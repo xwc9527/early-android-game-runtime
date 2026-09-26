@@ -302,6 +302,19 @@
           "status": "SOURCE_LOCATED"
         }
       ],
+      "prerequisite_edges": [
+        {
+          "edge": "Dalvik RegisterNatives method binding",
+          "semantic_cluster": "Dalvik.JNINativeBinding",
+          "relationship": "REOPEN_REQUIRED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/Jni.cpp",
+          "source_symbol": "RegisterNatives",
+          "source_sha256": "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed"
+        }
+      ],
       "blocking_edges": ["nativehelper class lookup, method table and fatal failure source closure", "AGR JNI native registration contract review"],
       "status": "SOURCE_LOCATED",
       "closure_reviewed": false
@@ -310,12 +323,150 @@
       "source_repo": "platform/dalvik",
       "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
       "source_file_sha256": {
-        "vm/Jni.cpp": "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed"
+        "vm/Jni.cpp": "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed",
+        "vm/oo/Object.h": "484caed3838449e6de6cb7924bbe197b0027df27560472a7d736fe6a2a201e9c",
+        "vm/oo/Object.cpp": "2dae8cfe46a065903c9aace88290e9748201c682ef1bb548656bb8948f42c057",
+        "vm/oo/Class.h": "2a9c3c9dd3d59cd517ecd58b8b3ee0d5b2550e625ff996fcbdb734f38ede6edf",
+        "vm/oo/Class.cpp": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5",
+        "vm/Exception.h": "0b72f4b67252f30d132af044c8dfb3c55b61ff476a33bf6b20a143f2bb0b8084",
+        "vm/Exception.cpp": "dc5cc67916f941987f92915d329e50b8195aacb278172c2c44194de1dfd3b4c8",
+        "vm/Native.cpp": "1d0a8d136b4d3a5b5c0782c91bb5d39d0a1775d5fecd91024d993048d3350e1b",
+        "vm/LinearAlloc.h": "699f59b5e3c2b879bd8e5c945b3dff7c2625454c31e11128f8d6eef803f854b2",
+        "vm/arch/x86/Call386ABI.S": "f3eafef537e6fe1b038e52d71de88d421e71f75461dd02409cfe57a20403e585",
+        "vm/arch/arm/CallEABI.S": "cff93020ae97264529c24ef99e496e6decde30a7e10d7eda568272116628f78e",
+        "vm/arch/arm/CallOldABI.S": "0dbc973e8d32b2f421cd2e7783ba0756faf74f3e46fb689c2bfab9746339808e",
+        "vm/arch/mips/CallO32.S": "d6e36c7ddfd7db5f1f7d24a79dca727f26336def3ae25686e26af9377f6b300f",
+        "vm/arch/generic/Call.cpp": "2865b06b4cf7973c6b789af8f4c1d8ddb98d5243c4119a154d84e05d20d2e7e7"
       },
-      "required_symbols": ["RegisterNatives", "dvmRegisterJNIMethod", "JNI_ERR", "JNI_OK"],
-      "blocking_edges": ["Dalvik native method lookup, binding, repeat registration and failure source closure", "AGR native binding and JNI table contract review"],
+      "required_symbols": ["RegisterNatives", "dvmRegisterJNIMethod", "dvmUseJNIBridge", "dvmCallJNIMethod", "dvmPlatformInvoke", "dvmSetNativeFunc", "dvmFindDirectMethodByDescriptor", "dvmFindVirtualMethodByDescriptor", "dvmIsNativeMethod", "dvmIsStaticMethod", "dvmIsSynchronizedMethod", "dvmThrowNoSuchMethodError", "dvmResolveNativeMethod", "JNI_OK", "JNI_ERR", "fastJni"],
+      "internal_deps": ["direct then virtual descriptor lookup after stripping a leading !", "native access flag check", "null fnPtr returns false with no exception", "missing method and non-native method throw NoSuchMethodError and return false", "fast JNI rejects synchronized and non-static methods with no exception", "already-registered methods rebind through dvmUseJNIBridge", "method->fastJni is written and has no reader in the pinned Dalvik or libcore trees", "platform invoke always passes JNIEnv* and jclass or this", "ENFORCE_READ_ONLY is false so method mutation does not call mprotect"],
+      "cross_cluster_deps": ["JNI thread state around RegisterNatives", "exception class initialization", "exception object allocation", "exception constructor invocation", "synchronized JNI bridge monitor"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "JNI thread state around RegisterNatives",
+          "semantic_cluster": "Dalvik.ThreadState",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/Thread.cpp",
+          "source_symbol": "dvmChangeStatus",
+          "source_sha256": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
+          "status": "SOURCE_CLOSED"
+        },
+        {
+          "edge": "exception class initialization",
+          "semantic_cluster": "Dalvik.ClassInitialization",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/oo/Class.cpp",
+          "source_symbol": "dvmInitClass",
+          "source_sha256": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "exception object allocation",
+          "semantic_cluster": "Dalvik.ObjectAllocation",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/alloc/Alloc.cpp",
+          "source_symbol": "dvmAllocObject",
+          "source_sha256": "70bb6375a088dab380c31e5ab9959461f1c841f88c5ef163caacd1b26f7da02f",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "exception constructor invocation",
+          "semantic_cluster": "Dalvik.MethodInvocation",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/interp/Stack.cpp",
+          "source_symbol": "dvmCallMethod",
+          "source_sha256": "93ca5f272c9a801cc4c3408924b1bf4af212541a6f6ba577687d867be7d48503",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "synchronized JNI bridge monitor",
+          "semantic_cluster": "Dalvik.Monitor",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/Sync.cpp",
+          "source_symbol": "dvmLockObject",
+          "source_sha256": "8b100ff9e5037fcc8c7bfbbc152a924b31e22e925b03847765d007db42f91b5d",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
+      "prerequisite_edges": [
+        {
+          "edge": "JNI thread state around RegisterNatives",
+          "semantic_cluster": "Dalvik.ThreadState",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_CLOSED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/Thread.cpp",
+          "source_symbol": "dvmChangeStatus",
+          "source_sha256": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7"
+        },
+        {
+          "edge": "exception class initialization",
+          "semantic_cluster": "Dalvik.ClassInitialization",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/oo/Class.cpp",
+          "source_symbol": "dvmInitClass",
+          "source_sha256": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5"
+        },
+        {
+          "edge": "exception object allocation",
+          "semantic_cluster": "Dalvik.ObjectAllocation",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/alloc/Alloc.cpp",
+          "source_symbol": "dvmAllocObject",
+          "source_sha256": "70bb6375a088dab380c31e5ab9959461f1c841f88c5ef163caacd1b26f7da02f"
+        },
+        {
+          "edge": "exception constructor invocation",
+          "semantic_cluster": "Dalvik.MethodInvocation",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/interp/Stack.cpp",
+          "source_symbol": "dvmCallMethod",
+          "source_sha256": "93ca5f272c9a801cc4c3408924b1bf4af212541a6f6ba577687d867be7d48503"
+        },
+        {
+          "edge": "synchronized JNI bridge monitor",
+          "semantic_cluster": "Dalvik.Monitor",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/Sync.cpp",
+          "source_symbol": "dvmLockObject",
+          "source_sha256": "8b100ff9e5037fcc8c7bfbbc152a924b31e22e925b03847765d007db42f91b5d"
+        }
+      ],
+      "blocking_edges": [
+        "UNRESOLVED substrate crossings for thread state, exception initialization, allocation, constructor invocation, and the synchronized JNI bridge monitor",
+        "AGR native binding production contract remains divergent and is not a closure PASS"
+      ],
       "status": "SOURCE_LOCATED",
-      "closure_reviewed": false
+      "closure_reviewed": false,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "Review does not pass. RegisterNatives decodes the jclass, switches the JNI thread to THREAD_RUNNING, and returns JNI_ERR at the first dvmRegisterJNIMethod failure or JNI_OK when every method binds. Lookup is direct, then virtual, on the declaring class only. A leading ! is stripped before lookup, sets method->fastJni, and rejects synchronized or non-static methods without a throw. fnPtr NULL returns false before lookup and throws nothing. A missing method or a non-native method calls dvmThrowNoSuchMethodError. That throw initializes the exception class, allocates the object, and invokes its constructor. Repeat registration is allowed and rebinds through dvmUseJNIBridge and dvmSetNativeFunc. The installed bridge is dvmCallJNIMethod, which passes JNIEnv* and jclass or this into dvmPlatformInvoke on x86, ARM EABI, ARM old ABI, MIPS, and the generic FFI path. method->fastJni is written at Jni.cpp and declared on Method; the pinned Dalvik tree and libcore contain no other fastJni token, so the omitted-JNIEnv call is not implemented. ENFORCE_READ_ONLY is false, so the linear-alloc write guard does not call mprotect on this path. Class.cpp is pinned for dvmSetNativeFunc only; dvmInitClass stays a Dalvik.ClassInitialization crossing and is not absorbed. These UNRESOLVED crossings block SOURCE_CLOSED.",
+        "unresolved_dependency_edges": [
+          "JNI thread state around RegisterNatives",
+          "exception class initialization",
+          "exception object allocation",
+          "exception constructor invocation",
+          "synchronized JNI bridge monitor"
+        ]
+      }
     },
     "AndroidNative.AssetObject": {
       "source_repo": "platform/frameworks/base",

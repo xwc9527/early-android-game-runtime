@@ -42,6 +42,15 @@
       "reopen_reason": null
     },
     {
+      "name": "NativeCoreRuntime",
+      "status": "experimental",
+      "paths": [
+        "Runtime/NativeCore/agr_runtime.c"
+      ],
+      "gate": null,
+      "reopen_reason": null
+    },
+    {
       "name": "APKBootstrap",
       "status": "stable",
       "paths": [
@@ -79,6 +88,16 @@
         "Runtime/DexLoom/Include/dx_vm.h"
       ],
       "gate": "phase3a0-classpath",
+      "reopen_reason": null
+    },
+    {
+      "name": "DalvikJNI",
+      "status": "stable",
+      "paths": [
+        "Runtime/DexLoom/VM/dx_jni.c",
+        "Runtime/DexLoom/Include/dx_jni.h"
+      ],
+      "gate": "phase3a-jni",
       "reopen_reason": null
     },
     {

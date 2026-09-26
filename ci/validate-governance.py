@@ -80,8 +80,25 @@ def main() -> int:
                 "ci/governance/upstream-map.json", "ci/governance/diagnostic-cutpoints.json",
                 "ci/governance/expensive-run-plan.json", "ci/governance/closure-attempts.json", "ci/experiments.json",
                 "artifacts/schema/semantic-diff.schema.json", "artifacts/schema/upstream-map.schema.json",
-                "artifacts/schema/experiments.schema.json", "artifacts/schema/closure-attempts.schema.json"]
+                "artifacts/schema/experiments.schema.json", "artifacts/schema/closure-attempts.schema.json",
+                "ci/governance/substrate-production-contracts.json",
+                "artifacts/schema/substrate-production-contracts.schema.json",
+                "tools/reference-lab/substrate_contracts.py"]
     errors = [f"missing:{p}" for p in required if not (ROOT / p).is_file()]
+    if (ROOT / "tools/reference-lab/substrate_contracts.py").is_file():
+        contract_spec = spec_from_file_location(
+            "substrate_contracts", ROOT / "tools/reference-lab/substrate_contracts.py")
+        contract_tool = module_from_spec(contract_spec)
+        contract_spec.loader.exec_module(contract_tool)
+        try:
+            bound = contract_tool.load_substrate_production_contracts()
+            for contract in bound.get("contracts") or []:
+                contract_tool.require_production_contract(
+                    contract.get("semantic_cluster"), contract.get("source_revision"),
+                    contract.get("source_owner_digest"), bound)
+            contract_tool.validate_committed_crossing_closures(bound)
+        except ValueError as exc:
+            errors.append("substrate production contracts: " + str(exc))
     state, registry, closure = load("ci/governance/state.json"), load("ci/governance/modules.json"), load("ci/governance/closure.json")
     upstream_map = load("ci/governance/upstream-map.json")
     experiments = load("ci/experiments.json")

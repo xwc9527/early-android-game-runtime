@@ -1,0 +1,73 @@
+{
+  "source_repo": "platform/dalvik",
+  "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+  "source_file_sha256": {
+    "vm/Thread.cpp": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
+    "vm/Thread.h": "d31169a50cd6e5504fa017cf9ff77a749ff8fb48636985a2037b140c5301f70a"
+  },
+  "required_symbols": [
+    "dvmChangeStatus",
+    "dvmThreadSelf",
+    "fullSuspendCheck",
+    "THREAD_RUNNING",
+    "THREAD_WAIT",
+    "THREAD_TIMED_WAIT",
+    "THREAD_SUSPENDED",
+    "suspendCount",
+    "dbgSuspendCount"
+  ],
+  "internal_deps": [
+    "equal old and new status returns the old status without a store",
+    "THREAD_RUNNING is published with android_atomic_acquire_store before suspendCount is read",
+    "a nonzero suspendCount then enters fullSuspendCheck",
+    "every other status, including THREAD_WAIT and THREAD_TIMED_WAIT, is published with android_atomic_release_store and does not check suspension",
+    "dvmChangeStatus rejects THREAD_SUSPENDED as a requested status",
+    "fullSuspendCheck stores THREAD_SUSPENDED, waits while suspendCount is nonzero, then restores the previous status",
+    "a NULL self is resolved with dvmThreadSelf through pthread_getspecific",
+    "RegisterNatives enters through ScopedJniThreadState, which calls dvmChangeStatus(THREAD_RUNNING) and leaves with dvmChangeStatus(THREAD_NATIVE)",
+    "waitCond and waitMutex are Thread fields initialized in Thread.cpp and are not read or written by dvmChangeStatus or fullSuspendCheck"
+  ],
+  "cross_cluster_deps": [
+    "self-suspend on the thread suspend-count condition"
+  ],
+  "cross_cluster_source_edges": [
+    {
+      "edge": "self-suspend on the thread suspend-count condition",
+      "semantic_cluster": "Bionic.PthreadCondition",
+      "source_repo": "platform/bionic",
+      "revision": "081db840befec895fb86e709ae95832ade2d065c",
+      "source_file": "libc/bionic/pthread.c",
+      "source_symbol": "pthread_cond_wait",
+      "source_sha256": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
+      "status": "SOURCE_CLOSED"
+    }
+  ],
+  "prerequisite_edges": [
+    {
+      "edge": "self-suspend on the thread suspend-count condition",
+      "semantic_cluster": "Bionic.PthreadCondition",
+      "relationship": "PREREQUISITE_CLOSED",
+      "owner_source_status": "SOURCE_CLOSED",
+      "source_repo": "platform/bionic",
+      "revision": "081db840befec895fb86e709ae95832ade2d065c",
+      "source_file": "libc/bionic/pthread.c",
+      "source_symbol": "pthread_cond_wait",
+      "source_sha256": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d"
+    }
+  ],
+  "blocking_edges": [],
+  "status": "SOURCE_CLOSED",
+  "closure_reviewed": true,
+  "closure_evidence": {
+    "reviewed_by": "api19-source-audit",
+    "closure_notes": "Review passes for the pinned status path. vm/Thread.cpp ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7 and vm/Thread.h d31169a50cd6e5504fa017cf9ff77a749ff8fb48636985a2037b140c5301f70a match platform/dalvik 36e356c96640775f0a3f167bd2426ea0f0093b8b. dvmChangeStatus at Thread.cpp:2905 returns the old status without a store when it equals the new status. A NULL self is resolved by dvmThreadSelf through pthread_getspecific. THREAD_RUNNING is published with android_atomic_acquire_store before suspendCount is read, and a nonzero count calls fullSuspendCheck at Thread.cpp:2845. fullSuspendCheck stores THREAD_SUSPENDED, waits in dvmWaitCond while suspendCount is nonzero, asserts dbgSuspendCount is zero, restores the previous status, and unlocks. That wait is the single cross-cluster edge, already PREREQUISITE_CLOSED. A non-RUNNING request, including THREAD_WAIT and THREAD_TIMED_WAIT, uses android_atomic_release_store and asserts the request is not THREAD_SUSPENDED. RegisterNatives at Jni.cpp:2459 enters through ScopedJniThreadState, which calls dvmChangeStatus(THREAD_RUNNING) at Jni.cpp:229 and leaves with dvmChangeStatus(THREAD_NATIVE) at Jni.cpp:233. waitCond and waitMutex are initialized at Thread.cpp:939 and are not read by dvmChangeStatus or fullSuspendCheck. The Sync.cpp wait, interrupt, and signal protocol is not on this path. This record is source closure only. It is not MIGRATION_AUTHORIZED and does not close the JNINativeBinding prerequisite.",
+    "source_file_sha256": {
+      "vm/Thread.cpp": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
+      "vm/Thread.h": "d31169a50cd6e5504fa017cf9ff77a749ff8fb48636985a2037b140c5301f70a"
+    },
+    "reviewed_dependency_edges": [
+      "self-suspend on the thread suspend-count condition"
+    ],
+    "unresolved_dependency_edges": []
+  }
+}

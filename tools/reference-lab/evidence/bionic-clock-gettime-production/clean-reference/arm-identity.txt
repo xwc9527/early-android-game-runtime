@@ -1,0 +1,6 @@
+FINGERPRINT Android/aosp_arm/generic:4.4.4/KTU84Q/eng.root.20260925.132919:eng/test-keys
+RELEASE 4.4.4
+SDK 19
+ABI armeabi-v7a
+MODE int:portable
+UNAME /system/bin/sh: uname: not found

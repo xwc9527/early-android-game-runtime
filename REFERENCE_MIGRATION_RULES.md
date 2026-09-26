@@ -61,7 +61,17 @@ API19 source location; `SOURCE_CLOSED` records review of the semantic owner's
 state, initialization, internal and cross-layer dependencies, and declared
 stopping boundaries. None of these is migration authority by itself.
 `MIGRATION_AUTHORIZED` applies only to a reviewed semantic cluster Source
-Manifest, never to an individual method or a broad module label.
+Manifest, never to an individual method or a broad module label. A
+`SOURCE_DERIVED` shared-substrate owner keeps that provenance. The generator
+derives its authorization from `source_derived_reviews`; a boolean on the
+owner, the review, or the manifest does not authorize it. The review must
+match that owner's repository, revision, source-file SHA-256, source closure,
+reviewed dependency and boundary edges, and empty unresolved set, and the
+manifest must keep the origin dependency and source path that reached it.
+`Bionic.ClockGettime` is limited to the `CLOCK_REALTIME` and
+`CLOCK_MONOTONIC` requests on the current `Bionic.PthreadCondition` crossing.
+Its review cites the Darwin host-boundary evidence by path and SHA-256. That
+authorization is not `PRODUCTION_CLOSED` or `PREREQUISITE_CLOSED`.
 
 TRACE absence is never evidence that Android source is unused. A REMOVE or
 pruning decision requires source closure for the affected cluster, an explicit
@@ -83,6 +93,43 @@ HLE is not an implementation of Android semantics. A call chain may terminate as
 At that boundary the closure records the app-process observable request,
 response, callbacks, lifecycle, and errors. Android-owned behavior before the
 boundary remains in the source cluster.
+
+## Shared runtime substrate
+
+An upper cluster stops only on a prerequisite that names one of its own crossing edges. A source-derived owner may carry `prerequisite_edges` for its own `cross_cluster_source_edges` only. The stop is bound to that current owner, the exact crossing, and the origin that reached the owner. Observed-entry stop keys do not propagate down the recursive tree, and a different owner is not stopped merely because it targets the same substrate owner. Dependencies behind the stopped edge belong to the substrate closure. `Framework.ZygotePreload` remains in the upper closure when it is the derived owner; only the substrate crossings it declares are truncated.
+
+Confirmed substrate owners are:
+
+- `Libcore.BootClassLoading`
+- `Dalvik.BootClassResolution`
+- `Dalvik.ClassInitialization`
+- `Dalvik.ClassVerification`
+- `Dalvik.Monitor`
+- `Dalvik.ThreadState`
+- `Dalvik.MethodInvocation`
+- `Dalvik.ObjectAllocation`
+- `Dalvik.StaticFieldArrayRoots`
+- `Dalvik.JNINativeBinding`
+- `Bionic.PthreadCondition`
+- `Bionic.ClockGettime`
+
+`Framework.ZygotePreload` is not substrate. It remains the Integer startup-environment source owner. `Framework.ZygoteVMOptions` and `AndroidNative.InitZygote` keep their existing narrow source-owner identity. Any additional substrate owner requires explicit confirmation before it is added to this list.
+
+The upper cluster records the crossing on `prerequisite_edges`. This relationship is not an owner source status. Owner records keep `SOURCE_LOCATED` or `SOURCE_CLOSED`. The relationship has exactly three states:
+
+| Relationship | Meaning |
+|---|---|
+| `UNRESOLVED` | The exact crossing is recorded, recursion stops for that origin only, and the closure work queue keeps this blocker. The upper cluster cannot close or authorize migration. |
+| `PREREQUISITE_CLOSED` | The exact crossing passes `external_edge_closed`, and `ci/governance/substrate-production-contracts.json` has one `CROSSING_CLOSED` record for that same edge, semantic owner, repository, revision, file, symbol, and SHA-256. The record also binds the declaring origin, the pinned source path, the production scope derived from that path, the production module, the source owner revision and digest, tested commit and tree, the differential recomputed from the named evidence, and `closure_run`. `closure_run` must be the single `VALID_PASS` row in `ci/governance/closure-attempts.json` whose `target` equals the record's `closure_target` and whose tested commit and tree match, and `git rev-parse <tested_commit>^{tree}` must equal the tested tree. A `PRODUCTION_CLOSED` record for the same semantic owner does not cover the crossing. A shorter scope, a scope that adds an unreached capability, a different symbol or hash, a different origin or source path, a mismatched differential, or a handwritten relationship is rejected. The `contracts` array stays the whole-owner list and remains empty. |
+| `REOPEN_REQUIRED` | Pinned API19 source shows the existing CLOSED or STABLE contract is insufficient or divergent. Recursion stops for the declaring origin, and the closure work queue keeps this blocker. The upper cluster cannot close or authorize migration. |
+
+The prerequisite record must repeat the crossing edge's edge name, owner, repository, revision, file, symbol, and SHA-256. A record that does not match one crossing source edge of the owner that declares it is rejected. `UNRESOLVED` and `REOPEN_REQUIRED` work items copy that declaring owner's `origin_dependency_ids` and full `source_paths`. `PREREQUISITE_CLOSED` is omitted from the work queue only after the exact crossing closure matches. A same-name owner record cannot omit it. The whole-owner `contracts` array stays empty and cannot certify a substrate owner.
+
+`PREREQUISITE_CLOSED` does not lower `MIGRATION_AUTHORIZED`. The upper cluster still needs its own source files, inline edges, boundary contracts, zero unresolved edges, and cluster review. `UNRESOLVED` and `REOPEN_REQUIRED` block both `SOURCE_CLOSED` and `MIGRATION_AUTHORIZED`.
+
+A private copy of a substrate source file, `SERVICE_HLE`, an excluded HLE boundary, or `GAME_PATCH` cannot satisfy or skip the prerequisite. A substrate defect is repaired by reopening that public owner, then by its own source repair, differential, and CLOSE. The upper cluster references that result afterward. Recording `REOPEN_REQUIRED` is not itself a reopen. A real reopen is a separate step that names the module, evidence, and reopen condition.
+
+Integer records six real crossings as `UNRESOLVED` and does not write `PREREQUISITE_CLOSED`. `valueOf` stops at `Dalvik.ClassInitialization`, `Dalvik.ObjectAllocation`, `Dalvik.MethodInvocation`, and `Dalvik.StaticFieldArrayRoots`. `Framework.ZygotePreload` stays in the Integer closure and stops at `Dalvik.ClassInitialization` and `Libcore.BootClassLoading`. `Dalvik.StaticFieldArrayRoots` keeps source status `SOURCE_CLOSED` while its relationship stays `UNRESOLVED`. The Integer cluster remains `SOURCE_LOCATED` with `MIGRATION_AUTHORIZED=false`. Resources records one real crossing as `REOPEN_REQUIRED` and does not write `PREREQUISITE_CLOSED`: `AndroidNative.JNIHelp` stops at `Dalvik.JNINativeBinding` on `Dalvik RegisterNatives method binding`. Pinned CLEAN image `2d4f0d0a7a193b829349c0f9247b670c600ee2690eeb1f8949fc5794b2639645` and Dalvik `36e356c96640775f0a3f167bd2426ea0f0093b8b` `vm/Jni.cpp` `RegisterNatives` / `dvmRegisterJNIMethod` diverge from `Runtime/DexLoom/VM/dx_jni.c` `jni_RegisterNatives` on `missing_signature`, `non_native`, `null_fn`, and `fast_static`. This relationship record is not a module reopen. `AndroidNative.JNIHelp` stays in the Resources closure. Its two blocking edges stay, because the source map separates nativehelper class resolution and the `RegisterNatives` call from Dalvik method binding. The Resources cluster remains `SOURCE_LOCATED` with `MIGRATION_AUTHORIZED=false`.
 
 ## What is not an input
 

@@ -1,0 +1,7 @@
+INIT rc=0
+BEFORE monotonic rc=0 ns=530925793000
+BEFORE realtime rc=0 ns=1790442016925793000
+AFTER monotonic rc=0 ns=531233684000
+AFTER realtime rc=0 ns=1790442017233685000
+ADVANCED monotonic=1 realtime=1
+PROBE_DONE ok=1

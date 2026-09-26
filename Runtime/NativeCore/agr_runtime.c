@@ -6,6 +6,7 @@
 #include "../Bionic/agr_bionic_sync.h"
 #include "../Bionic/agr_bionic_thread_attr.h"
 #include "../Bionic/agr_futex_host.h"
+#include "../Bionic/agr_bionic_clock.h"
 #include "../Bionic/agr_bionic_errno.h"
 #include "../Bionic/agr_bionic_allocator.h"
 #include "../HostServices/agr_host_services.h"
@@ -533,7 +534,19 @@ int32_t agr_dispatch_system(agr_runtime*rt,const char*name,const uint32_t r[4],u
         agr_thread*t=thread(rt);if(!t->errno_address){int32_t zero=0;t->errno_address=agr_alloc_static(rt,&zero,4,4);}out->value=t->errno_address;
 #endif
     }
-    else if(!strcmp(name,"clock_gettime")){rt->clock_ns+=16666667ULL;uint32_t v[2]={(uint32_t)(rt->clock_ns/1000000000ULL),(uint32_t)(rt->clock_ns%1000000000ULL)};write_mem(rt,b,v,8);}
+    else if(!strcmp(name,"clock_gettime")){
+#if defined(__APPLE__)
+        if(a==0u||a==1u){
+            uint32_t sec=0,nsec=0; int32_t android_errno=0;
+            int32_t rc=agr_bionic_clock_gettime(&rt->host_services,(int32_t)a,b,&sec,&nsec,&android_errno);
+            if(rc==0){uint32_t v[2]={sec,nsec}; if(!write_mem(rt,b,v,8)){allocator_set_errno(rt,AGR_ANDROID_EFAULT); out->value=(uint32_t)-1;}}
+            else if(rc<0){allocator_set_errno(rt,android_errno); out->value=(uint32_t)-1;}
+            else{rt->clock_ns+=16666667ULL;uint32_t v[2]={(uint32_t)(rt->clock_ns/1000000000ULL),(uint32_t)(rt->clock_ns%1000000000ULL)};write_mem(rt,b,v,8);}
+        }else{rt->clock_ns+=16666667ULL;uint32_t v[2]={(uint32_t)(rt->clock_ns/1000000000ULL),(uint32_t)(rt->clock_ns%1000000000ULL)};write_mem(rt,b,v,8);}
+#else
+        rt->clock_ns+=16666667ULL;uint32_t v[2]={(uint32_t)(rt->clock_ns/1000000000ULL),(uint32_t)(rt->clock_ns%1000000000ULL)};write_mem(rt,b,v,8);
+#endif
+    }
     else if(!strcmp(name,"gettimeofday")){rt->clock_ns+=16666667ULL;uint32_t v[2]={(uint32_t)(rt->clock_ns/1000000000ULL),(uint32_t)((rt->clock_ns%1000000000ULL)/1000)};write_mem(rt,a,v,8);}
     else if(!strcmp(name,"pthread_key_create")){
 #if defined(__APPLE__)

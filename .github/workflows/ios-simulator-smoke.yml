@@ -7,6 +7,14 @@ on:
         description: Smoke deadline in seconds (capped at 900; use 1 to test evidence capture)
         required: false
         default: '900'
+      host_clock_probe_only:
+        description: Run only the realtime and monotonic HostServices probe
+        type: boolean
+        default: false
+      bionic_clock_port_only:
+        description: Run the production Bionic realtime and monotonic clock port
+        type: boolean
+        default: false
 
 jobs:
   smoke:
@@ -14,7 +22,14 @@ jobs:
     timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
+      - name: Probe HostServices realtime and monotonic clocks
+        if: inputs.host_clock_probe_only
+        run: bash scripts/probe-host-clock.sh
+      - name: Probe production Bionic realtime and monotonic clocks
+        if: inputs.bionic_clock_port_only
+        run: bash scripts/probe-bionic-clock.sh
       - name: Build and run Simulator smoke with evidence deadline
+        if: ${{ !inputs.host_clock_probe_only && !inputs.bionic_clock_port_only }}
         env:
           SMOKE_TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
         run: python3 scripts/run-simulator-smoke-bounded.py --timeout-seconds "$SMOKE_TIMEOUT_SECONDS"
@@ -23,4 +38,22 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-simulator-smoke-evidence
-          path: build/artifacts
+          path: |
+            build/artifacts
+            !build/artifacts/host-clock/**
+            !build/artifacts/bionic-clock-port/**
+          if-no-files-found: warn
+      - name: Upload host clock probe evidence
+        if: always() && inputs.host_clock_probe_only
+        uses: actions/upload-artifact@v4
+        with:
+          name: host-clock-probe
+          path: build/artifacts/host-clock
+          if-no-files-found: error
+      - name: Upload production Bionic clock probe evidence
+        if: always() && inputs.bionic_clock_port_only
+        uses: actions/upload-artifact@v4
+        with:
+          name: bionic-clock-port
+          path: build/artifacts/bionic-clock-port
+          if-no-files-found: error

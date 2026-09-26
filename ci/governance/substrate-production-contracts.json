@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "contracts": [],
+  "crossing_closures": [
+    {
+      "semantic_cluster": "Bionic.PthreadCondition",
+      "status": "CROSSING_CLOSED",
+      "edge": "self-suspend on the thread suspend-count condition",
+      "source_repo": "platform/bionic",
+      "revision": "081db840befec895fb86e709ae95832ade2d065c",
+      "source_file": "libc/bionic/pthread.c",
+      "source_symbol": "pthread_cond_wait",
+      "source_sha256": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
+      "origin": {
+        "source_repo": "platform/dalvik",
+        "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+        "source_file": "vm/Thread.cpp",
+        "source_symbol": "dvmChangeStatus",
+        "source_sha256": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7"
+      },
+      "source_path": [
+        "dvmChangeStatus",
+        "fullSuspendCheck",
+        "pthread_mutex_lock",
+        "pthread_cond_wait",
+        "pthread_cond_broadcast",
+        "__pthread_cond_pulse"
+      ],
+      "production_scope": [
+        "futex wait/wake with full barrier on normal lock, normal unlock, and broadcast pulse",
+        "normal pthread_mutex_lock",
+        "normal pthread_mutex_unlock",
+        "pthread_cond_broadcast",
+        "untimed pthread_cond_wait"
+      ],
+      "production_module": "pthread",
+      "source_revision": "081db840befec895fb86e709ae95832ade2d065c",
+      "source_owner_digest": "8d62e6f7b90e11e1b6d89ccc55962b84ccd14ed720181d6c5153fd60ef418deb",
+      "tested_commit": "741545edc903915b5fc7c9dac53f8b016952dc84",
+      "tested_tree": "120663dc01662362c55aee3900c71e09da8d15dd",
+      "evidence_dir": "tools/reference-lab/evidence/bionic-pthread-threadstate",
+      "differential": {
+        "producer": "substrate_contracts.suspend_crossing_differential",
+        "result": "NO_DIVERGENCE",
+        "source_path_sha256": "5ad88ab55cd9e8e95fbc18ed4422b5628f656711a50a338eb9e0bd9862e9a2e2",
+        "agr_probe_sha256": "a2a82e27aa8503519be30eb5071e64b96397288dd8603b9f74bf5635f8ceba26"
+      },
+      "closure_run": "36262733436",
+      "closure_target": "Dalvik.ThreadState self-suspend crossing"
+    }
+  ]
+}

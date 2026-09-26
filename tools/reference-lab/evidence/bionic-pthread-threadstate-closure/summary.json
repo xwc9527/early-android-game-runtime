@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "crossing": "self-suspend on the thread suspend-count condition",
+  "semantic_cluster": "Bionic.PthreadCondition",
+  "status": "CROSSING_CLOSED",
+  "owner_production_status": "not PRODUCTION_CLOSED",
+  "production_scope": [
+    "futex wait/wake with full barrier on normal lock, normal unlock, and broadcast pulse",
+    "normal pthread_mutex_lock",
+    "normal pthread_mutex_unlock",
+    "pthread_cond_broadcast",
+    "untimed pthread_cond_wait"
+  ],
+  "excluded_from_scope": [
+    "absolute pthread_cond_timedwait",
+    "monotonic pthread_cond_timedwait",
+    "pthread_mutex_lock_timeout_np",
+    "pthread_cond_signal",
+    "clock_gettime"
+  ],
+  "source_path_evidence": "tools/reference-lab/evidence/bionic-pthread-threadstate/source-path.txt",
+  "agr_probe": "tools/reference-lab/evidence/bionic-pthread-threadstate/runs/36262733436/bionic-suspend-cond.txt",
+  "differential_producer": "substrate_contracts.suspend_crossing_differential",
+  "differential_result": "NO_DIVERGENCE",
+  "clean_probe": "not required; pinned pthread.c NULL abstime and Thread.cpp resume broadcast uniquely determine this untimed path",
+  "tested_commit": "741545edc903915b5fc7c9dac53f8b016952dc84",
+  "tested_tree": "120663dc01662362c55aee3900c71e09da8d15dd",
+  "closure_run": "36262733436",
+  "closure_job": "108461516565",
+  "closure_target": "Dalvik.ThreadState self-suspend crossing",
+  "authority": "ci/governance/substrate-production-contracts.json crossing_closures[0]"
+}

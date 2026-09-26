@@ -1,0 +1,8 @@
+{
+  "producer": "substrate_contracts.suspend_crossing_differential",
+  "result": "NO_DIVERGENCE",
+  "source_path_sha256": "5ad88ab55cd9e8e95fbc18ed4422b5628f656711a50a338eb9e0bd9862e9a2e2",
+  "agr_probe_sha256": "a2a82e27aa8503519be30eb5071e64b96397288dd8603b9f74bf5635f8ceba26",
+  "evidence_dir": "tools/reference-lab/evidence/bionic-pthread-threadstate",
+  "note": "The producer recomputes these hashes from source-path.txt and the governance probe. A handwritten result is not accepted."
+}

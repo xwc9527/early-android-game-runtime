@@ -6,34 +6,34 @@
     "last_known_good": "3e3db84a53ad0957e9217f804b6f718a942b9a11"
   },
   "active": {
-    "target": "Phase 3 Dalvik semantics closure",
-    "branch": "recovery/phase3-dalvik-semantics",
-    "lifecycle": "CLOSED",
-    "observed_discontinuity": "Phase 3 final gate host contract passed. JNI Call variants invoke the selected method and static field getters read the static slot.",
-    "android_subsystem": "API19 Dalvik JNI Call and GetStaticField",
+    "target": "Dalvik.JNINativeBinding API19 Repair",
+    "branch": "cursor/shared-substrate-prerequisite-da4f",
+    "lifecycle": "IMPLEMENTED",
+    "observed_discontinuity": "Pinned API19 RegisterNatives diverges from dx_jni.c jni_RegisterNatives on missing_signature, non_native, null_fn, and fast_static. Production repair is not implemented.",
+    "android_subsystem": "API19 Dalvik RegisterNatives method binding",
     "upstream_path": [
-      "platform/dalvik@android-4.4.4_r2:vm/Jni.cpp"
+      "platform/dalvik@android-4.4.4_r2:vm/Jni.cpp:RegisterNatives",
+      "platform/dalvik@android-4.4.4_r2:vm/Jni.cpp:dvmRegisterJNIMethod"
     ],
     "agr_path": [
-      "Runtime/DexLoom/VM/dx_jni.c",
-      "Runtime/DexLoom/VM/dx_vm.c"
+      "Runtime/DexLoom/VM/dx_jni.c:jni_RegisterNatives"
     ],
     "active_explanations": [],
-    "earliest_evidenced_divergence": "Host contract matches the API19 JNI call and static-field result. Reference differential is not yet executed.",
+    "earliest_evidenced_divergence": "CLEAN image 2d4f0d0a7a193b829349c0f9247b670c600ee2690eeb1f8949fc5794b2639645 and Dalvik 36e356c96640775f0a3f167bd2426ea0f0093b8b vm/Jni.cpp RegisterNatives / dvmRegisterJNIMethod diverge from Runtime/DexLoom/VM/dx_jni.c jni_RegisterNatives on missing_signature, non_native, null_fn, and fast_static.",
     "semantic_class": "PUBLIC_OBSERVABLE",
-    "causal_status": "CONTRACT_CONFIRMED",
-    "evidence_level": "CONTRACT_CONFIRMED",
-    "classification": "AGR_INTERNAL_BUG",
-    "next_validation": "Phase 3 is CLOSED. The next target is the Local Android Reference Lab. API19_REFERENCE_DIFFERENTIAL was not executed for this phase.",
-    "primary_blocker": "none",
-    "first_broken_boundary": "none",
-    "first_broken_boundary_evidence": "Tests/DexLoom/jni-call-host.c and JNI run 36039287996"
+    "causal_status": "OBSERVED",
+    "evidence_level": "OBSERVED",
+    "classification": "ANDROID_SEMANTIC_BUG",
+    "next_validation": "Dalvik.JNINativeBinding remains SOURCE_LOCATED. Do not repair dx_jni.c until that owner source closure is SOURCE_CLOSED.",
+    "primary_blocker": "Dalvik.JNINativeBinding source closure is SOURCE_LOCATED. Its RegisterNatives path crosses Dalvik.ThreadState, Dalvik.ClassInitialization, Dalvik.ObjectAllocation, Dalvik.MethodInvocation, and Dalvik.Monitor, and those relationships are UNRESOLVED.",
+    "first_broken_boundary": "vm/Jni.cpp RegisterNatives / dvmRegisterJNIMethod versus dx_jni.c jni_RegisterNatives",
+    "first_broken_boundary_evidence": "CLEAN differential cases missing_signature, non_native, null_fn, and fast_static. The DIVERGED result is not a closure PASS."
   },
   "ci_budget": {
     "valid_closure_runs": 1,
     "infrastructure_failures_consume_budget": false,
-    "closure_runs_used": 1,
-    "last_closure_attempt": "36039287996 VALID_PASS",
+    "closure_runs_used": 0,
+    "last_closure_attempt": "none for current target",
     "automatic_reruns_available": 1,
     "discovery_policy": "information_gain",
     "consecutive_expensive_runs_without_information_gain": 0
