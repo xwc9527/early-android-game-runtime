@@ -673,14 +673,33 @@
       "source_repo": "platform/dalvik",
       "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
       "source_file_sha256": {
-        "vm/Exception.cpp": "dc5cc67916f941987f92915d329e50b8195aacb278172c2c44194de1dfd3b4c8"
+        "vm/Exception.cpp": "dc5cc67916f941987f92915d329e50b8195aacb278172c2c44194de1dfd3b4c8",
+        "vm/alloc/Heap.cpp": "304b39f9cc522367f6c53f4ddcff78f372b7a161dc5231c260c1b0c5dec80297",
+        "vm/alloc/Alloc.cpp": "70bb6375a088dab380c31e5ab9959461f1c841f88c5ef163caacd1b26f7da02f",
+        "vm/alloc/Visit.cpp": "fbdcfeeb19903107c3fb3ad6aae213d1c75d1db25aa23f7a66342148d63444f9",
+        "vm/Init.cpp": "e82787184690cb66a1c26707e802ad5b07e772bb5ef332ab1ff6b2b344b1c6f5",
+        "vm/Exception.h": "0b72f4b67252f30d132af044c8dfb3c55b61ff476a33bf6b20a143f2bb0b8084"
       },
       "required_symbols": [
-        "dvmThrowOutOfMemoryError"
+        "dvmThrowOutOfMemoryError",
+        "dvmThrowException",
+        "dvmThrowChainedException",
+        "throwOOME",
+        "dvmSetException",
+        "outOfMemoryObj",
+        "dvmCreateStockExceptions",
+        "createStockException",
+        "dvmVisitRoots"
+      ],
+      "internal_deps": [
+        "normal OOME construction when thread is rooted",
+        "stock exception initialization after Java constructors become available",
+        "preallocated OOME VM-internal GC root",
+        "preallocated OOME fallback on recursive allocation failure"
       ],
       "blocking_edges": [
-        "exception class creation and pending-exception source closure",
-        "AGR preallocated OOME contract review"
+        "exception creation and thread-list/recursion state source closure",
+        "AGR pending-exception and preallocated OOME contract review"
       ],
       "status": "SOURCE_LOCATED",
       "closure_reviewed": false,

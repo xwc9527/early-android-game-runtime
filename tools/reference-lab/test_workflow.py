@@ -77,6 +77,9 @@ class WorkflowTest(unittest.TestCase):
         self.assertEqual(sum(item["semantic_cluster"] == "Framework.ZygotePreload" for item in edge), 1)
         for probe in corpus:
             trace = json.loads((ROOT / probe["trace"]).read_text())
+            clean = json.loads((ROOT / probe["clean"]).read_text())
+            self.assertEqual(clean["vm_config"]["dalvik.vm.dexopt-flags"], "")
+            self.assertEqual(trace["vm_config"]["dalvik.vm.dexopt-flags"], "")
             self.assertEqual(trace["zygote_preload"]["class_state"], "PRELOADED_IN_ZYGOTE")
             self.assertEqual(trace["zygote_preload"]["configured_classes_sha256"], expected)
             self.assertNotIn("java.lang.Integer", trace["zygote_preload"]["failed_classes"])
