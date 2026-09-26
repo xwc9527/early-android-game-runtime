@@ -261,7 +261,7 @@
         "vm/Sync.cpp": "8b100ff9e5037fcc8c7bfbbc152a924b31e22e925b03847765d007db42f91b5d"
       },
       "required_symbols": ["dvmObjectWait", "dvmObjectNotifyAll"],
-      "cross_cluster_deps": ["thread wait state and suspension coordination"],
+      "cross_cluster_deps": ["thread wait state and suspension coordination", "Bionic pthread condition and mutex semantics"],
       "cross_cluster_source_edges": [
         {
           "edge": "thread wait state and suspension coordination",
@@ -271,6 +271,16 @@
           "source_file": "vm/Thread.cpp",
           "source_symbol": "dvmChangeStatus",
           "source_sha256": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
+          "status": "SOURCE_LOCATED"
+        },
+        {
+          "edge": "Bionic pthread condition and mutex semantics",
+          "semantic_cluster": "Bionic.PthreadCondition",
+          "source_repo": "platform/bionic",
+          "revision": "081db840befec895fb86e709ae95832ade2d065c",
+          "source_file": "libc/bionic/pthread.c",
+          "source_symbol": "pthread_cond_wait",
+          "source_sha256": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
           "status": "SOURCE_LOCATED"
         }
       ],
@@ -287,6 +297,30 @@
       },
       "required_symbols": ["dvmChangeStatus", "THREAD_WAIT", "THREAD_TIMED_WAIT", "waitCond", "waitMutex"],
       "blocking_edges": ["thread status, suspension and wait condition source closure", "AGR thread state and wake contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "Bionic.PthreadCondition": {
+      "source_repo": "platform/bionic",
+      "revision": "081db840befec895fb86e709ae95832ade2d065c",
+      "source_file_sha256": {
+        "libc/bionic/pthread.c": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
+        "libc/private/bionic_futex.h": "9c48e2c3107f0e6c7ba0d11172b3b5596f44c379aca2ee528767ac1d42b05233",
+        "libc/arch-x86/bionic/futex_x86.S": "965782747536d6947f14bc616c977aff443716ee483ffb12fd410cfd4aa72c08",
+        "libc/arch-arm/bionic/futex_arm.S": "b39152b27229a158b0811b89136acda35314de090b1977991d4305a322d55913"
+      },
+      "required_symbols": ["pthread_cond_wait", "pthread_cond_signal", "pthread_cond_broadcast", "pthread_mutex_lock", "pthread_mutex_unlock", "__futex_wait_ex", "__futex_wake_ex", "__futex_syscall3", "__NR_futex"],
+      "excluded_deps": ["Linux futex wait/wake boundary"],
+      "boundary_contracts": {
+        "Linux futex wait/wake boundary": {
+          "request_schema": "guest futex word address, expected value, private/shared operation, optional relative timeout and wake count",
+          "response_schema": "wake/timeout/interruption result with Linux errno semantics",
+          "callbacks": [],
+          "lifecycle": "Bionic condition wait unlocks and reacquires its mutex; signal/broadcast changes condition counter before futex wake",
+          "error_semantics": "ETIMEDOUT is returned to pthread caller; futex compare mismatch and interruption are handled by Bionic condition code"
+        }
+      },
+      "blocking_edges": ["Bionic condition/mutex state and error-path source closure", "AGR guest futex and pthread condition contract review"],
       "status": "SOURCE_LOCATED",
       "closure_reviewed": false
     },
