@@ -69,7 +69,8 @@ Run the pipeline with:
 
 For a cross-repository source edge, also pass
 `--external-checkout platform/dalvik=/path/to/pinned/dalvik`. The verifier
-checks the external Git revision and each referenced file digest.
+checks the external Git revision, each referenced file digest, and that every
+edge's source symbol occurs in the exact file claimed by that edge.
 
 The TRACE run manifest must identify an instrumented dependency-mapper build
 of android-4.4.4_r2, its image SHA-256, the APK SHA-256, scenario, and

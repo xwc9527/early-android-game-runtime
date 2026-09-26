@@ -97,8 +97,13 @@ def verify(index, checkout, external_checkouts=None):
             target = (external / edge["source_file"]).resolve()
             if not target.is_relative_to(external) or not target.is_file():
                 raise ValueError("external source file escapes or is missing")
-            if hashlib.sha256(target.read_bytes()).hexdigest() != edge["source_sha256"]:
+            content = target.read_bytes()
+            if hashlib.sha256(content).hexdigest() != edge["source_sha256"]:
                 raise ValueError("external source file digest differs")
+            symbol = edge.get("source_symbol")
+            if not isinstance(symbol, str) or not symbol or symbol not in content.decode(
+                    "utf-8", errors="replace"):
+                raise ValueError("external edge symbol is absent from its source file")
             owner = (index.get("external_cluster_sources") or {}).get(edge["semantic_cluster"])
             if (not owner or owner.get("source_repo") != repo or
                     owner.get("revision") != edge["revision"] or

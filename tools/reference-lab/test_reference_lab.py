@@ -3,6 +3,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from lab import assert_matched_reference, assert_not_oracle, describe, ensure_layout
 from mapper import build_book, write_book
@@ -10,13 +11,34 @@ from source_closure import (close_entry, external_edge_closed, external_owner_di
                             source_derived_clusters)
 from source_index import build_index
 from workflow import validate_source_manifests
-from verify_source_index import verify_reference_evidence
+from verify_source_index import verify, verify_reference_evidence
 
 EVIDENCE = Path(__file__).with_name("clean_boot_evidence.json")
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class ReferenceLabTest(unittest.TestCase):
+    def test_source_edge_symbol_must_be_in_claimed_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "Root.java").write_text("root", encoding="utf-8")
+            (root / "a.cpp").write_text("void SymbolA() {}", encoding="utf-8")
+            (root / "b.cpp").write_text("void SymbolB() {}", encoding="utf-8")
+            digest = lambda name: hashlib.sha256((root / name).read_bytes()).hexdigest()
+            edge = {"semantic_cluster": "Owner", "source_repo": "repo", "revision": "a" * 40,
+                    "source_file": "a.cpp", "source_sha256": digest("a.cpp"),
+                    "source_symbol": "SymbolB", "status": "SOURCE_LOCATED"}
+            index = {"revision": "a" * 40, "source_file_sha256": {"Root.java": digest("Root.java")},
+                     "entries": {"root": {"cross_cluster_source_edges": [edge]}},
+                     "external_cluster_sources": {"Owner": {
+                         "source_repo": "repo", "revision": "a" * 40,
+                         "source_file_sha256": {"a.cpp": digest("a.cpp"),
+                                                "b.cpp": digest("b.cpp")},
+                         "required_symbols": ["SymbolA", "SymbolB"]}}}
+            with patch("verify_source_index.subprocess.check_output", return_value="a" * 40 + "\n"):
+                with self.assertRaisesRegex(ValueError, "absent from its source file"):
+                    verify(index, root, {"repo": root})
+
     def test_reference_evidence_requires_matching_digest(self):
         path = "tools/reference-lab/evidence/paired-core-odex-preverification.json"
         record = {"reference_evidence": path,
