@@ -8,6 +8,23 @@ import os
 import subprocess
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def verify_reference_evidence(record):
+    relative = record.get("reference_evidence")
+    if relative is None:
+        return False
+    expected = record.get("reference_evidence_sha256")
+    if not isinstance(relative, str) or not isinstance(expected, str):
+        raise ValueError("reference evidence lacks a pinned digest")
+    target = (ROOT / relative).resolve()
+    if not target.is_relative_to(ROOT) or not target.is_file():
+        raise ValueError("reference evidence escapes or is missing")
+    if hashlib.sha256(target.read_bytes()).hexdigest() != expected:
+        raise ValueError("reference evidence digest differs")
+    return True
+
 
 def verify(index, checkout, external_checkouts=None):
     checkout = checkout.resolve()
@@ -34,7 +51,9 @@ def verify(index, checkout, external_checkouts=None):
             raise ValueError("source file digest differs: " + relative)
     external_count = 0
     external_file_count = 0
+    evidence_count = 0
     for name, owner in (index.get("external_cluster_sources") or {}).items():
+        evidence_count += verify_reference_evidence(owner)
         repo = owner.get("source_repo")
         if repo not in external_checkouts:
             raise ValueError("external source checkout is missing: " + str(repo))
@@ -65,6 +84,7 @@ def verify(index, checkout, external_checkouts=None):
         (index.get("external_cluster_sources") or {}).values())
     for entry in sources_with_edges:
         for edge in entry.get("cross_cluster_source_edges") or []:
+            evidence_count += verify_reference_evidence(edge)
             repo = edge["source_repo"]
             if repo not in external_checkouts:
                 raise ValueError("external source checkout is missing: " + repo)
@@ -90,7 +110,8 @@ def verify(index, checkout, external_checkouts=None):
             "revision": revision, "verified_files": len(hashes),
             "verified_external_clusters": len(index.get("external_cluster_sources") or {}),
             "verified_external_files": external_file_count,
-            "verified_external_edges": external_count}
+            "verified_external_edges": external_count,
+            "verified_reference_evidence": evidence_count}
 
 
 def main():

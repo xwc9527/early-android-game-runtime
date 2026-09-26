@@ -89,6 +89,16 @@ class WorkflowTest(unittest.TestCase):
     def test_integer_preload_is_inherited_in_each_qualified_trace(self):
         evidence = ROOT / "tools/reference-lab/evidence"
         corpus = json.loads((evidence / "four-game-corpus-manifest.json").read_text())
+        boot = json.loads((evidence / "paired-core-odex-preverification.json").read_text())
+        self.assertEqual(boot["clean"]["embedded_dex_sha256"],
+                         boot["trace"]["embedded_dex_sha256"])
+        self.assertEqual(boot["clean"]["class_access_flags"],
+                         boot["trace"]["class_access_flags"])
+        self.assertEqual(set(boot["clean"]["class_access_flags"]),
+                         {"Ljava/lang/Integer;", "Ljava/lang/Number;",
+                          "Ljava/lang/Comparable;"})
+        self.assertTrue(all(flags & 0x30000 == 0x30000
+                            for flags in boot["clean"]["class_access_flags"].values()))
         index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
         preload = index["external_cluster_sources"]["Framework.ZygotePreload"]
         expected = preload["source_file_sha256"]["preloaded-classes"]

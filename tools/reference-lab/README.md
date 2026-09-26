@@ -132,6 +132,10 @@ reach `SOURCE_CLOSED`.
 `closure_work_queue` enumerates every blocking edge on observed entries and
 reachable source-derived owners, preserving origin dependency IDs and source
 paths. Validation rejects a queue that omits or invents a denied gate.
+For the Integer boot path, `inspect_boot_odex.py --clean CLEAN_CORE_ODEX
+--trace TRACE_CORE_ODEX --out OUTPUT_JSON` verifies the paired embedded DEX
+hash and the `VERIFIED | OPTIMIZED` flags on Integer, Number, and Comparable.
+The checked output is `evidence/paired-core-odex-preverification.json`.
 
 The current implementation does not provide a complete Android TRACE event
 producer, Framework source closure, cluster ports, or iOS differential. Its

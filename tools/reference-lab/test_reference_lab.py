@@ -1,3 +1,4 @@
+import hashlib
 import json
 import tempfile
 import unittest
@@ -9,11 +10,22 @@ from source_closure import (close_entry, external_edge_closed, external_owner_di
                             source_derived_clusters)
 from source_index import build_index
 from workflow import validate_source_manifests
+from verify_source_index import verify_reference_evidence
 
 EVIDENCE = Path(__file__).with_name("clean_boot_evidence.json")
+ROOT = Path(__file__).resolve().parents[2]
 
 
 class ReferenceLabTest(unittest.TestCase):
+    def test_reference_evidence_requires_matching_digest(self):
+        path = "tools/reference-lab/evidence/paired-core-odex-preverification.json"
+        record = {"reference_evidence": path,
+                  "reference_evidence_sha256": hashlib.sha256((ROOT / path).read_bytes()).hexdigest()}
+        self.assertTrue(verify_reference_evidence(record))
+        record["reference_evidence_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "digest differs"):
+            verify_reference_evidence(record)
+
     def test_trace_is_not_oracle(self):
         trace = describe("TRACE")
         trace["variant"] = "TRACE"

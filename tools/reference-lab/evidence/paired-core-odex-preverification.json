@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "baseline": "android-4.4.4_r2",
+  "clean": {
+    "odex_sha256": "230303a2c862d502314a821e809182cd1d2f52a376bdd72181d469dd24a0828f",
+    "embedded_dex_sha256": "be651742e6dc94d90200b079990405f4fb1e0a786ed37e05ca0e78ce54965242",
+    "embedded_dex_offset": 40,
+    "embedded_dex_length": 2830568,
+    "class_access_flags": {
+      "Ljava/lang/Comparable;": 198145,
+      "Ljava/lang/Integer;": 196625,
+      "Ljava/lang/Number;": 197633
+    }
+  },
+  "trace": {
+    "odex_sha256": "23ada8a1ac16ce7b4e2e99c9e7b1c3e026411a35f2e1b094f4748a886dfdd81e",
+    "embedded_dex_sha256": "be651742e6dc94d90200b079990405f4fb1e0a786ed37e05ca0e78ce54965242",
+    "embedded_dex_offset": 40,
+    "embedded_dex_length": 2830568,
+    "class_access_flags": {
+      "Ljava/lang/Comparable;": 198145,
+      "Ljava/lang/Integer;": 196625,
+      "Ljava/lang/Number;": 197633
+    }
+  }
+}
