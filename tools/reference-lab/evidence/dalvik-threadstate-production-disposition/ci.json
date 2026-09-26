@@ -1,0 +1,12 @@
+{
+  "tested_commit": "cf288b97cc4bb19ed8db44a38199af29386013c3",
+  "tested_tree": "1dbf505edb53c6814323acfe24b16e2f03bc2a09",
+  "governance_run": "36267526200",
+  "governance_job": "108474933418",
+  "governance_conclusion": "success",
+  "also_success": [
+    "36267526186 Phase 3A0 classpath",
+    "36267526181 Phase 3A JNI references",
+    "36267526196 Phase 3 protected regression"
+  ]
+}
