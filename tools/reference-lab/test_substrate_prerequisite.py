@@ -839,12 +839,48 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         self.assertEqual(owner["closure_evidence"]["unresolved_dependency_edges"], [])
         self.assertEqual(owner["closure_evidence"]["source_file_sha256"], owner["source_file_sha256"])
         pthread = index["external_cluster_sources"]["Bionic.PthreadCondition"]
-        self.assertEqual(pthread["status"], "SOURCE_LOCATED")
-        self.assertIs(pthread["closure_reviewed"], False)
-        clock_edge = pthread["cross_cluster_source_edges"][0]
-        self.assertEqual(clock_edge["edge"], "clock_gettime for absolute condition timeouts")
+        clock_edge = next(edge for edge in pthread["cross_cluster_source_edges"]
+                          if edge["edge"] == "clock_gettime for absolute condition timeouts")
         self.assertEqual(clock_edge["status"], "SOURCE_CLOSED")
         self.assertNotIn("prerequisite_edges", pthread)
+
+    def test_pthread_condition_source_is_closed_without_a_production_relationship(self):
+        index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
+        owner = index["external_cluster_sources"]["Bionic.PthreadCondition"]
+        self.assertEqual(owner["status"], "SOURCE_CLOSED")
+        self.assertIs(owner["closure_reviewed"], True)
+        self.assertEqual(owner["blocking_edges"], [])
+        self.assertNotIn("PREREQUISITE_CLOSED", json.dumps(owner))
+        self.assertNotIn("prerequisite_edges", owner)
+        self.assertEqual(set(owner["cross_cluster_deps"]), {
+            "clock_gettime for absolute condition timeouts",
+            "clock_gettime for monotonic mutex lock timeouts"})
+        for edge in owner["cross_cluster_source_edges"]:
+            self.assertEqual(edge["semantic_cluster"], "Bionic.ClockGettime")
+            self.assertEqual(edge["source_symbol"], "clock_gettime")
+            self.assertEqual(edge["status"], "SOURCE_CLOSED")
+            self.assertEqual(edge["source_sha256"],
+                             "731838cb7c57328dec3443e1d13f8fd6f243096b83c934d1bcafbcb02fae3051")
+        contract = owner["boundary_contracts"]["Linux futex wait/wake boundary"]
+        self.assertEqual(set(contract), {"request_schema", "response_schema", "callbacks", "lifecycle", "error_semantics"})
+        self.assertEqual(contract["callbacks"], [])
+        self.assertNotIn("ETIMEDOUT", contract["error_semantics"])
+        self.assertNotIn("mutex", contract["lifecycle"])
+        self.assertEqual(owner["closure_evidence"]["unresolved_dependency_edges"], [])
+        self.assertEqual(owner["closure_evidence"]["source_file_sha256"], owner["source_file_sha256"])
+        thread = index["external_cluster_sources"]["Dalvik.ThreadState"]
+        self.assertEqual(thread["status"], "SOURCE_LOCATED")
+        self.assertIs(thread["closure_reviewed"], False)
+        self.assertEqual(thread["prerequisite_edges"][0]["relationship"], "UNRESOLVED")
+        self.assertEqual(thread["prerequisite_edges"][0]["owner_source_status"], "SOURCE_CLOSED")
+        self.assertEqual(thread["cross_cluster_source_edges"][0]["status"], "SOURCE_CLOSED")
+        monitor = index["external_cluster_sources"]["Dalvik.Monitor"]
+        self.assertEqual(monitor["status"], "SOURCE_LOCATED")
+        self.assertIs(monitor["closure_reviewed"], False)
+        self.assertNotIn("prerequisite_edges", monitor)
+        monitor_edge = next(edge for edge in monitor["cross_cluster_source_edges"]
+                            if edge["edge"] == "Bionic pthread condition and mutex semantics")
+        self.assertEqual(monitor_edge["status"], "SOURCE_CLOSED")
 
 
 if __name__ == "__main__":

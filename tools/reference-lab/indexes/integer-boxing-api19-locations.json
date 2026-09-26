@@ -305,7 +305,7 @@
           "source_file": "libc/bionic/pthread.c",
           "source_symbol": "pthread_cond_wait",
           "source_sha256": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
-          "status": "SOURCE_LOCATED"
+          "status": "SOURCE_CLOSED"
         }
       ],
       "blocking_edges": ["monitor ownership and wait/notify source closure", "AGR class-init synchronization contract review"],
@@ -331,7 +331,7 @@
           "source_file": "libc/bionic/pthread.c",
           "source_symbol": "pthread_cond_wait",
           "source_sha256": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
-          "status": "SOURCE_LOCATED"
+          "status": "SOURCE_CLOSED"
         }
       ],
       "prerequisite_edges": [
@@ -339,7 +339,7 @@
           "edge": "self-suspend on the thread suspend-count condition",
           "semantic_cluster": "Bionic.PthreadCondition",
           "relationship": "UNRESOLVED",
-          "owner_source_status": "SOURCE_LOCATED",
+          "owner_source_status": "SOURCE_CLOSED",
           "source_repo": "platform/bionic",
           "revision": "081db840befec895fb86e709ae95832ade2d065c",
           "source_file": "libc/bionic/pthread.c",
@@ -367,13 +367,28 @@
         "libc/bionic/pthread.c": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
         "libc/private/bionic_futex.h": "9c48e2c3107f0e6c7ba0d11172b3b5596f44c379aca2ee528767ac1d42b05233",
         "libc/arch-x86/bionic/futex_x86.S": "965782747536d6947f14bc616c977aff443716ee483ffb12fd410cfd4aa72c08",
-        "libc/arch-arm/bionic/futex_arm.S": "b39152b27229a158b0811b89136acda35314de090b1977991d4305a322d55913"
+        "libc/arch-arm/bionic/futex_arm.S": "b39152b27229a158b0811b89136acda35314de090b1977991d4305a322d55913",
+        "libc/include/pthread.h": "f0925006ea0be99f4aad7ecdef64677a11b003251d1145dc53bcc6cb08275064",
+        "libc/kernel/common/linux/futex.h": "1a15b4c9b803415cdf552b7c0cc80cda9fee71f190191675d0739894ccafb68a",
+        "libc/kernel/common/asm-generic/errno.h": "e76b913a6a8b0be93706d310ae6ea69a0c6b63180dd7aabd675ee186ff3cd8bb",
+        "libc/kernel/common/asm-generic/errno-base.h": "f9c7c0ee4cc2ce0722c7efc9ffd6f0a27b48cb7b4d24ffc7e7ea2c5390be272f"
       },
-      "required_symbols": ["pthread_cond_wait", "pthread_cond_signal", "pthread_cond_broadcast", "pthread_mutex_lock", "pthread_mutex_unlock", "__futex_wait_ex", "__futex_wake_ex", "__futex_syscall3", "__NR_futex"],
-      "cross_cluster_deps": ["clock_gettime for absolute condition timeouts"],
+      "required_symbols": ["pthread_cond_init", "pthread_cond_destroy", "pthread_cond_wait", "pthread_cond_timedwait", "pthread_cond_timedwait_monotonic", "pthread_cond_timedwait_monotonic_np", "pthread_cond_timedwait_relative_np", "pthread_cond_timeout_np", "pthread_cond_signal", "pthread_cond_broadcast", "__pthread_cond_pulse", "__pthread_cond_timedwait", "__pthread_cond_timedwait_relative", "__timespec_to_absolute", "pthread_mutex_lock", "pthread_mutex_unlock", "pthread_mutex_lock_timeout_np", "__futex_wait_ex", "__futex_wake_ex", "__futex_syscall3", "__futex_syscall4", "__NR_futex", "COND_SHARED_MASK", "FUTEX_PRIVATE_FLAG", "CLOCK_REALTIME", "CLOCK_MONOTONIC"],
+      "internal_deps": ["pthread_cond_t is one volatile int; bit 0 is COND_SHARED_MASK and the other bits are a counter stepped by 2", "pthread_cond_init stores 0, then sets bit 0 only when the attribute is PTHREAD_PROCESS_SHARED (1); PTHREAD_PROCESS_PRIVATE is 0", "pthread_cond_destroy stores 0xdeadc04d and does not wake waiters; the wait path does not test that sentinel", "pthread_cond_wait calls pthread_cond_timedwait with a NULL abstime, which waits without a timeout", "pthread_cond_timedwait samples CLOCK_REALTIME; pthread_cond_timedwait_monotonic and pthread_cond_timedwait_monotonic_np sample CLOCK_MONOTONIC", "an absolute deadline that is already past returns ETIMEDOUT before the mutex is unlocked", "otherwise __timespec_to_absolute subtracts the sampled clock and borrows one second when tv_nsec is negative, then the relative wait uses that timespec", "pthread_cond_timedwait_relative_np and pthread_cond_timeout_np do not call clock_gettime; timeout_np builds seconds and nanoseconds from the millisecond argument", "__pthread_cond_timedwait_relative samples cond->value, unlocks the mutex, waits, then locks the mutex again and ignores both mutex return values", "only a futex status of -ETIMEDOUT is returned as ETIMEDOUT; every other futex status, including a compare mismatch or an interruption, returns 0", "signal and broadcast share __pthread_cond_pulse; signal passes 1 and broadcast passes INT_MAX", "pulse keeps the shared bit, subtracts 2 from the counter with __bionic_cmpxchg until it succeeds, runs ANDROID_MEMBAR_FULL, then wakes", "a normal mutex uses bits 1-0 for unlocked 0, locked 1, and contended 2; bit 13 is the shared flag; bits 15-14 are the type", "normal unlock decrements and wakes one waiter only from the contended state; the wait comment says a mismatched futex value returns immediately", "__futex_wait_ex and __futex_wake_ex use FUTEX_WAIT or FUTEX_WAKE when pshared is nonzero, and OR FUTEX_PRIVATE_FLAG 128 otherwise", "linux/futex.h defines FUTEX_WAIT as 0 and FUTEX_WAKE as 1 and does not define FUTEX_PRIVATE_FLAG, so the 128 fallback in bionic_futex.h is the value used", "the x86 and ARM stubs return the raw syscall register and do not call __set_errno; ARM __futex_syscall4 branches to __futex_syscall3 with the four arguments already in r0-r3", "pthread_mutex_lock_timeout_np samples CLOCK_MONOTONIC through the same timespec helpers and is not on the condition-wait return path"],
+      "cross_cluster_deps": ["clock_gettime for absolute condition timeouts", "clock_gettime for monotonic mutex lock timeouts"],
       "cross_cluster_source_edges": [
         {
           "edge": "clock_gettime for absolute condition timeouts",
+          "semantic_cluster": "Bionic.ClockGettime",
+          "source_repo": "platform/bionic",
+          "revision": "081db840befec895fb86e709ae95832ade2d065c",
+          "source_file": "libc/arch-x86/syscalls/clock_gettime.S",
+          "source_symbol": "clock_gettime",
+          "source_sha256": "731838cb7c57328dec3443e1d13f8fd6f243096b83c934d1bcafbcb02fae3051",
+          "status": "SOURCE_CLOSED"
+        },
+        {
+          "edge": "clock_gettime for monotonic mutex lock timeouts",
           "semantic_cluster": "Bionic.ClockGettime",
           "source_repo": "platform/bionic",
           "revision": "081db840befec895fb86e709ae95832ade2d065c",
@@ -386,16 +401,32 @@
       "excluded_deps": ["Linux futex wait/wake boundary"],
       "boundary_contracts": {
         "Linux futex wait/wake boundary": {
-          "request_schema": "guest futex word address, expected value, private/shared operation, optional relative timeout and wake count",
-          "response_schema": "wake/timeout/interruption result with Linux errno semantics",
+          "request_schema": "futex word address, FUTEX_WAIT (0) or FUTEX_WAKE (1) with FUTEX_PRIVATE_FLAG (128) when pshared is 0, the expected value or wake count, and for wait a relative timespec pointer or NULL",
+          "response_schema": "raw syscall register value, unchanged by the stub",
           "callbacks": [],
-          "lifecycle": "Bionic condition wait unlocks and reacquires its mutex; signal/broadcast changes condition counter before futex wake",
-          "error_semantics": "ETIMEDOUT is returned to pthread caller; futex compare mismatch and interruption are handled by Bionic condition code"
+          "lifecycle": "one int $0x80 on x86 or one swi #0 on ARM; the stub does not retry",
+          "error_semantics": "a kernel failure remains the negative errno returned by the syscall; the stub does not call __set_errno"
         }
       },
-      "blocking_edges": ["Bionic condition/mutex state and error-path source closure", "AGR guest futex and pthread condition contract review"],
-      "status": "SOURCE_LOCATED",
-      "closure_reviewed": false
+      "blocking_edges": [],
+      "status": "SOURCE_CLOSED",
+      "closure_reviewed": true,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "Condition state, private or shared futex opcode selection, mutex unlock and relock, absolute-to-relative conversion, and the -ETIMEDOUT filter are in pthread.c. The excluded boundary is only the raw futex syscall. clock_gettime for absolute condition timeouts matches the closed Bionic.ClockGettime owner; mutex lock_timeout_np calls the same symbol with CLOCK_MONOTONIC. No other confirmed substrate owner is called. This source record does not review Runtime/Bionic.",
+        "source_file_sha256": {
+          "libc/bionic/pthread.c": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
+          "libc/private/bionic_futex.h": "9c48e2c3107f0e6c7ba0d11172b3b5596f44c379aca2ee528767ac1d42b05233",
+          "libc/arch-x86/bionic/futex_x86.S": "965782747536d6947f14bc616c977aff443716ee483ffb12fd410cfd4aa72c08",
+          "libc/arch-arm/bionic/futex_arm.S": "b39152b27229a158b0811b89136acda35314de090b1977991d4305a322d55913",
+          "libc/include/pthread.h": "f0925006ea0be99f4aad7ecdef64677a11b003251d1145dc53bcc6cb08275064",
+          "libc/kernel/common/linux/futex.h": "1a15b4c9b803415cdf552b7c0cc80cda9fee71f190191675d0739894ccafb68a",
+          "libc/kernel/common/asm-generic/errno.h": "e76b913a6a8b0be93706d310ae6ea69a0c6b63180dd7aabd675ee186ff3cd8bb",
+          "libc/kernel/common/asm-generic/errno-base.h": "f9c7c0ee4cc2ce0722c7efc9ffd6f0a27b48cb7b4d24ffc7e7ea2c5390be272f"
+        },
+        "reviewed_dependency_edges": ["clock_gettime for absolute condition timeouts", "clock_gettime for monotonic mutex lock timeouts", "Linux futex wait/wake boundary"],
+        "unresolved_dependency_edges": []
+      }
     },
     "Bionic.ClockGettime": {
       "source_repo": "platform/bionic",
