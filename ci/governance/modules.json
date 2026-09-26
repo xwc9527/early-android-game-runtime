@@ -42,6 +42,15 @@
       "reopen_reason": null
     },
     {
+      "name": "NativeCoreRuntime",
+      "status": "experimental",
+      "paths": [
+        "Runtime/NativeCore/agr_runtime.c"
+      ],
+      "gate": null,
+      "reopen_reason": null
+    },
+    {
       "name": "APKBootstrap",
       "status": "stable",
       "paths": [

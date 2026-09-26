@@ -809,7 +809,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         self.assertNotIn("waitMutex", owner["required_symbols"])
         self.assertEqual([(edge["semantic_cluster"], edge["source_file"], edge["source_symbol"], edge["relationship"])
                           for edge in owner["prerequisite_edges"]], [
-            ("Bionic.PthreadCondition", "libc/bionic/pthread.c", "pthread_cond_wait", "UNRESOLVED")])
+            ("Bionic.PthreadCondition", "libc/bionic/pthread.c", "pthread_cond_wait", "REOPEN_REQUIRED")])
         binding = resource_index["external_cluster_sources"]["Dalvik.JNINativeBinding"]
         thread_edge = next(edge for edge in binding["prerequisite_edges"]
                            if edge["edge"] == "JNI thread state around RegisterNatives")
@@ -871,7 +871,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         thread = index["external_cluster_sources"]["Dalvik.ThreadState"]
         self.assertEqual(thread["status"], "SOURCE_LOCATED")
         self.assertIs(thread["closure_reviewed"], False)
-        self.assertEqual(thread["prerequisite_edges"][0]["relationship"], "UNRESOLVED")
+        self.assertEqual(thread["prerequisite_edges"][0]["relationship"], "REOPEN_REQUIRED")
         self.assertEqual(thread["prerequisite_edges"][0]["owner_source_status"], "SOURCE_CLOSED")
         self.assertEqual(thread["cross_cluster_source_edges"][0]["status"], "SOURCE_CLOSED")
         monitor = index["external_cluster_sources"]["Dalvik.Monitor"]

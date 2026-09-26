@@ -338,7 +338,7 @@
         {
           "edge": "self-suspend on the thread suspend-count condition",
           "semantic_cluster": "Bionic.PthreadCondition",
-          "relationship": "UNRESOLVED",
+          "relationship": "REOPEN_REQUIRED",
           "owner_source_status": "SOURCE_CLOSED",
           "source_repo": "platform/bionic",
           "revision": "081db840befec895fb86e709ae95832ade2d065c",
