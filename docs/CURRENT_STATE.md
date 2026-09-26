@@ -1,6 +1,6 @@
 # AGR Current State
 
-Updated: 2026-09-25
+Updated: 2026-09-26
 
 ## Current reference-migration work
 
@@ -40,7 +40,7 @@ Formal `main` baseline remains `3e3db84a53ad0957e9217f804b6f718a942b9a11`. This 
 
 ## Current phase
 
-Phase 3, Dalvik semantics, is CLOSED. Subphases 3A0, 3A, 3B, 3C, 3D, and the final JNI gate are CLOSED. Lifecycle of the active target: `CLOSED`.
+The active target is `Dalvik.JNINativeBinding API19 Repair` on `cursor/shared-substrate-prerequisite-da4f`. Its governance lifecycle is `IMPLEMENTED` and it has no closure attempt. Phase 3, including subphases 3A0, 3A, 3B, 3C, 3D, and the final JNI gate, remains a historical CLOSED target.
 
 ## CLOSED modules
 
@@ -56,11 +56,11 @@ Earlier merged Runtime contracts (linker, pthread, EHABI, allocator, APK bootstr
 
 ## Active target
 
-Phase 3 Dalvik semantics closure. It is CLOSED at `851a025a14a75429c975da43853269f9d98ed8ef` / tree `9ece3c2b0f1bea5d8275bde75f13d91b5b3e63d6`. JNI run `36039287996`, classpath `36039288141`, governance `36039288115`, protected regression `36039288207`.
+`Dalvik.JNINativeBinding API19 Repair`. `DalvikJNI` is reopened for this target. Production `dx_jni.c` and `dx_jni.h` are unchanged. The owner source status remains `SOURCE_LOCATED`.
 
 ## Current blocker
 
-None for Phase 3. `API19_REFERENCE_DIFFERENTIAL` was not executed and is not claimed as PASS.
+`Dalvik.JNINativeBinding` source closure is not `SOURCE_CLOSED`. `RegisterNatives` crosses `Dalvik.ThreadState`, `Dalvik.ClassInitialization`, `Dalvik.ObjectAllocation`, `Dalvik.MethodInvocation`, and `Dalvik.Monitor`, and those relationships are `UNRESOLVED`. The CLEAN differential result `DIVERGED` is not a closure PASS. Do not repair production until that source closure passes.
 
 ## Next architecture milestone
 

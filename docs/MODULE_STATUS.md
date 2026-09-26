@@ -22,7 +22,7 @@ Status controls modification permission. `stable` and `CLOSED` mean the current 
 | Audio/OpenSL ES | not started | none | — | — | the migration sequence reaches an excluded AudioFlinger or device boundary |
 | Product UI/library | not started | product | — | — | a product phase is explicitly opened |
 
-`DalvikJNI` in `ci/governance/modules.json` is the machine-registry projection of the existing DALVIK_VM JNI CLOSED surface. It gives stable protection to `Runtime/DexLoom/VM/dx_jni.c` and `Runtime/DexLoom/Include/dx_jni.h`. The CLOSED rows above stay CLOSED. This entry is not a new closure.
+`DalvikJNI` in `ci/governance/modules.json` is the machine-registry projection of the existing DALVIK_VM JNI CLOSED surface. It gives stable protection to `Runtime/DexLoom/VM/dx_jni.c` and `Runtime/DexLoom/Include/dx_jni.h`. The CLOSED rows above stay CLOSED. This entry is not a new closure. `ci/governance/reopens.json` reopens `DalvikJNI` for target `Dalvik.JNINativeBinding API19 Repair`. The module status stays `stable`. The reopen does not change `dx_jni.c` or `dx_jni.h` and does not mark that owner `SOURCE_CLOSED`.
 
 Stable modules may be read during Discovery. A production change carried into closure still needs an evidence-backed reopen in `ci/governance/reopens.json`. Historical Frozen Bubble, traversal, physical-first-frame, and DEX-parser reopen records are in `ci/governance/history/reopens-pre-reference.json` and are not reopen authority.
 

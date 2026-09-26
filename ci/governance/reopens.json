@@ -12,6 +12,12 @@
       "target": "Phase 3 Dalvik semantics closure",
       "reason": "game_dex_runner.c still publishes references through the VM indirect-ref tables that Phase 3D marks as roots.",
       "evidence": "Phase 3A VALID_PASS a2e07eb37f645f39c9a968b78808e88cdc25c6e3. Class mirrors use the VM global ref table."
+    },
+    {
+      "module": "DalvikJNI",
+      "target": "Dalvik.JNINativeBinding API19 Repair",
+      "reason": "The existing DALVIK_VM JNI production surface diverges from pinned API19 RegisterNatives. This reopen names DalvikJNI for that repair target. It does not change dx_jni.c or dx_jni.h.",
+      "evidence": "CLEAN image 2d4f0d0a7a193b829349c0f9247b670c600ee2690eeb1f8949fc5794b2639645. Dalvik 36e356c96640775f0a3f167bd2426ea0f0093b8b vm/Jni.cpp RegisterNatives / dvmRegisterJNIMethod. AGR Runtime/DexLoom/VM/dx_jni.c jni_RegisterNatives. Diverged cases missing_signature, non_native, null_fn, fast_static. DIVERGED is not a closure PASS."
     }
   ]
 }

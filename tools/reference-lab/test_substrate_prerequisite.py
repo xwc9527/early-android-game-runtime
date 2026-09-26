@@ -746,6 +746,35 @@ class SubstratePrerequisiteTest(unittest.TestCase):
             if item.get("relationship") == "REOPEN_REQUIRED"], [
             ("Dalvik.JNINativeBinding", "Dalvik RegisterNatives method binding")])
 
+    def test_jni_native_binding_source_closure_stays_located(self):
+        index = json.loads((ROOT / "tools/reference-lab/indexes/shared-resources-api19-locations.json").read_text())
+        owner = index["external_cluster_sources"]["Dalvik.JNINativeBinding"]
+        self.assertEqual(owner["status"], "SOURCE_LOCATED")
+        self.assertIs(owner["closure_reviewed"], False)
+        self.assertNotIn("PREREQUISITE_CLOSED", json.dumps(owner))
+        crossings = [(edge["semantic_cluster"], edge["source_file"], edge["source_symbol"],
+                      edge["relationship"], edge["owner_source_status"])
+                     for edge in owner["prerequisite_edges"]]
+        self.assertEqual(crossings, [
+            ("Dalvik.ThreadState", "vm/Thread.cpp", "dvmChangeStatus",
+             "UNRESOLVED", "SOURCE_LOCATED"),
+            ("Dalvik.ClassInitialization", "vm/oo/Class.cpp", "dvmInitClass",
+             "UNRESOLVED", "SOURCE_LOCATED"),
+            ("Dalvik.ObjectAllocation", "vm/alloc/Alloc.cpp", "dvmAllocObject",
+             "UNRESOLVED", "SOURCE_LOCATED"),
+            ("Dalvik.MethodInvocation", "vm/interp/Stack.cpp", "dvmCallMethod",
+             "UNRESOLVED", "SOURCE_LOCATED"),
+            ("Dalvik.Monitor", "vm/Sync.cpp", "dvmLockObject",
+             "UNRESOLVED", "SOURCE_LOCATED")])
+        self.assertEqual(owner["source_file_sha256"]["vm/Jni.cpp"],
+                         "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed")
+        self.assertIn("method->fastJni is written and has no reader in the pinned Dalvik or libcore trees",
+                      owner["internal_deps"])
+        self.assertIn("platform invoke always passes JNIEnv* and jclass or this", owner["internal_deps"])
+        help_edge = index["external_cluster_sources"]["AndroidNative.JNIHelp"]["prerequisite_edges"][0]
+        self.assertEqual(help_edge["relationship"], "REOPEN_REQUIRED")
+        self.assertEqual(help_edge["owner_source_status"], "SOURCE_LOCATED")
+
 
 if __name__ == "__main__":
     unittest.main()
