@@ -222,6 +222,14 @@ def validate_source_manifests(document):
     origins = {item["dependency_id"]: item
                for item in document.get("manifests", [])}
     derived = document.get("source_derived_clusters", {})
+    required_derived = {edge.get("semantic_cluster")
+                        for item in document.get("manifests", [])
+                        for edge in (item.get("cross_cluster_source_edges") or [])}
+    required_derived.update(edge.get("semantic_cluster")
+                            for item in derived.values()
+                            for edge in (item.get("cross_cluster_source_edges") or []))
+    if not required_derived.issubset(derived):
+        raise ValueError("source-derived manifest omits a pinned source edge")
     for name, cluster in derived.items():
         if (cluster.get("semantic_cluster") != name or
                 cluster.get("provenance") != "SOURCE_DERIVED" or

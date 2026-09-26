@@ -50,6 +50,10 @@ class WorkflowTest(unittest.TestCase):
         self.assertTrue(all(item["origin_dependency_ids"] and item["source_paths"]
                             for item in derived.values()))
         forged = json.loads(json.dumps(cluster))
+        forged.pop("source_derived_clusters")
+        with self.assertRaisesRegex(ValueError, "omits a pinned source edge"):
+            validate_source_manifests(forged)
+        forged = json.loads(json.dumps(cluster))
         forged["source_derived_clusters"]["Dalvik.StaticFieldArrayRoots"]["source_paths"] = [
             "Unrelated.method -> Dalvik.StaticFieldArrayRoots"]
         with self.assertRaisesRegex(ValueError, "observed parent"):

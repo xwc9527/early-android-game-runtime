@@ -119,6 +119,8 @@ an excluded platform boundary with its observable contract.
 recursively from observed Migration Book entries. Each derived owner retains
 its original observed dependency ID and full source path; it is explicitly
 `SOURCE_DERIVED`, never a new TRACE observation or migration authorization.
+Validation rejects a missing derived owner or a path whose adjacent edge lacks
+the pinned repository, revision, file hash, and symbol.
 An external `SOURCE_CLOSED` edge requires a separately reviewed owner record
 at the same revision and file hash, with its own nested edges and boundary
 contracts resolved. The closed owner's canonical digest must also match the

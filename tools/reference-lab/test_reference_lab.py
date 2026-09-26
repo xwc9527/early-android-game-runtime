@@ -189,7 +189,8 @@ class ReferenceLabTest(unittest.TestCase):
         pinned["closure_evidence"]["edge_reviews"]["androidfw Asset"]["source_manifest_sha256"] = external_owner_digest(external_owner)
         complete = close_entry(entry, index)
         self.assertEqual(complete["status"], "SOURCE_CLOSED")
-        validate_source_manifests({"schema_version": 1, "manifests": [complete]})
+        validate_source_manifests({"schema_version": 1, "manifests": [complete],
+                                   "source_derived_clusters": source_derived_clusters([complete], index)})
         pinned["blocking_edges"] = ["unresolved host boundary"]
         self.assertEqual(close_entry(entry, index)["status"], "SOURCE_LOCATED")
         pinned.pop("blocking_edges")
