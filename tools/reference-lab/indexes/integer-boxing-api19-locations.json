@@ -310,6 +310,19 @@
         "libc/arch-arm/bionic/futex_arm.S": "b39152b27229a158b0811b89136acda35314de090b1977991d4305a322d55913"
       },
       "required_symbols": ["pthread_cond_wait", "pthread_cond_signal", "pthread_cond_broadcast", "pthread_mutex_lock", "pthread_mutex_unlock", "__futex_wait_ex", "__futex_wake_ex", "__futex_syscall3", "__NR_futex"],
+      "cross_cluster_deps": ["clock_gettime for absolute condition timeouts"],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "clock_gettime for absolute condition timeouts",
+          "semantic_cluster": "Bionic.ClockGettime",
+          "source_repo": "platform/bionic",
+          "revision": "081db840befec895fb86e709ae95832ade2d065c",
+          "source_file": "libc/arch-x86/syscalls/clock_gettime.S",
+          "source_symbol": "clock_gettime",
+          "source_sha256": "731838cb7c57328dec3443e1d13f8fd6f243096b83c934d1bcafbcb02fae3051",
+          "status": "SOURCE_LOCATED"
+        }
+      ],
       "excluded_deps": ["Linux futex wait/wake boundary"],
       "boundary_contracts": {
         "Linux futex wait/wake boundary": {
@@ -321,6 +334,28 @@
         }
       },
       "blocking_edges": ["Bionic condition/mutex state and error-path source closure", "AGR guest futex and pthread condition contract review"],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false
+    },
+    "Bionic.ClockGettime": {
+      "source_repo": "platform/bionic",
+      "revision": "081db840befec895fb86e709ae95832ade2d065c",
+      "source_file_sha256": {
+        "libc/arch-x86/syscalls/clock_gettime.S": "731838cb7c57328dec3443e1d13f8fd6f243096b83c934d1bcafbcb02fae3051",
+        "libc/arch-arm/syscalls/clock_gettime.S": "8655a9bb334957a2f2b21168cc39a660e218e18655b9bd9e32e10e504f8e5215"
+      },
+      "required_symbols": ["clock_gettime", "__NR_clock_gettime", "__set_errno"],
+      "excluded_deps": ["Linux clock_gettime kernel boundary"],
+      "boundary_contracts": {
+        "Linux clock_gettime kernel boundary": {
+          "request_schema": "clock id including CLOCK_REALTIME or CLOCK_MONOTONIC and guest timespec output address",
+          "response_schema": "guest timespec seconds/nanoseconds or syscall failure",
+          "callbacks": [],
+          "lifecycle": "sample clock before translating absolute pthread condition timeout",
+          "error_semantics": "Bionic syscall wrapper maps negative kernel errno through __set_errno and returns -1"
+        }
+      },
+      "blocking_edges": ["Bionic clock id, timespec and errno source closure", "AGR host clock conversion contract review"],
       "status": "SOURCE_LOCATED",
       "closure_reviewed": false
     },

@@ -42,7 +42,7 @@ class WorkflowTest(unittest.TestCase):
         self.assertTrue(external_edge_closed(root_edge, index))
         self.assertFalse(cluster["cluster_source_manifests"]["libcore.IntegerBoxing"]["migration_authorized"])
         derived = cluster["source_derived_clusters"]
-        self.assertEqual(len(derived), 13)
+        self.assertEqual(len(derived), 14)
         self.assertNotIn("Dalvik.OOMException", derived)
         self.assertEqual(derived["Libcore.BootClassLoading"]["status"], "SOURCE_LOCATED")
         self.assertEqual(derived["Dalvik.BootClassResolution"]["status"], "SOURCE_LOCATED")
@@ -59,6 +59,8 @@ class WorkflowTest(unittest.TestCase):
                             for path in derived["Bionic.PthreadCondition"]["source_paths"]))
         self.assertIn("Linux futex wait/wake boundary",
                       derived["Bionic.PthreadCondition"]["boundary_contracts"])
+        self.assertTrue(any("Bionic.PthreadCondition -> Bionic.ClockGettime" in path
+                            for path in derived["Bionic.ClockGettime"]["source_paths"]))
         self.assertEqual(derived["Dalvik.StaticFieldArrayRoots"]["status"], "SOURCE_CLOSED")
         self.assertEqual(derived["Framework.ZygoteVMOptions"]["status"], "SOURCE_CLOSED")
         self.assertEqual(derived["AndroidNative.InitZygote"]["status"], "SOURCE_CLOSED")

@@ -521,6 +521,50 @@
       ],
       "cycle_paths": []
     },
+    "Bionic.ClockGettime": {
+      "source_repo": "platform/bionic",
+      "revision": "081db840befec895fb86e709ae95832ade2d065c",
+      "source_file_sha256": {
+        "libc/arch-x86/syscalls/clock_gettime.S": "731838cb7c57328dec3443e1d13f8fd6f243096b83c934d1bcafbcb02fae3051",
+        "libc/arch-arm/syscalls/clock_gettime.S": "8655a9bb334957a2f2b21168cc39a660e218e18655b9bd9e32e10e504f8e5215"
+      },
+      "required_symbols": [
+        "clock_gettime",
+        "__NR_clock_gettime",
+        "__set_errno"
+      ],
+      "excluded_deps": [
+        "Linux clock_gettime kernel boundary"
+      ],
+      "boundary_contracts": {
+        "Linux clock_gettime kernel boundary": {
+          "request_schema": "clock id including CLOCK_REALTIME or CLOCK_MONOTONIC and guest timespec output address",
+          "response_schema": "guest timespec seconds/nanoseconds or syscall failure",
+          "callbacks": [],
+          "lifecycle": "sample clock before translating absolute pthread condition timeout",
+          "error_semantics": "Bionic syscall wrapper maps negative kernel errno through __set_errno and returns -1"
+        }
+      },
+      "blocking_edges": [
+        "Bionic clock id, timespec and errno source closure",
+        "AGR host clock conversion contract review"
+      ],
+      "status": "SOURCE_LOCATED",
+      "closure_reviewed": false,
+      "semantic_cluster": "Bionic.ClockGettime",
+      "provenance": "SOURCE_DERIVED",
+      "migration_authorized": false,
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.Monitor -> Bionic.PthreadCondition -> Bionic.ClockGettime",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization -> Dalvik.Monitor -> Bionic.PthreadCondition -> Bionic.ClockGettime",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.Monitor -> Bionic.PthreadCondition -> Bionic.ClockGettime",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Libcore.BootClassLoading -> Dalvik.BootClassResolution -> Dalvik.ClassInitialization -> Dalvik.Monitor -> Bionic.PthreadCondition -> Bionic.ClockGettime"
+      ],
+      "cycle_paths": []
+    },
     "Bionic.PthreadCondition": {
       "source_repo": "platform/bionic",
       "revision": "081db840befec895fb86e709ae95832ade2d065c",
@@ -540,6 +584,21 @@
         "__futex_wake_ex",
         "__futex_syscall3",
         "__NR_futex"
+      ],
+      "cross_cluster_deps": [
+        "clock_gettime for absolute condition timeouts"
+      ],
+      "cross_cluster_source_edges": [
+        {
+          "edge": "clock_gettime for absolute condition timeouts",
+          "semantic_cluster": "Bionic.ClockGettime",
+          "source_repo": "platform/bionic",
+          "revision": "081db840befec895fb86e709ae95832ade2d065c",
+          "source_file": "libc/arch-x86/syscalls/clock_gettime.S",
+          "source_symbol": "clock_gettime",
+          "source_sha256": "731838cb7c57328dec3443e1d13f8fd6f243096b83c934d1bcafbcb02fae3051",
+          "status": "SOURCE_LOCATED"
+        }
       ],
       "excluded_deps": [
         "Linux futex wait/wake boundary"
@@ -1251,6 +1310,34 @@
       ],
       "source_paths": [
         "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Bionic.ClockGettime",
+      "blocking_edge": "AGR host clock conversion contract review",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.Monitor -> Bionic.PthreadCondition -> Bionic.ClockGettime",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization -> Dalvik.Monitor -> Bionic.PthreadCondition -> Bionic.ClockGettime",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.Monitor -> Bionic.PthreadCondition -> Bionic.ClockGettime",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Libcore.BootClassLoading -> Dalvik.BootClassResolution -> Dalvik.ClassInitialization -> Dalvik.Monitor -> Bionic.PthreadCondition -> Bionic.ClockGettime"
+      ]
+    },
+    {
+      "scope": "SOURCE_DERIVED",
+      "semantic_cluster": "Bionic.ClockGettime",
+      "blocking_edge": "Bionic clock id, timespec and errno source closure",
+      "origin_dependency_ids": [
+        "JAVA_METHOD:ee651e4447951b08"
+      ],
+      "source_paths": [
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ClassInitialization -> Dalvik.Monitor -> Bionic.PthreadCondition -> Bionic.ClockGettime",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Dalvik.ObjectAllocation -> Dalvik.ClassInitialization -> Dalvik.Monitor -> Bionic.PthreadCondition -> Bionic.ClockGettime",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Dalvik.ClassInitialization -> Dalvik.Monitor -> Bionic.PthreadCondition -> Bionic.ClockGettime",
+        "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer; -> Framework.ZygotePreload -> Libcore.BootClassLoading -> Dalvik.BootClassResolution -> Dalvik.ClassInitialization -> Dalvik.Monitor -> Bionic.PthreadCondition -> Bionic.ClockGettime"
       ]
     },
     {
