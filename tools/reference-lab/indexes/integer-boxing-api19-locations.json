@@ -94,6 +94,30 @@
           "status": "SOURCE_LOCATED"
         }
       ],
+      "prerequisite_edges": [
+        {
+          "edge": "Dalvik class initialization before app fork",
+          "semantic_cluster": "Dalvik.ClassInitialization",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/oo/Class.cpp",
+          "source_symbol": "dvmInitClass",
+          "source_sha256": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5"
+        },
+        {
+          "edge": "libcore Class.forName and boot loader delegation",
+          "semantic_cluster": "Libcore.BootClassLoading",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/libcore",
+          "revision": "9b24ebf95f897a75c60c9c68d00694406afa6fbc",
+          "source_file": "libdvm/src/main/java/java/lang/Class.java",
+          "source_symbol": "forName(String className)",
+          "source_sha256": "44c31dc402d679c1b6a19d3d9d027d20018686f54f4876e4b0808315a91aefed"
+        }
+      ],
       "excluded_deps": ["Zygote fork and heap inheritance boundary"],
       "boundary_contracts": {
         "Zygote fork and heap inheritance boundary": {
@@ -510,6 +534,52 @@
           "source_symbol": "scanStaticFields",
           "source_sha256": "bf05e421a49accf1209bb12e83bb2df740d6348d9b6c775f24cebadc6b7b8ab3",
           "status": "SOURCE_CLOSED"
+        }
+      ],
+      "prerequisite_edges": [
+        {
+          "edge": "Dalvik class initialization for Integer.<clinit>",
+          "semantic_cluster": "Dalvik.ClassInitialization",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/oo/Class.cpp",
+          "source_symbol": "dvmInitClass",
+          "source_sha256": "162df11c98ef06b8ebed8622fa2fadccfafce199eefb54189bcf1bafb0d68eb5"
+        },
+        {
+          "edge": "Dalvik object allocation",
+          "semantic_cluster": "Dalvik.ObjectAllocation",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/alloc/Alloc.cpp",
+          "source_symbol": "dvmAllocObject",
+          "source_sha256": "70bb6375a088dab380c31e5ab9959461f1c841f88c5ef163caacd1b26f7da02f"
+        },
+        {
+          "edge": "Dalvik constructor invocation",
+          "semantic_cluster": "Dalvik.MethodInvocation",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_LOCATED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/mterp/out/InterpC-portable.cpp",
+          "source_symbol": "GOTO_TARGET(invokeDirect",
+          "source_sha256": "7350a2dd50d2d7376ad9668494ebd43915f0ef20e43c0cd84fd2a0d99d24f556"
+        },
+        {
+          "edge": "Dalvik static field and array GC roots",
+          "semantic_cluster": "Dalvik.StaticFieldArrayRoots",
+          "relationship": "UNRESOLVED",
+          "owner_source_status": "SOURCE_CLOSED",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/alloc/MarkSweep.cpp",
+          "source_symbol": "scanStaticFields",
+          "source_sha256": "bf05e421a49accf1209bb12e83bb2df740d6348d9b6c775f24cebadc6b7b8ab3"
         }
       ],
       "blocking_edges": [

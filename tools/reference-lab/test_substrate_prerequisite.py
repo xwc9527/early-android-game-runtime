@@ -299,7 +299,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
                     "tested_commit": PHASE3_COMMIT, "tested_tree": PHASE3_TREE,
                     "closure_run": PHASE3_RUN}
         contract.update(overrides)
-        return {"schema_version": 1, "contracts": [contract], "reopens": []}, ["SyntheticSubstrate"]
+        return {"schema_version": 1, "contracts": [contract]}, ["SyntheticSubstrate"]
 
     def _closed_manifest(self, index):
         pinned = index["entries"][UPPER]
@@ -619,25 +619,22 @@ class SubstratePrerequisiteTest(unittest.TestCase):
             require_production_contract(
                 "Dalvik.ClassInitialization", owner["revision"], digest, contracts, modules=modules)
 
-    def test_reopen_blocks_closed_prerequisite(self):
-        index = self._closed_substrate_index()
-        contracts, modules = self._contract(index)
-        contracts["reopens"] = [{"semantic_cluster": "Dalvik.ClassInitialization",
-                                "reason": "synthetic contract reopen",
-                                "evidence": "synthetic reopen evidence"}]
-        with self.assertRaisesRegex(ValueError, "reopen blocks closed prerequisite"):
-            close_entry({"dependency_id": "JAVA_METHOD:box", "canonical_name": UPPER}, index,
-                        contracts=contracts, modules=modules)
+    def test_substrate_registry_rejects_a_second_reopen_ledger(self):
+        with self.assertRaisesRegex(ValueError, "must not carry a reopen ledger"):
+            require_production_contract(
+                "Dalvik.ClassInitialization", REV, "1" * 64,
+                {"schema_version": 1, "contracts": [], "reopens": []})
 
     def test_substrate_production_registry_starts_empty(self):
         registry = json.loads((ROOT / "ci/governance/substrate-production-contracts.json").read_text())
-        self.assertEqual(registry, {"schema_version": 1, "contracts": [], "reopens": []})
+        self.assertEqual(registry, {"schema_version": 1, "contracts": []})
+        self.assertNotIn("reopens", registry)
         encoded = json.dumps(registry)
         self.assertNotIn("PRODUCTION_CLOSED", encoded)
         for name in SHARED_RUNTIME_SUBSTRATE_OWNERS:
             self.assertNotIn(name, encoded)
 
-    def test_real_integer_and_resources_artifacts_stay_unclassified(self):
+    def test_real_integer_crossings_are_unresolved_and_resources_stay_unclassified(self):
         evidence = ROOT / "tools/reference-lab/evidence"
         corpus = json.loads((evidence / "four-game-corpus-manifest.json").read_text())
         integer_index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
@@ -646,16 +643,53 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         resources = json.loads((evidence / "shared-resource-source-seed.json").read_text())
         self.assertEqual(build_cluster_seed(corpus, integer_index, "libcore.IntegerBoxing"), integer)
         self.assertEqual(build_cluster_seed(corpus, resource_index, "Framework.Resources"), resources)
-        for artifact, count, cluster in (
-                (integer, 14, "libcore.IntegerBoxing"),
-                (resources, 16, "Framework.Resources")):
-            self.assertEqual(artifact["cluster_source_manifests"][cluster]["status"], "SOURCE_LOCATED")
-            self.assertFalse(artifact["cluster_source_manifests"][cluster]["migration_authorized"])
-            self.assertEqual(len(artifact["source_derived_clusters"]), count)
-            encoded = json.dumps(artifact)
-            self.assertNotIn("prerequisite_edges", encoded)
-            self.assertNotIn("PREREQUISITE_CLOSED", encoded)
-            self.assertNotIn("REOPEN_REQUIRED", encoded)
+        value_of = "Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;"
+        cluster = integer["cluster_source_manifests"]["libcore.IntegerBoxing"]
+        self.assertEqual(cluster["status"], "SOURCE_LOCATED")
+        self.assertFalse(cluster["migration_authorized"])
+        derived = integer["source_derived_clusters"]
+        self.assertEqual(set(derived), {"Framework.ZygotePreload"})
+        self.assertTrue(all(path == value_of + " -> Framework.ZygotePreload"
+                            for path in derived["Framework.ZygotePreload"]["source_paths"]))
+        absorbed = {
+            "Dalvik.ClassInitialization", "Dalvik.ObjectAllocation", "Dalvik.MethodInvocation",
+            "Dalvik.StaticFieldArrayRoots", "Libcore.BootClassLoading", "Dalvik.BootClassResolution",
+            "Dalvik.ClassVerification", "Dalvik.Monitor", "Dalvik.ThreadState",
+            "Bionic.PthreadCondition", "Bionic.ClockGettime", "Framework.ZygoteVMOptions",
+            "AndroidNative.InitZygote"}
+        self.assertTrue(absorbed.isdisjoint(derived))
+        relations = [(edge["semantic_cluster"], edge["relationship"], edge["owner_source_status"])
+                     for edge in cluster["prerequisite_edges"]]
+        self.assertEqual(relations, [
+            ("Dalvik.ClassInitialization", "UNRESOLVED", "SOURCE_LOCATED"),
+            ("Dalvik.MethodInvocation", "UNRESOLVED", "SOURCE_LOCATED"),
+            ("Dalvik.ObjectAllocation", "UNRESOLVED", "SOURCE_LOCATED"),
+            ("Dalvik.StaticFieldArrayRoots", "UNRESOLVED", "SOURCE_CLOSED")])
+        zygote_relations = [(edge["semantic_cluster"], edge["relationship"])
+                            for edge in derived["Framework.ZygotePreload"]["prerequisite_edges"]]
+        self.assertEqual(zygote_relations, [
+            ("Dalvik.ClassInitialization", "UNRESOLVED"),
+            ("Libcore.BootClassLoading", "UNRESOLVED")])
+        queued = [(item["semantic_cluster"], item["blocking_edge"], item["relationship"])
+                  for item in integer["closure_work_queue"] if item.get("scope") == "PREREQUISITE"]
+        self.assertEqual(queued, [
+            ("Dalvik.ClassInitialization", "Dalvik class initialization before app fork", "UNRESOLVED"),
+            ("Dalvik.ClassInitialization", "Dalvik class initialization for Integer.<clinit>", "UNRESOLVED"),
+            ("Dalvik.MethodInvocation", "Dalvik constructor invocation", "UNRESOLVED"),
+            ("Dalvik.ObjectAllocation", "Dalvik object allocation", "UNRESOLVED"),
+            ("Dalvik.StaticFieldArrayRoots", "Dalvik static field and array GC roots", "UNRESOLVED"),
+            ("Libcore.BootClassLoading", "libcore Class.forName and boot loader delegation", "UNRESOLVED")])
+        encoded = json.dumps(integer)
+        self.assertNotIn("PREREQUISITE_CLOSED", encoded)
+        self.assertNotIn("REOPEN_REQUIRED", encoded)
+        resources_cluster = resources["cluster_source_manifests"]["Framework.Resources"]
+        self.assertEqual(resources_cluster["status"], "SOURCE_LOCATED")
+        self.assertFalse(resources_cluster["migration_authorized"])
+        self.assertEqual(len(resources["source_derived_clusters"]), 16)
+        resources_encoded = json.dumps(resources)
+        self.assertNotIn("prerequisite_edges", resources_encoded)
+        self.assertNotIn("PREREQUISITE_CLOSED", resources_encoded)
+        self.assertNotIn("REOPEN_REQUIRED", resources_encoded)
 
 
 if __name__ == "__main__":

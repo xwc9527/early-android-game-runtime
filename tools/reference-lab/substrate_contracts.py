@@ -37,9 +37,10 @@ def validate_registry_document(document):
     """Schema-check the registry. An empty contract list is the initial authority."""
     if not isinstance(document, dict) or document.get("schema_version") != 1:
         raise ValueError("unsupported substrate production contract registry")
+    if "reopens" in document:
+        raise ValueError("substrate production contract registry must not carry a reopen ledger")
     contracts = document.get("contracts")
-    reopens = document.get("reopens")
-    if not isinstance(contracts, list) or not isinstance(reopens, list):
+    if not isinstance(contracts, list):
         raise ValueError("substrate production contract registry is malformed")
     seen = set()
     for contract in contracts:
@@ -57,10 +58,6 @@ def validate_registry_document(document):
         _require_field(contract, "tested_tree", HEX40, "production contract lacks tested tree")
         _require_field(contract, "closure_run", None, "production contract lacks closure run")
         _require_field(contract, "production_module", None, "production contract lacks production module")
-    for reopen in reopens:
-        if not isinstance(reopen, dict) or not all(reopen.get(key) for key in (
-                "semantic_cluster", "reason", "evidence")):
-            raise ValueError("substrate production reopen lacks evidence")
 
 
 def require_production_contract(semantic_cluster, source_revision, source_owner_digest,
@@ -86,9 +83,6 @@ def require_production_contract(semantic_cluster, source_revision, source_owner_
     _require_field(record, "production_module", None, "production contract lacks production module")
     if record["production_module"] not in modules:
         raise ValueError("production contract module is not registered")
-    if any(item.get("semantic_cluster") == semantic_cluster and item.get("reason") and item.get("evidence")
-           for item in contracts.get("reopens") or [] if isinstance(item, dict)):
-        raise ValueError("production contract reopen blocks closed prerequisite")
     _require_recorded_valid_pass(record, ledger)
     _require_git_tree(record["tested_commit"], record["tested_tree"])
     raise ValueError("no API19 CLEAN differential authority")

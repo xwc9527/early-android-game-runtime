@@ -98,38 +98,28 @@ class WorkflowTest(unittest.TestCase):
         self.assertTrue(external_edge_closed(root_edge, index))
         self.assertFalse(cluster["cluster_source_manifests"]["libcore.IntegerBoxing"]["migration_authorized"])
         derived = cluster["source_derived_clusters"]
-        self.assertEqual(len(derived), 14)
-        self.assertNotIn("Dalvik.OOMException", derived)
-        self.assertEqual(derived["Libcore.BootClassLoading"]["status"], "SOURCE_LOCATED")
-        self.assertEqual(derived["Dalvik.BootClassResolution"]["status"], "SOURCE_LOCATED")
-        self.assertTrue(any("Framework.ZygotePreload -> Libcore.BootClassLoading -> "
-                            "Dalvik.BootClassResolution" in path
-                            for path in derived["Dalvik.BootClassResolution"]["source_paths"]))
-        self.assertTrue(any("Dalvik.BootClassResolution -> Dalvik.ClassInitialization" in path
-                            for path in derived["Dalvik.ClassInitialization"]["source_paths"]))
-        self.assertTrue(any("Dalvik.BootClassResolution -> Dalvik.MethodInvocation" in path
-                            for path in derived["Dalvik.MethodInvocation"]["source_paths"]))
-        self.assertTrue(any("Dalvik.Monitor -> Dalvik.ThreadState" in path
-                            for path in derived["Dalvik.ThreadState"]["source_paths"]))
-        self.assertTrue(any("Dalvik.Monitor -> Bionic.PthreadCondition" in path
-                            for path in derived["Bionic.PthreadCondition"]["source_paths"]))
-        self.assertIn("Linux futex wait/wake boundary",
-                      derived["Bionic.PthreadCondition"]["boundary_contracts"])
-        self.assertTrue(any("Bionic.PthreadCondition -> Bionic.ClockGettime" in path
-                            for path in derived["Bionic.ClockGettime"]["source_paths"]))
-        self.assertEqual(derived["Dalvik.StaticFieldArrayRoots"]["status"], "SOURCE_CLOSED")
-        self.assertEqual(derived["Framework.ZygoteVMOptions"]["status"], "SOURCE_CLOSED")
-        self.assertEqual(derived["AndroidNative.InitZygote"]["status"], "SOURCE_CLOSED")
+        self.assertEqual(set(derived), {"Framework.ZygotePreload"})
+        self.assertEqual(derived["Framework.ZygotePreload"]["status"], "SOURCE_LOCATED")
+        self.assertEqual(derived["Framework.ZygotePreload"]["source_paths"], [
+            name + " -> Framework.ZygotePreload"])
+        absorbed = {
+            "Dalvik.ClassInitialization", "Dalvik.ObjectAllocation", "Dalvik.MethodInvocation",
+            "Dalvik.StaticFieldArrayRoots", "Libcore.BootClassLoading", "Dalvik.BootClassResolution",
+            "Dalvik.ClassVerification", "Dalvik.Monitor", "Dalvik.ThreadState",
+            "Bionic.PthreadCondition", "Bionic.ClockGettime"}
+        self.assertTrue(absorbed.isdisjoint(derived))
         self.assertFalse(any(item["migration_authorized"] for item in derived.values()))
-        self.assertTrue(all(item["origin_dependency_ids"] and item["source_paths"]
-                            for item in derived.values()))
+        roots = next(item for item in value_of["prerequisite_edges"]
+                     if item["semantic_cluster"] == "Dalvik.StaticFieldArrayRoots")
+        self.assertEqual(roots["relationship"], "UNRESOLVED")
+        self.assertEqual(roots["owner_source_status"], "SOURCE_CLOSED")
         queue = cluster["closure_work_queue"]
-        self.assertTrue(any(item["scope"] == "SOURCE_DERIVED" and
-                            item["semantic_cluster"] == "Dalvik.ClassVerification"
-                            for item in queue))
-        self.assertTrue(any(item["semantic_cluster"] == "Dalvik.BootClassResolution"
-                            for item in queue))
-        self.assertFalse(any(item["semantic_cluster"] == "Dalvik.StaticFieldArrayRoots"
+        self.assertTrue(any(item["scope"] == "PREREQUISITE" and
+                            item["semantic_cluster"] == "Dalvik.StaticFieldArrayRoots" and
+                            item["relationship"] == "UNRESOLVED" for item in queue))
+        self.assertFalse(any(item["semantic_cluster"] == "Dalvik.BootClassResolution"
+                             for item in queue))
+        self.assertFalse(any(item["semantic_cluster"] == "Dalvik.ClassVerification"
                              for item in queue))
         forged = json.loads(json.dumps(cluster))
         forged["closure_work_queue"].pop()
@@ -144,20 +134,20 @@ class WorkflowTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "omits a pinned source edge"):
             validate_source_manifests(forged)
         forged = json.loads(json.dumps(cluster))
-        forged["source_derived_clusters"]["Dalvik.StaticFieldArrayRoots"]["source_paths"] = [
-            "Unrelated.method -> Dalvik.StaticFieldArrayRoots"]
+        forged["source_derived_clusters"]["Framework.ZygotePreload"]["source_paths"] = [
+            "Unrelated.method -> Framework.ZygotePreload"]
         with self.assertRaisesRegex(ValueError, "observed parent"):
             validate_source_manifests(forged)
         forged = json.loads(json.dumps(cluster))
-        root = forged["source_derived_clusters"]["Dalvik.StaticFieldArrayRoots"]
-        root["source_paths"] = [path.replace(" -> Dalvik.StaticFieldArrayRoots",
-                                             " -> Dalvik.Monitor -> Dalvik.StaticFieldArrayRoots")
-                                for path in root["source_paths"]]
+        zygote = forged["source_derived_clusters"]["Framework.ZygotePreload"]
+        zygote["source_paths"] = [path.replace(" -> Framework.ZygotePreload",
+                                               " -> Dalvik.Monitor -> Framework.ZygotePreload")
+                                  for path in zygote["source_paths"]]
         with self.assertRaisesRegex(ValueError, "pinned source edge"):
             validate_source_manifests(forged)
         forged = json.loads(json.dumps(cluster))
-        forged["source_derived_clusters"]["Dalvik.StaticFieldArrayRoots"]["source_file_sha256"][
-            "vm/alloc/MarkSweep.cpp"] = "0" * 64
+        forged["source_derived_clusters"]["Framework.ZygotePreload"]["source_file_sha256"][
+            "core/java/com/android/internal/os/ZygoteInit.java"] = "0" * 64
         with self.assertRaisesRegex(ValueError, "pinned source edge"):
             validate_source_manifests(forged)
 
