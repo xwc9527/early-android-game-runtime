@@ -1,2 +1,4 @@
 *.sh text eol=lf
 *.patch text eol=lf
+evidence/bionic-clock-gettime-host-boundary/** text eol=lf
+evidence/bionic-clock-gettime-source-manifest.json text eol=lf

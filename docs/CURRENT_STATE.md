@@ -14,7 +14,11 @@ The four-game app-to-boot invoke queue contains 779 observed method identities,
 114 shared by at least two games. Two Framework resource entries and
 `Integer.valueOf(int)` are `SOURCE_LOCATED`; four other observed Integer boxing
 method source sets are `SOURCE_CLOSED`. Both semantic clusters remain unclosed
-and `MIGRATION_AUTHORIZED` is false. No new
+and `MIGRATION_AUTHORIZED` is false. `Bionic.ClockGettime` can be
+`MIGRATION_AUTHORIZED` only as a `SOURCE_DERIVED` substrate manifest when its
+source-derived review matches, including the Darwin realtime and monotonic
+host-boundary evidence. That authorization is not production closure and does
+not close Integer or Resources. No new
 Android-visible source port or CLEAN-to-AGR differential is claimed. The
 current source indexes and manifests are under `tools/reference-lab/indexes`
 and `tools/reference-lab/evidence`; their unresolved edges are explicit.

@@ -61,7 +61,17 @@ API19 source location; `SOURCE_CLOSED` records review of the semantic owner's
 state, initialization, internal and cross-layer dependencies, and declared
 stopping boundaries. None of these is migration authority by itself.
 `MIGRATION_AUTHORIZED` applies only to a reviewed semantic cluster Source
-Manifest, never to an individual method or a broad module label.
+Manifest, never to an individual method or a broad module label. A
+`SOURCE_DERIVED` shared-substrate owner keeps that provenance. The generator
+derives its authorization from `source_derived_reviews`; a boolean on the
+owner, the review, or the manifest does not authorize it. The review must
+match that owner's repository, revision, source-file SHA-256, source closure,
+reviewed dependency and boundary edges, and empty unresolved set, and the
+manifest must keep the origin dependency and source path that reached it.
+`Bionic.ClockGettime` is limited to the `CLOCK_REALTIME` and
+`CLOCK_MONOTONIC` requests on the current `Bionic.PthreadCondition` crossing.
+Its review cites the Darwin host-boundary evidence by path and SHA-256. That
+authorization is not `PRODUCTION_CLOSED` or `PREREQUISITE_CLOSED`.
 
 TRACE absence is never evidence that Android source is unused. A REMOVE or
 pruning decision requires source closure for the affected cluster, an explicit

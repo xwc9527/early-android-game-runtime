@@ -10,10 +10,11 @@ import json
 from pathlib import Path
 
 from mapper import build_book, corpus_union, union_books, write_book
-from source_closure import (close_entry, closure_owners, closure_work_queue, component_containing,
-                            component_source_closed, prerequisite_relations_allow_closure,
-                            required_derived_names, reviewed_edge_contracts, source_derived_clusters,
-                            validate_prerequisite_relations)
+from source_closure import (SHARED_RUNTIME_SUBSTRATE_OWNERS, close_entry, closure_owners,
+                            closure_work_queue, component_containing, component_source_closed,
+                            prerequisite_relations_allow_closure, required_derived_names,
+                            require_source_derived_review, reviewed_edge_contracts,
+                            source_derived_clusters, validate_prerequisite_relations)
 from static_scan import apk_identity, scan_apk
 
 
@@ -228,11 +229,18 @@ def validate_source_manifests(document, index=None, contracts=None, production_e
     derived = document.get("source_derived_clusters", {})
     if not required_derived_names(document.get("manifests", []), derived).issubset(derived):
         raise ValueError("source-derived manifest omits a pinned source edge")
+    indexed_reviews = (index or {}).get("source_derived_reviews") or {}
+    if index is not None:
+        if not isinstance(indexed_reviews, dict):
+            raise ValueError("source-derived reviews must be an object")
+        for review_name in indexed_reviews:
+            if review_name not in SHARED_RUNTIME_SUBSTRATE_OWNERS:
+                raise ValueError("source-derived review names a non-substrate owner: " + str(review_name))
     for name, cluster in derived.items():
         if (cluster.get("semantic_cluster") != name or
                 cluster.get("provenance") != "SOURCE_DERIVED" or
-                cluster.get("migration_authorized") is not False or
-                cluster.get("status") not in ("SOURCE_LOCATED", "SOURCE_CLOSED") or
+                cluster.get("status") not in (
+                    "SOURCE_LOCATED", "SOURCE_CLOSED", "MIGRATION_AUTHORIZED") or
                 not set(cluster.get("origin_dependency_ids") or []).issubset(origins) or
                 not cluster.get("origin_dependency_ids") or
                 not cluster.get("source_paths") or
@@ -240,6 +248,11 @@ def validate_source_manifests(document, index=None, contracts=None, production_e
                 not cluster.get("source_file_sha256") or
                 not cluster.get("required_symbols")):
             raise ValueError("invalid source-derived cluster provenance")
+        if cluster.get("status") == "MIGRATION_AUTHORIZED":
+            if cluster.get("migration_authorized") is not True:
+                raise ValueError("handwritten source-derived authorization")
+        elif cluster.get("migration_authorized") is not False:
+            raise ValueError("handwritten source-derived authorization")
         expected_origins = set()
         for path in cluster["source_paths"]:
             nodes = path.split(" -> ")
@@ -284,6 +297,15 @@ def validate_source_manifests(document, index=None, contracts=None, production_e
                 not (cluster.get("closure_evidence") or {}).get("reviewed_by") or
                 (cluster.get("closure_evidence") or {}).get("unresolved_dependency_edges") != []):
             raise ValueError("source-derived cluster claims closure without review")
+        if cluster["status"] == "MIGRATION_AUTHORIZED":
+            require_source_derived_review(cluster, cluster.get("migration_review"))
+        if index is not None and name in indexed_reviews:
+            review = indexed_reviews[name]
+            require_source_derived_review(cluster, review)
+            if (cluster.get("status") != "MIGRATION_AUTHORIZED" or
+                    cluster.get("migration_authorized") is not True or
+                    cluster.get("migration_review") != review):
+                raise ValueError("source-derived authorization does not match review")
     expected_queue = closure_work_queue(document.get("manifests", []), derived, index, contracts,
                                          production_evidence, modules)
     if (expected_queue and "closure_work_queue" not in document) or (

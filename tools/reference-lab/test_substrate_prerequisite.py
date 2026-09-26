@@ -7,6 +7,7 @@ from cluster_seed import build_cluster_seed
 from source_closure import (
     CROSSING_FIELDS,
     SHARED_RUNTIME_SUBSTRATE_OWNERS,
+    bionic_clock_gettime_source_manifest,
     close_entry,
     closure_work_queue,
     external_edge_closed,
@@ -889,6 +890,133 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         monitor_edge = next(edge for edge in monitor["cross_cluster_source_edges"]
                             if edge["edge"] == "Bionic pthread condition and mutex semantics")
         self.assertEqual(monitor_edge["status"], "SOURCE_CLOSED")
+
+    def test_clock_gettime_source_derived_review_authorizes_only_the_two_host_clocks(self):
+        index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text(encoding="utf-8"))
+        missing = json.loads(json.dumps(index))
+        missing.pop("source_derived_reviews")
+        without = bionic_clock_gettime_source_manifest(missing)
+        clock = without["source_derived_clusters"]["Bionic.ClockGettime"]
+        self.assertEqual(set(without["source_derived_clusters"]), {"Bionic.ClockGettime"})
+        self.assertEqual(clock["status"], "SOURCE_CLOSED")
+        self.assertIs(clock["migration_authorized"], False)
+        self.assertEqual(clock["provenance"], "SOURCE_DERIVED")
+        self.assertNotIn("migration_review", clock)
+        self.assertEqual(clock["source_paths"], ["Bionic.PthreadCondition -> Bionic.ClockGettime"])
+        self.assertEqual(clock["origin_dependency_ids"], ["BIONIC_PTHREAD_CONDITION:clock-crossing"])
+
+        def reject(mutate, message):
+            bad = json.loads(json.dumps(index))
+            mutate(bad)
+            with self.assertRaisesRegex(ValueError, message):
+                bionic_clock_gettime_source_manifest(bad)
+
+        reject(lambda doc: doc["source_derived_reviews"]["Bionic.ClockGettime"].__setitem__(
+            "source_revision", "0" * 40), "does not match owner")
+        reject(lambda doc: doc["source_derived_reviews"]["Bionic.ClockGettime"]["source_file_sha256"].__setitem__(
+            "libc/arch-x86/syscalls/clock_gettime.S", "0" * 64), "does not match owner")
+        reject(lambda doc: doc["source_derived_reviews"]["Bionic.ClockGettime"].__setitem__(
+            "unresolved_dependency_edges", ["clock 2"]), "incomplete")
+        reject(lambda doc: doc["source_derived_reviews"]["Bionic.ClockGettime"].pop("reviewed_by"),
+               "incomplete")
+        reject(lambda doc: doc["source_derived_reviews"]["Bionic.ClockGettime"].__setitem__(
+            "migration_authorized", True), "handwritten source-derived authorization")
+        reject(lambda doc: doc["source_derived_reviews"]["Bionic.ClockGettime"].__setitem__(
+            "provenance", "OBSERVED"), "handwritten source-derived authorization")
+        reject(lambda doc: doc["source_derived_reviews"]["Bionic.ClockGettime"].__setitem__(
+            "semantic_cluster", "Bionic.PthreadCondition"), "does not match owner")
+        reject(lambda doc: doc["source_derived_reviews"]["Bionic.ClockGettime"]["host_boundary_evidence"][0].__setitem__(
+            "host_semantic_requests", ["CLOCK_MONOTONIC", "CLOCK_REALTIME", "CLOCK_BOOTTIME"]),
+               "does not match the clock crossing")
+        reject(lambda doc: doc["source_derived_reviews"]["Bionic.ClockGettime"]["host_boundary_evidence"][0].__setitem__(
+            "host_semantic_requests", ["CLOCK_MONOTONIC"]), "does not match the clock crossing")
+        reject(lambda doc: doc["source_derived_reviews"]["Bionic.ClockGettime"]["host_boundary_evidence"][0].__setitem__(
+            "evidence_sha256", "0" * 64), "does not match host boundary evidence")
+        reject(lambda doc: doc["source_derived_reviews"].__setitem__(
+            "Framework.ZygotePreload", {"semantic_cluster": "Framework.ZygotePreload"}),
+               "non-substrate owner")
+
+        located = json.loads(json.dumps(index))
+        located["source_derived_reviews"]["Dalvik.ThreadState"] = {
+            "semantic_cluster": "Dalvik.ThreadState"}
+        edge = next(item for item in located["external_cluster_sources"]["Dalvik.Monitor"]["cross_cluster_source_edges"]
+                    if item["semantic_cluster"] == "Dalvik.ThreadState")
+        with self.assertRaisesRegex(ValueError, "source-derived owner is not closed"):
+            source_derived_clusters([{
+                "dependency_id": "DALVIK_MONITOR:thread-state",
+                "canonical_name": "Dalvik.Monitor",
+                "status": "SOURCE_LOCATED",
+                "migration_authorized": False,
+                "cross_cluster_source_edges": [edge],
+            }], located)
+
+        authorized = bionic_clock_gettime_source_manifest(index)
+        clock = authorized["source_derived_clusters"]["Bionic.ClockGettime"]
+        self.assertEqual(clock["status"], "MIGRATION_AUTHORIZED")
+        self.assertIs(clock["migration_authorized"], True)
+        self.assertEqual(clock["provenance"], "SOURCE_DERIVED")
+        self.assertNotIn("migration_authorized", clock["migration_review"])
+        self.assertEqual(authorized, json.loads((
+            ROOT / "tools/reference-lab/evidence/bionic-clock-gettime-source-manifest.json").read_text(encoding="utf-8")))
+        self.assertNotIn("Bionic.PthreadCondition", authorized["source_derived_clusters"])
+        self.assertFalse(authorized["manifests"][0]["migration_authorized"])
+        self.assertNotIn("relationship", json.dumps(authorized["source_derived_clusters"]))
+        self.assertIn("not PRODUCTION_CLOSED or PREREQUISITE_CLOSED",
+                      clock["migration_review"]["closure_notes"])
+        stripped = json.loads(json.dumps(authorized))
+        stripped_clock = stripped["source_derived_clusters"]["Bionic.ClockGettime"]
+        stripped_clock["status"] = "SOURCE_CLOSED"
+        stripped_clock["migration_authorized"] = False
+        stripped_clock.pop("migration_review")
+        with self.assertRaisesRegex(ValueError, "does not match review"):
+            validate_source_manifests(stripped, index)
+        forged = json.loads(json.dumps(without))
+        forged["source_derived_clusters"]["Bionic.ClockGettime"]["migration_authorized"] = True
+        with self.assertRaisesRegex(ValueError, "handwritten source-derived authorization"):
+            validate_source_manifests(forged, missing)
+        forged = json.loads(json.dumps(without))
+        forged_clock = forged["source_derived_clusters"]["Bionic.ClockGettime"]
+        forged_clock["status"] = "MIGRATION_AUTHORIZED"
+        forged_clock["migration_authorized"] = True
+        with self.assertRaisesRegex(ValueError, "handwritten source-derived authorization"):
+            validate_source_manifests(forged, missing)
+
+        integer = json.loads((ROOT / "tools/reference-lab/evidence/integer-boxing-source-seed.json").read_text(encoding="utf-8"))
+        self.assertNotIn("Bionic.ClockGettime", integer["source_derived_clusters"])
+        self.assertFalse(integer["cluster_source_manifests"]["libcore.IntegerBoxing"]["migration_authorized"])
+        self.assertTrue(all(item["migration_authorized"] is False
+                            for item in integer["source_derived_clusters"].values()))
+        source = {"revision": "d" * 40, "source_sha256": "c" * 64,
+                  "source_file_sha256": {"core/java/android/app/Activity.java": "c" * 64},
+                  "entries": {"android.app.Activity.setContentView": {
+                      "source_files": ["core/java/android/app/Activity.java"],
+                      "required_symbols": ["setContentView"],
+                      "owner_cluster": "Framework", "semantic_cluster": "Framework.WindowContent",
+                      "source_repo": "platform/frameworks/base",
+                      "source_file": "core/java/android/app/Activity.java",
+                      "source_symbol": "setContentView",
+                      "closure_reviewed": True,
+                      "closure_evidence": {"source_sha256": "c" * 64, "reviewed_by": "source-audit",
+                                           "closure_notes": "Reviewed entry and callees"}}}}
+        entry = {"dependency_id": "JAVA_METHOD:setContentView",
+                 "canonical_name": "android.app.Activity.setContentView",
+                 "confidence": "OBSERVED_RUNTIME"}
+        closed = cluster_manifests([close_entry(entry, source)], source)
+        self.assertEqual(closed["Framework.WindowContent"]["status"], "SOURCE_CLOSED")
+        self.assertFalse(closed["Framework.WindowContent"]["migration_authorized"])
+        source["cluster_reviews"] = {"Framework.WindowContent": {
+            "closure_reviewed": True, "source_revision": "d" * 40,
+            "entry_names": ["android.app.Activity.setContentView"],
+            "source_file_sha256": {"core/java/android/app/Activity.java": "c" * 64},
+            "reviewed_dependency_edges": [], "unresolved_dependency_edges": [],
+            "reviewed_by": "source-audit", "closure_notes": "Reviewed semantic owner"}}
+        authorized_cluster = cluster_manifests([close_entry(entry, source)], source)
+        self.assertEqual(authorized_cluster["Framework.WindowContent"]["status"], "MIGRATION_AUTHORIZED")
+        source["cluster_reviews"]["Framework.WindowContent"]["source_file_sha256"][
+            "core/java/android/app/Activity.java"] = "e" * 64
+        mismatched = cluster_manifests([close_entry(entry, source)], source)
+        self.assertEqual(mismatched["Framework.WindowContent"]["status"], "SOURCE_CLOSED")
+        self.assertFalse(mismatched["Framework.WindowContent"]["migration_authorized"])
 
 
 if __name__ == "__main__":

@@ -889,5 +889,43 @@
         "edge_reviews": {}
       }
     }
+  },
+  "source_derived_reviews": {
+    "Bionic.ClockGettime": {
+      "closure_notes": "The review covers only the Bionic.PthreadCondition crossing requests CLOCK_MONOTONIC and CLOCK_REALTIME. It binds this owner, platform/bionic revision 081db840befec895fb86e709ae95832ade2d065c, the pinned source file SHA-256 set, the closed Linux clock_gettime kernel boundary, and the Darwin host-boundary evidence from workflow run 36257240208. Clocks 2-9, CPU clocks, and encoded thread ids are outside this review. This record is not PRODUCTION_CLOSED or PREREQUISITE_CLOSED.",
+      "closure_reviewed": true,
+      "host_boundary_evidence": [
+        {
+          "boundary": "Linux clock_gettime kernel boundary",
+          "evidence_path": "tools/reference-lab/evidence/bionic-clock-gettime-host-boundary/run.json",
+          "evidence_sha256": "17aa4afe9ba74efd70f54f9233a49d5bdfb19d76a02761c5b53f566f6d8ad993",
+          "host_semantic_requests": [
+            "CLOCK_MONOTONIC",
+            "CLOCK_REALTIME"
+          ]
+        }
+      ],
+      "reviewed_by": "api19-source-audit",
+      "reviewed_dependency_edges": [
+        "Linux clock_gettime kernel boundary"
+      ],
+      "semantic_cluster": "Bionic.ClockGettime",
+      "source_file_sha256": {
+        "libc/arch-arm/syscalls/clock_gettime.S": "8655a9bb334957a2f2b21168cc39a660e218e18655b9bd9e32e10e504f8e5215",
+        "libc/arch-x86/syscalls/clock_gettime.S": "731838cb7c57328dec3443e1d13f8fd6f243096b83c934d1bcafbcb02fae3051",
+        "libc/bionic/__set_errno.cpp": "92c665df1882423e160598585513f2088953ebd36c895c7bafde43d7b09ddac8",
+        "libc/include/sys/types.h": "937090dd11b20095209c0f07489678b65fdf21670f983de60a14a76e66591f84",
+        "libc/include/time.h": "81ab935505ccba4ef4aaa887bdfa9716bfb64ac9d2747a6f6944f061705b702e",
+        "libc/kernel/arch-arm/asm/posix_types.h": "88f11cb6bd76df5a6032cf5975a26823acab3cda1fdf81c79536786351101da8",
+        "libc/kernel/arch-arm/asm/unistd.h": "4d46fd8e8fcb116d1f67eaa1ea51d60765831b5080aeff8e58e7d2e6091c5818",
+        "libc/kernel/arch-x86/asm/posix_types_32.h": "9ae91d29d49b6b539139f12e69db1344e0d41323e8c03c5acc3f986587b5596d",
+        "libc/kernel/arch-x86/asm/unistd_32.h": "51d906e6ca361519b36e7467b08063411fcc3e6240d384748a1369ad63682a3c",
+        "libc/kernel/common/linux/err.h": "fe11636349213df4a2c89372ef0025b0a26adf7340e227c9aaaa91db1722682e",
+        "libc/kernel/common/linux/time.h": "cb155387ab5e7daa1ff0e3c814309cc7f08e2237a9270b7adbcf4da520042dca"
+      },
+      "source_repo": "platform/bionic",
+      "source_revision": "081db840befec895fb86e709ae95832ade2d065c",
+      "unresolved_dependency_edges": []
+    }
   }
 }

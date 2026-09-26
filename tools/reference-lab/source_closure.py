@@ -6,6 +6,7 @@ This step does not invent callees that the index does not contain.
 
 import hashlib
 import json
+from pathlib import Path
 
 from substrate_contracts import require_production_contract
 
@@ -574,6 +575,194 @@ def _matches_pinned_owner(edge, owner):
             edge.get("source_symbol") in (owner.get("required_symbols") or []))
 
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+CLOCK_GETTIME_HOST_REQUESTS = ("CLOCK_MONOTONIC", "CLOCK_REALTIME")
+HOST_EVIDENCE_RAW_FILES = (
+    "identity.txt",
+    "iphoneos-link.txt",
+    "simulator-link.txt",
+    "simulator-probe.txt",
+    "simulator-probe-rc.txt",
+    "simulator-device.txt",
+)
+
+
+def _dependency_edge_names(owner):
+    return {dep for field in EXTERNAL_DEPENDENCY_FIELDS for dep in (owner.get(field) or [])}
+
+
+def _normalized_repo_text(relative):
+    if (not isinstance(relative, str) or not relative or relative.startswith("/") or
+            "\\" in relative or ".." in relative.split("/")):
+        raise ValueError("source-derived review does not match host boundary evidence")
+    path = REPO_ROOT / relative
+    if not path.is_file():
+        raise ValueError("source-derived review does not match host boundary evidence")
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
+def _require_probe_samples(text):
+    lines = [line for line in text.splitlines() if line]
+    prefixes = (
+        "INIT rc=",
+        "BEFORE monotonic rc=",
+        "BEFORE realtime rc=",
+        "AFTER monotonic rc=",
+        "AFTER realtime rc=",
+        "ADVANCED monotonic=",
+        "PROBE_DONE ok=",
+    )
+    if len(lines) != len(prefixes) or any(not line.startswith(prefix)
+                                          for line, prefix in zip(lines, prefixes)):
+        raise ValueError("source-derived review does not match host boundary evidence")
+
+    def rc_ns(line):
+        return int(line.split("rc=", 1)[1].split()[0]), int(line.split("ns=", 1)[1])
+
+    init = int(lines[0].split("rc=", 1)[1])
+    monotonic_before = rc_ns(lines[1])
+    realtime_before = rc_ns(lines[2])
+    monotonic_after = rc_ns(lines[3])
+    realtime_after = rc_ns(lines[4])
+    ok = int(lines[6].split("ok=", 1)[1])
+    if (init != 0 or ok != 1 or "monotonic=1" not in lines[5] or "realtime=1" not in lines[5] or
+            any(rc != 0 for rc, _ in (
+                monotonic_before, realtime_before, monotonic_after, realtime_after)) or
+            monotonic_after[1] <= monotonic_before[1] or realtime_after[1] <= realtime_before[1]):
+        raise ValueError("source-derived review does not match host boundary evidence")
+
+
+def _require_host_boundary_evidence(owner_name, owner, review):
+    boundaries = list(owner.get("excluded_deps") or [])
+    items = review.get("host_boundary_evidence")
+    if boundaries:
+        if not isinstance(items, list) or sorted(
+                item.get("boundary") for item in items if isinstance(item, dict)) != sorted(boundaries):
+            raise ValueError("source-derived review is incomplete")
+    elif items not in (None, []):
+        raise ValueError("source-derived review does not match owner")
+    for item in items or []:
+        if not isinstance(item, dict):
+            raise ValueError("source-derived review is incomplete")
+        requests = item.get("host_semantic_requests")
+        if not isinstance(requests, list) or any(not isinstance(name, str) for name in requests):
+            raise ValueError("source-derived review is incomplete")
+        if (owner_name == "Bionic.ClockGettime" and
+                tuple(sorted(requests)) != CLOCK_GETTIME_HOST_REQUESTS):
+            raise ValueError("source-derived review does not match the clock crossing")
+        body = _normalized_repo_text(item.get("evidence_path"))
+        if hashlib.sha256(body).hexdigest() != item.get("evidence_sha256"):
+            raise ValueError("source-derived review does not match host boundary evidence")
+        evidence = json.loads(body.decode("utf-8"))
+        if (evidence.get("semantic_cluster") != owner_name or
+                evidence.get("boundary") != item.get("boundary") or
+                evidence.get("host_semantic_requests") != list(requests) or
+                not evidence.get("workflow_run_id") or
+                not isinstance(evidence.get("tested_commit"), str) or
+                len(evidence.get("tested_commit")) != 40 or
+                not isinstance(evidence.get("tested_tree"), str) or
+                len(evidence.get("tested_tree")) != 40):
+            raise ValueError("source-derived review does not match host boundary evidence")
+        raw = evidence.get("raw_files") or {}
+        if set(raw) != set(HOST_EVIDENCE_RAW_FILES):
+            raise ValueError("source-derived review does not match host boundary evidence")
+        loaded = {}
+        evidence_dir = str(Path(item["evidence_path"]).parent).replace("\\", "/")
+        for name, digest in raw.items():
+            file_body = _normalized_repo_text(evidence_dir + "/" + name)
+            if hashlib.sha256(file_body).hexdigest() != digest:
+                raise ValueError("source-derived review does not match host boundary evidence")
+            loaded[name] = file_body.decode("utf-8")
+        identity = loaded["identity.txt"]
+        if (evidence["tested_commit"] not in identity or evidence["tested_tree"] not in identity or
+                "Xcode 27.0" not in identity or "IPHONEOS_SDK_VERSION 27.0" not in identity or
+                "IPHONESIMULATOR_SDK_VERSION 27.0" not in identity or
+                not loaded["iphoneos-link.txt"].startswith("IPHONEOS_LINK rc=0\n") or
+                "_clock_gettime" not in loaded["iphoneos-link.txt"] or
+                loaded["simulator-link.txt"].strip() != "IPHONESIMULATOR_LINK rc=0" or
+                loaded["simulator-probe-rc.txt"].strip() != "SIMULATOR_PROBE rc=0" or
+                evidence.get("simulator_device") != loaded["simulator-device.txt"].strip()):
+            raise ValueError("source-derived review does not match host boundary evidence")
+        _require_probe_samples(loaded["simulator-probe.txt"])
+
+
+def require_source_derived_review(row, review):
+    """Authorization is the review match. A boolean in the review is not evidence."""
+    if not isinstance(row, dict) or row.get("semantic_cluster") not in SHARED_RUNTIME_SUBSTRATE_OWNERS:
+        raise ValueError("source-derived review does not match owner")
+    if not isinstance(review, dict) or "migration_authorized" in review or review.get("provenance") not in (
+            None, "SOURCE_DERIVED"):
+        raise ValueError("handwritten source-derived authorization")
+    if review.get("semantic_cluster") != row.get("semantic_cluster"):
+        raise ValueError("source-derived review does not match owner")
+    if (row.get("status") not in ("SOURCE_CLOSED", "MIGRATION_AUTHORIZED") or
+            row.get("blocking_edges") or row.get("closure_reviewed") is not True or
+            (row.get("closure_evidence") or {}).get("unresolved_dependency_edges") != [] or
+            not row.get("origin_dependency_ids") or not row.get("source_paths")):
+        raise ValueError("source-derived owner is not closed")
+    if (review.get("closure_reviewed") is not True or not review.get("reviewed_by") or
+            not review.get("closure_notes") or review.get("unresolved_dependency_edges") != []):
+        raise ValueError("source-derived review is incomplete")
+    files = row.get("source_file_sha256") or {}
+    edges = _dependency_edge_names(row)
+    closure = row.get("closure_evidence") or {}
+    if (review.get("source_repo") != row.get("source_repo") or
+            review.get("source_revision") != row.get("revision") or
+            not isinstance(review.get("source_revision"), str) or len(review.get("source_revision")) != 40 or
+            review.get("source_file_sha256") != files or
+            closure.get("source_file_sha256") != files or
+            set(review.get("reviewed_dependency_edges") or []) != edges or
+            set(closure.get("reviewed_dependency_edges") or []) != edges):
+        raise ValueError("source-derived review does not match owner")
+    _require_host_boundary_evidence(row["semantic_cluster"], row, review)
+
+
+def apply_source_derived_reviews(found, index):
+    """Promote a reached substrate owner only when its formal review matches."""
+    reviews = (index or {}).get("source_derived_reviews") or {}
+    if not isinstance(reviews, dict):
+        raise ValueError("source-derived reviews must be an object")
+    for name in reviews:
+        if name not in SHARED_RUNTIME_SUBSTRATE_OWNERS:
+            raise ValueError("source-derived review names a non-substrate owner: " + str(name))
+    for name, row in found.items():
+        review = reviews.get(name)
+        if review is None:
+            continue
+        require_source_derived_review(row, review)
+        row["status"] = "MIGRATION_AUTHORIZED"
+        row["migration_authorized"] = True
+        row["migration_review"] = json.loads(json.dumps(review))
+    return found
+
+
+def bionic_clock_gettime_source_manifest(index):
+    """Manifest for the real PthreadCondition clock crossing. The parent is not an observed entry."""
+    pthread = ((index or {}).get("external_cluster_sources") or {}).get("Bionic.PthreadCondition")
+    if not isinstance(pthread, dict) or not pthread.get("cross_cluster_source_edges"):
+        raise ValueError("Bionic.PthreadCondition clock crossing is missing")
+    parent = {
+        "dependency_id": "BIONIC_PTHREAD_CONDITION:clock-crossing",
+        "canonical_name": "Bionic.PthreadCondition",
+        "status": "SOURCE_LOCATED",
+        "migration_authorized": False,
+        "cross_cluster_source_edges": [dict(edge) for edge in pthread["cross_cluster_source_edges"]],
+    }
+    derived = source_derived_clusters([parent], index)
+    artifact = {
+        "schema_version": 1,
+        "scope": "Bionic.PthreadCondition clock_gettime crossing",
+        "source_index_revision": index.get("revision"),
+        "manifests": [parent],
+        "cluster_source_manifests": {},
+        "source_derived_clusters": derived,
+        "closure_work_queue": closure_work_queue([parent], derived, index),
+    }
+    from workflow import validate_source_manifests
+    validate_source_manifests(artifact, index)
+    return artifact
+
+
 def source_derived_clusters(manifests, index, contracts=None, evidence=None, modules=None,
                             catalog=None):
     """Expand pinned source edges. Stop keys belong to the owner that declares them."""
@@ -634,6 +823,7 @@ def source_derived_clusters(manifests, index, contracts=None, evidence=None, mod
         row["origin_dependency_ids"] = sorted(row["origin_dependency_ids"])
         row["source_paths"] = sorted(row["source_paths"])
         row["cycle_paths"] = sorted(row["cycle_paths"])
+    apply_source_derived_reviews(found, index)
     return dict(sorted(found.items()))
 
 
