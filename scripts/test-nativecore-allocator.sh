@@ -17,8 +17,9 @@ clang++ -std=c++17 -fno-rtti "${SAN[@]}" "${INC[@]}" -c "$ROOT/Runtime/Bionic/ag
 clang++ -std=c++17 -fno-rtti "${SAN[@]}" "${INC[@]}" -c "$ROOT/Runtime/Bionic/agr_bionic_sync.cpp" -o "$OBJ/sync.o"
 clang++ -std=c++17 -fno-rtti "${SAN[@]}" "${INC[@]}" -c "$ROOT/Runtime/Bionic/agr_bionic_tls.cpp" -o "$OBJ/tls.o"
 clang++ -std=c++17 -fno-rtti "${SAN[@]}" "${INC[@]}" -c "$ROOT/Runtime/Bionic/agr_bionic_errno_host.cpp" -o "$OBJ/errno.o"
+clang -std=c11 "${SAN[@]}" "${INC[@]}" -c "$ROOT/Runtime/Bionic/agr_bionic_clock.c" -o "$OBJ/clock.o"
 clang++ -std=c++17 -fno-rtti "${SAN[@]}" "${INC[@]}" -c "$ROOT/Runtime/Bionic/agr_bionic_thread_lifecycle.cpp" -o "$OBJ/lifecycle.o"
-clang++ "${SAN[@]}" "$OBJ/test.o" "$OBJ/runtime.o" "$OBJ/allocator.o" "$OBJ/vma.o" "$OBJ/host-services.o" "$OBJ/thread-attr.o" "$OBJ/linker.o" "$OBJ/dynamic.o" "$OBJ/mmap.o" "$OBJ/futex.o" "$OBJ/sync.o" "$OBJ/tls.o" "$OBJ/errno.o" "$OBJ/lifecycle.o" -pthread -lm -framework CoreFoundation -framework Security -o "$OUT"
+clang++ "${SAN[@]}" "$OBJ/test.o" "$OBJ/runtime.o" "$OBJ/allocator.o" "$OBJ/vma.o" "$OBJ/host-services.o" "$OBJ/thread-attr.o" "$OBJ/linker.o" "$OBJ/dynamic.o" "$OBJ/mmap.o" "$OBJ/futex.o" "$OBJ/sync.o" "$OBJ/tls.o" "$OBJ/errno.o" "$OBJ/clock.o" "$OBJ/lifecycle.o" -pthread -lm -framework CoreFoundation -framework Security -o "$OUT"
 "$OUT"
 "$OUT" invalid-free
 "$OUT" double-free

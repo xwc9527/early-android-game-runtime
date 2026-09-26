@@ -18,8 +18,10 @@ and `MIGRATION_AUTHORIZED` is false. `Bionic.ClockGettime` can be
 `MIGRATION_AUTHORIZED` only as a `SOURCE_DERIVED` substrate manifest when its
 source-derived review matches, including the Darwin realtime and monotonic
 host-boundary evidence. That authorization is not production closure and does
-not close Integer or Resources. No new
-Android-visible source port or CLEAN-to-AGR differential is claimed. The
+not close Integer or Resources. The authorized `CLOCK_REALTIME` and
+`CLOCK_MONOTONIC` requests now have a Bionic production port. That port is
+not `PRODUCTION_CLOSED` and it is not a formal CLEAN differential producer.
+The
 current source indexes and manifests are under `tools/reference-lab/indexes`
 and `tools/reference-lab/evidence`; their unresolved edges are explicit.
 
