@@ -89,6 +89,7 @@ class WorkflowTest(unittest.TestCase):
             self.assertEqual(trace["zygote_preload"]["configured_classes_sha256"], expected)
             self.assertNotIn("java.lang.Integer", trace["zygote_preload"]["failed_classes"])
             self.assertNotIn("java.lang.Number", trace["zygote_preload"]["failed_classes"])
+            self.assertNotIn("java.lang.Comparable", trace["zygote_preload"]["failed_classes"])
 
     def test_multi_repo_queue_keeps_source_and_authority_separate(self):
         root = ROOT / "tools/reference-lab"

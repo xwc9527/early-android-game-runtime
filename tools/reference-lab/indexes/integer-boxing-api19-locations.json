@@ -70,7 +70,7 @@
         "core/java/com/android/internal/os/ZygoteInit.java": "39396d52716a69a2b02df27a1001af3ac81c762c503c5ae7d420a687b080ab1c",
         "core/java/com/android/internal/os/ZygoteConnection.java": "37156818168d7fc47fdf5e55f6f6f30696ba4be9892820497474827cc130c9e8"
       },
-      "required_symbols": ["java.lang.Integer", "java.lang.Number", "preloadClasses", "Class.forName(line)", "forkAndSpecialize"],
+      "required_symbols": ["java.lang.Integer", "java.lang.Number", "java.lang.Comparable", "preloadClasses", "Class.forName(line)", "forkAndSpecialize"],
       "cross_cluster_deps": ["Dalvik class initialization before app fork"],
       "cross_cluster_source_edges": [
         {

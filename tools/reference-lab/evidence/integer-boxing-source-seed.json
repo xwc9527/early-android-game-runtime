@@ -854,6 +854,7 @@
       "required_symbols": [
         "java.lang.Integer",
         "java.lang.Number",
+        "java.lang.Comparable",
         "preloadClasses",
         "Class.forName(line)",
         "forkAndSpecialize"
