@@ -1,0 +1,35 @@
+{
+  "authorized_path": [
+    "RegisterNatives vm/Jni.cpp:2459",
+    "ScopedJniThreadState constructor vm/Jni.cpp:229 dvmChangeStatus(THREAD_RUNNING)",
+    "dvmChangeStatus vm/Thread.cpp:2905",
+    "android_atomic_acquire_store of THREAD_RUNNING",
+    "suspendCount read after that store",
+    "fullSuspendCheck vm/Thread.cpp:2845 when suspendCount != 0",
+    "lockThreadSuspendCount vm/Thread.cpp:333 pthread_mutex_lock",
+    "dvmWaitCond vm/Thread.h:486 pthread_cond_wait on gDvm.threadSuspendCountCond",
+    "restore previous status and unlock",
+    "RegisterNatives body",
+    "ScopedJniThreadState destructor vm/Jni.cpp:233 dvmChangeStatus(THREAD_NATIVE)",
+    "android_atomic_release_store of THREAD_NATIVE"
+  ],
+  "closed_crossing_source_path": [
+    "dvmChangeStatus",
+    "fullSuspendCheck",
+    "pthread_mutex_lock",
+    "pthread_cond_wait",
+    "pthread_cond_broadcast",
+    "__pthread_cond_pulse"
+  ],
+  "not_on_authorized_path": [
+    "dvmThreadStartup",
+    "vm/Init.cpp registerSystemNatives",
+    "vm/Native.cpp dvmLoadNativeCode",
+    "Sync.cpp",
+    "thread->waitCond",
+    "thread->waitMutex",
+    "Java Thread API",
+    "debugger suspend",
+    "GC suspend"
+  ]
+}

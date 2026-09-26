@@ -1,0 +1,22 @@
+{
+  "edge": "self-suspend on the thread suspend-count condition",
+  "relationship": "PREREQUISITE_CLOSED",
+  "contract_status": "CROSSING_CLOSED",
+  "production_module": "pthread",
+  "production_api": [
+    "agr_bionic_mutex_lock",
+    "agr_bionic_mutex_unlock",
+    "agr_bionic_cond_wait_relative with UINT64_MAX",
+    "agr_bionic_cond_broadcast"
+  ],
+  "address_contract": "agr_bionic_sync operations take uint32_t ARM32 addresses. agr_bionic_sync.h states atomics serialize with the guest address space.",
+  "production_binding": "Runtime/NativeCore/agr_runtime.c binds agr_bionic_sync only inside #if defined(__APPLE__), and every callback reads or writes a guest address through the runtime callbacks.",
+  "host_dex_binding": "Runtime/DexLoom/VM/dx_jni.c has no agr_bionic_sync and no guest address for threadSuspendCountLock or threadSuspendCountCond.",
+  "rejected_consumptions": [
+    "host pthread_mutex_lock or pthread_cond_wait, which bypasses the closed Bionic crossing",
+    "a synthetic uint32_t such as the test fixture 0x4000, which forges an ARM32 guest address",
+    "truncating a Darwin pointer into uint32_t",
+    "placing the Dalvik VM suspend lock in guest VMA so host DEX can call agr_runtime.bionic_sync"
+  ],
+  "decision": "The closed crossing cannot be consumed by the host DEX RegisterNatives path without a new semantic boundary or a forged guest address."
+}

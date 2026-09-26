@@ -1,0 +1,7 @@
+{
+  "same_as_before": true,
+  "function": "jni_RegisterNatives",
+  "file": "Runtime/DexLoom/VM/dx_jni.c",
+  "lines": "1043-1072",
+  "dalvik_thread_status_owner": null
+}

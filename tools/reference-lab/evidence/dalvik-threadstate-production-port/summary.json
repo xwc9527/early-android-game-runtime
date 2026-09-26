@@ -1,0 +1,17 @@
+{
+  "stop": "EVIDENCE_GAP",
+  "production_port": false,
+  "runtime_modified": false,
+  "branch": "cursor/shared-substrate-prerequisite-da4f",
+  "inspected_commit": "baeee030684f908f8c6e7f3a1e80325642b36365",
+  "inspected_tree": "b2b1e1d89f816471c7ff3cd2323f558af7af5fec",
+  "worktree": "C:/Users/47763/Projects/early-android-game-runtime",
+  "relationship": "REOPEN_REQUIRED",
+  "relationship_changed": false,
+  "indexed_owner_status": "SOURCE_CLOSED",
+  "derived_manifest_status": "MIGRATION_AUTHORIZED",
+  "derived_provenance": "SOURCE_DERIVED",
+  "jni_owner_status": "SOURCE_LOCATED",
+  "other_jni_prerequisites": "UNRESOLVED",
+  "next_blocker": "The RegisterNatives thread-state port cannot start until the entry THREAD_NATIVE publication and a host-DEX consumption of the closed self-suspend crossing are both inside existing authority."
+}
