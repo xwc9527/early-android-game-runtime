@@ -456,16 +456,19 @@ def emit_partial(rows, destination, allowed_kinds):
         debug_entries.append((pc, name))
 
     starts = set()
+    def runtime_eligible(row):
+        return row["pc"] in eligible and not (row.get("cpsr", 0) & 0x0600fc00)
+
     for index, row in enumerate(rows):
         pc = row["pc"]
-        if pc not in eligible:
-            if index + 1 < len(rows) and rows[index + 1]["pc"] in eligible:
+        if not runtime_eligible(row):
+            if index + 1 < len(rows) and runtime_eligible(rows[index + 1]):
                 starts.add(rows[index + 1]["pc"])
             continue
         op = operations[pc]
         if index == 0:
             starts.add(pc)
-        elif rows[index - 1]["pc"] not in eligible:
+        elif not runtime_eligible(rows[index - 1]):
             starts.add(pc)
         else:
             previous = rows[index - 1]
@@ -473,7 +476,7 @@ def emit_partial(rows, destination, allowed_kinds):
             if is_terminal(previous_op) or previous["pc"] + previous["len"] != pc:
                 starts.add(pc)
         if is_terminal(op):
-            if index + 1 < len(rows) and rows[index + 1]["pc"] in eligible:
+            if index + 1 < len(rows) and runtime_eligible(rows[index + 1]):
                 starts.add(rows[index + 1]["pc"])
             if op[0] == "b":
                 starts.add(op[1])
