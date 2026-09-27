@@ -441,13 +441,13 @@ def emit_op(op, thumb):
 def emit(rows, destination):
     pieces = ["#include \"agr_aot.h\"", ""]
     entries = []
+    block_lengths = {}
     for start, body in blocks_from_trace(rows):
         name = f"aot_{start:08x}"
         lines = [f"static int {name}(AgrAotRegs *s) {{", "    int rc = 0;", "    (void)rc;"]
         ended = False
         for row in body:
             op = decode(row["pc"], row["insn"], row["len"], row["thumb"])
-            lines.append("    agr_aot_count_instruction();")
             lines.append("    " + emit_op(op, row["thumb"]))
             if "return AGR_AOT_BOUNDARY" in lines[-1] or op[0] == "ldmia_sp" and (op[1] & (1 << 15)):
                 ended = True
@@ -460,21 +460,22 @@ def emit(rows, destination):
         pieces.extend(lines)
         pieces.append("")
         entries.append((start, name))
+        block_lengths[start] = len(body)
     entries.sort()
     pieces.append("const AgrAotEntry agr_aot_debug_blocks[] = {")
     if not entries:
-        pieces.append("    {0, 0}")
+        pieces.append("    {0, 0, 0}")
     else:
         for pc, name in entries:
-            pieces.append(f"    {{{pc}u, {name}}},")
+            pieces.append(f"    {{{pc}u, {name}, {block_lengths[pc]}u}},")
     pieces.append("};")
     pieces.append(f"const uint32_t agr_aot_debug_block_count = {len(entries)}u;")
     pieces.append("const AgrAotEntry agr_aot_fast_blocks[] = {")
     if not entries:
-        pieces.append("    {0, 0}")
+        pieces.append("    {0, 0, 0}")
     else:
         for pc, name in entries:
-            pieces.append(f"    {{{pc}u, {name}}},")
+            pieces.append(f"    {{{pc}u, {name}, {block_lengths[pc]}u}},")
     pieces.append("};")
     pieces.append(f"const uint32_t agr_aot_fast_block_count = {len(entries)}u;")
     hash_size = 1
@@ -487,7 +488,7 @@ def emit(rows, destination):
             index = (index + 1) & (hash_size - 1)
         hashed[index] = (pc, name)
     pieces.append("const AgrAotEntry agr_aot_fast_hash[] = {")
-    pieces.extend(f"    {{{pc}u, {name}}}," for pc, name in hashed)
+    pieces.extend(f"    {{{pc}u, {name}, {block_lengths.get(pc, 0)}u}}," for pc, name in hashed)
     pieces.append("};")
     pieces.append(f"const uint32_t agr_aot_fast_hash_mask = {hash_size - 1}u;")
     pieces.append("")
@@ -539,7 +540,6 @@ def emit_partial(rows, destination, allowed_kinds):
         else:
             guards = [f"agr_aot_load32(s, {pc}u) != {raw}u"]
         lines.append(f"    if ({' || '.join(guards)}) return AGR_AOT_MISS;")
-        lines.append("    agr_aot_count_instruction();")
         lines.append("    " + emit_op(op, row["thumb"]))
         if not is_terminal(op):
             lines.append(f"    s->r[15] = {pc + length}u;")
@@ -597,8 +597,7 @@ def emit_partial(rows, destination, allowed_kinds):
                 break
             pc = nxt
         name = f"aot_fast_{start:08x}"
-        lines = [f"static int {name}(AgrAotRegs *s) {{", "    int rc = 0;", "    (void)rc;",
-                 f"    agr_aot_count_instructions({len(body)}u);"]
+        lines = [f"static int {name}(AgrAotRegs *s) {{", "    int rc = 0;", "    (void)rc;"]
         ended = False
         for row, op in body:
             lines.append("    " + emit_op(op, row["thumb"]))
@@ -614,14 +613,14 @@ def emit_partial(rows, destination, allowed_kinds):
         fast_block_lengths[start] = len(body)
 
     pieces.append("const AgrAotEntry agr_aot_debug_blocks[] = {")
-    pieces.extend(f"    {{{pc}u, {name}}}," for pc, name in debug_entries)
+    pieces.extend(f"    {{{pc}u, {name}, 1u}}," for pc, name in debug_entries)
     if not debug_entries:
-        pieces.append("    {0, 0},")
+        pieces.append("    {0, 0, 0},")
     pieces.extend(["};", f"const uint32_t agr_aot_debug_block_count = {len(debug_entries)}u;", ""])
     pieces.append("const AgrAotEntry agr_aot_fast_blocks[] = {")
-    pieces.extend(f"    {{{pc}u, {name}}}," for pc, name in fast_entries)
+    pieces.extend(f"    {{{pc}u, {name}, {fast_block_lengths[pc]}u}}," for pc, name in fast_entries)
     if not fast_entries:
-        pieces.append("    {0, 0},")
+        pieces.append("    {0, 0, 0},")
     pieces.extend(["};", f"const uint32_t agr_aot_fast_block_count = {len(fast_entries)}u;", ""])
     hash_size = 1
     while hash_size < max(2, len(fast_entries) * 2):
@@ -637,7 +636,7 @@ def emit_partial(rows, destination, allowed_kinds):
         hashed[index] = (pc, name)
         max_probe = max(max_probe, probe)
     pieces.append("const AgrAotEntry agr_aot_fast_hash[] = {")
-    pieces.extend(f"    {{{pc}u, {name}}}," for pc, name in hashed)
+    pieces.extend(f"    {{{pc}u, {name}, {fast_block_lengths.get(pc, 0)}u}}," for pc, name in hashed)
     pieces.extend(["};", f"const uint32_t agr_aot_fast_hash_mask = {hash_size - 1}u;", ""])
     destination.write_text("\n".join(pieces), encoding="utf-8", newline="\n")
     return debug_entries, fast_entries, fast_block_lengths, hash_size, max_probe

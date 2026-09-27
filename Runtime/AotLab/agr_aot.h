@@ -24,6 +24,7 @@ typedef int (*AgrAotFn)(AgrAotRegs *state);
 typedef struct AgrAotEntry {
     uint32_t pc;
     AgrAotFn function;
+    uint32_t instructions;
 } AgrAotEntry;
 
 extern const AgrAotEntry agr_aot_debug_blocks[];

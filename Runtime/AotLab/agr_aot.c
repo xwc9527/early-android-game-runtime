@@ -127,12 +127,12 @@ void agr_aot_log_host(const char *name, uint32_t slot, uint32_t r0, uint32_t r1,
 void agr_aot_set_enabled(int value) { enabled = value; }
 void agr_aot_set_diagnostic(int value) { diagnostic = value; }
 
-static AgrAotFn lookup(uint32_t pc) {
+static const AgrAotEntry *lookup(uint32_t pc) {
     if (!diagnostic) {
         uint32_t index = ((pc >> 1u) * 2654435761u) & agr_aot_fast_hash_mask;
         for (uint32_t probe = 0; probe <= agr_aot_fast_hash_mask; probe++) {
             uint32_t found = agr_aot_fast_hash[index].pc;
-            if (found == pc) return agr_aot_fast_hash[index].function;
+            if (found == pc) return &agr_aot_fast_hash[index];
             if (!found) return NULL;
             index = (index + 1u) & agr_aot_fast_hash_mask;
         }
@@ -143,7 +143,7 @@ static AgrAotFn lookup(uint32_t pc) {
     while (low < high) {
         uint32_t mid = low + (high - low) / 2u;
         uint32_t found = blocks[mid].pc;
-        if (found == pc) return blocks[mid].function;
+        if (found == pc) return &blocks[mid];
         if (found < pc) low = mid + 1u;
         else high = mid;
     }
@@ -158,6 +158,12 @@ int agr_aot_drive(void *cpu) {
     uint8_t *memory = arm_interp_memory_base(cpu);
     if (!regs || !cpsr || !memory) return AGR_AOT_FAULT;
     AgrAotRegs state = {regs, cpsr, memory};
+    uint32_t local_blocks = 0, local_instructions = 0;
+#define AGR_AOT_RETURN(value) do { \
+    executed_blocks += local_blocks; \
+    executed_instructions += local_instructions; \
+    return (value); \
+} while (0)
     for (uint32_t step = 0; step < 100000u; step++) {
         uint32_t pc = regs[15];
         /* The interpreter owns Thumb IT predication until its ITSTATE clears. */
@@ -165,41 +171,43 @@ int agr_aot_drive(void *cpu) {
             fallback_count++;
             it_fallbacks++;
             last_miss = pc;
-            return AGR_AOT_MISS;
+            AGR_AOT_RETURN(AGR_AOT_MISS);
         }
         if ((*cpsr & 0x20u) == 0 && !agr_aot_fault(pc)) {
             uint32_t word = agr_aot_load32(&state, pc);
             if ((word & 0xff000000u) == 0xef000000u) {
                 boundary_count++;
-                return AGR_AOT_SVC;
+                AGR_AOT_RETURN(AGR_AOT_SVC);
             }
         }
-        AgrAotFn function = lookup(pc);
-        if (!function) {
+        const AgrAotEntry *entry = lookup(pc);
+        if (!entry) {
             fallback_count++;
             lookup_misses++;
             last_miss = pc;
-            return AGR_AOT_MISS;
+            AGR_AOT_RETURN(AGR_AOT_MISS);
         }
         if (checkpoint_file) {
             fprintf(checkpoint_file, "%u %u", pc, *cpsr);
             for (uint32_t i = 0; i < 16; i++) fprintf(checkpoint_file, " %u", regs[i]);
             fputc('\n', checkpoint_file);
         }
-        executed_blocks++;
-        int result = function(&state);
-        if (result == AGR_AOT_FAULT) return AGR_AOT_FAULT;
+        local_blocks++;
+        int result = entry->function(&state);
+        if (result != AGR_AOT_MISS) local_instructions += entry->instructions;
+        if (result == AGR_AOT_FAULT) AGR_AOT_RETURN(AGR_AOT_FAULT);
         if (result == AGR_AOT_MISS) {
             fallback_count++;
             guard_misses++;
             last_miss = pc;
-            return AGR_AOT_MISS;
+            AGR_AOT_RETURN(AGR_AOT_MISS);
         }
     }
     fallback_count++;
     step_limit_fallbacks++;
     last_miss = regs[15];
-    return AGR_AOT_MISS;
+    AGR_AOT_RETURN(AGR_AOT_MISS);
+#undef AGR_AOT_RETURN
 }
 
 uint32_t agr_aot_executed_blocks(void) { return executed_blocks; }
