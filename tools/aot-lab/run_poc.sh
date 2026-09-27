@@ -20,10 +20,14 @@ PY
 
 bash "$ROOT/scripts/build-and-run-simulator.sh" deps
 bash "$ROOT/scripts/build-and-run-simulator.sh" build
+set +e
 bash "$ROOT/tools/aot-lab/launch_aot.sh" trace
+trace_status=$?
+set -e
 cp "$ROOT/build/artifacts/aot-trace.txt" "$EVIDENCE/interpreter-trace.txt"
 cp "$ROOT/build/artifacts/aot-hosts.txt" "$EVIDENCE/interpreter-hosts.txt"
 cp "$ROOT/build/artifacts/aot-result.json" "$EVIDENCE/interpreter-result.json"
+if [[ "$trace_status" -ne 0 ]]; then exit "$trace_status"; fi
 
 python3 "$ROOT/tools/aot-lab/translate.py" \
   --trace "$EVIDENCE/interpreter-trace.txt" \
@@ -32,7 +36,10 @@ python3 "$ROOT/tools/aot-lab/translate.py" \
 python3 "$ROOT/tools/aot-lab/no_jit_proof.py" "$ROOT/Runtime/AotLab/aot_blocks.c" "$EVIDENCE/no-jit.json"
 
 bash "$ROOT/scripts/build-and-run-simulator.sh" build
+set +e
 bash "$ROOT/tools/aot-lab/launch_aot.sh" run
+run_status=$?
+set -e
 cp "$ROOT/build/artifacts/aot-hosts.txt" "$EVIDENCE/aot-hosts.txt"
 cp "$ROOT/build/artifacts/aot-result.json" "$EVIDENCE/aot-result.json"
 if [[ -f "$ROOT/build/artifacts/aot-checkpoints.txt" ]]; then

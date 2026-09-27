@@ -1992,7 +1992,8 @@ static int runAotPoc(BOOL useAot) {
         @"lines": @(lines), @"triangles": @(triangles), @"bytes": @(bytes),
         @"error": error ?: @""
     };
-    [result writeToFile:resultPath atomically:YES];
+    NSData *resultData = [NSJSONSerialization dataWithJSONObject:result options:0 error:nil];
+    [resultData writeToFile:resultPath atomically:YES];
     if (guest) agr_guest_destroy(guest);
     return status;
 }
