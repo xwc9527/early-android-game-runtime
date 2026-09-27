@@ -465,7 +465,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         if (gKungFooAotProbeMode == 1) {
             agr_aot_set_trace_limit(1000000);
             agr_aot_trace_open([[docs stringByAppendingPathComponent:@"aot-trace.txt"] UTF8String]);
-        } else {
+        } else if (gKungFooAotProbeMode == 2) {
             agr_aot_checkpoint_open([[docs stringByAppendingPathComponent:@"aot-checkpoints.txt"] UTF8String]);
             agr_aot_set_enabled(1);
         }
@@ -485,7 +485,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         BOOL stagePassed=package && mounted==0 && registered==0 && dexLoaded==0 && jniOnLoad==0;
         const char *stageError=guest?agr_guest_last_error(guest):"guest unavailable";
         NSDictionary *stageResult=@{
-            @"mode":gKungFooAotProbeMode==2?@"aot":@"interpreter",
+            @"mode":gKungFooAotProbeMode==2?@"aot":(gKungFooAotProbeMode==3?@"interpreter-baseline":@"interpreter-trace"),
             @"workload":@"kungfoo-armv7-native-loader-stage",
             @"passed":@(stagePassed),@"mounted":@(mounted==0),
             @"elf_registered":@(registered==0),@"dex_loaded":@(dexLoaded==0),
@@ -1985,17 +1985,17 @@ static uint64_t aotHash(const uint8_t *bytes, uint32_t size) {
     return hash;
 }
 
-static int runKungFooAotProbe(BOOL useAot) {
+static int runKungFooAotProbe(int mode) {
     NSString *docs=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
     [[NSFileManager defaultManager] createDirectoryAtPath:docs withIntermediateDirectories:YES attributes:nil error:nil];
     NSMutableArray<NSString *> *failures=[NSMutableArray array];
-    gKungFooAotProbeMode=useAot?2:1;
+    gKungFooAotProbeMode=mode;
     NSDictionary *native=runKungFooNativeRegression(failures,NO);
     gKungFooAotProbeMode=0;
     BOOL passed=failures.count==0 && [native[@"native_activity_created"] boolValue]
         && [native[@"native_draws"] unsignedIntValue]>0
         && [native[@"native_swaps"] unsignedIntValue]>0;
-    NSDictionary *result=@{@"mode":useAot?@"aot":@"interpreter",
+    NSDictionary *result=@{@"mode":mode==2?@"aot":(mode==3?@"interpreter-baseline":@"interpreter-trace"),
         @"workload":@"kungfoo-armv7-native-dlopen-to-gameplay",
         @"passed":@(passed),@"failures":failures,@"native":native?:@{}};
     NSData *bytes=[NSJSONSerialization dataWithJSONObject:result options:0 error:nil];
@@ -2095,8 +2095,11 @@ static int runAotPoc(BOOL useAot) {
     if (![scene isKindOfClass:UIWindowScene.class]) return;
     NSArray<NSString *> *arguments=NSProcessInfo.processInfo.arguments;
     if ([arguments containsObject:@"--aot-kungfoo-trace"] ||
-        [arguments containsObject:@"--aot-kungfoo-run"]) {
-        exit(runKungFooAotProbe([arguments containsObject:@"--aot-kungfoo-run"]));
+        [arguments containsObject:@"--aot-kungfoo-run"] ||
+        [arguments containsObject:@"--aot-kungfoo-baseline"]) {
+        int mode=[arguments containsObject:@"--aot-kungfoo-run"]?2:
+            ([arguments containsObject:@"--aot-kungfoo-baseline"]?3:1);
+        exit(runKungFooAotProbe(mode));
     }
     if ([arguments containsObject:@"--aot-trace"] || [arguments containsObject:@"--aot-run"]) {
         exit(runAotPoc([arguments containsObject:@"--aot-run"]));

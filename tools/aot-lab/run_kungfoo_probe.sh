@@ -53,6 +53,14 @@ if [[ "$probe_status" -eq 0 && -s "$EVIDENCE/interpreter-trace.txt" ]]; then
   if [[ "$translate_status" -eq 0 ]]; then
     cmp "$EVIDENCE/aot_blocks.c" "$ROOT/Runtime/AotLab/aot_blocks.c"
     set +e
+    bash "$ROOT/tools/aot-lab/launch_aot.sh" kungfoo-baseline
+    baseline_status=$?
+    set -e
+    [[ -f "$ROOT/build/artifacts/aot-stage-result.json" ]] && cp "$ROOT/build/artifacts/aot-stage-result.json" "$EVIDENCE/baseline-stage-result.json"
+    [[ -f "$ROOT/build/artifacts/aot-hosts.txt" ]] && cp "$ROOT/build/artifacts/aot-hosts.txt" "$EVIDENCE/baseline-hosts.txt"
+    printf '%s\n' "$baseline_status" > "$EVIDENCE/baseline.exit"
+    [[ "$baseline_status" -eq 0 ]] || exit "$baseline_status"
+    set +e
     bash "$ROOT/tools/aot-lab/launch_aot.sh" kungfoo-run
     aot_status=$?
     set -e
@@ -61,7 +69,9 @@ if [[ "$probe_status" -eq 0 && -s "$EVIDENCE/interpreter-trace.txt" ]]; then
     done
     [[ -f "$ROOT/build/artifacts/pvs-progress.json" ]] && cp "$ROOT/build/artifacts/pvs-progress.json" "$EVIDENCE/aot-progress.json"
     printf '%s\n' "$aot_status" > "$EVIDENCE/aot.exit"
-    exit "$aot_status"
+    [[ "$aot_status" -eq 0 ]] || exit "$aot_status"
+    python3 "$ROOT/tools/aot-lab/kungfoo_stage_differential.py" "$EVIDENCE"
+    exit $?
   fi
   exit "$translate_status"
 fi

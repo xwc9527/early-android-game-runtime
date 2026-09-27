@@ -25,6 +25,7 @@ case "$MODE" in
   run) ARG="--aot-run" ;;
   kungfoo-trace) ARG="--aot-kungfoo-trace" ;;
   kungfoo-run) ARG="--aot-kungfoo-run" ;;
+  kungfoo-baseline) ARG="--aot-kungfoo-baseline" ;;
   *) echo "unknown AOT launch mode: $MODE" >&2; exit 2 ;;
 esac
 RESULT_NAME=aot-result.json
