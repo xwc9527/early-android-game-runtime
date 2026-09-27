@@ -1,0 +1,14 @@
+{
+  "production_module": "DalvikThreadState",
+  "status": "experimental",
+  "paths": [
+    "Runtime/DexLoom/VM/dx_thread_state.c",
+    "Runtime/DexLoom/Include/dx_thread_state.h"
+  ],
+  "caller_module": "DalvikJNI",
+  "caller_files": [
+    "Runtime/DexLoom/VM/dx_jni.c",
+    "Runtime/DexLoom/Include/dx_jni.h"
+  ],
+  "semantic_owner": "Dalvik.ThreadState"
+}

@@ -641,7 +641,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         encoded = json.dumps(registry)
         self.assertNotIn("PRODUCTION_CLOSED", encoded)
         self.assertEqual([item["semantic_cluster"] for item in registry["crossing_closures"]],
-                         ["Bionic.PthreadCondition"])
+                         ["Bionic.PthreadCondition", "Dalvik.ThreadState"])
         self.assertEqual(registry["crossing_closures"][0]["status"], "CROSSING_CLOSED")
         self.assertEqual(registry["crossing_closures"][0]["closure_target"],
                          "Dalvik.ThreadState self-suspend crossing")
@@ -766,13 +766,12 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         owner = index["external_cluster_sources"]["Dalvik.JNINativeBinding"]
         self.assertEqual(owner["status"], "SOURCE_LOCATED")
         self.assertIs(owner["closure_reviewed"], False)
-        self.assertNotIn("PREREQUISITE_CLOSED", json.dumps(owner))
         crossings = [(edge["semantic_cluster"], edge["source_file"], edge["source_symbol"],
                       edge["relationship"], edge["owner_source_status"])
                      for edge in owner["prerequisite_edges"]]
         self.assertEqual(crossings, [
             ("Dalvik.ThreadState", "vm/Thread.cpp", "dvmChangeStatus",
-             "REOPEN_REQUIRED", "SOURCE_CLOSED"),
+             "PREREQUISITE_CLOSED", "SOURCE_CLOSED"),
             ("Dalvik.ClassInitialization", "vm/oo/Class.cpp", "dvmInitClass",
              "UNRESOLVED", "SOURCE_LOCATED"),
             ("Dalvik.ObjectAllocation", "vm/alloc/Alloc.cpp", "dvmAllocObject",
@@ -816,7 +815,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         self.assertEqual(constructor["owner_source_status"], "SOURCE_LOCATED")
         other = [edge["relationship"] for edge in binding["prerequisite_edges"]
                  if edge["semantic_cluster"] != "Dalvik.MethodInvocation"]
-        self.assertEqual(other, ["REOPEN_REQUIRED", "UNRESOLVED", "UNRESOLVED", "UNRESOLVED"])
+        self.assertEqual(other, ["PREREQUISITE_CLOSED", "UNRESOLVED", "UNRESOLVED", "UNRESOLVED"])
 
     def test_thread_state_source_is_closed_without_migration_authority(self):
         integer_index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
@@ -851,7 +850,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         thread_edge = next(edge for edge in binding["prerequisite_edges"]
                            if edge["edge"] == "JNI thread state around RegisterNatives")
         self.assertEqual(thread_edge["semantic_cluster"], "Dalvik.ThreadState")
-        self.assertEqual(thread_edge["relationship"], "REOPEN_REQUIRED")
+        self.assertEqual(thread_edge["relationship"], "PREREQUISITE_CLOSED")
         self.assertEqual(thread_edge["owner_source_status"], "SOURCE_CLOSED")
         monitor = integer_index["external_cluster_sources"]["Dalvik.Monitor"]
         self.assertEqual(monitor["status"], "SOURCE_LOCATED")
@@ -1146,7 +1145,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
             ROOT / "tools/reference-lab/evidence/dalvik-threadstate-production-disposition/source-manifest.json"
         ).read_text(encoding="utf-8")))
         self.assertEqual(binding["status"], "SOURCE_LOCATED")
-        self.assertEqual(binding["prerequisite_edges"][0]["relationship"], "REOPEN_REQUIRED")
+        self.assertEqual(binding["prerequisite_edges"][0]["relationship"], "PREREQUISITE_CLOSED")
         clock = bionic_clock_gettime_source_manifest(index)
         self.assertEqual(set(clock["source_derived_clusters"]), {"Bionic.ClockGettime"})
         self.assertTrue(clock["source_derived_clusters"]["Bionic.ClockGettime"]["migration_authorized"])
@@ -1178,7 +1177,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
     def test_host_dex_pthread_consumption_stays_an_evidence_gap(self):
         contracts = json.loads((ROOT / "ci/governance/substrate-production-contracts.json").read_text(encoding="utf-8"))
         self.assertEqual(contracts["contracts"], [])
-        self.assertEqual(len(contracts["crossing_closures"]), 1)
+        self.assertEqual(len(contracts["crossing_closures"]), 2)
         crossing = contracts["crossing_closures"][0]
         self.assertEqual(crossing["status"], "CROSSING_CLOSED")
         self.assertEqual(crossing["semantic_cluster"], "Bionic.PthreadCondition")
@@ -1195,7 +1194,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         binding = resources["external_cluster_sources"]["Dalvik.JNINativeBinding"]
         self.assertEqual([(edge["semantic_cluster"], edge["relationship"])
                           for edge in binding["prerequisite_edges"]], [
-            ("Dalvik.ThreadState", "REOPEN_REQUIRED"),
+            ("Dalvik.ThreadState", "PREREQUISITE_CLOSED"),
             ("Dalvik.ClassInitialization", "UNRESOLVED"),
             ("Dalvik.ObjectAllocation", "UNRESOLVED"),
             ("Dalvik.MethodInvocation", "UNRESOLVED"),
@@ -1316,7 +1315,8 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         resources = json.loads((ROOT / "tools/reference-lab/indexes/shared-resources-api19-locations.json").read_text(encoding="utf-8"))
         binding = resources["external_cluster_sources"]["Dalvik.JNINativeBinding"]
         self.assertEqual(binding["status"], "SOURCE_LOCATED")
-        self.assertEqual(binding["prerequisite_edges"][0]["relationship"], "REOPEN_REQUIRED")
+        self.assertEqual(binding["prerequisite_edges"][0]["relationship"], "PREREQUISITE_CLOSED")
+        validate_committed_crossing_closures()
 
 
 if __name__ == "__main__":

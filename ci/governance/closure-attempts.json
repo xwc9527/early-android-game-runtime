@@ -210,6 +210,16 @@
       "classification": "VALID_PASS",
       "reason": "Untimed self-suspend wait, normal mutex lock and unlock, and broadcast wake match the pinned path. The row is not a Bionic.PthreadCondition owner closure.",
       "consumes_budget": true
+    },
+    {
+      "target": "RegisterNatives thread-state crossing",
+      "target_evidence": "tools/reference-lab/evidence/dalvik-threadstate-production-port/host-output.txt reports THREADSTATE_PORT ok=1. Phase 3A JNI references run 36299095567 executed that host contract on commit 010f7fede617bb2bf3188001a431c988b6359e2f. This row closes only that crossing.",
+      "run_id": "36299095567",
+      "tested_commit": "010f7fede617bb2bf3188001a431c988b6359e2f",
+      "tested_tree": "28e856a756e6be4872d926ede5f93c0ae4c8effb",
+      "classification": "VALID_PASS",
+      "reason": "RegisterNatives thread status, the D010 host words, and the closed Bionic self-suspend wait match the pinned path. The row does not close Dalvik.ThreadState as an owner and does not close Dalvik.JNINativeBinding.",
+      "consumes_budget": true
     }
   ],
   "active_target": "Dalvik.JNINativeBinding API19 Repair"

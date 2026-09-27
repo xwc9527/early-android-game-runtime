@@ -397,7 +397,7 @@
         {
           "edge": "JNI thread state around RegisterNatives",
           "semantic_cluster": "Dalvik.ThreadState",
-          "relationship": "REOPEN_REQUIRED",
+          "relationship": "PREREQUISITE_CLOSED",
           "owner_source_status": "SOURCE_CLOSED",
           "source_repo": "platform/dalvik",
           "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
@@ -451,16 +451,15 @@
         }
       ],
       "blocking_edges": [
-        "UNRESOLVED substrate crossings for thread state, exception initialization, allocation, constructor invocation, and the synchronized JNI bridge monitor",
+        "UNRESOLVED substrate crossings for exception initialization, allocation, constructor invocation, and the synchronized JNI bridge monitor",
         "AGR native binding production contract remains divergent and is not a closure PASS"
       ],
       "status": "SOURCE_LOCATED",
       "closure_reviewed": false,
       "closure_evidence": {
         "reviewed_by": "api19-source-audit",
-        "closure_notes": "Review does not pass. RegisterNatives decodes the jclass, switches the JNI thread to THREAD_RUNNING, and returns JNI_ERR at the first dvmRegisterJNIMethod failure or JNI_OK when every method binds. Lookup is direct, then virtual, on the declaring class only. A leading ! is stripped before lookup, sets method->fastJni, and rejects synchronized or non-static methods without a throw. fnPtr NULL returns false before lookup and throws nothing. A missing method or a non-native method calls dvmThrowNoSuchMethodError. That throw initializes the exception class, allocates the object, and invokes its constructor. Repeat registration is allowed and rebinds through dvmUseJNIBridge and dvmSetNativeFunc. The installed bridge is dvmCallJNIMethod, which passes JNIEnv* and jclass or this into dvmPlatformInvoke on x86, ARM EABI, ARM old ABI, MIPS, and the generic FFI path. method->fastJni is written at Jni.cpp and declared on Method; the pinned Dalvik tree and libcore contain no other fastJni token, so the omitted-JNIEnv call is not implemented. ENFORCE_READ_ONLY is false, so the linear-alloc write guard does not call mprotect on this path. Class.cpp is pinned for dvmSetNativeFunc only; dvmInitClass stays a Dalvik.ClassInitialization crossing and is not absorbed. These UNRESOLVED crossings block SOURCE_CLOSED. The RegisterNatives entry reached from AndroidRuntime::startReg is already THREAD_NATIVE because JNI_CreateJavaVM calls dvmChangeStatus(NULL, THREAD_NATIVE) after dvmStartup returns. That call is in vm/Jni.cpp and uses the existing ThreadState symbol. registerSystemNatives and dvmLoadNativeCode do not publish this entry.",
+        "closure_notes": "Review does not pass. RegisterNatives decodes the jclass, switches the JNI thread to THREAD_RUNNING, and returns JNI_ERR at the first dvmRegisterJNIMethod failure or JNI_OK when every method binds. Lookup is direct, then virtual, on the declaring class only. A leading ! is stripped before lookup, sets method->fastJni, and rejects synchronized or non-static methods without a throw. fnPtr NULL returns false before lookup and throws nothing. A missing method or a non-native method calls dvmThrowNoSuchMethodError. That throw initializes the exception class, allocates the object, and invokes its constructor. Repeat registration is allowed and rebinds through dvmUseJNIBridge and dvmSetNativeFunc. The installed bridge is dvmCallJNIMethod, which passes JNIEnv* and jclass or this into dvmPlatformInvoke on x86, ARM EABI, ARM old ABI, MIPS, and the generic FFI path. method->fastJni is written at Jni.cpp and declared on Method; the pinned Dalvik tree and libcore contain no other fastJni token, so the omitted-JNIEnv call is not implemented. ENFORCE_READ_ONLY is false, so the linear-alloc write guard does not call mprotect on this path. Class.cpp is pinned for dvmSetNativeFunc only; dvmInitClass stays a Dalvik.ClassInitialization crossing and is not absorbed. The RegisterNatives thread-state crossing is an exact PREREQUISITE_CLOSED. The other four UNRESOLVED crossings still block SOURCE_CLOSED. The RegisterNatives entry reached from AndroidRuntime::startReg is already THREAD_NATIVE because JNI_CreateJavaVM calls dvmChangeStatus(NULL, THREAD_NATIVE) after dvmStartup returns. That call is in vm/Jni.cpp and uses the existing ThreadState symbol. registerSystemNatives and dvmLoadNativeCode do not publish this entry.",
         "unresolved_dependency_edges": [
-          "JNI thread state around RegisterNatives",
           "exception class initialization",
           "exception object allocation",
           "exception constructor invocation",
