@@ -198,7 +198,7 @@ def emit_op(op, thumb):
         return f"agr_aot_add_imm(s, {rd}, {base}, {source});"
     if kind == "str_wb":
         rd, rn, imm, up, writeback, pc = op[1:]
-        sign = "" if up else "-"
+        sign = "+" if up else "-"
         base = f"({pc + 8}u)" if rn == 15 else f"s->r[{rn}]"
         value = f"({pc + 8}u)" if rd == 15 else f"s->r[{rd}]"
         lines = [f"{{ uint32_t addr = {base} {sign} {imm}u;"]
@@ -213,7 +213,7 @@ def emit_op(op, thumb):
         return f"agr_aot_add_imm(s, {rd}, s->r[{rn}], {imm}u);"
     if kind == "ldr_wb":
         rd, rn, imm, up, writeback, pc = op[1:]
-        sign = "" if up else "-"
+        sign = "+" if up else "-"
         base = f"({pc + 8}u)" if rn == 15 else f"s->r[{rn}]"
         lines = [f"{{ uint32_t addr = {base} {sign} {imm}u;"]
         if writeback and rn != 15:
