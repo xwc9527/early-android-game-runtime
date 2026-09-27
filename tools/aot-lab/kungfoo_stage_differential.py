@@ -3,6 +3,7 @@
 
 import json
 from pathlib import Path
+import statistics
 import sys
 
 
@@ -15,11 +16,17 @@ def main():
     evidence = Path(sys.argv[1])
     baseline = json.loads((evidence / "baseline-stage-result.json").read_text(encoding="utf-8"))
     aot = json.loads((evidence / "aot-stage-result.json").read_text(encoding="utf-8"))
-    performance = json.loads((evidence / "performance-stage-result.json").read_text(encoding="utf-8"))
     manifest = json.loads((evidence / "translation-manifest.json").read_text(encoding="utf-8"))
     baseline_hosts = (evidence / "baseline-hosts.txt").read_text(encoding="utf-8").splitlines()
     aot_hosts = (evidence / "aot-hosts.txt").read_text(encoding="utf-8").splitlines()
-    performance_hosts = (evidence / "performance-hosts.txt").read_text(encoding="utf-8").splitlines()
+    baseline_performance = [json.loads(path.read_text(encoding="utf-8")) for path in
+                            sorted(evidence.glob("baseline-performance-*-stage-result.json"))]
+    performance = [json.loads(path.read_text(encoding="utf-8")) for path in
+                   sorted(evidence.glob("performance-*-stage-result.json"))]
+    baseline_performance_hosts = [path.read_text(encoding="utf-8").splitlines() for path in
+                                  sorted(evidence.glob("baseline-performance-*-hosts.txt"))]
+    performance_hosts = [path.read_text(encoding="utf-8").splitlines() for path in
+                         sorted(evidence.glob("performance-*-hosts.txt"))]
     trace = integer_rows(evidence / "interpreter-trace.txt")
     checkpoints = integer_rows(evidence / "aot-checkpoints.txt")
 
@@ -48,23 +55,30 @@ def main():
     }
     baseline_seconds = float(baseline.get("seconds") or 0)
     aot_seconds = float(aot.get("seconds") or 0)
-    performance_seconds = float(performance.get("seconds") or 0)
     baseline_boundary = float(baseline.get("boundary_seconds") or 0)
     aot_boundary = float(aot.get("boundary_seconds") or 0)
-    performance_boundary = float(performance.get("boundary_seconds") or 0)
     baseline_guest = max(0.0, baseline_seconds - baseline_boundary)
     aot_guest = max(0.0, aot_seconds - aot_boundary)
-    performance_guest = max(0.0, performance_seconds - performance_boundary)
+    baseline_guest_samples = [max(0.0, float(row.get("seconds") or 0) -
+                                  float(row.get("boundary_seconds") or 0))
+                              for row in baseline_performance]
+    performance_guest_samples = [max(0.0, float(row.get("seconds") or 0) -
+                                     float(row.get("boundary_seconds") or 0))
+                                 for row in performance]
+    baseline_guest_median = statistics.median(baseline_guest_samples) if baseline_guest_samples else 0
+    performance_guest_median = statistics.median(performance_guest_samples) if performance_guest_samples else 0
+    samples_valid = (len(baseline_performance) == len(performance) == 7 and
+                     all(row.get("passed") for row in baseline_performance + performance) and
+                     all(hosts == baseline_hosts for hosts in baseline_performance_hosts + performance_hosts))
     result = {
         "schema_version": 1,
         "workload": "kungfoo-armv7-native-loader-stage",
         "semantic_pass": bool(all(equal_fields.values()) and baseline.get("passed") and
-                              aot.get("passed") and performance.get("passed") and
-                              baseline_hosts == aot_hosts == performance_hosts and
+                              aot.get("passed") and samples_valid and baseline_hosts == aot_hosts and
                               not mismatches and checkpoints and int(aot.get("aot_instructions") or 0) > 0),
         "observable_fields_equal": equal_fields,
         "host_sequence_equal": baseline_hosts == aot_hosts,
-        "performance_host_sequence_equal": baseline_hosts == performance_hosts,
+        "performance_host_sequence_equal": samples_valid,
         "host_call_count": len(aot_hosts),
         "checkpoint_count": len(checkpoints),
         "checkpoint_mismatches": mismatches,
@@ -75,16 +89,20 @@ def main():
         "miss_pc": aot.get("miss_pc"),
         "interpreter_seconds": baseline_seconds,
         "aot_correctness_seconds": aot_seconds,
-        "aot_performance_seconds": performance_seconds,
         "interpreter_boundary_seconds": baseline_boundary,
         "aot_correctness_boundary_seconds": aot_boundary,
-        "aot_performance_boundary_seconds": performance_boundary,
         "interpreter_guest_seconds": baseline_guest,
         "aot_correctness_guest_seconds": aot_guest,
-        "aot_performance_guest_seconds": performance_guest,
-        "guest_speedup": baseline_guest / performance_guest if performance_guest else 0,
-        "performance_aot_instructions": int(performance.get("aot_instructions") or 0),
-        "performance_fallback_count": int(performance.get("fallback_count") or 0),
+        "performance_sample_count": len(performance),
+        "interpreter_guest_seconds_samples": baseline_guest_samples,
+        "aot_performance_guest_seconds_samples": performance_guest_samples,
+        "interpreter_guest_seconds_median": baseline_guest_median,
+        "aot_performance_guest_seconds_median": performance_guest_median,
+        "interpreter_guest_seconds_range": [min(baseline_guest_samples), max(baseline_guest_samples)] if baseline_guest_samples else [],
+        "aot_performance_guest_seconds_range": [min(performance_guest_samples), max(performance_guest_samples)] if performance_guest_samples else [],
+        "guest_speedup_median": baseline_guest_median / performance_guest_median if performance_guest_median else 0,
+        "performance_aot_instructions": sorted({int(row.get("aot_instructions") or 0) for row in performance}),
+        "performance_fallback_count": sorted({int(row.get("fallback_count") or 0) for row in performance}),
         "preparation_wall_seconds": manifest.get("preparation_wall_seconds"),
         "generated_c_bytes": manifest.get("generated_c_bytes"),
         "generated_block_count": len(manifest.get("blocks") or []),

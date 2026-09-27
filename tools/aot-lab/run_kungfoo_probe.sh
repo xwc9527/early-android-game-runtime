@@ -70,14 +70,24 @@ if [[ "$probe_status" -eq 0 && -s "$EVIDENCE/interpreter-trace.txt" ]]; then
     [[ -f "$ROOT/build/artifacts/pvs-progress.json" ]] && cp "$ROOT/build/artifacts/pvs-progress.json" "$EVIDENCE/aot-progress.json"
     printf '%s\n' "$aot_status" > "$EVIDENCE/aot.exit"
     [[ "$aot_status" -eq 0 ]] || exit "$aot_status"
-    set +e
-    bash "$ROOT/tools/aot-lab/launch_aot.sh" kungfoo-performance
-    performance_status=$?
-    set -e
-    [[ -f "$ROOT/build/artifacts/aot-stage-result.json" ]] && cp "$ROOT/build/artifacts/aot-stage-result.json" "$EVIDENCE/performance-stage-result.json"
-    [[ -f "$ROOT/build/artifacts/aot-hosts.txt" ]] && cp "$ROOT/build/artifacts/aot-hosts.txt" "$EVIDENCE/performance-hosts.txt"
-    printf '%s\n' "$performance_status" > "$EVIDENCE/performance.exit"
-    [[ "$performance_status" -eq 0 ]] || exit "$performance_status"
+    for sample in $(seq -w 1 7); do
+      set +e
+      bash "$ROOT/tools/aot-lab/launch_aot.sh" kungfoo-baseline
+      sample_status=$?
+      set -e
+      printf '%s\n' "$sample_status" > "$EVIDENCE/baseline-performance-$sample.exit"
+      [[ -f "$ROOT/build/artifacts/aot-stage-result.json" ]] && cp "$ROOT/build/artifacts/aot-stage-result.json" "$EVIDENCE/baseline-performance-$sample-stage-result.json"
+      [[ -f "$ROOT/build/artifacts/aot-hosts.txt" ]] && cp "$ROOT/build/artifacts/aot-hosts.txt" "$EVIDENCE/baseline-performance-$sample-hosts.txt"
+      [[ "$sample_status" -eq 0 ]] || exit "$sample_status"
+      set +e
+      bash "$ROOT/tools/aot-lab/launch_aot.sh" kungfoo-performance
+      sample_status=$?
+      set -e
+      printf '%s\n' "$sample_status" > "$EVIDENCE/performance-$sample.exit"
+      [[ -f "$ROOT/build/artifacts/aot-stage-result.json" ]] && cp "$ROOT/build/artifacts/aot-stage-result.json" "$EVIDENCE/performance-$sample-stage-result.json"
+      [[ -f "$ROOT/build/artifacts/aot-hosts.txt" ]] && cp "$ROOT/build/artifacts/aot-hosts.txt" "$EVIDENCE/performance-$sample-hosts.txt"
+      [[ "$sample_status" -eq 0 ]] || exit "$sample_status"
+    done
     python3 "$ROOT/tools/aot-lab/kungfoo_stage_differential.py" "$EVIDENCE"
     exit $?
   fi
