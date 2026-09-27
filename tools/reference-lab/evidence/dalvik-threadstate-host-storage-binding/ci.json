@@ -1,0 +1,17 @@
+{
+  "tested_commit": "8360dd9635d5c6239e700132954831279988f874",
+  "tested_tree": "200a66ddc1c218a67b968cb7687d29be2a55ce67",
+  "governance_run": "36295850907",
+  "governance_job": "108554433612",
+  "governance_conclusion": "success",
+  "also_success": [
+    "36295850915 Phase 3A0 classpath",
+    "36295850911 Phase 3A JNI references",
+    "36295850913 Phase 3 protected regression"
+  ],
+  "result": "AUTHORIZED",
+  "decision_id": "D010",
+  "selected_fork": "representation-split",
+  "runtime_modified": false,
+  "crossing_record_modified": false
+}
