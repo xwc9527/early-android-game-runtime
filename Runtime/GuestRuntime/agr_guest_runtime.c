@@ -1011,13 +1011,14 @@ static int run_until_return(agr_guest *g) {
         if (atomic_load_explicit(&g->shutting_down,memory_order_acquire)) return -1;
         int driven = agr_aot_drive(guest_cpu(g));
         if (driven == AGR_AOT_FAULT) { set_error(g, "AOT guest memory fault"); return -1; }
-        uint64_t budget = driven == AGR_AOT_MISS ? 1 : g->run_budget; uint32_t svc = 0;
+        uint64_t budget = driven == AGR_AOT_MISS ? 1 : g->run_budget;
+        uint64_t starting_budget = budget; uint32_t svc = 0;
         arm_interp_set_thread_tag(guest_cpu(g), agr_current_thread(g->runtime));
         int32_t state = arm_interp_run(guest_cpu(g), &budget, &svc);
         uint32_t observed_pc=arm_interp_get_reg(guest_cpu(g),15);
         guest_context(g)->current_guest_pc=observed_pc;
         atomic_store_explicit(&g->last_guest_pc,observed_pc,memory_order_release);
-        atomic_fetch_add_explicit(&g->instruction_count,g->run_budget-budget,memory_order_relaxed);
+        atomic_fetch_add_explicit(&g->instruction_count,starting_budget-budget,memory_order_relaxed);
         if (state == 0 && driven == AGR_AOT_MISS) continue;
         if (state != 1) {
             uint32_t pc = arm_interp_get_reg(guest_cpu(g), 15), cpsr = arm_interp_get_cpsr(guest_cpu(g));

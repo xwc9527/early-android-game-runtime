@@ -56,7 +56,7 @@ def decode(pc, insn, length, thumb):
         if hw0 == 0xe92d:
             return ("stmdb_sp", hw1 & 0x5fff)
         if hw0 == 0xe8bd:
-            mask = hw1 & 0x1fff
+            mask = hw1 & 0x5fff
             if hw1 & 0x8000:
                 mask |= 1 << 15
             return ("ldmia_sp", mask)
@@ -355,6 +355,8 @@ def self_test(so_path):
     arm = Cs(CS_ARCH_ARM, CS_MODE_ARM)
     ranges = [(0xdc4, 0xf04, True), (0xd08, 0xd44, False)]
     rows = []
+    if decode(0, 0xe8bd4010, 4, True) != ("ldmia_sp", (1 << 4) | (1 << 14)):
+        raise SystemExit("Thumb-2 pop.w must preserve the LR register-list bit")
     for start, end, is_thumb in ranges:
         code = data[start:end]
         decoder = thumb if is_thumb else arm

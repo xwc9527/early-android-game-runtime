@@ -20,8 +20,8 @@
     "movw",
     "stmdb_sp"
   ],
-  "preparation_wall_seconds": 0.12840980000328273,
-  "generated_c_bytes": 434561,
+  "preparation_wall_seconds": 0.18263830000068992,
+  "generated_c_bytes": 434579,
   "blocks": [
     {
       "pc": 289412,

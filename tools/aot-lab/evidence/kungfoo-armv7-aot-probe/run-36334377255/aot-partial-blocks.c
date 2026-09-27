@@ -3165,7 +3165,7 @@ static int aot_00048268(AgrAotRegs *s) {
     if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
     if (agr_aot_load16(s, 295528u) != 59581u || agr_aot_load16(s, 295530u) != 16400u) return AGR_AOT_MISS;
     agr_aot_count_instruction();
-    if ((rc = agr_aot_ldmia_sp(s, 16u))) return rc;
+    if ((rc = agr_aot_ldmia_sp(s, 16400u))) return rc;
     s->r[15] = 295532u;
     return AGR_AOT_BOUNDARY;
 }
@@ -3385,7 +3385,7 @@ static int aot_0004833c(AgrAotRegs *s) {
     if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
     if (agr_aot_load16(s, 295740u) != 59581u || agr_aot_load16(s, 295742u) != 16400u) return AGR_AOT_MISS;
     agr_aot_count_instruction();
-    if ((rc = agr_aot_ldmia_sp(s, 16u))) return rc;
+    if ((rc = agr_aot_ldmia_sp(s, 16400u))) return rc;
     s->r[15] = 295744u;
     return AGR_AOT_BOUNDARY;
 }
@@ -3605,7 +3605,7 @@ static int aot_00048410(AgrAotRegs *s) {
     if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
     if (agr_aot_load16(s, 295952u) != 59581u || agr_aot_load16(s, 295954u) != 16400u) return AGR_AOT_MISS;
     agr_aot_count_instruction();
-    if ((rc = agr_aot_ldmia_sp(s, 16u))) return rc;
+    if ((rc = agr_aot_ldmia_sp(s, 16400u))) return rc;
     s->r[15] = 295956u;
     return AGR_AOT_BOUNDARY;
 }
@@ -3968,7 +3968,7 @@ static int aot_0004855a(AgrAotRegs *s) {
     if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
     if (agr_aot_load16(s, 296282u) != 59581u || agr_aot_load16(s, 296284u) != 16400u) return AGR_AOT_MISS;
     agr_aot_count_instruction();
-    if ((rc = agr_aot_ldmia_sp(s, 16u))) return rc;
+    if ((rc = agr_aot_ldmia_sp(s, 16400u))) return rc;
     s->r[15] = 296286u;
     return AGR_AOT_BOUNDARY;
 }
@@ -4208,7 +4208,7 @@ static int aot_00048648(AgrAotRegs *s) {
     if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
     if (agr_aot_load16(s, 296520u) != 59581u || agr_aot_load16(s, 296522u) != 16400u) return AGR_AOT_MISS;
     agr_aot_count_instruction();
-    if ((rc = agr_aot_ldmia_sp(s, 16u))) return rc;
+    if ((rc = agr_aot_ldmia_sp(s, 16400u))) return rc;
     s->r[15] = 296524u;
     return AGR_AOT_BOUNDARY;
 }
@@ -4802,7 +4802,7 @@ static int aot_0004885a(AgrAotRegs *s) {
     if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
     if (agr_aot_load16(s, 297050u) != 59581u || agr_aot_load16(s, 297052u) != 16440u) return AGR_AOT_MISS;
     agr_aot_count_instruction();
-    if ((rc = agr_aot_ldmia_sp(s, 56u))) return rc;
+    if ((rc = agr_aot_ldmia_sp(s, 16440u))) return rc;
     s->r[15] = 297054u;
     return AGR_AOT_BOUNDARY;
 }
