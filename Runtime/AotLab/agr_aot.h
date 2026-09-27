@@ -79,6 +79,10 @@ static inline int agr_aot_fault8(uint32_t address) {
     return address < 0x1000u;
 }
 
+static inline int agr_aot_fault16(uint32_t address) {
+    return address < 0x1000u || address > 0xfffffffeu;
+}
+
 static inline uint32_t agr_aot_load32(AgrAotRegs *state, uint32_t address) {
     uint32_t value = 0;
     if (agr_aot_fault(address)) return 0;
@@ -99,6 +103,11 @@ static inline void agr_aot_store32(AgrAotRegs *state, uint32_t address, uint32_t
 
 static inline void agr_aot_store8(AgrAotRegs *state, uint32_t address, uint32_t value) {
     if (!agr_aot_fault8(address)) state->mem[address] = (uint8_t)value;
+}
+
+static inline void agr_aot_store16(AgrAotRegs *state, uint32_t address, uint32_t value) {
+    uint16_t half = (uint16_t)value;
+    if (!agr_aot_fault16(address)) memcpy(state->mem + address, &half, 2);
 }
 
 static inline void agr_aot_set_nz(AgrAotRegs *state, uint32_t value) {
@@ -141,6 +150,20 @@ static inline void agr_aot_lsls(AgrAotRegs *state, uint32_t rd,
     uint32_t result = amount ? value << amount : value;
     uint32_t old_carry = (*state->cpsr >> 29) & 1u;
     uint32_t carry = amount ? (value >> (32u - amount)) & 1u : old_carry;
+    state->r[rd] = result;
+    *state->cpsr &= ~(7u << 29);
+    *state->cpsr |= ((result >> 31) << 31) | ((result == 0) << 30) | (carry << 29);
+}
+
+static inline void agr_aot_lsls_reg(AgrAotRegs *state, uint32_t rd,
+                                    uint32_t value, uint32_t amount_register) {
+    uint32_t amount = amount_register & 0xffu;
+    uint32_t old_carry = (*state->cpsr >> 29) & 1u;
+    uint32_t result, carry;
+    if (amount == 0) { result = value; carry = old_carry; }
+    else if (amount < 32) { result = value << amount; carry = (value >> (32u - amount)) & 1u; }
+    else if (amount == 32) { result = 0; carry = value & 1u; }
+    else { result = 0; carry = 0; }
     state->r[rd] = result;
     *state->cpsr &= ~(7u << 29);
     *state->cpsr |= ((result >> 31) << 31) | ((result == 0) << 30) | (carry << 29);
@@ -195,6 +218,19 @@ static inline int agr_aot_ldrb(AgrAotRegs *state, uint32_t rt, uint32_t address)
     return 0;
 }
 
+static inline int agr_aot_ldrh(AgrAotRegs *state, uint32_t rt, uint32_t address) {
+    if (agr_aot_fault16(address)) return AGR_AOT_FAULT;
+    uint16_t value = 0;
+    memcpy(&value, state->mem + address, 2);
+    state->r[rt] = value;
+    return 0;
+}
+
+static inline void agr_aot_set_itstate(AgrAotRegs *state, uint32_t value) {
+    *state->cpsr &= ~0x0600fc00u;
+    *state->cpsr |= ((value & 0xfcu) << 8) | ((value & 3u) << 25);
+}
+
 static inline int agr_aot_stmdb_sp(AgrAotRegs *state, uint32_t mask) {
     uint32_t count = 0;
     for (uint32_t i = 0; i < 16; i++) if (mask & (1u << i)) count++;
@@ -207,6 +243,18 @@ static inline int agr_aot_stmdb_sp(AgrAotRegs *state, uint32_t mask) {
         }
     }
     state->r[13] -= count * 4u;
+    return 0;
+}
+
+static inline int agr_aot_stm(AgrAotRegs *state, uint32_t rn, uint32_t mask) {
+    uint32_t address = state->r[rn];
+    for (uint32_t i = 0; i < 16; i++) {
+        if (mask & (1u << i)) {
+            if (agr_aot_fault(address)) return AGR_AOT_FAULT;
+            agr_aot_store32(state, address, state->r[i]);
+            address += 4u;
+        }
+    }
     return 0;
 }
 

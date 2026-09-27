@@ -67,6 +67,9 @@ def decode(pc, insn, length, thumb):
         if insn & 0xff00 == 0x4400:
             rd = (insn & 7) | ((insn >> 4) & 8)
             return ("add_high", rd, (insn >> 3) & 15, pc)
+        if insn & 0xff00 == 0x4500:
+            rn = (insn & 7) | ((insn >> 4) & 8)
+            return ("cmp_reg", rn, (insn >> 3) & 15)
         if insn & 0xff00 == 0x4600:
             rd = (insn & 7) | ((insn >> 4) & 8)
             rm = (insn >> 3) & 15
@@ -85,6 +88,10 @@ def decode(pc, insn, length, thumb):
             return ("strb_imm", insn & 7, (insn >> 3) & 7, (insn >> 6) & 31)
         if insn & 0xf800 == 0x7800:
             return ("ldrb_imm", insn & 7, (insn >> 3) & 7, (insn >> 6) & 31)
+        if insn & 0xf800 == 0x8000:
+            return ("strh_imm", insn & 7, (insn >> 3) & 7, ((insn >> 6) & 31) * 2)
+        if insn & 0xf800 == 0x8800:
+            return ("ldrh_imm", insn & 7, (insn >> 3) & 7, ((insn >> 6) & 31) * 2)
         if insn & 0xf800 == 0x4800:
             return ("ldr_imm", (insn >> 8) & 7, 15, (insn & 0xff) * 4, True, pc)
         if insn & 0xf800 == 0x9000:
@@ -98,6 +105,8 @@ def decode(pc, insn, length, thumb):
             return ("stmdb_sp", mask)
         if insn & 0xff00 == 0xb000:
             return ("adjust_sp", (insn & 0x7f) * 4, bool(insn & 0x80))
+        if insn & 0xffc0 == 0xb2c0:
+            return ("uxtb", insn & 7, (insn >> 3) & 7)
         if insn & 0xfe00 == 0xbc00:
             mask = insn & 0xff
             if insn & 0x100:
@@ -110,6 +119,10 @@ def decode(pc, insn, length, thumb):
             nonzero = insn & 0x0800 != 0
             target = (pc + 4 + ((i << 6) | (imm5 << 1))) & 0xffffffff
             return ("cbz", rn, target, pc + 2, nonzero)
+        if insn & 0xff00 == 0xbf00 and insn & 15:
+            return ("it", insn & 0xff, pc)
+        if insn & 0xf800 == 0xa800:
+            return ("add_imm", (insn >> 8) & 7, 13, (insn & 0xff) * 4, pc)
         if insn & 0xf800 == 0xe000:
             imm11 = insn & 0x7ff
             offset = sign_extend(imm11 << 1, 12)
@@ -123,6 +136,8 @@ def decode(pc, insn, length, thumb):
             return ("blx_reg", (insn >> 3) & 15, pc + 2, pc)
     if thumb and length == 4:
         hw0, hw1 = (insn >> 16) & 0xffff, insn & 0xffff
+        if insn == 0xf3bf8f5f:
+            return ("dmb",)
         if hw0 == 0xe92d:
             return ("stmdb_sp", hw1 & 0x5fff)
         if hw0 == 0xe8bd:
@@ -130,6 +145,8 @@ def decode(pc, insn, length, thumb):
             if hw1 & 0x8000:
                 mask |= 1 << 15
             return ("ldmia_sp", mask)
+        if hw0 & 0xfff0 == 0xe880:
+            return ("stm", hw0 & 15, hw1 & 0xffff)
         if hw0 & 0xfff0 == 0xf8d0:
             return ("ldr_imm", (hw1 >> 12) & 15, hw0 & 15, hw1 & 0xfff, True, pc)
         if hw0 & 0xfff0 == 0xf8c0:
@@ -162,6 +179,31 @@ def decode(pc, insn, length, thumb):
             imm8 = hw1 & 0xff
             immediate = (imm4 << 12) | (i << 11) | (imm3 << 8) | imm8
             return ("movw", rd, immediate)
+        if hw0 & 0xfbf0 == 0xf2c0 and not (hw1 & 0x8000):
+            i = (hw0 >> 10) & 1
+            immediate = ((hw0 & 15) << 12) | (i << 11) | (((hw1 >> 12) & 7) << 8) | (hw1 & 0xff)
+            return ("movt", (hw1 >> 8) & 15, immediate)
+        if hw0 & 0xfbf0 == 0xf200:
+            immediate = (((hw0 >> 10) & 1) << 11) | (((hw1 >> 12) & 7) << 8) | (hw1 & 0xff)
+            return ("add_imm", (hw1 >> 8) & 15, hw0 & 15, immediate, pc)
+        if hw0 & 0xfbf0 == 0xf1d0:
+            imm12 = ((hw0 >> 10) & 1) << 11 | ((hw1 >> 12) & 7) << 8 | (hw1 & 0xff)
+            return ("subs_imm", (hw1 >> 8) & 15, hw0 & 15, thumb_expand_imm(imm12))
+        if hw0 & 0xfbf0 in {0xf000, 0xf040} and not (hw1 & 0x8000):
+            imm12 = ((hw0 >> 10) & 1) << 11 | ((hw1 >> 12) & 7) << 8 | (hw1 & 0xff)
+            return ("and_imm" if (hw0 & 0x0040) == 0 else "orr_imm",
+                    (hw1 >> 8) & 15, hw0 & 15, thumb_expand_imm(imm12))
+        if hw0 & 0xffe0 == 0xeb00 and hw1 & 0x00f0 == 0:
+            return ("add_reg", (hw1 >> 8) & 15, hw0 & 15, hw1 & 15, pc)
+        if hw0 & 0xfff0 == 0xfa00 and hw1 & 0xf0f0 == 0xf000:
+            return ("lsls_reg", (hw1 >> 8) & 15, hw0 & 15, hw1 & 15)
+        if hw0 & 0xf800 == 0xf000 and hw1 & 0xd000 == 0x8000:
+            s = (hw0 >> 10) & 1
+            condition = (hw0 >> 6) & 15
+            immediate = sign_extend((s << 20) | (((hw1 >> 11) & 1) << 19) |
+                                    (((hw1 >> 13) & 1) << 18) | ((hw0 & 0x3f) << 12) |
+                                    ((hw1 & 0x7ff) << 1), 21)
+            return ("b_cond", condition, (pc + 4 + immediate) & 0xffffffff, pc + 4)
         if hw0 & 0xf800 == 0xf000 and hw1 & 0xd000 == 0xc000:
             s = (hw0 >> 10) & 1
             imm10 = hw0 & 0x3ff
@@ -193,8 +235,6 @@ def decode(pc, insn, length, thumb):
             i2 = 0 if (j2 ^ s) else 1
             immediate = sign_extend((s << 24) | (i1 << 23) | (i2 << 22) | (imm10 << 12) | (imm11 << 1), 25)
             return ("b", (pc + 4 + immediate) & 0xffffffff)
-        if insn == 0xf3bf8f5f:
-            return ("dmb",)
     if not thumb and length == 4:
         if insn & 0x0fe00010 == 0x00800000 and (insn >> 4) & 0xff == 0:
             rn = (insn >> 16) & 15
@@ -228,7 +268,7 @@ def is_svc(row):
 
 
 def is_terminal(op):
-    if op[0] in {"b", "b_cond", "cbz", "bx_reg", "bl_imm", "blx_reg", "blx_imm"}:
+    if op[0] in {"b", "b_cond", "cbz", "bx_reg", "bl_imm", "blx_reg", "blx_imm", "it"}:
         return True
     if op[0] in {"add_high", "add_reg", "add_imm"} and op[1] == 15:
         return True
@@ -316,6 +356,8 @@ def emit_op(op, thumb):
         return f"agr_aot_mov_reg(s, {op[1]}, {op[2]});"
     if kind == "movw":
         return f"agr_aot_movw(s, {op[1]}, {op[2]}u);"
+    if kind == "movt":
+        return f"s->r[{op[1]}] = (s->r[{op[1]}] & 0xffffu) | ({op[2]}u << 16);"
     if kind == "mov_imm":
         return f"s->r[{op[1]}] = {op[2]}u;"
     if kind == "ldr_imm":
@@ -372,8 +414,15 @@ def emit_op(op, thumb):
     if kind == "strb_imm":
         return (f"{{ uint32_t addr = s->r[{op[2]}] + {op[3]}u; "
                 f"if (agr_aot_fault8(addr)) return AGR_AOT_FAULT; agr_aot_store8(s, addr, s->r[{op[1]}]); }}")
+    if kind == "ldrh_imm":
+        return f"{{ int rc = agr_aot_ldrh(s, {op[1]}, s->r[{op[2]}] + {op[3]}u); if (rc) return rc; }}"
+    if kind == "strh_imm":
+        return (f"{{ uint32_t addr = s->r[{op[2]}] + {op[3]}u; "
+                f"if (agr_aot_fault16(addr)) return AGR_AOT_FAULT; agr_aot_store16(s, addr, s->r[{op[1]}]); }}")
     if kind == "stmdb_sp":
         return f"if (agr_aot_stmdb_sp(s, {op[1]}u)) return AGR_AOT_FAULT;"
+    if kind == "stm":
+        return f"if (agr_aot_stm(s, {op[1]}u, {op[2]}u)) return AGR_AOT_FAULT;"
     if kind == "ldmia_sp":
         line = f"if ((rc = agr_aot_ldmia_sp(s, {op[1]}u))) return rc;"
         return line
@@ -401,6 +450,16 @@ def emit_op(op, thumb):
     if kind == "adjust_sp":
         sign = "-=" if op[2] else "+="
         return f"s->r[13] {sign} {op[1]}u;"
+    if kind == "uxtb":
+        return f"s->r[{op[1]}] = s->r[{op[2]}] & 0xffu;"
+    if kind == "lsls_reg":
+        return f"agr_aot_lsls_reg(s, {op[1]}, s->r[{op[2]}], s->r[{op[3]}]);"
+    if kind == "it":
+        return f"agr_aot_set_itstate(s, {op[1]}u); s->r[15] = {op[2] + 2}u; return AGR_AOT_BOUNDARY;"
+    if kind == "and_imm":
+        return f"s->r[{op[1]}] = s->r[{op[2]}] & {op[3]}u;"
+    if kind == "orr_imm":
+        return f"s->r[{op[1]}] = s->r[{op[2]}] | {op[3]}u;"
     if kind == "ldr_wb":
         rd, rn, imm, up, writeback, pc = op[1:]
         sign = "+" if up else "-"
@@ -586,7 +645,7 @@ def emit_partial(rows, destination, allowed_kinds):
     for start in sorted(starts):
         body = []
         pc = start
-        while pc in eligible and len(body) < 64:
+        while pc in eligible:
             row = eligible[pc]
             op = operations[pc]
             body.append((row, op))

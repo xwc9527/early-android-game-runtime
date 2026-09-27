@@ -436,6 +436,16 @@ static int aot_debug_000477f2(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000477f4(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 292852u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 292854u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000477f6(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -693,6 +703,16 @@ static int aot_debug_00047846(AgrAotRegs *s) {
     if (agr_aot_load16(s, 292934u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 292936u + 40u); if (rc) return rc; }
     s->r[15] = 292936u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00047848(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 292936u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 292938u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -956,6 +976,16 @@ static int aot_debug_0004789a(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_0004789c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 293020u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 293022u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_0004789e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -1213,6 +1243,16 @@ static int aot_debug_000478ee(AgrAotRegs *s) {
     if (agr_aot_load16(s, 293102u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 293104u + 40u); if (rc) return rc; }
     s->r[15] = 293104u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000478f0(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 293104u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 293106u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -1476,6 +1516,16 @@ static int aot_debug_00047942(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00047944(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 293188u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 293190u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00047946(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -1733,6 +1783,16 @@ static int aot_debug_00047996(AgrAotRegs *s) {
     if (agr_aot_load16(s, 293270u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 293272u + 40u); if (rc) return rc; }
     s->r[15] = 293272u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00047998(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 293272u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 293274u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -1996,6 +2056,16 @@ static int aot_debug_000479ea(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000479ec(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 293356u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 293358u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000479ee(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -2253,6 +2323,16 @@ static int aot_debug_00047a3e(AgrAotRegs *s) {
     if (agr_aot_load16(s, 293438u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 293440u + 40u); if (rc) return rc; }
     s->r[15] = 293440u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00047a40(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 293440u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 293442u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -2516,6 +2596,16 @@ static int aot_debug_00047a92(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00047a94(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 293524u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 293526u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00047a96(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -2773,6 +2863,16 @@ static int aot_debug_00047ae6(AgrAotRegs *s) {
     if (agr_aot_load16(s, 293606u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 293608u + 40u); if (rc) return rc; }
     s->r[15] = 293608u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00047ae8(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 293608u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 293610u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -3036,6 +3136,16 @@ static int aot_debug_00047b3a(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00047b3c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 293692u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 293694u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00047b3e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -3293,6 +3403,16 @@ static int aot_debug_00047b8e(AgrAotRegs *s) {
     if (agr_aot_load16(s, 293774u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 293776u + 40u); if (rc) return rc; }
     s->r[15] = 293776u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00047b90(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 293776u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 293778u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -3556,6 +3676,16 @@ static int aot_debug_00047be2(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00047be4(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 293860u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 293862u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00047be6(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -3813,6 +3943,16 @@ static int aot_debug_00047c36(AgrAotRegs *s) {
     if (agr_aot_load16(s, 293942u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 293944u + 40u); if (rc) return rc; }
     s->r[15] = 293944u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00047c38(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 293944u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 293946u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -4076,6 +4216,16 @@ static int aot_debug_00047c8a(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00047c8c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 294028u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 294030u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00047c8e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -4333,6 +4483,16 @@ static int aot_debug_00047cde(AgrAotRegs *s) {
     if (agr_aot_load16(s, 294110u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 294112u + 40u); if (rc) return rc; }
     s->r[15] = 294112u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00047ce0(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 294112u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 294114u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -4596,6 +4756,16 @@ static int aot_debug_00047d32(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00047d34(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 294196u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 294198u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00047d36(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -4853,6 +5023,16 @@ static int aot_debug_00047d86(AgrAotRegs *s) {
     if (agr_aot_load16(s, 294278u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 294280u + 40u); if (rc) return rc; }
     s->r[15] = 294280u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00047d88(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 294280u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 294282u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -5116,6 +5296,16 @@ static int aot_debug_00047dda(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00047ddc(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 294364u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 294366u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00047dde(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -5373,6 +5563,16 @@ static int aot_debug_00047e2e(AgrAotRegs *s) {
     if (agr_aot_load16(s, 294446u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 294448u + 40u); if (rc) return rc; }
     s->r[15] = 294448u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00047e30(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 294448u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 294450u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -5636,6 +5836,16 @@ static int aot_debug_00047e82(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00047e84(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 294532u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 294534u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00047e86(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -5893,6 +6103,16 @@ static int aot_debug_00047ed6(AgrAotRegs *s) {
     if (agr_aot_load16(s, 294614u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 294616u + 40u); if (rc) return rc; }
     s->r[15] = 294616u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00047ed8(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 294616u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 294618u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -6156,6 +6376,16 @@ static int aot_debug_00047f2a(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00047f2c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 294700u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 294702u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00047f2e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -6413,6 +6643,16 @@ static int aot_debug_00047f7e(AgrAotRegs *s) {
     if (agr_aot_load16(s, 294782u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 294784u + 40u); if (rc) return rc; }
     s->r[15] = 294784u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00047f80(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 294784u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 294786u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -6676,6 +6916,16 @@ static int aot_debug_00047fd2(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00047fd4(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 294868u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 294870u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00047fd6(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -6933,6 +7183,16 @@ static int aot_debug_00048026(AgrAotRegs *s) {
     if (agr_aot_load16(s, 294950u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 294952u + 40u); if (rc) return rc; }
     s->r[15] = 294952u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00048028(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 294952u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 294954u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -7196,6 +7456,16 @@ static int aot_debug_0004807a(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_0004807c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 295036u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 295038u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_0004807e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -7453,6 +7723,16 @@ static int aot_debug_000480ce(AgrAotRegs *s) {
     if (agr_aot_load16(s, 295118u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 295120u + 40u); if (rc) return rc; }
     s->r[15] = 295120u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000480d0(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 295120u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 295122u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -7716,6 +7996,16 @@ static int aot_debug_00048122(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00048124(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 295204u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 295206u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00048126(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -7973,6 +8263,16 @@ static int aot_debug_00048176(AgrAotRegs *s) {
     if (agr_aot_load16(s, 295286u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 295288u + 40u); if (rc) return rc; }
     s->r[15] = 295288u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00048178(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 295288u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 295290u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -8236,6 +8536,16 @@ static int aot_debug_000481ca(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000481cc(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 295372u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 295374u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000481ce(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -8493,6 +8803,16 @@ static int aot_debug_0004821e(AgrAotRegs *s) {
     if (agr_aot_load16(s, 295454u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 295456u + 40u); if (rc) return rc; }
     s->r[15] = 295456u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00048220(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 295456u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 295458u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -8882,6 +9202,16 @@ static int aot_debug_0004829e(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000482a0(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 295584u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 295586u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000482a2(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -9139,6 +9469,16 @@ static int aot_debug_000482f2(AgrAotRegs *s) {
     if (agr_aot_load16(s, 295666u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 295668u + 40u); if (rc) return rc; }
     s->r[15] = 295668u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000482f4(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 295668u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 295670u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -9528,6 +9868,16 @@ static int aot_debug_00048372(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00048374(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 295796u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 295798u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00048376(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -9785,6 +10135,16 @@ static int aot_debug_000483c6(AgrAotRegs *s) {
     if (agr_aot_load16(s, 295878u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 295880u + 40u); if (rc) return rc; }
     s->r[15] = 295880u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000483c8(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 295880u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 295882u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -10174,6 +10534,16 @@ static int aot_debug_00048446(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00048448(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296008u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 296010u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_0004844a(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -10434,6 +10804,16 @@ static int aot_debug_0004849a(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_0004849c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296092u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 296094u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_0004849e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -10691,6 +11071,16 @@ static int aot_debug_000484ee(AgrAotRegs *s) {
     if (agr_aot_load16(s, 296174u) != 18698u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 1, 296176u + 40u); if (rc) return rc; }
     s->r[15] = 296176u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000484f0(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296176u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 296178u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -11218,6 +11608,16 @@ static int aot_debug_0004859a(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_0004859c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296348u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 296350u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_0004859e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -11478,6 +11878,16 @@ static int aot_debug_000485ee(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000485f0(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296432u) != 43521u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
+    s->r[15] = 296434u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000485f2(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -11710,6 +12120,16 @@ static int aot_debug_0004863a(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_0004863c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296508u) != 61904u || agr_aot_load16(s, 296510u) != 769u) return AGR_AOT_MISS;
+    agr_aot_subs(s, 3, s->r[0], 1u);
+    s->r[15] = 296512u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00048640(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -11718,6 +12138,14 @@ static int aot_debug_00048640(AgrAotRegs *s) {
     agr_aot_mov_reg(s, 0, 4);
     s->r[15] = 296514u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00048642(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296514u) != 48952u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 56u); s->r[15] = 296516u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_00048644(AgrAotRegs *s) {
@@ -11846,6 +12274,14 @@ static int aot_debug_00048676(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00048678(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296568u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296570u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_0004867a(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -11904,6 +12340,14 @@ static int aot_debug_00048684(AgrAotRegs *s) {
     agr_aot_lsls(s, 1, s->r[2], 31u);
     s->r[15] = 296582u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00048686(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296582u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296584u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_00048688(AgrAotRegs *s) {
@@ -11966,6 +12410,14 @@ static int aot_debug_00048692(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00048694(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296596u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296598u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00048696(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -12024,6 +12476,14 @@ static int aot_debug_000486a0(AgrAotRegs *s) {
     agr_aot_lsls(s, 0, s->r[2], 31u);
     s->r[15] = 296610u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000486a2(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296610u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296612u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_000486a4(AgrAotRegs *s) {
@@ -12086,6 +12546,14 @@ static int aot_debug_000486ae(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000486b0(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296624u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296626u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000486b2(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -12144,6 +12612,14 @@ static int aot_debug_000486bc(AgrAotRegs *s) {
     agr_aot_lsls(s, 2, s->r[2], 31u);
     s->r[15] = 296638u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000486be(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296638u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296640u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_000486c0(AgrAotRegs *s) {
@@ -12206,6 +12682,14 @@ static int aot_debug_000486ca(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000486cc(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296652u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296654u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000486ce(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -12264,6 +12748,14 @@ static int aot_debug_000486d8(AgrAotRegs *s) {
     agr_aot_lsls(s, 1, s->r[2], 31u);
     s->r[15] = 296666u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000486da(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296666u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296668u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_000486dc(AgrAotRegs *s) {
@@ -12326,6 +12818,14 @@ static int aot_debug_000486e6(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000486e8(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296680u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296682u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000486ea(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -12384,6 +12884,14 @@ static int aot_debug_000486f4(AgrAotRegs *s) {
     agr_aot_lsls(s, 0, s->r[2], 31u);
     s->r[15] = 296694u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000486f6(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296694u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296696u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_000486f8(AgrAotRegs *s) {
@@ -12446,6 +12954,14 @@ static int aot_debug_00048702(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00048704(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296708u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296710u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00048706(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -12504,6 +13020,14 @@ static int aot_debug_00048710(AgrAotRegs *s) {
     agr_aot_lsls(s, 2, s->r[2], 31u);
     s->r[15] = 296722u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00048712(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296722u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296724u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_00048714(AgrAotRegs *s) {
@@ -12574,6 +13098,14 @@ static int aot_debug_00048752(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00048754(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296788u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296790u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00048756(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -12632,6 +13164,14 @@ static int aot_debug_00048760(AgrAotRegs *s) {
     agr_aot_lsls(s, 1, s->r[2], 31u);
     s->r[15] = 296802u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00048762(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296802u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296804u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_00048764(AgrAotRegs *s) {
@@ -12694,6 +13234,14 @@ static int aot_debug_0004876e(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00048770(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296816u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296818u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00048772(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -12752,6 +13300,14 @@ static int aot_debug_0004877c(AgrAotRegs *s) {
     agr_aot_lsls(s, 0, s->r[2], 31u);
     s->r[15] = 296830u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_0004877e(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296830u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296832u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_00048780(AgrAotRegs *s) {
@@ -12814,6 +13370,14 @@ static int aot_debug_0004878a(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_0004878c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296844u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296846u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_0004878e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -12872,6 +13436,14 @@ static int aot_debug_00048798(AgrAotRegs *s) {
     agr_aot_lsls(s, 2, s->r[2], 31u);
     s->r[15] = 296858u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_0004879a(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296858u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296860u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_0004879c(AgrAotRegs *s) {
@@ -12934,6 +13506,14 @@ static int aot_debug_000487a6(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000487a8(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296872u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296874u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000487aa(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -12992,6 +13572,14 @@ static int aot_debug_000487b4(AgrAotRegs *s) {
     agr_aot_lsls(s, 1, s->r[2], 31u);
     s->r[15] = 296886u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000487b6(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296886u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296888u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_000487b8(AgrAotRegs *s) {
@@ -13054,6 +13642,14 @@ static int aot_debug_000487c2(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000487c4(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296900u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296902u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000487c6(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -13112,6 +13708,14 @@ static int aot_debug_000487d0(AgrAotRegs *s) {
     agr_aot_lsls(s, 0, s->r[2], 31u);
     s->r[15] = 296914u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000487d2(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296914u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296916u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_000487d4(AgrAotRegs *s) {
@@ -13174,6 +13778,14 @@ static int aot_debug_000487de(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000487e0(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296928u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296930u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000487e2(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -13232,6 +13844,14 @@ static int aot_debug_000487ec(AgrAotRegs *s) {
     agr_aot_lsls(s, 2, s->r[2], 31u);
     s->r[15] = 296942u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000487ee(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 296942u) != 48988u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296944u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_000487f0(AgrAotRegs *s) {
@@ -13614,6 +14234,14 @@ static int aot_debug_000918fa(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000918fc(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 596220u) != 48904u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 8u); s->r[15] = 596222u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000918fe(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -13630,6 +14258,24 @@ static int aot_debug_00091900(AgrAotRegs *s) {
     if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
     if (agr_aot_load16(s, 596224u) != 63413u || agr_aot_load16(s, 596226u) != 59674u) return AGR_AOT_MISS;
     agr_aot_branch_reg(s, 289592u, 596228u, 1); return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00091904(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 596228u) != 61904u || agr_aot_load16(s, 596230u) != 1u) return AGR_AOT_MISS;
+    agr_aot_subs(s, 0, s->r[0], 1u);
+    s->r[15] = 596232u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00091908(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 596232u) != 48952u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 56u); s->r[15] = 596234u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_0009190a(AgrAotRegs *s) {
@@ -13778,6 +14424,14 @@ static int aot_debug_000919e4(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000919e6(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 596454u) != 48964u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 68u); s->r[15] = 596456u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000919e8(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -13796,6 +14450,24 @@ static int aot_debug_000919ea(AgrAotRegs *s) {
     { uint32_t addr = s->r[4] + 16u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[3]); }
     s->r[15] = 596460u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000919ec(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 596460u) != 17849u) return AGR_AOT_MISS;
+    agr_aot_cmp(s, s->r[9], s->r[7]);
+    s->r[15] = 596462u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000919ee(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 596462u) != 61440u || agr_aot_load16(s, 596464u) != 33115u) return AGR_AOT_MISS;
+    s->r[15] = agr_aot_condition(s, 0u) ? 597160u : 596466u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_000919f2(AgrAotRegs *s) {
@@ -13846,6 +14518,14 @@ static int aot_debug_000919fc(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000919fe(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 596478u) != 61504u || agr_aot_load16(s, 596480u) != 32941u) return AGR_AOT_MISS;
+    s->r[15] = agr_aot_condition(s, 1u) ? 596828u : 596482u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00091b5c(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -13886,6 +14566,14 @@ static int aot_debug_00091b66(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00091b68(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 596840u) != 62144u || agr_aot_load16(s, 596842u) != 32949u) return AGR_AOT_MISS;
+    s->r[15] = agr_aot_condition(s, 11u) ? 597206u : 596844u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00091b6c(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -13916,6 +14604,16 @@ static int aot_debug_00091b70(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00091b72(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 596850u) != 60169u || agr_aot_load16(s, 596852u) != 779u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 3, s->r[9], s->r[11]);
+    s->r[15] = 596854u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00091b76(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -13924,6 +14622,14 @@ static int aot_debug_00091b76(AgrAotRegs *s) {
     agr_aot_cmp(s, s->r[7], s->r[3]);
     s->r[15] = 596856u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00091b78(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 596856u) != 48916u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 20u); s->r[15] = 596858u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_00091b7a(AgrAotRegs *s) {
@@ -14022,6 +14728,14 @@ static int aot_debug_00091cb0(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00091cb2(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 597170u) != 62527u || agr_aot_load16(s, 597172u) != 44702u) return AGR_AOT_MISS;
+    s->r[15] = agr_aot_condition(s, 0u) ? 596466u : 597174u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_0009266c(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -14040,6 +14754,14 @@ static int aot_debug_0009266e(AgrAotRegs *s) {
     agr_aot_cmp(s, s->r[0], 0u);
     s->r[15] = 599664u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00092670(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 599664u) != 48916u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 20u); s->r[15] = 599666u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_00092672(AgrAotRegs *s) {
@@ -14252,6 +14974,16 @@ static int aot_debug_0009298c(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00092990(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 600464u) != 59525u || agr_aot_load16(s, 600466u) != 1088u) return AGR_AOT_MISS;
+    if (agr_aot_stm(s, 5u, 1088u)) return AGR_AOT_FAULT;
+    s->r[15] = 600468u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00092994(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -14278,6 +15010,24 @@ static int aot_debug_00092998(AgrAotRegs *s) {
     agr_aot_movs_imm(s, 4, 0u);
     s->r[15] = 600474u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_0009299a(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 600474u) != 17841u) return AGR_AOT_MISS;
+    agr_aot_cmp(s, s->r[9], s->r[6]);
+    s->r[15] = 600476u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_0009299c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 600476u) != 48916u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 20u); s->r[15] = 600478u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_0009299e(AgrAotRegs *s) {
@@ -14641,6 +15391,16 @@ static int aot_debug_00092d56(AgrAotRegs *s) {
     if (agr_aot_load16(s, 601430u) != 39944u) return AGR_AOT_MISS;
     { int rc = agr_aot_ldr(s, 4, s->r[13] + 32u); if (rc) return rc; }
     s->r[15] = 601432u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00092d58(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 601432u) != 61444u || agr_aot_load16(s, 601434u) != 774u) return AGR_AOT_MISS;
+    s->r[3] = s->r[4] & 6u;
+    s->r[15] = 601436u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -15012,6 +15772,16 @@ static int aot_debug_000933aa(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000933ae(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 603054u) != 59529u || agr_aot_load16(s, 603056u) != 264u) return AGR_AOT_MISS;
+    if (agr_aot_stm(s, 9u, 264u)) return AGR_AOT_FAULT;
+    s->r[15] = 603058u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000933b2(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -15210,6 +15980,16 @@ static int aot_debug_000933f0(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000933f4(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 603124u) != 59525u || agr_aot_load16(s, 603126u) != 264u) return AGR_AOT_MISS;
+    if (agr_aot_stm(s, 5u, 264u)) return AGR_AOT_FAULT;
+    s->r[15] = 603128u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000933f8(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -15355,6 +16135,16 @@ static int aot_debug_00093424(AgrAotRegs *s) {
     if (agr_aot_load16(s, 603172u) != 61702u || agr_aot_load16(s, 603174u) != 28u) return AGR_AOT_MISS;
     agr_aot_add_imm(s, 0, s->r[6], 28u);
     s->r[15] = 603176u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00093428(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 603176u) != 59526u || agr_aot_load16(s, 603178u) != 264u) return AGR_AOT_MISS;
+    if (agr_aot_stm(s, 6u, 264u)) return AGR_AOT_FAULT;
+    s->r[15] = 603180u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -15641,6 +16431,16 @@ static int aot_debug_0009348a(AgrAotRegs *s) {
     if (agr_aot_load16(s, 603274u) != 61706u || agr_aot_load16(s, 603276u) != 800u) return AGR_AOT_MISS;
     agr_aot_add_imm(s, 3, s->r[10], 32u);
     s->r[15] = 603278u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_0009348e(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 603278u) != 59527u || agr_aot_load16(s, 603280u) != 12u) return AGR_AOT_MISS;
+    if (agr_aot_stm(s, 7u, 12u)) return AGR_AOT_FAULT;
+    s->r[15] = 603282u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -15956,6 +16756,16 @@ static int aot_debug_000934f8(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000934fa(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 603386u) != 59525u || agr_aot_load16(s, 603388u) != 12u) return AGR_AOT_MISS;
+    if (agr_aot_stm(s, 5u, 12u)) return AGR_AOT_FAULT;
+    s->r[15] = 603390u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000934fe(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -16162,6 +16972,16 @@ static int aot_debug_0009353a(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_0009353e(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 603454u) != 59529u || agr_aot_load16(s, 603456u) != 12u) return AGR_AOT_MISS;
+    if (agr_aot_stm(s, 9u, 12u)) return AGR_AOT_FAULT;
+    s->r[15] = 603458u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00093542(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -16310,6 +17130,16 @@ static int aot_debug_00093572(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00093574(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 603508u) != 62531u || agr_aot_load16(s, 603510u) != 21248u) return AGR_AOT_MISS;
+    s->r[3] = s->r[3] | 8192u;
+    s->r[15] = 603512u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00093578(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -16377,6 +17207,16 @@ static int aot_debug_0009358a(AgrAotRegs *s) {
     if (agr_aot_load16(s, 603530u) != 63688u || agr_aot_load16(s, 603532u) != 40968u) return AGR_AOT_MISS;
     { uint32_t addr = s->r[8] + 8u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[10]); }
     s->r[15] = 603534u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_0009358e(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 603534u) != 59528u || agr_aot_load16(s, 603536u) != 1032u) return AGR_AOT_MISS;
+    if (agr_aot_stm(s, 8u, 1032u)) return AGR_AOT_FAULT;
+    s->r[15] = 603538u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -16558,6 +17398,16 @@ static int aot_debug_000935c6(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000935ca(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 603594u) != 59525u || agr_aot_load16(s, 603596u) != 1032u) return AGR_AOT_MISS;
+    if (agr_aot_stm(s, 5u, 1032u)) return AGR_AOT_FAULT;
+    s->r[15] = 603598u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000935ce(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -16703,6 +17553,16 @@ static int aot_debug_000935f8(AgrAotRegs *s) {
     if (agr_aot_load16(s, 603640u) != 61702u || agr_aot_load16(s, 603642u) != 28u) return AGR_AOT_MISS;
     agr_aot_add_imm(s, 0, s->r[6], 28u);
     s->r[15] = 603644u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000935fc(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 603644u) != 59526u || agr_aot_load16(s, 603646u) != 1032u) return AGR_AOT_MISS;
+    if (agr_aot_stm(s, 6u, 1032u)) return AGR_AOT_FAULT;
+    s->r[15] = 603648u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -16989,6 +17849,16 @@ static int aot_debug_0009365e(AgrAotRegs *s) {
     if (agr_aot_load16(s, 603742u) != 61705u || agr_aot_load16(s, 603744u) != 800u) return AGR_AOT_MISS;
     agr_aot_add_imm(s, 3, s->r[9], 32u);
     s->r[15] = 603746u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00093662(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 603746u) != 59527u || agr_aot_load16(s, 603748u) != 12u) return AGR_AOT_MISS;
+    if (agr_aot_stm(s, 7u, 12u)) return AGR_AOT_FAULT;
+    s->r[15] = 603750u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -17304,6 +18174,16 @@ static int aot_debug_000936cc(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000936ce(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 603854u) != 59525u || agr_aot_load16(s, 603856u) != 12u) return AGR_AOT_MISS;
+    if (agr_aot_stm(s, 5u, 12u)) return AGR_AOT_FAULT;
+    s->r[15] = 603858u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000936d2(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -17510,6 +18390,16 @@ static int aot_debug_0009370e(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00093712(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 603922u) != 59530u || agr_aot_load16(s, 603924u) != 12u) return AGR_AOT_MISS;
+    if (agr_aot_stm(s, 10u, 12u)) return AGR_AOT_FAULT;
+    s->r[15] = 603926u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00093716(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -17615,6 +18505,16 @@ static int aot_debug_0009373a(AgrAotRegs *s) {
     if (agr_aot_load16(s, 603962u) != 63688u || agr_aot_load16(s, 603964u) != 28792u) return AGR_AOT_MISS;
     { uint32_t addr = s->r[8] + 120u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[7]); }
     s->r[15] = 603966u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_0009373e(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 603966u) != 62531u || agr_aot_load16(s, 603968u) != 21248u) return AGR_AOT_MISS;
+    s->r[3] = s->r[3] | 8192u;
+    s->r[15] = 603970u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -18000,6 +18900,16 @@ static int aot_debug_00093df0(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00093df2(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 605682u) != 61909u || agr_aot_load16(s, 605684u) != 1281u) return AGR_AOT_MISS;
+    agr_aot_subs(s, 5, s->r[5], 1u);
+    s->r[15] = 605686u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00093df6(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -18018,6 +18928,14 @@ static int aot_debug_00093dfa(AgrAotRegs *s) {
     { uint32_t addr = s->r[4] + 116u; if (agr_aot_fault8(addr)) return AGR_AOT_FAULT; agr_aot_store8(s, addr, s->r[3]); }
     s->r[15] = 605694u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00093dfe(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 605694u) != 48952u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 56u); s->r[15] = 605696u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_00093e00(AgrAotRegs *s) {
@@ -18354,6 +19272,16 @@ static int aot_debug_00094220(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00094222(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 606754u) != 61909u || agr_aot_load16(s, 606756u) != 1281u) return AGR_AOT_MISS;
+    agr_aot_subs(s, 5, s->r[5], 1u);
+    s->r[15] = 606758u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00094226(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -18372,6 +19300,14 @@ static int aot_debug_0009422a(AgrAotRegs *s) {
     { uint32_t addr = s->r[4] + 116u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[3]); }
     s->r[15] = 606764u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_0009422c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 606764u) != 48952u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 56u); s->r[15] = 606766u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_0009422e(AgrAotRegs *s) {
@@ -18786,6 +19722,14 @@ static int aot_debug_000970bc(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000970be(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 618686u) != 48920u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 618688u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000970c0(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -18938,6 +19882,14 @@ static int aot_debug_0009753e(AgrAotRegs *s) {
     s->r[3] += 619842u;
     s->r[15] = 619840u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00097540(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 619840u) != 48920u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 619842u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_00097542(AgrAotRegs *s) {
@@ -19872,6 +20824,14 @@ static int aot_debug_00098b9a(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00098b9c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 625564u) != 48920u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 625566u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00098b9e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -20080,6 +21040,14 @@ static int aot_debug_00098cb4(AgrAotRegs *s) {
     agr_aot_adds(s, 0, s->r[0], 0u);
     s->r[15] = 625846u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_00098cb6(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 625846u) != 48920u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 625848u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_00098cb8(AgrAotRegs *s) {
@@ -20292,6 +21260,14 @@ static int aot_debug_00098cf8(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_00098cfa(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 625914u) != 48920u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 625916u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_00098cfc(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -20358,6 +21334,14 @@ static int aot_debug_0009ff98(AgrAotRegs *s) {
     { int rc = agr_aot_ldr(s, 5, 655260u + 44u); if (rc) return rc; }
     s->r[15] = 655258u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_0009ff9a(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 655258u) != 48920u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 655260u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_0009ff9c(AgrAotRegs *s) {
@@ -20516,6 +21500,14 @@ static int aot_debug_000a0000(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000a0002(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 655362u) != 48920u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 655364u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000a0004(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -20639,6 +21631,16 @@ static int aot_debug_000a77ee(AgrAotRegs *s) {
     if (agr_aot_load16(s, 686062u) != 45187u) return AGR_AOT_MISS;
     s->r[13] -= 12u;
     s->r[15] = 686064u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000a77f0(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 686064u) != 44289u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 5, s->r[13], 4u);
+    s->r[15] = 686066u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -20926,6 +21928,14 @@ static int aot_debug_000a7bd4(AgrAotRegs *s) {
     agr_aot_cmp(s, s->r[4], 0u);
     s->r[15] = 687062u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000a7bd6(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 687062u) != 61440u || agr_aot_load16(s, 687064u) != 32953u) return AGR_AOT_MISS;
+    s->r[15] = agr_aot_condition(s, 0u) ? 687436u : 687066u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_000a7bda(AgrAotRegs *s) {
@@ -22284,6 +23294,14 @@ static int aot_debug_000a7f24(AgrAotRegs *s) {
     agr_aot_cmp(s, s->r[4], 0u);
     s->r[15] = 687910u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000a7f26(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 687910u) != 61440u || agr_aot_load16(s, 687912u) != 32953u) return AGR_AOT_MISS;
+    s->r[15] = agr_aot_condition(s, 0u) ? 688284u : 687914u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_000a7f2a(AgrAotRegs *s) {
@@ -23975,6 +24993,26 @@ static int aot_debug_000a83ec(AgrAotRegs *s) {
     if (agr_aot_load16(s, 689132u) != 8448u) return AGR_AOT_MISS;
     agr_aot_movs_imm(s, 1, 0u);
     s->r[15] = 689134u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000a83ee(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 689134u) != 34816u) return AGR_AOT_MISS;
+    { int rc = agr_aot_ldrh(s, 0, s->r[0] + 0u); if (rc) return rc; }
+    s->r[15] = 689136u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000a83f0(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 689136u) != 32824u) return AGR_AOT_MISS;
+    { uint32_t addr = s->r[7] + 0u; if (agr_aot_fault16(addr)) return AGR_AOT_FAULT; agr_aot_store16(s, addr, s->r[0]); }
+    s->r[15] = 689138u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -31650,6 +32688,14 @@ static int aot_debug_000aa52c(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000aa52e(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 697646u) != 48920u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 697648u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000aa530(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -32524,6 +33570,14 @@ static int aot_debug_000ab3a4(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000ab3a6(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 701350u) != 61440u || agr_aot_load16(s, 701352u) != 32936u) return AGR_AOT_MISS;
+    s->r[15] = agr_aot_condition(s, 0u) ? 701690u : 701354u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000ab3aa(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -32856,6 +33910,14 @@ static int aot_debug_000abc6a(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000abc6c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 703596u) != 48920u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 703598u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000abc6e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -32896,6 +33958,14 @@ static int aot_debug_000abc74(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000abc76(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 703606u) != 48908u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 12u); s->r[15] = 703608u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000abc78(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -32903,6 +33973,16 @@ static int aot_debug_000abc78(AgrAotRegs *s) {
     if (agr_aot_load16(s, 703608u) != 8704u) return AGR_AOT_MISS;
     agr_aot_movs_imm(s, 2, 0u);
     s->r[15] = 703610u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000abc7a(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 703610u) != 61442u || agr_aot_load16(s, 703612u) != 513u) return AGR_AOT_MISS;
+    s->r[2] = s->r[2] & 1u;
+    s->r[15] = 703614u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -33062,6 +34142,16 @@ static int aot_debug_000abca6(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000abca8(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 703656u) != 61956u || agr_aot_load16(s, 703658u) != 4125u) return AGR_AOT_MISS;
+    agr_aot_add_imm(s, 0, s->r[4], 285u);
+    s->r[15] = 703660u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000abcac(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -33216,6 +34306,14 @@ static int aot_debug_000ad2b8(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000ad2ba(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 709306u) != 48920u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 709308u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000ad2bc(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -33368,6 +34466,14 @@ static int aot_debug_000ad73a(AgrAotRegs *s) {
     s->r[3] += 710462u;
     s->r[15] = 710460u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000ad73c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 710460u) != 48920u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 710462u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_000ad73e(AgrAotRegs *s) {
@@ -34302,6 +35408,14 @@ static int aot_debug_000aecf2(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000aecf4(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 716020u) != 48920u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 716022u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000aecf6(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -34510,6 +35624,14 @@ static int aot_debug_000aee0c(AgrAotRegs *s) {
     agr_aot_adds(s, 0, s->r[0], 0u);
     s->r[15] = 716302u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000aee0e(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 716302u) != 48920u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 716304u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_000aee10(AgrAotRegs *s) {
@@ -34722,6 +35844,14 @@ static int aot_debug_000aee50(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000aee52(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 716370u) != 48920u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 716372u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000aee54(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -34747,6 +35877,16 @@ static int aot_debug_000c0678(AgrAotRegs *s) {
     if (agr_aot_load16(s, 788088u) != 63055u || agr_aot_load16(s, 788090u) != 29692u) return AGR_AOT_MISS;
     agr_aot_movw(s, 3, 65532u);
     s->r[15] = 788092u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000c067c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 788092u) != 63171u || agr_aot_load16(s, 788094u) != 29695u) return AGR_AOT_MISS;
+    s->r[3] = (s->r[3] & 0xffffu) | (16383u << 16);
+    s->r[15] = 788096u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -34826,6 +35966,14 @@ static int aot_debug_000c068e(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000c0690(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 788112u) != 48952u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 56u); s->r[15] = 788114u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000c0692(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -34856,6 +36004,14 @@ static int aot_debug_000c0698(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000c069c(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 788124u) != 49044u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 148u); s->r[15] = 788126u; return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000c069e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -34884,6 +36040,14 @@ static int aot_debug_000c06a2(AgrAotRegs *s) {
     agr_aot_cmp(s, s->r[1], s->r[4]);
     s->r[15] = 788132u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000c06a4(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 788132u) != 48936u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 40u); s->r[15] = 788134u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_000c06a6(AgrAotRegs *s) {
@@ -35150,6 +36314,14 @@ static int aot_debug_000c16b2(AgrAotRegs *s) {
     agr_aot_cmp(s, s->r[5], s->r[2]);
     s->r[15] = 792244u;
     return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000c16b4(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 792244u) != 48927u) return AGR_AOT_MISS;
+    agr_aot_set_itstate(s, 31u); s->r[15] = 792246u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_debug_000c16b6(AgrAotRegs *s) {
@@ -38592,6 +39764,16 @@ static int aot_debug_000c2c1e(AgrAotRegs *s) {
     return AGR_AOT_BOUNDARY;
 }
 
+static int aot_debug_000c2c20(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 797728u) != 64007u || agr_aot_load16(s, 797730u) != 61700u) return AGR_AOT_MISS;
+    agr_aot_lsls_reg(s, 1, s->r[7], s->r[4]);
+    s->r[15] = 797732u;
+    return AGR_AOT_BOUNDARY;
+}
+
 static int aot_debug_000c2c24(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
@@ -38609,6 +39791,16 @@ static int aot_debug_000c2c26(AgrAotRegs *s) {
     if (agr_aot_load16(s, 797734u) != 13313u) return AGR_AOT_MISS;
     agr_aot_adds(s, 4, s->r[4], 1u);
     s->r[15] = 797736u;
+    return AGR_AOT_BOUNDARY;
+}
+
+static int aot_debug_000c2c28(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
+    if (agr_aot_load16(s, 797736u) != 45769u) return AGR_AOT_MISS;
+    s->r[1] = s->r[1] & 0xffu;
+    s->r[15] = 797738u;
     return AGR_AOT_BOUNDARY;
 }
 
@@ -38865,13 +40057,7 @@ static int aot_fast_000477f2(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 292852u + 40u); if (rc) return rc; }
-    s->r[15] = 292852u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000477f6(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 292860u;
     agr_aot_branch_reg(s, 792908u | 1u, 292862u, 1); return AGR_AOT_BOUNDARY;
@@ -38924,13 +40110,7 @@ static int aot_fast_00047846(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 292936u + 40u); if (rc) return rc; }
-    s->r[15] = 292936u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_0004784a(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 292944u;
     agr_aot_branch_reg(s, 792908u | 1u, 292946u, 1); return AGR_AOT_BOUNDARY;
@@ -38983,13 +40163,7 @@ static int aot_fast_0004789a(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 293020u + 40u); if (rc) return rc; }
-    s->r[15] = 293020u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_0004789e(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 293028u;
     agr_aot_branch_reg(s, 792908u | 1u, 293030u, 1); return AGR_AOT_BOUNDARY;
@@ -39042,13 +40216,7 @@ static int aot_fast_000478ee(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 293104u + 40u); if (rc) return rc; }
-    s->r[15] = 293104u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000478f2(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 293112u;
     agr_aot_branch_reg(s, 792908u | 1u, 293114u, 1); return AGR_AOT_BOUNDARY;
@@ -39101,13 +40269,7 @@ static int aot_fast_00047942(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 293188u + 40u); if (rc) return rc; }
-    s->r[15] = 293188u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047946(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 293196u;
     agr_aot_branch_reg(s, 792908u | 1u, 293198u, 1); return AGR_AOT_BOUNDARY;
@@ -39160,13 +40322,7 @@ static int aot_fast_00047996(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 293272u + 40u); if (rc) return rc; }
-    s->r[15] = 293272u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_0004799a(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 293280u;
     agr_aot_branch_reg(s, 792908u | 1u, 293282u, 1); return AGR_AOT_BOUNDARY;
@@ -39219,13 +40375,7 @@ static int aot_fast_000479ea(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 293356u + 40u); if (rc) return rc; }
-    s->r[15] = 293356u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000479ee(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 293364u;
     agr_aot_branch_reg(s, 792908u | 1u, 293366u, 1); return AGR_AOT_BOUNDARY;
@@ -39278,13 +40428,7 @@ static int aot_fast_00047a3e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 293440u + 40u); if (rc) return rc; }
-    s->r[15] = 293440u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047a42(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 293448u;
     agr_aot_branch_reg(s, 792908u | 1u, 293450u, 1); return AGR_AOT_BOUNDARY;
@@ -39337,13 +40481,7 @@ static int aot_fast_00047a92(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 293524u + 40u); if (rc) return rc; }
-    s->r[15] = 293524u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047a96(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 293532u;
     agr_aot_branch_reg(s, 792908u | 1u, 293534u, 1); return AGR_AOT_BOUNDARY;
@@ -39396,13 +40534,7 @@ static int aot_fast_00047ae6(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 293608u + 40u); if (rc) return rc; }
-    s->r[15] = 293608u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047aea(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 293616u;
     agr_aot_branch_reg(s, 792908u | 1u, 293618u, 1); return AGR_AOT_BOUNDARY;
@@ -39455,13 +40587,7 @@ static int aot_fast_00047b3a(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 293692u + 40u); if (rc) return rc; }
-    s->r[15] = 293692u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047b3e(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 293700u;
     agr_aot_branch_reg(s, 792908u | 1u, 293702u, 1); return AGR_AOT_BOUNDARY;
@@ -39514,13 +40640,7 @@ static int aot_fast_00047b8e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 293776u + 40u); if (rc) return rc; }
-    s->r[15] = 293776u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047b92(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 293784u;
     agr_aot_branch_reg(s, 792908u | 1u, 293786u, 1); return AGR_AOT_BOUNDARY;
@@ -39573,13 +40693,7 @@ static int aot_fast_00047be2(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 293860u + 40u); if (rc) return rc; }
-    s->r[15] = 293860u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047be6(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 293868u;
     agr_aot_branch_reg(s, 792908u | 1u, 293870u, 1); return AGR_AOT_BOUNDARY;
@@ -39632,13 +40746,7 @@ static int aot_fast_00047c36(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 293944u + 40u); if (rc) return rc; }
-    s->r[15] = 293944u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047c3a(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 293952u;
     agr_aot_branch_reg(s, 792908u | 1u, 293954u, 1); return AGR_AOT_BOUNDARY;
@@ -39691,13 +40799,7 @@ static int aot_fast_00047c8a(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 294028u + 40u); if (rc) return rc; }
-    s->r[15] = 294028u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047c8e(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 294036u;
     agr_aot_branch_reg(s, 792908u | 1u, 294038u, 1); return AGR_AOT_BOUNDARY;
@@ -39750,13 +40852,7 @@ static int aot_fast_00047cde(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 294112u + 40u); if (rc) return rc; }
-    s->r[15] = 294112u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047ce2(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 294120u;
     agr_aot_branch_reg(s, 792908u | 1u, 294122u, 1); return AGR_AOT_BOUNDARY;
@@ -39809,13 +40905,7 @@ static int aot_fast_00047d32(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 294196u + 40u); if (rc) return rc; }
-    s->r[15] = 294196u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047d36(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 294204u;
     agr_aot_branch_reg(s, 792908u | 1u, 294206u, 1); return AGR_AOT_BOUNDARY;
@@ -39868,13 +40958,7 @@ static int aot_fast_00047d86(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 294280u + 40u); if (rc) return rc; }
-    s->r[15] = 294280u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047d8a(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 294288u;
     agr_aot_branch_reg(s, 792908u | 1u, 294290u, 1); return AGR_AOT_BOUNDARY;
@@ -39927,13 +41011,7 @@ static int aot_fast_00047dda(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 294364u + 40u); if (rc) return rc; }
-    s->r[15] = 294364u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047dde(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 294372u;
     agr_aot_branch_reg(s, 792908u | 1u, 294374u, 1); return AGR_AOT_BOUNDARY;
@@ -39986,13 +41064,7 @@ static int aot_fast_00047e2e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 294448u + 40u); if (rc) return rc; }
-    s->r[15] = 294448u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047e32(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 294456u;
     agr_aot_branch_reg(s, 792908u | 1u, 294458u, 1); return AGR_AOT_BOUNDARY;
@@ -40045,13 +41117,7 @@ static int aot_fast_00047e82(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 294532u + 40u); if (rc) return rc; }
-    s->r[15] = 294532u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047e86(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 294540u;
     agr_aot_branch_reg(s, 792908u | 1u, 294542u, 1); return AGR_AOT_BOUNDARY;
@@ -40104,13 +41170,7 @@ static int aot_fast_00047ed6(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 294616u + 40u); if (rc) return rc; }
-    s->r[15] = 294616u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047eda(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 294624u;
     agr_aot_branch_reg(s, 792908u | 1u, 294626u, 1); return AGR_AOT_BOUNDARY;
@@ -40163,13 +41223,7 @@ static int aot_fast_00047f2a(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 294700u + 40u); if (rc) return rc; }
-    s->r[15] = 294700u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047f2e(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 294708u;
     agr_aot_branch_reg(s, 792908u | 1u, 294710u, 1); return AGR_AOT_BOUNDARY;
@@ -40222,13 +41276,7 @@ static int aot_fast_00047f7e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 294784u + 40u); if (rc) return rc; }
-    s->r[15] = 294784u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047f82(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 294792u;
     agr_aot_branch_reg(s, 792908u | 1u, 294794u, 1); return AGR_AOT_BOUNDARY;
@@ -40281,13 +41329,7 @@ static int aot_fast_00047fd2(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 294868u + 40u); if (rc) return rc; }
-    s->r[15] = 294868u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00047fd6(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 294876u;
     agr_aot_branch_reg(s, 792908u | 1u, 294878u, 1); return AGR_AOT_BOUNDARY;
@@ -40340,13 +41382,7 @@ static int aot_fast_00048026(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 294952u + 40u); if (rc) return rc; }
-    s->r[15] = 294952u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_0004802a(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 294960u;
     agr_aot_branch_reg(s, 792908u | 1u, 294962u, 1); return AGR_AOT_BOUNDARY;
@@ -40399,13 +41435,7 @@ static int aot_fast_0004807a(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 295036u + 40u); if (rc) return rc; }
-    s->r[15] = 295036u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_0004807e(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 295044u;
     agr_aot_branch_reg(s, 792908u | 1u, 295046u, 1); return AGR_AOT_BOUNDARY;
@@ -40458,13 +41488,7 @@ static int aot_fast_000480ce(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 295120u + 40u); if (rc) return rc; }
-    s->r[15] = 295120u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000480d2(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 295128u;
     agr_aot_branch_reg(s, 792908u | 1u, 295130u, 1); return AGR_AOT_BOUNDARY;
@@ -40517,13 +41541,7 @@ static int aot_fast_00048122(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 295204u + 40u); if (rc) return rc; }
-    s->r[15] = 295204u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00048126(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 295212u;
     agr_aot_branch_reg(s, 792908u | 1u, 295214u, 1); return AGR_AOT_BOUNDARY;
@@ -40576,13 +41594,7 @@ static int aot_fast_00048176(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 295288u + 40u); if (rc) return rc; }
-    s->r[15] = 295288u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_0004817a(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 295296u;
     agr_aot_branch_reg(s, 792908u | 1u, 295298u, 1); return AGR_AOT_BOUNDARY;
@@ -40635,13 +41647,7 @@ static int aot_fast_000481ca(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 295372u + 40u); if (rc) return rc; }
-    s->r[15] = 295372u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000481ce(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 295380u;
     agr_aot_branch_reg(s, 792908u | 1u, 295382u, 1); return AGR_AOT_BOUNDARY;
@@ -40694,13 +41700,7 @@ static int aot_fast_0004821e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 295456u + 40u); if (rc) return rc; }
-    s->r[15] = 295456u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00048222(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 295464u;
     agr_aot_branch_reg(s, 792908u | 1u, 295466u, 1); return AGR_AOT_BOUNDARY;
@@ -40776,13 +41776,7 @@ static int aot_fast_0004829e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 295584u + 40u); if (rc) return rc; }
-    s->r[15] = 295584u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000482a2(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 295592u;
     agr_aot_branch_reg(s, 792908u | 1u, 295594u, 1); return AGR_AOT_BOUNDARY;
@@ -40835,13 +41829,7 @@ static int aot_fast_000482f2(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 295668u + 40u); if (rc) return rc; }
-    s->r[15] = 295668u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000482f6(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 295676u;
     agr_aot_branch_reg(s, 792908u | 1u, 295678u, 1); return AGR_AOT_BOUNDARY;
@@ -40917,13 +41905,7 @@ static int aot_fast_00048372(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 295796u + 40u); if (rc) return rc; }
-    s->r[15] = 295796u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00048376(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 295804u;
     agr_aot_branch_reg(s, 792908u | 1u, 295806u, 1); return AGR_AOT_BOUNDARY;
@@ -40976,13 +41958,7 @@ static int aot_fast_000483c6(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 295880u + 40u); if (rc) return rc; }
-    s->r[15] = 295880u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000483ca(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 295888u;
     agr_aot_branch_reg(s, 792908u | 1u, 295890u, 1); return AGR_AOT_BOUNDARY;
@@ -41058,13 +42034,7 @@ static int aot_fast_00048446(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 296008u + 40u); if (rc) return rc; }
-    s->r[15] = 296008u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_0004844a(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 296016u;
     agr_aot_branch_reg(s, 792908u | 1u, 296018u, 1); return AGR_AOT_BOUNDARY;
@@ -41117,13 +42087,7 @@ static int aot_fast_0004849a(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 296092u + 40u); if (rc) return rc; }
-    s->r[15] = 296092u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_0004849e(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 296100u;
     agr_aot_branch_reg(s, 792908u | 1u, 296102u, 1); return AGR_AOT_BOUNDARY;
@@ -41176,13 +42140,7 @@ static int aot_fast_000484ee(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 296176u + 40u); if (rc) return rc; }
-    s->r[15] = 296176u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000484f2(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 296184u;
     agr_aot_branch_reg(s, 792908u | 1u, 296186u, 1); return AGR_AOT_BOUNDARY;
@@ -41277,13 +42235,7 @@ static int aot_fast_0004859a(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 296348u + 40u); if (rc) return rc; }
-    s->r[15] = 296348u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_0004859e(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 296356u;
     agr_aot_branch_reg(s, 792908u | 1u, 296358u, 1); return AGR_AOT_BOUNDARY;
@@ -41336,13 +42288,7 @@ static int aot_fast_000485ee(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 1, 296432u + 40u); if (rc) return rc; }
-    s->r[15] = 296432u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000485f2(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 2, s->r[13], 4u);
     agr_aot_mov_reg(s, 0, 5);
     s->r[1] += 296440u;
     agr_aot_branch_reg(s, 792908u | 1u, 296442u, 1); return AGR_AOT_BOUNDARY;
@@ -41387,16 +42333,9 @@ static int aot_fast_00048634(AgrAotRegs *s) {
     { int rc = agr_aot_ldr(s, 2, 296504u + 36u); if (rc) return rc; }
     s->r[1] += 296508u;
     s->r[2] += 296510u;
-    s->r[15] = 296508u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00048640(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_subs(s, 3, s->r[0], 1u);
     agr_aot_mov_reg(s, 0, 4);
-    s->r[15] = 296514u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 56u); s->r[15] = 296516u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00048646(AgrAotRegs *s) {
@@ -41424,8 +42363,7 @@ static int aot_fast_00048670(AgrAotRegs *s) {
     s->r[3] += 296566u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 0, s->r[2], 31u);
-    s->r[15] = 296568u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296570u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_0004867e(AgrAotRegs *s) {
@@ -41435,8 +42373,7 @@ static int aot_fast_0004867e(AgrAotRegs *s) {
     s->r[3] += 296580u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 1, s->r[2], 31u);
-    s->r[15] = 296582u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296584u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_0004868c(AgrAotRegs *s) {
@@ -41446,8 +42383,7 @@ static int aot_fast_0004868c(AgrAotRegs *s) {
     s->r[3] += 296594u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 2, s->r[2], 31u);
-    s->r[15] = 296596u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296598u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_0004869a(AgrAotRegs *s) {
@@ -41457,8 +42393,7 @@ static int aot_fast_0004869a(AgrAotRegs *s) {
     s->r[3] += 296608u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 0, s->r[2], 31u);
-    s->r[15] = 296610u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296612u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000486a8(AgrAotRegs *s) {
@@ -41468,8 +42403,7 @@ static int aot_fast_000486a8(AgrAotRegs *s) {
     s->r[3] += 296622u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 1, s->r[2], 31u);
-    s->r[15] = 296624u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296626u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000486b6(AgrAotRegs *s) {
@@ -41479,8 +42413,7 @@ static int aot_fast_000486b6(AgrAotRegs *s) {
     s->r[3] += 296636u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 2, s->r[2], 31u);
-    s->r[15] = 296638u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296640u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000486c4(AgrAotRegs *s) {
@@ -41490,8 +42423,7 @@ static int aot_fast_000486c4(AgrAotRegs *s) {
     s->r[3] += 296650u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 0, s->r[2], 31u);
-    s->r[15] = 296652u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296654u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000486d2(AgrAotRegs *s) {
@@ -41501,8 +42433,7 @@ static int aot_fast_000486d2(AgrAotRegs *s) {
     s->r[3] += 296664u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 1, s->r[2], 31u);
-    s->r[15] = 296666u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296668u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000486e0(AgrAotRegs *s) {
@@ -41512,8 +42443,7 @@ static int aot_fast_000486e0(AgrAotRegs *s) {
     s->r[3] += 296678u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 2, s->r[2], 31u);
-    s->r[15] = 296680u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296682u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000486ee(AgrAotRegs *s) {
@@ -41523,8 +42453,7 @@ static int aot_fast_000486ee(AgrAotRegs *s) {
     s->r[3] += 296692u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 0, s->r[2], 31u);
-    s->r[15] = 296694u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296696u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000486fc(AgrAotRegs *s) {
@@ -41534,8 +42463,7 @@ static int aot_fast_000486fc(AgrAotRegs *s) {
     s->r[3] += 296706u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 1, s->r[2], 31u);
-    s->r[15] = 296708u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296710u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_0004870a(AgrAotRegs *s) {
@@ -41545,8 +42473,7 @@ static int aot_fast_0004870a(AgrAotRegs *s) {
     s->r[3] += 296720u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 2, s->r[2], 31u);
-    s->r[15] = 296722u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296724u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00048718(AgrAotRegs *s) {
@@ -41562,8 +42489,7 @@ static int aot_fast_0004874c(AgrAotRegs *s) {
     s->r[3] += 296786u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 0, s->r[2], 31u);
-    s->r[15] = 296788u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296790u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_0004875a(AgrAotRegs *s) {
@@ -41573,8 +42499,7 @@ static int aot_fast_0004875a(AgrAotRegs *s) {
     s->r[3] += 296800u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 1, s->r[2], 31u);
-    s->r[15] = 296802u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296804u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00048768(AgrAotRegs *s) {
@@ -41584,8 +42509,7 @@ static int aot_fast_00048768(AgrAotRegs *s) {
     s->r[3] += 296814u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 2, s->r[2], 31u);
-    s->r[15] = 296816u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296818u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00048776(AgrAotRegs *s) {
@@ -41595,8 +42519,7 @@ static int aot_fast_00048776(AgrAotRegs *s) {
     s->r[3] += 296828u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 0, s->r[2], 31u);
-    s->r[15] = 296830u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296832u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00048784(AgrAotRegs *s) {
@@ -41606,8 +42529,7 @@ static int aot_fast_00048784(AgrAotRegs *s) {
     s->r[3] += 296842u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 1, s->r[2], 31u);
-    s->r[15] = 296844u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296846u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00048792(AgrAotRegs *s) {
@@ -41617,8 +42539,7 @@ static int aot_fast_00048792(AgrAotRegs *s) {
     s->r[3] += 296856u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 2, s->r[2], 31u);
-    s->r[15] = 296858u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296860u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000487a0(AgrAotRegs *s) {
@@ -41628,8 +42549,7 @@ static int aot_fast_000487a0(AgrAotRegs *s) {
     s->r[3] += 296870u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 0, s->r[2], 31u);
-    s->r[15] = 296872u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296874u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000487ae(AgrAotRegs *s) {
@@ -41639,8 +42559,7 @@ static int aot_fast_000487ae(AgrAotRegs *s) {
     s->r[3] += 296884u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 1, s->r[2], 31u);
-    s->r[15] = 296886u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296888u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000487bc(AgrAotRegs *s) {
@@ -41650,8 +42569,7 @@ static int aot_fast_000487bc(AgrAotRegs *s) {
     s->r[3] += 296898u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 2, s->r[2], 31u);
-    s->r[15] = 296900u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296902u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000487ca(AgrAotRegs *s) {
@@ -41661,8 +42579,7 @@ static int aot_fast_000487ca(AgrAotRegs *s) {
     s->r[3] += 296912u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 0, s->r[2], 31u);
-    s->r[15] = 296914u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296916u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000487d8(AgrAotRegs *s) {
@@ -41672,8 +42589,7 @@ static int aot_fast_000487d8(AgrAotRegs *s) {
     s->r[3] += 296926u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 1, s->r[2], 31u);
-    s->r[15] = 296928u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296930u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000487e6(AgrAotRegs *s) {
@@ -41683,8 +42599,7 @@ static int aot_fast_000487e6(AgrAotRegs *s) {
     s->r[3] += 296940u;
     { int rc = agr_aot_ldr(s, 2, s->r[3] + 0u); if (rc) return rc; }
     agr_aot_lsls(s, 2, s->r[2], 31u);
-    s->r[15] = 296942u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 92u); s->r[15] = 296944u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000487f4(AgrAotRegs *s) {
@@ -41752,14 +42667,20 @@ static int aot_fast_000918f6(AgrAotRegs *s) {
     { int rc = agr_aot_ldr(s, 1, s->r[1] + 4u); if (rc) return rc; }
     { int rc = agr_aot_ldrb(s, 3, s->r[1] + 0u); if (rc) return rc; }
     agr_aot_cmp(s, s->r[3], 42u);
-    s->r[15] = 596220u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 8u); s->r[15] = 596222u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00091900(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     agr_aot_branch_reg(s, 289592u, 596228u, 1); return AGR_AOT_BOUNDARY;
+}
+
+static int aot_fast_00091904(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    agr_aot_subs(s, 0, s->r[0], 1u);
+    agr_aot_set_itstate(s, 56u); s->r[15] = 596234u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_0009190c(AgrAotRegs *s) {
@@ -41789,8 +42710,14 @@ static int aot_fast_000919cc(AgrAotRegs *s) {
     agr_aot_lsls(s, 3, s->r[3], 27u);
     { uint32_t addr = s->r[13] + 52u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[0]); }
     { uint32_t addr = s->r[13] + 44u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[2]); }
-    s->r[15] = 596454u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 68u); s->r[15] = 596456u; return AGR_AOT_BOUNDARY;
+}
+
+static int aot_fast_000919ec(AgrAotRegs *s) {
+    int rc = 0;
+    (void)rc;
+    agr_aot_cmp(s, s->r[9], s->r[7]);
+    s->r[15] = agr_aot_condition(s, 0u) ? 597160u : 596466u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000919f2(AgrAotRegs *s) {
@@ -41806,8 +42733,7 @@ static int aot_fast_000919fa(AgrAotRegs *s) {
     (void)rc;
     { uint32_t addr = s->r[13] + 40u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[0]); }
     agr_aot_cmp(s, s->r[0], 0u);
-    s->r[15] = 596478u;
-    return AGR_AOT_BOUNDARY;
+    s->r[15] = agr_aot_condition(s, 1u) ? 596828u : 596482u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00091b5c(AgrAotRegs *s) {
@@ -41817,8 +42743,7 @@ static int aot_fast_00091b5c(AgrAotRegs *s) {
     agr_aot_cmp(s, s->r[11], 0u);
     { uint32_t addr = s->r[4] + 0u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[9]); }
     { uint32_t addr = s->r[4] + 4u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[7]); }
-    s->r[15] = 596840u;
-    return AGR_AOT_BOUNDARY;
+    s->r[15] = agr_aot_condition(s, 11u) ? 597206u : 596844u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00091b6c(AgrAotRegs *s) {
@@ -41827,16 +42752,9 @@ static int aot_fast_00091b6c(AgrAotRegs *s) {
     agr_aot_movs_imm(s, 7, 0u);
     { uint32_t addr = s->r[13] + 40u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[7]); }
     { int rc = agr_aot_ldr(s, 7, s->r[13] + 136u); if (rc) return rc; }
-    s->r[15] = 596850u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00091b76(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 3, s->r[9], s->r[11]);
     agr_aot_cmp(s, s->r[7], s->r[3]);
-    s->r[15] = 596856u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 20u); s->r[15] = 596858u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00091b7e(AgrAotRegs *s) {
@@ -41860,8 +42778,7 @@ static int aot_fast_00091cb0(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     agr_aot_cmp(s, s->r[0], 0u);
-    s->r[15] = 597170u;
-    return AGR_AOT_BOUNDARY;
+    s->r[15] = agr_aot_condition(s, 0u) ? 596466u : 597174u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_0009266c(AgrAotRegs *s) {
@@ -41869,8 +42786,7 @@ static int aot_fast_0009266c(AgrAotRegs *s) {
     (void)rc;
     if (agr_aot_stmdb_sp(s, 16496u)) return AGR_AOT_FAULT;
     agr_aot_cmp(s, s->r[0], 0u);
-    s->r[15] = 599664u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 20u); s->r[15] = 599666u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00092676(AgrAotRegs *s) {
@@ -41921,13 +42837,7 @@ static int aot_fast_0009298c(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     agr_aot_cmp(s, s->r[8], 0u);
-    s->r[15] = 600464u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00092994(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    if (agr_aot_stm(s, 5u, 1088u)) return AGR_AOT_FAULT;
     s->r[15] = agr_aot_condition(s, 11u) ? 600534u : 600470u; return AGR_AOT_BOUNDARY;
 }
 
@@ -41936,8 +42846,8 @@ static int aot_fast_00092996(AgrAotRegs *s) {
     (void)rc;
     s->r[6] += s->r[8];
     agr_aot_movs_imm(s, 4, 0u);
-    s->r[15] = 600474u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_cmp(s, s->r[9], s->r[6]);
+    agr_aot_set_itstate(s, 20u); s->r[15] = 600478u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000929a2(AgrAotRegs *s) {
@@ -41993,13 +42903,7 @@ static int aot_fast_00092d56(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { int rc = agr_aot_ldr(s, 4, s->r[13] + 32u); if (rc) return rc; }
-    s->r[15] = 601432u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00092d5c(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    s->r[3] = s->r[4] & 6u;
     agr_aot_cmp(s, s->r[3], 6u);
     s->r[15] = agr_aot_condition(s, 0u) ? 601476u : 601440u; return AGR_AOT_BOUNDARY;
 }
@@ -42082,13 +42986,7 @@ static int aot_fast_00093388(AgrAotRegs *s) {
     agr_aot_add_imm(s, 0, s->r[9], 28u);
     agr_aot_adds(s, 3, s->r[3], 8u);
     { uint32_t addr = s->r[9] + 8u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[8]); }
-    s->r[15] = 603054u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000933b2(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    if (agr_aot_stm(s, 9u, 264u)) return AGR_AOT_FAULT;
     { uint32_t addr = s->r[9] + 12u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[8]); }
     { uint32_t addr = s->r[9] + 16u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[8]); }
     { uint32_t addr = s->r[9] + 20u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[8]); }
@@ -42114,13 +43012,7 @@ static int aot_fast_000933c8(AgrAotRegs *s) {
     { uint32_t addr = s->r[9] + 32u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[2]); }
     { int rc = agr_aot_ldr(s, 5, s->r[4] + s->r[1]); if (rc) return rc; }
     agr_aot_add_imm(s, 0, s->r[5], 28u);
-    s->r[15] = 603124u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000933f8(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    if (agr_aot_stm(s, 5u, 264u)) return AGR_AOT_FAULT;
     { uint32_t addr = s->r[5] + 8u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[8]); }
     { uint32_t addr = s->r[5] + 12u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[8]); }
     { uint32_t addr = s->r[5] + 16u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[8]); }
@@ -42141,13 +43033,7 @@ static int aot_fast_00093412(AgrAotRegs *s) {
     { uint32_t addr = s->r[5] + 36u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[7]); }
     { int rc = agr_aot_ldr(s, 6, s->r[4] + s->r[2]); if (rc) return rc; }
     agr_aot_add_imm(s, 0, s->r[6], 28u);
-    s->r[15] = 603176u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_0009342c(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    if (agr_aot_stm(s, 6u, 264u)) return AGR_AOT_FAULT;
     { uint32_t addr = s->r[6] + 8u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[8]); }
     { uint32_t addr = s->r[6] + 12u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[8]); }
     { uint32_t addr = s->r[6] + 16u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[8]); }
@@ -42187,13 +43073,7 @@ static int aot_fast_00093460(AgrAotRegs *s) {
     { int rc = agr_aot_ldr(s, 10, s->r[4] + (s->r[3] << 0u)); if (rc) return rc; }
     agr_aot_add_imm(s, 2, s->r[10], 12u);
     agr_aot_add_imm(s, 3, s->r[10], 32u);
-    s->r[15] = 603278u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00093492(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    if (agr_aot_stm(s, 7u, 12u)) return AGR_AOT_FAULT;
     agr_aot_branch_reg(s, 605660u | 1u, 603286u, 1); return AGR_AOT_BOUNDARY;
 }
 
@@ -42246,13 +43126,7 @@ static int aot_fast_000934f0(AgrAotRegs *s) {
     agr_aot_add_imm(s, 3, s->r[10], 32u);
     agr_aot_add_imm(s, 2, s->r[10], 12u);
     agr_aot_mov_reg(s, 0, 9);
-    s->r[15] = 603386u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000934fe(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    if (agr_aot_stm(s, 5u, 12u)) return AGR_AOT_FAULT;
     agr_aot_mov_reg(s, 1, 6);
     agr_aot_movs_imm(s, 3, 0u);
     { uint32_t addr = s->r[5] + 116u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[3]); }
@@ -42284,13 +43158,7 @@ static int aot_fast_00093530(AgrAotRegs *s) {
     agr_aot_mov_reg(s, 1, 6);
     agr_aot_mov_reg(s, 0, 3);
     agr_aot_add_imm(s, 3, s->r[10], 32u);
-    s->r[15] = 603454u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00093542(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    if (agr_aot_stm(s, 9u, 12u)) return AGR_AOT_FAULT;
     agr_aot_movs_imm(s, 3, 0u);
     { uint32_t addr = s->r[9] + 116u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[3]); }
     { uint32_t addr = s->r[9] + 120u; if (agr_aot_fault8(addr)) return AGR_AOT_FAULT; agr_aot_store8(s, addr, s->r[3]); }
@@ -42311,13 +43179,7 @@ static int aot_fast_00093564(AgrAotRegs *s) {
     s->r[9] = 4294967295u;
     { int rc = agr_aot_ldr(s, 2, 603508u + 724u); if (rc) return rc; }
     { uint32_t addr = s->r[5] + 116u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[7]); }
-    s->r[15] = 603508u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00093578(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    s->r[3] = s->r[3] | 8192u;
     { uint32_t addr = s->r[8] + 120u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[7]); }
     { uint32_t addr = s->r[5] + 16u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[3]); }
     { int rc = agr_aot_ldr(s, 8, s->r[4] + (s->r[1] << 0u)); if (rc) return rc; }
@@ -42325,13 +43187,7 @@ static int aot_fast_00093578(AgrAotRegs *s) {
     agr_aot_add_imm(s, 0, s->r[8], 28u);
     agr_aot_adds(s, 3, s->r[3], 8u);
     { uint32_t addr = s->r[8] + 8u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[10]); }
-    s->r[15] = 603534u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00093592(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    if (agr_aot_stm(s, 8u, 1032u)) return AGR_AOT_FAULT;
     { uint32_t addr = s->r[8] + 12u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[10]); }
     { uint32_t addr = s->r[8] + 16u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[10]); }
     { uint32_t addr = s->r[8] + 20u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[10]); }
@@ -42355,13 +43211,7 @@ static int aot_fast_000935a8(AgrAotRegs *s) {
     { uint32_t addr = s->r[8] + 0u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[7]); }
     { int rc = agr_aot_ldr(s, 5, s->r[4] + s->r[2]); if (rc) return rc; }
     agr_aot_add_imm(s, 0, s->r[5], 28u);
-    s->r[15] = 603594u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000935ce(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    if (agr_aot_stm(s, 5u, 1032u)) return AGR_AOT_FAULT;
     { uint32_t addr = s->r[5] + 8u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[10]); }
     { uint32_t addr = s->r[5] + 12u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[10]); }
     { uint32_t addr = s->r[5] + 16u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[10]); }
@@ -42382,13 +43232,7 @@ static int aot_fast_000935e8(AgrAotRegs *s) {
     { uint32_t addr = s->r[5] + 36u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[9]); }
     { int rc = agr_aot_ldr(s, 6, s->r[4] + s->r[2]); if (rc) return rc; }
     agr_aot_add_imm(s, 0, s->r[6], 28u);
-    s->r[15] = 603644u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00093600(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    if (agr_aot_stm(s, 6u, 1032u)) return AGR_AOT_FAULT;
     { uint32_t addr = s->r[6] + 8u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[10]); }
     { uint32_t addr = s->r[6] + 12u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[10]); }
     { uint32_t addr = s->r[6] + 16u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[10]); }
@@ -42428,13 +43272,7 @@ static int aot_fast_00093634(AgrAotRegs *s) {
     { int rc = agr_aot_ldr(s, 9, s->r[4] + (s->r[3] << 0u)); if (rc) return rc; }
     agr_aot_add_imm(s, 2, s->r[9], 12u);
     agr_aot_add_imm(s, 3, s->r[9], 32u);
-    s->r[15] = 603746u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00093666(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    if (agr_aot_stm(s, 7u, 12u)) return AGR_AOT_FAULT;
     agr_aot_branch_reg(s, 606732u | 1u, 603754u, 1); return AGR_AOT_BOUNDARY;
 }
 
@@ -42487,13 +43325,7 @@ static int aot_fast_000936c4(AgrAotRegs *s) {
     agr_aot_add_imm(s, 3, s->r[9], 32u);
     agr_aot_add_imm(s, 2, s->r[9], 12u);
     agr_aot_mov_reg(s, 0, 10);
-    s->r[15] = 603854u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000936d2(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    if (agr_aot_stm(s, 5u, 12u)) return AGR_AOT_FAULT;
     agr_aot_mov_reg(s, 1, 6);
     agr_aot_movs_imm(s, 3, 0u);
     { uint32_t addr = s->r[5] + 116u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[3]); }
@@ -42525,13 +43357,7 @@ static int aot_fast_00093704(AgrAotRegs *s) {
     agr_aot_mov_reg(s, 1, 6);
     agr_aot_mov_reg(s, 0, 3);
     agr_aot_add_imm(s, 3, s->r[9], 32u);
-    s->r[15] = 603922u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00093716(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    if (agr_aot_stm(s, 10u, 12u)) return AGR_AOT_FAULT;
     agr_aot_movs_imm(s, 3, 0u);
     { uint32_t addr = s->r[10] + 116u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[3]); }
     { uint32_t addr = s->r[10] + 120u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[3]); }
@@ -42548,13 +43374,7 @@ static int aot_fast_00093738(AgrAotRegs *s) {
     (void)rc;
     { int rc = agr_aot_ldr(s, 3, s->r[5] + 16u); if (rc) return rc; }
     { uint32_t addr = s->r[8] + 120u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[7]); }
-    s->r[15] = 603966u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00093742(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    s->r[3] = s->r[3] | 8192u;
     { uint32_t addr = s->r[5] + 116u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[7]); }
     { uint32_t addr = s->r[5] + 16u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[3]); }
     { int rc = agr_aot_ldr(s, 0, s->r[13] + 8u); if (rc) return rc; }
@@ -42680,17 +43500,10 @@ static int aot_fast_00093df0(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { uint32_t addr = s->r[4] + 120u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[5]); }
-    s->r[15] = 605682u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00093df6(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_subs(s, 5, s->r[5], 1u);
     s->r[3] = 0u;
     { uint32_t addr = s->r[4] + 116u; if (agr_aot_fault8(addr)) return AGR_AOT_FAULT; agr_aot_store8(s, addr, s->r[3]); }
-    s->r[15] = 605694u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 56u); s->r[15] = 605696u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00093e02(AgrAotRegs *s) {
@@ -42796,17 +43609,10 @@ static int aot_fast_00094220(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { uint32_t addr = s->r[4] + 124u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[5]); }
-    s->r[15] = 606754u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_00094226(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_subs(s, 5, s->r[5], 1u);
     s->r[3] = 0u;
     { uint32_t addr = s->r[4] + 116u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[3]); }
-    s->r[15] = 606764u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 56u); s->r[15] = 606766u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00094230(AgrAotRegs *s) {
@@ -42880,8 +43686,7 @@ static int aot_fast_000970b4(AgrAotRegs *s) {
     if (agr_aot_stmdb_sp(s, 16400u)) return AGR_AOT_FAULT;
     s->r[3] += 618686u;
     { uint32_t addr = s->r[0] + 8u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[1]); }
-    s->r[15] = 618686u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 618688u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000970c2(AgrAotRegs *s) {
@@ -42917,8 +43722,7 @@ static int aot_fast_00097538(AgrAotRegs *s) {
     agr_aot_adds(s, 1, s->r[1], 0u);
     if (agr_aot_stmdb_sp(s, 16400u)) return AGR_AOT_FAULT;
     s->r[3] += 619842u;
-    s->r[15] = 619840u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 619842u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00097544(AgrAotRegs *s) {
@@ -43141,8 +43945,7 @@ static int aot_fast_00098b9a(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     agr_aot_adds(s, 0, s->r[0], 0u);
-    s->r[15] = 625564u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 625566u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00098ba0(AgrAotRegs *s) {
@@ -43194,8 +43997,7 @@ static int aot_fast_00098cb4(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     agr_aot_adds(s, 0, s->r[0], 0u);
-    s->r[15] = 625846u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 625848u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00098cba(AgrAotRegs *s) {
@@ -43247,8 +44049,7 @@ static int aot_fast_00098cf8(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     agr_aot_adds(s, 0, s->r[0], 0u);
-    s->r[15] = 625914u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 625916u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_00098cfe(AgrAotRegs *s) {
@@ -43265,8 +44066,7 @@ static int aot_fast_0009ff90(AgrAotRegs *s) {
     { int rc = agr_aot_ldr(s, 3, 655256u + 44u); if (rc) return rc; }
     agr_aot_mov_reg(s, 4, 0);
     { int rc = agr_aot_ldr(s, 5, 655260u + 44u); if (rc) return rc; }
-    s->r[15] = 655258u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 655260u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_0009ff9e(AgrAotRegs *s) {
@@ -43297,8 +44097,7 @@ static int aot_fast_0009fff8(AgrAotRegs *s) {
     { int rc = agr_aot_ldr(s, 3, 655360u + 44u); if (rc) return rc; }
     agr_aot_mov_reg(s, 4, 0);
     { int rc = agr_aot_ldr(s, 5, 655364u + 44u); if (rc) return rc; }
-    s->r[15] = 655362u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 655364u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000a0006(AgrAotRegs *s) {
@@ -43326,13 +44125,7 @@ static int aot_fast_000a77ec(AgrAotRegs *s) {
     (void)rc;
     if (agr_aot_stmdb_sp(s, 16432u)) return AGR_AOT_FAULT;
     s->r[13] -= 12u;
-    s->r[15] = 686064u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000a77f2(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 5, s->r[13], 4u);
     agr_aot_mov_reg(s, 4, 0);
     agr_aot_movs_imm(s, 2, 0u);
     agr_aot_movs_imm(s, 3, 6u);
@@ -43398,8 +44191,7 @@ static int aot_fast_000a7bcc(AgrAotRegs *s) {
     agr_aot_mov_reg(s, 5, 0);
     { int rc = agr_aot_ldr(s, 4, s->r[0] + 8u); if (rc) return rc; }
     agr_aot_cmp(s, s->r[4], 0u);
-    s->r[15] = 687062u;
-    return AGR_AOT_BOUNDARY;
+    s->r[15] = agr_aot_condition(s, 0u) ? 687436u : 687066u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000a7bda(AgrAotRegs *s) {
@@ -43469,8 +44261,74 @@ static int aot_fast_000a7bda(AgrAotRegs *s) {
     s->r[12] += 687242u;
     { int rc = agr_aot_ldr(s, 5, 687244u + 432u); if (rc) return rc; }
     s->r[7] += 687246u;
-    s->r[15] = 687244u;
-    return AGR_AOT_BOUNDARY;
+    { int rc = agr_aot_ldr(s, 0, 687248u + 432u); if (rc) return rc; }
+    s->r[6] += 687250u;
+    { int rc = agr_aot_ldr(s, 1, 687252u + 432u); if (rc) return rc; }
+    s->r[5] += 687254u;
+    { int rc = agr_aot_ldr(s, 2, 687256u + 432u); if (rc) return rc; }
+    s->r[0] += 687258u;
+    { int rc = agr_aot_ldr(s, 3, 687260u + 432u); if (rc) return rc; }
+    s->r[1] += 687262u;
+    { int rc = agr_aot_ldr(s, 11, 687264u + 432u); if (rc) return rc; }
+    s->r[2] += 687268u;
+    { int rc = agr_aot_ldr(s, 10, 687268u + 432u); if (rc) return rc; }
+    s->r[3] += 687274u;
+    { int rc = agr_aot_ldr(s, 9, 687276u + 428u); if (rc) return rc; }
+    s->r[11] += 687280u;
+    { int rc = agr_aot_ldr(s, 8, 687280u + 428u); if (rc) return rc; }
+    s->r[10] += 687286u;
+    s->r[9] += 687288u;
+    { uint32_t addr = s->r[4] + 96u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[12]); }
+    { uint32_t addr = s->r[4] + 100u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[7]); }
+    s->r[8] += 687296u;
+    { uint32_t addr = s->r[4] + 104u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[6]); }
+    { uint32_t addr = s->r[4] + 108u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[5]); }
+    { uint32_t addr = s->r[4] + 112u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[0]); }
+    { uint32_t addr = s->r[4] + 116u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[1]); }
+    { uint32_t addr = s->r[4] + 120u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[2]); }
+    { uint32_t addr = s->r[4] + 124u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[3]); }
+    { uint32_t addr = s->r[4] + 128u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[8]); }
+    { uint32_t addr = s->r[4] + 132u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[11]); }
+    { uint32_t addr = s->r[4] + 136u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[10]); }
+    { int rc = agr_aot_ldr(s, 12, 687320u + 392u); if (rc) return rc; }
+    { uint32_t addr = s->r[4] + 140u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[9]); }
+    { int rc = agr_aot_ldr(s, 7, 687328u + 388u); if (rc) return rc; }
+    s->r[12] += 687332u;
+    { int rc = agr_aot_ldr(s, 6, 687332u + 388u); if (rc) return rc; }
+    { int rc = agr_aot_ldr(s, 5, 687336u + 388u); if (rc) return rc; }
+    s->r[7] += 687338u;
+    { int rc = agr_aot_ldr(s, 0, 687340u + 388u); if (rc) return rc; }
+    s->r[6] += 687342u;
+    { int rc = agr_aot_ldr(s, 2, 687344u + 388u); if (rc) return rc; }
+    s->r[5] += 687346u;
+    { int rc = agr_aot_ldr(s, 3, 687348u + 388u); if (rc) return rc; }
+    s->r[0] += 687350u;
+    { int rc = agr_aot_ldr(s, 8, 687352u + 388u); if (rc) return rc; }
+    s->r[2] += 687356u;
+    { int rc = agr_aot_ldr(s, 11, 687356u + 388u); if (rc) return rc; }
+    s->r[3] += 687362u;
+    { int rc = agr_aot_ldr(s, 10, 687364u + 384u); if (rc) return rc; }
+    s->r[8] += 687368u;
+    { int rc = agr_aot_ldr(s, 9, 687368u + 384u); if (rc) return rc; }
+    s->r[11] += 687374u;
+    { uint32_t addr = s->r[4] + 164u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[1]); }
+    s->r[10] += 687380u;
+    { int rc = agr_aot_ldr(s, 1, 687380u + 376u); if (rc) return rc; }
+    s->r[9] += 687384u;
+    { uint32_t addr = s->r[4] + 148u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[12]); }
+    s->r[1] += 687390u;
+    { uint32_t addr = s->r[4] + 152u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[7]); }
+    { uint32_t addr = s->r[4] + 144u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[1]); }
+    { uint32_t addr = s->r[4] + 156u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[6]); }
+    { uint32_t addr = s->r[4] + 160u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[5]); }
+    { uint32_t addr = s->r[4] + 168u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[0]); }
+    { uint32_t addr = s->r[4] + 172u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[2]); }
+    { uint32_t addr = s->r[4] + 176u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[3]); }
+    { uint32_t addr = s->r[4] + 180u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[8]); }
+    { uint32_t addr = s->r[4] + 184u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[11]); }
+    { uint32_t addr = s->r[4] + 188u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[10]); }
+    { uint32_t addr = s->r[4] + 192u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[9]); }
+    if ((rc = agr_aot_ldmia_sp(s, 36856u))) return rc;
 }
 
 static int aot_fast_000a7f1c(AgrAotRegs *s) {
@@ -43480,8 +44338,7 @@ static int aot_fast_000a7f1c(AgrAotRegs *s) {
     agr_aot_mov_reg(s, 5, 0);
     { int rc = agr_aot_ldr(s, 4, s->r[0] + 8u); if (rc) return rc; }
     agr_aot_cmp(s, s->r[4], 0u);
-    s->r[15] = 687910u;
-    return AGR_AOT_BOUNDARY;
+    s->r[15] = agr_aot_condition(s, 0u) ? 688284u : 687914u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000a7f2a(AgrAotRegs *s) {
@@ -43551,8 +44408,74 @@ static int aot_fast_000a7f2a(AgrAotRegs *s) {
     s->r[12] += 688090u;
     { int rc = agr_aot_ldr(s, 5, 688092u + 432u); if (rc) return rc; }
     s->r[7] += 688094u;
-    s->r[15] = 688092u;
-    return AGR_AOT_BOUNDARY;
+    { int rc = agr_aot_ldr(s, 0, 688096u + 432u); if (rc) return rc; }
+    s->r[6] += 688098u;
+    { int rc = agr_aot_ldr(s, 1, 688100u + 432u); if (rc) return rc; }
+    s->r[5] += 688102u;
+    { int rc = agr_aot_ldr(s, 2, 688104u + 432u); if (rc) return rc; }
+    s->r[0] += 688106u;
+    { int rc = agr_aot_ldr(s, 3, 688108u + 432u); if (rc) return rc; }
+    s->r[1] += 688110u;
+    { int rc = agr_aot_ldr(s, 11, 688112u + 432u); if (rc) return rc; }
+    s->r[2] += 688116u;
+    { int rc = agr_aot_ldr(s, 10, 688116u + 432u); if (rc) return rc; }
+    s->r[3] += 688122u;
+    { int rc = agr_aot_ldr(s, 9, 688124u + 428u); if (rc) return rc; }
+    s->r[11] += 688128u;
+    { int rc = agr_aot_ldr(s, 8, 688128u + 428u); if (rc) return rc; }
+    s->r[10] += 688134u;
+    s->r[9] += 688136u;
+    { uint32_t addr = s->r[4] + 96u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[12]); }
+    { uint32_t addr = s->r[4] + 100u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[7]); }
+    s->r[8] += 688144u;
+    { uint32_t addr = s->r[4] + 104u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[6]); }
+    { uint32_t addr = s->r[4] + 108u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[5]); }
+    { uint32_t addr = s->r[4] + 112u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[0]); }
+    { uint32_t addr = s->r[4] + 116u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[1]); }
+    { uint32_t addr = s->r[4] + 120u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[2]); }
+    { uint32_t addr = s->r[4] + 124u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[3]); }
+    { uint32_t addr = s->r[4] + 128u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[8]); }
+    { uint32_t addr = s->r[4] + 132u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[11]); }
+    { uint32_t addr = s->r[4] + 136u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[10]); }
+    { int rc = agr_aot_ldr(s, 12, 688168u + 392u); if (rc) return rc; }
+    { uint32_t addr = s->r[4] + 140u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[9]); }
+    { int rc = agr_aot_ldr(s, 7, 688176u + 388u); if (rc) return rc; }
+    s->r[12] += 688180u;
+    { int rc = agr_aot_ldr(s, 6, 688180u + 388u); if (rc) return rc; }
+    { int rc = agr_aot_ldr(s, 5, 688184u + 388u); if (rc) return rc; }
+    s->r[7] += 688186u;
+    { int rc = agr_aot_ldr(s, 0, 688188u + 388u); if (rc) return rc; }
+    s->r[6] += 688190u;
+    { int rc = agr_aot_ldr(s, 2, 688192u + 388u); if (rc) return rc; }
+    s->r[5] += 688194u;
+    { int rc = agr_aot_ldr(s, 3, 688196u + 388u); if (rc) return rc; }
+    s->r[0] += 688198u;
+    { int rc = agr_aot_ldr(s, 8, 688200u + 388u); if (rc) return rc; }
+    s->r[2] += 688204u;
+    { int rc = agr_aot_ldr(s, 11, 688204u + 388u); if (rc) return rc; }
+    s->r[3] += 688210u;
+    { int rc = agr_aot_ldr(s, 10, 688212u + 384u); if (rc) return rc; }
+    s->r[8] += 688216u;
+    { int rc = agr_aot_ldr(s, 9, 688216u + 384u); if (rc) return rc; }
+    s->r[11] += 688222u;
+    { uint32_t addr = s->r[4] + 164u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[1]); }
+    s->r[10] += 688228u;
+    { int rc = agr_aot_ldr(s, 1, 688228u + 376u); if (rc) return rc; }
+    s->r[9] += 688232u;
+    { uint32_t addr = s->r[4] + 148u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[12]); }
+    s->r[1] += 688238u;
+    { uint32_t addr = s->r[4] + 152u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[7]); }
+    { uint32_t addr = s->r[4] + 144u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[1]); }
+    { uint32_t addr = s->r[4] + 156u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[6]); }
+    { uint32_t addr = s->r[4] + 160u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[5]); }
+    { uint32_t addr = s->r[4] + 168u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[0]); }
+    { uint32_t addr = s->r[4] + 172u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[2]); }
+    { uint32_t addr = s->r[4] + 176u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[3]); }
+    { uint32_t addr = s->r[4] + 180u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[8]); }
+    { uint32_t addr = s->r[4] + 184u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[11]); }
+    { uint32_t addr = s->r[4] + 188u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[10]); }
+    { uint32_t addr = s->r[4] + 192u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[9]); }
+    if ((rc = agr_aot_ldmia_sp(s, 36856u))) return rc;
 }
 
 static int aot_fast_000a8390(AgrAotRegs *s) {
@@ -43618,13 +44541,8 @@ static int aot_fast_000a83e8(AgrAotRegs *s) {
     agr_aot_movs_imm(s, 3, 4u);
     agr_aot_mov_reg(s, 2, 6);
     agr_aot_movs_imm(s, 1, 0u);
-    s->r[15] = 689134u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000a83f2(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    { int rc = agr_aot_ldrh(s, 0, s->r[0] + 0u); if (rc) return rc; }
+    { uint32_t addr = s->r[7] + 0u; if (agr_aot_fault16(addr)) return AGR_AOT_FAULT; agr_aot_store16(s, addr, s->r[0]); }
     { uint32_t addr = s->r[2] + s->r[3]; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[1]); }
     agr_aot_adds(s, 3, s->r[3], 4u);
     agr_aot_cmp(s, s->r[3], 24u);
@@ -44739,8 +45657,7 @@ static int aot_fast_000aa524(AgrAotRegs *s) {
     { int rc = agr_aot_ldr(s, 3, 697644u + 52u); if (rc) return rc; }
     agr_aot_mov_reg(s, 4, 0);
     { int rc = agr_aot_ldr(s, 5, 697648u + 52u); if (rc) return rc; }
-    s->r[15] = 697646u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 697648u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000aa532(AgrAotRegs *s) {
@@ -44982,8 +45899,7 @@ static int aot_fast_000ab39c(AgrAotRegs *s) {
     agr_aot_mov_reg(s, 5, 0);
     agr_aot_mov_reg(s, 8, 2);
     agr_aot_cmp(s, s->r[2], 0u);
-    s->r[15] = 701350u;
-    return AGR_AOT_BOUNDARY;
+    s->r[15] = agr_aot_condition(s, 0u) ? 701690u : 701354u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000ab3aa(AgrAotRegs *s) {
@@ -45083,8 +45999,7 @@ static int aot_fast_000abc64(AgrAotRegs *s) {
     agr_aot_adds(s, 3, s->r[3], 0u);
     { int rc = agr_aot_ldr(s, 5, 703596u + 92u); if (rc) return rc; }
     agr_aot_mov_reg(s, 4, 0);
-    s->r[15] = 703596u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 703598u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000abc70(AgrAotRegs *s) {
@@ -45093,8 +46008,7 @@ static int aot_fast_000abc70(AgrAotRegs *s) {
     agr_aot_cmp(s, s->r[1], 0u);
     s->r[5] += 703606u;
     { int rc = agr_aot_ldr(s, 5, s->r[5] + 0u); if (rc) return rc; }
-    s->r[15] = 703606u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 12u); s->r[15] = 703608u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000abc7e(AgrAotRegs *s) {
@@ -45126,13 +46040,7 @@ static int aot_fast_000abca4(AgrAotRegs *s) {
     (void)rc;
     { uint32_t addr = s->r[4] + 28u; if (agr_aot_fault8(addr)) return AGR_AOT_FAULT; agr_aot_store8(s, addr, s->r[5]); }
     agr_aot_mov_reg(s, 1, 5);
-    s->r[15] = 703656u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000abcac(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_add_imm(s, 0, s->r[4], 285u);
     s->r[2] = 256u;
     agr_aot_branch_reg(s, 289460u, 703668u, 1); return AGR_AOT_BOUNDARY;
 }
@@ -45164,8 +46072,7 @@ static int aot_fast_000ad2b0(AgrAotRegs *s) {
     if (agr_aot_stmdb_sp(s, 16400u)) return AGR_AOT_FAULT;
     s->r[3] += 709306u;
     { uint32_t addr = s->r[0] + 8u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[1]); }
-    s->r[15] = 709306u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 709308u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000ad2be(AgrAotRegs *s) {
@@ -45201,8 +46108,7 @@ static int aot_fast_000ad734(AgrAotRegs *s) {
     agr_aot_adds(s, 1, s->r[1], 0u);
     if (agr_aot_stmdb_sp(s, 16400u)) return AGR_AOT_FAULT;
     s->r[3] += 710462u;
-    s->r[15] = 710460u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 710462u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000ad740(AgrAotRegs *s) {
@@ -45425,8 +46331,7 @@ static int aot_fast_000aecf2(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     agr_aot_adds(s, 0, s->r[0], 0u);
-    s->r[15] = 716020u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 716022u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000aecf8(AgrAotRegs *s) {
@@ -45478,8 +46383,7 @@ static int aot_fast_000aee0c(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     agr_aot_adds(s, 0, s->r[0], 0u);
-    s->r[15] = 716302u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 716304u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000aee12(AgrAotRegs *s) {
@@ -45531,8 +46435,7 @@ static int aot_fast_000aee50(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     agr_aot_adds(s, 0, s->r[0], 0u);
-    s->r[15] = 716370u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 24u); s->r[15] = 716372u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000aee56(AgrAotRegs *s) {
@@ -45545,13 +46448,7 @@ static int aot_fast_000c0678(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     agr_aot_movw(s, 3, 65532u);
-    s->r[15] = 788092u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000c0680(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    s->r[3] = (s->r[3] & 0xffffu) | (16383u << 16);
     agr_aot_cmp(s, s->r[0], s->r[3]);
     if (agr_aot_stmdb_sp(s, 16400u)) return AGR_AOT_FAULT;
     agr_aot_mov_reg(s, 4, 0);
@@ -45570,8 +46467,7 @@ static int aot_fast_000c068c(AgrAotRegs *s) {
     (void)rc;
     agr_aot_lsls(s, 2, s->r[1], 1u);
     agr_aot_cmp(s, s->r[4], s->r[2]);
-    s->r[15] = 788112u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 56u); s->r[15] = 788114u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000c0694(AgrAotRegs *s) {
@@ -45579,16 +46475,14 @@ static int aot_fast_000c0694(AgrAotRegs *s) {
     (void)rc;
     agr_aot_add_imm(s, 2, s->r[4], 29u);
     agr_aot_cmp(s, s->r[2], 4096u);
-    s->r[15] = 788124u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 148u); s->r[15] = 788126u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000c06a2(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     agr_aot_cmp(s, s->r[1], s->r[4]);
-    s->r[15] = 788132u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 40u); s->r[15] = 788134u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000c06a8(AgrAotRegs *s) {
@@ -45656,8 +46550,7 @@ static int aot_fast_000c16a8(AgrAotRegs *s) {
     agr_aot_mov_reg(s, 0, 3);
     s->r[2] += 792244u;
     agr_aot_cmp(s, s->r[5], s->r[2]);
-    s->r[15] = 792244u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_set_itstate(s, 31u); s->r[15] = 792246u; return AGR_AOT_BOUNDARY;
 }
 
 static int aot_fast_000c16be(AgrAotRegs *s) {
@@ -46341,22 +47234,10 @@ static int aot_fast_000c2c1e(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     agr_aot_adds(s, 3, s->r[6], s->r[4]);
-    s->r[15] = 797728u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000c2c24(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    agr_aot_lsls_reg(s, 1, s->r[7], s->r[4]);
     agr_aot_mov_reg(s, 0, 6);
     agr_aot_adds(s, 4, s->r[4], 1u);
-    s->r[15] = 797736u;
-    return AGR_AOT_BOUNDARY;
-}
-
-static int aot_fast_000c2c2a(AgrAotRegs *s) {
-    int rc = 0;
-    (void)rc;
+    s->r[1] = s->r[1] & 0xffu;
     { uint32_t addr = s->r[3] + 1168u; if (agr_aot_fault8(addr)) return AGR_AOT_FAULT; agr_aot_store8(s, addr, s->r[1]); }
     agr_aot_branch_reg(s, 796904u | 1u, 797746u, 1); return AGR_AOT_BOUNDARY;
 }
@@ -46457,6 +47338,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {292844u, aot_debug_000477ec, 1u},
     {292846u, aot_debug_000477ee, 1u},
     {292850u, aot_debug_000477f2, 1u},
+    {292852u, aot_debug_000477f4, 1u},
     {292854u, aot_debug_000477f6, 1u},
     {292856u, aot_debug_000477f8, 1u},
     {292858u, aot_debug_000477fa, 1u},
@@ -46484,6 +47366,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {292928u, aot_debug_00047840, 1u},
     {292930u, aot_debug_00047842, 1u},
     {292934u, aot_debug_00047846, 1u},
+    {292936u, aot_debug_00047848, 1u},
     {292938u, aot_debug_0004784a, 1u},
     {292940u, aot_debug_0004784c, 1u},
     {292942u, aot_debug_0004784e, 1u},
@@ -46511,6 +47394,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {293012u, aot_debug_00047894, 1u},
     {293014u, aot_debug_00047896, 1u},
     {293018u, aot_debug_0004789a, 1u},
+    {293020u, aot_debug_0004789c, 1u},
     {293022u, aot_debug_0004789e, 1u},
     {293024u, aot_debug_000478a0, 1u},
     {293026u, aot_debug_000478a2, 1u},
@@ -46538,6 +47422,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {293096u, aot_debug_000478e8, 1u},
     {293098u, aot_debug_000478ea, 1u},
     {293102u, aot_debug_000478ee, 1u},
+    {293104u, aot_debug_000478f0, 1u},
     {293106u, aot_debug_000478f2, 1u},
     {293108u, aot_debug_000478f4, 1u},
     {293110u, aot_debug_000478f6, 1u},
@@ -46565,6 +47450,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {293180u, aot_debug_0004793c, 1u},
     {293182u, aot_debug_0004793e, 1u},
     {293186u, aot_debug_00047942, 1u},
+    {293188u, aot_debug_00047944, 1u},
     {293190u, aot_debug_00047946, 1u},
     {293192u, aot_debug_00047948, 1u},
     {293194u, aot_debug_0004794a, 1u},
@@ -46592,6 +47478,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {293264u, aot_debug_00047990, 1u},
     {293266u, aot_debug_00047992, 1u},
     {293270u, aot_debug_00047996, 1u},
+    {293272u, aot_debug_00047998, 1u},
     {293274u, aot_debug_0004799a, 1u},
     {293276u, aot_debug_0004799c, 1u},
     {293278u, aot_debug_0004799e, 1u},
@@ -46619,6 +47506,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {293348u, aot_debug_000479e4, 1u},
     {293350u, aot_debug_000479e6, 1u},
     {293354u, aot_debug_000479ea, 1u},
+    {293356u, aot_debug_000479ec, 1u},
     {293358u, aot_debug_000479ee, 1u},
     {293360u, aot_debug_000479f0, 1u},
     {293362u, aot_debug_000479f2, 1u},
@@ -46646,6 +47534,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {293432u, aot_debug_00047a38, 1u},
     {293434u, aot_debug_00047a3a, 1u},
     {293438u, aot_debug_00047a3e, 1u},
+    {293440u, aot_debug_00047a40, 1u},
     {293442u, aot_debug_00047a42, 1u},
     {293444u, aot_debug_00047a44, 1u},
     {293446u, aot_debug_00047a46, 1u},
@@ -46673,6 +47562,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {293516u, aot_debug_00047a8c, 1u},
     {293518u, aot_debug_00047a8e, 1u},
     {293522u, aot_debug_00047a92, 1u},
+    {293524u, aot_debug_00047a94, 1u},
     {293526u, aot_debug_00047a96, 1u},
     {293528u, aot_debug_00047a98, 1u},
     {293530u, aot_debug_00047a9a, 1u},
@@ -46700,6 +47590,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {293600u, aot_debug_00047ae0, 1u},
     {293602u, aot_debug_00047ae2, 1u},
     {293606u, aot_debug_00047ae6, 1u},
+    {293608u, aot_debug_00047ae8, 1u},
     {293610u, aot_debug_00047aea, 1u},
     {293612u, aot_debug_00047aec, 1u},
     {293614u, aot_debug_00047aee, 1u},
@@ -46727,6 +47618,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {293684u, aot_debug_00047b34, 1u},
     {293686u, aot_debug_00047b36, 1u},
     {293690u, aot_debug_00047b3a, 1u},
+    {293692u, aot_debug_00047b3c, 1u},
     {293694u, aot_debug_00047b3e, 1u},
     {293696u, aot_debug_00047b40, 1u},
     {293698u, aot_debug_00047b42, 1u},
@@ -46754,6 +47646,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {293768u, aot_debug_00047b88, 1u},
     {293770u, aot_debug_00047b8a, 1u},
     {293774u, aot_debug_00047b8e, 1u},
+    {293776u, aot_debug_00047b90, 1u},
     {293778u, aot_debug_00047b92, 1u},
     {293780u, aot_debug_00047b94, 1u},
     {293782u, aot_debug_00047b96, 1u},
@@ -46781,6 +47674,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {293852u, aot_debug_00047bdc, 1u},
     {293854u, aot_debug_00047bde, 1u},
     {293858u, aot_debug_00047be2, 1u},
+    {293860u, aot_debug_00047be4, 1u},
     {293862u, aot_debug_00047be6, 1u},
     {293864u, aot_debug_00047be8, 1u},
     {293866u, aot_debug_00047bea, 1u},
@@ -46808,6 +47702,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {293936u, aot_debug_00047c30, 1u},
     {293938u, aot_debug_00047c32, 1u},
     {293942u, aot_debug_00047c36, 1u},
+    {293944u, aot_debug_00047c38, 1u},
     {293946u, aot_debug_00047c3a, 1u},
     {293948u, aot_debug_00047c3c, 1u},
     {293950u, aot_debug_00047c3e, 1u},
@@ -46835,6 +47730,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {294020u, aot_debug_00047c84, 1u},
     {294022u, aot_debug_00047c86, 1u},
     {294026u, aot_debug_00047c8a, 1u},
+    {294028u, aot_debug_00047c8c, 1u},
     {294030u, aot_debug_00047c8e, 1u},
     {294032u, aot_debug_00047c90, 1u},
     {294034u, aot_debug_00047c92, 1u},
@@ -46862,6 +47758,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {294104u, aot_debug_00047cd8, 1u},
     {294106u, aot_debug_00047cda, 1u},
     {294110u, aot_debug_00047cde, 1u},
+    {294112u, aot_debug_00047ce0, 1u},
     {294114u, aot_debug_00047ce2, 1u},
     {294116u, aot_debug_00047ce4, 1u},
     {294118u, aot_debug_00047ce6, 1u},
@@ -46889,6 +47786,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {294188u, aot_debug_00047d2c, 1u},
     {294190u, aot_debug_00047d2e, 1u},
     {294194u, aot_debug_00047d32, 1u},
+    {294196u, aot_debug_00047d34, 1u},
     {294198u, aot_debug_00047d36, 1u},
     {294200u, aot_debug_00047d38, 1u},
     {294202u, aot_debug_00047d3a, 1u},
@@ -46916,6 +47814,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {294272u, aot_debug_00047d80, 1u},
     {294274u, aot_debug_00047d82, 1u},
     {294278u, aot_debug_00047d86, 1u},
+    {294280u, aot_debug_00047d88, 1u},
     {294282u, aot_debug_00047d8a, 1u},
     {294284u, aot_debug_00047d8c, 1u},
     {294286u, aot_debug_00047d8e, 1u},
@@ -46943,6 +47842,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {294356u, aot_debug_00047dd4, 1u},
     {294358u, aot_debug_00047dd6, 1u},
     {294362u, aot_debug_00047dda, 1u},
+    {294364u, aot_debug_00047ddc, 1u},
     {294366u, aot_debug_00047dde, 1u},
     {294368u, aot_debug_00047de0, 1u},
     {294370u, aot_debug_00047de2, 1u},
@@ -46970,6 +47870,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {294440u, aot_debug_00047e28, 1u},
     {294442u, aot_debug_00047e2a, 1u},
     {294446u, aot_debug_00047e2e, 1u},
+    {294448u, aot_debug_00047e30, 1u},
     {294450u, aot_debug_00047e32, 1u},
     {294452u, aot_debug_00047e34, 1u},
     {294454u, aot_debug_00047e36, 1u},
@@ -46997,6 +47898,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {294524u, aot_debug_00047e7c, 1u},
     {294526u, aot_debug_00047e7e, 1u},
     {294530u, aot_debug_00047e82, 1u},
+    {294532u, aot_debug_00047e84, 1u},
     {294534u, aot_debug_00047e86, 1u},
     {294536u, aot_debug_00047e88, 1u},
     {294538u, aot_debug_00047e8a, 1u},
@@ -47024,6 +47926,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {294608u, aot_debug_00047ed0, 1u},
     {294610u, aot_debug_00047ed2, 1u},
     {294614u, aot_debug_00047ed6, 1u},
+    {294616u, aot_debug_00047ed8, 1u},
     {294618u, aot_debug_00047eda, 1u},
     {294620u, aot_debug_00047edc, 1u},
     {294622u, aot_debug_00047ede, 1u},
@@ -47051,6 +47954,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {294692u, aot_debug_00047f24, 1u},
     {294694u, aot_debug_00047f26, 1u},
     {294698u, aot_debug_00047f2a, 1u},
+    {294700u, aot_debug_00047f2c, 1u},
     {294702u, aot_debug_00047f2e, 1u},
     {294704u, aot_debug_00047f30, 1u},
     {294706u, aot_debug_00047f32, 1u},
@@ -47078,6 +47982,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {294776u, aot_debug_00047f78, 1u},
     {294778u, aot_debug_00047f7a, 1u},
     {294782u, aot_debug_00047f7e, 1u},
+    {294784u, aot_debug_00047f80, 1u},
     {294786u, aot_debug_00047f82, 1u},
     {294788u, aot_debug_00047f84, 1u},
     {294790u, aot_debug_00047f86, 1u},
@@ -47105,6 +48010,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {294860u, aot_debug_00047fcc, 1u},
     {294862u, aot_debug_00047fce, 1u},
     {294866u, aot_debug_00047fd2, 1u},
+    {294868u, aot_debug_00047fd4, 1u},
     {294870u, aot_debug_00047fd6, 1u},
     {294872u, aot_debug_00047fd8, 1u},
     {294874u, aot_debug_00047fda, 1u},
@@ -47132,6 +48038,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {294944u, aot_debug_00048020, 1u},
     {294946u, aot_debug_00048022, 1u},
     {294950u, aot_debug_00048026, 1u},
+    {294952u, aot_debug_00048028, 1u},
     {294954u, aot_debug_0004802a, 1u},
     {294956u, aot_debug_0004802c, 1u},
     {294958u, aot_debug_0004802e, 1u},
@@ -47159,6 +48066,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {295028u, aot_debug_00048074, 1u},
     {295030u, aot_debug_00048076, 1u},
     {295034u, aot_debug_0004807a, 1u},
+    {295036u, aot_debug_0004807c, 1u},
     {295038u, aot_debug_0004807e, 1u},
     {295040u, aot_debug_00048080, 1u},
     {295042u, aot_debug_00048082, 1u},
@@ -47186,6 +48094,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {295112u, aot_debug_000480c8, 1u},
     {295114u, aot_debug_000480ca, 1u},
     {295118u, aot_debug_000480ce, 1u},
+    {295120u, aot_debug_000480d0, 1u},
     {295122u, aot_debug_000480d2, 1u},
     {295124u, aot_debug_000480d4, 1u},
     {295126u, aot_debug_000480d6, 1u},
@@ -47213,6 +48122,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {295196u, aot_debug_0004811c, 1u},
     {295198u, aot_debug_0004811e, 1u},
     {295202u, aot_debug_00048122, 1u},
+    {295204u, aot_debug_00048124, 1u},
     {295206u, aot_debug_00048126, 1u},
     {295208u, aot_debug_00048128, 1u},
     {295210u, aot_debug_0004812a, 1u},
@@ -47240,6 +48150,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {295280u, aot_debug_00048170, 1u},
     {295282u, aot_debug_00048172, 1u},
     {295286u, aot_debug_00048176, 1u},
+    {295288u, aot_debug_00048178, 1u},
     {295290u, aot_debug_0004817a, 1u},
     {295292u, aot_debug_0004817c, 1u},
     {295294u, aot_debug_0004817e, 1u},
@@ -47267,6 +48178,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {295364u, aot_debug_000481c4, 1u},
     {295366u, aot_debug_000481c6, 1u},
     {295370u, aot_debug_000481ca, 1u},
+    {295372u, aot_debug_000481cc, 1u},
     {295374u, aot_debug_000481ce, 1u},
     {295376u, aot_debug_000481d0, 1u},
     {295378u, aot_debug_000481d2, 1u},
@@ -47294,6 +48206,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {295448u, aot_debug_00048218, 1u},
     {295450u, aot_debug_0004821a, 1u},
     {295454u, aot_debug_0004821e, 1u},
+    {295456u, aot_debug_00048220, 1u},
     {295458u, aot_debug_00048222, 1u},
     {295460u, aot_debug_00048224, 1u},
     {295462u, aot_debug_00048226, 1u},
@@ -47334,6 +48247,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {295576u, aot_debug_00048298, 1u},
     {295578u, aot_debug_0004829a, 1u},
     {295582u, aot_debug_0004829e, 1u},
+    {295584u, aot_debug_000482a0, 1u},
     {295586u, aot_debug_000482a2, 1u},
     {295588u, aot_debug_000482a4, 1u},
     {295590u, aot_debug_000482a6, 1u},
@@ -47361,6 +48275,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {295660u, aot_debug_000482ec, 1u},
     {295662u, aot_debug_000482ee, 1u},
     {295666u, aot_debug_000482f2, 1u},
+    {295668u, aot_debug_000482f4, 1u},
     {295670u, aot_debug_000482f6, 1u},
     {295672u, aot_debug_000482f8, 1u},
     {295674u, aot_debug_000482fa, 1u},
@@ -47401,6 +48316,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {295788u, aot_debug_0004836c, 1u},
     {295790u, aot_debug_0004836e, 1u},
     {295794u, aot_debug_00048372, 1u},
+    {295796u, aot_debug_00048374, 1u},
     {295798u, aot_debug_00048376, 1u},
     {295800u, aot_debug_00048378, 1u},
     {295802u, aot_debug_0004837a, 1u},
@@ -47428,6 +48344,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {295872u, aot_debug_000483c0, 1u},
     {295874u, aot_debug_000483c2, 1u},
     {295878u, aot_debug_000483c6, 1u},
+    {295880u, aot_debug_000483c8, 1u},
     {295882u, aot_debug_000483ca, 1u},
     {295884u, aot_debug_000483cc, 1u},
     {295886u, aot_debug_000483ce, 1u},
@@ -47468,6 +48385,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {296000u, aot_debug_00048440, 1u},
     {296002u, aot_debug_00048442, 1u},
     {296006u, aot_debug_00048446, 1u},
+    {296008u, aot_debug_00048448, 1u},
     {296010u, aot_debug_0004844a, 1u},
     {296012u, aot_debug_0004844c, 1u},
     {296014u, aot_debug_0004844e, 1u},
@@ -47495,6 +48413,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {296084u, aot_debug_00048494, 1u},
     {296086u, aot_debug_00048496, 1u},
     {296090u, aot_debug_0004849a, 1u},
+    {296092u, aot_debug_0004849c, 1u},
     {296094u, aot_debug_0004849e, 1u},
     {296096u, aot_debug_000484a0, 1u},
     {296098u, aot_debug_000484a2, 1u},
@@ -47522,6 +48441,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {296168u, aot_debug_000484e8, 1u},
     {296170u, aot_debug_000484ea, 1u},
     {296174u, aot_debug_000484ee, 1u},
+    {296176u, aot_debug_000484f0, 1u},
     {296178u, aot_debug_000484f2, 1u},
     {296180u, aot_debug_000484f4, 1u},
     {296182u, aot_debug_000484f6, 1u},
@@ -47576,6 +48496,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {296340u, aot_debug_00048594, 1u},
     {296342u, aot_debug_00048596, 1u},
     {296346u, aot_debug_0004859a, 1u},
+    {296348u, aot_debug_0004859c, 1u},
     {296350u, aot_debug_0004859e, 1u},
     {296352u, aot_debug_000485a0, 1u},
     {296354u, aot_debug_000485a2, 1u},
@@ -47603,6 +48524,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {296424u, aot_debug_000485e8, 1u},
     {296426u, aot_debug_000485ea, 1u},
     {296430u, aot_debug_000485ee, 1u},
+    {296432u, aot_debug_000485f0, 1u},
     {296434u, aot_debug_000485f2, 1u},
     {296436u, aot_debug_000485f4, 1u},
     {296438u, aot_debug_000485f6, 1u},
@@ -47627,7 +48549,9 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {296502u, aot_debug_00048636, 1u},
     {296504u, aot_debug_00048638, 1u},
     {296506u, aot_debug_0004863a, 1u},
+    {296508u, aot_debug_0004863c, 1u},
     {296512u, aot_debug_00048640, 1u},
+    {296514u, aot_debug_00048642, 1u},
     {296516u, aot_debug_00048644, 1u},
     {296518u, aot_debug_00048646, 1u},
     {296520u, aot_debug_00048648, 1u},
@@ -47641,72 +48565,84 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {296562u, aot_debug_00048672, 1u},
     {296564u, aot_debug_00048674, 1u},
     {296566u, aot_debug_00048676, 1u},
+    {296568u, aot_debug_00048678, 1u},
     {296570u, aot_debug_0004867a, 1u},
     {296572u, aot_debug_0004867c, 1u},
     {296574u, aot_debug_0004867e, 1u},
     {296576u, aot_debug_00048680, 1u},
     {296578u, aot_debug_00048682, 1u},
     {296580u, aot_debug_00048684, 1u},
+    {296582u, aot_debug_00048686, 1u},
     {296584u, aot_debug_00048688, 1u},
     {296586u, aot_debug_0004868a, 1u},
     {296588u, aot_debug_0004868c, 1u},
     {296590u, aot_debug_0004868e, 1u},
     {296592u, aot_debug_00048690, 1u},
     {296594u, aot_debug_00048692, 1u},
+    {296596u, aot_debug_00048694, 1u},
     {296598u, aot_debug_00048696, 1u},
     {296600u, aot_debug_00048698, 1u},
     {296602u, aot_debug_0004869a, 1u},
     {296604u, aot_debug_0004869c, 1u},
     {296606u, aot_debug_0004869e, 1u},
     {296608u, aot_debug_000486a0, 1u},
+    {296610u, aot_debug_000486a2, 1u},
     {296612u, aot_debug_000486a4, 1u},
     {296614u, aot_debug_000486a6, 1u},
     {296616u, aot_debug_000486a8, 1u},
     {296618u, aot_debug_000486aa, 1u},
     {296620u, aot_debug_000486ac, 1u},
     {296622u, aot_debug_000486ae, 1u},
+    {296624u, aot_debug_000486b0, 1u},
     {296626u, aot_debug_000486b2, 1u},
     {296628u, aot_debug_000486b4, 1u},
     {296630u, aot_debug_000486b6, 1u},
     {296632u, aot_debug_000486b8, 1u},
     {296634u, aot_debug_000486ba, 1u},
     {296636u, aot_debug_000486bc, 1u},
+    {296638u, aot_debug_000486be, 1u},
     {296640u, aot_debug_000486c0, 1u},
     {296642u, aot_debug_000486c2, 1u},
     {296644u, aot_debug_000486c4, 1u},
     {296646u, aot_debug_000486c6, 1u},
     {296648u, aot_debug_000486c8, 1u},
     {296650u, aot_debug_000486ca, 1u},
+    {296652u, aot_debug_000486cc, 1u},
     {296654u, aot_debug_000486ce, 1u},
     {296656u, aot_debug_000486d0, 1u},
     {296658u, aot_debug_000486d2, 1u},
     {296660u, aot_debug_000486d4, 1u},
     {296662u, aot_debug_000486d6, 1u},
     {296664u, aot_debug_000486d8, 1u},
+    {296666u, aot_debug_000486da, 1u},
     {296668u, aot_debug_000486dc, 1u},
     {296670u, aot_debug_000486de, 1u},
     {296672u, aot_debug_000486e0, 1u},
     {296674u, aot_debug_000486e2, 1u},
     {296676u, aot_debug_000486e4, 1u},
     {296678u, aot_debug_000486e6, 1u},
+    {296680u, aot_debug_000486e8, 1u},
     {296682u, aot_debug_000486ea, 1u},
     {296684u, aot_debug_000486ec, 1u},
     {296686u, aot_debug_000486ee, 1u},
     {296688u, aot_debug_000486f0, 1u},
     {296690u, aot_debug_000486f2, 1u},
     {296692u, aot_debug_000486f4, 1u},
+    {296694u, aot_debug_000486f6, 1u},
     {296696u, aot_debug_000486f8, 1u},
     {296698u, aot_debug_000486fa, 1u},
     {296700u, aot_debug_000486fc, 1u},
     {296702u, aot_debug_000486fe, 1u},
     {296704u, aot_debug_00048700, 1u},
     {296706u, aot_debug_00048702, 1u},
+    {296708u, aot_debug_00048704, 1u},
     {296710u, aot_debug_00048706, 1u},
     {296712u, aot_debug_00048708, 1u},
     {296714u, aot_debug_0004870a, 1u},
     {296716u, aot_debug_0004870c, 1u},
     {296718u, aot_debug_0004870e, 1u},
     {296720u, aot_debug_00048710, 1u},
+    {296722u, aot_debug_00048712, 1u},
     {296724u, aot_debug_00048714, 1u},
     {296726u, aot_debug_00048716, 1u},
     {296728u, aot_debug_00048718, 1u},
@@ -47714,72 +48650,84 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {296782u, aot_debug_0004874e, 1u},
     {296784u, aot_debug_00048750, 1u},
     {296786u, aot_debug_00048752, 1u},
+    {296788u, aot_debug_00048754, 1u},
     {296790u, aot_debug_00048756, 1u},
     {296792u, aot_debug_00048758, 1u},
     {296794u, aot_debug_0004875a, 1u},
     {296796u, aot_debug_0004875c, 1u},
     {296798u, aot_debug_0004875e, 1u},
     {296800u, aot_debug_00048760, 1u},
+    {296802u, aot_debug_00048762, 1u},
     {296804u, aot_debug_00048764, 1u},
     {296806u, aot_debug_00048766, 1u},
     {296808u, aot_debug_00048768, 1u},
     {296810u, aot_debug_0004876a, 1u},
     {296812u, aot_debug_0004876c, 1u},
     {296814u, aot_debug_0004876e, 1u},
+    {296816u, aot_debug_00048770, 1u},
     {296818u, aot_debug_00048772, 1u},
     {296820u, aot_debug_00048774, 1u},
     {296822u, aot_debug_00048776, 1u},
     {296824u, aot_debug_00048778, 1u},
     {296826u, aot_debug_0004877a, 1u},
     {296828u, aot_debug_0004877c, 1u},
+    {296830u, aot_debug_0004877e, 1u},
     {296832u, aot_debug_00048780, 1u},
     {296834u, aot_debug_00048782, 1u},
     {296836u, aot_debug_00048784, 1u},
     {296838u, aot_debug_00048786, 1u},
     {296840u, aot_debug_00048788, 1u},
     {296842u, aot_debug_0004878a, 1u},
+    {296844u, aot_debug_0004878c, 1u},
     {296846u, aot_debug_0004878e, 1u},
     {296848u, aot_debug_00048790, 1u},
     {296850u, aot_debug_00048792, 1u},
     {296852u, aot_debug_00048794, 1u},
     {296854u, aot_debug_00048796, 1u},
     {296856u, aot_debug_00048798, 1u},
+    {296858u, aot_debug_0004879a, 1u},
     {296860u, aot_debug_0004879c, 1u},
     {296862u, aot_debug_0004879e, 1u},
     {296864u, aot_debug_000487a0, 1u},
     {296866u, aot_debug_000487a2, 1u},
     {296868u, aot_debug_000487a4, 1u},
     {296870u, aot_debug_000487a6, 1u},
+    {296872u, aot_debug_000487a8, 1u},
     {296874u, aot_debug_000487aa, 1u},
     {296876u, aot_debug_000487ac, 1u},
     {296878u, aot_debug_000487ae, 1u},
     {296880u, aot_debug_000487b0, 1u},
     {296882u, aot_debug_000487b2, 1u},
     {296884u, aot_debug_000487b4, 1u},
+    {296886u, aot_debug_000487b6, 1u},
     {296888u, aot_debug_000487b8, 1u},
     {296890u, aot_debug_000487ba, 1u},
     {296892u, aot_debug_000487bc, 1u},
     {296894u, aot_debug_000487be, 1u},
     {296896u, aot_debug_000487c0, 1u},
     {296898u, aot_debug_000487c2, 1u},
+    {296900u, aot_debug_000487c4, 1u},
     {296902u, aot_debug_000487c6, 1u},
     {296904u, aot_debug_000487c8, 1u},
     {296906u, aot_debug_000487ca, 1u},
     {296908u, aot_debug_000487cc, 1u},
     {296910u, aot_debug_000487ce, 1u},
     {296912u, aot_debug_000487d0, 1u},
+    {296914u, aot_debug_000487d2, 1u},
     {296916u, aot_debug_000487d4, 1u},
     {296918u, aot_debug_000487d6, 1u},
     {296920u, aot_debug_000487d8, 1u},
     {296922u, aot_debug_000487da, 1u},
     {296924u, aot_debug_000487dc, 1u},
     {296926u, aot_debug_000487de, 1u},
+    {296928u, aot_debug_000487e0, 1u},
     {296930u, aot_debug_000487e2, 1u},
     {296932u, aot_debug_000487e4, 1u},
     {296934u, aot_debug_000487e6, 1u},
     {296936u, aot_debug_000487e8, 1u},
     {296938u, aot_debug_000487ea, 1u},
     {296940u, aot_debug_000487ec, 1u},
+    {296942u, aot_debug_000487ee, 1u},
     {296944u, aot_debug_000487f0, 1u},
     {296946u, aot_debug_000487f2, 1u},
     {296948u, aot_debug_000487f4, 1u},
@@ -47819,8 +48767,11 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {596214u, aot_debug_000918f6, 1u},
     {596216u, aot_debug_000918f8, 1u},
     {596218u, aot_debug_000918fa, 1u},
+    {596220u, aot_debug_000918fc, 1u},
     {596222u, aot_debug_000918fe, 1u},
     {596224u, aot_debug_00091900, 1u},
+    {596228u, aot_debug_00091904, 1u},
+    {596232u, aot_debug_00091908, 1u},
     {596234u, aot_debug_0009190a, 1u},
     {596236u, aot_debug_0009190c, 1u},
     {596242u, aot_debug_00091912, 1u},
@@ -47836,21 +48787,28 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {596448u, aot_debug_000919e0, 1u},
     {596450u, aot_debug_000919e2, 1u},
     {596452u, aot_debug_000919e4, 1u},
+    {596454u, aot_debug_000919e6, 1u},
     {596456u, aot_debug_000919e8, 1u},
     {596458u, aot_debug_000919ea, 1u},
+    {596460u, aot_debug_000919ec, 1u},
+    {596462u, aot_debug_000919ee, 1u},
     {596466u, aot_debug_000919f2, 1u},
     {596468u, aot_debug_000919f4, 1u},
     {596470u, aot_debug_000919f6, 1u},
     {596474u, aot_debug_000919fa, 1u},
     {596476u, aot_debug_000919fc, 1u},
+    {596478u, aot_debug_000919fe, 1u},
     {596828u, aot_debug_00091b5c, 1u},
     {596830u, aot_debug_00091b5e, 1u},
     {596834u, aot_debug_00091b62, 1u},
     {596838u, aot_debug_00091b66, 1u},
+    {596840u, aot_debug_00091b68, 1u},
     {596844u, aot_debug_00091b6c, 1u},
     {596846u, aot_debug_00091b6e, 1u},
     {596848u, aot_debug_00091b70, 1u},
+    {596850u, aot_debug_00091b72, 1u},
     {596854u, aot_debug_00091b76, 1u},
+    {596856u, aot_debug_00091b78, 1u},
     {596858u, aot_debug_00091b7a, 1u},
     {596860u, aot_debug_00091b7c, 1u},
     {596862u, aot_debug_00091b7e, 1u},
@@ -47861,8 +48819,10 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {597162u, aot_debug_00091caa, 1u},
     {597164u, aot_debug_00091cac, 1u},
     {597168u, aot_debug_00091cb0, 1u},
+    {597170u, aot_debug_00091cb2, 1u},
     {599660u, aot_debug_0009266c, 1u},
     {599662u, aot_debug_0009266e, 1u},
+    {599664u, aot_debug_00092670, 1u},
     {599666u, aot_debug_00092672, 1u},
     {599668u, aot_debug_00092674, 1u},
     {599670u, aot_debug_00092676, 1u},
@@ -47885,9 +48845,12 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {600456u, aot_debug_00092988, 1u},
     {600458u, aot_debug_0009298a, 1u},
     {600460u, aot_debug_0009298c, 1u},
+    {600464u, aot_debug_00092990, 1u},
     {600468u, aot_debug_00092994, 1u},
     {600470u, aot_debug_00092996, 1u},
     {600472u, aot_debug_00092998, 1u},
+    {600474u, aot_debug_0009299a, 1u},
+    {600476u, aot_debug_0009299c, 1u},
     {600478u, aot_debug_0009299e, 1u},
     {600480u, aot_debug_000929a0, 1u},
     {600482u, aot_debug_000929a2, 1u},
@@ -47925,6 +48888,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {601426u, aot_debug_00092d52, 1u},
     {601428u, aot_debug_00092d54, 1u},
     {601430u, aot_debug_00092d56, 1u},
+    {601432u, aot_debug_00092d58, 1u},
     {601436u, aot_debug_00092d5c, 1u},
     {601438u, aot_debug_00092d5e, 1u},
     {601476u, aot_debug_00092d84, 1u},
@@ -47963,6 +48927,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {603044u, aot_debug_000933a4, 1u},
     {603048u, aot_debug_000933a8, 1u},
     {603050u, aot_debug_000933aa, 1u},
+    {603054u, aot_debug_000933ae, 1u},
     {603058u, aot_debug_000933b2, 1u},
     {603062u, aot_debug_000933b6, 1u},
     {603066u, aot_debug_000933ba, 1u},
@@ -47983,6 +48948,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {603114u, aot_debug_000933ea, 1u},
     {603118u, aot_debug_000933ee, 1u},
     {603120u, aot_debug_000933f0, 1u},
+    {603124u, aot_debug_000933f4, 1u},
     {603128u, aot_debug_000933f8, 1u},
     {603132u, aot_debug_000933fc, 1u},
     {603136u, aot_debug_00093400, 1u},
@@ -47998,6 +48964,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {603168u, aot_debug_00093420, 1u},
     {603170u, aot_debug_00093422, 1u},
     {603172u, aot_debug_00093424, 1u},
+    {603176u, aot_debug_00093428, 1u},
     {603180u, aot_debug_0009342c, 1u},
     {603184u, aot_debug_00093430, 1u},
     {603188u, aot_debug_00093434, 1u},
@@ -48027,6 +48994,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {603266u, aot_debug_00093482, 1u},
     {603270u, aot_debug_00093486, 1u},
     {603274u, aot_debug_0009348a, 1u},
+    {603278u, aot_debug_0009348e, 1u},
     {603282u, aot_debug_00093492, 1u},
     {603286u, aot_debug_00093496, 1u},
     {603288u, aot_debug_00093498, 1u},
@@ -48059,6 +49027,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {603376u, aot_debug_000934f0, 1u},
     {603380u, aot_debug_000934f4, 1u},
     {603384u, aot_debug_000934f8, 1u},
+    {603386u, aot_debug_000934fa, 1u},
     {603390u, aot_debug_000934fe, 1u},
     {603392u, aot_debug_00093500, 1u},
     {603394u, aot_debug_00093502, 1u},
@@ -48080,6 +49049,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {603446u, aot_debug_00093536, 1u},
     {603448u, aot_debug_00093538, 1u},
     {603450u, aot_debug_0009353a, 1u},
+    {603454u, aot_debug_0009353e, 1u},
     {603458u, aot_debug_00093542, 1u},
     {603460u, aot_debug_00093544, 1u},
     {603464u, aot_debug_00093548, 1u},
@@ -48095,6 +49065,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {603500u, aot_debug_0009356c, 1u},
     {603504u, aot_debug_00093570, 1u},
     {603506u, aot_debug_00093572, 1u},
+    {603508u, aot_debug_00093574, 1u},
     {603512u, aot_debug_00093578, 1u},
     {603516u, aot_debug_0009357c, 1u},
     {603518u, aot_debug_0009357e, 1u},
@@ -48102,6 +49073,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {603524u, aot_debug_00093584, 1u},
     {603528u, aot_debug_00093588, 1u},
     {603530u, aot_debug_0009358a, 1u},
+    {603534u, aot_debug_0009358e, 1u},
     {603538u, aot_debug_00093592, 1u},
     {603542u, aot_debug_00093596, 1u},
     {603546u, aot_debug_0009359a, 1u},
@@ -48120,6 +49092,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {603584u, aot_debug_000935c0, 1u},
     {603588u, aot_debug_000935c4, 1u},
     {603590u, aot_debug_000935c6, 1u},
+    {603594u, aot_debug_000935ca, 1u},
     {603598u, aot_debug_000935ce, 1u},
     {603602u, aot_debug_000935d2, 1u},
     {603606u, aot_debug_000935d6, 1u},
@@ -48135,6 +49108,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {603634u, aot_debug_000935f2, 1u},
     {603638u, aot_debug_000935f6, 1u},
     {603640u, aot_debug_000935f8, 1u},
+    {603644u, aot_debug_000935fc, 1u},
     {603648u, aot_debug_00093600, 1u},
     {603652u, aot_debug_00093604, 1u},
     {603656u, aot_debug_00093608, 1u},
@@ -48164,6 +49138,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {603734u, aot_debug_00093656, 1u},
     {603738u, aot_debug_0009365a, 1u},
     {603742u, aot_debug_0009365e, 1u},
+    {603746u, aot_debug_00093662, 1u},
     {603750u, aot_debug_00093666, 1u},
     {603754u, aot_debug_0009366a, 1u},
     {603756u, aot_debug_0009366c, 1u},
@@ -48196,6 +49171,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {603844u, aot_debug_000936c4, 1u},
     {603848u, aot_debug_000936c8, 1u},
     {603852u, aot_debug_000936cc, 1u},
+    {603854u, aot_debug_000936ce, 1u},
     {603858u, aot_debug_000936d2, 1u},
     {603860u, aot_debug_000936d4, 1u},
     {603862u, aot_debug_000936d6, 1u},
@@ -48217,6 +49193,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {603914u, aot_debug_0009370a, 1u},
     {603916u, aot_debug_0009370c, 1u},
     {603918u, aot_debug_0009370e, 1u},
+    {603922u, aot_debug_00093712, 1u},
     {603926u, aot_debug_00093716, 1u},
     {603928u, aot_debug_00093718, 1u},
     {603932u, aot_debug_0009371c, 1u},
@@ -48228,6 +49205,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {603956u, aot_debug_00093734, 1u},
     {603960u, aot_debug_00093738, 1u},
     {603962u, aot_debug_0009373a, 1u},
+    {603966u, aot_debug_0009373e, 1u},
     {603970u, aot_debug_00093742, 1u},
     {603972u, aot_debug_00093744, 1u},
     {603974u, aot_debug_00093746, 1u},
@@ -48269,8 +49247,10 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {605672u, aot_debug_00093de8, 1u},
     {605676u, aot_debug_00093dec, 1u},
     {605680u, aot_debug_00093df0, 1u},
+    {605682u, aot_debug_00093df2, 1u},
     {605686u, aot_debug_00093df6, 1u},
     {605690u, aot_debug_00093dfa, 1u},
+    {605694u, aot_debug_00093dfe, 1u},
     {605696u, aot_debug_00093e00, 1u},
     {605698u, aot_debug_00093e02, 1u},
     {605702u, aot_debug_00093e06, 1u},
@@ -48307,8 +49287,10 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {606744u, aot_debug_00094218, 1u},
     {606748u, aot_debug_0009421c, 1u},
     {606752u, aot_debug_00094220, 1u},
+    {606754u, aot_debug_00094222, 1u},
     {606758u, aot_debug_00094226, 1u},
     {606762u, aot_debug_0009422a, 1u},
+    {606764u, aot_debug_0009422c, 1u},
     {606766u, aot_debug_0009422e, 1u},
     {606768u, aot_debug_00094230, 1u},
     {606772u, aot_debug_00094234, 1u},
@@ -48351,6 +49333,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {618680u, aot_debug_000970b8, 1u},
     {618682u, aot_debug_000970ba, 1u},
     {618684u, aot_debug_000970bc, 1u},
+    {618686u, aot_debug_000970be, 1u},
     {618688u, aot_debug_000970c0, 1u},
     {618690u, aot_debug_000970c2, 1u},
     {618692u, aot_debug_000970c4, 1u},
@@ -48367,6 +49350,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {619834u, aot_debug_0009753a, 1u},
     {619836u, aot_debug_0009753c, 1u},
     {619838u, aot_debug_0009753e, 1u},
+    {619840u, aot_debug_00097540, 1u},
     {619842u, aot_debug_00097542, 1u},
     {619844u, aot_debug_00097544, 1u},
     {619846u, aot_debug_00097546, 1u},
@@ -48465,6 +49449,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {625556u, aot_debug_00098b94, 1u},
     {625558u, aot_debug_00098b96, 1u},
     {625562u, aot_debug_00098b9a, 1u},
+    {625564u, aot_debug_00098b9c, 1u},
     {625566u, aot_debug_00098b9e, 1u},
     {625568u, aot_debug_00098ba0, 1u},
     {625800u, aot_debug_00098c88, 1u},
@@ -48487,6 +49472,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {625838u, aot_debug_00098cae, 1u},
     {625840u, aot_debug_00098cb0, 1u},
     {625844u, aot_debug_00098cb4, 1u},
+    {625846u, aot_debug_00098cb6, 1u},
     {625848u, aot_debug_00098cb8, 1u},
     {625850u, aot_debug_00098cba, 1u},
     {625868u, aot_debug_00098ccc, 1u},
@@ -48509,6 +49495,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {625906u, aot_debug_00098cf2, 1u},
     {625908u, aot_debug_00098cf4, 1u},
     {625912u, aot_debug_00098cf8, 1u},
+    {625914u, aot_debug_00098cfa, 1u},
     {625916u, aot_debug_00098cfc, 1u},
     {625918u, aot_debug_00098cfe, 1u},
     {655248u, aot_debug_0009ff90, 1u},
@@ -48516,6 +49503,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {655252u, aot_debug_0009ff94, 1u},
     {655254u, aot_debug_0009ff96, 1u},
     {655256u, aot_debug_0009ff98, 1u},
+    {655258u, aot_debug_0009ff9a, 1u},
     {655260u, aot_debug_0009ff9c, 1u},
     {655262u, aot_debug_0009ff9e, 1u},
     {655264u, aot_debug_0009ffa0, 1u},
@@ -48532,6 +49520,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {655356u, aot_debug_0009fffc, 1u},
     {655358u, aot_debug_0009fffe, 1u},
     {655360u, aot_debug_000a0000, 1u},
+    {655362u, aot_debug_000a0002, 1u},
     {655364u, aot_debug_000a0004, 1u},
     {655366u, aot_debug_000a0006, 1u},
     {655368u, aot_debug_000a0008, 1u},
@@ -48545,6 +49534,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {655386u, aot_debug_000a001a, 1u},
     {686060u, aot_debug_000a77ec, 1u},
     {686062u, aot_debug_000a77ee, 1u},
+    {686064u, aot_debug_000a77f0, 1u},
     {686066u, aot_debug_000a77f2, 1u},
     {686068u, aot_debug_000a77f4, 1u},
     {686070u, aot_debug_000a77f6, 1u},
@@ -48575,6 +49565,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {687056u, aot_debug_000a7bd0, 1u},
     {687058u, aot_debug_000a7bd2, 1u},
     {687060u, aot_debug_000a7bd4, 1u},
+    {687062u, aot_debug_000a7bd6, 1u},
     {687066u, aot_debug_000a7bda, 1u},
     {687070u, aot_debug_000a7bde, 1u},
     {687074u, aot_debug_000a7be2, 1u},
@@ -48711,6 +49702,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {687904u, aot_debug_000a7f20, 1u},
     {687906u, aot_debug_000a7f22, 1u},
     {687908u, aot_debug_000a7f24, 1u},
+    {687910u, aot_debug_000a7f26, 1u},
     {687914u, aot_debug_000a7f2a, 1u},
     {687918u, aot_debug_000a7f2e, 1u},
     {687922u, aot_debug_000a7f32, 1u},
@@ -48881,6 +49873,8 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {689128u, aot_debug_000a83e8, 1u},
     {689130u, aot_debug_000a83ea, 1u},
     {689132u, aot_debug_000a83ec, 1u},
+    {689134u, aot_debug_000a83ee, 1u},
+    {689136u, aot_debug_000a83f0, 1u},
     {689138u, aot_debug_000a83f2, 1u},
     {689140u, aot_debug_000a83f4, 1u},
     {689142u, aot_debug_000a83f6, 1u},
@@ -49661,6 +50655,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {697640u, aot_debug_000aa528, 1u},
     {697642u, aot_debug_000aa52a, 1u},
     {697644u, aot_debug_000aa52c, 1u},
+    {697646u, aot_debug_000aa52e, 1u},
     {697648u, aot_debug_000aa530, 1u},
     {697650u, aot_debug_000aa532, 1u},
     {697652u, aot_debug_000aa534, 1u},
@@ -49752,6 +50747,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {701344u, aot_debug_000ab3a0, 1u},
     {701346u, aot_debug_000ab3a2, 1u},
     {701348u, aot_debug_000ab3a4, 1u},
+    {701350u, aot_debug_000ab3a6, 1u},
     {701354u, aot_debug_000ab3aa, 1u},
     {701356u, aot_debug_000ab3ac, 1u},
     {701360u, aot_debug_000ab3b0, 1u},
@@ -49787,11 +50783,14 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {703590u, aot_debug_000abc66, 1u},
     {703592u, aot_debug_000abc68, 1u},
     {703594u, aot_debug_000abc6a, 1u},
+    {703596u, aot_debug_000abc6c, 1u},
     {703598u, aot_debug_000abc6e, 1u},
     {703600u, aot_debug_000abc70, 1u},
     {703602u, aot_debug_000abc72, 1u},
     {703604u, aot_debug_000abc74, 1u},
+    {703606u, aot_debug_000abc76, 1u},
     {703608u, aot_debug_000abc78, 1u},
+    {703610u, aot_debug_000abc7a, 1u},
     {703614u, aot_debug_000abc7e, 1u},
     {703616u, aot_debug_000abc80, 1u},
     {703620u, aot_debug_000abc84, 1u},
@@ -49808,6 +50807,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {703648u, aot_debug_000abca0, 1u},
     {703652u, aot_debug_000abca4, 1u},
     {703654u, aot_debug_000abca6, 1u},
+    {703656u, aot_debug_000abca8, 1u},
     {703660u, aot_debug_000abcac, 1u},
     {703664u, aot_debug_000abcb0, 1u},
     {703668u, aot_debug_000abcb4, 1u},
@@ -49824,6 +50824,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {709300u, aot_debug_000ad2b4, 1u},
     {709302u, aot_debug_000ad2b6, 1u},
     {709304u, aot_debug_000ad2b8, 1u},
+    {709306u, aot_debug_000ad2ba, 1u},
     {709308u, aot_debug_000ad2bc, 1u},
     {709310u, aot_debug_000ad2be, 1u},
     {709312u, aot_debug_000ad2c0, 1u},
@@ -49840,6 +50841,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {710454u, aot_debug_000ad736, 1u},
     {710456u, aot_debug_000ad738, 1u},
     {710458u, aot_debug_000ad73a, 1u},
+    {710460u, aot_debug_000ad73c, 1u},
     {710462u, aot_debug_000ad73e, 1u},
     {710464u, aot_debug_000ad740, 1u},
     {710466u, aot_debug_000ad742, 1u},
@@ -49938,6 +50940,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {716012u, aot_debug_000aecec, 1u},
     {716014u, aot_debug_000aecee, 1u},
     {716018u, aot_debug_000aecf2, 1u},
+    {716020u, aot_debug_000aecf4, 1u},
     {716022u, aot_debug_000aecf6, 1u},
     {716024u, aot_debug_000aecf8, 1u},
     {716256u, aot_debug_000aede0, 1u},
@@ -49960,6 +50963,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {716294u, aot_debug_000aee06, 1u},
     {716296u, aot_debug_000aee08, 1u},
     {716300u, aot_debug_000aee0c, 1u},
+    {716302u, aot_debug_000aee0e, 1u},
     {716304u, aot_debug_000aee10, 1u},
     {716306u, aot_debug_000aee12, 1u},
     {716324u, aot_debug_000aee24, 1u},
@@ -49982,9 +50986,11 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {716362u, aot_debug_000aee4a, 1u},
     {716364u, aot_debug_000aee4c, 1u},
     {716368u, aot_debug_000aee50, 1u},
+    {716370u, aot_debug_000aee52, 1u},
     {716372u, aot_debug_000aee54, 1u},
     {716374u, aot_debug_000aee56, 1u},
     {788088u, aot_debug_000c0678, 1u},
+    {788092u, aot_debug_000c067c, 1u},
     {788096u, aot_debug_000c0680, 1u},
     {788098u, aot_debug_000c0682, 1u},
     {788100u, aot_debug_000c0684, 1u},
@@ -49993,12 +50999,15 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {788106u, aot_debug_000c068a, 1u},
     {788108u, aot_debug_000c068c, 1u},
     {788110u, aot_debug_000c068e, 1u},
+    {788112u, aot_debug_000c0690, 1u},
     {788114u, aot_debug_000c0692, 1u},
     {788116u, aot_debug_000c0694, 1u},
     {788120u, aot_debug_000c0698, 1u},
+    {788124u, aot_debug_000c069c, 1u},
     {788126u, aot_debug_000c069e, 1u},
     {788128u, aot_debug_000c06a0, 1u},
     {788130u, aot_debug_000c06a2, 1u},
+    {788132u, aot_debug_000c06a4, 1u},
     {788134u, aot_debug_000c06a6, 1u},
     {788136u, aot_debug_000c06a8, 1u},
     {788154u, aot_debug_000c06ba, 1u},
@@ -50027,6 +51036,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {792238u, aot_debug_000c16ae, 1u},
     {792240u, aot_debug_000c16b0, 1u},
     {792242u, aot_debug_000c16b2, 1u},
+    {792244u, aot_debug_000c16b4, 1u},
     {792246u, aot_debug_000c16b6, 1u},
     {792248u, aot_debug_000c16b8, 1u},
     {792250u, aot_debug_000c16ba, 1u},
@@ -50381,8 +51391,10 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {797722u, aot_debug_000c2c1a, 1u},
     {797724u, aot_debug_000c2c1c, 1u},
     {797726u, aot_debug_000c2c1e, 1u},
+    {797728u, aot_debug_000c2c20, 1u},
     {797732u, aot_debug_000c2c24, 1u},
     {797734u, aot_debug_000c2c26, 1u},
+    {797736u, aot_debug_000c2c28, 1u},
     {797738u, aot_debug_000c2c2a, 1u},
     {797742u, aot_debug_000c2c2e, 1u},
     {797746u, aot_debug_000c2c32, 1u},
@@ -50400,7 +51412,7 @@ const AgrAotEntry agr_aot_debug_blocks[] = {
     {831380u, aot_debug_000caf94, 1u},
     {831384u, aot_debug_000caf98, 1u},
 };
-const uint32_t agr_aot_debug_block_count = 3988u;
+const uint32_t agr_aot_debug_block_count = 4119u;
 
 const AgrAotEntry agr_aot_fast_blocks[] = {
     {289412u, aot_fast_00046a84, 3u},
@@ -50415,242 +51427,203 @@ const AgrAotEntry agr_aot_fast_blocks[] = {
     {291380u, aot_fast_00047234, 3u},
     {292816u, aot_fast_000477d0, 9u},
     {292836u, aot_fast_000477e4, 6u},
-    {292850u, aot_fast_000477f2, 1u},
-    {292854u, aot_fast_000477f6, 3u},
+    {292850u, aot_fast_000477f2, 5u},
     {292862u, aot_fast_000477fe, 6u},
     {292876u, aot_fast_0004780c, 2u},
     {292900u, aot_fast_00047824, 9u},
     {292920u, aot_fast_00047838, 6u},
-    {292934u, aot_fast_00047846, 1u},
-    {292938u, aot_fast_0004784a, 3u},
+    {292934u, aot_fast_00047846, 5u},
     {292946u, aot_fast_00047852, 6u},
     {292960u, aot_fast_00047860, 2u},
     {292984u, aot_fast_00047878, 9u},
     {293004u, aot_fast_0004788c, 6u},
-    {293018u, aot_fast_0004789a, 1u},
-    {293022u, aot_fast_0004789e, 3u},
+    {293018u, aot_fast_0004789a, 5u},
     {293030u, aot_fast_000478a6, 6u},
     {293044u, aot_fast_000478b4, 2u},
     {293068u, aot_fast_000478cc, 9u},
     {293088u, aot_fast_000478e0, 6u},
-    {293102u, aot_fast_000478ee, 1u},
-    {293106u, aot_fast_000478f2, 3u},
+    {293102u, aot_fast_000478ee, 5u},
     {293114u, aot_fast_000478fa, 6u},
     {293128u, aot_fast_00047908, 2u},
     {293152u, aot_fast_00047920, 9u},
     {293172u, aot_fast_00047934, 6u},
-    {293186u, aot_fast_00047942, 1u},
-    {293190u, aot_fast_00047946, 3u},
+    {293186u, aot_fast_00047942, 5u},
     {293198u, aot_fast_0004794e, 6u},
     {293212u, aot_fast_0004795c, 2u},
     {293236u, aot_fast_00047974, 9u},
     {293256u, aot_fast_00047988, 6u},
-    {293270u, aot_fast_00047996, 1u},
-    {293274u, aot_fast_0004799a, 3u},
+    {293270u, aot_fast_00047996, 5u},
     {293282u, aot_fast_000479a2, 6u},
     {293296u, aot_fast_000479b0, 2u},
     {293320u, aot_fast_000479c8, 9u},
     {293340u, aot_fast_000479dc, 6u},
-    {293354u, aot_fast_000479ea, 1u},
-    {293358u, aot_fast_000479ee, 3u},
+    {293354u, aot_fast_000479ea, 5u},
     {293366u, aot_fast_000479f6, 6u},
     {293380u, aot_fast_00047a04, 2u},
     {293404u, aot_fast_00047a1c, 9u},
     {293424u, aot_fast_00047a30, 6u},
-    {293438u, aot_fast_00047a3e, 1u},
-    {293442u, aot_fast_00047a42, 3u},
+    {293438u, aot_fast_00047a3e, 5u},
     {293450u, aot_fast_00047a4a, 6u},
     {293464u, aot_fast_00047a58, 2u},
     {293488u, aot_fast_00047a70, 9u},
     {293508u, aot_fast_00047a84, 6u},
-    {293522u, aot_fast_00047a92, 1u},
-    {293526u, aot_fast_00047a96, 3u},
+    {293522u, aot_fast_00047a92, 5u},
     {293534u, aot_fast_00047a9e, 6u},
     {293548u, aot_fast_00047aac, 2u},
     {293572u, aot_fast_00047ac4, 9u},
     {293592u, aot_fast_00047ad8, 6u},
-    {293606u, aot_fast_00047ae6, 1u},
-    {293610u, aot_fast_00047aea, 3u},
+    {293606u, aot_fast_00047ae6, 5u},
     {293618u, aot_fast_00047af2, 6u},
     {293632u, aot_fast_00047b00, 2u},
     {293656u, aot_fast_00047b18, 9u},
     {293676u, aot_fast_00047b2c, 6u},
-    {293690u, aot_fast_00047b3a, 1u},
-    {293694u, aot_fast_00047b3e, 3u},
+    {293690u, aot_fast_00047b3a, 5u},
     {293702u, aot_fast_00047b46, 6u},
     {293716u, aot_fast_00047b54, 2u},
     {293740u, aot_fast_00047b6c, 9u},
     {293760u, aot_fast_00047b80, 6u},
-    {293774u, aot_fast_00047b8e, 1u},
-    {293778u, aot_fast_00047b92, 3u},
+    {293774u, aot_fast_00047b8e, 5u},
     {293786u, aot_fast_00047b9a, 6u},
     {293800u, aot_fast_00047ba8, 2u},
     {293824u, aot_fast_00047bc0, 9u},
     {293844u, aot_fast_00047bd4, 6u},
-    {293858u, aot_fast_00047be2, 1u},
-    {293862u, aot_fast_00047be6, 3u},
+    {293858u, aot_fast_00047be2, 5u},
     {293870u, aot_fast_00047bee, 6u},
     {293884u, aot_fast_00047bfc, 2u},
     {293908u, aot_fast_00047c14, 9u},
     {293928u, aot_fast_00047c28, 6u},
-    {293942u, aot_fast_00047c36, 1u},
-    {293946u, aot_fast_00047c3a, 3u},
+    {293942u, aot_fast_00047c36, 5u},
     {293954u, aot_fast_00047c42, 6u},
     {293968u, aot_fast_00047c50, 2u},
     {293992u, aot_fast_00047c68, 9u},
     {294012u, aot_fast_00047c7c, 6u},
-    {294026u, aot_fast_00047c8a, 1u},
-    {294030u, aot_fast_00047c8e, 3u},
+    {294026u, aot_fast_00047c8a, 5u},
     {294038u, aot_fast_00047c96, 6u},
     {294052u, aot_fast_00047ca4, 2u},
     {294076u, aot_fast_00047cbc, 9u},
     {294096u, aot_fast_00047cd0, 6u},
-    {294110u, aot_fast_00047cde, 1u},
-    {294114u, aot_fast_00047ce2, 3u},
+    {294110u, aot_fast_00047cde, 5u},
     {294122u, aot_fast_00047cea, 6u},
     {294136u, aot_fast_00047cf8, 2u},
     {294160u, aot_fast_00047d10, 9u},
     {294180u, aot_fast_00047d24, 6u},
-    {294194u, aot_fast_00047d32, 1u},
-    {294198u, aot_fast_00047d36, 3u},
+    {294194u, aot_fast_00047d32, 5u},
     {294206u, aot_fast_00047d3e, 6u},
     {294220u, aot_fast_00047d4c, 2u},
     {294244u, aot_fast_00047d64, 9u},
     {294264u, aot_fast_00047d78, 6u},
-    {294278u, aot_fast_00047d86, 1u},
-    {294282u, aot_fast_00047d8a, 3u},
+    {294278u, aot_fast_00047d86, 5u},
     {294290u, aot_fast_00047d92, 6u},
     {294304u, aot_fast_00047da0, 2u},
     {294328u, aot_fast_00047db8, 9u},
     {294348u, aot_fast_00047dcc, 6u},
-    {294362u, aot_fast_00047dda, 1u},
-    {294366u, aot_fast_00047dde, 3u},
+    {294362u, aot_fast_00047dda, 5u},
     {294374u, aot_fast_00047de6, 6u},
     {294388u, aot_fast_00047df4, 2u},
     {294412u, aot_fast_00047e0c, 9u},
     {294432u, aot_fast_00047e20, 6u},
-    {294446u, aot_fast_00047e2e, 1u},
-    {294450u, aot_fast_00047e32, 3u},
+    {294446u, aot_fast_00047e2e, 5u},
     {294458u, aot_fast_00047e3a, 6u},
     {294472u, aot_fast_00047e48, 2u},
     {294496u, aot_fast_00047e60, 9u},
     {294516u, aot_fast_00047e74, 6u},
-    {294530u, aot_fast_00047e82, 1u},
-    {294534u, aot_fast_00047e86, 3u},
+    {294530u, aot_fast_00047e82, 5u},
     {294542u, aot_fast_00047e8e, 6u},
     {294556u, aot_fast_00047e9c, 2u},
     {294580u, aot_fast_00047eb4, 9u},
     {294600u, aot_fast_00047ec8, 6u},
-    {294614u, aot_fast_00047ed6, 1u},
-    {294618u, aot_fast_00047eda, 3u},
+    {294614u, aot_fast_00047ed6, 5u},
     {294626u, aot_fast_00047ee2, 6u},
     {294640u, aot_fast_00047ef0, 2u},
     {294664u, aot_fast_00047f08, 9u},
     {294684u, aot_fast_00047f1c, 6u},
-    {294698u, aot_fast_00047f2a, 1u},
-    {294702u, aot_fast_00047f2e, 3u},
+    {294698u, aot_fast_00047f2a, 5u},
     {294710u, aot_fast_00047f36, 6u},
     {294724u, aot_fast_00047f44, 2u},
     {294748u, aot_fast_00047f5c, 9u},
     {294768u, aot_fast_00047f70, 6u},
-    {294782u, aot_fast_00047f7e, 1u},
-    {294786u, aot_fast_00047f82, 3u},
+    {294782u, aot_fast_00047f7e, 5u},
     {294794u, aot_fast_00047f8a, 6u},
     {294808u, aot_fast_00047f98, 2u},
     {294832u, aot_fast_00047fb0, 9u},
     {294852u, aot_fast_00047fc4, 6u},
-    {294866u, aot_fast_00047fd2, 1u},
-    {294870u, aot_fast_00047fd6, 3u},
+    {294866u, aot_fast_00047fd2, 5u},
     {294878u, aot_fast_00047fde, 6u},
     {294892u, aot_fast_00047fec, 2u},
     {294916u, aot_fast_00048004, 9u},
     {294936u, aot_fast_00048018, 6u},
-    {294950u, aot_fast_00048026, 1u},
-    {294954u, aot_fast_0004802a, 3u},
+    {294950u, aot_fast_00048026, 5u},
     {294962u, aot_fast_00048032, 6u},
     {294976u, aot_fast_00048040, 2u},
     {295000u, aot_fast_00048058, 9u},
     {295020u, aot_fast_0004806c, 6u},
-    {295034u, aot_fast_0004807a, 1u},
-    {295038u, aot_fast_0004807e, 3u},
+    {295034u, aot_fast_0004807a, 5u},
     {295046u, aot_fast_00048086, 6u},
     {295060u, aot_fast_00048094, 2u},
     {295084u, aot_fast_000480ac, 9u},
     {295104u, aot_fast_000480c0, 6u},
-    {295118u, aot_fast_000480ce, 1u},
-    {295122u, aot_fast_000480d2, 3u},
+    {295118u, aot_fast_000480ce, 5u},
     {295130u, aot_fast_000480da, 6u},
     {295144u, aot_fast_000480e8, 2u},
     {295168u, aot_fast_00048100, 9u},
     {295188u, aot_fast_00048114, 6u},
-    {295202u, aot_fast_00048122, 1u},
-    {295206u, aot_fast_00048126, 3u},
+    {295202u, aot_fast_00048122, 5u},
     {295214u, aot_fast_0004812e, 6u},
     {295228u, aot_fast_0004813c, 2u},
     {295252u, aot_fast_00048154, 9u},
     {295272u, aot_fast_00048168, 6u},
-    {295286u, aot_fast_00048176, 1u},
-    {295290u, aot_fast_0004817a, 3u},
+    {295286u, aot_fast_00048176, 5u},
     {295298u, aot_fast_00048182, 6u},
     {295312u, aot_fast_00048190, 2u},
     {295336u, aot_fast_000481a8, 9u},
     {295356u, aot_fast_000481bc, 6u},
-    {295370u, aot_fast_000481ca, 1u},
-    {295374u, aot_fast_000481ce, 3u},
+    {295370u, aot_fast_000481ca, 5u},
     {295382u, aot_fast_000481d6, 6u},
     {295396u, aot_fast_000481e4, 2u},
     {295420u, aot_fast_000481fc, 9u},
     {295440u, aot_fast_00048210, 6u},
-    {295454u, aot_fast_0004821e, 1u},
-    {295458u, aot_fast_00048222, 3u},
+    {295454u, aot_fast_0004821e, 5u},
     {295466u, aot_fast_0004822a, 6u},
     {295480u, aot_fast_00048238, 2u},
     {295504u, aot_fast_00048250, 5u},
     {295516u, aot_fast_0004825c, 8u},
     {295548u, aot_fast_0004827c, 9u},
     {295568u, aot_fast_00048290, 6u},
-    {295582u, aot_fast_0004829e, 1u},
-    {295586u, aot_fast_000482a2, 3u},
+    {295582u, aot_fast_0004829e, 5u},
     {295594u, aot_fast_000482aa, 6u},
     {295608u, aot_fast_000482b8, 2u},
     {295632u, aot_fast_000482d0, 9u},
     {295652u, aot_fast_000482e4, 6u},
-    {295666u, aot_fast_000482f2, 1u},
-    {295670u, aot_fast_000482f6, 3u},
+    {295666u, aot_fast_000482f2, 5u},
     {295678u, aot_fast_000482fe, 6u},
     {295692u, aot_fast_0004830c, 2u},
     {295716u, aot_fast_00048324, 5u},
     {295728u, aot_fast_00048330, 8u},
     {295760u, aot_fast_00048350, 9u},
     {295780u, aot_fast_00048364, 6u},
-    {295794u, aot_fast_00048372, 1u},
-    {295798u, aot_fast_00048376, 3u},
+    {295794u, aot_fast_00048372, 5u},
     {295806u, aot_fast_0004837e, 6u},
     {295820u, aot_fast_0004838c, 2u},
     {295844u, aot_fast_000483a4, 9u},
     {295864u, aot_fast_000483b8, 6u},
-    {295878u, aot_fast_000483c6, 1u},
-    {295882u, aot_fast_000483ca, 3u},
+    {295878u, aot_fast_000483c6, 5u},
     {295890u, aot_fast_000483d2, 6u},
     {295904u, aot_fast_000483e0, 2u},
     {295928u, aot_fast_000483f8, 5u},
     {295940u, aot_fast_00048404, 8u},
     {295972u, aot_fast_00048424, 9u},
     {295992u, aot_fast_00048438, 6u},
-    {296006u, aot_fast_00048446, 1u},
-    {296010u, aot_fast_0004844a, 3u},
+    {296006u, aot_fast_00048446, 5u},
     {296018u, aot_fast_00048452, 6u},
     {296032u, aot_fast_00048460, 2u},
     {296056u, aot_fast_00048478, 9u},
     {296076u, aot_fast_0004848c, 6u},
-    {296090u, aot_fast_0004849a, 1u},
-    {296094u, aot_fast_0004849e, 3u},
+    {296090u, aot_fast_0004849a, 5u},
     {296102u, aot_fast_000484a6, 6u},
     {296116u, aot_fast_000484b4, 2u},
     {296140u, aot_fast_000484cc, 9u},
     {296160u, aot_fast_000484e0, 6u},
-    {296174u, aot_fast_000484ee, 1u},
-    {296178u, aot_fast_000484f2, 3u},
+    {296174u, aot_fast_000484ee, 5u},
     {296186u, aot_fast_000484fa, 6u},
     {296200u, aot_fast_00048508, 2u},
     {296224u, aot_fast_00048520, 7u},
@@ -50658,78 +51631,74 @@ const AgrAotEntry agr_aot_fast_blocks[] = {
     {296268u, aot_fast_0004854c, 9u},
     {296312u, aot_fast_00048578, 9u},
     {296332u, aot_fast_0004858c, 6u},
-    {296346u, aot_fast_0004859a, 1u},
-    {296350u, aot_fast_0004859e, 3u},
+    {296346u, aot_fast_0004859a, 5u},
     {296358u, aot_fast_000485a6, 6u},
     {296372u, aot_fast_000485b4, 2u},
     {296396u, aot_fast_000485cc, 9u},
     {296416u, aot_fast_000485e0, 6u},
-    {296430u, aot_fast_000485ee, 1u},
-    {296434u, aot_fast_000485f2, 3u},
+    {296430u, aot_fast_000485ee, 5u},
     {296442u, aot_fast_000485fa, 6u},
     {296456u, aot_fast_00048608, 2u},
     {296480u, aot_fast_00048620, 9u},
-    {296500u, aot_fast_00048634, 4u},
-    {296512u, aot_fast_00048640, 1u},
+    {296500u, aot_fast_00048634, 7u},
     {296518u, aot_fast_00048646, 3u},
     {296544u, aot_fast_00048660, 5u},
-    {296560u, aot_fast_00048670, 4u},
-    {296574u, aot_fast_0004867e, 4u},
-    {296588u, aot_fast_0004868c, 4u},
-    {296602u, aot_fast_0004869a, 4u},
-    {296616u, aot_fast_000486a8, 4u},
-    {296630u, aot_fast_000486b6, 4u},
-    {296644u, aot_fast_000486c4, 4u},
-    {296658u, aot_fast_000486d2, 4u},
-    {296672u, aot_fast_000486e0, 4u},
-    {296686u, aot_fast_000486ee, 4u},
-    {296700u, aot_fast_000486fc, 4u},
-    {296714u, aot_fast_0004870a, 4u},
+    {296560u, aot_fast_00048670, 5u},
+    {296574u, aot_fast_0004867e, 5u},
+    {296588u, aot_fast_0004868c, 5u},
+    {296602u, aot_fast_0004869a, 5u},
+    {296616u, aot_fast_000486a8, 5u},
+    {296630u, aot_fast_000486b6, 5u},
+    {296644u, aot_fast_000486c4, 5u},
+    {296658u, aot_fast_000486d2, 5u},
+    {296672u, aot_fast_000486e0, 5u},
+    {296686u, aot_fast_000486ee, 5u},
+    {296700u, aot_fast_000486fc, 5u},
+    {296714u, aot_fast_0004870a, 5u},
     {296728u, aot_fast_00048718, 1u},
-    {296780u, aot_fast_0004874c, 4u},
-    {296794u, aot_fast_0004875a, 4u},
-    {296808u, aot_fast_00048768, 4u},
-    {296822u, aot_fast_00048776, 4u},
-    {296836u, aot_fast_00048784, 4u},
-    {296850u, aot_fast_00048792, 4u},
-    {296864u, aot_fast_000487a0, 4u},
-    {296878u, aot_fast_000487ae, 4u},
-    {296892u, aot_fast_000487bc, 4u},
-    {296906u, aot_fast_000487ca, 4u},
-    {296920u, aot_fast_000487d8, 4u},
-    {296934u, aot_fast_000487e6, 4u},
+    {296780u, aot_fast_0004874c, 5u},
+    {296794u, aot_fast_0004875a, 5u},
+    {296808u, aot_fast_00048768, 5u},
+    {296822u, aot_fast_00048776, 5u},
+    {296836u, aot_fast_00048784, 5u},
+    {296850u, aot_fast_00048792, 5u},
+    {296864u, aot_fast_000487a0, 5u},
+    {296878u, aot_fast_000487ae, 5u},
+    {296892u, aot_fast_000487bc, 5u},
+    {296906u, aot_fast_000487ca, 5u},
+    {296920u, aot_fast_000487d8, 5u},
+    {296934u, aot_fast_000487e6, 5u},
     {296948u, aot_fast_000487f4, 1u},
     {297000u, aot_fast_00048828, 14u},
     {297030u, aot_fast_00048846, 12u},
     {596200u, aot_fast_000918e8, 3u},
     {596206u, aot_fast_000918ee, 4u},
-    {596214u, aot_fast_000918f6, 3u},
+    {596214u, aot_fast_000918f6, 4u},
     {596224u, aot_fast_00091900, 1u},
+    {596228u, aot_fast_00091904, 2u},
     {596236u, aot_fast_0009190c, 1u},
     {596242u, aot_fast_00091912, 2u},
-    {596428u, aot_fast_000919cc, 11u},
+    {596428u, aot_fast_000919cc, 12u},
+    {596460u, aot_fast_000919ec, 2u},
     {596466u, aot_fast_000919f2, 3u},
-    {596474u, aot_fast_000919fa, 2u},
-    {596828u, aot_fast_00091b5c, 4u},
-    {596844u, aot_fast_00091b6c, 3u},
-    {596854u, aot_fast_00091b76, 1u},
+    {596474u, aot_fast_000919fa, 3u},
+    {596828u, aot_fast_00091b5c, 5u},
+    {596844u, aot_fast_00091b6c, 6u},
     {596862u, aot_fast_00091b7e, 4u},
     {597160u, aot_fast_00091ca8, 3u},
-    {597168u, aot_fast_00091cb0, 1u},
-    {599660u, aot_fast_0009266c, 2u},
+    {597168u, aot_fast_00091cb0, 2u},
+    {599660u, aot_fast_0009266c, 3u},
     {599670u, aot_fast_00092676, 4u},
     {599680u, aot_fast_00092680, 1u},
     {599704u, aot_fast_00092698, 1u},
     {600428u, aot_fast_0009296c, 11u},
     {600456u, aot_fast_00092988, 2u},
-    {600460u, aot_fast_0009298c, 1u},
-    {600468u, aot_fast_00092994, 1u},
-    {600470u, aot_fast_00092996, 2u},
+    {600460u, aot_fast_0009298c, 3u},
+    {600470u, aot_fast_00092996, 4u},
     {600482u, aot_fast_000929a2, 4u},
     {601352u, aot_fast_00092d08, 28u},
     {601426u, aot_fast_00092d52, 2u},
-    {601430u, aot_fast_00092d56, 1u},
-    {601436u, aot_fast_00092d5c, 2u},
+    {601430u, aot_fast_00092d56, 4u},
     {601476u, aot_fast_00092d84, 2u},
     {602820u, aot_fast_000932c4, 4u},
     {602956u, aot_fast_0009334c, 9u},
@@ -50737,43 +51706,29 @@ const AgrAotEntry agr_aot_fast_blocks[] = {
     {602994u, aot_fast_00093372, 2u},
     {602998u, aot_fast_00093376, 3u},
     {603008u, aot_fast_00093380, 3u},
-    {603016u, aot_fast_00093388, 12u},
-    {603058u, aot_fast_000933b2, 6u},
-    {603080u, aot_fast_000933c8, 14u},
-    {603128u, aot_fast_000933f8, 7u},
-    {603154u, aot_fast_00093412, 8u},
-    {603180u, aot_fast_0009342c, 6u},
+    {603016u, aot_fast_00093388, 19u},
+    {603080u, aot_fast_000933c8, 22u},
+    {603154u, aot_fast_00093412, 15u},
     {603204u, aot_fast_00093444, 10u},
-    {603232u, aot_fast_00093460, 13u},
-    {603282u, aot_fast_00093492, 1u},
+    {603232u, aot_fast_00093460, 15u},
     {603286u, aot_fast_00093496, 5u},
     {603302u, aot_fast_000934a6, 18u},
     {603362u, aot_fast_000934e2, 5u},
-    {603376u, aot_fast_000934f0, 3u},
-    {603390u, aot_fast_000934fe, 10u},
+    {603376u, aot_fast_000934f0, 14u},
     {603422u, aot_fast_0009351e, 6u},
-    {603440u, aot_fast_00093530, 5u},
-    {603458u, aot_fast_00093542, 9u},
-    {603492u, aot_fast_00093564, 6u},
-    {603512u, aot_fast_00093578, 7u},
-    {603538u, aot_fast_00093592, 6u},
-    {603560u, aot_fast_000935a8, 12u},
-    {603598u, aot_fast_000935ce, 7u},
-    {603624u, aot_fast_000935e8, 8u},
-    {603648u, aot_fast_00093600, 6u},
+    {603440u, aot_fast_00093530, 15u},
+    {603492u, aot_fast_00093564, 21u},
+    {603560u, aot_fast_000935a8, 20u},
+    {603624u, aot_fast_000935e8, 15u},
     {603672u, aot_fast_00093618, 10u},
-    {603700u, aot_fast_00093634, 13u},
-    {603750u, aot_fast_00093666, 1u},
+    {603700u, aot_fast_00093634, 15u},
     {603754u, aot_fast_0009366a, 5u},
     {603770u, aot_fast_0009367a, 18u},
     {603830u, aot_fast_000936b6, 5u},
-    {603844u, aot_fast_000936c4, 3u},
-    {603858u, aot_fast_000936d2, 10u},
+    {603844u, aot_fast_000936c4, 14u},
     {603890u, aot_fast_000936f2, 6u},
-    {603908u, aot_fast_00093704, 5u},
-    {603926u, aot_fast_00093716, 9u},
-    {603960u, aot_fast_00093738, 2u},
-    {603970u, aot_fast_00093742, 4u},
+    {603908u, aot_fast_00093704, 15u},
+    {603960u, aot_fast_00093738, 7u},
     {603984u, aot_fast_00093750, 1u},
     {603990u, aot_fast_00093756, 2u},
     {603994u, aot_fast_0009375a, 4u},
@@ -50789,8 +51744,7 @@ const AgrAotEntry agr_aot_fast_blocks[] = {
     {605526u, aot_fast_00093d56, 2u},
     {605660u, aot_fast_00093ddc, 4u},
     {605670u, aot_fast_00093de6, 3u},
-    {605680u, aot_fast_00093df0, 1u},
-    {605686u, aot_fast_00093df6, 2u},
+    {605680u, aot_fast_00093df0, 5u},
     {605698u, aot_fast_00093e02, 5u},
     {606540u, aot_fast_0009414c, 5u},
     {606552u, aot_fast_00094158, 1u},
@@ -50804,18 +51758,17 @@ const AgrAotEntry agr_aot_fast_blocks[] = {
     {606596u, aot_fast_00094184, 2u},
     {606732u, aot_fast_0009420c, 4u},
     {606742u, aot_fast_00094216, 3u},
-    {606752u, aot_fast_00094220, 1u},
-    {606758u, aot_fast_00094226, 2u},
+    {606752u, aot_fast_00094220, 5u},
     {606768u, aot_fast_00094230, 5u},
     {612328u, aot_fast_000957e8, 19u},
     {612370u, aot_fast_00095812, 5u},
     {612384u, aot_fast_00095820, 5u},
     {612396u, aot_fast_0009582c, 2u},
-    {618676u, aot_fast_000970b4, 5u},
+    {618676u, aot_fast_000970b4, 6u},
     {618690u, aot_fast_000970c2, 5u},
     {618702u, aot_fast_000970ce, 4u},
     {618712u, aot_fast_000970d8, 2u},
-    {619832u, aot_fast_00097538, 4u},
+    {619832u, aot_fast_00097538, 5u},
     {619844u, aot_fast_00097544, 5u},
     {619856u, aot_fast_00097550, 3u},
     {620456u, aot_fast_000977a8, 7u},
@@ -50840,44 +51793,42 @@ const AgrAotEntry agr_aot_fast_blocks[] = {
     {625528u, aot_fast_00098b78, 5u},
     {625538u, aot_fast_00098b82, 2u},
     {625544u, aot_fast_00098b88, 8u},
-    {625562u, aot_fast_00098b9a, 1u},
+    {625562u, aot_fast_00098b9a, 2u},
     {625568u, aot_fast_00098ba0, 1u},
     {625800u, aot_fast_00098c88, 5u},
     {625812u, aot_fast_00098c94, 5u},
     {625822u, aot_fast_00098c9e, 2u},
     {625828u, aot_fast_00098ca4, 7u},
-    {625844u, aot_fast_00098cb4, 1u},
+    {625844u, aot_fast_00098cb4, 2u},
     {625850u, aot_fast_00098cba, 1u},
     {625868u, aot_fast_00098ccc, 5u},
     {625880u, aot_fast_00098cd8, 5u},
     {625890u, aot_fast_00098ce2, 2u},
     {625896u, aot_fast_00098ce8, 7u},
-    {625912u, aot_fast_00098cf8, 1u},
+    {625912u, aot_fast_00098cf8, 2u},
     {625918u, aot_fast_00098cfe, 1u},
-    {655248u, aot_fast_0009ff90, 5u},
+    {655248u, aot_fast_0009ff90, 6u},
     {655262u, aot_fast_0009ff9e, 7u},
     {655278u, aot_fast_0009ffae, 3u},
-    {655352u, aot_fast_0009fff8, 5u},
+    {655352u, aot_fast_0009fff8, 6u},
     {655366u, aot_fast_000a0006, 7u},
     {655382u, aot_fast_000a0016, 3u},
-    {686060u, aot_fast_000a77ec, 2u},
-    {686066u, aot_fast_000a77f2, 9u},
+    {686060u, aot_fast_000a77ec, 12u},
     {686088u, aot_fast_000a7808, 3u},
     {686098u, aot_fast_000a7812, 2u},
     {686104u, aot_fast_000a7818, 2u},
     {686880u, aot_fast_000a7b20, 8u},
     {686898u, aot_fast_000a7b32, 1u},
     {686900u, aot_fast_000a7b34, 1u},
-    {687052u, aot_fast_000a7bcc, 4u},
-    {687066u, aot_fast_000a7bda, 64u},
-    {687900u, aot_fast_000a7f1c, 4u},
-    {687914u, aot_fast_000a7f2a, 64u},
+    {687052u, aot_fast_000a7bcc, 5u},
+    {687066u, aot_fast_000a7bda, 132u},
+    {687900u, aot_fast_000a7f1c, 5u},
+    {687914u, aot_fast_000a7f2a, 132u},
     {689040u, aot_fast_000a8390, 21u},
     {689094u, aot_fast_000a83c6, 2u},
     {689098u, aot_fast_000a83ca, 5u},
     {689108u, aot_fast_000a83d4, 7u},
-    {689128u, aot_fast_000a83e8, 3u},
-    {689138u, aot_fast_000a83f2, 4u},
+    {689128u, aot_fast_000a83e8, 9u},
     {689146u, aot_fast_000a83fa, 5u},
     {689156u, aot_fast_000a8404, 6u},
     {689172u, aot_fast_000a8414, 6u},
@@ -50943,7 +51894,7 @@ const AgrAotEntry agr_aot_fast_blocks[] = {
     {691990u, aot_fast_000a8f16, 1u},
     {691996u, aot_fast_000a8f1c, 2u},
     {692000u, aot_fast_000a8f20, 3u},
-    {697636u, aot_fast_000aa524, 5u},
+    {697636u, aot_fast_000aa524, 6u},
     {697650u, aot_fast_000aa532, 7u},
     {697666u, aot_fast_000aa542, 5u},
     {697678u, aot_fast_000aa54e, 2u},
@@ -50970,7 +51921,7 @@ const AgrAotEntry agr_aot_fast_blocks[] = {
     {701308u, aot_fast_000ab37c, 1u},
     {701314u, aot_fast_000ab382, 2u},
     {701318u, aot_fast_000ab386, 7u},
-    {701340u, aot_fast_000ab39c, 4u},
+    {701340u, aot_fast_000ab39c, 5u},
     {701354u, aot_fast_000ab3aa, 2u},
     {701360u, aot_fast_000ab3b0, 5u},
     {701550u, aot_fast_000ab46e, 2u},
@@ -50982,19 +51933,18 @@ const AgrAotEntry agr_aot_fast_blocks[] = {
     {701634u, aot_fast_000ab4c2, 3u},
     {701640u, aot_fast_000ab4c8, 5u},
     {701694u, aot_fast_000ab4fe, 1u},
-    {703588u, aot_fast_000abc64, 4u},
-    {703600u, aot_fast_000abc70, 3u},
+    {703588u, aot_fast_000abc64, 5u},
+    {703600u, aot_fast_000abc70, 4u},
     {703614u, aot_fast_000abc7e, 8u},
     {703634u, aot_fast_000abc92, 6u},
-    {703652u, aot_fast_000abca4, 2u},
-    {703660u, aot_fast_000abcac, 2u},
+    {703652u, aot_fast_000abca4, 5u},
     {703668u, aot_fast_000abcb4, 3u},
     {703676u, aot_fast_000abcbc, 6u},
-    {709296u, aot_fast_000ad2b0, 5u},
+    {709296u, aot_fast_000ad2b0, 6u},
     {709310u, aot_fast_000ad2be, 5u},
     {709322u, aot_fast_000ad2ca, 4u},
     {709332u, aot_fast_000ad2d4, 2u},
-    {710452u, aot_fast_000ad734, 4u},
+    {710452u, aot_fast_000ad734, 5u},
     {710464u, aot_fast_000ad740, 5u},
     {710476u, aot_fast_000ad74c, 3u},
     {711076u, aot_fast_000ad9a4, 7u},
@@ -51019,26 +51969,25 @@ const AgrAotEntry agr_aot_fast_blocks[] = {
     {715984u, aot_fast_000aecd0, 5u},
     {715994u, aot_fast_000aecda, 2u},
     {716000u, aot_fast_000aece0, 8u},
-    {716018u, aot_fast_000aecf2, 1u},
+    {716018u, aot_fast_000aecf2, 2u},
     {716024u, aot_fast_000aecf8, 1u},
     {716256u, aot_fast_000aede0, 5u},
     {716268u, aot_fast_000aedec, 5u},
     {716278u, aot_fast_000aedf6, 2u},
     {716284u, aot_fast_000aedfc, 7u},
-    {716300u, aot_fast_000aee0c, 1u},
+    {716300u, aot_fast_000aee0c, 2u},
     {716306u, aot_fast_000aee12, 1u},
     {716324u, aot_fast_000aee24, 5u},
     {716336u, aot_fast_000aee30, 5u},
     {716346u, aot_fast_000aee3a, 2u},
     {716352u, aot_fast_000aee40, 7u},
-    {716368u, aot_fast_000aee50, 1u},
+    {716368u, aot_fast_000aee50, 2u},
     {716374u, aot_fast_000aee56, 1u},
-    {788088u, aot_fast_000c0678, 1u},
-    {788096u, aot_fast_000c0680, 4u},
+    {788088u, aot_fast_000c0678, 6u},
     {788104u, aot_fast_000c0688, 2u},
-    {788108u, aot_fast_000c068c, 2u},
-    {788116u, aot_fast_000c0694, 2u},
-    {788130u, aot_fast_000c06a2, 1u},
+    {788108u, aot_fast_000c068c, 3u},
+    {788116u, aot_fast_000c0694, 3u},
+    {788130u, aot_fast_000c06a2, 2u},
     {788136u, aot_fast_000c06a8, 1u},
     {788154u, aot_fast_000c06ba, 2u},
     {788162u, aot_fast_000c06c2, 4u},
@@ -51046,7 +51995,7 @@ const AgrAotEntry agr_aot_fast_blocks[] = {
     {792210u, aot_fast_000c1692, 1u},
     {792212u, aot_fast_000c1694, 4u},
     {792222u, aot_fast_000c169e, 4u},
-    {792232u, aot_fast_000c16a8, 6u},
+    {792232u, aot_fast_000c16a8, 7u},
     {792254u, aot_fast_000c16be, 1u},
     {792908u, aot_fast_000c194c, 6u},
     {792922u, aot_fast_000c195a, 2u},
@@ -51108,9 +52057,7 @@ const AgrAotEntry agr_aot_fast_blocks[] = {
     {797702u, aot_fast_000c2c06, 3u},
     {797710u, aot_fast_000c2c0e, 3u},
     {797720u, aot_fast_000c2c18, 3u},
-    {797726u, aot_fast_000c2c1e, 1u},
-    {797732u, aot_fast_000c2c24, 2u},
-    {797738u, aot_fast_000c2c2a, 2u},
+    {797726u, aot_fast_000c2c1e, 7u},
     {797746u, aot_fast_000c2c32, 4u},
     {797758u, aot_fast_000c2c3e, 1u},
     {797760u, aot_fast_000c2c40, 3u},
@@ -51119,19 +52066,19 @@ const AgrAotEntry agr_aot_fast_blocks[] = {
     {831376u, aot_fast_000caf90, 1u},
     {831380u, aot_fast_000caf94, 2u},
 };
-const uint32_t agr_aot_fast_block_count = 715u;
+const uint32_t agr_aot_fast_block_count = 650u;
 
 const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {605508u, aot_fast_00093d44, 3u},
-    {293862u, aot_fast_00047be6, 3u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {796970u, aot_fast_000c292a, 2u},
     {690124u, aot_fast_000a87cc, 4u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {603058u, aot_fast_000933b2, 6u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {294808u, aot_fast_00047f98, 2u},
@@ -51152,21 +52099,21 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296700u, aot_fast_000486fc, 4u},
-    {296350u, aot_fast_0004859e, 3u},
+    {296700u, aot_fast_000486fc, 5u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {606596u, aot_fast_00094184, 2u},
-    {294950u, aot_fast_00048026, 1u},
+    {294950u, aot_fast_00048026, 5u},
     {294600u, aot_fast_00047ec8, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {292850u, aot_fast_000477f2, 1u},
-    {686066u, aot_fast_000a77f2, 9u},
-    {788116u, aot_fast_000c0694, 2u},
+    {292850u, aot_fast_000477f2, 5u},
+    {788116u, aot_fast_000c0694, 3u},
     {792212u, aot_fast_000c1694, 4u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51180,7 +52127,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {701296u, aot_fast_000ab370, 3u},
     {0u, 0, 0u},
-    {618676u, aot_fast_000970b4, 5u},
+    {618676u, aot_fast_000970b4, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51205,7 +52152,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {294534u, aot_fast_00047e86, 3u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51234,7 +52181,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296672u, aot_fast_000486e0, 4u},
+    {296672u, aot_fast_000486e0, 5u},
     {0u, 0, 0u},
     {295972u, aot_fast_00048424, 9u},
     {0u, 0, 0u},
@@ -51243,10 +52190,10 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {605518u, aot_fast_00093d4e, 1u},
     {0u, 0, 0u},
-    {293522u, aot_fast_00047a92, 1u},
+    {293522u, aot_fast_00047a92, 5u},
     {293172u, aot_fast_00047934, 6u},
     {0u, 0, 0u},
-    {788088u, aot_fast_000c0678, 1u},
+    {788088u, aot_fast_000c0678, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51270,8 +52217,8 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {690626u, aot_fast_000a89c2, 7u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {603560u, aot_fast_000935a8, 12u},
-    {296010u, aot_fast_0004844a, 3u},
+    {603560u, aot_fast_000935a8, 20u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51285,14 +52232,14 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {295206u, aot_fast_00048126, 3u},
+    {0u, 0, 0u},
     {700360u, aot_fast_000aafc8, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293106u, aot_fast_000478f2, 3u},
     {796914u, aot_fast_000c28f2, 1u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51303,9 +52250,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {294052u, aot_fast_00047ca4, 2u},
     {293702u, aot_fast_00047b46, 6u},
     {625828u, aot_fast_00098ca4, 7u},
-    {703652u, aot_fast_000abca4, 2u},
-    {0u, 0, 0u},
-    {603598u, aot_fast_000935ce, 7u},
+    {703652u, aot_fast_000abca4, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51316,28 +52261,30 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296644u, aot_fast_000486c4, 4u},
-    {603844u, aot_fast_000936c4, 3u},
+    {0u, 0, 0u},
+    {0u, 0, 0u},
+    {296644u, aot_fast_000486c4, 5u},
+    {603844u, aot_fast_000936c4, 14u},
     {0u, 0, 0u},
     {295594u, aot_fast_000482aa, 6u},
     {606540u, aot_fast_0009414c, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {294194u, aot_fast_00047d32, 1u},
+    {294194u, aot_fast_00047d32, 5u},
     {293844u, aot_fast_00047bd4, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {690106u, aot_fast_000a87ba, 6u},
     {0u, 0, 0u},
-    {603390u, aot_fast_000934fe, 10u},
     {701694u, aot_fast_000ab4fe, 1u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {700644u, aot_fast_000ab0e4, 1u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {293740u, aot_fast_00047b6c, 9u},
-    {596844u, aot_fast_00091b6c, 3u},
+    {596844u, aot_fast_00091b6c, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51364,15 +52311,15 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {697636u, aot_fast_000aa524, 5u},
-    {295878u, aot_fast_000483c6, 1u},
+    {697636u, aot_fast_000aa524, 6u},
+    {295878u, aot_fast_000483c6, 5u},
     {689094u, aot_fast_000a83c6, 2u},
     {795240u, aot_fast_000c2268, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293778u, aot_fast_00047b92, 3u},
     {691090u, aot_fast_000a8b92, 6u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51384,12 +52331,12 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {294374u, aot_fast_00047de6, 6u},
     {605670u, aot_fast_00093de6, 3u},
     {625800u, aot_fast_00098c88, 5u},
-    {596428u, aot_fast_000919cc, 11u},
+    {596428u, aot_fast_000919cc, 12u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {295670u, aot_fast_000482f6, 3u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51398,26 +52345,26 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {690882u, aot_fast_000a8ac2, 13u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296616u, aot_fast_000486a8, 4u},
+    {296616u, aot_fast_000486a8, 5u},
     {788136u, aot_fast_000c06a8, 1u},
-    {792232u, aot_fast_000c16a8, 6u},
+    {792232u, aot_fast_000c16a8, 7u},
     {0u, 0, 0u},
     {700720u, aot_fast_000ab130, 4u},
-    {294866u, aot_fast_00047fd2, 1u},
+    {294866u, aot_fast_00047fd2, 5u},
     {294516u, aot_fast_00047e74, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296512u, aot_fast_00048640, 1u},
+    {0u, 0, 0u},
     {603362u, aot_fast_000934e2, 5u},
     {0u, 0, 0u},
-    {606758u, aot_fast_00094226, 2u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {294412u, aot_fast_00047e0c, 9u},
-    {716300u, aot_fast_000aee0c, 1u},
+    {716300u, aot_fast_000aee0c, 2u},
     {0u, 0, 0u},
     {596466u, aot_fast_000919f2, 3u},
     {690324u, aot_fast_000a8894, 9u},
@@ -51435,25 +52382,25 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {612396u, aot_fast_0009582c, 2u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {603154u, aot_fast_00093412, 8u},
+    {603154u, aot_fast_00093412, 15u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {655352u, aot_fast_0009fff8, 5u},
+    {655352u, aot_fast_0009fff8, 6u},
     {0u, 0, 0u},
     {605500u, aot_fast_00093d3c, 1u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {796962u, aot_fast_000c2922, 3u},
     {0u, 0, 0u},
-    {603750u, aot_fast_00093666, 1u},
+    {0u, 0, 0u},
     {296200u, aot_fast_00048508, 2u},
     {701354u, aot_fast_000ab3aa, 2u},
     {0u, 0, 0u},
     {700654u, aot_fast_000ab0ee, 3u},
-    {655248u, aot_fast_0009ff90, 5u},
-    {294450u, aot_fast_00047e32, 3u},
+    {655248u, aot_fast_0009ff90, 6u},
     {831376u, aot_fast_000caf90, 1u},
-    {596854u, aot_fast_00091b76, 1u},
+    {0u, 0, 0u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51480,16 +52427,16 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {690154u, aot_fast_000a87ea, 30u},
-    {296588u, aot_fast_0004868c, 4u},
+    {296588u, aot_fast_0004868c, 5u},
     {689804u, aot_fast_000a868c, 62u},
-    {788108u, aot_fast_000c068c, 2u},
+    {788108u, aot_fast_000c068c, 3u},
     {796300u, aot_fast_000c268c, 4u},
     {295188u, aot_fast_00048114, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293438u, aot_fast_00047a3e, 1u},
+    {293438u, aot_fast_00047a3e, 5u},
     {293088u, aot_fast_000478e0, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51498,7 +52445,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {295084u, aot_fast_000480ac, 9u},
     {622764u, aot_fast_000980ac, 1u},
-    {605680u, aot_fast_00093df0, 1u},
+    {605680u, aot_fast_00093df0, 5u},
     {703634u, aot_fast_000abc92, 6u},
     {686900u, aot_fast_000a7b34, 1u},
     {711126u, aot_fast_000ad9d6, 1u},
@@ -51511,7 +52458,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {797738u, aot_fast_000c2c2a, 2u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {792942u, aot_fast_000c196e, 3u},
     {797038u, aot_fast_000c296e, 3u},
@@ -51531,13 +52478,13 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {606768u, aot_fast_00094230, 5u},
-    {295122u, aot_fast_000480d2, 3u},
     {795184u, aot_fast_000c2230, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293022u, aot_fast_0004789e, 3u},
+    {0u, 0, 0u},
+    {0u, 0, 0u},
     {710464u, aot_fast_000ad740, 5u},
     {0u, 0, 0u},
     {701572u, aot_fast_000ab484, 4u},
@@ -51548,7 +52495,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {293968u, aot_fast_00047c50, 2u},
     {293618u, aot_fast_00047af2, 6u},
-    {600468u, aot_fast_00092994, 1u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51562,14 +52509,14 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296560u, aot_fast_00048670, 4u},
+    {296560u, aot_fast_00048670, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {294110u, aot_fast_00047cde, 1u},
+    {294110u, aot_fast_00047cde, 5u},
     {293760u, aot_fast_00047b80, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51598,7 +52545,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {296948u, aot_fast_000487f4, 1u},
     {796310u, aot_fast_000c2696, 31u},
-    {619832u, aot_fast_00097538, 4u},
+    {619832u, aot_fast_00097538, 5u},
     {0u, 0, 0u},
     {295548u, aot_fast_0004827c, 9u},
     {0u, 0, 0u},
@@ -51611,13 +52558,13 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {295794u, aot_fast_00048372, 1u},
+    {295794u, aot_fast_00048372, 5u},
     {602994u, aot_fast_00093372, 2u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293694u, aot_fast_00047b3e, 3u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51635,12 +52582,12 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {295586u, aot_fast_000482a2, 3u},
+    {0u, 0, 0u},
     {700740u, aot_fast_000ab144, 2u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {687052u, aot_fast_000a7bcc, 4u},
+    {687052u, aot_fast_000a7bcc, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51649,7 +52596,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {795194u, aot_fast_000c223a, 16u},
     {0u, 0, 0u},
-    {294782u, aot_fast_00047f7e, 1u},
+    {294782u, aot_fast_00047f7e, 5u},
     {294432u, aot_fast_00047e20, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51678,7 +52625,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296920u, aot_fast_000487d8, 4u},
+    {296920u, aot_fast_000487d8, 5u},
     {603770u, aot_fast_0009367a, 18u},
     {690136u, aot_fast_000a87d8, 6u},
     {0u, 0, 0u},
@@ -51697,7 +52644,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {291320u, aot_fast_000471f8, 3u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {294366u, aot_fast_00047dde, 3u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {690978u, aot_fast_000a8b22, 6u},
     {711108u, aot_fast_000ad9c4, 8u},
@@ -51715,8 +52662,8 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {293212u, aot_fast_0004795c, 2u},
     {292862u, aot_fast_000477fe, 6u},
     {0u, 0, 0u},
-    {603458u, aot_fast_00093542, 9u},
     {697666u, aot_fast_000aa542, 5u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51729,13 +52676,13 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {701308u, aot_fast_000ab37c, 1u},
-    {295454u, aot_fast_0004821e, 1u},
+    {295454u, aot_fast_0004821e, 5u},
     {295104u, aot_fast_000480c0, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293354u, aot_fast_000479ea, 1u},
+    {293354u, aot_fast_000479ea, 5u},
     {293004u, aot_fast_0004788c, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51760,7 +52707,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {796954u, aot_fast_000c291a, 2u},
-    {296892u, aot_fast_000487bc, 4u},
+    {296892u, aot_fast_000487bc, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51777,13 +52724,13 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {295038u, aot_fast_0004807e, 3u},
+    {0u, 0, 0u},
     {692000u, aot_fast_000a8f20, 3u},
     {0u, 0, 0u},
-    {703588u, aot_fast_000abc64, 4u},
+    {703588u, aot_fast_000abc64, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {292938u, aot_fast_0004784a, 3u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51798,12 +52745,12 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {603080u, aot_fast_000933c8, 14u},
+    {603080u, aot_fast_000933c8, 22u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {655278u, aot_fast_0009ffae, 3u},
-    {716368u, aot_fast_000aee50, 1u},
-    {716018u, aot_fast_000aecf2, 1u},
+    {716368u, aot_fast_000aee50, 2u},
+    {716018u, aot_fast_000aecf2, 2u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51815,7 +52762,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {294026u, aot_fast_00047c8a, 1u},
+    {294026u, aot_fast_00047c8a, 5u},
     {293676u, aot_fast_00047b2c, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51842,7 +52789,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296864u, aot_fast_000487a0, 4u},
+    {296864u, aot_fast_000487a0, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {701318u, aot_fast_000ab386, 7u},
@@ -51850,11 +52797,11 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {597168u, aot_fast_00091cb0, 1u},
+    {597168u, aot_fast_00091cb0, 2u},
     {691026u, aot_fast_000a8b52, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {603960u, aot_fast_00093738, 2u},
+    {603960u, aot_fast_00093738, 7u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51863,8 +52810,8 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293610u, aot_fast_00047aea, 3u},
-    {600460u, aot_fast_0009298c, 1u},
+    {0u, 0, 0u},
+    {600460u, aot_fast_0009298c, 3u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51890,14 +52837,14 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {603648u, aot_fast_00093600, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {294698u, aot_fast_00047f2a, 1u},
+    {0u, 0, 0u},
+    {294698u, aot_fast_00047f2a, 5u},
     {294348u, aot_fast_00047dcc, 6u},
-    {687914u, aot_fast_000a7f2a, 64u},
+    {687914u, aot_fast_000a7f2a, 132u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51912,9 +52859,9 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {797702u, aot_fast_000c2c06, 3u},
     {0u, 0, 0u},
     {797002u, aot_fast_000c294a, 2u},
-    {686060u, aot_fast_000a77ec, 2u},
+    {686060u, aot_fast_000a77ec, 12u},
     {0u, 0, 0u},
-    {603440u, aot_fast_00093530, 5u},
+    {603440u, aot_fast_00093530, 15u},
     {295890u, aot_fast_000483d2, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51924,7 +52871,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296836u, aot_fast_00048784, 4u},
+    {296836u, aot_fast_00048784, 5u},
     {0u, 0, 0u},
     {701640u, aot_fast_000ab4c8, 5u},
     {602986u, aot_fast_0009336a, 1u},
@@ -51939,11 +52886,11 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {296032u, aot_fast_00048460, 2u},
-    {603232u, aot_fast_00093460, 13u},
+    {603232u, aot_fast_00093460, 15u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {294282u, aot_fast_00047d8a, 3u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -51951,7 +52898,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {686098u, aot_fast_000a7812, 2u},
     {0u, 0, 0u},
     {295928u, aot_fast_000483f8, 5u},
-    {603128u, aot_fast_000933f8, 7u},
+    {0u, 0, 0u},
     {295228u, aot_fast_0004813c, 2u},
     {294878u, aot_fast_00047fde, 6u},
     {0u, 0, 0u},
@@ -51961,29 +52908,29 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {293128u, aot_fast_00047908, 2u},
     {796936u, aot_fast_000c2908, 1u},
     {0u, 0, 0u},
-    {296174u, aot_fast_000484ee, 1u},
+    {296174u, aot_fast_000484ee, 5u},
     {689040u, aot_fast_000a8390, 21u},
     {0u, 0, 0u},
     {700628u, aot_fast_000ab0d4, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {625850u, aot_fast_00098cba, 1u},
-    {596828u, aot_fast_00091b5c, 4u},
-    {0u, 0, 0u},
-    {0u, 0, 0u},
-    {603970u, aot_fast_00093742, 4u},
+    {596828u, aot_fast_00091b5c, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {295370u, aot_fast_000481ca, 1u},
+    {0u, 0, 0u},
+    {0u, 0, 0u},
+    {0u, 0, 0u},
+    {295370u, aot_fast_000481ca, 5u},
     {295020u, aot_fast_0004806c, 6u},
     {691982u, aot_fast_000a8f0e, 1u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293270u, aot_fast_00047996, 1u},
+    {293270u, aot_fast_00047996, 5u},
     {292920u, aot_fast_00047838, 6u},
-    {600470u, aot_fast_00092996, 2u},
+    {600470u, aot_fast_00092996, 4u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52006,7 +52953,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {625538u, aot_fast_00098b82, 2u},
     {691074u, aot_fast_000a8b82, 6u},
     {0u, 0, 0u},
-    {296808u, aot_fast_00048768, 4u},
+    {296808u, aot_fast_00048768, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52023,13 +52970,13 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {603204u, aot_fast_00093444, 10u},
     {689220u, aot_fast_000a8444, 32u},
     {0u, 0, 0u},
-    {294954u, aot_fast_0004802a, 3u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {690866u, aot_fast_000a8ab2, 7u},
     {0u, 0, 0u},
-    {292854u, aot_fast_000477f6, 3u},
+    {0u, 0, 0u},
     {599704u, aot_fast_00092698, 1u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52061,7 +53008,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293942u, aot_fast_00047c36, 1u},
+    {293942u, aot_fast_00047c36, 5u},
     {293592u, aot_fast_00047ad8, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52088,8 +53035,8 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296780u, aot_fast_0004874c, 4u},
-    {296430u, aot_fast_000485ee, 1u},
+    {296780u, aot_fast_0004874c, 5u},
+    {296430u, aot_fast_000485ee, 5u},
     {689996u, aot_fast_000a874c, 13u},
     {710476u, aot_fast_000ad74c, 3u},
     {0u, 0, 0u},
@@ -52109,7 +53056,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {831152u, aot_fast_000caeb0, 1u},
     {601426u, aot_fast_00092d52, 2u},
     {797684u, aot_fast_000c2bf4, 4u},
-    {293526u, aot_fast_00047a96, 3u},
+    {0u, 0, 0u},
     {690488u, aot_fast_000a8938, 8u},
     {620506u, aot_fast_000977da, 1u},
     {0u, 0, 0u},
@@ -52135,19 +53082,19 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296714u, aot_fast_0004870a, 4u},
+    {296714u, aot_fast_0004870a, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {294614u, aot_fast_00047ed6, 1u},
+    {294614u, aot_fast_00047ed6, 5u},
     {294264u, aot_fast_00047d78, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {797022u, aot_fast_000c295e, 3u},
     {0u, 0, 0u},
-    {788130u, aot_fast_000c06a2, 1u},
+    {788130u, aot_fast_000c06a2, 2u},
     {619844u, aot_fast_00097544, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52157,18 +53104,18 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {294160u, aot_fast_00047d10, 9u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {596214u, aot_fast_000918f6, 3u},
+    {596214u, aot_fast_000918f6, 4u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {295806u, aot_fast_0004837e, 6u},
-    {606752u, aot_fast_00094220, 1u},
+    {606752u, aot_fast_00094220, 5u},
     {618690u, aot_fast_000970c2, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {597160u, aot_fast_00091ca8, 3u},
     {0u, 0, 0u},
-    {0u, 0, 0u},
+    {596460u, aot_fast_000919ec, 2u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52189,7 +53136,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {700752u, aot_fast_000ab150, 2u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {294198u, aot_fast_00047d36, 3u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52207,7 +53154,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {293044u, aot_fast_000478b4, 2u},
     {603990u, aot_fast_00093756, 2u},
     {0u, 0, 0u},
-    {296090u, aot_fast_0004849a, 1u},
+    {296090u, aot_fast_0004849a, 5u},
     {689306u, aot_fast_000a849a, 7u},
     {0u, 0, 0u},
     {622720u, aot_fast_00098080, 5u},
@@ -52217,22 +53164,22 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296686u, aot_fast_000486ee, 4u},
+    {296686u, aot_fast_000486ee, 5u},
     {0u, 0, 0u},
     {689202u, aot_fast_000a8432, 6u},
     {709332u, aot_fast_000ad2d4, 2u},
-    {295286u, aot_fast_00048176, 1u},
+    {295286u, aot_fast_00048176, 5u},
     {294936u, aot_fast_00048018, 6u},
     {0u, 0, 0u},
-    {601436u, aot_fast_00092d5c, 2u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293186u, aot_fast_00047942, 1u},
+    {0u, 0, 0u},
+    {293186u, aot_fast_00047942, 5u},
     {292836u, aot_fast_000477e4, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {295882u, aot_fast_000483ca, 3u},
     {689098u, aot_fast_000a83ca, 5u},
+    {0u, 0, 0u},
     {700686u, aot_fast_000ab10e, 4u},
     {294832u, aot_fast_00047fb0, 9u},
     {691794u, aot_fast_000a8e52, 9u},
@@ -52260,7 +53207,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {797732u, aot_fast_000c2c24, 2u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52269,8 +53216,8 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {294870u, aot_fast_00047fd6, 3u},
     {700374u, aot_fast_000aafd6, 4u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52278,7 +53225,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {603016u, aot_fast_00093388, 12u},
+    {603016u, aot_fast_00093388, 19u},
     {295466u, aot_fast_0004822a, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52299,15 +53246,15 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296658u, aot_fast_000486d2, 4u},
-    {603858u, aot_fast_000936d2, 10u},
+    {296658u, aot_fast_000486d2, 5u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {295608u, aot_fast_000482b8, 2u},
     {606554u, aot_fast_0009415a, 2u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293858u, aot_fast_00047be2, 1u},
+    {293858u, aot_fast_00047be2, 5u},
     {289412u, aot_fast_00046a84, 3u},
     {293508u, aot_fast_00047a84, 6u},
     {620488u, aot_fast_000977c8, 8u},
@@ -52330,12 +53277,12 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {703600u, aot_fast_000abc70, 3u},
+    {703600u, aot_fast_000abc70, 4u},
     {0u, 0, 0u},
     {711092u, aot_fast_000ad9b4, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296346u, aot_fast_0004859a, 1u},
+    {296346u, aot_fast_0004859a, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52355,7 +53302,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {625918u, aot_fast_00098cfe, 1u},
     {625568u, aot_fast_00098ba0, 1u},
-    {293442u, aot_fast_00047a42, 3u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52381,20 +53328,20 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296630u, aot_fast_000486b6, 4u},
+    {296630u, aot_fast_000486b6, 5u},
     {603830u, aot_fast_000936b6, 5u},
     {689146u, aot_fast_000a83fa, 5u},
     {795992u, aot_fast_000c2558, 1u},
     {700734u, aot_fast_000ab13e, 1u},
     {0u, 0, 0u},
-    {294530u, aot_fast_00047e82, 1u},
+    {294530u, aot_fast_00047e82, 5u},
     {294180u, aot_fast_00047d24, 6u},
     {691842u, aot_fast_000a8e82, 4u},
     {0u, 0, 0u},
     {796938u, aot_fast_000c290a, 2u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {603376u, aot_fast_000934f0, 3u},
+    {603376u, aot_fast_000934f0, 14u},
     {0u, 0, 0u},
     {291380u, aot_fast_00047234, 3u},
     {0u, 0, 0u},
@@ -52435,8 +53382,8 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {700668u, aot_fast_000ab0fc, 1u},
     {655262u, aot_fast_0009ff9e, 7u},
     {716352u, aot_fast_000aee40, 7u},
-    {294114u, aot_fast_00047ce2, 3u},
     {625890u, aot_fast_00098ce2, 2u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52453,7 +53400,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {292960u, aot_fast_00047860, 2u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296006u, aot_fast_00048446, 1u},
+    {296006u, aot_fast_00048446, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52463,23 +53410,23 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {289460u, aot_fast_00046ab4, 3u},
     {797014u, aot_fast_000c2956, 3u},
     {0u, 0, 0u},
-    {296602u, aot_fast_0004869a, 4u},
+    {296602u, aot_fast_0004869a, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {295202u, aot_fast_00048122, 1u},
+    {295202u, aot_fast_00048122, 5u},
     {294852u, aot_fast_00047fc4, 6u},
     {0u, 0, 0u},
     {601352u, aot_fast_00092d08, 28u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293102u, aot_fast_000478ee, 1u},
+    {293102u, aot_fast_000478ee, 5u},
     {596206u, aot_fast_000918ee, 4u},
     {689714u, aot_fast_000a8632, 7u},
     {690064u, aot_fast_000a8790, 4u},
-    {295798u, aot_fast_00048376, 3u},
     {602998u, aot_fast_00093376, 3u},
     {796910u, aot_fast_000c28ee, 2u},
+    {0u, 0, 0u},
     {294748u, aot_fast_00047f5c, 9u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52512,10 +53459,10 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {296186u, aot_fast_000484fa, 6u},
-    {701340u, aot_fast_000ab39c, 4u},
+    {701340u, aot_fast_000ab39c, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {294786u, aot_fast_00047f82, 3u},
+    {0u, 0, 0u},
     {716324u, aot_fast_000aee24, 5u},
     {0u, 0, 0u},
     {625512u, aot_fast_00098b68, 7u},
@@ -52523,7 +53470,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {690348u, aot_fast_000a88ac, 7u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {603282u, aot_fast_00093492, 1u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {295382u, aot_fast_000481d6, 6u},
     {0u, 0, 0u},
@@ -52545,7 +53492,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {620508u, aot_fast_000977dc, 1u},
-    {296574u, aot_fast_0004867e, 4u},
+    {296574u, aot_fast_0004867e, 5u},
     {296224u, aot_fast_00048520, 7u},
     {689440u, aot_fast_000a8520, 44u},
     {0u, 0, 0u},
@@ -52553,7 +53500,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293774u, aot_fast_00047b8e, 1u},
+    {293774u, aot_fast_00047b8e, 5u},
     {293424u, aot_fast_00047a30, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52571,7 +53518,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {795728u, aot_fast_000c2450, 30u},
-    {295666u, aot_fast_000482f2, 1u},
+    {295666u, aot_fast_000482f2, 5u},
     {713108u, aot_fast_000ae194, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52582,7 +53529,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {689128u, aot_fast_000a83e8, 3u},
+    {689128u, aot_fast_000a83e8, 9u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52595,13 +53542,13 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {603008u, aot_fast_00093380, 3u},
-    {295458u, aot_fast_00048222, 3u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293358u, aot_fast_000479ee, 3u},
+    {0u, 0, 0u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52618,12 +53565,12 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {709296u, aot_fast_000ad2b0, 5u},
+    {709296u, aot_fast_000ad2b0, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {687066u, aot_fast_000a7bda, 64u},
+    {687066u, aot_fast_000a7bda, 132u},
     {0u, 0, 0u},
     {796958u, aot_fast_000c291e, 2u},
     {0u, 0, 0u},
@@ -52633,7 +53580,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {700650u, aot_fast_000ab0ea, 2u},
     {0u, 0, 0u},
-    {294446u, aot_fast_00047e2e, 1u},
+    {294446u, aot_fast_00047e2e, 5u},
     {294096u, aot_fast_00047cd0, 6u},
     {691058u, aot_fast_000a8b72, 6u},
     {715984u, aot_fast_000aecd0, 5u},
@@ -52651,7 +53598,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {603538u, aot_fast_00093592, 6u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52661,7 +53608,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {797696u, aot_fast_000c2c00, 2u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296934u, aot_fast_000487e6, 4u},
+    {296934u, aot_fast_000487e6, 5u},
     {788104u, aot_fast_000c0688, 2u},
     {792200u, aot_fast_000c1688, 5u},
     {0u, 0, 0u},
@@ -52681,11 +53628,11 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {716268u, aot_fast_000aedec, 5u},
-    {294030u, aot_fast_00047c8e, 3u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {603926u, aot_fast_00093716, 9u},
+    {0u, 0, 0u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52699,7 +53646,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {292876u, aot_fast_0004780c, 2u},
     {0u, 0, 0u},
     {619856u, aot_fast_00097550, 3u},
-    {689138u, aot_fast_000a83f2, 4u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52713,13 +53660,13 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {295118u, aot_fast_000480ce, 1u},
+    {295118u, aot_fast_000480ce, 5u},
     {294768u, aot_fast_00047f70, 6u},
     {618702u, aot_fast_000970ce, 4u},
-    {625844u, aot_fast_00098cb4, 1u},
+    {625844u, aot_fast_00098cb4, 2u},
     {703668u, aot_fast_000abcb4, 3u},
     {716306u, aot_fast_000aee12, 1u},
-    {293018u, aot_fast_0004789a, 1u},
+    {293018u, aot_fast_0004789a, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {701568u, aot_fast_000ab480, 2u},
@@ -52743,8 +53690,8 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296906u, aot_fast_000487ca, 4u},
-    {599660u, aot_fast_0009266c, 2u},
+    {296906u, aot_fast_000487ca, 5u},
+    {599660u, aot_fast_0009266c, 3u},
     {0u, 0, 0u},
     {701360u, aot_fast_000ab3b0, 5u},
     {0u, 0, 0u},
@@ -52761,7 +53708,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {603302u, aot_fast_000934a6, 18u},
     {0u, 0, 0u},
     {622732u, aot_fast_0009808c, 5u},
-    {294702u, aot_fast_00047f2e, 3u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52797,9 +53744,9 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {295440u, aot_fast_00048210, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {605686u, aot_fast_00093df6, 2u},
     {716278u, aot_fast_000aedf6, 2u},
-    {293690u, aot_fast_00047b3a, 1u},
+    {0u, 0, 0u},
+    {293690u, aot_fast_00047b3a, 5u},
     {293340u, aot_fast_000479dc, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52817,7 +53764,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {295582u, aot_fast_0004829e, 1u},
+    {295582u, aot_fast_0004829e, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52825,9 +53772,9 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {596236u, aot_fast_0009190c, 1u},
-    {296878u, aot_fast_000487ae, 4u},
+    {296878u, aot_fast_000487ae, 5u},
     {690094u, aot_fast_000a87ae, 4u},
-    {296178u, aot_fast_000484f2, 3u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {618712u, aot_fast_000970d8, 2u},
@@ -52838,16 +53785,16 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {603624u, aot_fast_000935e8, 8u},
-    {0u, 0, 0u},
-    {0u, 0, 0u},
-    {295374u, aot_fast_000481ce, 3u},
+    {603624u, aot_fast_000935e8, 15u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293274u, aot_fast_0004799a, 3u},
+    {0u, 0, 0u},
+    {0u, 0, 0u},
+    {0u, 0, 0u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52879,12 +53826,12 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {713204u, aot_fast_000ae1f4, 7u},
     {622742u, aot_fast_00098096, 2u},
     {0u, 0, 0u},
-    {294362u, aot_fast_00047dda, 1u},
+    {294362u, aot_fast_00047dda, 5u},
     {294012u, aot_fast_00047c7c, 6u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {603908u, aot_fast_00093704, 5u},
+    {603908u, aot_fast_00093704, 15u},
     {296358u, aot_fast_000485a6, 6u},
     {795720u, aot_fast_000c2448, 4u},
     {0u, 0, 0u},
@@ -52907,9 +53854,9 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296850u, aot_fast_00048792, 4u},
-    {296500u, aot_fast_00048634, 4u},
-    {603700u, aot_fast_00093634, 13u},
+    {296850u, aot_fast_00048792, 5u},
+    {296500u, aot_fast_00048634, 7u},
+    {603700u, aot_fast_00093634, 15u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52927,12 +53874,12 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293946u, aot_fast_00047c3a, 3u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {612384u, aot_fast_00095820, 5u},
     {788162u, aot_fast_000c06c2, 4u},
-    {603492u, aot_fast_00093564, 6u},
+    {603492u, aot_fast_00093564, 21u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52955,31 +53902,30 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {690700u, aot_fast_000a8a0c, 62u},
     {0u, 0, 0u},
     {603984u, aot_fast_00093750, 1u},
-    {296434u, aot_fast_000485f2, 3u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {713176u, aot_fast_000ae1d8, 5u},
-    {295034u, aot_fast_0004807a, 1u},
+    {295034u, aot_fast_0004807a, 5u},
     {294684u, aot_fast_00047f1c, 6u},
-    {687900u, aot_fast_000a7f1c, 4u},
+    {687900u, aot_fast_000a7f1c, 5u},
     {691996u, aot_fast_000a8f1c, 2u},
     {690946u, aot_fast_000a8b02, 4u},
     {711076u, aot_fast_000ad9a4, 7u},
-    {292934u, aot_fast_00047846, 1u},
+    {292934u, aot_fast_00047846, 5u},
     {297030u, aot_fast_00048846, 12u},
     {0u, 0, 0u},
-    {603180u, aot_fast_0009342c, 6u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {294580u, aot_fast_00047eb4, 9u},
-    {601430u, aot_fast_00092d56, 1u},
+    {601430u, aot_fast_00092d56, 4u},
     {605526u, aot_fast_00093d56, 2u},
     {831156u, aot_fast_000caeb4, 2u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {599680u, aot_fast_00092680, 1u},
-    {788096u, aot_fast_000c0680, 4u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -52989,7 +53935,8 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296822u, aot_fast_00048776, 4u},
+    {0u, 0, 0u},
+    {296822u, aot_fast_00048776, 5u},
     {603672u, aot_fast_00093618, 10u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -53007,9 +53954,9 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {294618u, aot_fast_00047eda, 3u},
     {0u, 0, 0u},
-    {797726u, aot_fast_000c2c1e, 1u},
+    {0u, 0, 0u},
+    {797726u, aot_fast_000c2c1e, 7u},
     {0u, 0, 0u},
     {792930u, aot_fast_000c1962, 4u},
     {0u, 0, 0u},
@@ -53032,11 +53979,11 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {703660u, aot_fast_000abcac, 2u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {690672u, aot_fast_000a89f0, 13u},
     {0u, 0, 0u},
-    {710452u, aot_fast_000ad734, 4u},
+    {710452u, aot_fast_000ad734, 5u},
     {0u, 0, 0u},
     {296056u, aot_fast_00048478, 9u},
     {0u, 0, 0u},
@@ -53045,7 +53992,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293606u, aot_fast_00047ae6, 1u},
+    {293606u, aot_fast_00047ae6, 5u},
     {293256u, aot_fast_00047988, 6u},
     {600456u, aot_fast_00092988, 2u},
     {0u, 0, 0u},
@@ -53071,9 +54018,9 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {289652u, aot_fast_00046b74, 3u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {296794u, aot_fast_0004875a, 4u},
+    {296794u, aot_fast_0004875a, 5u},
     {603994u, aot_fast_0009375a, 4u},
-    {296094u, aot_fast_0004849e, 3u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -53087,13 +54034,13 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {295290u, aot_fast_0004817a, 3u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {293190u, aot_fast_00047946, 3u},
+    {0u, 0, 0u},
+    {0u, 0, 0u},
     {612328u, aot_fast_000957e8, 19u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -53104,8 +54051,8 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {716374u, aot_fast_000aee56, 1u},
     {294136u, aot_fast_00047cf8, 2u},
     {293786u, aot_fast_00047b9a, 6u},
-    {625562u, aot_fast_00098b9a, 1u},
-    {625912u, aot_fast_00098cf8, 1u},
+    {625562u, aot_fast_00098b9a, 2u},
+    {625912u, aot_fast_00098cf8, 2u},
     {716024u, aot_fast_000aecf8, 1u},
     {0u, 0, 0u},
     {0u, 0, 0u},
@@ -53125,7 +54072,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {713120u, aot_fast_000ae1a0, 5u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {294278u, aot_fast_00047d86, 1u},
+    {294278u, aot_fast_00047d86, 5u},
     {293928u, aot_fast_00047c28, 6u},
     {0u, 0, 0u},
     {600428u, aot_fast_0009296c, 11u},
@@ -53140,8 +54087,8 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {293824u, aot_fast_00047bc0, 9u},
     {0u, 0, 0u},
+    {596228u, aot_fast_00091904, 2u},
     {796932u, aot_fast_000c2904, 2u},
-    {0u, 0, 0u},
     {689736u, aot_fast_000a8648, 13u},
     {0u, 0, 0u},
     {295820u, aot_fast_0004838c, 2u},
@@ -53151,7 +54098,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
-    {596474u, aot_fast_000919fa, 2u},
+    {596474u, aot_fast_000919fa, 3u},
     {0u, 0, 0u},
     {0u, 0, 0u},
     {296416u, aot_fast_000485e0, 6u},
@@ -53167,7 +54114,7 @@ const AgrAotEntry agr_aot_fast_hash[] = {
     {0u, 0, 0u},
     {0u, 0, 0u},
     {296312u, aot_fast_00048578, 9u},
-    {603512u, aot_fast_00093578, 7u},
+    {0u, 0, 0u},
     {0u, 0, 0u},
     {0u, 0, 0u},
 };
