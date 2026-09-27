@@ -2,7 +2,7 @@
 # Capture the original KungFoo ARMv7 dlopen/constructor path inside AGR.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-EVIDENCE="$ROOT/tools/aot-lab/evidence/kungfoo-armv7-aot-probe"
+EVIDENCE="$ROOT/build/kungfoo-aot-probe"
 mkdir -p "$EVIDENCE"
 export AGR_SIMULATOR_PROFILE=aot-kungfoo
 
@@ -15,7 +15,7 @@ bash "$ROOT/tools/aot-lab/launch_aot.sh" kungfoo-trace
 probe_status=$?
 set -e
 
-for name in aot-trace.txt aot-hosts.txt aot-result.json ci-environment.json simulator-device.txt; do
+for name in aot-trace.txt aot-hosts.txt aot-result.json pvs-progress.json aot-simulator-log.txt aot-process-list.txt ci-environment.json simulator-device.txt; do
   if [[ -f "$ROOT/build/artifacts/$name" ]]; then
     cp "$ROOT/build/artifacts/$name" "$EVIDENCE/$name"
   fi

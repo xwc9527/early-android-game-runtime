@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "run_id": 36319705624,
+  "tested_commit": "e1ce63bbeaac9bca53f8336b73ddc9131d76fdd6",
+  "tested_tree": "9c01b59d3d1904ea919b6ab22fa74cfa957777fc",
+  "job_id": 108621050004,
+  "artifact_id": 10932096849,
+  "artifact_sha256": "3ceddd9cd799e91b59b0eb5cab17399befc0916fd1a5748cde95297f1891baf7",
+  "job_log_sha256": "19cf95afbf60f9bdb13cfa1194cbb04102e39a0eaf35e31ba6e53a6d164d1dec",
+  "classification": "INVALID_HARNESS",
+  "observation": "App launched, no aot-result.json after 180 second post-launch poll; previous harness did not archive partial guest progress or trace"
+}

@@ -18,13 +18,13 @@ jobs:
       - name: Capture KungFoo ARMv7 AGR execution
         run: |
           set -o pipefail
-          mkdir -p tools/aot-lab/evidence/kungfoo-armv7-aot-probe
+          mkdir -p build/kungfoo-aot-probe
           bash tools/aot-lab/run_kungfoo_probe.sh 2>&1 |
-            tee tools/aot-lab/evidence/kungfoo-armv7-aot-probe/ci-log.txt
+            tee build/kungfoo-aot-probe/ci-log.txt
       - name: Upload original probe evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: kungfoo-armv7-aot-probe
-          path: tools/aot-lab/evidence/kungfoo-armv7-aot-probe
+          path: build/kungfoo-aot-probe
           if-no-files-found: error

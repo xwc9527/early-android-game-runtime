@@ -471,7 +471,9 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         }
         aotStageStart=CFAbsoluteTimeGetCurrent();
     }
+    if (aotProbe) writePVSProgress(@"before:aot-kungfoo.dlopen",guest);
     int jniOnLoad=dexLoaded==0?agr_guest_load_java_library(guest,agr_apk_native_library(package),&jniVersion):-1;
+    if (aotProbe) writePVSProgress(@"after:aot-kungfoo.dlopen",guest);
     if (aotProbe) {
         aotStageSeconds=CFAbsoluteTimeGetCurrent()-aotStageStart;
         aotStageInterpreterInstructions=guest?agr_guest_instruction_count(guest)-aotStageBefore:0;

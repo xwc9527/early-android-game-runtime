@@ -19,7 +19,7 @@ xcrun simctl boot "$DEVICE" 2>/dev/null || true
 xcrun simctl bootstatus "$DEVICE" -b
 xcrun simctl install "$DEVICE" "$APP"
 DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
-rm -f "$DATA/Documents/aot-result.json" "$DATA/Documents/aot-trace.txt" "$DATA/Documents/aot-hosts.txt"
+rm -f "$DATA/Documents/aot-result.json" "$DATA/Documents/aot-trace.txt" "$DATA/Documents/aot-hosts.txt" "$DATA/Documents/pvs-progress.json"
 case "$MODE" in
   trace) ARG="--aot-trace" ;;
   run) ARG="--aot-run" ;;
@@ -32,9 +32,16 @@ for _ in $(seq 1 180); do
   [[ -s "$DATA/Documents/aot-result.json" ]] && break
   sleep 1
 done
-test -s "$DATA/Documents/aot-result.json"
-cp "$DATA/Documents/aot-result.json" "$ARTIFACTS/aot-result.json"
-[[ -f "$DATA/Documents/aot-hosts.txt" ]] && cp "$DATA/Documents/aot-hosts.txt" "$ARTIFACTS/aot-hosts.txt"
-[[ -f "$DATA/Documents/aot-trace.txt" ]] && cp "$DATA/Documents/aot-trace.txt" "$ARTIFACTS/aot-trace.txt"
-[[ -f "$DATA/Documents/aot-checkpoints.txt" ]] && cp "$DATA/Documents/aot-checkpoints.txt" "$ARTIFACTS/aot-checkpoints.txt"
+for name in aot-result.json aot-hosts.txt aot-trace.txt aot-checkpoints.txt pvs-progress.json; do
+  [[ -f "$DATA/Documents/$name" ]] && cp "$DATA/Documents/$name" "$ARTIFACTS/$name"
+done
+if [[ ! -s "$ARTIFACTS/aot-result.json" ]]; then
+  xcrun simctl spawn "$DEVICE" log show --last 15m --style compact \
+    --predicate 'process == "AGRSimulator" OR process == "runningboardd"' \
+    > "$ARTIFACTS/aot-simulator-log.txt" 2>&1 || true
+  xcrun simctl spawn "$DEVICE" launchctl list > "$ARTIFACTS/aot-process-list.txt" 2>&1 || true
+  printf 'AOT_RESULT_TIMEOUT\n' >&2
+  [[ -s "$ARTIFACTS/pvs-progress.json" ]] && cat "$ARTIFACTS/pvs-progress.json" >&2
+  exit 1
+fi
 python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print("error: aot-result", json.dumps(d)); raise SystemExit(0 if d.get("passed") else 1)' "$ARTIFACTS/aot-result.json"

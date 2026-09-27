@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "run_id": 36319557461,
+  "tested_commit": "6601e526f48ec2990bf5a04f8b1b9b98c5a3a2ab",
+  "job_id": 108620626093,
+  "artifact_id": 10931957175,
+  "artifact_sha256": "ce361a054238f19cdbbcef6a65cce586e6c267e251600f7fb3a1947832959b97",
+  "job_log_sha256": "7f23f89c3f122f8b6ce82139f635af1c1ceec4495ef4b6434d44add812b69e58",
+  "classification": "INVALID_HARNESS",
+  "cause": "aot-kungfoo sample profile omitted frozen-bubble.apk required by ci/select-simulator-runtime.py"
+}
