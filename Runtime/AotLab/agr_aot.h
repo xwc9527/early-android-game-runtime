@@ -2,6 +2,7 @@
 #define AGR_AOT_H
 
 #include <stdint.h>
+#include <stdatomic.h>
 #include <string.h>
 
 enum {
@@ -73,6 +74,51 @@ static inline void agr_aot_store32(AgrAotRegs *state, uint32_t address, uint32_t
 static inline void agr_aot_set_nz(AgrAotRegs *state, uint32_t value) {
     *state->cpsr &= ~(3u << 30);
     *state->cpsr |= ((value >> 31) << 31) | ((value == 0) << 30);
+}
+
+static inline void agr_aot_set_nzcv(AgrAotRegs *state, uint32_t value,
+                                    uint32_t carry, uint32_t overflow) {
+    *state->cpsr &= ~(15u << 28);
+    *state->cpsr |= ((value >> 31) << 31) | ((value == 0) << 30) |
+                    ((carry & 1u) << 29) | ((overflow & 1u) << 28);
+}
+
+static inline void agr_aot_adds(AgrAotRegs *state, uint32_t rd,
+                                uint32_t left, uint32_t right) {
+    uint64_t wide = (uint64_t)left + right;
+    uint32_t value = (uint32_t)wide;
+    uint32_t overflow = ((~(left ^ right) & (left ^ value)) >> 31) & 1u;
+    state->r[rd] = value;
+    agr_aot_set_nzcv(state, value, (uint32_t)(wide >> 32), overflow);
+}
+
+static inline void agr_aot_cmp(AgrAotRegs *state, uint32_t left, uint32_t right) {
+    uint32_t value = left - right;
+    uint32_t overflow = (((left ^ right) & (left ^ value)) >> 31) & 1u;
+    agr_aot_set_nzcv(state, value, left >= right, overflow);
+}
+
+static inline void agr_aot_lsls(AgrAotRegs *state, uint32_t rd,
+                                uint32_t value, uint32_t amount) {
+    uint32_t result = amount ? value << amount : value;
+    uint32_t old_carry = (*state->cpsr >> 29) & 1u;
+    uint32_t carry = amount ? (value >> (32u - amount)) & 1u : old_carry;
+    state->r[rd] = result;
+    *state->cpsr &= ~(7u << 29);
+    *state->cpsr |= ((result >> 31) << 31) | ((result == 0) << 30) | (carry << 29);
+}
+
+static inline int agr_aot_condition(const AgrAotRegs *state, uint32_t condition) {
+    uint32_t n = (*state->cpsr >> 31) & 1u, z = (*state->cpsr >> 30) & 1u;
+    uint32_t c = (*state->cpsr >> 29) & 1u, v = (*state->cpsr >> 28) & 1u;
+    switch (condition & 15u) {
+        case 0: return z; case 1: return !z; case 2: return c; case 3: return !c;
+        case 4: return n; case 5: return !n; case 6: return v; case 7: return !v;
+        case 8: return c && !z; case 9: return !c || z;
+        case 10: return n == v; case 11: return n != v;
+        case 12: return !z && n == v; case 13: return z || n != v;
+        case 14: return 1; default: return 0;
+    }
 }
 
 static inline uint32_t agr_aot_reg(const AgrAotRegs *state, uint32_t index, uint32_t pc, int thumb) {

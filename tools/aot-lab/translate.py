@@ -28,16 +28,54 @@ def arm_expand_imm(insn):
 def decode(pc, insn, length, thumb):
     """Return a generic operation or raise ValueError. No guest-PC special cases."""
     if thumb and length == 2:
+        if insn & 0xf800 == 0x0000:
+            return ("lsls_imm", insn & 7, (insn >> 3) & 7, (insn >> 6) & 31)
+        if insn & 0xfe00 == 0x1800:
+            return ("adds_reg", insn & 7, (insn >> 3) & 7, (insn >> 6) & 7)
+        if insn & 0xfe00 == 0x1c00:
+            return ("adds_imm", insn & 7, (insn >> 3) & 7, (insn >> 6) & 7)
         if insn & 0xf800 == 0x2000:
             return ("movs_imm", (insn >> 8) & 7, insn & 0xff)
+        if insn & 0xf800 == 0x2800:
+            return ("cmp_imm", (insn >> 8) & 7, insn & 0xff)
+        if insn & 0xf800 == 0x3000:
+            rd = (insn >> 8) & 7
+            return ("adds_imm", rd, rd, insn & 0xff)
+        if insn & 0xffc0 == 0x4280:
+            return ("cmp_reg", insn & 7, (insn >> 3) & 7)
+        if insn & 0xff00 == 0x4400:
+            rd = (insn & 7) | ((insn >> 4) & 8)
+            return ("add_high", rd, (insn >> 3) & 15, pc)
         if insn & 0xff00 == 0x4600:
             rd = (insn & 7) | ((insn >> 4) & 8)
             rm = (insn >> 3) & 15
             return ("mov_reg", rd, rm)
+        if insn & 0xfe00 == 0x5000:
+            return ("str_reg", insn & 7, (insn >> 3) & 7, (insn >> 6) & 7)
+        if insn & 0xfe00 == 0x5800:
+            return ("ldr_reg", insn & 7, (insn >> 3) & 7, (insn >> 6) & 7, pc)
+        if insn & 0xf800 == 0x6000:
+            return ("str_imm", insn & 7, (insn >> 3) & 7, ((insn >> 6) & 31) * 4)
         if insn & 0xf800 == 0x6800:
             return ("ldr_imm", insn & 7, (insn >> 3) & 7, ((insn >> 6) & 31) * 4, True, pc)
+        if insn & 0xf800 == 0x4800:
+            return ("ldr_imm", (insn >> 8) & 7, 15, (insn & 0xff) * 4, True, pc)
+        if insn & 0xf800 == 0x9000:
+            return ("str_imm", (insn >> 8) & 7, 13, (insn & 0xff) * 4)
         if insn & 0xf800 == 0x9800:
             return ("ldr_imm", (insn >> 8) & 7, 13, (insn & 0xff) * 4, True, pc)
+        if insn & 0xfe00 == 0xb400:
+            mask = insn & 0xff
+            if insn & 0x100:
+                mask |= 1 << 14
+            return ("stmdb_sp", mask)
+        if insn & 0xff00 == 0xb000:
+            return ("adjust_sp", (insn & 0x7f) * 4, bool(insn & 0x80))
+        if insn & 0xfe00 == 0xbc00:
+            mask = insn & 0xff
+            if insn & 0x100:
+                mask |= 1 << 15
+            return ("ldmia_sp", mask)
         if insn & 0xf500 == 0xb100:
             i = (insn >> 9) & 1
             imm5 = (insn >> 3) & 31
@@ -49,6 +87,11 @@ def decode(pc, insn, length, thumb):
             imm11 = insn & 0x7ff
             offset = sign_extend(imm11 << 1, 12)
             return ("b", (pc + 4 + offset) & 0xffffffff)
+        if insn & 0xf000 == 0xd000 and (insn >> 8) & 15 < 14:
+            target = (pc + 4 + sign_extend((insn & 0xff) << 1, 9)) & 0xffffffff
+            return ("b_cond", (insn >> 8) & 15, target, pc + 2)
+        if insn & 0xff87 == 0x4700:
+            return ("bx_reg", (insn >> 3) & 15)
         if insn & 0xff87 == 0x4780:
             return ("blx_reg", (insn >> 3) & 15, pc + 2)
     if thumb and length == 4:
@@ -81,6 +124,28 @@ def decode(pc, insn, length, thumb):
             immediate = sign_extend((s << 24) | (i1 << 23) | (i2 << 22) | (imm10 << 12) | (imm11 << 1), 25)
             target = (((pc + 4) & ~3) + immediate) & 0xffffffff
             return ("blx_imm", target, pc + 4)
+        if hw0 & 0xf800 == 0xf000 and hw1 & 0xd000 == 0xd000:
+            s = (hw0 >> 10) & 1
+            imm10 = hw0 & 0x3ff
+            j1 = (hw1 >> 13) & 1
+            j2 = (hw1 >> 11) & 1
+            imm11 = hw1 & 0x7ff
+            i1 = 0 if (j1 ^ s) else 1
+            i2 = 0 if (j2 ^ s) else 1
+            immediate = sign_extend((s << 24) | (i1 << 23) | (i2 << 22) | (imm10 << 12) | (imm11 << 1), 25)
+            return ("bl_imm", (pc + 4 + immediate) & 0xffffffff, pc + 4)
+        if hw0 & 0xf800 == 0xf000 and hw1 & 0xd000 == 0x9000:
+            s = (hw0 >> 10) & 1
+            imm10 = hw0 & 0x3ff
+            j1 = (hw1 >> 13) & 1
+            j2 = (hw1 >> 11) & 1
+            imm11 = hw1 & 0x7ff
+            i1 = 0 if (j1 ^ s) else 1
+            i2 = 0 if (j2 ^ s) else 1
+            immediate = sign_extend((s << 24) | (i1 << 23) | (i2 << 22) | (imm10 << 12) | (imm11 << 1), 25)
+            return ("b", (pc + 4 + immediate) & 0xffffffff)
+        if insn == 0xf3bf8f5f:
+            return ("dmb",)
     if not thumb and length == 4:
         if insn & 0x0fe00010 == 0x00800000 and (insn >> 4) & 0xff == 0:
             rn = (insn >> 16) & 15
@@ -114,7 +179,7 @@ def is_svc(row):
 
 
 def is_terminal(op):
-    if op[0] in {"b", "cbz", "blx_reg", "blx_imm"}:
+    if op[0] in {"b", "b_cond", "cbz", "bx_reg", "bl_imm", "blx_reg", "blx_imm"}:
         return True
     if op[0] == "ldr_wb" and op[1] == 15:
         return True
@@ -174,6 +239,22 @@ def blocks_from_trace(rows):
 
 def emit_op(op, thumb):
     kind = op[0]
+    if kind == "lsls_imm":
+        return f"agr_aot_lsls(s, {op[1]}, s->r[{op[2]}], {op[3]}u);"
+    if kind == "adds_reg":
+        return f"agr_aot_adds(s, {op[1]}, s->r[{op[2]}], s->r[{op[3]}]);"
+    if kind == "adds_imm":
+        return f"agr_aot_adds(s, {op[1]}, s->r[{op[2]}], {op[3]}u);"
+    if kind == "cmp_reg":
+        return f"agr_aot_cmp(s, s->r[{op[1]}], s->r[{op[2]}]);"
+    if kind == "cmp_imm":
+        return f"agr_aot_cmp(s, s->r[{op[1]}], {op[2]}u);"
+    if kind == "add_high":
+        rd, rm, pc = op[1:]
+        source = f"{pc + 4}u" if rm == 15 else f"s->r[{rm}]"
+        if rd == 15:
+            return f"agr_aot_branch_reg(s, s->r[15] + {source}, 0u, 0); return AGR_AOT_BOUNDARY;"
+        return f"s->r[{rd}] += {source};"
     if kind == "movs_imm":
         return f"agr_aot_movs_imm(s, {op[1]}, {op[2]}u);"
     if kind == "mov_reg":
@@ -188,6 +269,14 @@ def emit_op(op, thumb):
         else:
             base = f"s->r[{rn}]"
         return f"{{ int rc = agr_aot_ldr(s, {rd}, {base} + {imm}u); if (rc) return rc; }}"
+    if kind == "ldr_reg":
+        return f"{{ int rc = agr_aot_ldr(s, {op[1]}, s->r[{op[2]}] + s->r[{op[3]}]); if (rc) return rc; }}"
+    if kind == "str_imm":
+        return (f"{{ uint32_t addr = s->r[{op[2]}] + {op[3]}u; "
+                f"if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[{op[1]}]); }}")
+    if kind == "str_reg":
+        return (f"{{ uint32_t addr = s->r[{op[2]}] + s->r[{op[3]}]; "
+                f"if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[{op[1]}]); }}")
     if kind == "stmdb_sp":
         return f"if (agr_aot_stmdb_sp(s, {op[1]}u)) return AGR_AOT_FAULT;"
     if kind == "ldmia_sp":
@@ -213,6 +302,9 @@ def emit_op(op, thumb):
         if rn == 15:
             return f"agr_aot_add_imm(s, {rd}, {pc + 8}u, {imm}u);"
         return f"agr_aot_add_imm(s, {rd}, s->r[{rn}], {imm}u);"
+    if kind == "adjust_sp":
+        sign = "-=" if op[2] else "+="
+        return f"s->r[13] {sign} {op[1]}u;"
     if kind == "ldr_wb":
         rd, rn, imm, up, writeback, pc = op[1:]
         sign = "+" if up else "-"
@@ -224,6 +316,8 @@ def emit_op(op, thumb):
         return " ".join(lines)
     if kind == "b":
         return f"s->r[15] = {op[1]}u; return AGR_AOT_BOUNDARY;"
+    if kind == "b_cond":
+        return f"s->r[15] = agr_aot_condition(s, {op[1]}u) ? {op[2]}u : {op[3]}u; return AGR_AOT_BOUNDARY;"
     if kind == "cbz":
         rn, target, fall, nonzero = op[1:]
         test = f"s->r[{rn}]" if nonzero else f"!s->r[{rn}]"
@@ -233,9 +327,15 @@ def emit_op(op, thumb):
         return (
             f"agr_aot_branch_reg(s, s->r[{rm}], {nxt}u, {1 if thumb else 0}); return AGR_AOT_BOUNDARY;"
         )
+    if kind == "bx_reg":
+        return f"agr_aot_branch_reg(s, s->r[{op[1]}], 0u, 0); return AGR_AOT_BOUNDARY;"
+    if kind == "bl_imm":
+        return f"agr_aot_branch_reg(s, {op[1]}u | 1u, {op[2]}u, 1); return AGR_AOT_BOUNDARY;"
     if kind == "blx_imm":
         target, nxt = op[1:]
         return f"agr_aot_branch_reg(s, {target}u, {nxt}u, {1 if thumb else 0}); return AGR_AOT_BOUNDARY;"
+    if kind == "dmb":
+        return "atomic_thread_fence(memory_order_seq_cst);"
     raise ValueError(kind)
 
 
@@ -392,10 +492,19 @@ def main():
         return
     rows = load_trace(args.trace)
     allowed_kinds = None
+    baseline_kinds = None
     if args.partial_baseline_trace:
         baseline = load_trace(args.partial_baseline_trace)
-        allowed_kinds = {decode(row["pc"], row["insn"], row["len"], row["thumb"])[0]
-                         for row in baseline if not is_svc(row)}
+        baseline_kinds = {decode(row["pc"], row["insn"], row["len"], row["thumb"])[0]
+                          for row in baseline if not is_svc(row)}
+        allowed_kinds = set()
+        for row in rows:
+            if is_svc(row):
+                continue
+            try:
+                allowed_kinds.add(decode(row["pc"], row["insn"], row["len"], row["thumb"])[0])
+            except ValueError:
+                pass
         entries = emit_partial(rows, Path(args.out), allowed_kinds)
     else:
         entries = emit(rows, Path(args.out))
@@ -408,6 +517,8 @@ def main():
         "input_trace_sha256": hashlib.sha256(Path(args.trace).read_bytes()).hexdigest(),
         "partial_baseline_trace_sha256": hashlib.sha256(Path(args.partial_baseline_trace).read_bytes()).hexdigest() if args.partial_baseline_trace else None,
         "allowed_op_kinds": sorted(allowed_kinds) if allowed_kinds is not None else None,
+        "baseline_op_kinds": sorted(baseline_kinds) if baseline_kinds is not None else None,
+        "new_public_op_kinds": sorted(allowed_kinds - baseline_kinds) if baseline_kinds is not None else None,
         "preparation_wall_seconds": time.perf_counter() - started,
         "generated_c_bytes": Path(args.out).stat().st_size,
         "blocks": [{"pc": pc, "name": name} for pc, name in entries],
