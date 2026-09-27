@@ -1,0 +1,16 @@
+{
+  "api19_objects": {
+    "lock": "gDvm.threadSuspendCountLock",
+    "cond": "gDvm.threadSuspendCountCond",
+    "declarations": "vm/Globals.h pthread_mutex_t and pthread_cond_t",
+    "initialization": "dvmThreadStartup vm/Thread.cpp pthread_mutex_init(NULL) and pthread_cond_init(NULL)",
+    "caller": "fullSuspendCheck through dvmLockMutex and dvmWaitCond",
+    "guest_export": false
+  },
+  "agr_placement": {
+    "dex": "HOST-NATIVE AOSP, D002",
+    "process_runtime": "owns shared DEX VM state separately from guest address space",
+    "guest_arm": "original native libraries and guest-visible pthread objects"
+  },
+  "unresolved": "No locked sentence says these VM fields are guest ABI objects, and no locked sentence says they are exempt from the Bionic guest-word port."
+}

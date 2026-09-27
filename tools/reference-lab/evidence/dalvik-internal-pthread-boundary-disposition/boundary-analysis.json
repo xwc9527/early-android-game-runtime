@@ -1,0 +1,34 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "question": "Are threadSuspendCountLock and threadSuspendCountCond Guest ABI objects?",
+      "shared_fact": "In API19 they are VM globals. Guest code is not given their address. D002 places the VM on the host.",
+      "not_unique": "The Bionic port and the pthread plan key the same kind of word by guest address, without an exemption for VM-internal objects."
+    },
+    {
+      "id": 2,
+      "question": "What does the crossing authority bind?",
+      "shared_fact": "CROSSING_CLOSED production_scope lists lock, unlock, untimed wait, broadcast, and the futex barrier. It does not list guest VMA.",
+      "not_unique": "The production entry comments do bind the implemented object to an in-guest word."
+    },
+    {
+      "id": 3,
+      "question": "Where does Android semantics end?",
+      "shared_fact": "Android-visible behavior of this crossing ends at the Bionic operations in production_scope. The excluded boundary is the Linux futex syscall. HostServices must not own pthread policy.",
+      "not_unique": "The identity that may key that wait for a host VM object is not specified."
+    },
+    {
+      "id": 4,
+      "question": "Would a new storage adapter or HostServices primitive be adaptation or a new decision?",
+      "shared_fact": "No HostServices wait/wake primitive exists, so it cannot be cited as a current contract.",
+      "not_unique": "Fork representation-split treats a host storage binding as future consumer authority under the same semantic crossing. Fork representation-bound treats any non-guest storage as a Bionic contract change or a guest-ownership change."
+    },
+    {
+      "id": 5,
+      "question": "Can CROSSING_CLOSED be cited unchanged?",
+      "shared_fact": "Yes, for this edge's identity, origin, source path, and production scope. It must not be edited. It has no HOST-DEX consumer clause.",
+      "missing_authority": "A separate consumer-binding decision. Which decision depends on the fork."
+    }
+  ]
+}

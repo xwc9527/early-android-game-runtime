@@ -1,0 +1,13 @@
+result DECISION_FORK
+selected null
+forks representation-split, representation-bound
+runtime_modified false
+locked_decision_written false
+CROSSING_CLOSED unchanged
+contracts array empty
+DECISIONS.md does not name threadSuspendCountLock
+prior consumption evidence remains EVIDENCE_GAP
+unittest test_internal_pthread_boundary_is_an_unauthorized_fork OK
+unittest test_host_dex_pthread_consumption_stays_an_evidence_gap OK
+unittest test_suspend_crossing_closure_is_exact_and_rejects_substitutes OK
+Ran 3 tests OK

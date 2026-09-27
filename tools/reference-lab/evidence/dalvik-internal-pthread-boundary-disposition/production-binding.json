@@ -1,0 +1,8 @@
+{
+  "state_machine": "Runtime/Bionic/agr_bionic_sync.cpp",
+  "address_comment": "ARM32 addresses only, serializing with the guest address space",
+  "wait_wake": "Runtime/Bionic/agr_futex_host.h keys wait and wake by a uint32_t address and does not return a Darwin pointer",
+  "runtime_binding": "Runtime/NativeCore/agr_runtime.c installs that binding on Apple and reads guest memory",
+  "closure_probe": "The CROSSING_CLOSED probe ran the same state machine through a test callback table. That probe does not add a HOST-DEX storage clause to the crossing record.",
+  "host_services": "agr_host_services exports no wait or wake function. The migration-plan ledger line is not an implemented contract."
+}

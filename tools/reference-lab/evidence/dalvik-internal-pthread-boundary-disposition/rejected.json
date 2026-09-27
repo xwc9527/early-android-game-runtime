@@ -1,0 +1,11 @@
+{
+  "rejected": [
+    "host pthread_mutex or pthread_cond as the semantic implementation",
+    "a synthetic ARM32 address presented as a guest word",
+    "truncating a Darwin pointer",
+    "placing the VM suspend objects in guest VMA without a decision",
+    "treating the unimplemented HostServices wait/wake ledger line as a contract",
+    "editing CROSSING_CLOSED or PREREQUISITE_CLOSED in this review",
+    "writing a new LOCKED decision before authorization"
+  ]
+}

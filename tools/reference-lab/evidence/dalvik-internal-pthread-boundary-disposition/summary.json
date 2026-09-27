@@ -1,0 +1,10 @@
+{
+  "result": "DECISION_FORK",
+  "selected": null,
+  "forks": ["representation-split", "representation-bound"],
+  "runtime_modified": false,
+  "locked_decision_written": false,
+  "crossing_status": "CROSSING_CLOSED",
+  "prerequisite_status": "PREREQUISITE_CLOSED",
+  "remaining_blocker": "Authorization must choose the fork. The ThreadState production port stays stopped."
+}

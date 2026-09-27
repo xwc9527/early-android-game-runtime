@@ -1,0 +1,18 @@
+{
+  "unchanged": [
+    "CROSSING_CLOSED record",
+    "PREREQUISITE_CLOSED relationship",
+    "Bionic.PthreadCondition is not PRODUCTION_CLOSED",
+    "Dalvik.ThreadState manifest stays MIGRATION_AUTHORIZED",
+    "JNINativeBinding to ThreadState stays REOPEN_REQUIRED",
+    "the other four JNI prerequisites stay UNRESOLVED",
+    "Runtime behavior"
+  ],
+  "not_authorized": [
+    "a LOCKED decision",
+    "a HOST-DEX consumer binding",
+    "a HostServices wait/wake implementation",
+    "a ThreadState production port"
+  ],
+  "after_authorization": "The chosen fork names the missing authority. Only that authority, once written, can become the next production blocker. Until then the port stays stopped."
+}

@@ -1206,6 +1206,21 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         sync = (ROOT / "Runtime/Bionic/agr_bionic_sync.h").read_text(encoding="utf-8")
         self.assertIn("ARM32 addresses", sync)
 
+    def test_internal_pthread_boundary_is_an_unauthorized_fork(self):
+        disposition = json.loads((ROOT / "tools/reference-lab/evidence/dalvik-internal-pthread-boundary-disposition/summary.json").read_text(encoding="utf-8"))
+        self.assertEqual(disposition["result"], "DECISION_FORK")
+        self.assertIsNone(disposition["selected"])
+        self.assertEqual(disposition["forks"], ["representation-split", "representation-bound"])
+        self.assertFalse(disposition["runtime_modified"])
+        self.assertFalse(disposition["locked_decision_written"])
+        contracts = json.loads((ROOT / "ci/governance/substrate-production-contracts.json").read_text(encoding="utf-8"))
+        self.assertEqual(contracts["contracts"], [])
+        crossing = contracts["crossing_closures"][0]
+        self.assertEqual(crossing["status"], "CROSSING_CLOSED")
+        self.assertEqual(crossing["edge"], "self-suspend on the thread suspend-count condition")
+        decisions = (ROOT / "docs/DECISIONS.md").read_text(encoding="utf-8")
+        self.assertNotIn("threadSuspendCountLock", decisions)
+
 
 if __name__ == "__main__":
     unittest.main()
