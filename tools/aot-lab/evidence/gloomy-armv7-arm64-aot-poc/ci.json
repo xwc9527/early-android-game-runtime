@@ -20,7 +20,7 @@
     "aot_blocks.c",
     "differential.json"
   ],
-  "artifact_only": [
+  "previously_artifact_only": [
     "interpreter-trace.txt",
     "interpreter-hosts.txt",
     "interpreter-result.json",
@@ -28,5 +28,11 @@
     "simulator-macho.txt",
     "iphoneos-link.txt",
     "ci-log.txt"
-  ]
+  ],
+  "original_artifact_imported": "ci-artifact-10928445760.zip",
+  "original_artifact_sha256": "a46cc2770606e6f772031a8fafeae9d39a89a05992de04e484228d4dc81e00c8",
+  "original_artifact_members": "artifact-contents.json",
+  "recomputed_differential_pass": true,
+  "regenerated_aot_code_byte_equal": true,
+  "regenerated_translation_manifest_byte_equal": true
 }

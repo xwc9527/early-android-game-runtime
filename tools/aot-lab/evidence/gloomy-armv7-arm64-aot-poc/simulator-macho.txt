@@ -1,0 +1,15 @@
+SIMULATOR_OBJECT
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/build/obj/aot_blocks.o:
+Mach header
+      magic  cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
+MH_MAGIC_64    ARM64        ALL  0x00      OBJECT     5        536 SUBSECTIONS_VIA_SYMBOLS
+SIMULATOR_SIGNATURE
+Executable=/Users/runner/work/early-android-game-runtime/early-android-game-runtime/build/AGRSimulator.app/AGRSimulator
+Identifier=dev.agr.simulator
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20400 size=3850 flags=0x2(adhoc) hashes=114+3 location=embedded
+Signature=adhoc
+Info.plist entries=9
+TeamIdentifier=not set
+Sealed Resources version=2 rules=10 files=18
+Internal requirements count=0 size=12

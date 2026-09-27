@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "artifact_id": 10928445760,
+  "run_id": 36308503927,
+  "tested_commit": "eb804c6196b20dafb636386892b163ecd24c579d",
+  "artifact_sha256": "a46cc2770606e6f772031a8fafeae9d39a89a05992de04e484228d4dc81e00c8",
+  "artifact_bytes": 29522,
+  "members": [
+    {
+      "name": "aot-checkpoints.txt",
+      "bytes": 4368,
+      "sha256": "de3250053a59ef74e2ecac10783fd6470216736be7c3969145bd0a348f0cb78b"
+    },
+    {
+      "name": "aot-hosts.txt",
+      "bytes": 822,
+      "sha256": "34da7d640b8b1e9081c34233fabe77890a4db3ec8a412c69f5c25cdba9bd6cf4"
+    },
+    {
+      "name": "aot-result.json",
+      "bytes": 331,
+      "sha256": "211d3e0087ba0fef576cbf64b7960545624588fda698abf778022eda726d523b"
+    },
+    {
+      "name": "aot_blocks.c",
+      "bytes": 15674,
+      "sha256": "1d58975e0602060959c40295e13d57cff570ef02e3a898ec47adb8a985513259"
+    },
+    {
+      "name": "ci-log.txt",
+      "bytes": 168490,
+      "sha256": "b99f1d12e4c8d4b931b99ec88370d2d32d66e447eaeb0da7b3042ccd9bab46f4"
+    },
+    {
+      "name": "differential.json",
+      "bytes": 844,
+      "sha256": "dd057cc63144dac12eed549934e48c8ff3e803ff2c8a48f64c2a50a27277a7ba"
+    },
+    {
+      "name": "input-identity.json",
+      "bytes": 254,
+      "sha256": "a513be7fbec27dbfadf0aaf4b86f0e9dc1f494fb3f893937b9cf0ca4590bd0ad"
+    },
+    {
+      "name": "interpreter-hosts.txt",
+      "bytes": 822,
+      "sha256": "34da7d640b8b1e9081c34233fabe77890a4db3ec8a412c69f5c25cdba9bd6cf4"
+    },
+    {
+      "name": "interpreter-result.json",
+      "bytes": 335,
+      "sha256": "c913cb0a57113f4369b4583fd83081139464df28b1c448e340453d7be2cdba3d"
+    },
+    {
+      "name": "interpreter-trace.txt",
+      "bytes": 26534,
+      "sha256": "12eaddf3c382326b7abe9fe8630ffdf4df4dccc7dde45ea96175a1fef7bfaa73"
+    },
+    {
+      "name": "iphoneos-link.txt",
+      "bytes": 447,
+      "sha256": "77072b8084825632ff4b4792a47cde528eedd7fc653f5def22f55ac164f2ab20"
+    },
+    {
+      "name": "no-jit.json",
+      "bytes": 354,
+      "sha256": "1d2b9e05b18ecdea04d01a1e7db086c024adf10d37d76c654c6334fbaa2ab493"
+    },
+    {
+      "name": "simulator-macho.txt",
+      "bytes": 730,
+      "sha256": "85cc1f1834db71969f3be67b85c37dbe25b11a2dfb405297470639b1daaf8d6f"
+    },
+    {
+      "name": "translation-manifest.json",
+      "bytes": 2071,
+      "sha256": "e2b501a2ecdc3e77caadb47fb4370643789847a738b9a9f2f71241bd3faf2d02"
+    }
+  ]
+}

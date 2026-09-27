@@ -1,0 +1,1461 @@
+{
+  "schema_version": 1,
+  "source_elf_sha256": "010baa4964cd7dbcf1ba038428ab4d6afc13ffd0a180b447be07b8f088f9ba9d",
+  "symbol_address": "0x0008174d",
+  "symbol_size": 296,
+  "instruction_set": "Thumb",
+  "decoded_instruction_count": 126,
+  "supported_encoding_count": 66,
+  "complete_symbol_disassembly": true,
+  "rows": [
+    {
+      "pc": "0x0008174c",
+      "bytes": "2de9f043",
+      "mnemonic": "push.w",
+      "operands": "{r4, r5, r6, r7, r8, sb, lr}",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "stmdb_sp",
+        17392
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081750",
+      "bytes": "1746",
+      "mnemonic": "mov",
+      "operands": "r7, r2",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        7,
+        2
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081752",
+      "bytes": "0368",
+      "mnemonic": "ldr",
+      "operands": "r3, [r0]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        0,
+        0,
+        true,
+        530258
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081754",
+      "bytes": "89b0",
+      "mnemonic": "sub",
+      "operands": "sp, #0x24",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81754 thumb=True len=2 insn=0xb089"
+    },
+    {
+      "pc": "0x00081756",
+      "bytes": "474a",
+      "mnemonic": "ldr",
+      "operands": "r2, [pc, #0x11c]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81756 thumb=True len=2 insn=0x4a47"
+    },
+    {
+      "pc": "0x00081758",
+      "bytes": "0446",
+      "mnemonic": "mov",
+      "operands": "r4, r0",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        4,
+        0
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008175a",
+      "bytes": "8946",
+      "mnemonic": "mov",
+      "operands": "sb, r1",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        9,
+        1
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008175c",
+      "bytes": "7a44",
+      "mnemonic": "add",
+      "operands": "r2, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8175c thumb=True len=2 insn=0x447a"
+    },
+    {
+      "pc": "0x0008175e",
+      "bytes": "5a61",
+      "mnemonic": "str",
+      "operands": "r2, [r3, #0x14]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8175e thumb=True len=2 insn=0x615a"
+    },
+    {
+      "pc": "0x00081760",
+      "bytes": "0368",
+      "mnemonic": "ldr",
+      "operands": "r3, [r0]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        0,
+        0,
+        true,
+        530272
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081762",
+      "bytes": "454a",
+      "mnemonic": "ldr",
+      "operands": "r2, [pc, #0x114]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81762 thumb=True len=2 insn=0x4a45"
+    },
+    {
+      "pc": "0x00081764",
+      "bytes": "7a44",
+      "mnemonic": "add",
+      "operands": "r2, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81764 thumb=True len=2 insn=0x447a"
+    },
+    {
+      "pc": "0x00081766",
+      "bytes": "1a60",
+      "mnemonic": "str",
+      "operands": "r2, [r3]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81766 thumb=True len=2 insn=0x601a"
+    },
+    {
+      "pc": "0x00081768",
+      "bytes": "0368",
+      "mnemonic": "ldr",
+      "operands": "r3, [r0]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        0,
+        0,
+        true,
+        530280
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008176a",
+      "bytes": "444a",
+      "mnemonic": "ldr",
+      "operands": "r2, [pc, #0x110]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8176a thumb=True len=2 insn=0x4a44"
+    },
+    {
+      "pc": "0x0008176c",
+      "bytes": "7a44",
+      "mnemonic": "add",
+      "operands": "r2, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8176c thumb=True len=2 insn=0x447a"
+    },
+    {
+      "pc": "0x0008176e",
+      "bytes": "5a60",
+      "mnemonic": "str",
+      "operands": "r2, [r3, #4]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8176e thumb=True len=2 insn=0x605a"
+    },
+    {
+      "pc": "0x00081770",
+      "bytes": "0368",
+      "mnemonic": "ldr",
+      "operands": "r3, [r0]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        0,
+        0,
+        true,
+        530288
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081772",
+      "bytes": "434a",
+      "mnemonic": "ldr",
+      "operands": "r2, [pc, #0x10c]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81772 thumb=True len=2 insn=0x4a43"
+    },
+    {
+      "pc": "0x00081774",
+      "bytes": "7a44",
+      "mnemonic": "add",
+      "operands": "r2, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81774 thumb=True len=2 insn=0x447a"
+    },
+    {
+      "pc": "0x00081776",
+      "bytes": "9a60",
+      "mnemonic": "str",
+      "operands": "r2, [r3, #8]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81776 thumb=True len=2 insn=0x609a"
+    },
+    {
+      "pc": "0x00081778",
+      "bytes": "0368",
+      "mnemonic": "ldr",
+      "operands": "r3, [r0]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        0,
+        0,
+        true,
+        530296
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008177a",
+      "bytes": "424a",
+      "mnemonic": "ldr",
+      "operands": "r2, [pc, #0x108]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8177a thumb=True len=2 insn=0x4a42"
+    },
+    {
+      "pc": "0x0008177c",
+      "bytes": "7a44",
+      "mnemonic": "add",
+      "operands": "r2, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8177c thumb=True len=2 insn=0x447a"
+    },
+    {
+      "pc": "0x0008177e",
+      "bytes": "da60",
+      "mnemonic": "str",
+      "operands": "r2, [r3, #0xc]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8177e thumb=True len=2 insn=0x60da"
+    },
+    {
+      "pc": "0x00081780",
+      "bytes": "0368",
+      "mnemonic": "ldr",
+      "operands": "r3, [r0]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        0,
+        0,
+        true,
+        530304
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081782",
+      "bytes": "414a",
+      "mnemonic": "ldr",
+      "operands": "r2, [pc, #0x104]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81782 thumb=True len=2 insn=0x4a41"
+    },
+    {
+      "pc": "0x00081784",
+      "bytes": "7a44",
+      "mnemonic": "add",
+      "operands": "r2, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81784 thumb=True len=2 insn=0x447a"
+    },
+    {
+      "pc": "0x00081786",
+      "bytes": "1a61",
+      "mnemonic": "str",
+      "operands": "r2, [r3, #0x10]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81786 thumb=True len=2 insn=0x611a"
+    },
+    {
+      "pc": "0x00081788",
+      "bytes": "0368",
+      "mnemonic": "ldr",
+      "operands": "r3, [r0]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        0,
+        0,
+        true,
+        530312
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008178a",
+      "bytes": "404a",
+      "mnemonic": "ldr",
+      "operands": "r2, [pc, #0x100]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8178a thumb=True len=2 insn=0x4a40"
+    },
+    {
+      "pc": "0x0008178c",
+      "bytes": "7a44",
+      "mnemonic": "add",
+      "operands": "r2, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8178c thumb=True len=2 insn=0x447a"
+    },
+    {
+      "pc": "0x0008178e",
+      "bytes": "9a63",
+      "mnemonic": "str",
+      "operands": "r2, [r3, #0x38]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8178e thumb=True len=2 insn=0x639a"
+    },
+    {
+      "pc": "0x00081790",
+      "bytes": "0368",
+      "mnemonic": "ldr",
+      "operands": "r3, [r0]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        0,
+        0,
+        true,
+        530320
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081792",
+      "bytes": "3f4a",
+      "mnemonic": "ldr",
+      "operands": "r2, [pc, #0xfc]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81792 thumb=True len=2 insn=0x4a3f"
+    },
+    {
+      "pc": "0x00081794",
+      "bytes": "7a44",
+      "mnemonic": "add",
+      "operands": "r2, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81794 thumb=True len=2 insn=0x447a"
+    },
+    {
+      "pc": "0x00081796",
+      "bytes": "da63",
+      "mnemonic": "str",
+      "operands": "r2, [r3, #0x3c]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81796 thumb=True len=2 insn=0x63da"
+    },
+    {
+      "pc": "0x00081798",
+      "bytes": "0368",
+      "mnemonic": "ldr",
+      "operands": "r3, [r0]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        0,
+        0,
+        true,
+        530328
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008179a",
+      "bytes": "3e4a",
+      "mnemonic": "ldr",
+      "operands": "r2, [pc, #0xf8]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8179a thumb=True len=2 insn=0x4a3e"
+    },
+    {
+      "pc": "0x0008179c",
+      "bytes": "7a44",
+      "mnemonic": "add",
+      "operands": "r2, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8179c thumb=True len=2 insn=0x447a"
+    },
+    {
+      "pc": "0x0008179e",
+      "bytes": "9a61",
+      "mnemonic": "str",
+      "operands": "r2, [r3, #0x18]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8179e thumb=True len=2 insn=0x619a"
+    },
+    {
+      "pc": "0x000817a0",
+      "bytes": "0368",
+      "mnemonic": "ldr",
+      "operands": "r3, [r0]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        0,
+        0,
+        true,
+        530336
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817a2",
+      "bytes": "3d4a",
+      "mnemonic": "ldr",
+      "operands": "r2, [pc, #0xf4]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817a2 thumb=True len=2 insn=0x4a3d"
+    },
+    {
+      "pc": "0x000817a4",
+      "bytes": "7a44",
+      "mnemonic": "add",
+      "operands": "r2, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817a4 thumb=True len=2 insn=0x447a"
+    },
+    {
+      "pc": "0x000817a6",
+      "bytes": "da61",
+      "mnemonic": "str",
+      "operands": "r2, [r3, #0x1c]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817a6 thumb=True len=2 insn=0x61da"
+    },
+    {
+      "pc": "0x000817a8",
+      "bytes": "0368",
+      "mnemonic": "ldr",
+      "operands": "r3, [r0]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        0,
+        0,
+        true,
+        530344
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817aa",
+      "bytes": "3c4a",
+      "mnemonic": "ldr",
+      "operands": "r2, [pc, #0xf0]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817aa thumb=True len=2 insn=0x4a3c"
+    },
+    {
+      "pc": "0x000817ac",
+      "bytes": "7a44",
+      "mnemonic": "add",
+      "operands": "r2, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817ac thumb=True len=2 insn=0x447a"
+    },
+    {
+      "pc": "0x000817ae",
+      "bytes": "9a62",
+      "mnemonic": "str",
+      "operands": "r2, [r3, #0x28]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817ae thumb=True len=2 insn=0x629a"
+    },
+    {
+      "pc": "0x000817b0",
+      "bytes": "0368",
+      "mnemonic": "ldr",
+      "operands": "r3, [r0]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        0,
+        0,
+        true,
+        530352
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817b2",
+      "bytes": "3b4a",
+      "mnemonic": "ldr",
+      "operands": "r2, [pc, #0xec]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817b2 thumb=True len=2 insn=0x4a3b"
+    },
+    {
+      "pc": "0x000817b4",
+      "bytes": "7a44",
+      "mnemonic": "add",
+      "operands": "r2, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817b4 thumb=True len=2 insn=0x447a"
+    },
+    {
+      "pc": "0x000817b6",
+      "bytes": "da62",
+      "mnemonic": "str",
+      "operands": "r2, [r3, #0x2c]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817b6 thumb=True len=2 insn=0x62da"
+    },
+    {
+      "pc": "0x000817b8",
+      "bytes": "0368",
+      "mnemonic": "ldr",
+      "operands": "r3, [r0]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        0,
+        0,
+        true,
+        530360
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817ba",
+      "bytes": "9420",
+      "mnemonic": "movs",
+      "operands": "r0, #0x94",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "movs_imm",
+        0,
+        148
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817bc",
+      "bytes": "394a",
+      "mnemonic": "ldr",
+      "operands": "r2, [pc, #0xe4]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817bc thumb=True len=2 insn=0x4a39"
+    },
+    {
+      "pc": "0x000817be",
+      "bytes": "7a44",
+      "mnemonic": "add",
+      "operands": "r2, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817be thumb=True len=2 insn=0x447a"
+    },
+    {
+      "pc": "0x000817c0",
+      "bytes": "1a63",
+      "mnemonic": "str",
+      "operands": "r2, [r3, #0x30]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817c0 thumb=True len=2 insn=0x631a"
+    },
+    {
+      "pc": "0x000817c2",
+      "bytes": "b5f752eb",
+      "mnemonic": "blx",
+      "operands": "#0x36e68",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        224872,
+        530374
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817c6",
+      "bytes": "0021",
+      "mnemonic": "movs",
+      "operands": "r1, #0",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "movs_imm",
+        1,
+        0
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817c8",
+      "bytes": "9422",
+      "mnemonic": "movs",
+      "operands": "r2, #0x94",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "movs_imm",
+        2,
+        148
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817ca",
+      "bytes": "0546",
+      "mnemonic": "mov",
+      "operands": "r5, r0",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        5,
+        0
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817cc",
+      "bytes": "05f14006",
+      "mnemonic": "add.w",
+      "operands": "r6, r5, #0x40",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817cc thumb=True len=4 insn=0xf1050640"
+    },
+    {
+      "pc": "0x000817d0",
+      "bytes": "05f14408",
+      "mnemonic": "add.w",
+      "operands": "r8, r5, #0x44",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817d0 thumb=True len=4 insn=0xf1050844"
+    },
+    {
+      "pc": "0x000817d4",
+      "bytes": "b5f76ee9",
+      "mnemonic": "blx",
+      "operands": "#0x36ab4",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        223924,
+        530392
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817d8",
+      "bytes": "0021",
+      "mnemonic": "movs",
+      "operands": "r1, #0",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "movs_imm",
+        1,
+        0
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817da",
+      "bytes": "ec60",
+      "mnemonic": "str",
+      "operands": "r4, [r5, #0xc]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817da thumb=True len=2 insn=0x60ec"
+    },
+    {
+      "pc": "0x000817dc",
+      "bytes": "3046",
+      "mnemonic": "mov",
+      "operands": "r0, r6",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        0,
+        6
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817de",
+      "bytes": "b5f7e6eb",
+      "mnemonic": "blx",
+      "operands": "#0x36fac",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        225196,
+        530402
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817e2",
+      "bytes": "4046",
+      "mnemonic": "mov",
+      "operands": "r0, r8",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        0,
+        8
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817e4",
+      "bytes": "0021",
+      "mnemonic": "movs",
+      "operands": "r1, #0",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "movs_imm",
+        1,
+        0
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817e6",
+      "bytes": "b5f7e8eb",
+      "mnemonic": "blx",
+      "operands": "#0x36fb8",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        225208,
+        530410
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817ea",
+      "bytes": "b9f1000f",
+      "mnemonic": "cmp.w",
+      "operands": "sb, #0",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817ea thumb=True len=4 insn=0xf1b90f00"
+    },
+    {
+      "pc": "0x000817ee",
+      "bytes": "08d0",
+      "mnemonic": "beq",
+      "operands": "#0x81802",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817ee thumb=True len=2 insn=0xd008"
+    },
+    {
+      "pc": "0x000817f0",
+      "bytes": "3846",
+      "mnemonic": "mov",
+      "operands": "r0, r7",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        0,
+        7
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817f2",
+      "bytes": "b5f73aeb",
+      "mnemonic": "blx",
+      "operands": "#0x36e68",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        224872,
+        530422
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817f6",
+      "bytes": "af61",
+      "mnemonic": "str",
+      "operands": "r7, [r5, #0x18]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817f6 thumb=True len=2 insn=0x61af"
+    },
+    {
+      "pc": "0x000817f8",
+      "bytes": "4946",
+      "mnemonic": "mov",
+      "operands": "r1, sb",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        1,
+        9
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817fa",
+      "bytes": "3a46",
+      "mnemonic": "mov",
+      "operands": "r2, r7",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        2,
+        7
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x000817fc",
+      "bytes": "6861",
+      "mnemonic": "str",
+      "operands": "r0, [r5, #0x14]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x817fc thumb=True len=2 insn=0x6168"
+    },
+    {
+      "pc": "0x000817fe",
+      "bytes": "b5f796e9",
+      "mnemonic": "blx",
+      "operands": "#0x36b2c",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        224044,
+        530434
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081802",
+      "bytes": "6846",
+      "mnemonic": "mov",
+      "operands": "r0, sp",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        0,
+        13
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081804",
+      "bytes": "b5f7deeb",
+      "mnemonic": "blx",
+      "operands": "#0x36fc4",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        225220,
+        530440
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081808",
+      "bytes": "70b1",
+      "mnemonic": "cbz",
+      "operands": "r0, #0x81828",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "cbz",
+        0,
+        530472,
+        530442,
+        false
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008180a",
+      "bytes": "b5f76aeb",
+      "mnemonic": "blx",
+      "operands": "#0x36ee0",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        224992,
+        530446
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008180e",
+      "bytes": "0025",
+      "mnemonic": "movs",
+      "operands": "r5, #0",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "movs_imm",
+        5,
+        0
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081810",
+      "bytes": "0068",
+      "mnemonic": "ldr",
+      "operands": "r0, [r0]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        0,
+        0,
+        0,
+        true,
+        530448
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081812",
+      "bytes": "b5f76ceb",
+      "mnemonic": "blx",
+      "operands": "#0x36eec",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        225004,
+        530454
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081816",
+      "bytes": "2449",
+      "mnemonic": "ldr",
+      "operands": "r1, [pc, #0x90]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81816 thumb=True len=2 insn=0x4924"
+    },
+    {
+      "pc": "0x00081818",
+      "bytes": "244a",
+      "mnemonic": "ldr",
+      "operands": "r2, [pc, #0x90]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81818 thumb=True len=2 insn=0x4a24"
+    },
+    {
+      "pc": "0x0008181a",
+      "bytes": "7944",
+      "mnemonic": "add",
+      "operands": "r1, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8181a thumb=True len=2 insn=0x4479"
+    },
+    {
+      "pc": "0x0008181c",
+      "bytes": "7a44",
+      "mnemonic": "add",
+      "operands": "r2, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8181c thumb=True len=2 insn=0x447a"
+    },
+    {
+      "pc": "0x0008181e",
+      "bytes": "0346",
+      "mnemonic": "mov",
+      "operands": "r3, r0",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        3,
+        0
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081820",
+      "bytes": "0620",
+      "mnemonic": "movs",
+      "operands": "r0, #6",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "movs_imm",
+        0,
+        6
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081822",
+      "bytes": "b5f73ce9",
+      "mnemonic": "blx",
+      "operands": "#0x36a9c",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        223900,
+        530470
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081826",
+      "bytes": "20e0",
+      "mnemonic": "b",
+      "operands": "#0x8186a",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "b",
+        530538
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081828",
+      "bytes": "009b",
+      "mnemonic": "ldr",
+      "operands": "r3, [sp]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        13,
+        0,
+        true,
+        530472
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008182a",
+      "bytes": "02af",
+      "mnemonic": "add",
+      "operands": "r7, sp, #8",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8182a thumb=True len=2 insn=0xaf02"
+    },
+    {
+      "pc": "0x0008182c",
+      "bytes": "3846",
+      "mnemonic": "mov",
+      "operands": "r0, r7",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        0,
+        7
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008182e",
+      "bytes": "ab64",
+      "mnemonic": "str",
+      "operands": "r3, [r5, #0x48]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8182e thumb=True len=2 insn=0x64ab"
+    },
+    {
+      "pc": "0x00081830",
+      "bytes": "019b",
+      "mnemonic": "ldr",
+      "operands": "r3, [sp, #4]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        13,
+        4,
+        true,
+        530480
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081832",
+      "bytes": "eb64",
+      "mnemonic": "str",
+      "operands": "r3, [r5, #0x4c]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81832 thumb=True len=2 insn=0x64eb"
+    },
+    {
+      "pc": "0x00081834",
+      "bytes": "b5f7cceb",
+      "mnemonic": "blx",
+      "operands": "#0x36fd0",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        225232,
+        530488
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081838",
+      "bytes": "0121",
+      "mnemonic": "movs",
+      "operands": "r1, #1",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "movs_imm",
+        1,
+        1
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008183a",
+      "bytes": "3846",
+      "mnemonic": "mov",
+      "operands": "r0, r7",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        0,
+        7
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008183c",
+      "bytes": "b5f7ceeb",
+      "mnemonic": "blx",
+      "operands": "#0x36fdc",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        225244,
+        530496
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081840",
+      "bytes": "1b4a",
+      "mnemonic": "ldr",
+      "operands": "r2, [pc, #0x6c]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81840 thumb=True len=2 insn=0x4a1b"
+    },
+    {
+      "pc": "0x00081842",
+      "bytes": "05f15000",
+      "mnemonic": "add.w",
+      "operands": "r0, r5, #0x50",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81842 thumb=True len=4 insn=0xf1050050"
+    },
+    {
+      "pc": "0x00081846",
+      "bytes": "3946",
+      "mnemonic": "mov",
+      "operands": "r1, r7",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        1,
+        7
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081848",
+      "bytes": "7a44",
+      "mnemonic": "add",
+      "operands": "r2, pc",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81848 thumb=True len=2 insn=0x447a"
+    },
+    {
+      "pc": "0x0008184a",
+      "bytes": "2b46",
+      "mnemonic": "mov",
+      "operands": "r3, r5",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        3,
+        5
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008184c",
+      "bytes": "b5f7cceb",
+      "mnemonic": "blx",
+      "operands": "#0x36fe8",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        225256,
+        530512
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081850",
+      "bytes": "3046",
+      "mnemonic": "mov",
+      "operands": "r0, r6",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        0,
+        6
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081852",
+      "bytes": "b5f722eb",
+      "mnemonic": "blx",
+      "operands": "#0x36e98",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        224920,
+        530518
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081856",
+      "bytes": "eb6e",
+      "mnemonic": "ldr",
+      "operands": "r3, [r5, #0x6c]",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldr_imm",
+        3,
+        5,
+        108,
+        true,
+        530518
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081858",
+      "bytes": "23b9",
+      "mnemonic": "cbnz",
+      "operands": "r3, #0x81864",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "cbz",
+        3,
+        530532,
+        530522,
+        true
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008185a",
+      "bytes": "4046",
+      "mnemonic": "mov",
+      "operands": "r0, r8",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        0,
+        8
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008185c",
+      "bytes": "3146",
+      "mnemonic": "mov",
+      "operands": "r1, r6",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        1,
+        6
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008185e",
+      "bytes": "b5f74ceb",
+      "mnemonic": "blx",
+      "operands": "#0x36ef8",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        225016,
+        530530
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081862",
+      "bytes": "f8e7",
+      "mnemonic": "b",
+      "operands": "#0x81856",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "b",
+        530518
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081864",
+      "bytes": "3046",
+      "mnemonic": "mov",
+      "operands": "r0, r6",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "mov_reg",
+        0,
+        6
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081866",
+      "bytes": "b5f71eeb",
+      "mnemonic": "blx",
+      "operands": "#0x36ea4",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "blx_imm",
+        224932,
+        530538
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x0008186a",
+      "bytes": "e561",
+      "mnemonic": "str",
+      "operands": "r5, [r4, #0x1c]",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8186a thumb=True len=2 insn=0x61e5"
+    },
+    {
+      "pc": "0x0008186c",
+      "bytes": "09b0",
+      "mnemonic": "add",
+      "operands": "sp, #0x24",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x8186c thumb=True len=2 insn=0xb009"
+    },
+    {
+      "pc": "0x0008186e",
+      "bytes": "bde8f083",
+      "mnemonic": "pop.w",
+      "operands": "{r4, r5, r6, r7, r8, sb, pc}",
+      "aot_decoder_supported": true,
+      "aot_operation": [
+        "ldmia_sp",
+        33776
+      ],
+      "decoder_error": null
+    },
+    {
+      "pc": "0x00081872",
+      "bytes": "00bf",
+      "mnemonic": "nop",
+      "operands": "",
+      "aot_decoder_supported": false,
+      "aot_operation": null,
+      "decoder_error": "unsupported encoding pc=0x81872 thumb=True len=2 insn=0xbf00"
+    }
+  ]
+}

@@ -41,9 +41,13 @@ guest time and 0.151 ms AOT guest time, but the wall interval is dominated by
 host/import boundaries. The original CI artifact for run `36308503927`,
 artifact `10928445760`, is reported as valid by the public Actions API;
 `gloomy-armv7-arm64-aot-poc/artifact-metadata.json` binds its digest and
-tested commit. The repository still lacks several original CI files listed
-in `gloomy-armv7-arm64-aot-poc/ci.json`. Until those bytes are recovered,
-the partial Gloomy repository evidence is not a complete route authority.
+tested commit. The complete 29,522-byte original ZIP is now in the repository
+as `ci-artifact-10928445760.zip`, with all 14 original members extracted.
+Its SHA-256 matches the public API digest. The differential was recomputed
+from the original interpreter trace and AOT outputs; the generated C and
+translation manifest match the original artifact byte-for-byte. This closes
+the Gloomy provenance gap, but its guest workload remains only 153 executed
+instructions and does not decide the core CPU route.
 
 The current translator (`tools/aot-lab/translate.py`) takes an interpreter
 instruction trace as its input and emits only the PCs decoded in that trace.

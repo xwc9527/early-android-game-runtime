@@ -1,0 +1,152 @@
+
+/tmp/kungfoo-armv7.so:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+0008174c <ANativeActivity_onCreate>:
+   8174c:	e92d 43f0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, lr}
+   81750:	4617      	mov	r7, r2
+   81752:	6803      	ldr	r3, [r0, #0]
+   81754:	b089      	sub	sp, #36	; 0x24
+   81756:	4a47      	ldr	r2, [pc, #284]	; (81874 <ANativeActivity_onCreate+0x128>)
+   81758:	4604      	mov	r4, r0
+   8175a:	4689      	mov	r9, r1
+   8175c:	447a      	add	r2, pc
+   8175e:	615a      	str	r2, [r3, #20]
+   81760:	6803      	ldr	r3, [r0, #0]
+   81762:	4a45      	ldr	r2, [pc, #276]	; (81878 <ANativeActivity_onCreate+0x12c>)
+   81764:	447a      	add	r2, pc
+   81766:	601a      	str	r2, [r3, #0]
+   81768:	6803      	ldr	r3, [r0, #0]
+   8176a:	4a44      	ldr	r2, [pc, #272]	; (8187c <ANativeActivity_onCreate+0x130>)
+   8176c:	447a      	add	r2, pc
+   8176e:	605a      	str	r2, [r3, #4]
+   81770:	6803      	ldr	r3, [r0, #0]
+   81772:	4a43      	ldr	r2, [pc, #268]	; (81880 <ANativeActivity_onCreate+0x134>)
+   81774:	447a      	add	r2, pc
+   81776:	609a      	str	r2, [r3, #8]
+   81778:	6803      	ldr	r3, [r0, #0]
+   8177a:	4a42      	ldr	r2, [pc, #264]	; (81884 <ANativeActivity_onCreate+0x138>)
+   8177c:	447a      	add	r2, pc
+   8177e:	60da      	str	r2, [r3, #12]
+   81780:	6803      	ldr	r3, [r0, #0]
+   81782:	4a41      	ldr	r2, [pc, #260]	; (81888 <ANativeActivity_onCreate+0x13c>)
+   81784:	447a      	add	r2, pc
+   81786:	611a      	str	r2, [r3, #16]
+   81788:	6803      	ldr	r3, [r0, #0]
+   8178a:	4a40      	ldr	r2, [pc, #256]	; (8188c <ANativeActivity_onCreate+0x140>)
+   8178c:	447a      	add	r2, pc
+   8178e:	639a      	str	r2, [r3, #56]	; 0x38
+   81790:	6803      	ldr	r3, [r0, #0]
+   81792:	4a3f      	ldr	r2, [pc, #252]	; (81890 <ANativeActivity_onCreate+0x144>)
+   81794:	447a      	add	r2, pc
+   81796:	63da      	str	r2, [r3, #60]	; 0x3c
+   81798:	6803      	ldr	r3, [r0, #0]
+   8179a:	4a3e      	ldr	r2, [pc, #248]	; (81894 <ANativeActivity_onCreate+0x148>)
+   8179c:	447a      	add	r2, pc
+   8179e:	619a      	str	r2, [r3, #24]
+   817a0:	6803      	ldr	r3, [r0, #0]
+   817a2:	4a3d      	ldr	r2, [pc, #244]	; (81898 <ANativeActivity_onCreate+0x14c>)
+   817a4:	447a      	add	r2, pc
+   817a6:	61da      	str	r2, [r3, #28]
+   817a8:	6803      	ldr	r3, [r0, #0]
+   817aa:	4a3c      	ldr	r2, [pc, #240]	; (8189c <ANativeActivity_onCreate+0x150>)
+   817ac:	447a      	add	r2, pc
+   817ae:	629a      	str	r2, [r3, #40]	; 0x28
+   817b0:	6803      	ldr	r3, [r0, #0]
+   817b2:	4a3b      	ldr	r2, [pc, #236]	; (818a0 <ANativeActivity_onCreate+0x154>)
+   817b4:	447a      	add	r2, pc
+   817b6:	62da      	str	r2, [r3, #44]	; 0x2c
+   817b8:	6803      	ldr	r3, [r0, #0]
+   817ba:	2094      	movs	r0, #148	; 0x94
+   817bc:	4a39      	ldr	r2, [pc, #228]	; (818a4 <ANativeActivity_onCreate+0x158>)
+   817be:	447a      	add	r2, pc
+   817c0:	631a      	str	r2, [r3, #48]	; 0x30
+   817c2:	f7b5 eb52 	blx	36e68 <malloc@plt>
+   817c6:	2100      	movs	r1, #0
+   817c8:	2294      	movs	r2, #148	; 0x94
+   817ca:	4605      	mov	r5, r0
+   817cc:	f105 0640 	add.w	r6, r5, #64	; 0x40
+   817d0:	f105 0844 	add.w	r8, r5, #68	; 0x44
+   817d4:	f7b5 e96e 	blx	36ab4 <memset@plt>
+   817d8:	2100      	movs	r1, #0
+   817da:	60ec      	str	r4, [r5, #12]
+   817dc:	4630      	mov	r0, r6
+   817de:	f7b5 ebe6 	blx	36fac <pthread_mutex_init@plt>
+   817e2:	4640      	mov	r0, r8
+   817e4:	2100      	movs	r1, #0
+   817e6:	f7b5 ebe8 	blx	36fb8 <pthread_cond_init@plt>
+   817ea:	f1b9 0f00 	cmp.w	r9, #0
+   817ee:	d008      	beq.n	81802 <ANativeActivity_onCreate+0xb6>
+   817f0:	4638      	mov	r0, r7
+   817f2:	f7b5 eb3a 	blx	36e68 <malloc@plt>
+   817f6:	61af      	str	r7, [r5, #24]
+   817f8:	4649      	mov	r1, r9
+   817fa:	463a      	mov	r2, r7
+   817fc:	6168      	str	r0, [r5, #20]
+   817fe:	f7b5 e996 	blx	36b2c <memcpy@plt>
+   81802:	4668      	mov	r0, sp
+   81804:	f7b5 ebde 	blx	36fc4 <pipe@plt>
+   81808:	b170      	cbz	r0, 81828 <ANativeActivity_onCreate+0xdc>
+   8180a:	f7b5 eb6a 	blx	36ee0 <__errno@plt>
+   8180e:	2500      	movs	r5, #0
+   81810:	6800      	ldr	r0, [r0, #0]
+   81812:	f7b5 eb6c 	blx	36eec <strerror@plt>
+   81816:	4924      	ldr	r1, [pc, #144]	; (818a8 <ANativeActivity_onCreate+0x15c>)
+   81818:	4a24      	ldr	r2, [pc, #144]	; (818ac <ANativeActivity_onCreate+0x160>)
+   8181a:	4479      	add	r1, pc
+   8181c:	447a      	add	r2, pc
+   8181e:	4603      	mov	r3, r0
+   81820:	2006      	movs	r0, #6
+   81822:	f7b5 e93c 	blx	36a9c <__android_log_print@plt>
+   81826:	e020      	b.n	8186a <ANativeActivity_onCreate+0x11e>
+   81828:	9b00      	ldr	r3, [sp, #0]
+   8182a:	af02      	add	r7, sp, #8
+   8182c:	4638      	mov	r0, r7
+   8182e:	64ab      	str	r3, [r5, #72]	; 0x48
+   81830:	9b01      	ldr	r3, [sp, #4]
+   81832:	64eb      	str	r3, [r5, #76]	; 0x4c
+   81834:	f7b5 ebcc 	blx	36fd0 <pthread_attr_init@plt>
+   81838:	2101      	movs	r1, #1
+   8183a:	4638      	mov	r0, r7
+   8183c:	f7b5 ebce 	blx	36fdc <pthread_attr_setdetachstate@plt>
+   81840:	4a1b      	ldr	r2, [pc, #108]	; (818b0 <ANativeActivity_onCreate+0x164>)
+   81842:	f105 0050 	add.w	r0, r5, #80	; 0x50
+   81846:	4639      	mov	r1, r7
+   81848:	447a      	add	r2, pc
+   8184a:	462b      	mov	r3, r5
+   8184c:	f7b5 ebcc 	blx	36fe8 <pthread_create@plt>
+   81850:	4630      	mov	r0, r6
+   81852:	f7b5 eb22 	blx	36e98 <pthread_mutex_lock@plt>
+   81856:	6eeb      	ldr	r3, [r5, #108]	; 0x6c
+   81858:	b923      	cbnz	r3, 81864 <ANativeActivity_onCreate+0x118>
+   8185a:	4640      	mov	r0, r8
+   8185c:	4631      	mov	r1, r6
+   8185e:	f7b5 eb4c 	blx	36ef8 <pthread_cond_wait@plt>
+   81862:	e7f8      	b.n	81856 <ANativeActivity_onCreate+0x10a>
+   81864:	4630      	mov	r0, r6
+   81866:	f7b5 eb1e 	blx	36ea4 <pthread_mutex_unlock@plt>
+   8186a:	61e5      	str	r5, [r4, #28]
+   8186c:	b009      	add	sp, #36	; 0x24
+   8186e:	e8bd 83f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, pc}
+   81872:	bf00      	nop
+   81874:	fd7f ffff 	ldc2l	15, cr15, [pc, #-1020]!	; 8147c <_ZN15b2ContactSolver27SolveTOIPositionConstraintsEii+0x634>
+   81878:	fd29 ffff 	stc2	15, cr15, [r9, #-1020]!	; 0xfffffc04
+   8187c:	fd19 ffff 	ldc2	15, cr15, [r9, #-1020]	; 0xfffffc04
+   81880:	fd21 ffff 	stc2	15, cr15, [r1, #-1020]!	; 0xfffffc04
+   81884:	fd01 ffff 	stc2	15, cr15, [r1, #-1020]	; 0xfffffc04
+   81888:	fcf1 ffff 	ldc2l	15, cr15, [r1], #1020	; 0x3fc
+   8188c:	fcab ffff 	stc2	15, cr15, [fp], #1020	; 0x3fc
+   81890:	fc9b ffff 	ldc2	15, cr15, [fp], {255}	; 0xff
+   81894:	fc85 ffff 	stc2	15, cr15, [r5], {255}	; 0xff
+   81898:	fc77 ffff 	ldc2l	15, cr15, [r7], #-1020	; 0xfffffc04
+   8189c:	fc67 ffff 	stc2l	15, cr15, [r7], #-1020	; 0xfffffc04
+   818a0:	fc0b ffff 	stc2	15, cr15, [fp], {255}	; 0xff
+   818a4:	fbf9 ffff 			; <UNDEFINED> instruction: 0xfbf9ffff
+   818a8:	e5da      	b.n	81460 <_ZN15b2ContactSolver27SolveTOIPositionConstraintsEii+0x618>
+   818aa:	0004      	movs	r4, r0
+   818ac:	e623      	b.n	814f6 <_ZN15b2ContactSolver27SolveTOIPositionConstraintsEii+0x6ae>
+   818ae:	0004      	movs	r4, r0
+   818b0:	fce5 ffff 	stc2l	15, cr15, [r5], #1020	; 0x3fc
+   818b4:	4b02      	ldr	r3, [pc, #8]	; (818c0 <ANativeActivity_onCreate+0x174>)

@@ -48,6 +48,15 @@ The raw `readelf -A` outputs show both ELF files declare ARMv7, Thumb-2,
 and VFPv3-D16. They do not show which floating point instructions execute in
 the tested paths.
 
+`nativeactivity-oncreate-objdump.txt` preserves the bounded original
+disassembly of the exported `ANativeActivity_onCreate` function, which the
+AGR regression calls. Executable instructions end at `0x81872`; the
+following bytes are a literal pool. `nativeactivity-oncreate-code-decoder.json`
+checks only the 296 executable bytes against the current AOT decoder:
+66 of 126 static instructions are recognized, and the first unsupported
+encoding is `sub sp, #36` at `0x81754`. Recognition is not a correctness or
+dynamic coverage claim. The ELF SHA-256 is checked by the inspection script.
+
 Reproduction uses `tools/reference-lab/probe_pair.py --arch arm` with the
 locked `tools/reference-lab/scenarios/kungfoo-landscape-gameplay.json`
 actions, variants CLEAN and TRACE, and
