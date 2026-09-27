@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "status": "AOT_PRIMARY_EVIDENCE_INSUFFICIENT",
+  "scope": "KungFoo real ARMv7 native loader stage; same AGR guest/runtime contract; trace-guided generic AOT plus interpreter fallback",
+  "identity": {
+    "github_run_id": 36341112962,
+    "artifact_id": 10939156553,
+    "tested_commit": "9534aca1aa87888b05cbb959062a932a05093711",
+    "tested_tree": "f9096fdf33017178246779a94e9718f057db7801",
+    "apk_sha256": "097ade628ad0837e312da4ca48afe0906eb99c3b992d497c7da33e2b2267eb22",
+    "artifact_zip_sha256": "1949a913bab916282d308b4ca621d873904b02aa50e481e4bd93da6a4d037f04"
+  },
+  "correctness": {
+    "semantic_pass": true,
+    "observable_fields_equal": true,
+    "host_sequence_equal": true,
+    "host_call_count": 603,
+    "checkpoint_count": 23660,
+    "checkpoint_mismatches": []
+  },
+  "execution": {
+    "guest_instructions": 29578,
+    "aot_instructions": 23660,
+    "aot_instruction_fraction": 0.7999188586111299,
+    "interpreter_instructions": 5918,
+    "interpreter_instruction_fraction": 0.20008114138887012,
+    "fallback_count": 5262,
+    "boundary_count": 656,
+    "unique_guest_pcs": 4147,
+    "generated_unique_blocks": 3533,
+    "generated_unique_fraction": 0.8519411622859898
+  },
+  "capability_reuse": {
+    "baseline_public_op_kinds": [
+      "add_imm",
+      "b",
+      "blx_imm",
+      "blx_reg",
+      "cbz",
+      "ldmia_sp",
+      "ldr_imm",
+      "ldr_wb",
+      "mov_reg",
+      "movs_imm",
+      "movw",
+      "stmdb_sp"
+    ],
+    "new_public_op_kinds": [
+      "add_high",
+      "add_reg",
+      "adds_imm",
+      "adds_reg",
+      "adjust_sp",
+      "b_cond",
+      "bl_imm",
+      "bx_reg",
+      "cmp_imm",
+      "cmp_reg",
+      "dmb",
+      "ldr_reg",
+      "lsls_imm",
+      "str_imm",
+      "str_reg"
+    ],
+    "baseline_decoded_dynamic_instructions": 11429,
+    "new_public_decoded_dynamic_instructions": 12818,
+    "unsupported_dynamic_instructions": 4675,
+    "svc_boundary_instructions": 656,
+    "game_specific_handling_detected": false,
+    "audit": "translator uses encoding/mode/architectural-state rules; no workload name, guest-PC equality, or guest-PC switch in translator/AOT runtime sources"
+  },
+  "performance": {
+    "paired_sample_count": 7,
+    "interpreter_guest_seconds_samples": [
+      0.013275048774719241,
+      0.007338912834167478,
+      0.0035440258865356428,
+      0.004705910697937009,
+      0.008397982185363778,
+      0.009030110275268554,
+      0.004112040191650391
+    ],
+    "aot_guest_seconds_samples": [
+      0.00796398114013673,
+      0.012651053718566889,
+      0.005979957992553719,
+      0.005628989250183115,
+      0.009521090675353998,
+      0.004973932998657236,
+      0.012726043434143065
+    ],
+    "interpreter_guest_seconds_median": 0.007338912834167478,
+    "aot_guest_seconds_median": 0.00796398114013673,
+    "median_ratio_interpreter_over_aot": 0.921513085607518,
+    "aggregate_interpreter_guest_seconds": 0.050404030845642094,
+    "aggregate_aot_guest_seconds": 0.05944504920959475,
+    "aggregate_ratio_interpreter_over_aot": 0.8479096495979789,
+    "interpretation": "ranges overlap, but neither median nor aggregate demonstrates AOT acceleration"
+  },
+  "offline_preparation": {
+    "translation_wall_seconds": 2.389138750000029,
+    "clang_compile_real_seconds": 3.12,
+    "generated_c_bytes": 1278210,
+    "generated_block_count": 3533
+  },
+  "route_judgment": {
+    "correctness_and_cross_workload_reuse_demonstrated": true,
+    "high_performance_demonstrated": false,
+    "supports_aot_as_primary_arm_execution_route": false,
+    "reason": "second real ARM workload is semantically identical but retains 20.01% interpreter execution and measures 0.922x median and 0.849x aggregate guest speed relative to interpreter",
+    "d011_modified": false,
+    "next_validation_requires": "a materially more optimized backend structure or a competing dynarec/JIT proof; current evidence cannot select AOT as most suitable"
+  }
+}

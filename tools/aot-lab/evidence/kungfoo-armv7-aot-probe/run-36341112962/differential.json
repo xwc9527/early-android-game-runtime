@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "workload": "kungfoo-armv7-native-loader-stage",
+  "semantic_pass": true,
+  "observable_fields_equal": {
+    "passed": true,
+    "mounted": true,
+    "elf_registered": true,
+    "dex_loaded": true,
+    "jni_onload_status": true,
+    "jni_version": true,
+    "native_so_bytes": true,
+    "error": true
+  },
+  "host_sequence_equal": true,
+  "performance_host_sequence_equal": true,
+  "host_call_count": 603,
+  "checkpoint_count": 23660,
+  "checkpoint_mismatches": [],
+  "interpreter_instructions": 29578,
+  "aot_instructions": 23660,
+  "aot_blocks": 23660,
+  "fallback_count": 5262,
+  "miss_pc": "000487f2",
+  "interpreter_seconds": 0.005424976348876953,
+  "aot_correctness_seconds": 0.07943499088287354,
+  "interpreter_boundary_seconds": 0.001138999999999991,
+  "aot_correctness_boundary_seconds": 0.03375400000000019,
+  "interpreter_guest_seconds": 0.004285976348876962,
+  "aot_correctness_guest_seconds": 0.04568099088287335,
+  "performance_sample_count": 7,
+  "interpreter_guest_seconds_samples": [
+    0.013275048774719241,
+    0.007338912834167478,
+    0.0035440258865356428,
+    0.004705910697937009,
+    0.008397982185363778,
+    0.009030110275268554,
+    0.004112040191650391
+  ],
+  "aot_performance_guest_seconds_samples": [
+    0.00796398114013673,
+    0.012651053718566889,
+    0.005979957992553719,
+    0.005628989250183115,
+    0.009521090675353998,
+    0.004973932998657236,
+    0.012726043434143065
+  ],
+  "interpreter_guest_seconds_median": 0.007338912834167478,
+  "aot_performance_guest_seconds_median": 0.00796398114013673,
+  "interpreter_guest_seconds_range": [
+    0.0035440258865356428,
+    0.013275048774719241
+  ],
+  "aot_performance_guest_seconds_range": [
+    0.004973932998657236,
+    0.012726043434143065
+  ],
+  "guest_speedup_median": 0.921513085607518,
+  "performance_aot_instructions": [
+    23660
+  ],
+  "performance_fallback_count": [
+    5262
+  ],
+  "preparation_wall_seconds": 2.389138750000029,
+  "generated_c_bytes": 1278210,
+  "generated_block_count": 3533,
+  "partial_baseline_trace_sha256": "12eaddf3c382326b7abe9fe8630ffdf4df4dccc7dde45ea96175a1fef7bfaa73",
+  "input_trace_sha256": "c8240bcf870a26c53bdcf1d9b5309bdebc9fd47e6c47f390687b699be73222d6"
+}
