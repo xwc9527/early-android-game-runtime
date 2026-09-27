@@ -1,0 +1,11 @@
+{
+  "stop": false,
+  "question": "Which pinned API19 source path publishes THREAD_NATIVE before ScopedJniThreadState on the current RegisterNatives origin?",
+  "answer": "JNI_CreateJavaVM in vm/Jni.cpp, owned by Dalvik.JNINativeBinding, calls dvmChangeStatus(NULL, THREAD_NATIVE) after dvmStartup returns.",
+  "owner": "Dalvik.JNINativeBinding",
+  "new_owner": false,
+  "status": "SOURCE_LOCATED",
+  "pthread_gap": "unchanged",
+  "runtime_modified": false,
+  "remaining_blocker": "The closed Bionic self-suspend crossing is still not consumable from host DEX. JNI thread state around RegisterNatives stays REOPEN_REQUIRED."
+}

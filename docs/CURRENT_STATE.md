@@ -26,9 +26,9 @@ That record does not mark `Bionic.PthreadCondition` `PRODUCTION_CLOSED`.
 Absolute condition timeouts stay outside that path. `Dalvik.ThreadState` is
 `SOURCE_CLOSED` for that source path. The source-derived manifest reached from
 `JNI thread state around RegisterNatives` is `MIGRATION_AUTHORIZED`. The
-production port stopped on an evidence gap: the entry `THREAD_NATIVE` value
-is assigned outside the closed ThreadState files, and the closed pthread
-crossing is bound to guest ARM32 addresses. `Dalvik.JNINativeBinding` stays
+production port stopped on an evidence gap: the entry `THREAD_NATIVE` for
+this origin is `JNI_CreateJavaVM` in `Dalvik.JNINativeBinding`, and the
+closed pthread crossing is bound to guest ARM32 addresses. `Dalvik.JNINativeBinding` stays
 `SOURCE_LOCATED`, and that prerequisite stays `REOPEN_REQUIRED`.
 The current source indexes and manifests are under `tools/reference-lab/indexes`
 and `tools/reference-lab/evidence`; their unresolved edges are explicit.
@@ -74,7 +74,7 @@ Earlier merged Runtime contracts (linker, pthread, EHABI, allocator, APK bootstr
 
 ## Current blocker
 
-`Dalvik.ThreadState` is migration-authorized for the RegisterNatives thread-state crossing. The production port stopped before changing Runtime. The entry status and the closed pthread crossing are not uniquely consumable from the authorized path; the evidence is `tools/reference-lab/evidence/dalvik-threadstate-production-port/`. `JNI thread state around RegisterNatives` stays `REOPEN_REQUIRED`. `Dalvik.JNINativeBinding` stays `SOURCE_LOCATED`. Class initialization, object allocation, method invocation, and monitor relationships stay `UNRESOLVED`.
+`Dalvik.ThreadState` is migration-authorized for the RegisterNatives thread-state crossing. The production port is still stopped. The entry `THREAD_NATIVE` on the current origin is published by `JNI_CreateJavaVM` before `startReg`; that symbol is now on `Dalvik.JNINativeBinding`, which stays `SOURCE_LOCATED`. The closed pthread crossing remains the separate consumption gap in `tools/reference-lab/evidence/dalvik-threadstate-production-port/`. `JNI thread state around RegisterNatives` stays `REOPEN_REQUIRED`. Class initialization, object allocation, method invocation, and monitor relationships stay `UNRESOLVED`.
 
 ## Next architecture milestone
 

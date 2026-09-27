@@ -1,0 +1,17 @@
+{
+  "dependency_id": "DALVIK_JNI_NATIVE_BINDING:register-natives-thread-state",
+  "source_path": "Dalvik.JNINativeBinding -> Dalvik.ThreadState",
+  "upper_path": [
+    "Framework.NativeRegistration AndroidRuntime::start",
+    "AndroidRuntime::startVm",
+    "JNI_CreateJavaVM",
+    "AndroidRuntime::startReg",
+    "AndroidRuntime::registerNativeMethods",
+    "AndroidNative.JNIHelp jniRegisterNativeMethods",
+    "Dalvik.JNINativeBinding RegisterNatives",
+    "ScopedJniThreadState"
+  ],
+  "indexed_edge": "Dalvik RegisterNatives method binding",
+  "declaring_owner": "AndroidNative.JNIHelp",
+  "thread_state_edge": "JNI thread state around RegisterNatives"
+}

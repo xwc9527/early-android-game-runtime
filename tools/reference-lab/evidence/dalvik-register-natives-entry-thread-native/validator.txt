@@ -1,0 +1,14 @@
+Dalvik.JNINativeBinding status SOURCE_LOCATED
+closure_reviewed false
+JNI_CreateJavaVM in required_symbols
+JNI thread state around RegisterNatives REOPEN_REQUIRED
+exception class initialization UNRESOLVED
+exception object allocation UNRESOLVED
+exception constructor invocation UNRESOLVED
+synchronized JNI bridge monitor UNRESOLVED
+resources seed equal aside from book_sha256
+unittest test_jni_native_binding_source_closure_stays_located OK
+unittest test_thread_state_source_is_closed_without_migration_authority OK
+unittest test_thread_state_source_derived_review_authorizes_only_the_jni_crossing OK
+unittest test_method_invocation_source_stays_located OK
+Ran 4 tests OK

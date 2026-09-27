@@ -782,6 +782,11 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         help_edge = index["external_cluster_sources"]["AndroidNative.JNIHelp"]["prerequisite_edges"][0]
         self.assertEqual(help_edge["relationship"], "REOPEN_REQUIRED")
         self.assertEqual(help_edge["owner_source_status"], "SOURCE_LOCATED")
+        self.assertIn("JNI_CreateJavaVM", owner["required_symbols"])
+        self.assertNotIn("dvmLoadNativeCode", owner["required_symbols"])
+        self.assertNotIn("registerSystemNatives", owner["required_symbols"])
+        self.assertTrue(any("JNI_CreateJavaVM" in item and "THREAD_NATIVE" in item
+                            for item in owner["internal_deps"]))
 
     def test_method_invocation_source_stays_located(self):
         integer_index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
@@ -824,6 +829,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
             self.assertIn(symbol, owner["required_symbols"])
         self.assertNotIn("waitCond", owner["required_symbols"])
         self.assertNotIn("waitMutex", owner["required_symbols"])
+        self.assertNotIn("JNI_CreateJavaVM", owner["required_symbols"])
         self.assertEqual([(edge["semantic_cluster"], edge["source_file"], edge["source_symbol"], edge["relationship"])
                           for edge in owner["prerequisite_edges"]], [
             ("Bionic.PthreadCondition", "libc/bionic/pthread.c", "pthread_cond_wait", "PREREQUISITE_CLOSED")])
