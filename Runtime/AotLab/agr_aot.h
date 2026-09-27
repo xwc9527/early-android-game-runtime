@@ -30,6 +30,8 @@ extern const AgrAotEntry agr_aot_debug_blocks[];
 extern const uint32_t agr_aot_debug_block_count;
 extern const AgrAotEntry agr_aot_fast_blocks[];
 extern const uint32_t agr_aot_fast_block_count;
+extern const AgrAotEntry agr_aot_fast_hash[];
+extern const uint32_t agr_aot_fast_hash_mask;
 
 void agr_aot_set_enabled(int enabled);
 void agr_aot_set_diagnostic(int enabled);

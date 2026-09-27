@@ -384,6 +384,19 @@ def emit(rows, destination):
             pieces.append(f"    {{{pc}u, {name}}},")
     pieces.append("};")
     pieces.append(f"const uint32_t agr_aot_fast_block_count = {len(entries)}u;")
+    hash_size = 1
+    while hash_size < max(2, len(entries) * 2):
+        hash_size <<= 1
+    hashed = [(0, "0")] * hash_size
+    for pc, name in entries:
+        index = (((pc >> 1) * 2654435761) & 0xffffffff) & (hash_size - 1)
+        while hashed[index][0]:
+            index = (index + 1) & (hash_size - 1)
+        hashed[index] = (pc, name)
+    pieces.append("const AgrAotEntry agr_aot_fast_hash[] = {")
+    pieces.extend(f"    {{{pc}u, {name}}}," for pc, name in hashed)
+    pieces.append("};")
+    pieces.append(f"const uint32_t agr_aot_fast_hash_mask = {hash_size - 1}u;")
     pieces.append("")
     destination.write_text("\n".join(pieces), encoding="utf-8", newline="\n")
     return entries
@@ -514,8 +527,24 @@ def emit_partial(rows, destination, allowed_kinds):
     if not fast_entries:
         pieces.append("    {0, 0},")
     pieces.extend(["};", f"const uint32_t agr_aot_fast_block_count = {len(fast_entries)}u;", ""])
+    hash_size = 1
+    while hash_size < max(2, len(fast_entries) * 2):
+        hash_size <<= 1
+    hashed = [(0, "0")] * hash_size
+    max_probe = 0
+    for pc, name in fast_entries:
+        index = (((pc >> 1) * 2654435761) & 0xffffffff) & (hash_size - 1)
+        probe = 0
+        while hashed[index][0]:
+            index = (index + 1) & (hash_size - 1)
+            probe += 1
+        hashed[index] = (pc, name)
+        max_probe = max(max_probe, probe)
+    pieces.append("const AgrAotEntry agr_aot_fast_hash[] = {")
+    pieces.extend(f"    {{{pc}u, {name}}}," for pc, name in hashed)
+    pieces.extend(["};", f"const uint32_t agr_aot_fast_hash_mask = {hash_size - 1}u;", ""])
     destination.write_text("\n".join(pieces), encoding="utf-8", newline="\n")
-    return debug_entries, fast_entries, fast_block_lengths
+    return debug_entries, fast_entries, fast_block_lengths, hash_size, max_probe
 
 
 def load_trace(path):
@@ -590,11 +619,14 @@ def main():
                 allowed_kinds.add(decode(row["pc"], row["insn"], row["len"], row["thumb"])[0])
             except ValueError:
                 pass
-        entries, fast_entries, fast_block_lengths = emit_partial(rows, Path(args.out), allowed_kinds)
+        entries, fast_entries, fast_block_lengths, fast_hash_size, fast_hash_max_probe = emit_partial(
+            rows, Path(args.out), allowed_kinds)
     else:
         entries = emit(rows, Path(args.out))
         fast_entries = []
         fast_block_lengths = {}
+        fast_hash_size = 0
+        fast_hash_max_probe = 0
     manifest = {
         "trace_instructions": len(rows),
         "unique_pcs": len({row["pc"] for row in rows}),
@@ -611,6 +643,8 @@ def main():
         "blocks": [{"pc": pc, "name": name} for pc, name in entries],
         "fast_blocks": [{"pc": pc, "name": name, "instructions": fast_block_lengths[pc]}
                         for pc, name in fast_entries],
+        "fast_hash_size": fast_hash_size,
+        "fast_hash_max_probe": fast_hash_max_probe,
     }
     if args.manifest:
         Path(args.manifest).write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")

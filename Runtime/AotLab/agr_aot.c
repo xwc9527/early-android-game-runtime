@@ -128,8 +128,18 @@ void agr_aot_set_enabled(int value) { enabled = value; }
 void agr_aot_set_diagnostic(int value) { diagnostic = value; }
 
 static AgrAotFn lookup(uint32_t pc) {
-    const AgrAotEntry *blocks = diagnostic ? agr_aot_debug_blocks : agr_aot_fast_blocks;
-    uint32_t low = 0, high = diagnostic ? agr_aot_debug_block_count : agr_aot_fast_block_count;
+    if (!diagnostic) {
+        uint32_t index = ((pc >> 1u) * 2654435761u) & agr_aot_fast_hash_mask;
+        for (uint32_t probe = 0; probe <= agr_aot_fast_hash_mask; probe++) {
+            uint32_t found = agr_aot_fast_hash[index].pc;
+            if (found == pc) return agr_aot_fast_hash[index].function;
+            if (!found) return NULL;
+            index = (index + 1u) & agr_aot_fast_hash_mask;
+        }
+        return NULL;
+    }
+    const AgrAotEntry *blocks = agr_aot_debug_blocks;
+    uint32_t low = 0, high = agr_aot_debug_block_count;
     while (low < high) {
         uint32_t mid = low + (high - low) / 2u;
         uint32_t found = blocks[mid].pc;
