@@ -1,0 +1,5 @@
+{
+  "result": "EVIDENCE_GAP",
+  "accepted_boundary": null,
+  "reason": "The closed crossing's production entry addresses pthread words as ARM32 guest addresses. HostServices has no wait/wake primitive. The futex boundary's request includes the word address, so replacing only that syscall does not authorize a different word identity. Selecting host-keyed storage, a new HostServices wait, or a non-guest agr_bionic_sync binding would be a new architecture decision or a change to the Bionic port contract."
+}

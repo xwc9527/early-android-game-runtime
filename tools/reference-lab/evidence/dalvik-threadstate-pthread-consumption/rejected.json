@@ -1,0 +1,28 @@
+{
+  "rejected": [
+    {
+      "alternative": "host pthread_mutex and pthread_cond",
+      "reason": "That bypasses the Bionic semantic owner. HostServices may supply a raw wait only beneath the Bionic state machine, and no such primitive is declared."
+    },
+    {
+      "alternative": "synthetic uint32_t ARM32 address",
+      "reason": "agr_bionic_sync and agr_futex_host require a real guest-address word. A fixture address is not that word."
+    },
+    {
+      "alternative": "truncate a Darwin pointer to uint32_t",
+      "reason": "Darwin pointers do not cross the guest ABI boundary."
+    },
+    {
+      "alternative": "store the Dalvik suspend lock in guest VMA",
+      "reason": "API19 keeps threadSuspendCountLock in the VM, and no locked decision moves that object into guest address space so the existing binding can be reused."
+    },
+    {
+      "alternative": "rewrite the closed Bionic contract to accept host pointers",
+      "reason": "The crossing record and agr_bionic_sync's guest-word contract were not found to be factually wrong. Changing them is outside this review."
+    },
+    {
+      "alternative": "record a HostServices wait/wake consumption contract from the migration-plan ledger line",
+      "reason": "The ledger names a primitive that agr_host_services does not export. Using that sentence as the boundary would design a new host primitive and a new storage key."
+    }
+  ]
+}

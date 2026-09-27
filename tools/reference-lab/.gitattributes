@@ -9,3 +9,4 @@ evidence/dalvik-threadstate-source-closure/** text eol=lf
 evidence/dalvik-threadstate-production-disposition/** text eol=lf
 evidence/dalvik-threadstate-production-port/** text eol=lf
 evidence/dalvik-register-natives-entry-thread-native/** text eol=lf
+evidence/dalvik-threadstate-pthread-consumption/** text eol=lf

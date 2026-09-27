@@ -1,0 +1,36 @@
+{
+  "edge": "self-suspend on the thread suspend-count condition",
+  "semantic_cluster": "Bionic.PthreadCondition",
+  "status": "CROSSING_CLOSED",
+  "source_repo": "platform/bionic",
+  "revision": "081db840befec895fb86e709ae95832ade2d065c",
+  "source_file": "libc/bionic/pthread.c",
+  "source_symbol": "pthread_cond_wait",
+  "source_sha256": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
+  "origin": {
+    "source_repo": "platform/dalvik",
+    "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+    "source_file": "vm/Thread.cpp",
+    "source_symbol": "dvmChangeStatus",
+    "source_sha256": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7"
+  },
+  "source_path": [
+    "dvmChangeStatus",
+    "fullSuspendCheck",
+    "pthread_mutex_lock",
+    "pthread_cond_wait",
+    "pthread_cond_broadcast",
+    "__pthread_cond_pulse"
+  ],
+  "production_scope": [
+    "futex wait/wake with full barrier on normal lock, normal unlock, and broadcast pulse",
+    "normal pthread_mutex_lock",
+    "normal pthread_mutex_unlock",
+    "pthread_cond_broadcast",
+    "untimed pthread_cond_wait"
+  ],
+  "production_module": "pthread",
+  "whole_owner_production_closed": false,
+  "record": "ci/governance/substrate-production-contracts.json crossing_closures[0]",
+  "record_changed": false
+}

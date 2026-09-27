@@ -1168,6 +1168,44 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         reject(lambda doc, _binding: doc["source_derived_reviews"]["Dalvik.ThreadState"].__setitem__(
             "migration_authorized", True), "handwritten source-derived authorization")
 
+    def test_host_dex_pthread_consumption_stays_an_evidence_gap(self):
+        contracts = json.loads((ROOT / "ci/governance/substrate-production-contracts.json").read_text(encoding="utf-8"))
+        self.assertEqual(contracts["contracts"], [])
+        self.assertEqual(len(contracts["crossing_closures"]), 1)
+        crossing = contracts["crossing_closures"][0]
+        self.assertEqual(crossing["status"], "CROSSING_CLOSED")
+        self.assertEqual(crossing["semantic_cluster"], "Bionic.PthreadCondition")
+        self.assertEqual(crossing["edge"], "self-suspend on the thread suspend-count condition")
+        self.assertEqual(crossing["source_symbol"], "pthread_cond_wait")
+        self.assertEqual(crossing["production_module"], "pthread")
+        self.assertNotIn("host_dex_consumption", crossing)
+        integer = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text(encoding="utf-8"))
+        thread = integer["external_cluster_sources"]["Dalvik.ThreadState"]
+        self.assertEqual(thread["status"], "SOURCE_CLOSED")
+        self.assertNotIn("migration_authorized", thread)
+        self.assertEqual(thread["prerequisite_edges"][0]["relationship"], "PREREQUISITE_CLOSED")
+        resources = json.loads((ROOT / "tools/reference-lab/indexes/shared-resources-api19-locations.json").read_text(encoding="utf-8"))
+        binding = resources["external_cluster_sources"]["Dalvik.JNINativeBinding"]
+        self.assertEqual([(edge["semantic_cluster"], edge["relationship"])
+                          for edge in binding["prerequisite_edges"]], [
+            ("Dalvik.ThreadState", "REOPEN_REQUIRED"),
+            ("Dalvik.ClassInitialization", "UNRESOLVED"),
+            ("Dalvik.ObjectAllocation", "UNRESOLVED"),
+            ("Dalvik.MethodInvocation", "UNRESOLVED"),
+            ("Dalvik.Monitor", "UNRESOLVED")])
+        gap = json.loads((ROOT / "tools/reference-lab/evidence/dalvik-threadstate-pthread-consumption/summary.json").read_text(encoding="utf-8"))
+        self.assertEqual(gap["result"], "EVIDENCE_GAP")
+        self.assertIsNone(gap["accepted_boundary"])
+        self.assertFalse(gap["runtime_modified"])
+        manifest = json.loads((ROOT / "tools/reference-lab/evidence/dalvik-threadstate-production-disposition/source-manifest.json").read_text(encoding="utf-8"))
+        derived = manifest["source_derived_clusters"]["Dalvik.ThreadState"]
+        self.assertEqual(derived["status"], "MIGRATION_AUTHORIZED")
+        self.assertTrue(derived["migration_authorized"])
+        host = (ROOT / "Runtime/HostServices/agr_host_services.h").read_text(encoding="utf-8")
+        self.assertNotIn("futex", host)
+        sync = (ROOT / "Runtime/Bionic/agr_bionic_sync.h").read_text(encoding="utf-8")
+        self.assertIn("ARM32 addresses", sync)
+
 
 if __name__ == "__main__":
     unittest.main()

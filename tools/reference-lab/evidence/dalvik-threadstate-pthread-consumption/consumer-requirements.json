@@ -1,0 +1,20 @@
+{
+  "consumer": "Dalvik.ThreadState",
+  "placement": "HOST-DEX",
+  "needed_objects": [
+    "gDvm.threadSuspendCountLock",
+    "gDvm.threadSuspendCountCond"
+  ],
+  "needed_operations": [
+    "normal pthread_mutex_lock",
+    "normal pthread_mutex_unlock",
+    "untimed pthread_cond_wait",
+    "pthread_cond_broadcast"
+  ],
+  "missing": [
+    "a guest address for threadSuspendCountLock",
+    "a guest address for threadSuspendCountCond",
+    "an agr_bionic_sync binding that is not the guest agr_runtime",
+    "a HostServices wait/wake primitive"
+  ]
+}
