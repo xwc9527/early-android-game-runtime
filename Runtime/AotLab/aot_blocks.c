@@ -37687,7 +37687,7 @@ static int aot_000caeb0(AgrAotRegs *s) {
     if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
     if (agr_aot_load16(s, 831152u) != 18296u) return AGR_AOT_MISS;
     agr_aot_count_instruction();
-    agr_aot_branch_reg(s, s->r[15], 0u, 0); return AGR_AOT_BOUNDARY;
+    agr_aot_branch_reg(s, 831156u, 0u, 0); return AGR_AOT_BOUNDARY;
 }
 
 static int aot_000caeb4(AgrAotRegs *s) {
@@ -37718,7 +37718,7 @@ static int aot_000caf90(AgrAotRegs *s) {
     if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
     if (agr_aot_load16(s, 831376u) != 18296u) return AGR_AOT_MISS;
     agr_aot_count_instruction();
-    agr_aot_branch_reg(s, s->r[15], 0u, 0); return AGR_AOT_BOUNDARY;
+    agr_aot_branch_reg(s, 831380u, 0u, 0); return AGR_AOT_BOUNDARY;
 }
 
 static int aot_000caf94(AgrAotRegs *s) {
