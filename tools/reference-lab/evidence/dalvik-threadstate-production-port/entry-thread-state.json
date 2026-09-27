@@ -1,0 +1,35 @@
+{
+  "question": "What publishes THREAD_NATIVE before ScopedJniThreadState runs?",
+  "closed_path_assignment": false,
+  "constructor": "vm/Jni.cpp:229 calls dvmChangeStatus(mSelf, THREAD_RUNNING) and does not read or require the old status",
+  "destructor": "vm/Jni.cpp:233 calls dvmChangeStatus(mSelf, THREAD_NATIVE) unconditionally",
+  "same_status": "vm/Thread.cpp dvmChangeStatus returns the old status without a store when oldStatus == newStatus",
+  "assignments_outside_closed_files": [
+    {
+      "file": "vm/Init.cpp",
+      "line": 1625,
+      "function": "registerSystemNatives",
+      "text": "self->status = THREAD_NATIVE",
+      "publication": "plain store, not dvmChangeStatus",
+      "follows": "pEnv->RegisterNatives",
+      "in_threadstate_source_closure": false
+    },
+    {
+      "file": "vm/Native.cpp",
+      "line": 433,
+      "function": "dvmLoadNativeCode",
+      "text": "oldStatus = dvmChangeStatus(self, THREAD_NATIVE)",
+      "follows": "JNI_OnLoad, which calls RegisterNatives",
+      "restores": "dvmChangeStatus(self, oldStatus) after JNI_OnLoad returns",
+      "in_threadstate_source_closure": false
+    }
+  ],
+  "startup_on_thread_cpp_outside_authorized_path": {
+    "function": "dvmThreadStartup",
+    "line": 290,
+    "text": "thread->status = THREAD_RUNNING",
+    "effect_if_used_as_entry": "dvmChangeStatus(THREAD_RUNNING) is a same-status return and publishes nothing"
+  },
+  "production_observed_entry": "no Dalvik ThreadStatus word exists on DxExecutionContext or in jni_RegisterNatives",
+  "decision": "The closed path does not uniquely initialize the entry status. A THREAD_NATIVE default would be an unsupported initial value. Init.cpp and Native.cpp are outside the closed ThreadState file set and are not closed owners."
+}

@@ -1,0 +1,19 @@
+{
+  "result": "NO_DIVERGENCE",
+  "scope": "RegisterNatives thread-state path",
+  "clean_reference": "not required; pinned source and the closed crossing decide the result",
+  "source": [
+    "JNI_CreateJavaVM dvmChangeStatus(NULL, THREAD_NATIVE)",
+    "ScopedJniThreadState enters THREAD_RUNNING and leaves THREAD_NATIVE",
+    "same status returns without a store",
+    "THREAD_RUNNING is stored before suspendCount is read",
+    "nonzero suspendCount enters fullSuspendCheck",
+    "fullSuspendCheck stores THREAD_SUSPENDED, waits, restores the previous status",
+    "THREAD_SUSPENDED is rejected as a requested status",
+    "non-RUNNING status does not check suspendCount",
+    "resume broadcasts threadSuspendCountCond"
+  ],
+  "production": "Tests/DexLoom/threadstate-register-natives-host.c",
+  "host_output": "tools/reference-lab/evidence/dalvik-threadstate-production-port/host-output.txt",
+  "prior_stop": "tools/reference-lab/evidence/dalvik-threadstate-production-port/prior-stop-summary.json"
+}

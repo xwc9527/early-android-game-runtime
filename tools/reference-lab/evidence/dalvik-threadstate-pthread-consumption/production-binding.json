@@ -1,0 +1,11 @@
+{
+  "semantic_state_machine": "Runtime/Bionic/agr_bionic_sync.cpp",
+  "state_machine_contract": "The ARM32 pthread object is a single in-guest 32-bit word. Loads and atomics are callbacks into the shared guest address space. Linux futex calls remain raw host callbacks.",
+  "entry_header": "Runtime/Bionic/agr_bionic_sync.h",
+  "entry_contract": "ARM32 addresses and values only. Atomics must serialize with interpreter writes to the same guest address space.",
+  "wait_wake": "Runtime/Bionic/agr_futex_host.h",
+  "wait_wake_contract": "The word read is a raw process-shared ARM32 address. The callback does not return a Darwin pointer or Darwin errno.",
+  "production_binding": "Runtime/NativeCore/agr_runtime.c",
+  "binding_scope": "agr_bionic_sync and agr_futex_host are installed only in the Apple agr_runtime, and every callback reads or writes a guest address.",
+  "host_services": "Runtime/HostServices/agr_host_services.h exports clock, vm, file, and thread create/join/detach. It has no wait or wake primitive."
+}

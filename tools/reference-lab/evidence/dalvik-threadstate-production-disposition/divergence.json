@@ -1,0 +1,10 @@
+{
+  "result": "DIVERGED",
+  "classification": "ANDROID_SEMANTIC_BUG",
+  "semantic_class": "SEMANTIC_INVARIANT",
+  "causal_status": "OBSERVED",
+  "crossing": "JNI thread state around RegisterNatives",
+  "pinned_source": "platform/dalvik 36e356c96640775f0a3f167bd2426ea0f0093b8b vm/Jni.cpp RegisterNatives -> vm/Thread.cpp dvmChangeStatus",
+  "agr_path": "Runtime/DexLoom/VM/dx_jni.c jni_RegisterNatives",
+  "evidence": "jni_RegisterNatives does not publish Dalvik THREAD_RUNNING or THREAD_NATIVE, does not read suspendCount, and does not enter the closed self-suspend path. DxJavaThreadState NEW/STARTING/RUNNING/TERMINATED is not Dalvik ThreadStatus."
+}

@@ -1,0 +1,6 @@
+{
+  "owner": "Dalvik.Monitor",
+  "status": "SOURCE_CLOSED",
+  "required_symbols": ["dvmLockObject", "dvmUnlockObject", "dvmObjectWait", "dvmObjectNotifyAll"],
+  "relationship": "UNRESOLVED"
+}

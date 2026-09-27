@@ -1,0 +1,15 @@
+{
+  "tested_commit": "010f7fede617bb2bf3188001a431c988b6359e2f",
+  "tested_tree": "28e856a756e6be4872d926ede5f93c0ae4c8effb",
+  "closure_run": "36299095567",
+  "closure_workflow": "Phase 3A JNI references",
+  "governance_run": "36299095563",
+  "governance_job": "108563287071",
+  "governance_conclusion": "success",
+  "also_success": [
+    "36299095583 Phase 3A0 classpath",
+    "36299095578 Phase 3 protected regression"
+  ],
+  "result": "PREREQUISITE_CLOSED",
+  "relationship": "PREREQUISITE_CLOSED"
+}

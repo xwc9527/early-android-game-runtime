@@ -1,0 +1,10 @@
+{
+  "result": "EVIDENCE_GAP",
+  "accepted_boundary": null,
+  "runtime_modified": false,
+  "crossing_status": "CROSSING_CLOSED",
+  "prerequisite_status": "PREREQUISITE_CLOSED",
+  "thread_state_manifest": "MIGRATION_AUTHORIZED",
+  "jni_relationship": "REOPEN_REQUIRED",
+  "remaining_blocker": "HOST-DEX Dalvik.ThreadState still has no authorized way to consume the closed self-suspend crossing. The ThreadState production port stays stopped."
+}

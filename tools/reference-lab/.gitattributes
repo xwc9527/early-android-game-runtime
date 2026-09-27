@@ -1,2 +1,16 @@
 *.sh text eol=lf
 *.patch text eol=lf
+evidence/bionic-clock-gettime-host-boundary/** text eol=lf
+evidence/bionic-clock-gettime-source-manifest.json text eol=lf
+evidence/bionic-clock-gettime-production/** text eol=lf
+evidence/bionic-pthread-threadstate/** text eol=lf
+evidence/bionic-pthread-threadstate-closure/** text eol=lf
+evidence/dalvik-threadstate-source-closure/** text eol=lf
+evidence/dalvik-threadstate-production-disposition/** text eol=lf
+evidence/dalvik-threadstate-production-port/** text eol=lf
+evidence/dalvik-register-natives-entry-thread-native/** text eol=lf
+evidence/dalvik-threadstate-pthread-consumption/** text eol=lf
+evidence/dalvik-internal-pthread-boundary-disposition/** text eol=lf
+evidence/dalvik-threadstate-host-storage-binding/** text eol=lf
+evidence/dalvik-threadstate-register-natives-closure/** text eol=lf
+evidence/dalvik-monitor-jni-bridge-source-closure/** text eol=lf

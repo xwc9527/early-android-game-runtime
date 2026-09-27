@@ -1,0 +1,12 @@
+{
+  "api19": "fullSuspendCheck locks gDvm.threadSuspendCountLock and waits on gDvm.threadSuspendCountCond. Those are pthread objects in the Dalvik VM. Bionic and the VM share one process address space. The excluded boundary is the Linux futex syscall, and its request includes the futex word address.",
+  "locked_architecture": [
+    "HOST-NATIVE AOSP owns portable Bionic ports and the host-side DEX interpreter",
+    "guest pthread objects remain 32-bit Android values",
+    "Darwin pointers and layouts never cross the guest boundary",
+    "a different host mechanism is allowed only at an excluded kernel, service, device, or pure HostServices primitive"
+  ],
+  "migration_plan": "The pthread section says Linux futex operations become runtime wait/wake keyed by guest address. The HostServices ledger names a wait/wake primitive for the Bionic futex adapter and Dalvik safepoints, but agr_host_services does not export it.",
+  "clock_precedent": "Bionic.ClockGettime reaches an existing agr_host_services.clock_ns at its excluded kernel boundary. That boundary does not store a pthread word, and it does not authorize a second storage key for this crossing.",
+  "not_decided": "No locked decision says Dalvik's internal suspend lock is guest VMA, host memory that may call Darwin pthread, or host memory that may call the Bionic state machine through a non-guest key."
+}

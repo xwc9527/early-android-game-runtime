@@ -1,0 +1,38 @@
+{
+  "selected": {
+    "file": "vm/Jni.cpp",
+    "symbol": "JNI_CreateJavaVM",
+    "line": 3537,
+    "reason": "This is the last status publication before AndroidRuntime::start calls startReg. The success path calls it after dvmStartup returns and before the JNIEnv is given to the caller."
+  },
+  "excluded": [
+    {
+      "file": "vm/Init.cpp",
+      "symbol": "registerSystemNatives",
+      "line": 1625,
+      "text": "self->status = THREAD_NATIVE",
+      "reason": "This plain store covers only that function's own RegisterNatives of java.lang.Class. Line 1650 stores THREAD_RUNNING before dvmStartup returns. JNI_CreateJavaVM then publishes THREAD_NATIVE. It is not the entry seen by startReg."
+    },
+    {
+      "file": "vm/Thread.cpp",
+      "symbol": "dvmThreadStartup",
+      "line": 290,
+      "text": "thread->status = THREAD_RUNNING",
+      "reason": "Startup of the main thread struct is earlier than JNI_CreateJavaVM's return and is not the RegisterNatives entry contract."
+    },
+    {
+      "file": "vm/Native.cpp",
+      "symbol": "dvmLoadNativeCode",
+      "line": 433,
+      "text": "dvmChangeStatus(self, THREAD_NATIVE)",
+      "reason": "This publication wraps JNI_OnLoad for a later native-library load and restores the previous status afterward. The current origin reaches RegisterNatives from startReg, not from JNI_OnLoad."
+    },
+    {
+      "file": "vm/Jni.cpp",
+      "symbol": "dvmCallJNIMethod",
+      "line": 1149,
+      "text": "dvmChangeStatus(self, THREAD_NATIVE)",
+      "reason": "This publication wraps one interpreted native call and restores oldStatus at line 1162. startReg calls RegisterNatives from AndroidRuntime, not through dvmPlatformInvoke."
+    }
+  ]
+}

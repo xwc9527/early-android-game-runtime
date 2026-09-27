@@ -1,0 +1,21 @@
+{
+  "authority": "ci/governance/host-storage-consumer-bindings.json",
+  "decision_id": "D010",
+  "consumer": "Dalvik.ThreadState",
+  "semantic_owner": "Bionic.PthreadCondition",
+  "crossing_record": "ci/governance/substrate-production-contracts.json crossing_closures[0]",
+  "crossing_status": "CROSSING_CLOSED",
+  "edge": "self-suspend on the thread suspend-count condition",
+  "source_symbol": "pthread_cond_wait",
+  "source_sha256": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
+  "source_revision": "081db840befec895fb86e709ae95832ade2d065c",
+  "source_owner_digest": "8d62e6f7b90e11e1b6d89ccc55962b84ccd14ed720181d6c5153fd60ef418deb",
+  "storage_class": "HOST-DEX private VM state",
+  "objects": ["gDvm.threadSuspendCountLock", "gDvm.threadSuspendCountCond"],
+  "guest_abi_exposure": false,
+  "guest_address_requirement": false,
+  "guest_address_requirement_scope": "this consumer only",
+  "semantic_requirement": "closed Bionic state machine, ordering, and full-barrier behavior",
+  "guest_pthread_binding": "unchanged",
+  "self_certifying_boolean": false
+}

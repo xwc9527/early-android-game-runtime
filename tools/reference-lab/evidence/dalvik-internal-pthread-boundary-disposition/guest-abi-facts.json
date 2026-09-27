@@ -1,0 +1,7 @@
+{
+  "guest_abi": "Guest pointers, fds, pthread objects, structs, handles, and errno remain 32-bit Android values. Darwin pointers never cross that boundary.",
+  "scope_of_that_sentence": "The sentence is in the Guest ABI section. It constrains guest-visible values. It does not name gDvm.threadSuspendCountLock.",
+  "bionic_port_text": "agr_bionic_sync says the ARM32 pthread object is one in-guest 32-bit word and that callbacks enter the shared guest address space.",
+  "plan_text": "The pthread adapter section says Linux futex wait/wake is keyed by guest address and an expected 32-bit value, and that Bionic object representation is preserved.",
+  "conflict": "The Guest ABI section and the Bionic port text can both be read as covering every pthread word, or only words that cross the guest ABI. Neither reading is written down as an exception."
+}

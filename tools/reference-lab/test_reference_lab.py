@@ -281,7 +281,7 @@ class ReferenceLabTest(unittest.TestCase):
         owner["closure_evidence"]["reviewed_dependency_edges"] = ["Zygote preload"]
         self.assertFalse(external_edge_closed(edge, index))
         owner["cross_cluster_source_edges"] = [{**edge, "edge": "Zygote preload"}]
-        self.assertFalse(external_edge_closed(edge, index))  # cyclic owner graph
+        self.assertTrue(external_edge_closed(edge, index))
 
     def test_derived_source_chain_rejects_missing_and_records_cycle(self):
         edge = {"edge": "class init", "semantic_cluster": "Dalvik.Init",

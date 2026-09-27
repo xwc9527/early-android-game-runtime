@@ -1,0 +1,24 @@
+{
+  "artifact_id": 10912815362,
+  "artifact_name": "bionic-clock-port",
+  "artifact_sha256": "c307cc33fd1d3f4405c4259147f767f7936b76292957885bdb343c2384f67d1b",
+  "branch": "cursor/shared-substrate-prerequisite-da4f",
+  "completed_at": "2026-09-26T18:00:59Z",
+  "conclusion": "success",
+  "job_id": 108456321489,
+  "job_name": "smoke",
+  "port": "agr_bionic_clock_gettime",
+  "prior_compile_failure_reason": "agr_host_services_darwin.c was compiled as C++",
+  "prior_compile_failure_run_id": 36260642714,
+  "requests": [
+    "CLOCK_MONOTONIC",
+    "CLOCK_REALTIME"
+  ],
+  "runner_id": 1000001216,
+  "runner_label": "xcode-27",
+  "started_at": "2026-09-26T17:58:15Z",
+  "tested_commit": "cd78510bbee5fe9d0d4a726f93a6142768c311e4",
+  "tested_tree": "12402a0fcd1f047f39b58da3123be1306c3f15f2",
+  "workflow_name": "iOS Simulator smoke (bounded)",
+  "workflow_run_id": 36260882439
+}

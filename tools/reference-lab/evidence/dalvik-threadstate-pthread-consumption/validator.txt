@@ -1,0 +1,19 @@
+substrate contracts array empty
+one CROSSING_CLOSED self-suspend crossing
+production_module pthread
+no host_dex_consumption field on the crossing record
+Dalvik.ThreadState SOURCE_CLOSED
+prerequisite PREREQUISITE_CLOSED
+indexed owner has no migration_authorized key
+JNINativeBinding prerequisites: REOPEN_REQUIRED, UNRESOLVED, UNRESOLVED, UNRESOLVED, UNRESOLVED
+derived manifest MIGRATION_AUTHORIZED
+HostServices header has no futex primitive
+agr_bionic_sync.h keeps ARM32 addresses
+evidence result EVIDENCE_GAP
+accepted_boundary null
+runtime_modified false
+unittest test_host_dex_pthread_consumption_stays_an_evidence_gap OK
+unittest test_jni_native_binding_source_closure_stays_located OK
+unittest test_thread_state_source_derived_review_authorizes_only_the_jni_crossing OK
+unittest test_suspend_crossing_closure_is_exact_and_rejects_substitutes OK
+Ran 4 tests OK

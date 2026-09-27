@@ -1,0 +1,16 @@
+{
+  "rejected": [
+    "a different crossing",
+    "a different semantic owner",
+    "whole-owner PRODUCTION_CLOSED",
+    "a new pthread semantic owner",
+    "guest-visible pthread objects using host storage",
+    "a consumer other than Dalvik.ThreadState",
+    "production scope beyond the closed crossing",
+    "host pthread behavior as Bionic semantics",
+    "HostServices pthread policy",
+    "editing the existing crossing identity",
+    "a self-certifying authorized boolean",
+    "representation-bound"
+  ]
+}

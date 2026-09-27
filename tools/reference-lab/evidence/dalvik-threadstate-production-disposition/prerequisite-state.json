@@ -1,0 +1,16 @@
+{
+  "before": {
+    "relationship": "UNRESOLVED",
+    "owner_source_status": "SOURCE_CLOSED",
+    "owner_status": "SOURCE_LOCATED"
+  },
+  "after": {
+    "relationship": "REOPEN_REQUIRED",
+    "owner_source_status": "SOURCE_CLOSED",
+    "owner_status": "SOURCE_LOCATED"
+  },
+  "not_written": [
+    "PREREQUISITE_CLOSED",
+    "CROSSING_CLOSED"
+  ]
+}

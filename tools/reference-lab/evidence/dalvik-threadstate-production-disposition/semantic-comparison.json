@@ -1,0 +1,44 @@
+{
+  "items": [
+    {
+      "contract": "JNI thread status before RegisterNatives",
+      "api19": "THREAD_NATIVE before ScopedJniThreadState",
+      "agr": "no thread-status read"
+    },
+    {
+      "contract": "THREAD_RUNNING publication",
+      "api19": "dvmChangeStatus acquire store",
+      "agr": "no store"
+    },
+    {
+      "contract": "suspendCount check",
+      "api19": "checked after the RUNNING store",
+      "agr": "no suspendCount"
+    },
+    {
+      "contract": "self-suspend when needed",
+      "api19": "fullSuspendCheck on the closed pthread crossing",
+      "agr": "not entered"
+    },
+    {
+      "contract": "status during the body",
+      "api19": "THREAD_RUNNING",
+      "agr": "no status word"
+    },
+    {
+      "contract": "restore THREAD_NATIVE",
+      "api19": "destructor release store",
+      "agr": "no restore"
+    },
+    {
+      "contract": "same-status behavior",
+      "api19": "equal status returns without a store",
+      "agr": "no status to compare"
+    },
+    {
+      "contract": "acquire/release publication",
+      "api19": "RUNNING acquire, other statuses release",
+      "agr": "DxExecutionContext atomic store is a different enum and is not called"
+    }
+  ]
+}

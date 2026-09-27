@@ -1,0 +1,21 @@
+{
+  "before": {
+    "crossing": "CROSSING_CLOSED",
+    "prerequisite": "PREREQUISITE_CLOSED",
+    "host_dex_consumption": null,
+    "production_binding": "guest-address agr_bionic_sync"
+  },
+  "after": {
+    "crossing": "CROSSING_CLOSED",
+    "prerequisite": "PREREQUISITE_CLOSED",
+    "whole_owner": "not PRODUCTION_CLOSED",
+    "thread_state_manifest": "MIGRATION_AUTHORIZED",
+    "production_port": false,
+    "jni_relationship": "REOPEN_REQUIRED",
+    "other_four_relationships": "UNRESOLVED",
+    "accepted_boundary": null,
+    "result": "EVIDENCE_GAP",
+    "runtime_modified": false,
+    "crossing_record_changed": false
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "before": {
+    "thread_state_path": "ScopedJniThreadState calls dvmChangeStatus(THREAD_RUNNING) and later dvmChangeStatus(THREAD_NATIVE)",
+    "entry_publication": null,
+    "jni_native_binding_status": "SOURCE_LOCATED",
+    "jni_create_java_vm_in_required_symbols": false
+  },
+  "after": {
+    "entry_publication": "vm/Jni.cpp JNI_CreateJavaVM dvmChangeStatus(NULL, THREAD_NATIVE)",
+    "owner": "Dalvik.JNINativeBinding",
+    "status": "SOURCE_LOCATED",
+    "closure_reviewed": false,
+    "jni_create_java_vm_in_required_symbols": true,
+    "thread_state_status": "SOURCE_CLOSED",
+    "thread_state_manifest": "MIGRATION_AUTHORIZED",
+    "register_natives_relationship": "REOPEN_REQUIRED",
+    "other_four_relationships": "UNRESOLVED",
+    "work_queue_edge_added": false,
+    "runtime_modified": false
+  }
+}

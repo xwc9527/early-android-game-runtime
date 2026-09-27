@@ -1,0 +1,22 @@
+{
+  "owner": "Dalvik.ThreadState",
+  "before": "SOURCE_LOCATED",
+  "after": "SOURCE_CLOSED",
+  "migration_authorized": false,
+  "jni_native_binding": "SOURCE_LOCATED",
+  "jni_thread_state_relationship": "UNRESOLVED",
+  "jni_thread_state_owner_source_status": "SOURCE_CLOSED",
+  "next_blocker": "Dalvik.JNINativeBinding remains SOURCE_LOCATED. JNI thread state around RegisterNatives stays UNRESOLVED until a ThreadState production contract is reviewed.",
+  "ci": {
+    "tested_commit": "76da4647a7ae9cff2d5d582ddcf91c6c8915645b",
+    "tested_tree": "b07c91786fada07cb34774c4626235eb00a9c5aa",
+    "governance_run": "36266289474",
+    "governance_job": "108471488040",
+    "governance_conclusion": "success",
+    "also_success": [
+      "36266289462 Phase 3A0 classpath",
+      "36266289477 Phase 3A JNI references",
+      "36266289465 Phase 3 protected regression"
+    ]
+  }
+}

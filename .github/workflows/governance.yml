@@ -47,6 +47,19 @@ jobs:
           python3 ci/framework-v2-contract.py
           python3 ci/test-evidence-classifier.py
           python3 ci/test-closure-attempt-ledger.py
+      - name: Run ThreadState suspend-count condition contract
+        run: |
+          mkdir -p build/bionic-thread-tests build/artifacts
+          c++ -std=c++17 -O2 -pthread -Wall -Wextra -Werror \
+            Runtime/Bionic/agr_futex_host.cpp Runtime/Bionic/agr_bionic_sync.cpp \
+            Tests/bionic_sync_contract_test.cpp \
+            -o build/bionic-thread-tests/bionic-sync
+          c++ -std=c++17 -O2 -pthread -Wall -Wextra -Werror \
+            Runtime/Bionic/agr_futex_host.cpp Runtime/Bionic/agr_bionic_sync.cpp \
+            Tests/bionic_suspend_cond_test.cpp \
+            -o build/bionic-thread-tests/bionic-suspend-cond
+          python3 -c 'import subprocess; subprocess.run(["build/bionic-thread-tests/bionic-sync"], check=True, timeout=60)'
+          python3 -c 'import subprocess; subprocess.run(["build/bionic-thread-tests/bionic-suspend-cond"], check=True, timeout=60)' | tee build/artifacts/bionic-suspend-cond.txt
       - name: Validate JSON documents
         run: |
           python3 - <<'PY'
@@ -63,3 +76,4 @@ jobs:
           path: |
             build/artifacts/governance-report.json
             build/artifacts/upstream-map-report.json
+            build/artifacts/bionic-suspend-cond.txt

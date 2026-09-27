@@ -1,0 +1,2 @@
+IPHONEOS_LINK rc=0
+                 U _clock_gettime

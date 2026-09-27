@@ -81,3 +81,31 @@ TRACE evidence never authorizes an original AGR implementation.
 Dependency mapping and semantic differential are separate workflows.
 
 For the new migration workflow, D009 decides when reference execution is used. That decision outranks D008's older limit that executable API19 reference runs only for unresolved observable ambiguity. D008 remains the locked rule for source-first semantic differential. It is not rewritten by this decision.
+
+## D010 — HOST-DEX private storage for the thread suspend-count condition
+
+Status: LOCKED
+
+Decision: Select `representation-split` for `Dalvik.ThreadState` consuming `self-suspend on the thread suspend-count condition` from `Bionic.PthreadCondition`. `gDvm.threadSuspendCountLock` and `gDvm.threadSuspendCountCond` are HOST-DEX private VM state. Guest ABI exposure is false. Guest-address requirement is false for this consumer only. Semantic ownership stays with the existing CROSSING_CLOSED record. Storage representation may split. Semantic ownership may not split. The guest-visible pthread representation stays unchanged. This decision does not create a pthread semantic owner, does not mark `Bionic.PthreadCondition` PRODUCTION_CLOSED, does not authorize host pthread substitution, and does not authorize HostServices pthread policy.
+
+The machine-readable consumer binding is `ci/governance/host-storage-consumer-bindings.json`. It cites this decision and the existing crossing record. It does not rewrite that record.
+
+Reopen only if pinned API19 source shows these two objects are guest-visible, or a later locked decision requires every Dalvik VM pthread object to use ARM32 guest storage.
+
+## D011 — ARMv7 execution uses dynarec/JIT as the primary performance backend
+
+Status: LOCKED
+
+Decision: AGR CPU execution architecture prioritizes Android/API19 semantic correctness, game coverage, and execution performance. App Store compliance is a distribution-layer constraint and does not limit the core Runtime architecture. The absence of a JIT is not a CPU-architecture prerequisite.
+
+ARMv7 guest execution uses one shared AGR guest CPU, memory, and runtime contract. A high-performance dynamic recompiler / JIT is the primary backend. The existing interpreter remains a supported backend for the correctness baseline, differential oracle, fallback, diagnostics and single-step, and JIT regression comparison. It is not removed and it is not the primary high-performance native execution target.
+
+Dynarmic is the first implementation candidate, and the first target host is AArch64. This decision does not vendor, fork, or permanently bind Dynarmic. That choice waits for an AGR real-workload proof of concept.
+
+GUEST-ARM Android and native semantics do not change with the CPU backend. The JIT or dynarec replaces only the ARM instruction execution mechanism. It does not acquire linker, Bionic, JNI, EHABI, Android Runtime, or Framework ownership. The interpreter and the JIT share the same guest architectural state and Android environment. A backend must be replaceable. The environment layer must not bind itself to one CPU engine.
+
+A high-performance backend must be able to gain a later fast-memory or direct guest-memory path. Callback-only memory access is not an architecture limit. Executable-code invalidation and self-modifying-code correctness are part of the CPU backend contract. The interpreter and the JIT must be able to compare the same guest execution. An App Store-compatible interpreter build may later exist as an optional distribution profile. It does not become the core architecture constraint again.
+
+`REFERENCE_MIGRATION_RULES.md` remains the highest rule for Android-visible source ownership. This decision does not change Migration Book, API19 Source Closure, Source Port, or Differential.
+
+Reopen only if a later locked decision selects a different primary ARM execution mechanism, or an AGR real-workload proof shows that no dynarec/JIT backend can meet the guest contract.

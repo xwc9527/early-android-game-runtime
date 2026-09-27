@@ -1,0 +1,14 @@
+{
+  "tested_commit": "f6708bc51e7964ec8e92021ec1471ebfaff7e5fe",
+  "tested_tree": "ee42028b553f0b206d86fbdb3f9dfce15ff96e1a",
+  "governance_run": "36291282541",
+  "governance_job": "108541731828",
+  "governance_conclusion": "success",
+  "also_success": [
+    "36291282539 Phase 3A0 classpath",
+    "36291282521 Phase 3A JNI references",
+    "36291282529 Phase 3 protected regression"
+  ],
+  "result": "EVIDENCE_GAP",
+  "runtime_modified": false
+}

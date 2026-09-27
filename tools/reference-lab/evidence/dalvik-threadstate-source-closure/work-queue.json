@@ -1,0 +1,24 @@
+{
+  "before": {
+    "Dalvik.ThreadState": [
+      "BLOCKING ThreadState source review remains unreviewed",
+      "PREREQUISITE_CLOSED self-suspend on the thread suspend-count condition"
+    ],
+    "Dalvik.JNINativeBinding": [
+      "UNRESOLVED JNI thread state around RegisterNatives owner_source_status SOURCE_LOCATED"
+    ]
+  },
+  "after": {
+    "Dalvik.ThreadState": [
+      "no blocking edge",
+      "PREREQUISITE_CLOSED self-suspend on the thread suspend-count condition"
+    ],
+    "Dalvik.JNINativeBinding": [
+      "UNRESOLVED JNI thread state around RegisterNatives owner_source_status SOURCE_CLOSED"
+    ],
+    "Dalvik.Monitor": [
+      "status remains SOURCE_LOCATED",
+      "citing edge thread wait state and suspension coordination is SOURCE_CLOSED"
+    ]
+  }
+}

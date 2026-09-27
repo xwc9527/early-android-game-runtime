@@ -1,0 +1,34 @@
+{
+  "selected": null,
+  "forks": [
+    {
+      "id": "representation-split",
+      "basis": [
+        "Guest ABI text constrains guest-visible pthread objects",
+        "D002 places the Dalvik VM on the host",
+        "CROSSING_CLOSED production_scope does not require guest VMA",
+        "API19 keeps these two objects in gDvm and does not export them to guest code"
+      ],
+      "ownership": "Dalvik.ThreadState owns the objects as HOST-DEX VM state. Bionic.PthreadCondition owns the state machine. Guest ABI is not involved.",
+      "locked_decision_impact": "Does not reopen D002 or D008. Reads the plan sentence that keys futex by guest address as the guest pthread adapter, which that sentence does not explicitly limit.",
+      "bionic_contract_change": false,
+      "new_host_services_capability": false,
+      "missing_authority": "A consumer-binding record that names the host storage identity, cites this exact crossing, and does not widen production_scope.",
+      "migration_impact": "A later ThreadState port could call the closed operations on host-owned words. Guest pthread callers stay on the existing guest-word binding."
+    },
+    {
+      "id": "representation-bound",
+      "basis": [
+        "agr_bionic_sync defines the pthread object as one in-guest 32-bit word",
+        "The pthread plan preserves Bionic object representation and keys futex wait/wake by guest address",
+        "No locked exemption removes VM-internal pthread objects from that rule"
+      ],
+      "ownership": "The word remains guest-addressed Bionic state. Using it from HOST-DEX either moves VM state into guest VMA or changes that representation rule.",
+      "locked_decision_impact": "Putting the VM lock in guest VMA changes the host/guest ownership in D002. Changing the word rule changes the Bionic port contract.",
+      "bionic_contract_change": "Required unless the objects are placed in guest VMA, which is itself a new ownership decision.",
+      "new_host_services_capability": false,
+      "missing_authority": "An explicit decision to place these objects in guest VMA, or an explicit change to the Bionic address contract. Neither exists.",
+      "migration_impact": "The ThreadState port cannot consume the crossing until that decision. The guest ABI or the Bionic contract would change."
+    }
+  ]
+}

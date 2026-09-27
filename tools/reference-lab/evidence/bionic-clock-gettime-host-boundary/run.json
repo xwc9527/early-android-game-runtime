@@ -1,0 +1,26 @@
+{
+  "artifact_id": 10910449794,
+  "artifact_name": "host-clock-probe",
+  "artifact_sha256": "2cbc2511d05f100684cbeb75e895f65fc13f1b73c55f0cd3b3553fdcae03cb7c",
+  "boundary": "Linux clock_gettime kernel boundary",
+  "host_semantic_requests": [
+    "CLOCK_MONOTONIC",
+    "CLOCK_REALTIME"
+  ],
+  "job_id": "108446239141",
+  "raw_files": {
+    "identity.txt": "6357e79fbd64337de0e13adcc6e4d32f6b9ac7b4e754c0399b8f9fc66be55a86",
+    "iphoneos-link.txt": "89944bc21fe3c681b0486359b67d127c9f7a22a62ab45628ab88a01cdc5aa2a6",
+    "simulator-device.txt": "3fde927436ccd4e09fe72ed1d2292034056530a07e777ada6d5a864dbec33a04",
+    "simulator-link.txt": "70b4e51a56451334b9d337b55ce7e18f8a64ba2089dde1fac44d65d98b312cc7",
+    "simulator-probe-rc.txt": "36027a52b5784064a31796fa977850e70333f6b7e55dc85309868fcdac7d2717",
+    "simulator-probe.txt": "64d04bcf77fc8d933a1b16e2ab3078817b5c8986a540ff57c1024bc800d459ab"
+  },
+  "runner_label": "xcode-27",
+  "schema_version": 1,
+  "semantic_cluster": "Bionic.ClockGettime",
+  "simulator_device": "AB8C0656-C67F-4407-B6C8-570622E4D033",
+  "tested_commit": "944398a20dd044043ae308fab9e596c78f423db6",
+  "tested_tree": "7d9ad4ef90ccf48d55b982a268c9c89b93650b47",
+  "workflow_run_id": "36257240208"
+}

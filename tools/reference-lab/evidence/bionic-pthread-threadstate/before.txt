@@ -1,0 +1,4 @@
+agr_bionic_cond_wait_relative returned agr_bionic_mutex_unlock and agr_bionic_mutex_lock failures and did not wait after an unlock failure.
+normal agr_bionic_mutex_lock returned a futex wait error instead of retrying until the swap observed the unlocked word, and did not run a full barrier before return.
+normal agr_bionic_mutex_unlock did not run a full barrier before the atomic decrement.
+pulse woke without ANDROID_MEMBAR_FULL between the successful compare-exchange and the wake.

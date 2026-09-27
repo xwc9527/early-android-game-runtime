@@ -1,0 +1,13 @@
+{
+  "result": "AUTHORIZED",
+  "selected_fork": "representation-split",
+  "decision_id": "D010",
+  "consumer": "Dalvik.ThreadState",
+  "semantic_owner": "Bionic.PthreadCondition",
+  "edge": "self-suspend on the thread suspend-count condition",
+  "runtime_modified": false,
+  "crossing_record_modified": false,
+  "whole_owner_production_closed": false,
+  "guest_pthread_binding": "unchanged",
+  "remaining_production_blocker": "RegisterNatives thread-state path is not ported"
+}

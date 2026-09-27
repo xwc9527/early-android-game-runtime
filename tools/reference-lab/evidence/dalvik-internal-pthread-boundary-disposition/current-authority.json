@@ -1,0 +1,22 @@
+{
+  "crossing": {
+    "edge": "self-suspend on the thread suspend-count condition",
+    "semantic_cluster": "Bionic.PthreadCondition",
+    "status": "CROSSING_CLOSED",
+    "source_symbol": "pthread_cond_wait",
+    "source_sha256": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
+    "production_scope": [
+      "futex wait/wake with full barrier on normal lock, normal unlock, and broadcast pulse",
+      "normal pthread_mutex_lock",
+      "normal pthread_mutex_unlock",
+      "pthread_cond_broadcast",
+      "untimed pthread_cond_wait"
+    ],
+    "production_scope_includes_guest_address": false,
+    "whole_owner_production_closed": false,
+    "record_changed": false
+  },
+  "prerequisite": "PREREQUISITE_CLOSED",
+  "thread_state_manifest": "MIGRATION_AUTHORIZED",
+  "host_services_wait_wake_exported": false
+}

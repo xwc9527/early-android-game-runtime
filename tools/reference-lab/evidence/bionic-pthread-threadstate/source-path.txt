@@ -1,0 +1,30 @@
+repo platform/dalvik revision 36e356c96640775f0a3f167bd2426ea0f0093b8b
+file vm/Thread.cpp sha256 ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7 bytes 125471
+file vm/Thread.h sha256 d31169a50cd6e5504fa017cf9ff77a749ff8fb48636985a2037b140c5301f70a bytes 18388
+repo platform/bionic revision 081db840befec895fb86e709ae95832ade2d065c
+file libc/bionic/pthread.c sha256 8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d bytes 42168
+
+dvmChangeStatus Thread.cpp:2905
+  THREAD_RUNNING and suspendCount != 0 -> fullSuspendCheck Thread.cpp:2845
+fullSuspendCheck
+  lockThreadSuspendCount Thread.cpp:333 -> dvmLockMutex Thread.h:440 -> pthread_mutex_lock
+  pthread_mutex_init(NULL) Thread.h:433 is the normal mutex
+  while suspendCount != 0: dvmWaitCond Thread.h:486 -> pthread_cond_wait
+  unlockThreadSuspendCount Thread.cpp:349 -> dvmUnlockMutex Thread.h:459 -> pthread_mutex_unlock
+pthread_cond_wait pthread.c:1104 -> pthread_cond_timedwait(cond, mutex, NULL)
+  __pthread_cond_timedwait abstime NULL does not call clock_gettime
+  __pthread_cond_timedwait_relative pthread.c:1109
+    samples cond->value
+    pthread_mutex_unlock return ignored
+    __futex_wait_ex relative timeout NULL
+    pthread_mutex_lock return ignored
+    returns ETIMEDOUT only when futex status is -ETIMEDOUT, otherwise 0
+resume of gDvm.threadSuspendCountCond
+  dvmResumeThread Thread.cpp:2211 -> dvmBroadcastCond Thread.h:474 -> pthread_cond_broadcast
+  dvmResumeAllThreads Thread.cpp:2714 -> pthread_cond_broadcast
+  dvmUndoDebuggerSuspensions Thread.cpp:2765 -> pthread_cond_broadcast
+pthread_cond_broadcast pthread.c:1094 -> __pthread_cond_pulse(cond, INT_MAX)
+  cmpxchg steps the counter by -2
+  ANDROID_MEMBAR_FULL
+  __futex_wake_ex
+pthread_cond_signal is not called on threadSuspendCountCond

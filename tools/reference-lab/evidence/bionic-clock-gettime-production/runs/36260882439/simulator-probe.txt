@@ -1,0 +1,8 @@
+PORT agr_bionic_clock_gettime
+INIT rc=0
+CLOCK id=1 name=monotonic rc=0 errno=0 tv_sec=328 tv_nsec=669086000
+CLOCK id=0 name=realtime rc=0 errno=0 tv_sec=1790445636 tv_nsec=669087000
+CLOCK id=1 name=monotonic rc=0 errno=0 tv_sec=328 tv_nsec=975971000
+CLOCK id=0 name=realtime rc=0 errno=0 tv_sec=1790445636 tv_nsec=976008000
+ADVANCED monotonic=1 realtime=1 distinct=1
+PROBE_DONE ok=1

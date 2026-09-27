@@ -1,0 +1,4 @@
+untimed wait calls mutex unlock, futex wait, and mutex lock, and returns only the futex ETIMEDOUT filter.
+normal mutex lock retries through futex wait until acquisition and then runs a seq_cst fence.
+normal mutex unlock runs that fence before the decrement.
+broadcast pulse runs that fence after the counter update and before wake.

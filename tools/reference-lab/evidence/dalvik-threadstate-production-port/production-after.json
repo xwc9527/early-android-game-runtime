@@ -1,0 +1,19 @@
+{
+  "function": "jni_RegisterNatives",
+  "file": "Runtime/DexLoom/VM/dx_jni.c",
+  "entry": "dx_jni_init calls dx_thread_change_status(root, DX_DALVIK_THREAD_NATIVE)",
+  "body": "dx_thread_change_status(THREAD_RUNNING), register body, dx_thread_change_status(THREAD_NATIVE)",
+  "suspend": "Runtime/DexLoom/VM/dx_thread_state.c full_suspend_check",
+  "d010_binding": "ci/governance/host-storage-consumer-bindings.json",
+  "bionic_calls": [
+    "agr_bionic_mutex_init",
+    "agr_bionic_cond_init",
+    "agr_bionic_mutex_lock",
+    "agr_bionic_mutex_unlock",
+    "agr_bionic_cond_wait_relative",
+    "agr_bionic_cond_broadcast"
+  ],
+  "storage": "two HOST-DEX words addressed only inside the D010 callback table",
+  "guest_pthread_binding": "unchanged",
+  "dalvik_thread_status_owner": "Dalvik.ThreadState"
+}

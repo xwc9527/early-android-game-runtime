@@ -1,0 +1,58 @@
+{
+  "agr_production_probe": {
+    "advanced": {
+      "distinct": 1,
+      "monotonic": 1,
+      "realtime": 1
+    },
+    "monotonic_after": {
+      "errno": 0,
+      "rc": 0,
+      "tv_nsec": 975971000,
+      "tv_sec": 328
+    },
+    "monotonic_before": {
+      "errno": 0,
+      "rc": 0,
+      "tv_nsec": 669086000,
+      "tv_sec": 328
+    },
+    "realtime_after": {
+      "errno": 0,
+      "rc": 0,
+      "tv_nsec": 976008000,
+      "tv_sec": 1790445636
+    },
+    "realtime_before": {
+      "errno": 0,
+      "rc": 0,
+      "tv_nsec": 669087000,
+      "tv_sec": 1790445636
+    },
+    "symbol": "agr_bionic_clock_gettime",
+    "workflow_run_id": 36260882439
+  },
+  "formal_clean_differential_producer": false,
+  "observable_shape": {
+    "absolute_timestamps_equal": false,
+    "both_advance": true,
+    "clocks_distinct": true,
+    "monotonic_success": true,
+    "nsec_below_one_second": true,
+    "realtime_success": true
+  },
+  "producer": "focused reuse of existing CLEAN 0/1 lines against the production Bionic probe",
+  "reference": {
+    "arm_fingerprint": "Android/aosp_arm/generic:4.4.4/KTU84Q/eng.root.20260925.132919:eng/test-keys",
+    "arm_monotonic_sec": 60,
+    "arm_realtime_sec": 1790440856,
+    "both_abis": "clock ids 0 and 1 return rc=0 errno=0, nsec < 1000000000, and both advance across the sleep samples",
+    "x86_fingerprint": "Android/aosp_x86/generic_x86:4.4.4/KTU84Q/eng.root.20260925.052225:eng/test-keys",
+    "x86_monotonic_sec": 69,
+    "x86_realtime_sec": 1790440758
+  },
+  "scope": [
+    "CLOCK_REALTIME",
+    "CLOCK_MONOTONIC"
+  ]
+}

@@ -1,0 +1,11 @@
+BRANCH cursor/shared-substrate-prerequisite-da4f
+HEAD 944398a20dd044043ae308fab9e596c78f423db6
+TREE 7d9ad4ef90ccf48d55b982a268c9c89b93650b47
+SW_VERS 27.0
+UNAME arm64
+Xcode 27.0
+Build version 27A266a
+IPHONEOS_SDK_VERSION 27.0
+IPHONEOS_SDK_PATH /Applications/Xcode_27.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS27.0.sdk
+IPHONESIMULATOR_SDK_VERSION 27.0
+IPHONESIMULATOR_SDK_PATH /Applications/Xcode_27.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.0.sdk

@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "decision": {
+    "id": "D010",
+    "status": "LOCKED",
+    "selected_fork": "representation-split",
+    "consumer": "Dalvik.ThreadState",
+    "semantic_owner": "Bionic.PthreadCondition",
+    "edge": "self-suspend on the thread suspend-count condition",
+    "storage_class": "HOST-DEX private VM state",
+    "objects": ["gDvm.threadSuspendCountLock", "gDvm.threadSuspendCountCond"],
+    "guest_abi_exposure": false,
+    "guest_address_requirement": false,
+    "guest_address_requirement_scope": "this consumer only",
+    "guest_pthread_binding": "unchanged",
+    "semantic_ownership_separated": false,
+    "host_pthread_substitution": false,
+    "host_services_pthread_policy": false,
+    "new_semantic_owner": false,
+    "whole_owner_production_closed": false
+  },
+  "bindings": [
+    {
+      "consumer": "Dalvik.ThreadState",
+      "authorization_decision": "D010",
+      "semantic_owner": "Bionic.PthreadCondition",
+      "crossing_status": "CROSSING_CLOSED",
+      "edge": "self-suspend on the thread suspend-count condition",
+      "semantic_cluster": "Bionic.PthreadCondition",
+      "source_repo": "platform/bionic",
+      "revision": "081db840befec895fb86e709ae95832ade2d065c",
+      "source_file": "libc/bionic/pthread.c",
+      "source_symbol": "pthread_cond_wait",
+      "source_sha256": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
+      "source_revision": "081db840befec895fb86e709ae95832ade2d065c",
+      "source_owner_digest": "8d62e6f7b90e11e1b6d89ccc55962b84ccd14ed720181d6c5153fd60ef418deb",
+      "origin": {
+        "source_repo": "platform/dalvik",
+        "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+        "source_file": "vm/Thread.cpp",
+        "source_symbol": "dvmChangeStatus",
+        "source_sha256": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7"
+      },
+      "production_scope": [
+        "futex wait/wake with full barrier on normal lock, normal unlock, and broadcast pulse",
+        "normal pthread_mutex_lock",
+        "normal pthread_mutex_unlock",
+        "pthread_cond_broadcast",
+        "untimed pthread_cond_wait"
+      ],
+      "production_module": "pthread",
+      "tested_commit": "741545edc903915b5fc7c9dac53f8b016952dc84",
+      "tested_tree": "120663dc01662362c55aee3900c71e09da8d15dd",
+      "closure_run": "36262733436",
+      "storage_class": "HOST-DEX private VM state",
+      "objects": ["gDvm.threadSuspendCountLock", "gDvm.threadSuspendCountCond"],
+      "guest_abi_exposure": false,
+      "guest_address_requirement": false,
+      "guest_address_requirement_scope": "this consumer only",
+      "guest_pthread_binding": "unchanged",
+      "semantic_requirement": "closed Bionic state machine, ordering, and full-barrier behavior",
+      "semantic_ownership_separated": false,
+      "host_pthread_substitution": false,
+      "host_services_pthread_policy": false,
+      "new_semantic_owner": false,
+      "whole_owner_production_closed": false
+    }
+  ]
+}

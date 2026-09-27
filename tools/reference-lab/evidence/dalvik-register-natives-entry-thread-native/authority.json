@@ -1,0 +1,19 @@
+{
+  "owner": "Dalvik.JNINativeBinding",
+  "new_owner": false,
+  "reason": "JNI_CreateJavaVM is in vm/Jni.cpp, which this owner already pins. The call uses the existing Dalvik.ThreadState symbol dvmChangeStatus. It does not introduce a new semantic cluster.",
+  "source_repo": "platform/dalvik",
+  "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+  "source_file": "vm/Jni.cpp",
+  "source_sha256": "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed",
+  "symbol": "JNI_CreateJavaVM",
+  "callee": {
+    "owner": "Dalvik.ThreadState",
+    "symbol": "dvmChangeStatus",
+    "file": "vm/Thread.cpp",
+    "sha256": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7"
+  },
+  "status_after_review": "SOURCE_LOCATED",
+  "closure_reviewed": false,
+  "status_unchanged_because": "The other four prerequisite edges stay UNRESOLVED and the RegisterNatives thread-state edge stays REOPEN_REQUIRED. Those rules still block SOURCE_CLOSED."
+}

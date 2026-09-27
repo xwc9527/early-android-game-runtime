@@ -1,0 +1,11 @@
+{
+  "branch": "cursor/shared-substrate-prerequisite-da4f",
+  "base_commit": "6e1041b0c983f2c3af66a835c579c9fe56a45f8d",
+  "base_tree": "8b918a31f32c964c017d8d50536435f82197cb49",
+  "thread_state": "SOURCE_DERIVED manifest MIGRATION_AUTHORIZED",
+  "jni_relationship": "REOPEN_REQUIRED",
+  "jni_owner": "SOURCE_LOCATED",
+  "production_port": false,
+  "runtime_modified": false,
+  "next_blocker": "The authorized Dalvik.ThreadState production port on jni_RegisterNatives has not started. The other four JNINativeBinding prerequisites stay UNRESOLVED."
+}

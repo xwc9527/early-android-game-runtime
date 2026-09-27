@@ -1,0 +1,17 @@
+{
+  "tested_commit": "84d520a1d0c80bf5407fa86d86e210d96f3984fb",
+  "tested_tree": "540873d43a6a060c664db2b4e5b2e8b92030ee2b",
+  "governance_run": "36297806673",
+  "governance_job": "108559792831",
+  "governance_conclusion": "success",
+  "also_success": [
+    "36297806656 Phase 3A0 classpath",
+    "36297806640 Phase 3A JNI references",
+    "36297806581 Phase 3 protected regression"
+  ],
+  "runtime_modified": true,
+  "result": "PORTED",
+  "relationship": "REOPEN_REQUIRED",
+  "differential": "NO_DIVERGENCE",
+  "prior_stop_ci": "tools/reference-lab/evidence/dalvik-threadstate-production-port/prior-stop-ci.json"
+}

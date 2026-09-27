@@ -1,0 +1,29 @@
+{
+  "result": "EVIDENCE_GAP",
+  "runtime_modified": false,
+  "gaps": [
+    {
+      "id": "entry-thread-native",
+      "blocked_contract": "THREAD_NATIVE before ScopedJniThreadState",
+      "why_not_unique": "The authorized path's constructor publishes THREAD_RUNNING from whatever status is already stored. The destructor always requests THREAD_NATIVE. No assignment of the incoming THREAD_NATIVE value is in vm/Thread.cpp or vm/Thread.h on this path.",
+      "missing_dependencies": [
+        "vm/Init.cpp:1625 registerSystemNatives plain-stores THREAD_NATIVE before RegisterNatives",
+        "vm/Native.cpp:433 dvmLoadNativeCode publishes THREAD_NATIVE before JNI_OnLoad"
+      ],
+      "new_unclosed_owner": true,
+      "action": "stop"
+    },
+    {
+      "id": "closed-pthread-crossing-consumption",
+      "blocked_contract": "nonzero suspendCount enters the closed self-suspend crossing",
+      "why_not_unique": "The closed production implementation addresses pthread words as ARM32 guest addresses inside agr_runtime. Host DEX has no such words and no declared binding.",
+      "forbidden_repairs": [
+        "forge an ARM32 guest address",
+        "rewrite the Bionic contract",
+        "add timed wait or another pthread capability",
+        "reimplement the wait with host pthread calls"
+      ],
+      "action": "stop"
+    }
+  ]
+}

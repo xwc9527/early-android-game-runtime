@@ -4,6 +4,7 @@
 
 #include "../Include/dx_jni.h"
 #include "../Include/dx_vm.h"
+#include "../Include/dx_thread_state.h"
 #include "../Include/dx_log.h"
 #include <stdlib.h>
 #include <string.h>
@@ -1039,11 +1040,17 @@ JNI_ARRAY_REGION_STUBS(Long, jlong)
 JNI_ARRAY_REGION_STUBS(Float, jfloat)
 JNI_ARRAY_REGION_STUBS(Double, jdouble)
 
-// RegisterNatives / UnregisterNatives
-static jint JNICALL jni_RegisterNatives(JNIEnv *env, jclass clazz,
-                                         const JNINativeMethod *methods, jint nMethods) {
-    (void)env;
-    DxClass *cls = dx_jni_unwrap_class(clazz);
+/* Absent unless a host test defines it. Production callers leave it NULL. */
+extern void dx_thread_register_natives_body_observer(DxExecutionContext *exec)
+    __attribute__((weak));
+
+static jint jni_register_natives_body(JNIEnv *env, jclass clazz,
+                                      const JNINativeMethod *methods, jint nMethods) {
+    DxExecutionContext *self = exec_from_env(env);
+    DxClass *cls;
+    if (dx_thread_register_natives_body_observer)
+        dx_thread_register_natives_body_observer(self);
+    cls = dx_jni_unwrap_class(clazz);
     if (!cls) {
         DX_WARN(TAG, "RegisterNatives: null class");
         return -1;
@@ -1070,6 +1077,16 @@ static jint JNICALL jni_RegisterNatives(JNIEnv *env, jclass clazz,
     }
 
     return 0;
+}
+
+static jint JNICALL jni_RegisterNatives(JNIEnv *env, jclass clazz,
+                                         const JNINativeMethod *methods, jint nMethods) {
+    DxExecutionContext *self = exec_from_env(env);
+    jint result;
+    if (self) dx_thread_change_status(self, DX_DALVIK_THREAD_RUNNING);
+    result = jni_register_natives_body(env, clazz, methods, nMethods);
+    if (self) dx_thread_change_status(self, DX_DALVIK_THREAD_NATIVE);
+    return result;
 }
 
 static jint JNICALL jni_UnregisterNatives(JNIEnv *env, jclass clazz) {
@@ -1699,7 +1716,9 @@ DxResult dx_jni_init(DxVM *vm) {
     if (!vm) return DX_ERR_NULL_PTR;
     g_vm = vm;
     g_java_vm.functions = &g_invoke;
+    if (dx_thread_suspend_storage_init() != 0) return DX_ERR_NULL_PTR;
     if (vm->root_exec) {
+        dx_thread_change_status(vm->root_exec, DX_DALVIK_THREAD_NATIVE);
         vm->root_exec->jni_attached = 1;
         vm->root_exec->has_host_thread = 1;
         vm->root_exec->host_thread = pthread_self();

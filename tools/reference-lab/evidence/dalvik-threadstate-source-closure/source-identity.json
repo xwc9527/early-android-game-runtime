@@ -1,0 +1,21 @@
+{
+  "source_repo": "platform/dalvik",
+  "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+  "files": {
+    "vm/Thread.cpp": {
+      "sha256": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
+      "bytes": 125471
+    },
+    "vm/Thread.h": {
+      "sha256": "d31169a50cd6e5504fa017cf9ff77a749ff8fb48636985a2037b140c5301f70a",
+      "bytes": 18388
+    }
+  },
+  "caller_file": {
+    "vm/Jni.cpp": {
+      "sha256": "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed",
+      "bytes": 126542,
+      "owner": "Dalvik.JNINativeBinding"
+    }
+  }
+}

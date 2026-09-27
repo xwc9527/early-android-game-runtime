@@ -1,0 +1,11 @@
+{
+  "invariants": [
+    "storage representation may split",
+    "semantic ownership may not split",
+    "CROSSING_CLOSED is not rewritten with host storage",
+    "guest-visible pthread representation stays unchanged",
+    "HostServices does not receive pthread policy",
+    "host pthread does not replace Bionic semantics",
+    "only Dalvik.ThreadState may use this private storage for this exact crossing"
+  ]
+}

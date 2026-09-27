@@ -1,6 +1,6 @@
 # AGR Current State
 
-Updated: 2026-09-25
+Updated: 2026-09-27
 
 ## Current reference-migration work
 
@@ -14,9 +14,30 @@ The four-game app-to-boot invoke queue contains 779 observed method identities,
 114 shared by at least two games. Two Framework resource entries and
 `Integer.valueOf(int)` are `SOURCE_LOCATED`; four other observed Integer boxing
 method source sets are `SOURCE_CLOSED`. Both semantic clusters remain unclosed
-and `MIGRATION_AUTHORIZED` is false. No new
-Android-visible source port or CLEAN-to-AGR differential is claimed. The
-current source indexes and manifests are under `tools/reference-lab/indexes`
+and `MIGRATION_AUTHORIZED` is false. `Bionic.ClockGettime` can be
+`MIGRATION_AUTHORIZED` only as a `SOURCE_DERIVED` substrate manifest when its
+source-derived review matches, including the Darwin realtime and monotonic
+host-boundary evidence. That authorization is not production closure and does
+not close Integer or Resources. The authorized `CLOCK_REALTIME` and
+`CLOCK_MONOTONIC` requests now have a Bionic production port. That port is
+not `PRODUCTION_CLOSED` and it is not a formal CLEAN differential producer.
+The ThreadState self-suspend crossing has an exact `CROSSING_CLOSED` record.
+That record does not mark `Bionic.PthreadCondition` `PRODUCTION_CLOSED`.
+Absolute condition timeouts stay outside that path. `Dalvik.ThreadState` is
+`SOURCE_CLOSED` for that source path. The source-derived manifest reached from
+`JNI thread state around RegisterNatives` is `MIGRATION_AUTHORIZED`. The entry `THREAD_NATIVE` for
+this origin is `JNI_CreateJavaVM` in `Dalvik.JNINativeBinding`. The closed
+pthread crossing is consumed, for this consumer only, through D010
+`representation-split`. The RegisterNatives thread-state path is now in
+production and uses that binding. D011 locks dynarec/JIT as the primary
+ARMv7 execution architecture. The interpreter remains the correctness and
+fallback backend. Dynarmic is the first candidate and is not permanently
+bound. `Dalvik.JNINativeBinding` stays
+`SOURCE_LOCATED`. The RegisterNatives thread-state prerequisite is
+`PREREQUISITE_CLOSED` for that exact crossing. `Dalvik.Monitor` is
+`SOURCE_CLOSED` for the reviewed set that includes `dvmLockObject`. The
+synchronized JNI bridge relationship stays `UNRESOLVED`.
+The current source indexes and manifests are under `tools/reference-lab/indexes`
 and `tools/reference-lab/evidence`; their unresolved edges are explicit.
 
 The older R0 narrative below records an earlier workbench state and is
@@ -40,7 +61,7 @@ Formal `main` baseline remains `3e3db84a53ad0957e9217f804b6f718a942b9a11`. This 
 
 ## Current phase
 
-Phase 3, Dalvik semantics, is CLOSED. Subphases 3A0, 3A, 3B, 3C, 3D, and the final JNI gate are CLOSED. Lifecycle of the active target: `CLOSED`.
+The active target is `Dalvik.JNINativeBinding API19 Repair` on `cursor/shared-substrate-prerequisite-da4f`. Its governance lifecycle is `IMPLEMENTED` and it has no closure attempt. Phase 3, including subphases 3A0, 3A, 3B, 3C, 3D, and the final JNI gate, remains a historical CLOSED target.
 
 ## CLOSED modules
 
@@ -56,11 +77,11 @@ Earlier merged Runtime contracts (linker, pthread, EHABI, allocator, APK bootstr
 
 ## Active target
 
-Phase 3 Dalvik semantics closure. It is CLOSED at `851a025a14a75429c975da43853269f9d98ed8ef` / tree `9ece3c2b0f1bea5d8275bde75f13d91b5b3e63d6`. JNI run `36039287996`, classpath `36039288141`, governance `36039288115`, protected regression `36039288207`.
+`Dalvik.JNINativeBinding API19 Repair`. `DalvikJNI` is reopened for this target. `DalvikThreadState` owns the RegisterNatives thread-state implementation. The owner source status remains `SOURCE_LOCATED`.
 
 ## Current blocker
 
-None for Phase 3. `API19_REFERENCE_DIFFERENTIAL` was not executed and is not claimed as PASS.
+`Dalvik.ThreadState` is migration-authorized for the RegisterNatives thread-state crossing, and that path is now in production. `dx_jni_init` publishes entry `THREAD_NATIVE`. `jni_RegisterNatives` enters `THREAD_RUNNING`, reads `suspendCount`, and on a nonzero count waits through the D010 host words and the closed Bionic self-suspend operations, then restores `THREAD_NATIVE`. Guest-visible pthread objects stay on the ARM32 guest representation. The Bionic self-suspend crossing record is unchanged. `DalvikThreadState` owns `dx_thread_state.c` and `dx_thread_state.h`. The JNI relationship for this exact crossing is `PREREQUISITE_CLOSED`. `Dalvik.JNINativeBinding` stays `SOURCE_LOCATED`. Class initialization, object allocation, method invocation, and monitor relationships stay `UNRESOLVED`. The next blocker is those four prerequisites. The missing-signature, non-native, null-fn, and fast-JNI RegisterNatives divergences stay outside this crossing.
 
 ## Next architecture milestone
 

@@ -35,6 +35,18 @@ UIKit must not execute arbitrary guest code. Cross-affinity synchronous waits oc
 
 The guest ABI is little-endian ARM32/armeabi-v7a with API19-visible layout and 4 KiB Android page semantics. Guest pointers, sizes, fds, pthread objects, structs, handles, and errno remain 32-bit Android values. Darwin pointers and layouts never cross the boundary.
 
+## ARMv7 CPU Execution
+
+D011 locks the CPU execution architecture. Android/API19 semantic correctness, game coverage, and execution performance come first. App Store compliance stays a distribution constraint and does not constrain this architecture.
+
+Original ARMv7 code remains GUEST-ARM. The shared guest CPU, memory, and runtime contract is independent of the instruction backend. The primary backend is a high-performance dynamic recompiler / JIT. The existing interpreter stays in production as the correctness baseline, differential oracle, fallback, diagnostic and single-step backend, and the comparison target for JIT regressions.
+
+Dynarmic is the first candidate, aimed at an AArch64 host. D011 does not treat that candidate as a permanent vendor, fork, or binding. A later AGR real-workload proof decides whether it is adopted.
+
+The backend executes ARM instructions only. Linker, Bionic, JNI, EHABI, Android Runtime, and Framework ownership stay where D001–D010 and `REFERENCE_MIGRATION_RULES.md` place them. Both backends see the same guest architectural state and the same Android environment, so one engine can replace the other and the same guest execution can be compared. The environment layer does not bind itself to one CPU engine.
+
+The high-performance backend must be able to use a later fast or direct guest-memory path. Callback-only memory access is not frozen as the architecture. Code invalidation and self-modifying-code correctness belong to the CPU backend contract. An interpreter-only build may later be an optional distribution profile.
+
 ## Ownership Boundaries
 
 The formal AOSP-derived linker is the sole owner of ELF mappings, dependencies, symbols, relocations, constructors, finalizers, and libdl lifetime.
@@ -52,7 +64,7 @@ Input follows `UIKit raw event -> Android InputQueue semantics -> Android Looper
 3. Use HLE only at real kernel, service, device, or platform boundaries.
 4. Where an API19/AOSP source owner exists, do not write an original or approximate replacement. A different host mechanism is allowed only at an explicitly excluded Linux kernel, Binder/system_server, SurfaceFlinger, AudioFlinger, real device/service boundary, or pure HostServices primitive. `REFERENCE_MIGRATION_RULES.md` owns that decision.
 
-Python is restricted to build, audit, test, CI, and device observation. Production Runtime remains native C/C++, Rust for the existing ARM interpreter, and necessary iOS host code.
+Python is restricted to build, audit, test, CI, and device observation. Production Runtime remains native C/C++, the ARM interpreter as the correctness and fallback backend, a replaceable dynarec/JIT primary backend, and necessary iOS host code.
 
 ## Technical Debt Policy
 

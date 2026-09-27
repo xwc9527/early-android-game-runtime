@@ -1,0 +1,7 @@
+CASE tag=literal_0 clockid=0 rc=0 errno=0 tv_sec=1790440758 tv_nsec=33728241
+CASE tag=literal_1 clockid=1 rc=0 errno=0 tv_sec=69 tv_nsec=46604707
+CASE tag=before_sleep_0 clockid=0 rc=0 errno=0 tv_sec=1790440758 tv_nsec=58146964
+CASE tag=before_sleep_1 clockid=1 rc=0 errno=0 tv_sec=69 tv_nsec=69878590
+CASE tag=after_sleep_0 clockid=0 rc=0 errno=0 tv_sec=1790440758 tv_nsec=366133512
+CASE tag=after_sleep_1 clockid=1 rc=0 errno=0 tv_sec=69 tv_nsec=378034435
+PROBE_DONE

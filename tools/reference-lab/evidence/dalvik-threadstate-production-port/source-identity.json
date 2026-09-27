@@ -1,0 +1,32 @@
+{
+  "source_repo": "platform/dalvik",
+  "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+  "source_file_sha256": {
+    "vm/Thread.cpp": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
+    "vm/Thread.h": "d31169a50cd6e5504fa017cf9ff77a749ff8fb48636985a2037b140c5301f70a"
+  },
+  "caller_file": {
+    "vm/Jni.cpp": {
+      "sha256": "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed",
+      "owner": "Dalvik.JNINativeBinding"
+    }
+  },
+  "migration_authority": {
+    "indexed_owner": "Dalvik.ThreadState",
+    "indexed_status": "SOURCE_CLOSED",
+    "manifest": "tools/reference-lab/evidence/dalvik-threadstate-production-disposition/source-manifest.json",
+    "manifest_status": "MIGRATION_AUTHORIZED",
+    "provenance": "SOURCE_DERIVED",
+    "origin_dependency_id": "DALVIK_JNI_NATIVE_BINDING:register-natives-thread-state",
+    "source_path": "Dalvik.JNINativeBinding -> Dalvik.ThreadState",
+    "handwritten_migration_authorized": false
+  },
+  "prerequisite": {
+    "edge": "self-suspend on the thread suspend-count condition",
+    "semantic_cluster": "Bionic.PthreadCondition",
+    "relationship": "PREREQUISITE_CLOSED",
+    "contract": "ci/governance/substrate-production-contracts.json",
+    "contract_status": "CROSSING_CLOSED",
+    "production_module": "pthread"
+  }
+}

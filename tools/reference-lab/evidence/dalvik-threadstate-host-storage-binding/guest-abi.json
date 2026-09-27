@@ -1,0 +1,13 @@
+{
+  "guest_abi_exposure": false,
+  "guest_address_requirement": false,
+  "guest_address_requirement_scope": "this consumer only",
+  "guest_visible_pthread_objects": "ARM32 32-bit guest representation remains required",
+  "guest_pthread_binding": "unchanged",
+  "production_text": [
+    "Runtime/Bionic/agr_bionic_sync.h ARM32 addresses",
+    "Runtime/Bionic/agr_bionic_sync.cpp in-guest 32-bit word",
+    "Runtime/Bionic/agr_futex_host.h raw ARM32 word read",
+    "Runtime/NativeCore/agr_runtime.c guest atomic callbacks"
+  ]
+}

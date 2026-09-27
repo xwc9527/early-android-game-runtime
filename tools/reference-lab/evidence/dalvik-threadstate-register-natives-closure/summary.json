@@ -1,0 +1,19 @@
+{
+  "result": "PREREQUISITE_CLOSED",
+  "relationship_before": "REOPEN_REQUIRED",
+  "relationship_after": "PREREQUISITE_CLOSED",
+  "declaring_owner": "Dalvik.JNINativeBinding",
+  "semantic_owner": "Dalvik.ThreadState",
+  "edge": "JNI thread state around RegisterNatives",
+  "production_module": "DalvikThreadState",
+  "jni_owner_status": "SOURCE_LOCATED",
+  "other_jni_prerequisites": "UNRESOLVED",
+  "whole_owner_production_closed": false,
+  "bionic_crossing_modified": false,
+  "d010_modified": false,
+  "differential": "NO_DIVERGENCE",
+  "tested_commit": "010f7fede617bb2bf3188001a431c988b6359e2f",
+  "tested_tree": "28e856a756e6be4872d926ede5f93c0ae4c8effb",
+  "closure_run": "36299095567",
+  "next_blocker": "Dalvik.ClassInitialization, Dalvik.ObjectAllocation, Dalvik.MethodInvocation, and Dalvik.Monitor stay UNRESOLVED."
+}

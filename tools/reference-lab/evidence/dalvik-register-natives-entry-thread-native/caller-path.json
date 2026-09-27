@@ -1,0 +1,24 @@
+{
+  "path": [
+    "AndroidRuntime::start frameworks/base core/jni/AndroidRuntime.cpp:838 startVm",
+    "AndroidRuntime::startVm AndroidRuntime.cpp:774 JNI_CreateJavaVM",
+    "JNI_CreateJavaVM vm/Jni.cpp:3424",
+    "dvmStartup returns",
+    "dvmChangeStatus(NULL, THREAD_NATIVE) vm/Jni.cpp:3537",
+    "JNI_CreateJavaVM returns JNI_OK and the JNIEnv",
+    "AndroidRuntime::start AndroidRuntime.cpp:846 startReg",
+    "AndroidRuntime::startReg AndroidRuntime.cpp:1226 register_jni_procs",
+    "AndroidRuntime::registerNativeMethods AndroidRuntime.cpp:262",
+    "jniRegisterNativeMethods JNIHelp.cpp:72",
+    "RegisterNatives JNIHelp.cpp:86",
+    "RegisterNatives vm/Jni.cpp constructs ScopedJniThreadState",
+    "ScopedJniThreadState constructor reads the status published at Jni.cpp:3537"
+  ],
+  "publication": {
+    "file": "vm/Jni.cpp",
+    "symbol": "JNI_CreateJavaVM",
+    "line": 3537,
+    "text": "dvmChangeStatus(NULL, THREAD_NATIVE)",
+    "comment": "The current thread becomes the main VM thread. We return immediately, which effectively means the caller is executing in a native method."
+  }
+}
