@@ -1040,9 +1040,15 @@ JNI_ARRAY_REGION_STUBS(Long, jlong)
 JNI_ARRAY_REGION_STUBS(Float, jfloat)
 JNI_ARRAY_REGION_STUBS(Double, jdouble)
 
-/* Absent unless a host test defines it. Production callers leave it NULL. */
+/* Absent unless a host test defines it. Production callers leave it NULL.
+ * Mach-O requires weak_import for that missing symbol to stay a null pointer. */
+#if defined(__APPLE__)
+extern void dx_thread_register_natives_body_observer(DxExecutionContext *exec)
+    __attribute__((weak_import));
+#else
 extern void dx_thread_register_natives_body_observer(DxExecutionContext *exec)
     __attribute__((weak));
+#endif
 
 static jint jni_register_natives_body(JNIEnv *env, jclass clazz,
                                       const JNINativeMethod *methods, jint nMethods) {

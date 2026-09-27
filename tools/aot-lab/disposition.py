@@ -24,6 +24,10 @@ def main():
     checkpoints = rows(evidence / "aot-checkpoints.txt") if (evidence / "aot-checkpoints.txt").exists() else []
     manifest = json.loads((evidence / "translation-manifest.json").read_text(encoding="utf-8"))
     guest_rows = [row for row in trace if row[3] or (row[1] & 0xff000000) != 0xef000000]
+    modes = {}
+    for row in trace:
+        modes.setdefault(row[0], set()).add(row[3])
+    dual_mode_pcs = [pc for pc, seen in modes.items() if len(seen) > 1]
     cursor = 0
     checkpoint_mismatches = []
     for checkpoint in checkpoints:
@@ -48,7 +52,7 @@ def main():
         interpreter.get("passed") and aot.get("passed") and same_hosts and same_frame
         and same_pixels and fallback == 0 and translated == len(guest_rows)
         and executed_blocks == len(checkpoints) and executed_blocks > 0
-        and not checkpoint_mismatches)
+        and not checkpoint_mismatches and not dual_mode_pcs)
     base = float(interpreter.get("seconds") or 0)
     fast = float(aot.get("seconds") or 0)
     base_boundary = float(interpreter.get("boundary_seconds") or 0)
@@ -60,6 +64,7 @@ def main():
         "framebuffer_equal": same_frame,
         "nonblack_equal": same_pixels,
         "checkpoint_mismatches": checkpoint_mismatches,
+        "dual_mode_pcs": dual_mode_pcs,
         "fallback_count": fallback,
         "boundary_count": int(aot.get("boundary_count") or 0),
         "translated_blocks": len(manifest.get("blocks") or []),
