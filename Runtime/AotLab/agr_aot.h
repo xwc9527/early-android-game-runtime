@@ -74,6 +74,10 @@ static inline int agr_aot_fault(uint32_t address) {
     return address < 0x1000u || address > 0xfffffffcu;
 }
 
+static inline int agr_aot_fault8(uint32_t address) {
+    return address < 0x1000u;
+}
+
 static inline uint32_t agr_aot_load32(AgrAotRegs *state, uint32_t address) {
     uint32_t value = 0;
     if (agr_aot_fault(address)) return 0;
@@ -90,6 +94,10 @@ static inline uint16_t agr_aot_load16(AgrAotRegs *state, uint32_t address) {
 
 static inline void agr_aot_store32(AgrAotRegs *state, uint32_t address, uint32_t value) {
     if (!agr_aot_fault(address)) memcpy(state->mem + address, &value, 4);
+}
+
+static inline void agr_aot_store8(AgrAotRegs *state, uint32_t address, uint32_t value) {
+    if (!agr_aot_fault8(address)) state->mem[address] = (uint8_t)value;
 }
 
 static inline void agr_aot_set_nz(AgrAotRegs *state, uint32_t value) {
@@ -111,6 +119,14 @@ static inline void agr_aot_adds(AgrAotRegs *state, uint32_t rd,
     uint32_t overflow = ((~(left ^ right) & (left ^ value)) >> 31) & 1u;
     state->r[rd] = value;
     agr_aot_set_nzcv(state, value, (uint32_t)(wide >> 32), overflow);
+}
+
+static inline void agr_aot_subs(AgrAotRegs *state, uint32_t rd,
+                                uint32_t left, uint32_t right) {
+    uint32_t value = left - right;
+    uint32_t overflow = (((left ^ right) & (left ^ value)) >> 31) & 1u;
+    state->r[rd] = value;
+    agr_aot_set_nzcv(state, value, left >= right, overflow);
 }
 
 static inline void agr_aot_cmp(AgrAotRegs *state, uint32_t left, uint32_t right) {
@@ -169,6 +185,12 @@ static inline int agr_aot_ldr(AgrAotRegs *state, uint32_t rt, uint32_t address) 
         return AGR_AOT_BOUNDARY;
     }
     state->r[rt] = value;
+    return 0;
+}
+
+static inline int agr_aot_ldrb(AgrAotRegs *state, uint32_t rt, uint32_t address) {
+    if (agr_aot_fault8(address)) return AGR_AOT_FAULT;
+    state->r[rt] = state->mem[address];
     return 0;
 }
 

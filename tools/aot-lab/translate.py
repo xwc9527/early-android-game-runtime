@@ -25,6 +25,20 @@ def arm_expand_imm(insn):
     return ror32(insn & 0xff, ((insn >> 8) & 15) * 2)
 
 
+def thumb_expand_imm(imm12):
+    imm8 = imm12 & 0xff
+    if (imm12 >> 10) == 0:
+        mode = (imm12 >> 8) & 3
+        if mode == 0:
+            return imm8
+        if mode == 1:
+            return (imm8 << 16) | imm8
+        if mode == 2:
+            return (imm8 << 24) | (imm8 << 8)
+        return imm8 * 0x01010101
+    return ror32(0x80 | (imm12 & 0x7f), (imm12 >> 7) & 31)
+
+
 def decode(pc, insn, length, thumb):
     """Return a generic operation or raise ValueError. No guest-PC special cases."""
     if thumb and length == 2:
@@ -34,6 +48,10 @@ def decode(pc, insn, length, thumb):
             return ("adds_reg", insn & 7, (insn >> 3) & 7, (insn >> 6) & 7)
         if insn & 0xfe00 == 0x1c00:
             return ("adds_imm", insn & 7, (insn >> 3) & 7, (insn >> 6) & 7)
+        if insn & 0xfe00 == 0x1a00:
+            return ("subs_reg", insn & 7, (insn >> 3) & 7, (insn >> 6) & 7)
+        if insn & 0xfe00 == 0x1e00:
+            return ("subs_imm", insn & 7, (insn >> 3) & 7, (insn >> 6) & 7)
         if insn & 0xf800 == 0x2000:
             return ("movs_imm", (insn >> 8) & 7, insn & 0xff)
         if insn & 0xf800 == 0x2800:
@@ -41,6 +59,9 @@ def decode(pc, insn, length, thumb):
         if insn & 0xf800 == 0x3000:
             rd = (insn >> 8) & 7
             return ("adds_imm", rd, rd, insn & 0xff)
+        if insn & 0xf800 == 0x3800:
+            rd = (insn >> 8) & 7
+            return ("subs_imm", rd, rd, insn & 0xff)
         if insn & 0xffc0 == 0x4280:
             return ("cmp_reg", insn & 7, (insn >> 3) & 7)
         if insn & 0xff00 == 0x4400:
@@ -54,10 +75,16 @@ def decode(pc, insn, length, thumb):
             return ("str_reg", insn & 7, (insn >> 3) & 7, (insn >> 6) & 7)
         if insn & 0xfe00 == 0x5800:
             return ("ldr_reg", insn & 7, (insn >> 3) & 7, (insn >> 6) & 7, pc)
+        if insn & 0xfe00 == 0x5c00:
+            return ("ldrb_reg", insn & 7, (insn >> 3) & 7, (insn >> 6) & 7)
         if insn & 0xf800 == 0x6000:
             return ("str_imm", insn & 7, (insn >> 3) & 7, ((insn >> 6) & 31) * 4)
         if insn & 0xf800 == 0x6800:
             return ("ldr_imm", insn & 7, (insn >> 3) & 7, ((insn >> 6) & 31) * 4, True, pc)
+        if insn & 0xf800 == 0x7000:
+            return ("strb_imm", insn & 7, (insn >> 3) & 7, (insn >> 6) & 31)
+        if insn & 0xf800 == 0x7800:
+            return ("ldrb_imm", insn & 7, (insn >> 3) & 7, (insn >> 6) & 31)
         if insn & 0xf800 == 0x4800:
             return ("ldr_imm", (insn >> 8) & 7, 15, (insn & 0xff) * 4, True, pc)
         if insn & 0xf800 == 0x9000:
@@ -105,6 +132,28 @@ def decode(pc, insn, length, thumb):
             return ("ldmia_sp", mask)
         if hw0 & 0xfff0 == 0xf8d0:
             return ("ldr_imm", (hw1 >> 12) & 15, hw0 & 15, hw1 & 0xfff, True, pc)
+        if hw0 & 0xfff0 == 0xf8c0:
+            return ("str_imm", (hw1 >> 12) & 15, hw0 & 15, hw1 & 0xfff)
+        if hw0 & 0xfff0 == 0xf880:
+            return ("strb_imm", (hw1 >> 12) & 15, hw0 & 15, hw1 & 0xfff)
+        if hw0 & 0xfff0 in {0xf850, 0xf840}:
+            load = (hw0 & 0x0010) != 0
+            rt, rn = (hw1 >> 12) & 15, hw0 & 15
+            if not (hw1 & 0x0800):
+                op = "ldr_shifted" if load else "str_shifted"
+                return (op, rt, rn, hw1 & 15, (hw1 >> 4) & 3, pc)
+            pre, up, writeback = bool(hw1 & 0x0400), bool(hw1 & 0x0200), bool(hw1 & 0x0100)
+            op = "ldr_indexed" if load else "str_indexed"
+            return (op, rt, rn, hw1 & 0xff, up, pre, writeback, pc)
+        if hw0 & 0xfbf0 == 0xf1b0 and hw1 & 0x0f00 == 0x0f00:
+            imm12 = ((hw0 >> 10) & 1) << 11 | ((hw1 >> 12) & 7) << 8 | (hw1 & 0xff)
+            return ("cmp_imm", hw0 & 15, thumb_expand_imm(imm12))
+        if hw0 & 0xfbf0 == 0xf100:
+            imm12 = ((hw0 >> 10) & 1) << 11 | ((hw1 >> 12) & 7) << 8 | (hw1 & 0xff)
+            return ("add_imm", (hw1 >> 8) & 15, hw0 & 15, imm12, pc)
+        if hw0 & 0xfbef == 0xf04f:
+            imm12 = ((hw0 >> 10) & 1) << 11 | ((hw1 >> 12) & 7) << 8 | (hw1 & 0xff)
+            return ("mov_imm", (hw1 >> 8) & 15, thumb_expand_imm(imm12))
         if hw0 & 0xfbf0 == 0xf240:
             i = (hw0 >> 10) & 1
             imm4 = hw0 & 15
@@ -183,7 +232,7 @@ def is_terminal(op):
         return True
     if op[0] in {"add_high", "add_reg", "add_imm"} and op[1] == 15:
         return True
-    if op[0] == "ldr_wb" and op[1] == 15:
+    if op[0] in {"ldr_wb", "ldr_shifted", "ldr_indexed"} and op[1] == 15:
         return True
     if op[0] == "ldmia_sp" and op[1] & (1 << 15):
         return True
@@ -247,6 +296,10 @@ def emit_op(op, thumb):
         return f"agr_aot_adds(s, {op[1]}, s->r[{op[2]}], s->r[{op[3]}]);"
     if kind == "adds_imm":
         return f"agr_aot_adds(s, {op[1]}, s->r[{op[2]}], {op[3]}u);"
+    if kind == "subs_reg":
+        return f"agr_aot_subs(s, {op[1]}, s->r[{op[2]}], s->r[{op[3]}]);"
+    if kind == "subs_imm":
+        return f"agr_aot_subs(s, {op[1]}, s->r[{op[2]}], {op[3]}u);"
     if kind == "cmp_reg":
         return f"agr_aot_cmp(s, s->r[{op[1]}], s->r[{op[2]}]);"
     if kind == "cmp_imm":
@@ -263,6 +316,8 @@ def emit_op(op, thumb):
         return f"agr_aot_mov_reg(s, {op[1]}, {op[2]});"
     if kind == "movw":
         return f"agr_aot_movw(s, {op[1]}, {op[2]}u);"
+    if kind == "mov_imm":
+        return f"s->r[{op[1]}] = {op[2]}u;"
     if kind == "ldr_imm":
         rd, rn, imm = op[1], op[2], op[3]
         pc = op[5]
@@ -273,12 +328,50 @@ def emit_op(op, thumb):
         return f"{{ int rc = agr_aot_ldr(s, {rd}, {base} + {imm}u); if (rc) return rc; }}"
     if kind == "ldr_reg":
         return f"{{ int rc = agr_aot_ldr(s, {op[1]}, s->r[{op[2]}] + s->r[{op[3]}]); if (rc) return rc; }}"
+    if kind == "ldr_shifted":
+        rt, rn, rm, shift, pc = op[1:]
+        base = f"{(pc + 4) & ~3}u" if rn == 15 else f"s->r[{rn}]"
+        return f"{{ int rc = agr_aot_ldr(s, {rt}, {base} + (s->r[{rm}] << {shift}u)); if (rc) return rc; }}"
+    if kind == "ldr_indexed":
+        rt, rn, imm, up, pre, writeback, pc = op[1:]
+        base = f"{(pc + 4) & ~3}u" if rn == 15 else f"s->r[{rn}]"
+        sign = "+" if up else "-"
+        address = f"({base} {sign} {imm}u)" if pre else base
+        lines = [f"{{ uint32_t addr = {address};"]
+        if writeback and rn != 15:
+            lines.append(f"s->r[{rn}] = {base} {sign} {imm}u;")
+        lines.append(f"if ((rc = agr_aot_ldr(s, {rt}, addr))) return rc; }}")
+        return " ".join(lines)
+    if kind == "ldrb_reg":
+        return f"{{ int rc = agr_aot_ldrb(s, {op[1]}, s->r[{op[2]}] + s->r[{op[3]}]); if (rc) return rc; }}"
+    if kind == "ldrb_imm":
+        return f"{{ int rc = agr_aot_ldrb(s, {op[1]}, s->r[{op[2]}] + {op[3]}u); if (rc) return rc; }}"
     if kind == "str_imm":
         return (f"{{ uint32_t addr = s->r[{op[2]}] + {op[3]}u; "
                 f"if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[{op[1]}]); }}")
     if kind == "str_reg":
         return (f"{{ uint32_t addr = s->r[{op[2]}] + s->r[{op[3]}]; "
                 f"if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[{op[1]}]); }}")
+    if kind == "str_shifted":
+        rt, rn, rm, shift, pc = op[1:]
+        base = f"{(pc + 4) & ~3}u" if rn == 15 else f"s->r[{rn}]"
+        value = f"{pc + 4}u" if rt == 15 else f"s->r[{rt}]"
+        return (f"{{ uint32_t addr = {base} + (s->r[{rm}] << {shift}u); "
+                f"if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, {value}); }}")
+    if kind == "str_indexed":
+        rt, rn, imm, up, pre, writeback, pc = op[1:]
+        base = f"{(pc + 4) & ~3}u" if rn == 15 else f"s->r[{rn}]"
+        value = f"{pc + 4}u" if rt == 15 else f"s->r[{rt}]"
+        sign = "+" if up else "-"
+        address = f"({base} {sign} {imm}u)" if pre else base
+        lines = [f"{{ uint32_t addr = {address};"]
+        if writeback and rn != 15:
+            lines.append(f"s->r[{rn}] = {base} {sign} {imm}u;")
+        lines.append(f"if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, {value}); }}")
+        return " ".join(lines)
+    if kind == "strb_imm":
+        return (f"{{ uint32_t addr = s->r[{op[2]}] + {op[3]}u; "
+                f"if (agr_aot_fault8(addr)) return AGR_AOT_FAULT; agr_aot_store8(s, addr, s->r[{op[1]}]); }}")
     if kind == "stmdb_sp":
         return f"if (agr_aot_stmdb_sp(s, {op[1]}u)) return AGR_AOT_FAULT;"
     if kind == "ldmia_sp":
