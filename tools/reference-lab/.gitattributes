@@ -12,3 +12,4 @@ evidence/dalvik-register-natives-entry-thread-native/** text eol=lf
 evidence/dalvik-threadstate-pthread-consumption/** text eol=lf
 evidence/dalvik-internal-pthread-boundary-disposition/** text eol=lf
 evidence/dalvik-threadstate-host-storage-binding/** text eol=lf
+evidence/dalvik-threadstate-register-natives-closure/** text eol=lf

@@ -49,6 +49,66 @@ SUSPEND_PROBE = (
     "UNLOCK_ERROR_IGNORED waited=1 returned=0\n"
     "SUSPEND_PATH ok=1\n"
 )
+REGISTER_NATIVES_EDGE = "JNI thread state around RegisterNatives"
+REGISTER_NATIVES_SCOPE = (
+    "entry THREAD_NATIVE published by JNI_CreateJavaVM",
+    "RegisterNatives enters THREAD_RUNNING after publication",
+    "same-status change returns without a store",
+    "a THREAD_SUSPENDED request is not stored",
+    "a non-RUNNING status does not read suspendCount",
+    "nonzero suspendCount enters fullSuspendCheck",
+    "fullSuspendCheck waits through the D010 host words and the closed Bionic self-suspend operations",
+    "wake restores the previous status",
+    "RegisterNatives leave restores THREAD_NATIVE",
+)
+REGISTER_NATIVES_SOURCE_PATH = (
+    "JNI_CreateJavaVM",
+    "dvmChangeStatus(THREAD_NATIVE)",
+    "RegisterNatives",
+    "ScopedJniThreadState",
+    "dvmChangeStatus(THREAD_RUNNING)",
+    "suspendCount",
+    "fullSuspendCheck",
+    "D010 threadSuspendCountLock",
+    "D010 threadSuspendCountCond",
+    "closed Bionic self-suspend",
+    "dvmChangeStatus(THREAD_NATIVE)",
+)
+REGISTER_NATIVES_UNVERIFIED = (
+    "Java Thread API",
+    "general thread startup",
+    "arbitrary JNI entry/exit",
+    "debugger suspend",
+    "GC suspend-all",
+    "monitor wait/notify",
+    "Sync.cpp",
+    "pthread_cond_timedwait",
+    "clock_gettime",
+)
+REGISTER_NATIVES_MODULE = "DalvikThreadState"
+REGISTER_NATIVES_FILES = (
+    "Runtime/DexLoom/Include/dx_thread_state.h",
+    "Runtime/DexLoom/VM/dx_thread_state.c",
+)
+REGISTER_NATIVES_ORIGIN = {
+    "source_repo": "platform/dalvik",
+    "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+    "source_file": "vm/Jni.cpp",
+    "source_symbol": "RegisterNatives",
+    "source_sha256": "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed",
+}
+REGISTER_NATIVES_PROBE = (
+    "THREADSTATE_PORT ok=1 waits=1 broadcasts=1 cond=4294967294 body=1 java=3 dalvik=7\n"
+    "entry THREAD_NATIVE\n"
+    "failure body THREAD_RUNNING restore THREAD_NATIVE\n"
+    "success body THREAD_RUNNING restore THREAD_NATIVE\n"
+    "nonzero suspendCount entered SUSPENDED\n"
+    "wait consumed agr_bionic_cond_wait_relative\n"
+    "broadcast consumed agr_bionic_cond_broadcast\n"
+    "cond word 0xfffffffe is the closed pulse step\n"
+    "DxJavaThreadState TERMINATED 3 remained independent of Dalvik THREAD_NATIVE 7\n"
+    "second execution context THREAD_WAIT did not change the root context\n"
+)
 
 
 def load_substrate_production_contracts(path=None):
@@ -222,6 +282,41 @@ def suspend_crossing_differential(evidence_dir):
     }
 
 
+def register_natives_threadstate_differential():
+    """Recompute the RegisterNatives thread-state differential from committed evidence."""
+    source_path = _normalized(
+        ROOT / "tools/reference-lab/evidence/dalvik-threadstate-register-natives-closure/source-path.txt")
+    probe = _normalized(
+        ROOT / "tools/reference-lab/evidence/dalvik-threadstate-production-port/host-output.txt")
+    required = (
+        "JNI_CreateJavaVM",
+        "ScopedJniThreadState",
+        "RUNNING publication before suspendCount",
+        "same status returns without a store",
+        "THREAD_SUSPENDED request is not stored",
+        "non-RUNNING status does not check suspendCount",
+        "nonzero suspendCount enters fullSuspendCheck",
+        "D010 gDvm.threadSuspendCountLock gDvm.threadSuspendCountCond",
+        "closed Bionic self-suspend",
+        "wake restores previous status",
+        "DxJavaThreadState is independent",
+        "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
+        "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed",
+        "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
+    )
+    if probe != REGISTER_NATIVES_PROBE or any(item not in source_path for item in required):
+        raise ValueError("differential does not match")
+    if any(item in source_path for item in ("Java Thread.start", "dvmSuspendAllThreads", "pthread_cond_timedwait")):
+        raise ValueError("differential does not match")
+    return {
+        "result": "NO_DIVERGENCE",
+        "source_path_sha256": hashlib.sha256(source_path.encode("utf-8")).hexdigest(),
+        "agr_probe_sha256": hashlib.sha256(probe.encode("utf-8")).hexdigest(),
+        "production_scope": list(REGISTER_NATIVES_SCOPE),
+        "source_path": list(REGISTER_NATIVES_SOURCE_PATH),
+    }
+
+
 def require_exact_crossing_closure(prerequisite, crossing, declarer, source_revision,
                                    source_owner_digest, contracts=None, modules=None, ledger=None):
     """A crossing closure covers one prerequisite edge. An owner record does not."""
@@ -250,11 +345,24 @@ def require_exact_crossing_closure(prerequisite, crossing, declarer, source_revi
     if len(matches) != 1:
         raise ValueError("substrate crossing closure is not unique")
     record = matches[0]
-    scope = derived_production_scope(crossing)
+    if crossing.get("edge") == SUSPEND_EDGE:
+        _require_suspend_crossing_body(record, declarer, source_revision, source_owner_digest, modules)
+    elif crossing.get("edge") == REGISTER_NATIVES_EDGE:
+        _require_register_natives_crossing_body(
+            record, contracts, declarer, source_revision, source_owner_digest, modules)
+    else:
+        raise ValueError("crossing closure does not match the prerequisite edge")
+    _require_git_tree(record["tested_commit"], record["tested_tree"])
+    _require_crossing_run(record, ledger)
+    return record
+
+
+def _require_suspend_crossing_body(record, declarer, source_revision, source_owner_digest, modules):
+    derived_production_scope(record)
     declared = record.get("production_scope")
     if any(item in UNVERIFIED_CAPABILITIES for item in declared or []):
         raise ValueError("production scope includes an unverified capability")
-    if list(declared) != scope:
+    if list(declared) != list(SUSPEND_SCOPE):
         raise ValueError("production scope is short of the crossing")
     if list(record.get("source_path") or []) != list(SUSPEND_SOURCE_PATH):
         raise ValueError("crossing closure source path does not match")
@@ -278,9 +386,71 @@ def require_exact_crossing_closure(prerequisite, crossing, declarer, source_revi
             claimed.get("source_path_sha256") != differential["source_path_sha256"] or
             claimed.get("agr_probe_sha256") != differential["agr_probe_sha256"]):
         raise ValueError("differential does not match")
-    _require_git_tree(record["tested_commit"], record["tested_tree"])
-    _require_crossing_run(record, ledger)
-    return record
+
+
+def _require_register_natives_crossing_body(record, contracts, declarer, source_revision,
+                                            source_owner_digest, modules):
+    declared = record.get("production_scope")
+    if any(item in REGISTER_NATIVES_UNVERIFIED or item in UNVERIFIED_CAPABILITIES
+           for item in declared or []):
+        raise ValueError("production scope includes an unverified capability")
+    if list(declared) != list(REGISTER_NATIVES_SCOPE):
+        raise ValueError("production scope is short of the crossing")
+    if list(record.get("source_path") or []) != list(REGISTER_NATIVES_SOURCE_PATH):
+        raise ValueError("crossing closure source path does not match")
+    origin = record.get("origin") or {}
+    files = (declarer or {}).get("source_file_sha256") or {}
+    if (origin != REGISTER_NATIVES_ORIGIN or
+            origin.get("source_sha256") != files.get("vm/Jni.cpp") or
+            (declarer or {}).get("source_repo") != REGISTER_NATIVES_ORIGIN["source_repo"] or
+            (declarer or {}).get("revision") != REGISTER_NATIVES_ORIGIN["revision"] or
+            "RegisterNatives" not in ((declarer or {}).get("required_symbols") or []) or
+            "JNI_CreateJavaVM" not in ((declarer or {}).get("required_symbols") or [])):
+        raise ValueError("crossing closure origin does not match")
+    if (record.get("source_revision") != source_revision or
+            record.get("source_owner_digest") != source_owner_digest or
+            record.get("semantic_cluster") != "Dalvik.ThreadState" or
+            record.get("source_symbol") != "dvmChangeStatus"):
+        raise ValueError("crossing closure does not bind the source owner")
+    if record.get("production_module") != REGISTER_NATIVES_MODULE or record["production_module"] not in modules:
+        raise ValueError("production contract module is not registered")
+    document = json.loads(MODULES_PATH.read_text(encoding="utf-8"))
+    module = next((item for item in document.get("modules") or []
+                   if item.get("name") == REGISTER_NATIVES_MODULE), None)
+    if module is None or set(module.get("paths") or []) != set(REGISTER_NATIVES_FILES):
+        raise ValueError("production files do not match module ownership")
+    jni_module = next((item for item in document.get("modules") or []
+                       if item.get("name") == "DalvikJNI"), None)
+    if any(path in set((jni_module or {}).get("paths") or []) for path in REGISTER_NATIVES_FILES):
+        raise ValueError("production files do not match module ownership")
+    downstream = next((item for item in contracts.get("crossing_closures") or []
+                       if item.get("edge") == SUSPEND_EDGE
+                       and item.get("semantic_cluster") == "Bionic.PthreadCondition"), None)
+    if (downstream is None or downstream.get("status") != "CROSSING_CLOSED" or
+            downstream.get("source_symbol") != "pthread_cond_wait" or
+            downstream.get("source_sha256") !=
+            "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d" or
+            downstream.get("production_module") != "pthread" or
+            list(downstream.get("production_scope") or []) != list(SUSPEND_SCOPE)):
+        raise ValueError("downstream Bionic crossing does not match")
+    if any(item.get("semantic_cluster") == "Bionic.PthreadCondition" and item.get("status") == "PRODUCTION_CLOSED"
+           for item in contracts.get("contracts") or []):
+        raise ValueError("downstream Bionic crossing does not match")
+    binding_document = load_host_storage_consumer_bindings()
+    binding = (binding_document.get("bindings") or [None])[0]
+    if (not isinstance(binding, dict) or binding.get("authorization_decision") != "D010" or
+            binding.get("consumer") != "Dalvik.ThreadState" or
+            list(binding.get("objects") or []) != list(HOST_STORAGE_OBJECTS) or
+            binding.get("edge") != SUSPEND_EDGE or
+            binding.get("semantic_owner") != "Bionic.PthreadCondition"):
+        raise ValueError("D010 consumer binding does not match")
+    differential = register_natives_threadstate_differential()
+    claimed = record.get("differential") or {}
+    if (claimed.get("producer") != "substrate_contracts.register_natives_threadstate_differential" or
+            claimed.get("result") != differential["result"] or
+            claimed.get("source_path_sha256") != differential["source_path_sha256"] or
+            claimed.get("agr_probe_sha256") != differential["agr_probe_sha256"]):
+        raise ValueError("differential does not match")
 
 
 def _require_crossing_run(record, ledger):
@@ -468,10 +638,12 @@ def validate_committed_host_storage_bindings(contracts=None, document=None):
     require_host_storage_consumer_binding(bindings[0], contracts, decision)
     if contracts is None:
         contracts = load_substrate_production_contracts()
-    identities = {tuple(record.get(field) for field in CROSSING_FIELDS)
-                  for record in contracts.get("crossing_closures") or []}
     binding = bindings[0]
-    if identities != {tuple(binding.get(field) for field in CROSSING_FIELDS)}:
+    binding_identity = tuple(binding.get(field) for field in CROSSING_FIELDS)
+    bionic_records = [record for record in contracts.get("crossing_closures") or []
+                      if isinstance(record, dict) and record.get("semantic_cluster") == HOST_STORAGE_OWNER]
+    if (len(bionic_records) != 1 or
+            tuple(bionic_records[0].get(field) for field in CROSSING_FIELDS) != binding_identity):
         raise ValueError("consumer binding crossing does not match")
 
 
@@ -492,10 +664,34 @@ def validate_committed_crossing_closures(document=None):
         raise ValueError("self-suspend prerequisite is not closed by an exact crossing")
     require_exact_crossing_closure(
         edge, crossing, declarer, substrate["revision"], digest, document)
+    resources = json.loads((ROOT / "tools/reference-lab/indexes/shared-resources-api19-locations.json").read_text(encoding="utf-8"))
+    binding = resources["external_cluster_sources"]["Dalvik.JNINativeBinding"]
+    jni_edge = next(item for item in binding["prerequisite_edges"]
+                    if item.get("edge") == REGISTER_NATIVES_EDGE)
+    jni_crossing = next(item for item in binding["cross_cluster_source_edges"]
+                        if item.get("edge") == REGISTER_NATIVES_EDGE)
+    thread = owners["Dalvik.ThreadState"]
+    thread_digest = hashlib.sha256(json.dumps(
+        thread, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest()
     identities = {tuple(record.get(field) for field in CROSSING_FIELDS)
                   for record in document.get("crossing_closures") or []}
-    if identities != {tuple(edge.get(field) for field in CROSSING_FIELDS)}:
-        raise ValueError("crossing closure does not match the prerequisite edge")
+    suspend_identity = tuple(edge.get(field) for field in CROSSING_FIELDS)
+    jni_identity = tuple(jni_edge.get(field) for field in CROSSING_FIELDS)
+    if jni_edge.get("relationship") == "PREREQUISITE_CLOSED":
+        if identities != {suspend_identity, jni_identity}:
+            raise ValueError("crossing closure does not match the prerequisite edge")
+        require_exact_crossing_closure(
+            jni_edge, jni_crossing, binding, thread["revision"], thread_digest, document)
+        if binding.get("status") != "SOURCE_LOCATED" or binding.get("closure_reviewed") is not False:
+            raise ValueError("JNINativeBinding owner status changed")
+        others = [item for item in binding["prerequisite_edges"] if item.get("edge") != REGISTER_NATIVES_EDGE]
+        if any(item.get("relationship") != "UNRESOLVED" for item in others):
+            raise ValueError("unrelated JNI prerequisite changed")
+    else:
+        if identities != {suspend_identity}:
+            raise ValueError("crossing closure does not match the prerequisite edge")
+        if jni_edge.get("relationship") != "REOPEN_REQUIRED":
+            raise ValueError("handwritten prerequisite relationship")
 
 
 def _normalized(path):

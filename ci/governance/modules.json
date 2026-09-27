@@ -101,6 +101,16 @@
       "reopen_reason": null
     },
     {
+      "name": "DalvikThreadState",
+      "status": "experimental",
+      "paths": [
+        "Runtime/DexLoom/VM/dx_thread_state.c",
+        "Runtime/DexLoom/Include/dx_thread_state.h"
+      ],
+      "gate": "phase3a-jni",
+      "reopen_reason": null
+    },
+    {
       "name": "Framework",
       "status": "not_started",
       "paths": [

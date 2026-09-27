@@ -1,0 +1,18 @@
+JNI_CreateJavaVM
+dvmChangeStatus THREAD_NATIVE
+RegisterNatives
+ScopedJniThreadState
+dvmChangeStatus THREAD_RUNNING
+RUNNING publication before suspendCount
+same status returns without a store
+THREAD_SUSPENDED request is not stored
+non-RUNNING status does not check suspendCount
+nonzero suspendCount enters fullSuspendCheck
+D010 gDvm.threadSuspendCountLock gDvm.threadSuspendCountCond
+closed Bionic self-suspend agr_bionic_cond_wait_relative agr_bionic_cond_broadcast
+wake restores previous status
+dvmChangeStatus THREAD_NATIVE
+DxJavaThreadState is independent
+ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7
+ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed
+8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d

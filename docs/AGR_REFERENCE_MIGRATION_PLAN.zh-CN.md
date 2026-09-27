@@ -2,7 +2,7 @@
 
 `REFERENCE_MIGRATION_RULES.md` 仍是 Android-visible source ownership 的最高规则。本文是 Phase 3 CLOSED 之后的工程方案。Phase 3 已 CLOSED。当前已有本机同源 CLEAN/TRACE x86 与 ARM 构建对、四个合格样本的成对回归证据、Migration Book、owner/source mapping 队列及 Source Manifest 工具。实验室是支撑设施：只有源码归属、依赖闭包或差分判定出现具体证据缺口才扩建。已观测入口不等于子簇闭包；闭包不等于迁移授权。当前 Framework 资源和 libcore 整数装箱候选仍是 `SOURCE_LOCATED`。本文不授权原创 Android 语义、游戏缺口补丁或新的 Framework/HLE。
 
-已闭合或稳定的底座保持不动：ARM interpreter、linker/libdl、Bionic、pthread/TLS/futex、EHABI、allocator、APK bootstrap、ClassLoader、JNI、method/field resolution、class init、exception/native binding、GC root/lifetime、HostServices。要改变的是后续 Android Runtime / Framework 能力的发现、裁剪、迁移和修复方式。
+D011 把 dynarec/JIT 定为 ARMv7 的主要执行架构。现有 interpreter 继续作为正确性基线、差分参照、fallback、诊断和 JIT 回归比较，不再是高性能 native 执行的主要目标。Dynarmic 只是第一候选，尚未永久绑定。这条 CPU backend 决定不改变 Android-visible source ownership。linker/libdl、Bionic、pthread/TLS/futex、EHABI、allocator、APK bootstrap、ClassLoader、JNI、method/field resolution、class init、exception/native binding、GC root/lifetime、HostServices 的语义归属保持不动。要改变的是后续 Android Runtime / Framework 能力的发现、裁剪、迁移和修复方式。
 
 ## 1. 总体目标
 

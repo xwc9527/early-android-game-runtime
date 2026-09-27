@@ -20,6 +20,7 @@ from substrate_contracts import (
     require_host_storage_consumer_binding,
     require_production_contract,
     validate_committed_crossing_closures,
+    register_natives_threadstate_differential,
     validate_committed_host_storage_bindings,
 )
 from workflow import cluster_manifests, validate_source_manifests
@@ -1291,6 +1292,31 @@ class SubstratePrerequisiteTest(unittest.TestCase):
             "authorization_decision", "HANDWRITTEN"), "handwritten consumer authorization")
         reject(both("new_semantic_owner", True), "consumer binding creates a pthread semantic owner")
         reject(both("host_services_pthread_policy", True), "HostServices pthread policy is not authorized")
+
+    def test_arm_execution_decision_keeps_threadstate_closure_open(self):
+        decisions = (ROOT / "docs/DECISIONS.md").read_text(encoding="utf-8")
+        architecture = (ROOT / "docs/ARCHITECTURE.md").read_text(encoding="utf-8")
+        self.assertIn("## D011 — ARMv7 execution uses dynarec/JIT as the primary performance backend", decisions)
+        self.assertIn("Status: LOCKED", decisions[decisions.index("## D011"):])
+        self.assertIn("Dynarmic is the first implementation candidate", decisions)
+        self.assertIn("does not vendor, fork, or permanently bind Dynarmic", decisions)
+        self.assertIn("primary backend", architecture)
+        self.assertIn("correctness baseline", architecture)
+        modules = json.loads((ROOT / "ci/governance/modules.json").read_text(encoding="utf-8"))
+        thread_module = next(item for item in modules["modules"] if item["name"] == "DalvikThreadState")
+        self.assertEqual(thread_module["status"], "experimental")
+        self.assertEqual(set(thread_module["paths"]), {
+            "Runtime/DexLoom/VM/dx_thread_state.c",
+            "Runtime/DexLoom/Include/dx_thread_state.h",
+        })
+        jni_module = next(item for item in modules["modules"] if item["name"] == "DalvikJNI")
+        self.assertTrue(set(jni_module["paths"]).isdisjoint(thread_module["paths"]))
+        differential = register_natives_threadstate_differential()
+        self.assertEqual(differential["result"], "NO_DIVERGENCE")
+        resources = json.loads((ROOT / "tools/reference-lab/indexes/shared-resources-api19-locations.json").read_text(encoding="utf-8"))
+        binding = resources["external_cluster_sources"]["Dalvik.JNINativeBinding"]
+        self.assertEqual(binding["status"], "SOURCE_LOCATED")
+        self.assertEqual(binding["prerequisite_edges"][0]["relationship"], "REOPEN_REQUIRED")
 
 
 if __name__ == "__main__":

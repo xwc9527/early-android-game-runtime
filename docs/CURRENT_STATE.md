@@ -30,7 +30,10 @@ production port stopped on an evidence gap. The entry `THREAD_NATIVE` for
 this origin is `JNI_CreateJavaVM` in `Dalvik.JNINativeBinding`. The closed
 pthread crossing is consumed, for this consumer only, through D010
 `representation-split`. The RegisterNatives thread-state path is now in
-production and uses that binding. `Dalvik.JNINativeBinding` stays
+production and uses that binding. D011 locks dynarec/JIT as the primary
+ARMv7 execution architecture. The interpreter remains the correctness and
+fallback backend. Dynarmic is the first candidate and is not permanently
+bound. `Dalvik.JNINativeBinding` stays
 `SOURCE_LOCATED`, and that prerequisite stays `REOPEN_REQUIRED`.
 The current source indexes and manifests are under `tools/reference-lab/indexes`
 and `tools/reference-lab/evidence`; their unresolved edges are explicit.

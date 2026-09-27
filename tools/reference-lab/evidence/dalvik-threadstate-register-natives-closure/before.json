@@ -1,0 +1,7 @@
+{
+  "relationship": "REOPEN_REQUIRED",
+  "jni_owner_status": "SOURCE_LOCATED",
+  "production_module": null,
+  "crossing_record": false,
+  "note": "BEFORE the exact production closure. The production path is already ported."
+}
