@@ -1,0 +1,8 @@
+AGR_SMOKE_PHASE 2026-09-27T12:36:48Z prepare sample profile aot-kungfoo
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+100 11.9M  100 11.9M    0     0  24.4M      0 --:--:-- --:--:-- --:--:-- 24.4M
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/build/angle-xcframeworks-v2.1.28252.zip: OK
+info: downloading component rust-std
+ENVIRONMENT_BASELINE_MISMATCH [Errno 2] No such file or directory: '/Users/runner/work/early-android-game-runtime/early-android-game-runtime/samples/frozen-bubble.apk'
