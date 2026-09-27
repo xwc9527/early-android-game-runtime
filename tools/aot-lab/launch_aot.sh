@@ -20,8 +20,13 @@ xcrun simctl bootstatus "$DEVICE" -b
 xcrun simctl install "$DEVICE" "$APP"
 DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
 rm -f "$DATA/Documents/aot-result.json" "$DATA/Documents/aot-trace.txt" "$DATA/Documents/aot-hosts.txt"
-ARG="--aot-trace"
-if [[ "$MODE" == "run" ]]; then ARG="--aot-run"; fi
+case "$MODE" in
+  trace) ARG="--aot-trace" ;;
+  run) ARG="--aot-run" ;;
+  kungfoo-trace) ARG="--aot-kungfoo-trace" ;;
+  kungfoo-run) ARG="--aot-kungfoo-run" ;;
+  *) echo "unknown AOT launch mode: $MODE" >&2; exit 2 ;;
+esac
 xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args "$ARG"
 for _ in $(seq 1 180); do
   [[ -s "$DATA/Documents/aot-result.json" ]] && break

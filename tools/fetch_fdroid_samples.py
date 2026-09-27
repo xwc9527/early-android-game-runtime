@@ -22,6 +22,7 @@ PROFILES = {
     "runtime-regression": None,
     "full": None,
     "gloomy": {"gloomy-dungeons-2", "frozen-bubble"},
+    "aot-kungfoo": {"kungfoo-barracuda"},
 }
 
 

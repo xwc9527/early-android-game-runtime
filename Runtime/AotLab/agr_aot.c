@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdatomic.h>
 
 extern uint32_t *arm_interp_register_file(void *cpu);
 extern uint32_t *arm_interp_cpsr_ptr(void *cpu);
@@ -10,6 +11,9 @@ extern void arm_interp_set_trace(void (*function)(uint32_t, uint32_t, uint32_t, 
 
 static int enabled;
 static FILE *trace_file;
+static uint64_t trace_limit;
+static atomic_uint_fast64_t trace_seen;
+static atomic_int trace_incomplete;
 static FILE *log_file;
 static FILE *checkpoint_file;
 static uint32_t executed_blocks;
@@ -22,13 +26,26 @@ static double boundary_seconds;
 static void trace_instruction(uint32_t pc, uint32_t insn, uint32_t len, uint32_t thumb,
                               const uint32_t *regs, uint32_t cpsr) {
     if (!trace_file) return;
+    uint64_t ordinal = atomic_fetch_add_explicit(&trace_seen, 1, memory_order_relaxed);
+    if (trace_limit && ordinal >= trace_limit) {
+        atomic_store_explicit(&trace_incomplete, 1, memory_order_relaxed);
+        return;
+    }
+    flockfile(trace_file);
     fprintf(trace_file, "%u %u %u %u %u", pc, insn, len, thumb, cpsr);
     for (uint32_t i = 0; i < 16; i++) fprintf(trace_file, " %u", regs ? regs[i] : 0);
     fputc('\n', trace_file);
+    funlockfile(trace_file);
 }
+
+void agr_aot_set_trace_limit(uint64_t instruction_limit) { trace_limit = instruction_limit; }
+uint64_t agr_aot_trace_seen(void) { return atomic_load_explicit(&trace_seen, memory_order_relaxed); }
+int agr_aot_trace_incomplete(void) { return atomic_load_explicit(&trace_incomplete, memory_order_relaxed); }
 
 void agr_aot_trace_open(const char *path) {
     if (trace_file) fclose(trace_file);
+    atomic_store_explicit(&trace_seen, 0, memory_order_relaxed);
+    atomic_store_explicit(&trace_incomplete, 0, memory_order_relaxed);
     trace_file = fopen(path, "w");
     arm_interp_set_trace(trace_file ? trace_instruction : NULL);
 }

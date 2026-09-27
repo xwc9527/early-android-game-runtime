@@ -1,0 +1,30 @@
+name: ARMv7 AOT route validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [validation/aot-route-evidence]
+    paths-ignore:
+      - "tools/aot-lab/evidence/**"
+
+jobs:
+  kungfoo-armv7-interpreter-probe:
+    runs-on: xcode-27
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Capture KungFoo ARMv7 AGR execution
+        run: |
+          set -o pipefail
+          mkdir -p tools/aot-lab/evidence/kungfoo-armv7-aot-probe
+          bash tools/aot-lab/run_kungfoo_probe.sh 2>&1 |
+            tee tools/aot-lab/evidence/kungfoo-armv7-aot-probe/ci-log.txt
+      - name: Upload original probe evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kungfoo-armv7-aot-probe
+          path: tools/aot-lab/evidence/kungfoo-armv7-aot-probe
+          if-no-files-found: error

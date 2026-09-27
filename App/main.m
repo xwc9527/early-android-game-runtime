@@ -432,6 +432,8 @@ static void writePVSProgress(NSString *stage, agr_guest *guest) {
     [json writeToFile:path atomically:YES];
 }
 
+static int gKungFooAotProbeMode;
+
 static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace,
                                           NSMutableArray<NSString *> *failures, BOOL interactive) {
     agr_guest *guest = agr_guest_create();
@@ -451,7 +453,34 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
     }
     int dexLoaded=registered==0?agr_guest_load_dex_package(guest,package):-1;
     int32_t jniVersion=0;
+    BOOL aotProbe=gKungFooAotProbeMode != 0;
+    uint64_t aotStageBefore=guest?agr_guest_instruction_count(guest):0;
+    CFAbsoluteTime aotStageStart=0, aotStageSeconds=0;
+    uint64_t aotStageInterpreterInstructions=0, aotTraceSeen=0;
+    BOOL aotTraceIncomplete=NO;
+    if (aotProbe) {
+        NSString *docs=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+        [[NSFileManager defaultManager] createDirectoryAtPath:docs withIntermediateDirectories:YES attributes:nil error:nil];
+        agr_aot_log_open([[docs stringByAppendingPathComponent:@"aot-hosts.txt"] UTF8String]);
+        if (gKungFooAotProbeMode == 1) {
+            agr_aot_set_trace_limit(1000000);
+            agr_aot_trace_open([[docs stringByAppendingPathComponent:@"aot-trace.txt"] UTF8String]);
+        } else {
+            agr_aot_checkpoint_open([[docs stringByAppendingPathComponent:@"aot-checkpoints.txt"] UTF8String]);
+            agr_aot_set_enabled(1);
+        }
+        aotStageStart=CFAbsoluteTimeGetCurrent();
+    }
     int jniOnLoad=dexLoaded==0?agr_guest_load_java_library(guest,agr_apk_native_library(package),&jniVersion):-1;
+    if (aotProbe) {
+        aotStageSeconds=CFAbsoluteTimeGetCurrent()-aotStageStart;
+        aotStageInterpreterInstructions=guest?agr_guest_instruction_count(guest)-aotStageBefore:0;
+        aotTraceSeen=agr_aot_trace_seen();
+        aotTraceIncomplete=agr_aot_trace_incomplete() != 0;
+        agr_aot_set_enabled(0);
+        agr_aot_trace_close();
+        agr_aot_log_close();
+    }
     int loaded=jniOnLoad==0?0:-1;
     int dexStarted=loaded==0?agr_guest_start_dex_activity(guest):-1;
     uint32_t constructors = 0;
@@ -682,7 +711,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         agr_dex_set_upload_callback(NULL,NULL);
         agr_afw_destroy(dexAssets); free(dexHost);
     }
-    NSDictionary *result=@{@"package":package&&agr_apk_package_name(package)?[NSString stringWithUTF8String:agr_apk_package_name(package)]:@"",
+    NSMutableDictionary *result=[@{@"package":package&&agr_apk_package_name(package)?[NSString stringWithUTF8String:agr_apk_package_name(package)]:@"",
              @"selected_activity":package&&agr_apk_launch_activity(package)?[NSString stringWithUTF8String:agr_apk_launch_activity(package)]:@"",
              @"selected_native_library":package&&agr_apk_native_library(package)?[NSString stringWithUTF8String:agr_apk_native_library(package)]:@"",
              @"min_sdk":@(agr_apk_min_sdk(package)),@"target_sdk":@(agr_apk_target_sdk(package)),
@@ -701,7 +730,19 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
              @"nativeactivity_input_trace":inputTrace,
              @"teardown_callbacks_passed":@(teardownCallbacksPassed),
              @"teardown_completed":@(teardownCompleted),
-             @"runtime_failure_signature":error.length?error:@""};
+             @"runtime_failure_signature":error.length?error:@""} mutableCopy];
+    if (aotProbe) [result addEntriesFromDictionary:@{
+        @"aot_probe_stage":@"dlopen_constructors_and_jni_onload",
+        @"aot_stage_seconds":@(aotStageSeconds),
+        @"aot_stage_interpreter_instructions":@(aotStageInterpreterInstructions),
+        @"aot_trace_seen":@(aotTraceSeen),
+        @"aot_trace_incomplete":@(aotTraceIncomplete),
+        @"aot_stage_fallback_count":@(agr_aot_fallback_count()),
+        @"aot_stage_executed_instructions":@(agr_aot_executed_instructions()),
+        @"aot_stage_executed_blocks":@(agr_aot_executed_blocks()),
+        @"aot_stage_boundary_count":@(agr_aot_boundary_count()),
+        @"aot_stage_boundary_seconds":@(agr_aot_boundary_seconds()),
+        @"aot_stage_miss_pc":[NSString stringWithFormat:@"%08x",agr_aot_miss_pc()] }];
     agr_apk_package_close(package);
     return result;
 }
@@ -1920,6 +1961,24 @@ static uint64_t aotHash(const uint8_t *bytes, uint32_t size) {
     return hash;
 }
 
+static int runKungFooAotProbe(BOOL useAot) {
+    NSString *docs=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+    [[NSFileManager defaultManager] createDirectoryAtPath:docs withIntermediateDirectories:YES attributes:nil error:nil];
+    NSMutableArray<NSString *> *failures=[NSMutableArray array];
+    gKungFooAotProbeMode=useAot?2:1;
+    NSDictionary *native=runKungFooNativeRegression(failures,NO);
+    gKungFooAotProbeMode=0;
+    BOOL passed=failures.count==0 && [native[@"native_activity_created"] boolValue]
+        && [native[@"native_draws"] unsignedIntValue]>0
+        && [native[@"native_swaps"] unsignedIntValue]>0;
+    NSDictionary *result=@{@"mode":useAot?@"aot":@"interpreter",
+        @"workload":@"kungfoo-armv7-native-dlopen-to-gameplay",
+        @"passed":@(passed),@"failures":failures,@"native":native?:@{}};
+    NSData *bytes=[NSJSONSerialization dataWithJSONObject:result options:0 error:nil];
+    [bytes writeToFile:[docs stringByAppendingPathComponent:@"aot-result.json"] atomically:YES];
+    return passed?0:1;
+}
+
 static int runAotPoc(BOOL useAot) {
     NSString *docs = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
     [[NSFileManager defaultManager] createDirectoryAtPath:docs withIntermediateDirectories:YES attributes:nil error:nil];
@@ -2011,6 +2070,10 @@ static int runAotPoc(BOOL useAot) {
     (void)session; (void)connectionOptions;
     if (![scene isKindOfClass:UIWindowScene.class]) return;
     NSArray<NSString *> *arguments=NSProcessInfo.processInfo.arguments;
+    if ([arguments containsObject:@"--aot-kungfoo-trace"] ||
+        [arguments containsObject:@"--aot-kungfoo-run"]) {
+        exit(runKungFooAotProbe([arguments containsObject:@"--aot-kungfoo-run"]));
+    }
     if ([arguments containsObject:@"--aot-trace"] || [arguments containsObject:@"--aot-run"]) {
         exit(runAotPoc([arguments containsObject:@"--aot-run"]));
     }
