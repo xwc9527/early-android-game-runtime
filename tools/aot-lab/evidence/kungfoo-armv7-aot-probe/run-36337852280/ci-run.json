@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "run_id": 36337852280,
+  "job_id": 108672032558,
+  "artifact_id": 10937568766,
+  "artifact_sha256": "73792f94b07c475bc725e7ede25392f89bff4a17e2d8fb4caaa5219efcb0d3c9",
+  "job_log_sha256": "8de0707b027486fd0144d35df85e2a10847117914b8eec6d6163e7f28415cf34",
+  "tested_commit": "fe0e1cfc5d8505f11806b290274d8ef18f423358",
+  "tested_tree": "757248b0004f74c3065295823533446899e17b59",
+  "conclusion": "success",
+  "semantic_pass": true
+}
