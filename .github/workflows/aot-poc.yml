@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches: [experiment/armv7-arm64-aot-poc]
+    paths-ignore:
+      - "tools/aot-lab/evidence/**"
 
 jobs:
   aot-poc:
