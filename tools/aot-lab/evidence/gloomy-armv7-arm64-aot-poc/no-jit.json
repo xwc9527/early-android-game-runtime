@@ -1,0 +1,8 @@
+{
+  "artifact": "Runtime/AotLab/aot_blocks.c",
+  "produced_before_process_start": true,
+  "runtime_codegen": false,
+  "executable_data_pages": false,
+  "forbidden_tokens_present": [],
+  "proof": "The translated blocks are C compiled by Apple clang into a normal Mach-O __TEXT section. The running process does not allocate executable memory for them."
+}

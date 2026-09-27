@@ -1,0 +1,32 @@
+{
+  "tested_commit": "eb804c6196b20dafb636386892b163ecd24c579d",
+  "tested_tree": "9c553140b8364b1c9f10acb9df13d3ae50f23bde",
+  "workflow": "ARMv7 to ARM64 AOT proof",
+  "run_id": 36308503927,
+  "run_url": "https://github.com/xwc9527/early-android-game-runtime/actions/runs/36308503927",
+  "job_id": 108589737111,
+  "artifact_id": 10928445760,
+  "artifact_name": "gloomy-armv7-arm64-aot-poc",
+  "conclusion": "success",
+  "prior_success": {
+    "tested_commit": "5281f38b2c1d1668aa372002231458ae0aa4137b",
+    "tested_tree": "7fc21501c0daba442fe1ebd71ce6cf700c47ffee",
+    "run_id": 36307687874
+  },
+  "recovered_from_public_annotation": [
+    "aot-checkpoints.txt",
+    "aot-hosts.txt",
+    "aot-result.json",
+    "aot_blocks.c",
+    "differential.json"
+  ],
+  "artifact_only": [
+    "interpreter-trace.txt",
+    "interpreter-hosts.txt",
+    "interpreter-result.json",
+    "translation-manifest.json",
+    "simulator-macho.txt",
+    "iphoneos-link.txt",
+    "ci-log.txt"
+  ]
+}

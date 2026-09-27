@@ -1,0 +1,12 @@
+{
+  "disposition": "AOT_CORRECT_BUT_NOT_YET_PERFORMANT",
+  "semantic_pass": true,
+  "fallback_count": 0,
+  "dual_mode_pcs": [],
+  "d011_changed": false,
+  "reopen_d011": false,
+  "bottleneck": "The timed section is the existing JNI and GLES import boundary. Guest instruction time fell from 1.031 ms to 0.151 ms, which is the helper lowering itself. The 9.1x wall-clock ratio sits in boundary_seconds across two separate launches, interpreter first, so it is not an isolated AOT speedup.",
+  "wall_clock_speedup_measured": 9.103896652010098,
+  "framebuffer_fnv": "cfe58940c429fdfb",
+  "nonblack_pixels": 362
+}
