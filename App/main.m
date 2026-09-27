@@ -482,6 +482,28 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         agr_aot_set_enabled(0);
         agr_aot_trace_close();
         agr_aot_log_close();
+        BOOL stagePassed=package && mounted==0 && registered==0 && dexLoaded==0 && jniOnLoad==0;
+        const char *stageError=guest?agr_guest_last_error(guest):"guest unavailable";
+        NSDictionary *stageResult=@{
+            @"mode":gKungFooAotProbeMode==2?@"aot":@"interpreter",
+            @"workload":@"kungfoo-armv7-native-loader-stage",
+            @"passed":@(stagePassed),@"mounted":@(mounted==0),
+            @"elf_registered":@(registered==0),@"dex_loaded":@(dexLoaded==0),
+            @"jni_onload_status":@(jniOnLoad),@"jni_version":@(jniVersion),
+            @"native_so_bytes":@(mainLibraryBytes),
+            @"seconds":@(aotStageSeconds),
+            @"interpreter_instructions":@(aotStageInterpreterInstructions),
+            @"trace_seen":@(aotTraceSeen),@"trace_incomplete":@(aotTraceIncomplete),
+            @"aot_instructions":@(agr_aot_executed_instructions()),
+            @"aot_blocks":@(agr_aot_executed_blocks()),
+            @"fallback_count":@(agr_aot_fallback_count()),
+            @"boundary_count":@(agr_aot_boundary_count()),
+            @"boundary_seconds":@(agr_aot_boundary_seconds()),
+            @"miss_pc":[NSString stringWithFormat:@"%08x",agr_aot_miss_pc()],
+            @"error":stageError&&stageError[0]?[NSString stringWithUTF8String:stageError]:@""};
+        NSData *stageBytes=[NSJSONSerialization dataWithJSONObject:stageResult options:0 error:nil];
+        NSString *docs=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+        [stageBytes writeToFile:[docs stringByAppendingPathComponent:@"aot-stage-result.json"] atomically:YES];
     }
     int loaded=jniOnLoad==0?0:-1;
     int dexStarted=loaded==0?agr_guest_start_dex_activity(guest):-1;

@@ -15,7 +15,7 @@ bash "$ROOT/tools/aot-lab/launch_aot.sh" kungfoo-trace
 probe_status=$?
 set -e
 
-for name in aot-trace.txt aot-hosts.txt aot-result.json pvs-progress.json aot-simulator-log.txt aot-process-list.txt ci-environment.json simulator-device.txt; do
+for name in aot-trace.txt aot-hosts.txt aot-stage-result.json aot-result.json pvs-progress.json aot-simulator-log.txt aot-process-list.txt ci-environment.json simulator-device.txt; do
   if [[ -f "$ROOT/build/artifacts/$name" ]]; then
     cp "$ROOT/build/artifacts/$name" "$EVIDENCE/$name"
   fi

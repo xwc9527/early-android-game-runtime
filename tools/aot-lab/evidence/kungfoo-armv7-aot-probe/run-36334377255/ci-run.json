@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "run_id": 36334377255,
+  "tested_commit": "69712b0a4802700ae35540d84622ed4d8f4ff3d5",
+  "tested_tree": "33f143c098654b0f98a4a7a143956d8ac8d21126",
+  "job_id": 108662301204,
+  "artifact_id": 10937205815,
+  "artifact_sha256": "8d5d4aa9107dc00f76b61c660683e0ab50b802d332890eeacc8d6b47193d1bc3",
+  "job_log_sha256": "6a9534c4a67e594c64dd320a33489bc5b541a67b17a591187bc2c4f4b89ba15c",
+  "observation": "29,578 raw interpreter instruction events captured in loader stage; app later reached before:nativeactivity.input.created; runtime log reported JNI generic DEX invocation failed loadImage; full-game result absent after 180-second poll",
+  "translation_status": 1
+}

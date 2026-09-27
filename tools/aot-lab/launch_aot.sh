@@ -19,7 +19,7 @@ xcrun simctl boot "$DEVICE" 2>/dev/null || true
 xcrun simctl bootstatus "$DEVICE" -b
 xcrun simctl install "$DEVICE" "$APP"
 DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
-rm -f "$DATA/Documents/aot-result.json" "$DATA/Documents/aot-trace.txt" "$DATA/Documents/aot-hosts.txt" "$DATA/Documents/pvs-progress.json"
+rm -f "$DATA/Documents/aot-result.json" "$DATA/Documents/aot-stage-result.json" "$DATA/Documents/aot-trace.txt" "$DATA/Documents/aot-hosts.txt" "$DATA/Documents/pvs-progress.json"
 case "$MODE" in
   trace) ARG="--aot-trace" ;;
   run) ARG="--aot-run" ;;
@@ -27,15 +27,17 @@ case "$MODE" in
   kungfoo-run) ARG="--aot-kungfoo-run" ;;
   *) echo "unknown AOT launch mode: $MODE" >&2; exit 2 ;;
 esac
+RESULT_NAME=aot-result.json
+[[ "$MODE" == kungfoo-* ]] && RESULT_NAME=aot-stage-result.json
 xcrun simctl launch --terminate-running-process "$DEVICE" dev.agr.simulator --args "$ARG"
 for _ in $(seq 1 180); do
-  [[ -s "$DATA/Documents/aot-result.json" ]] && break
+  [[ -s "$DATA/Documents/$RESULT_NAME" ]] && break
   sleep 1
 done
-for name in aot-result.json aot-hosts.txt aot-trace.txt aot-checkpoints.txt pvs-progress.json; do
+for name in aot-result.json aot-stage-result.json aot-hosts.txt aot-trace.txt aot-checkpoints.txt pvs-progress.json; do
   [[ -f "$DATA/Documents/$name" ]] && cp "$DATA/Documents/$name" "$ARTIFACTS/$name"
 done
-if [[ ! -s "$ARTIFACTS/aot-result.json" ]]; then
+if [[ ! -s "$ARTIFACTS/$RESULT_NAME" ]]; then
   xcrun simctl spawn "$DEVICE" log show --last 15m --style compact \
     --predicate 'process == "AGRSimulator" OR process == "runningboardd"' \
     > "$ARTIFACTS/aot-simulator-log.txt" 2>&1 || true
@@ -44,4 +46,4 @@ if [[ ! -s "$ARTIFACTS/aot-result.json" ]]; then
   [[ -s "$ARTIFACTS/pvs-progress.json" ]] && cat "$ARTIFACTS/pvs-progress.json" >&2
   exit 1
 fi
-python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print("error: aot-result", json.dumps(d)); raise SystemExit(0 if d.get("passed") else 1)' "$ARTIFACTS/aot-result.json"
+python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print("aot-result", json.dumps(d)); raise SystemExit(0 if d.get("passed") else 1)' "$ARTIFACTS/$RESULT_NAME"
