@@ -88,8 +88,15 @@ with open(out_path, "w", encoding="utf-8") as f:
     f.write("\n")
 PY
   ANGLE_ROOT="$BUILD/angle-v2.1.28252"
-  test -d "$ANGLE_ROOT/dist/EGL.xcframework"
-  rustup target list --installed | grep -qx aarch64-apple-ios-sim
+  if [[ ! -d "$ANGLE_ROOT/dist/EGL.xcframework" ]]; then
+    echo "ANGLE xcframework missing at $ANGLE_ROOT/dist/EGL.xcframework" >&2
+    exit 1
+  fi
+  if ! rustup target list --installed | grep -qx aarch64-apple-ios-sim; then
+    echo "missing rust target aarch64-apple-ios-sim" >&2
+    rustup target list --installed >&2 || true
+    exit 1
+  fi
   rm -rf "$APP"
   mkdir -p "$APP"
   ANGLE_DIST="$ANGLE_ROOT/dist"
