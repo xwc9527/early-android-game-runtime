@@ -18,7 +18,14 @@ jobs:
           set -o pipefail
           mkdir -p tools/aot-lab/evidence/gloomy-armv7-arm64-aot-poc
           if ! bash tools/aot-lab/run_poc.sh 2>&1 | tee tools/aot-lab/evidence/gloomy-armv7-arm64-aot-poc/ci-log.txt; then
-            tail -n 40 tools/aot-lab/evidence/gloomy-armv7-arm64-aot-poc/ci-log.txt | sed 's/^/::error::/'
+            python3 - <<'PY'
+from pathlib import Path
+lines = Path("tools/aot-lab/evidence/gloomy-armv7-arm64-aot-poc/ci-log.txt").read_text(errors="replace").splitlines()
+keys = ("error:", "undefined symbol", "fatal error", "ld:", "Traceback", "ANGLE", "missing rust", "AGR_SMOKE_PHASE")
+picked = [line.strip() for line in lines if any(key in line for key in keys)]
+message = " || ".join((picked or lines)[-12:])
+print("::error::" + message[:1200].replace("%", "%25"))
+PY
             exit 1
           fi
       - name: Upload AOT evidence
