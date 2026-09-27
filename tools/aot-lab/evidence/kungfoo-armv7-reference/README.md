@@ -21,8 +21,12 @@ and relaunch. At every live step the ARM process mapped the app's native ELF.
 The probe records process survival, CPU time, thread count, resumed/focused
 Activity, and native library maps. `concordance.json` recomputes to
 `STATE_CONCORDANT` for structural lifecycle state; it does not assert game
-state, audio, pixels, or timing equivalence. Screenshots are archived because
-the probes cite their hashes, but frames alone do not establish runtime health.
+state, audio, pixels, or timing equivalence. The TRACE `screen-02-tap.png`
+captures active play with sprites and score 0; both runs' `screen-03-wait.png`
+capture the same game-over frame with score 5 (matching SHA-256
+`16ff26250a17ae17933cff6366110e3749cc5571a59ed0bd0c3e1c63efabf421`).
+Those frames corroborate the live process, growing CPU time, native ELF map,
+and completed lifecycle observations; they are not the sole health criterion.
 
 TRACE recorded 6,695 events. `trace/trace-direct/trace-all.log.gz` contains
 the unmodified guest direct trace bytes, and `trace/events.ndjson.gz` contains
@@ -40,6 +44,9 @@ KungFoo `.text` is `0x83d2c` (539,948) bytes; Gloomy `.text` is `0xf6e`
 (3,950) bytes. This static size comparison is not execution coverage or a
 performance measurement. Gloomy's ELF SHA-256 is
 `2b8672e79da33de4661f6aa0bcb79df2a302637aca9829d53fff8077a6895638`.
+The raw `readelf -A` outputs show both ELF files declare ARMv7, Thumb-2,
+and VFPv3-D16. They do not show which floating point instructions execute in
+the tested paths.
 
 Reproduction uses `tools/reference-lab/probe_pair.py --arch arm` with the
 locked `tools/reference-lab/scenarios/kungfoo-landscape-gameplay.json`
