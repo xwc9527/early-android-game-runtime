@@ -81,3 +81,13 @@ TRACE evidence never authorizes an original AGR implementation.
 Dependency mapping and semantic differential are separate workflows.
 
 For the new migration workflow, D009 decides when reference execution is used. That decision outranks D008's older limit that executable API19 reference runs only for unresolved observable ambiguity. D008 remains the locked rule for source-first semantic differential. It is not rewritten by this decision.
+
+## D010 — HOST-DEX private storage for the thread suspend-count condition
+
+Status: LOCKED
+
+Decision: Select `representation-split` for `Dalvik.ThreadState` consuming `self-suspend on the thread suspend-count condition` from `Bionic.PthreadCondition`. `gDvm.threadSuspendCountLock` and `gDvm.threadSuspendCountCond` are HOST-DEX private VM state. Guest ABI exposure is false. Guest-address requirement is false for this consumer only. Semantic ownership stays with the existing CROSSING_CLOSED record. Storage representation may split. Semantic ownership may not split. The guest-visible pthread representation stays unchanged. This decision does not create a pthread semantic owner, does not mark `Bionic.PthreadCondition` PRODUCTION_CLOSED, does not authorize host pthread substitution, and does not authorize HostServices pthread policy.
+
+The machine-readable consumer binding is `ci/governance/host-storage-consumer-bindings.json`. It cites this decision and the existing crossing record. It does not rewrite that record.
+
+Reopen only if pinned API19 source shows these two objects are guest-visible, or a later locked decision requires every Dalvik VM pthread object to use ARM32 guest storage.

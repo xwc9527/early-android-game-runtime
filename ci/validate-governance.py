@@ -83,6 +83,8 @@ def main() -> int:
                 "artifacts/schema/experiments.schema.json", "artifacts/schema/closure-attempts.schema.json",
                 "ci/governance/substrate-production-contracts.json",
                 "artifacts/schema/substrate-production-contracts.schema.json",
+                "ci/governance/host-storage-consumer-bindings.json",
+                "artifacts/schema/host-storage-consumer-bindings.schema.json",
                 "tools/reference-lab/substrate_contracts.py"]
     errors = [f"missing:{p}" for p in required if not (ROOT / p).is_file()]
     if (ROOT / "tools/reference-lab/substrate_contracts.py").is_file():
@@ -97,6 +99,7 @@ def main() -> int:
                     contract.get("semantic_cluster"), contract.get("source_revision"),
                     contract.get("source_owner_digest"), bound)
             contract_tool.validate_committed_crossing_closures(bound)
+            contract_tool.validate_committed_host_storage_bindings(bound)
         except ValueError as exc:
             errors.append("substrate production contracts: " + str(exc))
     state, registry, closure = load("ci/governance/state.json"), load("ci/governance/modules.json"), load("ci/governance/closure.json")

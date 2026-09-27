@@ -11,3 +11,4 @@ evidence/dalvik-threadstate-production-port/** text eol=lf
 evidence/dalvik-register-natives-entry-thread-native/** text eol=lf
 evidence/dalvik-threadstate-pthread-consumption/** text eol=lf
 evidence/dalvik-internal-pthread-boundary-disposition/** text eol=lf
+evidence/dalvik-threadstate-host-storage-binding/** text eol=lf

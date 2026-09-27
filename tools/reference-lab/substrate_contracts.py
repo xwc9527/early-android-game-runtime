@@ -296,6 +296,185 @@ def _require_crossing_run(record, ledger):
         raise ValueError("closure run is not a recorded VALID_PASS")
 
 
+HOST_STORAGE_BINDING_PATH = ROOT / "ci/governance/host-storage-consumer-bindings.json"
+DECISIONS_PATH = ROOT / "docs/DECISIONS.md"
+GUEST_SYNC_HEADER = ROOT / "Runtime/Bionic/agr_bionic_sync.h"
+HOST_SERVICES_HEADER = ROOT / "Runtime/HostServices/agr_host_services.h"
+HOST_STORAGE_DECISION = "D010"
+HOST_STORAGE_CLASS = "HOST-DEX private VM state"
+HOST_STORAGE_OBJECTS = ("gDvm.threadSuspendCountLock", "gDvm.threadSuspendCountCond")
+HOST_STORAGE_SEMANTIC_REQUIREMENT = (
+    "closed Bionic state machine, ordering, and full-barrier behavior")
+HOST_STORAGE_CONSUMER = "Dalvik.ThreadState"
+HOST_STORAGE_OWNER = "Bionic.PthreadCondition"
+DECISION_KEYS = {
+    "id", "status", "selected_fork", "consumer", "semantic_owner", "edge",
+    "storage_class", "objects", "guest_abi_exposure", "guest_address_requirement",
+    "guest_address_requirement_scope", "guest_pthread_binding",
+    "semantic_ownership_separated", "host_pthread_substitution",
+    "host_services_pthread_policy", "new_semantic_owner",
+    "whole_owner_production_closed",
+}
+BINDING_KEYS = DECISION_KEYS - {"id", "status", "selected_fork"} | {
+    "authorization_decision", "crossing_status", "semantic_cluster",
+    "source_repo", "revision", "source_file", "source_symbol", "source_sha256",
+    "source_revision", "source_owner_digest", "origin", "production_scope",
+    "production_module", "tested_commit", "tested_tree", "closure_run",
+    "semantic_requirement",
+}
+CROSSING_STORAGE_KEYS = {
+    "host_dex_consumption", "storage_class", "guest_abi_exposure", "consumer",
+    "authorization_decision", "objects",
+}
+D010_REQUIRED_TEXT = (
+    "Status: LOCKED",
+    "representation-split",
+    "Dalvik.ThreadState",
+    "Bionic.PthreadCondition",
+    SUSPEND_EDGE,
+    "HOST-DEX private VM state",
+    "gDvm.threadSuspendCountLock",
+    "gDvm.threadSuspendCountCond",
+    "Guest ABI exposure is false",
+    "Guest-address requirement is false for this consumer only",
+    "Semantic ownership stays with the existing CROSSING_CLOSED record",
+    "Storage representation may split",
+    "Semantic ownership may not split",
+    "guest-visible pthread representation stays unchanged",
+    "does not create a pthread semantic owner",
+    "does not mark `Bionic.PthreadCondition` PRODUCTION_CLOSED",
+    "does not authorize host pthread substitution",
+    "does not authorize HostServices pthread policy",
+)
+
+
+def load_host_storage_consumer_bindings(path=None):
+    document = json.loads(Path(path or HOST_STORAGE_BINDING_PATH).read_text(encoding="utf-8"))
+    if not isinstance(document, dict) or document.get("schema_version") != 1:
+        raise ValueError("host storage consumer binding is malformed")
+    return document
+
+
+def _d010_section(decisions_text=None):
+    text = decisions_text if decisions_text is not None else DECISIONS_PATH.read_text(encoding="utf-8")
+    marker = "## D010 — "
+    start = text.find(marker)
+    if start < 0:
+        raise ValueError("handwritten consumer authorization")
+    rest = text[start:]
+    end = rest.find("\n## ", 1)
+    section = rest if end < 0 else rest[:end]
+    if any(item not in section for item in D010_REQUIRED_TEXT):
+        raise ValueError("handwritten consumer authorization")
+    return section
+
+
+def require_host_storage_consumer_binding(binding, contracts=None, decision=None,
+                                           decisions_text=None, guest_header=None,
+                                           host_header=None):
+    """One HOST-DEX consumer may use private storage for one closed crossing."""
+    if not isinstance(binding, dict) or set(binding) != BINDING_KEYS or "authorized" in binding:
+        raise ValueError("handwritten consumer authorization" if isinstance(binding, dict) and "authorized" in binding
+                         else "consumer binding is malformed")
+    if binding.get("authorization_decision") != HOST_STORAGE_DECISION:
+        raise ValueError("handwritten consumer authorization")
+    if not isinstance(decision, dict) or set(decision) != DECISION_KEYS:
+        raise ValueError("handwritten consumer authorization")
+    if (decision.get("id") != HOST_STORAGE_DECISION or decision.get("status") != "LOCKED"
+            or decision.get("selected_fork") != "representation-split"):
+        raise ValueError("handwritten consumer authorization")
+    _d010_section(decisions_text)
+    shared = (
+        "consumer", "semantic_owner", "edge", "storage_class", "objects",
+        "guest_abi_exposure", "guest_address_requirement",
+        "guest_address_requirement_scope", "guest_pthread_binding",
+        "semantic_ownership_separated", "host_pthread_substitution",
+        "host_services_pthread_policy", "new_semantic_owner",
+        "whole_owner_production_closed",
+    )
+    if any(binding.get(field) != decision.get(field) for field in shared):
+        raise ValueError("handwritten consumer authorization")
+    if contracts is None:
+        contracts = load_substrate_production_contracts()
+    else:
+        validate_registry_document(contracts)
+    if any(isinstance(item, dict) and item.get("semantic_cluster") == HOST_STORAGE_OWNER
+           and item.get("status") == "PRODUCTION_CLOSED"
+           for item in contracts.get("contracts") or []):
+        raise ValueError("consumer binding is not whole-owner authority")
+    if binding.get("whole_owner_production_closed") is not False or binding.get("new_semantic_owner") is not False:
+        raise ValueError("consumer binding is not whole-owner authority" if binding.get("whole_owner_production_closed") is not False
+                         else "consumer binding creates a pthread semantic owner")
+    record = next((item for item in contracts.get("crossing_closures") or []
+                   if isinstance(item, dict) and item.get("edge") == SUSPEND_EDGE
+                   and item.get("semantic_cluster") == HOST_STORAGE_OWNER), None)
+    if record is None:
+        raise ValueError("consumer binding crossing does not match")
+    if CROSSING_STORAGE_KEYS & set(record):
+        raise ValueError("consumer binding modifies crossing identity")
+    if any(binding.get(field) != record.get(field) for field in CROSSING_FIELDS):
+        raise ValueError("consumer binding crossing does not match")
+    if (binding.get("source_revision") != record.get("source_revision")
+            or binding.get("source_owner_digest") != record.get("source_owner_digest")
+            or binding.get("tested_commit") != record.get("tested_commit")
+            or binding.get("tested_tree") != record.get("tested_tree")
+            or binding.get("closure_run") != record.get("closure_run")
+            or binding.get("origin") != record.get("origin")
+            or binding.get("production_module") != record.get("production_module")
+            or binding.get("crossing_status") != "CROSSING_CLOSED"):
+        raise ValueError("consumer binding modifies crossing identity")
+    if binding.get("consumer") != HOST_STORAGE_CONSUMER:
+        raise ValueError("consumer binding consumer does not match")
+    if binding.get("semantic_owner") != HOST_STORAGE_OWNER or binding.get("semantic_cluster") != HOST_STORAGE_OWNER:
+        raise ValueError("consumer binding semantic owner does not match")
+    scope = list(binding.get("production_scope") or [])
+    if any(item not in SUSPEND_SCOPE for item in scope) or len(scope) != len(set(scope)):
+        raise ValueError("consumer binding production scope exceeds the crossing")
+    if scope != list(SUSPEND_SCOPE) or list(record.get("production_scope") or []) != list(SUSPEND_SCOPE):
+        raise ValueError("consumer binding production scope does not match")
+    if binding.get("semantic_requirement") != HOST_STORAGE_SEMANTIC_REQUIREMENT:
+        raise ValueError("consumer binding semantic requirement does not match")
+    if (binding.get("storage_class") != HOST_STORAGE_CLASS
+            or list(binding.get("objects") or []) != list(HOST_STORAGE_OBJECTS)):
+        raise ValueError("guest-visible pthread object cannot use host storage")
+    if (binding.get("guest_abi_exposure") is not False
+            or binding.get("guest_address_requirement") is not False
+            or binding.get("guest_address_requirement_scope") != "this consumer only"):
+        raise ValueError("guest-visible pthread object cannot use host storage")
+    if binding.get("guest_pthread_binding") != "unchanged":
+        raise ValueError("guest pthread binding is not unchanged")
+    header = guest_header if guest_header is not None else GUEST_SYNC_HEADER.read_text(encoding="utf-8")
+    if "ARM32 addresses" not in header:
+        raise ValueError("guest pthread binding is not unchanged")
+    if binding.get("host_pthread_substitution") is not False:
+        raise ValueError("host pthread behavior is not Bionic semantics")
+    if binding.get("semantic_ownership_separated") is not False:
+        raise ValueError("consumer binding separates semantic ownership")
+    if binding.get("host_services_pthread_policy") is not False:
+        raise ValueError("HostServices pthread policy is not authorized")
+    services = host_header if host_header is not None else HOST_SERVICES_HEADER.read_text(encoding="utf-8")
+    if "futex" in services:
+        raise ValueError("HostServices pthread policy is not authorized")
+    return binding
+
+
+def validate_committed_host_storage_bindings(contracts=None, document=None):
+    """The committed binding must cite D010 and the unchanged crossing record."""
+    document = document if document is not None else load_host_storage_consumer_bindings()
+    decision = document.get("decision")
+    bindings = document.get("bindings")
+    if not isinstance(bindings, list) or len(bindings) != 1:
+        raise ValueError("host storage consumer binding is not unique")
+    require_host_storage_consumer_binding(bindings[0], contracts, decision)
+    if contracts is None:
+        contracts = load_substrate_production_contracts()
+    identities = {tuple(record.get(field) for field in CROSSING_FIELDS)
+                  for record in contracts.get("crossing_closures") or []}
+    binding = bindings[0]
+    if identities != {tuple(binding.get(field) for field in CROSSING_FIELDS)}:
+        raise ValueError("consumer binding crossing does not match")
+
+
 def validate_committed_crossing_closures(document=None):
     """The committed ThreadState edge must cite its own crossing closure."""
     if document is None:

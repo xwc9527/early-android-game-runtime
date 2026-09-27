@@ -1,0 +1,9 @@
+{
+  "objects": ["gDvm.threadSuspendCountLock", "gDvm.threadSuspendCountCond"],
+  "owner": "Dalvik.ThreadState",
+  "storage_class": "HOST-DEX private VM state",
+  "placement": "D002 host-side DEX VM",
+  "guest_vma": false,
+  "semantic_owner": "Bionic.PthreadCondition",
+  "semantic_ownership_separated": false
+}

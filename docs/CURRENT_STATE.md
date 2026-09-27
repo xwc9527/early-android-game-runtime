@@ -28,8 +28,9 @@ Absolute condition timeouts stay outside that path. `Dalvik.ThreadState` is
 `JNI thread state around RegisterNatives` is `MIGRATION_AUTHORIZED`. The
 production port stopped on an evidence gap. The entry `THREAD_NATIVE` for
 this origin is `JNI_CreateJavaVM` in `Dalvik.JNINativeBinding`. The closed
-pthread crossing has no authorized HOST-DEX consumption boundary. That question
-is an architecture fork awaiting authorization. `Dalvik.JNINativeBinding` stays
+pthread crossing is consumed, for this consumer only, through D010
+`representation-split`: HOST-DEX private VM storage, with Bionic semantic
+ownership unchanged. `Dalvik.JNINativeBinding` stays
 `SOURCE_LOCATED`, and that prerequisite stays `REOPEN_REQUIRED`.
 The current source indexes and manifests are under `tools/reference-lab/indexes`
 and `tools/reference-lab/evidence`; their unresolved edges are explicit.
@@ -75,7 +76,7 @@ Earlier merged Runtime contracts (linker, pthread, EHABI, allocator, APK bootstr
 
 ## Current blocker
 
-`Dalvik.ThreadState` is migration-authorized for the RegisterNatives thread-state crossing. The production port is still stopped. The entry `THREAD_NATIVE` is published by `JNI_CreateJavaVM`. The closed self-suspend crossing remains `PREREQUISITE_CLOSED`. Whether its guest-word binding is part of the semantic contract or only the guest ABI adapter is an unauthorized architecture fork in `tools/reference-lab/evidence/dalvik-internal-pthread-boundary-disposition/`. `Dalvik.JNINativeBinding` stays `SOURCE_LOCATED`. `JNI thread state around RegisterNatives` stays `REOPEN_REQUIRED`. Class initialization, object allocation, method invocation, and monitor relationships stay `UNRESOLVED`.
+`Dalvik.ThreadState` is migration-authorized for the RegisterNatives thread-state crossing. The production port is still stopped. The entry `THREAD_NATIVE` is published by `JNI_CreateJavaVM`. D010 selects `representation-split`: `gDvm.threadSuspendCountLock` and `gDvm.threadSuspendCountCond` are HOST-DEX private VM state and may consume the existing self-suspend `CROSSING_CLOSED` record without a guest address. Guest-visible pthread objects stay on the ARM32 guest representation. The crossing record is unchanged. The remaining production blocker is the unported RegisterNatives thread-state path. `Dalvik.JNINativeBinding` stays `SOURCE_LOCATED`. `JNI thread state around RegisterNatives` stays `REOPEN_REQUIRED`. Class initialization, object allocation, method invocation, and monitor relationships stay `UNRESOLVED`.
 
 ## Next architecture milestone
 

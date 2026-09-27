@@ -1,0 +1,18 @@
+{
+  "before": {
+    "architecture": "DECISION_FORK",
+    "selected": null,
+    "consumer_binding": null,
+    "crossing_status": "CROSSING_CLOSED"
+  },
+  "after": {
+    "architecture": "D010",
+    "selected_fork": "representation-split",
+    "consumer_binding": "ci/governance/host-storage-consumer-bindings.json",
+    "crossing_status": "CROSSING_CLOSED",
+    "crossing_record_modified": false,
+    "runtime_modified": false,
+    "prerequisite_status": "PREREQUISITE_CLOSED",
+    "whole_owner_production_closed": false
+  }
+}

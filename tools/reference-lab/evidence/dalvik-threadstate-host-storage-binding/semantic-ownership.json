@@ -1,0 +1,10 @@
+{
+  "semantic_owner": "Bionic.PthreadCondition",
+  "new_semantic_owner": false,
+  "whole_owner_production_closed": false,
+  "crossing_record_owns_semantics": true,
+  "consumer_binding_owns_storage_only": true,
+  "host_pthread_substitution": false,
+  "host_services_pthread_policy": false,
+  "semantic_requirement": "closed Bionic state machine, ordering, and full-barrier behavior"
+}

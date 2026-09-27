@@ -15,7 +15,13 @@ from source_closure import (
     external_owner_digest,
     source_derived_clusters,
 )
-from substrate_contracts import require_exact_crossing_closure, require_production_contract, validate_committed_crossing_closures
+from substrate_contracts import (
+    require_exact_crossing_closure,
+    require_host_storage_consumer_binding,
+    require_production_contract,
+    validate_committed_crossing_closures,
+    validate_committed_host_storage_bindings,
+)
 from workflow import cluster_manifests, validate_source_manifests
 
 PHASE3_RUN = "36039287996"
@@ -1218,8 +1224,73 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         crossing = contracts["crossing_closures"][0]
         self.assertEqual(crossing["status"], "CROSSING_CLOSED")
         self.assertEqual(crossing["edge"], "self-suspend on the thread suspend-count condition")
-        decisions = (ROOT / "docs/DECISIONS.md").read_text(encoding="utf-8")
-        self.assertNotIn("threadSuspendCountLock", decisions)
+
+
+    def test_threadstate_host_storage_binding_is_exact(self):
+        contracts = json.loads((ROOT / "ci/governance/substrate-production-contracts.json").read_text(encoding="utf-8"))
+        document = json.loads((ROOT / "ci/governance/host-storage-consumer-bindings.json").read_text(encoding="utf-8"))
+        validate_committed_host_storage_bindings(contracts, document)
+        self.assertEqual(contracts["contracts"], [])
+        crossing = contracts["crossing_closures"][0]
+        self.assertEqual(crossing["status"], "CROSSING_CLOSED")
+        self.assertNotIn("storage_class", crossing)
+        self.assertNotIn("host_dex_consumption", crossing)
+        binding = document["bindings"][0]
+        decision = document["decision"]
+        self.assertEqual(decision["id"], "D010")
+        self.assertEqual(decision["selected_fork"], "representation-split")
+        self.assertEqual(binding["consumer"], "Dalvik.ThreadState")
+        self.assertEqual(binding["semantic_owner"], "Bionic.PthreadCondition")
+        self.assertFalse(binding["guest_abi_exposure"])
+        self.assertFalse(binding["guest_address_requirement"])
+        self.assertEqual(binding["guest_pthread_binding"], "unchanged")
+        self.assertIn("## D010 — ", (ROOT / "docs/DECISIONS.md").read_text(encoding="utf-8"))
+        summary = json.loads((ROOT / "tools/reference-lab/evidence/dalvik-threadstate-host-storage-binding/summary.json").read_text(encoding="utf-8"))
+        self.assertEqual(summary["result"], "AUTHORIZED")
+        self.assertEqual(summary["selected_fork"], "representation-split")
+        self.assertEqual(summary["decision_id"], "D010")
+        self.assertFalse(summary["runtime_modified"])
+        self.assertFalse(summary["crossing_record_modified"])
+        self.assertFalse(summary["whole_owner_production_closed"])
+
+        def reject(mutate, message):
+            bad_contracts = json.loads(json.dumps(contracts))
+            bad_binding = json.loads(json.dumps(binding))
+            bad_decision = json.loads(json.dumps(decision))
+            mutate(bad_contracts, bad_binding, bad_decision)
+            with self.assertRaisesRegex(ValueError, message):
+                require_host_storage_consumer_binding(bad_binding, bad_contracts, bad_decision)
+
+        def both(field, value):
+            def mutate(_contracts, bad_binding, bad_decision):
+                bad_binding[field] = value
+                if field in bad_decision:
+                    bad_decision[field] = value
+            return mutate
+
+        reject(both("edge", "pthread_cond_signal"), "consumer binding crossing does not match")
+        reject(both("semantic_owner", "Dalvik.Monitor"), "consumer binding semantic owner does not match")
+        reject(lambda bad_contracts, bad_binding, bad_decision: bad_contracts["contracts"].append({
+            "semantic_cluster": "Bionic.PthreadCondition", "status": "PRODUCTION_CLOSED",
+            "source_revision": crossing["source_revision"],
+            "source_owner_digest": crossing["source_owner_digest"],
+            "production_module": "pthread", "tested_commit": crossing["tested_commit"],
+            "tested_tree": crossing["tested_tree"], "closure_run": crossing["closure_run"],
+        }), "consumer binding is not whole-owner authority")
+        reject(both("whole_owner_production_closed", True), "consumer binding is not whole-owner authority")
+        reject(both("guest_abi_exposure", True), "guest-visible pthread object cannot use host storage")
+        reject(both("consumer", "Dalvik.Monitor"), "consumer binding consumer does not match")
+        reject(lambda _contracts, bad_binding, _decision: bad_binding["production_scope"].append(
+            "absolute pthread_cond_timedwait"), "consumer binding production scope exceeds the crossing")
+        reject(both("host_pthread_substitution", True), "host pthread behavior is not Bionic semantics")
+        reject(lambda bad_contracts, _binding, _decision: bad_contracts["crossing_closures"][0].__setitem__(
+            "host_dex_consumption", True), "consumer binding modifies crossing identity")
+        reject(lambda _contracts, bad_binding, _decision: bad_binding.__setitem__(
+            "authorized", True), "handwritten consumer authorization")
+        reject(lambda _contracts, bad_binding, _decision: bad_binding.__setitem__(
+            "authorization_decision", "HANDWRITTEN"), "handwritten consumer authorization")
+        reject(both("new_semantic_owner", True), "consumer binding creates a pthread semantic owner")
+        reject(both("host_services_pthread_policy", True), "HostServices pthread policy is not authorized")
 
 
 if __name__ == "__main__":

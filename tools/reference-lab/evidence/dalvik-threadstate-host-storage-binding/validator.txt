@@ -1,0 +1,14 @@
+result AUTHORIZED
+decision D010 representation-split
+consumer Dalvik.ThreadState
+semantic owner Bionic.PthreadCondition
+crossing CROSSING_CLOSED unchanged
+guest ABI exposure false
+guest-address requirement false for this consumer only
+guest pthread binding unchanged
+contracts array empty
+unittest test_threadstate_host_storage_binding_is_exact OK
+unittest test_internal_pthread_boundary_is_an_unauthorized_fork OK
+unittest test_host_dex_pthread_consumption_stays_an_evidence_gap OK
+unittest test_suspend_crossing_closure_is_exact_and_rejects_substitutes OK
+Ran 4 tests OK

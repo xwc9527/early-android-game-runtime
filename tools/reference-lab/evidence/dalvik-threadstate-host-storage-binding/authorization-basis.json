@@ -1,0 +1,14 @@
+{
+  "authorization": "D010",
+  "prior_disposition": "tools/reference-lab/evidence/dalvik-internal-pthread-boundary-disposition",
+  "prior_result": "DECISION_FORK",
+  "basis": [
+    "The user selected representation-split for this exact crossing",
+    "API19 keeps gDvm.threadSuspendCountLock and gDvm.threadSuspendCountCond inside the VM and does not export them to guest code",
+    "D002 places the Dalvik VM on the host",
+    "Guest ABI constrains guest-visible pthread objects",
+    "CROSSING_CLOSED production_scope names the Bionic operations and does not name guest VMA",
+    "The existing guest pthread port remains the binding for guest-visible objects"
+  ],
+  "does_not_reopen": ["D002", "D008"]
+}
