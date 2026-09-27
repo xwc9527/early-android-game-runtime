@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "run_id": 36335270071,
+  "tested_commit": "7bdccc0cb735380197b0343df8029d6e5a1f8f7d",
+  "tested_tree": "0cc45edf347d6a95dcd936a2f8ac1fb804c6b402",
+  "job_id": 108664822525,
+  "artifact_id": 10937495290,
+  "artifact_sha256": "021847b4940573f7750d867a6bcedc54029178bead42be15d1cc75170b277481",
+  "job_log_sha256": "53d8b145e4232a6badbb3707b5923461eeeaa6377e57c26dafa05280b0078ef8",
+  "stage_pass": true,
+  "trace_sha256": "c8240bcf870a26c53bdcf1d9b5309bdebc9fd47e6c47f390687b699be73222d6",
+  "host_sequence_sha256": "19072bf46a922b205df85b2c37401b3d0a7b714bbcc9873a6315aefcb3d86a73",
+  "trace_incomplete": false
+}

@@ -19,7 +19,7 @@ xcrun simctl boot "$DEVICE" 2>/dev/null || true
 xcrun simctl bootstatus "$DEVICE" -b
 xcrun simctl install "$DEVICE" "$APP"
 DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
-rm -f "$DATA/Documents/aot-result.json" "$DATA/Documents/aot-stage-result.json" "$DATA/Documents/aot-trace.txt" "$DATA/Documents/aot-hosts.txt" "$DATA/Documents/pvs-progress.json"
+rm -f "$DATA/Documents/aot-result.json" "$DATA/Documents/aot-stage-result.json" "$DATA/Documents/aot-trace.txt" "$DATA/Documents/aot-hosts.txt" "$DATA/Documents/aot-checkpoints.txt" "$DATA/Documents/pvs-progress.json"
 case "$MODE" in
   trace) ARG="--aot-trace" ;;
   run) ARG="--aot-run" ;;

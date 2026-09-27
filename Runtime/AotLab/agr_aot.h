@@ -59,6 +59,13 @@ static inline uint32_t agr_aot_load32(AgrAotRegs *state, uint32_t address) {
     return value;
 }
 
+static inline uint16_t agr_aot_load16(AgrAotRegs *state, uint32_t address) {
+    uint16_t value = 0;
+    if (agr_aot_fault(address)) return 0;
+    memcpy(&value, state->mem + address, 2);
+    return value;
+}
+
 static inline void agr_aot_store32(AgrAotRegs *state, uint32_t address, uint32_t value) {
     if (!agr_aot_fault(address)) memcpy(state->mem + address, &value, 4);
 }

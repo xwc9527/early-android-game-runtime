@@ -2,8 +2,10 @@
 """Translate a recorded ARMv7 guest trace into a signed-code ARM64 C artifact."""
 
 import argparse
+import hashlib
 import json
 import struct
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -273,6 +275,64 @@ def emit(rows, destination):
     return entries
 
 
+def emit_partial(rows, destination, allowed_kinds):
+    """Emit only already-proven generic operations, one guarded instruction per block.
+
+    Unknown operations remain in the existing interpreter fallback. This is a
+    coverage experiment, not a claim that the new workload is fully AOT-ready.
+    """
+    unique = {}
+    ambiguous = set()
+    for row in rows:
+        previous = unique.setdefault(row["pc"], row)
+        if (previous["insn"], previous["len"], previous["thumb"]) != (
+                row["insn"], row["len"], row["thumb"]):
+            ambiguous.add(row["pc"])
+    pieces = ['#include "agr_aot.h"', ""]
+    entries = []
+    for pc, row in sorted(unique.items()):
+        if pc in ambiguous:
+            continue
+        if is_svc(row):
+            continue
+        if not row["thumb"] and (row["insn"] >> 28) != 14:
+            continue
+        try:
+            op = decode(row["pc"], row["insn"], row["len"], row["thumb"])
+        except ValueError:
+            continue
+        if op[0] not in allowed_kinds or op[0] == "mov_reg" and op[1] == 15:
+            continue
+        raw, length = row["insn"], row["len"]
+        name = f"aot_{pc:08x}"
+        lines = [f"static int {name}(AgrAotRegs *s) {{", "    int rc = 0;", "    (void)rc;"]
+        lines.append("    if (%s) return AGR_AOT_MISS;" %
+                     ("!(*s->cpsr & 0x20u)" if row["thumb"] else "(*s->cpsr & 0x20u)"))
+        if row["thumb"] and length == 2:
+            guards = [f"agr_aot_load16(s, {pc}u) != {raw}u"]
+        elif row["thumb"]:
+            guards = [f"agr_aot_load16(s, {pc}u) != {raw >> 16}u",
+                      f"agr_aot_load16(s, {pc + 2}u) != {raw & 0xffff}u"]
+        else:
+            guards = [f"agr_aot_load32(s, {pc}u) != {raw}u"]
+        lines.append(f"    if ({' || '.join(guards)}) return AGR_AOT_MISS;")
+        lines.append("    agr_aot_count_instruction();")
+        lines.append("    " + emit_op(op, row["thumb"]))
+        if not is_terminal(op):
+            lines.append(f"    s->r[15] = {pc + length}u;")
+            lines.append("    return AGR_AOT_BOUNDARY;")
+        lines.append("}")
+        pieces.extend(lines + [""])
+        entries.append((pc, name))
+    pieces.append("const AgrAotEntry agr_aot_blocks[] = {")
+    pieces.extend(f"    {{{pc}u, {name}}}," for pc, name in entries)
+    if not entries:
+        pieces.append("    {0, 0},")
+    pieces.extend(["};", f"const uint32_t agr_aot_block_count = {len(entries)}u;", ""])
+    destination.write_text("\n".join(pieces), encoding="utf-8", newline="\n")
+    return entries
+
+
 def load_trace(path):
     rows = []
     for line in Path(path).read_text(encoding="utf-8").splitlines():
@@ -317,23 +377,37 @@ def self_test(so_path):
 
 
 def main():
+    started = time.perf_counter()
     parser = argparse.ArgumentParser()
     parser.add_argument("--trace")
     parser.add_argument("--out", default=str(ROOT / "Runtime" / "AotLab" / "aot_blocks.c"))
     parser.add_argument("--manifest")
     parser.add_argument("--self-test")
+    parser.add_argument("--partial-baseline-trace")
     args = parser.parse_args()
     if args.self_test:
         self_test(args.self_test)
         return
     rows = load_trace(args.trace)
-    entries = emit(rows, Path(args.out))
+    allowed_kinds = None
+    if args.partial_baseline_trace:
+        baseline = load_trace(args.partial_baseline_trace)
+        allowed_kinds = {decode(row["pc"], row["insn"], row["len"], row["thumb"])[0]
+                         for row in baseline if not is_svc(row)}
+        entries = emit_partial(rows, Path(args.out), allowed_kinds)
+    else:
+        entries = emit(rows, Path(args.out))
     manifest = {
         "trace_instructions": len(rows),
         "unique_pcs": len({row["pc"] for row in rows}),
         "thumb_instructions": sum(1 for row in rows if row["thumb"]),
         "arm_instructions": sum(1 for row in rows if not row["thumb"]),
         "vfp_instructions": 0,
+        "input_trace_sha256": hashlib.sha256(Path(args.trace).read_bytes()).hexdigest(),
+        "partial_baseline_trace_sha256": hashlib.sha256(Path(args.partial_baseline_trace).read_bytes()).hexdigest() if args.partial_baseline_trace else None,
+        "allowed_op_kinds": sorted(allowed_kinds) if allowed_kinds is not None else None,
+        "preparation_wall_seconds": time.perf_counter() - started,
+        "generated_c_bytes": Path(args.out).stat().st_size,
         "blocks": [{"pc": pc, "name": name} for pc, name in entries],
     }
     if args.manifest:

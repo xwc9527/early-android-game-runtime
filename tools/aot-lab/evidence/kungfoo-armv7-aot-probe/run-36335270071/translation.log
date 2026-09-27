@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/Users/runner/work/early-android-game-runtime/early-android-game-runtime/tools/aot-lab/translate.py", line 345, in <module>
+    main()
+    ~~~~^^
+  File "/Users/runner/work/early-android-game-runtime/early-android-game-runtime/tools/aot-lab/translate.py", line 330, in main
+    entries = emit(rows, Path(args.out))
+  File "/Users/runner/work/early-android-game-runtime/early-android-game-runtime/tools/aot-lab/translate.py", line 243, in emit
+    for start, body in blocks_from_trace(rows):
+                       ~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/runner/work/early-android-game-runtime/early-android-game-runtime/tools/aot-lab/translate.py", line 146, in blocks_from_trace
+    op = decode(row["pc"], row["insn"], row["len"], row["thumb"])
+  File "/Users/runner/work/early-android-game-runtime/early-android-game-runtime/tools/aot-lab/translate.py", line 107, in decode
+    raise ValueError(f"unsupported encoding pc={pc:#x} thumb={thumb} len={length} insn={insn:#x}")
+ValueError: unsupported encoding pc=0x477d0 thumb=1 len=2 insn=0xb570

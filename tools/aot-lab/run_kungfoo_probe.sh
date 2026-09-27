@@ -15,9 +15,15 @@ bash "$ROOT/tools/aot-lab/launch_aot.sh" kungfoo-trace
 probe_status=$?
 set -e
 
-for name in aot-trace.txt aot-hosts.txt aot-stage-result.json aot-result.json pvs-progress.json aot-simulator-log.txt aot-process-list.txt ci-environment.json simulator-device.txt; do
+for name in ci-environment.json simulator-device.txt; do
   if [[ -f "$ROOT/build/artifacts/$name" ]]; then
     cp "$ROOT/build/artifacts/$name" "$EVIDENCE/$name"
+  fi
+done
+for pair in aot-trace.txt:interpreter-trace.txt aot-hosts.txt:interpreter-hosts.txt aot-stage-result.json:interpreter-stage-result.json pvs-progress.json:interpreter-progress.json aot-simulator-log.txt:interpreter-simulator-log.txt aot-process-list.txt:interpreter-process-list.txt; do
+  source_name="${pair%%:*}"; destination_name="${pair#*:}"
+  if [[ -f "$ROOT/build/artifacts/$source_name" ]]; then
+    cp "$ROOT/build/artifacts/$source_name" "$EVIDENCE/$destination_name"
   fi
 done
 cp "$ROOT/build/build-environment.json" "$EVIDENCE/build-environment.json"
@@ -33,18 +39,34 @@ record = {"schema_version": 1, "workload": "kungfoo-armv7-native-dlopen-to-gamep
 (evidence / "input-identity.json").write_text(json.dumps(record, indent=2) + "\n")
 PY
 
-if [[ -s "$EVIDENCE/aot-trace.txt" ]]; then
+if [[ "$probe_status" -eq 0 && -s "$EVIDENCE/interpreter-trace.txt" ]]; then
   set +e
   python3 "$ROOT/tools/aot-lab/translate.py" \
-    --trace "$EVIDENCE/aot-trace.txt" \
-    --out "$ROOT/build/kungfoo-aot-blocks.c" \
+    --trace "$EVIDENCE/interpreter-trace.txt" \
+    --partial-baseline-trace "$ROOT/tools/aot-lab/evidence/gloomy-armv7-arm64-aot-poc/interpreter-trace.txt" \
+    --out "$EVIDENCE/aot_blocks.c" \
     --manifest "$EVIDENCE/translation-manifest.json" \
     > "$EVIDENCE/translation.log" 2>&1
   translate_status=$?
   set -e
   printf '%s\n' "$translate_status" > "$EVIDENCE/translation.exit"
   if [[ "$translate_status" -eq 0 ]]; then
-    cp "$ROOT/build/kungfoo-aot-blocks.c" "$EVIDENCE/aot_blocks.c"
+    cmp "$EVIDENCE/aot_blocks.c" "$ROOT/Runtime/AotLab/aot_blocks.c"
+    set +e
+    bash "$ROOT/tools/aot-lab/launch_aot.sh" kungfoo-run
+    aot_status=$?
+    set -e
+    for name in aot-stage-result.json aot-hosts.txt aot-checkpoints.txt; do
+      [[ -f "$ROOT/build/artifacts/$name" ]] && cp "$ROOT/build/artifacts/$name" "$EVIDENCE/$name"
+    done
+    [[ -f "$ROOT/build/artifacts/pvs-progress.json" ]] && cp "$ROOT/build/artifacts/pvs-progress.json" "$EVIDENCE/aot-progress.json"
+    printf '%s\n' "$aot_status" > "$EVIDENCE/aot.exit"
+    exit "$aot_status"
   fi
+  exit "$translate_status"
+fi
+if [[ "$probe_status" -eq 0 ]]; then
+  echo "missing interpreter trace" >&2
+  exit 1
 fi
 exit "$probe_status"

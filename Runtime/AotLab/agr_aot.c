@@ -110,6 +110,12 @@ int agr_aot_drive(void *cpu) {
     AgrAotRegs state = {regs, cpsr, memory};
     for (uint32_t step = 0; step < 100000u; step++) {
         uint32_t pc = regs[15];
+        /* The interpreter owns Thumb IT predication until its ITSTATE clears. */
+        if (*cpsr & 0x0600fc00u) {
+            fallback_count++;
+            last_miss = pc;
+            return AGR_AOT_MISS;
+        }
         if ((*cpsr & 0x20u) == 0 && !agr_aot_fault(pc)) {
             uint32_t word = agr_aot_load32(&state, pc);
             if ((word & 0xff000000u) == 0xef000000u) {
@@ -131,6 +137,11 @@ int agr_aot_drive(void *cpu) {
         executed_blocks++;
         int result = function(&state);
         if (result == AGR_AOT_FAULT) return AGR_AOT_FAULT;
+        if (result == AGR_AOT_MISS) {
+            fallback_count++;
+            last_miss = pc;
+            return AGR_AOT_MISS;
+        }
     }
     fallback_count++;
     last_miss = regs[15];
