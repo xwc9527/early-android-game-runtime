@@ -4,7 +4,17 @@
 from pathlib import Path
 
 lines = Path("tools/aot-lab/evidence/gloomy-armv7-arm64-aot-poc/ci-log.txt").read_text(errors="replace").splitlines()
-keys = ("error:", "Undefined symbols", "not found", "referenced from", "fatal error", "Traceback", "missing rust", "compiled main.m")
-picked = [line.strip() for line in lines if "warning:" not in line and any(key in line for key in keys)]
-message = " || ".join((picked or [line for line in lines if "warning:" not in line])[-8:])
-print("::error::" + message[:900].replace("%", "%25"))
+picked = []
+index = 0
+while index < len(lines):
+    line = lines[index]
+    if "Traceback" in line:
+        picked.extend(item.strip() for item in lines[index:index + 12])
+        index += 12
+        continue
+    if "warning:" not in line and any(key in line for key in (
+        "error:", "unsupported", "Undefined symbols", "not found", "Exception", "compiled main.m")):
+        picked.append(line.strip())
+    index += 1
+message = " || ".join((picked or [line.strip() for line in lines if "warning:" not in line])[-10:])
+print("::error::" + message[:1500].replace("%", "%25"))
