@@ -1,0 +1,336 @@
+{
+  "schema_version": 1,
+  "lab_root": "/agr-reference",
+  "source_files": [
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/probe.json",
+      "source_bytes": 24056,
+      "source_sha256": "97e3df86f30150aef5ac1a918b6b51515075753618d085a5ea7861d26e341b86",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/probe.json",
+      "archive_bytes": 24056,
+      "archive_sha256": "97e3df86f30150aef5ac1a918b6b51515075753618d085a5ea7861d26e341b86",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/app.maps",
+      "source_bytes": 44508,
+      "source_sha256": "4e86418180377d3a6ea4e581ca6434e3ad10f0f60c0097f405da8de938207404",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/app.maps",
+      "archive_bytes": 44508,
+      "archive_sha256": "4e86418180377d3a6ea4e581ca6434e3ad10f0f60c0097f405da8de938207404",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/boot.logcat",
+      "source_bytes": 237051,
+      "source_sha256": "f01bb9816c7346438b0c4d3db4fa39cbc3b9fe7781a9692fd78ae10eb37f5e65",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/boot.logcat",
+      "archive_bytes": 237051,
+      "archive_sha256": "f01bb9816c7346438b0c4d3db4fa39cbc3b9fe7781a9692fd78ae10eb37f5e65",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/emulator.log",
+      "source_bytes": 336,
+      "source_sha256": "6db67f706cd5c01a50561a10f8f44f483d83d5fe68d5f9c8d29d3ba65257f9b0",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/emulator.log",
+      "archive_bytes": 336,
+      "archive_sha256": "6db67f706cd5c01a50561a10f8f44f483d83d5fe68d5f9c8d29d3ba65257f9b0",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/zygote-preload.json",
+      "source_bytes": 245493,
+      "source_sha256": "4a1c7f0bcc91c48051acd1199ce8e9ac1d9c8b0fb60809d751fea02be9169c86",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/zygote-preload.json",
+      "archive_bytes": 245493,
+      "archive_sha256": "4a1c7f0bcc91c48051acd1199ce8e9ac1d9c8b0fb60809d751fea02be9169c86",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/zygote.maps",
+      "source_bytes": 38477,
+      "source_sha256": "4c0aedca57d235dd95a5aa07dcb04864bfc98294ad0ef96543758098591fecb2",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/zygote.maps",
+      "archive_bytes": 38477,
+      "archive_sha256": "4c0aedca57d235dd95a5aa07dcb04864bfc98294ad0ef96543758098591fecb2",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/runtime.logcat",
+      "source_bytes": 204594,
+      "source_sha256": "cda73a102f5c299e38252f9fa3c8bf0470415e945b59b2371fcd3608ea42c6c2",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/runtime.logcat",
+      "archive_bytes": 204594,
+      "archive_sha256": "cda73a102f5c299e38252f9fa3c8bf0470415e945b59b2371fcd3608ea42c6c2",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-00-wait.png",
+      "source_bytes": 36125,
+      "source_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/screen-00-wait.png",
+      "archive_bytes": 36125,
+      "archive_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-01-tap.png",
+      "source_bytes": 34496,
+      "source_sha256": "3536c709b68ea04d16631a44bf918b2fc481364ebbc3b2ea1d01e90a0b246061",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/screen-01-tap.png",
+      "archive_bytes": 34496,
+      "archive_sha256": "3536c709b68ea04d16631a44bf918b2fc481364ebbc3b2ea1d01e90a0b246061",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-02-tap.png",
+      "source_bytes": 34496,
+      "source_sha256": "3536c709b68ea04d16631a44bf918b2fc481364ebbc3b2ea1d01e90a0b246061",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/screen-02-tap.png",
+      "archive_bytes": 34496,
+      "archive_sha256": "3536c709b68ea04d16631a44bf918b2fc481364ebbc3b2ea1d01e90a0b246061",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-03-wait.png",
+      "source_bytes": 17581,
+      "source_sha256": "16ff26250a17ae17933cff6366110e3749cc5571a59ed0bd0c3e1c63efabf421",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/screen-03-wait.png",
+      "archive_bytes": 17581,
+      "archive_sha256": "16ff26250a17ae17933cff6366110e3749cc5571a59ed0bd0c3e1c63efabf421",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-04-home.png",
+      "source_bytes": 41879,
+      "source_sha256": "69f326b2fede59620b37167b3157e9f2e177d688a3d11a826f66bb4088506232",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/screen-04-home.png",
+      "archive_bytes": 41879,
+      "archive_sha256": "69f326b2fede59620b37167b3157e9f2e177d688a3d11a826f66bb4088506232",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-05-resume.png",
+      "source_bytes": 36125,
+      "source_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/screen-05-resume.png",
+      "archive_bytes": 36125,
+      "archive_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-06-force_stop.png",
+      "source_bytes": 41928,
+      "source_sha256": "3b8e56b374bf03e555b5bc61a0bdbebb100751ed43116734418fda838368b369",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/screen-06-force_stop.png",
+      "archive_bytes": 41928,
+      "archive_sha256": "3b8e56b374bf03e555b5bc61a0bdbebb100751ed43116734418fda838368b369",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-07-relaunch.png",
+      "source_bytes": 36125,
+      "source_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/screen-07-relaunch.png",
+      "archive_bytes": 36125,
+      "archive_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/clean/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-launch.png",
+      "source_bytes": 36125,
+      "source_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/clean/screen-launch.png",
+      "archive_bytes": 36125,
+      "archive_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/probe.json",
+      "source_bytes": 24160,
+      "source_sha256": "322ac04708f517fa7cfb1f4e41c857882ead1602bfee7049a0f22f69e3bc7110",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/probe.json",
+      "archive_bytes": 24160,
+      "archive_sha256": "322ac04708f517fa7cfb1f4e41c857882ead1602bfee7049a0f22f69e3bc7110",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/app.maps",
+      "source_bytes": 44508,
+      "source_sha256": "43e874620f09a4586a7ca1429073e830f8dd2808f1a2566bb0450193c3e6b6e6",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/app.maps",
+      "archive_bytes": 44508,
+      "archive_sha256": "43e874620f09a4586a7ca1429073e830f8dd2808f1a2566bb0450193c3e6b6e6",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/boot.logcat",
+      "source_bytes": 232114,
+      "source_sha256": "e68eaad180e367154b6177a56541906e4e873b0b9d6ecec86475715eeb7310e2",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/boot.logcat",
+      "archive_bytes": 232114,
+      "archive_sha256": "e68eaad180e367154b6177a56541906e4e873b0b9d6ecec86475715eeb7310e2",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/emulator.log",
+      "source_bytes": 336,
+      "source_sha256": "6db67f706cd5c01a50561a10f8f44f483d83d5fe68d5f9c8d29d3ba65257f9b0",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/emulator.log",
+      "archive_bytes": 336,
+      "archive_sha256": "6db67f706cd5c01a50561a10f8f44f483d83d5fe68d5f9c8d29d3ba65257f9b0",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/zygote-preload.json",
+      "source_bytes": 245493,
+      "source_sha256": "4a1c7f0bcc91c48051acd1199ce8e9ac1d9c8b0fb60809d751fea02be9169c86",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/zygote-preload.json",
+      "archive_bytes": 245493,
+      "archive_sha256": "4a1c7f0bcc91c48051acd1199ce8e9ac1d9c8b0fb60809d751fea02be9169c86",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/zygote.maps",
+      "source_bytes": 38477,
+      "source_sha256": "bcc0f4d8c59238c0f22cff0697e5e52129fe5efe122a71e67739c6564c346ecb",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/zygote.maps",
+      "archive_bytes": 38477,
+      "archive_sha256": "bcc0f4d8c59238c0f22cff0697e5e52129fe5efe122a71e67739c6564c346ecb",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/trace.logcat",
+      "source_bytes": 205624,
+      "source_sha256": "2f9bc53c5dc754f00b8033fb6018b6e47570ea54666865bb1e87b4e86df98490",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/trace.logcat",
+      "archive_bytes": 205624,
+      "archive_sha256": "2f9bc53c5dc754f00b8033fb6018b6e47570ea54666865bb1e87b4e86df98490",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/trace-run.json",
+      "source_bytes": 1264,
+      "source_sha256": "a3043c0e85a3dfd48b81a1adecbcea565338124b5785f0aa9c97e39459ffa503",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/trace-run.json",
+      "archive_bytes": 1264,
+      "archive_sha256": "a3043c0e85a3dfd48b81a1adecbcea565338124b5785f0aa9c97e39459ffa503",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/events.ndjson",
+      "source_bytes": 2712718,
+      "source_sha256": "15234e994ff6c8d317ae8b39a4fd1d2fec49067b6ba54bf8dbf0aa30bc0f1b4c",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/events.ndjson.gz",
+      "archive_bytes": 41968,
+      "archive_sha256": "6a1e2c032a1d4d4e06c2c8297dfed05ac87a5b22d0b063421f3c070a21e527d2",
+      "encoding": "gzip"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/trace-direct/trace-all.log",
+      "source_bytes": 10704236,
+      "source_sha256": "f7d5599dd2d498d1734f7f49ffed2e9b032aa3ede95dc606acf6e9788954df94",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/trace-direct/trace-all.log.gz",
+      "archive_bytes": 416101,
+      "archive_sha256": "b0ee5680ebdb85716cd15e1517ef77586dbccbafc92223bb7364baa6855625ad",
+      "encoding": "gzip"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-00-wait.png",
+      "source_bytes": 36125,
+      "source_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/screen-00-wait.png",
+      "archive_bytes": 36125,
+      "archive_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-01-tap.png",
+      "source_bytes": 34496,
+      "source_sha256": "3536c709b68ea04d16631a44bf918b2fc481364ebbc3b2ea1d01e90a0b246061",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/screen-01-tap.png",
+      "archive_bytes": 34496,
+      "archive_sha256": "3536c709b68ea04d16631a44bf918b2fc481364ebbc3b2ea1d01e90a0b246061",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-02-tap.png",
+      "source_bytes": 99744,
+      "source_sha256": "73e2caec78b07a11fff3da437f44bda11afb276203564de6aa8144078137bf58",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/screen-02-tap.png",
+      "archive_bytes": 99744,
+      "archive_sha256": "73e2caec78b07a11fff3da437f44bda11afb276203564de6aa8144078137bf58",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-03-wait.png",
+      "source_bytes": 17581,
+      "source_sha256": "16ff26250a17ae17933cff6366110e3749cc5571a59ed0bd0c3e1c63efabf421",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/screen-03-wait.png",
+      "archive_bytes": 17581,
+      "archive_sha256": "16ff26250a17ae17933cff6366110e3749cc5571a59ed0bd0c3e1c63efabf421",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-04-home.png",
+      "source_bytes": 41436,
+      "source_sha256": "ac1508ad463ed7f4e7fa2683deb8a81519aca0c0a8eb680d30cbf50b3e50c57d",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/screen-04-home.png",
+      "archive_bytes": 41436,
+      "archive_sha256": "ac1508ad463ed7f4e7fa2683deb8a81519aca0c0a8eb680d30cbf50b3e50c57d",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-05-resume.png",
+      "source_bytes": 36125,
+      "source_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/screen-05-resume.png",
+      "archive_bytes": 36125,
+      "archive_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-06-force_stop.png",
+      "source_bytes": 41587,
+      "source_sha256": "47cce39471234977b7a5f35e6883ae9e135d8e4672473882ba71cdda739e7619",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/screen-06-force_stop.png",
+      "archive_bytes": 41587,
+      "archive_sha256": "47cce39471234977b7a5f35e6883ae9e135d8e4672473882ba71cdda739e7619",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-07-relaunch.png",
+      "source_bytes": 36125,
+      "source_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/screen-07-relaunch.png",
+      "archive_bytes": 36125,
+      "archive_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/emulator/aosp-r2-arm/trace/com.onetwofivegames.kungfoobarracuda/aot_armv7_gameplay_lifecycle/screen-launch.png",
+      "source_bytes": 36125,
+      "source_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/trace/screen-launch.png",
+      "archive_bytes": 36125,
+      "archive_sha256": "1bf2a7ba8932849578ed82470dd86899cda6cedf7397b4fbf277ef75078dc54b",
+      "encoding": "identity"
+    },
+    {
+      "source": "/agr-reference/arm-reference-pair.json",
+      "source_bytes": 1565,
+      "source_sha256": "bb70aca6041b1a6f239b2dbf5dc347db306b1637749e2eb0b93ddc1c5df04114",
+      "archive": "/mnt/c/Users/47763/Documents/Codex/2026-09-25/he/work/agr-aot-route-validation/tools/aot-lab/evidence/kungfoo-armv7-reference/arm-reference-pair.json",
+      "archive_bytes": 1565,
+      "archive_sha256": "bb70aca6041b1a6f239b2dbf5dc347db306b1637749e2eb0b93ddc1c5df04114",
+      "encoding": "identity"
+    }
+  ],
+  "excluded_build_outputs": [
+    "userdata.img",
+    "guest-framework.jar",
+    "guest-libdvm.so"
+  ],
+  "note": "Excluded binary inputs remain hash-bound in pair/probe records."
+}

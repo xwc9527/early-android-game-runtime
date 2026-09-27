@@ -1,0 +1,33 @@
+{
+  "clean": {
+    "baseline": "android-4.4.4_r2",
+    "build_flavor": "aosp_arm-eng",
+    "build_only_patch_sha256": "1d5d120d54935eab8ecef496c9e95659c5767ccf5f1c7b5ec9d20e0f294592ef",
+    "execution_mode": "int:portable",
+    "host_toolchain_sha256": "b0265bc11e50c071d3e69ebc34ba7a45d1c7090c873953608784bf43516d3ab7",
+    "image_sha256": "55c5ca31b556d522b9a266df7774281544c1abb680b9e73c9e82c796d984cc3a",
+    "instrumented": false,
+    "libdvm_sha256": "5d0ee66ce94771da2b1d9e09aa795fc66bef058bc7251f5a6345f62039b36d0c",
+    "role": "semantic_oracle",
+    "source_manifest_sha256": "f3d52b80cb4bd4a9ef30184bba758b18642d9f384cd57dd44d6f7704e32ffb7c",
+    "variant": "CLEAN"
+  },
+  "mapper_run_ready": false,
+  "oracle_ready": false,
+  "schema_version": 1,
+  "status": "BUILD_VERIFIED",
+  "trace": {
+    "baseline": "android-4.4.4_r2",
+    "build_flavor": "aosp_arm-eng",
+    "build_only_patch_sha256": "1d5d120d54935eab8ecef496c9e95659c5767ccf5f1c7b5ec9d20e0f294592ef",
+    "execution_mode": "int:portable",
+    "host_toolchain_sha256": "b0265bc11e50c071d3e69ebc34ba7a45d1c7090c873953608784bf43516d3ab7",
+    "image_sha256": "55f0cf0211ccb19558200d0f537f1a04394e9b707ec5bd7b03b57d2c6796881a",
+    "instrumented": true,
+    "libdvm_sha256": "6878efa65502a63490f761224801bff72560f5bbc48f606e24f8543172494a60",
+    "role": "dependency_mapper",
+    "source_manifest_sha256": "f3d52b80cb4bd4a9ef30184bba758b18642d9f384cd57dd44d6f7704e32ffb7c",
+    "trace_patch_sha256": "54560f1fd7b6d1c689a559480b9ca562293fc3cb20081d73bfc2eaf77e41ce2b",
+    "variant": "TRACE"
+  }
+}

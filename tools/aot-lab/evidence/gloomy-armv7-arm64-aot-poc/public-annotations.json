@@ -1,0 +1,38 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/xwc9527/early-android-game-runtime/blob/eb804c6196b20dafb636386892b163ecd24c579d/.github",
+    "start_line": 2,
+    "start_column": null,
+    "end_line": 2,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/xwc9527/early-android-game-runtime/blob/eb804c6196b20dafb636386892b163ecd24c579d/.github",
+    "start_line": 1347,
+    "start_column": null,
+    "end_line": 1347,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "aot-evidence-0-of-1",
+    "message": "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",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/xwc9527/early-android-game-runtime/blob/eb804c6196b20dafb636386892b163ecd24c579d/.github",
+    "start_line": 1346,
+    "start_column": null,
+    "end_line": 1346,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "aot-differential",
+    "message": "{\"semantic_pass\":true,\"hosts_equal\":true,\"host_calls\":19,\"framebuffer_equal\":true,\"nonblack_equal\":true,\"checkpoint_mismatches\":[],\"dual_mode_pcs\":[],\"fallback_count\":0,\"boundary_count\":21,\"translated_blocks\":30,\"executed_blocks\":32,\"interpreter_guest_instructions\":153,\"aot_instructions\":153,\"thumb_instructions\":132,\"arm_instructions\":42,\"vfp_instructions\":0,\"interpreter_seconds\":0.2828580141067505,\"aot_seconds\":0.03106999397277832,\"interpreter_boundary_seconds\":0.2818269999999999,\"aot_boundary_seconds\":0.030919000000000002,\"interpreter_arm_seconds\":0.0010310141067506051,\"aot_arm_seconds\":0.00015099397277831828,\"wall_clock_speedup\":9.103896652010098,\"miss_pc\":\"00000000\",\"framebuffer_fnv\":\"cfe58940c429fdfb\",\"nonblack_pixels\":362}",
+    "raw_details": ""
+  }
+]

@@ -1,0 +1,171 @@
+ELF Header:
+  Magic:   7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00 
+  Class:                             ELF32
+  Data:                              2's complement, little endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              DYN (Shared object file)
+  Machine:                           ARM
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          52 (bytes into file)
+  Start of section headers:          8496 (bytes into file)
+  Flags:                             0x5000000, Version5 EABI
+  Size of this header:               52 (bytes)
+  Size of program headers:           32 (bytes)
+  Number of program headers:         9
+  Size of section headers:           40 (bytes)
+  Number of section headers:         22
+  Section header string table index: 21
+
+Section Headers:
+  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+  [ 1] .interp           PROGBITS        00000154 000154 000013 00   A  0   0  1
+  [ 2] .note.gnu.build-id NOTE            00000168 000168 000024 00   A  0   0  4
+  [ 3] .dynsym           DYNSYM          0000018c 00018c 0003d0 10   A  4   1  4
+  [ 4] .dynstr           STRTAB          0000055c 00055c 000550 00   A  0   0  1
+  [ 5] .hash             HASH            00000aac 000aac 000190 04   A  3   0  4
+  [ 6] .rel.dyn          REL             00000c3c 000c3c 000040 08   A  3   0  4
+  [ 7] .rel.plt          REL             00000c7c 000c7c 000060 08  AI  3   8  4
+  [ 8] .plt              PROGBITS        00000cdc 000cdc 0000a4 00  AX  0   0  4
+  [ 9] .text             PROGBITS        00000d80 000d80 000f6e 00  AX  0   0  4
+  [10] .ARM.extab        PROGBITS        00001cf0 001cf0 00003c 00   A  0   0  4
+  [11] .ARM.exidx        ARM_EXIDX       00001d2c 001d2c 000118 08  AL  9   0  4
+  [12] .fini_array       FINI_ARRAY      00002e94 001e94 000008 00  WA  0   0  4
+  [13] .init_array       INIT_ARRAY      00002e9c 001e9c 000004 00  WA  0   0  1
+  [14] .dynamic          DYNAMIC         00002ea0 001ea0 000108 08  WA  4   0  4
+  [15] .got              PROGBITS        00002fa8 001fa8 000058 00  WA  0   0  4
+  [16] .data             PROGBITS        00003000 002000 000004 00  WA  0   0  4
+  [17] .bss              NOBITS          00003004 002004 000000 00  WA  0   0  1
+  [18] .comment          PROGBITS        00000000 002004 000010 01  MS  0   0  1
+  [19] .note.gnu.gold-version NOTE            00000000 002014 00001c 00      0   0  4
+  [20] .ARM.attributes   ARM_ATTRIBUTES  00000000 002030 000034 00      0   0  1
+  [21] .shstrtab         STRTAB          00000000 002064 0000cb 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
+  L (link order), O (extra OS processing required), G (group), T (TLS),
+  C (compressed), x (unknown), o (OS specific), E (exclude),
+  D (mbind), y (purecode), p (processor specific)
+
+Dynamic section at offset 0x1ea0 contains 28 entries:
+  Tag        Type                         Name/Value
+ 0x00000003 (PLTGOT)                     0x2fc4
+ 0x00000002 (PLTRELSZ)                   96 (bytes)
+ 0x00000017 (JMPREL)                     0xc7c
+ 0x00000014 (PLTREL)                     REL
+ 0x00000011 (REL)                        0xc3c
+ 0x00000012 (RELSZ)                      64 (bytes)
+ 0x00000013 (RELENT)                     8 (bytes)
+ 0x6ffffffa (RELCOUNT)                   6
+ 0x00000006 (SYMTAB)                     0x18c
+ 0x0000000b (SYMENT)                     16 (bytes)
+ 0x00000005 (STRTAB)                     0x55c
+ 0x0000000a (STRSZ)                      1360 (bytes)
+ 0x00000004 (HASH)                       0xaac
+ 0x00000001 (NEEDED)                     Shared library: [liblog.so]
+ 0x00000001 (NEEDED)                     Shared library: [libGLESv1_CM.so]
+ 0x00000001 (NEEDED)                     Shared library: [libstdc++.so]
+ 0x00000001 (NEEDED)                     Shared library: [libm.so]
+ 0x00000001 (NEEDED)                     Shared library: [libc.so]
+ 0x00000001 (NEEDED)                     Shared library: [libdl.so]
+ 0x0000000e (SONAME)                     Library soname: [librenderer.so]
+ 0x0000001a (FINI_ARRAY)                 0x2e94
+ 0x0000001c (FINI_ARRAYSZ)               8 (bytes)
+ 0x00000019 (INIT_ARRAY)                 0x2e9c
+ 0x0000001b (INIT_ARRAYSZ)               4 (bytes)
+ 0x00000010 (SYMBOLIC)                   0x0
+ 0x0000001e (FLAGS)                      SYMBOLIC BIND_NOW
+ 0x6ffffffb (FLAGS_1)                    Flags: NOW
+ 0x00000000 (NULL)                       0x0
+
+Relocation section '.rel.dyn' at offset 0xc3c contains 8 entries:
+ Offset     Info    Type                Sym. Value  Symbol's Name
+00002e94  00000017 R_ARM_RELATIVE        
+00002fa8  00000017 R_ARM_RELATIVE        
+00002fac  00000017 R_ARM_RELATIVE        
+00002fb0  00000017 R_ARM_RELATIVE        
+00002fb8  00000017 R_ARM_RELATIVE        
+00002fbc  00000017 R_ARM_RELATIVE        
+00002fb4  00000d15 R_ARM_GLOB_DAT         00000000   __gnu_Unwind_Find_exidx
+00002fc0  00002315 R_ARM_GLOB_DAT         00000000   __cxa_call_unexpected
+
+Relocation section '.rel.plt' at offset 0xc7c contains 12 entries:
+ Offset     Info    Type                Sym. Value  Symbol's Name
+00002fd0  00000216 R_ARM_JUMP_SLOT        00000000   __cxa_atexit
+00002fd4  00000116 R_ARM_JUMP_SLOT        00000000   __cxa_finalize
+00002fd8  00000416 R_ARM_JUMP_SLOT        00000000   glVertexPointer
+00002fdc  00000516 R_ARM_JUMP_SLOT        00000000   glColorPointer
+00002fe0  00000616 R_ARM_JUMP_SLOT        00000000   glTexCoordPointer
+00002fe4  00000716 R_ARM_JUMP_SLOT        00000000   glDrawElements
+00002fe8  00000a16 R_ARM_JUMP_SLOT        00000000   glDrawArrays
+00002fec  00000d16 R_ARM_JUMP_SLOT        00000000   __gnu_Unwind_Find_exidx
+00002ff0  00001316 R_ARM_JUMP_SLOT        00000000   abort
+00002ff4  00001516 R_ARM_JUMP_SLOT        00000000   memcpy
+00002ff8  00002016 R_ARM_JUMP_SLOT        00000000   __cxa_begin_cleanup
+00002ffc  00002116 R_ARM_JUMP_SLOT        00000000   __cxa_type_match
+
+Symbol table '.dynsym' contains 61 entries:
+   Num:    Value  Size Type    Bind   Vis      Ndx Name
+     0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 00000000     0 FUNC    GLOBAL DEFAULT  UND __cxa_finalize
+     2: 00000000     0 FUNC    GLOBAL DEFAULT  UND __cxa_atexit
+     3: 00000dc5   208 FUNC    GLOBAL DEFAULT    9 Java_zame_game_engine_Renderer_renderTriangles
+     4: 00000000     0 FUNC    GLOBAL DEFAULT  UND glVertexPointer
+     5: 00000000     0 FUNC    GLOBAL DEFAULT  UND glColorPointer
+     6: 00000000     0 FUNC    GLOBAL DEFAULT  UND glTexCoordPointer
+     7: 00000000     0 FUNC    GLOBAL DEFAULT  UND glDrawElements
+     8: 0000161d     4 FUNC    GLOBAL DEFAULT    9 __aeabi_unwind_cpp_pr0
+     9: 00000e95   114 FUNC    GLOBAL DEFAULT    9 Java_zame_game_engine_Renderer_renderLines
+    10: 00000000     0 FUNC    GLOBAL DEFAULT  UND glDrawArrays
+    11: 00001621     4 FUNC    WEAK   DEFAULT    9 __aeabi_unwind_cpp_pr1
+    12: 00001625     4 FUNC    WEAK   DEFAULT    9 __aeabi_unwind_cpp_pr2
+    13: 00000000     0 FUNC    WEAK   DEFAULT  UND __gnu_Unwind_Find_exidx
+    14: 00001875     0 FUNC    GLOBAL DEFAULT    9 __gnu_Unwind_Restore_VFP_D
+    15: 00001865     0 FUNC    GLOBAL DEFAULT    9 __gnu_Unwind_Restore_VFP
+    16: 00001885     0 FUNC    GLOBAL DEFAULT    9 __gnu_Unwind_Restore_VFP_D_16_to_31
+    17: 00001895     0 FUNC    GLOBAL DEFAULT    9 __gnu_Unwind_Restore_WMMXD
+    18: 0000191d     0 FUNC    GLOBAL DEFAULT    9 __gnu_Unwind_Restore_WMMXC
+    19: 00000000     0 FUNC    GLOBAL DEFAULT  UND abort
+    20: 0000184d    24 FUNC    GLOBAL DEFAULT    9 restore_core_regs
+    21: 00000000     0 FUNC    GLOBAL DEFAULT  UND memcpy
+    22: 000011b5     4 FUNC    GLOBAL DEFAULT    9 _Unwind_GetCFA
+    23: 000011b9    98 FUNC    GLOBAL DEFAULT    9 __gnu_Unwind_RaiseException
+    24: 0000121b    20 FUNC    GLOBAL DEFAULT    9 __gnu_Unwind_ForcedUnwind
+    25: 0000122f    66 FUNC    GLOBAL DEFAULT    9 __gnu_Unwind_Resume
+    26: 00001271    16 FUNC    GLOBAL DEFAULT    9 __gnu_Unwind_Resume_or_Rethrow
+    27: 00001281     2 FUNC    GLOBAL DEFAULT    9 _Unwind_Complete
+    28: 00001283    14 FUNC    GLOBAL DEFAULT    9 _Unwind_DeleteException
+    29: 00001291    44 FUNC    GLOBAL DEFAULT    9 _Unwind_VRS_Get
+    30: 000012d5    44 FUNC    GLOBAL DEFAULT    9 _Unwind_VRS_Set
+    31: 0000131b   122 FUNC    GLOBAL DEFAULT    9 __gnu_Unwind_Backtrace
+    32: 00000000     0 NOTYPE  WEAK   DEFAULT  UND __cxa_begin_cleanup
+    33: 00000000     0 NOTYPE  WEAK   DEFAULT  UND __cxa_type_match
+    34: 00001a3f   606 FUNC    GLOBAL DEFAULT    9 __gnu_unwind_execute
+    35: 00000000     0 NOTYPE  WEAK   DEFAULT  UND __cxa_call_unexpected
+    36: 00001629   546 FUNC    GLOBAL DEFAULT    9 _Unwind_VRS_Pop
+    37: 000018d9     0 FUNC    GLOBAL DEFAULT    9 __gnu_Unwind_Save_WMMXD
+    38: 00001931     0 FUNC    GLOBAL DEFAULT    9 __gnu_Unwind_Save_WMMXC
+    39: 0000187d     0 FUNC    GLOBAL DEFAULT    9 __gnu_Unwind_Save_VFP_D
+    40: 0000186d     0 FUNC    GLOBAL DEFAULT    9 __gnu_Unwind_Save_VFP
+    41: 0000188d     0 FUNC    GLOBAL DEFAULT    9 __gnu_Unwind_Save_VFP_D_16_to_31
+    42: 0000184d    24 FUNC    GLOBAL DEFAULT    9 __restore_core_regs
+    43: 00001945    34 FUNC    GLOBAL DEFAULT    9 ___Unwind_RaiseException
+    44: 00001945    34 FUNC    GLOBAL DEFAULT    9 _Unwind_RaiseException
+    45: 00001969    34 FUNC    GLOBAL DEFAULT    9 ___Unwind_Resume
+    46: 00001969    34 FUNC    GLOBAL DEFAULT    9 _Unwind_Resume
+    47: 0000198d    34 FUNC    GLOBAL DEFAULT    9 ___Unwind_Resume_or_Rethrow
+    48: 0000198d    34 FUNC    GLOBAL DEFAULT    9 _Unwind_Resume_or_Rethrow
+    49: 000019b1    34 FUNC    GLOBAL DEFAULT    9 ___Unwind_ForcedUnwind
+    50: 000019b1    34 FUNC    GLOBAL DEFAULT    9 _Unwind_ForcedUnwind
+    51: 000019d5    34 FUNC    GLOBAL DEFAULT    9 ___Unwind_Backtrace
+    52: 000019d5    34 FUNC    GLOBAL DEFAULT    9 _Unwind_Backtrace
+    53: 00001c9d    42 FUNC    GLOBAL DEFAULT    9 __gnu_unwind_frame
+    54: 00001cc7    10 FUNC    GLOBAL DEFAULT    9 _Unwind_GetRegionStart
+    55: 00001cd1    18 FUNC    GLOBAL DEFAULT    9 _Unwind_GetLanguageSpecificData
+    56: 00001ce3     6 FUNC    GLOBAL DEFAULT    9 _Unwind_GetDataRelBase
+    57: 00001ce9     6 FUNC    GLOBAL DEFAULT    9 _Unwind_GetTextRelBase
+    58: 00003004     0 NOTYPE  GLOBAL DEFAULT  ABS _edata
+    59: 00003004     0 NOTYPE  GLOBAL DEFAULT  ABS __bss_start
+    60: 00003004     0 NOTYPE  GLOBAL DEFAULT  ABS _end
