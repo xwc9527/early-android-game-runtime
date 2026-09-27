@@ -1,4 +1,5 @@
 #include "agr_guest_runtime.h"
+#include "../AotLab/agr_aot.h"
 #include "agr_jni_methods.h"
 #include "agr_runtime.h"
 #include "agr_thread_context.h"
@@ -1008,7 +1009,9 @@ static int dispatch_import(agr_guest *g, const char *name) {
 static int run_until_return(agr_guest *g) {
     for (;;) {
         if (atomic_load_explicit(&g->shutting_down,memory_order_acquire)) return -1;
-        uint64_t budget = g->run_budget; uint32_t svc = 0;
+        int driven = agr_aot_drive(guest_cpu(g));
+        if (driven == AGR_AOT_FAULT) { set_error(g, "AOT guest memory fault"); return -1; }
+        uint64_t budget = driven == AGR_AOT_MISS ? 1 : g->run_budget; uint32_t svc = 0;
         arm_interp_set_thread_tag(guest_cpu(g), agr_current_thread(g->runtime));
         int32_t state = arm_interp_run(guest_cpu(g), &budget, &svc);
         uint32_t observed_pc=arm_interp_get_reg(guest_cpu(g),15);
@@ -1031,11 +1034,25 @@ static int run_until_return(agr_guest *g) {
         }
         uint32_t address = arm_interp_get_reg(guest_cpu(g), 15) - 4;
         if (address == STOP_ADDR) return 0;
-        int jni = dispatch_jni(g, address); if (jni < 0) return -1; if (jni > 0) continue;
-        const char *name = trap_name(g, address);
-        int imported = name ? dispatch_import(g, name) : -1;
-        if (imported < 0) { if (!name) snprintf(g->error, sizeof(g->error), "unknown SVC trap 0x%x", address); return -1; }
-        if (imported == 3) return 2;
+        agr_aot_log_host(trap_name(g, address) ? trap_name(g, address) : "JNI", address,
+            arm_interp_get_reg(guest_cpu(g), 0), arm_interp_get_reg(guest_cpu(g), 1),
+            arm_interp_get_reg(guest_cpu(g), 2), arm_interp_get_reg(guest_cpu(g), 3));
+        struct timespec boundary_start, boundary_end;
+        clock_gettime(CLOCK_MONOTONIC, &boundary_start);
+        int jni = dispatch_jni(g, address); if (jni < 0) return -1;
+        if (jni == 0) {
+            const char *name = trap_name(g, address);
+            int imported = name ? dispatch_import(g, name) : -1;
+            clock_gettime(CLOCK_MONOTONIC, &boundary_end);
+            agr_aot_add_boundary_seconds((boundary_end.tv_sec - boundary_start.tv_sec) +
+                (boundary_end.tv_nsec - boundary_start.tv_nsec) / 1e9);
+            if (imported < 0) { if (!name) snprintf(g->error, sizeof(g->error), "unknown SVC trap 0x%x", address); return -1; }
+            if (imported == 3) return 2;
+            continue;
+        }
+        clock_gettime(CLOCK_MONOTONIC, &boundary_end);
+        agr_aot_add_boundary_seconds((boundary_end.tv_sec - boundary_start.tv_sec) +
+            (boundary_end.tv_nsec - boundary_start.tv_nsec) / 1e9);
     }
 }
 

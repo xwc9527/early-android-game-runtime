@@ -200,6 +200,25 @@ pub unsafe extern "C" fn arm_interp_set_cpsr(ptr: *mut c_void, value: u32) -> i3
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn arm_interp_register_file(ptr: *mut c_void) -> *mut u32 {
+    if ptr.is_null() { return std::ptr::null_mut(); }
+    (*ptr.cast::<Handle>()).cpu.regs_mut().as_mut_ptr()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn arm_interp_cpsr_ptr(ptr: *mut c_void) -> *mut u32 {
+    if ptr.is_null() { return std::ptr::null_mut(); }
+    (*ptr.cast::<Handle>()).cpu.cpsr_mut()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn arm_interp_set_trace(
+    function: Option<unsafe extern "C" fn(u32, u32, u32, u32, *const u32, u32)>,
+) {
+    crate::interpreter::set_aot_trace(function);
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn arm_interp_get_cpsr(ptr: *mut c_void) -> u32 {
     if ptr.is_null() { return 0; }
     (*ptr.cast::<Handle>()).cpu.cpsr()

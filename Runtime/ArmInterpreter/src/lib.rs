@@ -60,7 +60,7 @@ macro_rules! echo {
 }
 
 pub mod mem;
-mod interpreter;
+pub(crate) mod interpreter;
 mod ffi;
 
 pub use interpreter::{CpuContext, InterpreterCpu};

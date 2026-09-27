@@ -19,6 +19,26 @@
 
 use crate::{CpuError, CpuState};
 use crate::mem::{GuestMem, Mem, Ptr};
+use std::sync::atomic::{AtomicPtr, Ordering};
+
+type AotTraceFn = unsafe extern "C" fn(u32, u32, u32, u32, *const u32, u32);
+static AOT_TRACE: AtomicPtr<()> = AtomicPtr::new(std::ptr::null_mut());
+
+pub fn set_aot_trace(function: Option<AotTraceFn>) {
+    AOT_TRACE.store(
+        function.map(|item| item as *mut ()).unwrap_or(std::ptr::null_mut()),
+        Ordering::Release,
+    );
+}
+
+fn emit_aot_trace(pc: u32, insn: u32, len: u32, thumb: bool, regs: &[u32; 16], cpsr: u32) {
+    let function = AOT_TRACE.load(Ordering::Relaxed);
+    if function.is_null() {
+        return;
+    }
+    let function: AotTraceFn = unsafe { std::mem::transmute(function) };
+    unsafe { function(pc, insn, len, thumb as u32, regs.as_ptr(), cpsr) };
+}
 
 mod arm;
 mod thumb16;
@@ -203,6 +223,9 @@ impl InterpreterCpu {
     }
     pub fn cpsr(&self) -> u32 {
         self.cpsr
+    }
+    pub fn cpsr_mut(&mut self) -> &mut u32 {
+        &mut self.cpsr
     }
     pub fn set_cpsr(&mut self, cpsr: u32) {
         self.cpsr = cpsr;
@@ -607,6 +630,7 @@ impl InterpreterCpu {
             };
             (w, 4)
         };
+        emit_aot_trace(pc, insn, len, thumb, &self.regs, self.cpsr);
 
         // ---- P0: recognise only the host-call ARM SVC ----
         // dyld encodes host functions as `svc #imm` (encode_a32_svc = imm |

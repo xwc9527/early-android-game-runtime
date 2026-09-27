@@ -32,6 +32,7 @@
 #include "agr_androidfw.h"
 #include "agr_bitmap.h"
 #include "agr_guest_runtime.h"
+#include "../Runtime/AotLab/agr_aot.h"
 #include "game_dex_runner.h"
 #include "agr_forensic.h"
 #include <pthread.h>
@@ -1913,6 +1914,89 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
 }
 @end
 
+static uint64_t aotHash(const uint8_t *bytes, uint32_t size) {
+    uint64_t hash = 1469598103934665603ull;
+    for (uint32_t i = 0; i < size; i++) { hash ^= bytes[i]; hash *= 1099511628211ull; }
+    return hash;
+}
+
+static int runAotPoc(BOOL useAot) {
+    NSString *docs = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+    [[NSFileManager defaultManager] createDirectoryAtPath:docs withIntermediateDirectories:YES attributes:nil error:nil];
+    NSString *trace = [docs stringByAppendingPathComponent:@"aot-trace.txt"];
+    NSString *hosts = [docs stringByAppendingPathComponent:@"aot-hosts.txt"];
+    NSString *resultPath = [docs stringByAppendingPathComponent:@"aot-result.json"];
+    NSData *elf = bundleData(@"gloomy-librenderer", @"so");
+    agr_guest *guest = agr_guest_create();
+    int status = 1;
+    NSString *error = @"";
+    uint64_t hash = 0; NSUInteger nonblack = 0; int lines = -1, triangles = -1, bytes = -1;
+    CFAbsoluteTime elapsed = 0;
+    uint64_t interpreterInstructions = 0;
+    if (elf && guest && agr_guest_load_elf(guest, "librenderer.so", elf.bytes, (uint32_t)elf.length, 0x02800000) == 0
+        && agr_guest_create_gles1_pbuffer(guest, 32, 32) == 0) {
+        agr_guest_setup_gles1_frame(guest);
+        const float vertices[] = {-0.85f,-0.75f,0.0f, 0.85f,-0.75f,0.0f, 0.0f,0.85f,0.0f};
+        const float colors[] = {1.0f,0.05f,0.05f,1.0f, 1.0f,0.05f,0.05f,1.0f, 1.0f,0.05f,0.05f,1.0f};
+        const int32_t texcoords[] = {0,0,65536,0,32768,65536};
+        const int16_t indices[] = {0,1,2};
+        uint32_t vertexArray = agr_guest_new_primitive_array(guest, AGR_ARRAY_FLOAT, vertices, 9);
+        uint32_t colorArray = agr_guest_new_primitive_array(guest, AGR_ARRAY_FLOAT, colors, 12);
+        uint32_t texcoordArray = agr_guest_new_primitive_array(guest, AGR_ARRAY_INT, texcoords, 6);
+        uint32_t indexArray = agr_guest_new_primitive_array(guest, AGR_ARRAY_SHORT, indices, 3);
+        uint32_t lineArgs[] = {0x01000000,0x60001000,vertexArray,colorArray,3};
+        uint32_t triangleArgs[] = {0x01000000,0x60001000,vertexArray,colorArray,texcoordArray,indexArray,3};
+        int32_t ignored = 0;
+        uint64_t before = agr_guest_instruction_count(guest);
+        if (!useAot) agr_aot_trace_open(trace.UTF8String);
+        agr_aot_log_open(hosts.UTF8String);
+        if (useAot) {
+            NSString *checkpoints = [docs stringByAppendingPathComponent:@"aot-checkpoints.txt"];
+            agr_aot_checkpoint_open(checkpoints.UTF8String);
+            agr_aot_set_enabled(1);
+        }
+        CFAbsoluteTime start = CFAbsoluteTimeGetCurrent();
+        lines = agr_guest_call_symbol(guest, "Java_zame_game_engine_Renderer_renderLines", lineArgs, 5, &ignored);
+        triangles = lines == 0 ? agr_guest_call_symbol(guest, "Java_zame_game_engine_Renderer_renderTriangles", triangleArgs, 7, &ignored) : -1;
+        elapsed = CFAbsoluteTimeGetCurrent() - start;
+        interpreterInstructions = agr_guest_instruction_count(guest) - before;
+        agr_aot_set_enabled(0);
+        agr_aot_trace_close();
+        agr_aot_log_close();
+        uint8_t rgba[32 * 32 * 4] = {0};
+        bytes = triangles == 0 ? agr_guest_read_rgba(guest, rgba, sizeof(rgba)) : -1;
+        if (bytes > 0) {
+            hash = aotHash(rgba, (uint32_t)bytes);
+            for (int i = 0; i < bytes; i += 4) if (rgba[i] || rgba[i+1] || rgba[i+2]) nonblack++;
+        }
+        status = (lines == 0 && triangles == 0 && bytes == (int)sizeof(rgba) && nonblack > 0) ? 0 : 1;
+        error = [NSString stringWithUTF8String:agr_guest_last_error(guest) ?: ""];
+    } else {
+        error = guest ? [NSString stringWithUTF8String:agr_guest_last_error(guest) ?: ""] : @"create-failed";
+    }
+    agr_aot_trace_close();
+    agr_aot_log_close();
+    NSDictionary *result = @{
+        @"mode": useAot ? @"aot" : @"interpreter",
+        @"passed": @(status == 0),
+        @"seconds": @(elapsed),
+        @"interpreter_instructions": @(interpreterInstructions),
+        @"aot_instructions": @(agr_aot_executed_instructions()),
+        @"aot_blocks": @(agr_aot_executed_blocks()),
+        @"fallback_count": @(agr_aot_fallback_count()),
+        @"boundary_count": @(agr_aot_boundary_count()),
+        @"boundary_seconds": @(agr_aot_boundary_seconds()),
+        @"miss_pc": [NSString stringWithFormat:@"%08x", agr_aot_miss_pc()],
+        @"nonblack_pixels": @(nonblack),
+        @"framebuffer_fnv": [NSString stringWithFormat:@"%016llx", hash],
+        @"lines": @(lines), @"triangles": @(triangles), @"bytes": @(bytes),
+        @"error": error ?: @""
+    };
+    [result writeToFile:resultPath atomically:YES];
+    if (guest) agr_guest_destroy(guest);
+    return status;
+}
+
 @interface AppDelegate : UIResponder <UIApplicationDelegate, UIWindowSceneDelegate>
 @property(nonatomic, strong) UIWindow *window;
 @end
@@ -1926,6 +2010,9 @@ static UIImage *imageFromRGBA(const uint8_t *pixels,size_t width,size_t height) 
     (void)session; (void)connectionOptions;
     if (![scene isKindOfClass:UIWindowScene.class]) return;
     NSArray<NSString *> *arguments=NSProcessInfo.processInfo.arguments;
+    if ([arguments containsObject:@"--aot-trace"] || [arguments containsObject:@"--aot-run"]) {
+        exit(runAotPoc([arguments containsObject:@"--aot-run"]));
+    }
     BOOL interactive=[arguments containsObject:@"--interactive"];
     BOOL dexParserCompatibility=[arguments containsObject:@"--dex-parser-compatibility"];
     BOOL activityLaunchCompatibility=[arguments containsObject:@"--activity-launch-compatibility"];
