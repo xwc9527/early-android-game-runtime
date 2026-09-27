@@ -181,6 +181,8 @@ def is_svc(row):
 def is_terminal(op):
     if op[0] in {"b", "b_cond", "cbz", "bx_reg", "bl_imm", "blx_reg", "blx_imm"}:
         return True
+    if op[0] in {"add_high", "add_reg", "add_imm"} and op[1] == 15:
+        return True
     if op[0] == "ldr_wb" and op[1] == 15:
         return True
     if op[0] == "ldmia_sp" and op[1] & (1 << 15):
@@ -286,7 +288,8 @@ def emit_op(op, thumb):
         rd, rn, rm, pc = op[1:]
         base = f"{pc + 8}u" if rn == 15 else f"s->r[{rn}]"
         source = f"{pc + 8}u" if rm == 15 else f"s->r[{rm}]"
-        return f"agr_aot_add_imm(s, {rd}, {base}, {source});"
+        suffix = " return AGR_AOT_BOUNDARY;" if rd == 15 else ""
+        return f"agr_aot_add_imm(s, {rd}, {base}, {source});{suffix}"
     if kind == "str_wb":
         rd, rn, imm, up, writeback, pc = op[1:]
         sign = "+" if up else "-"
@@ -299,9 +302,9 @@ def emit_op(op, thumb):
         return " ".join(lines)
     if kind == "add_imm":
         rd, rn, imm, pc = op[1:]
-        if rn == 15:
-            return f"agr_aot_add_imm(s, {rd}, {pc + 8}u, {imm}u);"
-        return f"agr_aot_add_imm(s, {rd}, s->r[{rn}], {imm}u);"
+        base = f"{pc + 8}u" if rn == 15 else f"s->r[{rn}]"
+        suffix = " return AGR_AOT_BOUNDARY;" if rd == 15 else ""
+        return f"agr_aot_add_imm(s, {rd}, {base}, {imm}u);{suffix}"
     if kind == "adjust_sp":
         sign = "-=" if op[2] else "+="
         return f"s->r[13] {sign} {op[1]}u;"

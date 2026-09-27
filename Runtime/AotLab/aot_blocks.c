@@ -37707,9 +37707,7 @@ static int aot_000caeb8(AgrAotRegs *s) {
     if ((*s->cpsr & 0x20u)) return AGR_AOT_MISS;
     if (agr_aot_load32(s, 831160u) != 3767332879u) return AGR_AOT_MISS;
     agr_aot_count_instruction();
-    agr_aot_add_imm(s, 15, s->r[12], 831168u);
-    s->r[15] = 831164u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_add_imm(s, 15, s->r[12], 831168u); return AGR_AOT_BOUNDARY;
 }
 
 static int aot_000caf90(AgrAotRegs *s) {
@@ -37738,9 +37736,7 @@ static int aot_000caf98(AgrAotRegs *s) {
     if ((*s->cpsr & 0x20u)) return AGR_AOT_MISS;
     if (agr_aot_load32(s, 831384u) != 3767332879u) return AGR_AOT_MISS;
     agr_aot_count_instruction();
-    agr_aot_add_imm(s, 15, s->r[12], 831392u);
-    s->r[15] = 831388u;
-    return AGR_AOT_BOUNDARY;
+    agr_aot_add_imm(s, 15, s->r[12], 831392u); return AGR_AOT_BOUNDARY;
 }
 
 const AgrAotEntry agr_aot_blocks[] = {
