@@ -1018,6 +1018,7 @@ static int run_until_return(agr_guest *g) {
         guest_context(g)->current_guest_pc=observed_pc;
         atomic_store_explicit(&g->last_guest_pc,observed_pc,memory_order_release);
         atomic_fetch_add_explicit(&g->instruction_count,g->run_budget-budget,memory_order_relaxed);
+        if (state == 0 && driven == AGR_AOT_MISS) continue;
         if (state != 1) {
             uint32_t pc = arm_interp_get_reg(guest_cpu(g), 15), cpsr = arm_interp_get_cpsr(guest_cpu(g));
             uint8_t code[12] = {0}; arm_interp_read(guest_cpu(g), pc-8, code, sizeof(code));
