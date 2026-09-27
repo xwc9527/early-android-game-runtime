@@ -10,6 +10,7 @@ extern uint8_t *arm_interp_memory_base(void *cpu);
 extern void arm_interp_set_trace(void (*function)(uint32_t, uint32_t, uint32_t, uint32_t, const uint32_t *, uint32_t));
 
 static int enabled;
+static int diagnostic;
 static FILE *trace_file;
 static uint64_t trace_limit;
 static atomic_uint_fast64_t trace_seen;
@@ -22,6 +23,19 @@ static uint32_t fallback_count;
 static uint32_t boundary_count;
 static uint32_t last_miss;
 static double boundary_seconds;
+static double drive_seconds;
+static double off_probe_seconds;
+static double fallback_interpreter_seconds;
+static double svc_interpreter_seconds;
+static double baseline_interpreter_seconds;
+static uint32_t drive_calls;
+static uint32_t lookup_misses;
+static uint32_t it_fallbacks;
+static uint32_t guard_misses;
+static uint32_t step_limit_fallbacks;
+static uint32_t fallback_interpreter_instructions;
+static uint32_t svc_interpreter_instructions;
+static uint32_t baseline_interpreter_instructions;
 
 static void trace_instruction(uint32_t pc, uint32_t insn, uint32_t len, uint32_t thumb,
                               const uint32_t *regs, uint32_t cpsr) {
@@ -65,6 +79,10 @@ void agr_aot_log_open(const char *path) {
     boundary_count = 0;
     last_miss = 0;
     boundary_seconds = 0;
+    drive_seconds = off_probe_seconds = 0;
+    fallback_interpreter_seconds = svc_interpreter_seconds = baseline_interpreter_seconds = 0;
+    drive_calls = lookup_misses = it_fallbacks = guard_misses = step_limit_fallbacks = 0;
+    fallback_interpreter_instructions = svc_interpreter_instructions = baseline_interpreter_instructions = 0;
 }
 
 void agr_aot_checkpoint_open(const char *path) {
@@ -74,6 +92,25 @@ void agr_aot_checkpoint_open(const char *path) {
 
 void agr_aot_add_boundary_seconds(double seconds) { boundary_seconds += seconds; }
 double agr_aot_boundary_seconds(void) { return boundary_seconds; }
+
+void agr_aot_record_drive(double seconds, int result) {
+    drive_calls++;
+    if (result == AGR_AOT_OFF) off_probe_seconds += seconds;
+    else drive_seconds += seconds;
+}
+
+void agr_aot_record_interpreter(double seconds, int result, uint32_t instructions) {
+    if (result == AGR_AOT_MISS) {
+        fallback_interpreter_seconds += seconds;
+        fallback_interpreter_instructions += instructions;
+    } else if (result == AGR_AOT_SVC) {
+        svc_interpreter_seconds += seconds;
+        svc_interpreter_instructions += instructions;
+    } else {
+        baseline_interpreter_seconds += seconds;
+        baseline_interpreter_instructions += instructions;
+    }
+}
 
 void agr_aot_log_close(void) {
     if (log_file) fclose(log_file);
@@ -88,13 +125,15 @@ void agr_aot_log_host(const char *name, uint32_t slot, uint32_t r0, uint32_t r1,
 }
 
 void agr_aot_set_enabled(int value) { enabled = value; }
+void agr_aot_set_diagnostic(int value) { diagnostic = value; }
 
 static AgrAotFn lookup(uint32_t pc) {
-    uint32_t low = 0, high = agr_aot_block_count;
+    const AgrAotEntry *blocks = diagnostic ? agr_aot_debug_blocks : agr_aot_fast_blocks;
+    uint32_t low = 0, high = diagnostic ? agr_aot_debug_block_count : agr_aot_fast_block_count;
     while (low < high) {
         uint32_t mid = low + (high - low) / 2u;
-        uint32_t found = agr_aot_blocks[mid].pc;
-        if (found == pc) return agr_aot_blocks[mid].function;
+        uint32_t found = blocks[mid].pc;
+        if (found == pc) return blocks[mid].function;
         if (found < pc) low = mid + 1u;
         else high = mid;
     }
@@ -102,7 +141,8 @@ static AgrAotFn lookup(uint32_t pc) {
 }
 
 int agr_aot_drive(void *cpu) {
-    if (!enabled || !agr_aot_block_count || !cpu) return AGR_AOT_OFF;
+    uint32_t block_count = diagnostic ? agr_aot_debug_block_count : agr_aot_fast_block_count;
+    if (!enabled || !block_count || !cpu) return AGR_AOT_OFF;
     uint32_t *regs = arm_interp_register_file(cpu);
     uint32_t *cpsr = arm_interp_cpsr_ptr(cpu);
     uint8_t *memory = arm_interp_memory_base(cpu);
@@ -113,6 +153,7 @@ int agr_aot_drive(void *cpu) {
         /* The interpreter owns Thumb IT predication until its ITSTATE clears. */
         if (*cpsr & 0x0600fc00u) {
             fallback_count++;
+            it_fallbacks++;
             last_miss = pc;
             return AGR_AOT_MISS;
         }
@@ -126,6 +167,7 @@ int agr_aot_drive(void *cpu) {
         AgrAotFn function = lookup(pc);
         if (!function) {
             fallback_count++;
+            lookup_misses++;
             last_miss = pc;
             return AGR_AOT_MISS;
         }
@@ -139,11 +181,13 @@ int agr_aot_drive(void *cpu) {
         if (result == AGR_AOT_FAULT) return AGR_AOT_FAULT;
         if (result == AGR_AOT_MISS) {
             fallback_count++;
+            guard_misses++;
             last_miss = pc;
             return AGR_AOT_MISS;
         }
     }
     fallback_count++;
+    step_limit_fallbacks++;
     last_miss = regs[15];
     return AGR_AOT_MISS;
 }
@@ -155,3 +199,17 @@ uint32_t agr_aot_boundary_count(void) { return boundary_count; }
 uint32_t agr_aot_miss_pc(void) { return last_miss; }
 
 void agr_aot_count_instruction(void) { executed_instructions++; }
+void agr_aot_count_instructions(uint32_t count) { executed_instructions += count; }
+double agr_aot_drive_seconds(void) { return drive_seconds; }
+double agr_aot_off_probe_seconds(void) { return off_probe_seconds; }
+double agr_aot_fallback_interpreter_seconds(void) { return fallback_interpreter_seconds; }
+double agr_aot_svc_interpreter_seconds(void) { return svc_interpreter_seconds; }
+double agr_aot_baseline_interpreter_seconds(void) { return baseline_interpreter_seconds; }
+uint32_t agr_aot_drive_calls(void) { return drive_calls; }
+uint32_t agr_aot_lookup_misses(void) { return lookup_misses; }
+uint32_t agr_aot_it_fallbacks(void) { return it_fallbacks; }
+uint32_t agr_aot_guard_misses(void) { return guard_misses; }
+uint32_t agr_aot_step_limit_fallbacks(void) { return step_limit_fallbacks; }
+uint32_t agr_aot_fallback_interpreter_instructions(void) { return fallback_interpreter_instructions; }
+uint32_t agr_aot_svc_interpreter_instructions(void) { return svc_interpreter_instructions; }
+uint32_t agr_aot_baseline_interpreter_instructions(void) { return baseline_interpreter_instructions; }

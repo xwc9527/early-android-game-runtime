@@ -1009,16 +1009,26 @@ static int dispatch_import(agr_guest *g, const char *name) {
 static int run_until_return(agr_guest *g) {
     for (;;) {
         if (atomic_load_explicit(&g->shutting_down,memory_order_acquire)) return -1;
+        struct timespec engine_start, engine_end;
+        clock_gettime(CLOCK_MONOTONIC, &engine_start);
         int driven = agr_aot_drive(guest_cpu(g));
+        clock_gettime(CLOCK_MONOTONIC, &engine_end);
+        agr_aot_record_drive((engine_end.tv_sec - engine_start.tv_sec) +
+            (engine_end.tv_nsec - engine_start.tv_nsec) / 1e9, driven);
         if (driven == AGR_AOT_FAULT) { set_error(g, "AOT guest memory fault"); return -1; }
         uint64_t budget = driven == AGR_AOT_MISS ? 1 : g->run_budget;
         uint64_t starting_budget = budget; uint32_t svc = 0;
         arm_interp_set_thread_tag(guest_cpu(g), agr_current_thread(g->runtime));
+        clock_gettime(CLOCK_MONOTONIC, &engine_start);
         int32_t state = arm_interp_run(guest_cpu(g), &budget, &svc);
+        clock_gettime(CLOCK_MONOTONIC, &engine_end);
+        uint32_t interpreted = (uint32_t)(starting_budget - budget);
+        agr_aot_record_interpreter((engine_end.tv_sec - engine_start.tv_sec) +
+            (engine_end.tv_nsec - engine_start.tv_nsec) / 1e9, driven, interpreted);
         uint32_t observed_pc=arm_interp_get_reg(guest_cpu(g),15);
         guest_context(g)->current_guest_pc=observed_pc;
         atomic_store_explicit(&g->last_guest_pc,observed_pc,memory_order_release);
-        atomic_fetch_add_explicit(&g->instruction_count,starting_budget-budget,memory_order_relaxed);
+        atomic_fetch_add_explicit(&g->instruction_count,interpreted,memory_order_relaxed);
         if (state == 0 && driven == AGR_AOT_MISS) continue;
         if (state != 1) {
             uint32_t pc = arm_interp_get_reg(guest_cpu(g), 15), cpsr = arm_interp_get_cpsr(guest_cpu(g));

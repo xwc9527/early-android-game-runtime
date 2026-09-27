@@ -57,16 +57,17 @@ def main():
     aot_seconds = float(aot.get("seconds") or 0)
     baseline_boundary = float(baseline.get("boundary_seconds") or 0)
     aot_boundary = float(aot.get("boundary_seconds") or 0)
-    baseline_guest = max(0.0, baseline_seconds - baseline_boundary)
-    aot_guest = max(0.0, aot_seconds - aot_boundary)
-    baseline_guest_samples = [max(0.0, float(row.get("seconds") or 0) -
-                                  float(row.get("boundary_seconds") or 0))
-                              for row in baseline_performance]
-    performance_guest_samples = [max(0.0, float(row.get("seconds") or 0) -
-                                     float(row.get("boundary_seconds") or 0))
-                                 for row in performance]
-    baseline_guest_median = statistics.median(baseline_guest_samples) if baseline_guest_samples else 0
-    performance_guest_median = statistics.median(performance_guest_samples) if performance_guest_samples else 0
+    baseline_stage_residual = max(0.0, baseline_seconds - baseline_boundary)
+    aot_stage_residual = max(0.0, aot_seconds - aot_boundary)
+    baseline_engine_samples = [float(row.get("baseline_interpreter_seconds") or 0)
+                               for row in baseline_performance]
+    aot_engine_samples = [float(row.get("aot_drive_seconds") or 0) for row in performance]
+    fallback_engine_samples = [float(row.get("fallback_interpreter_seconds") or 0)
+                               for row in performance]
+    route_engine_samples = [aot_time + fallback_time for aot_time, fallback_time in
+                            zip(aot_engine_samples, fallback_engine_samples)]
+    baseline_engine_median = statistics.median(baseline_engine_samples) if baseline_engine_samples else 0
+    route_engine_median = statistics.median(route_engine_samples) if route_engine_samples else 0
     samples_valid = (len(baseline_performance) == len(performance) == 7 and
                      all(row.get("passed") for row in baseline_performance + performance) and
                      all(hosts == baseline_hosts for hosts in baseline_performance_hosts + performance_hosts))
@@ -91,18 +92,32 @@ def main():
         "aot_correctness_seconds": aot_seconds,
         "interpreter_boundary_seconds": baseline_boundary,
         "aot_correctness_boundary_seconds": aot_boundary,
-        "interpreter_guest_seconds": baseline_guest,
-        "aot_correctness_guest_seconds": aot_guest,
+        "interpreter_stage_residual_seconds": baseline_stage_residual,
+        "aot_correctness_stage_residual_seconds": aot_stage_residual,
+        "stage_residual_is_execution_metric": False,
         "performance_sample_count": len(performance),
-        "interpreter_guest_seconds_samples": baseline_guest_samples,
-        "aot_performance_guest_seconds_samples": performance_guest_samples,
-        "interpreter_guest_seconds_median": baseline_guest_median,
-        "aot_performance_guest_seconds_median": performance_guest_median,
-        "interpreter_guest_seconds_range": [min(baseline_guest_samples), max(baseline_guest_samples)] if baseline_guest_samples else [],
-        "aot_performance_guest_seconds_range": [min(performance_guest_samples), max(performance_guest_samples)] if performance_guest_samples else [],
-        "guest_speedup_median": baseline_guest_median / performance_guest_median if performance_guest_median else 0,
+        "timing_definition": "CLOCK_MONOTONIC intervals directly around agr_aot_drive and arm_interp_run; excludes loader/linker host work, SVC execution, and Runtime boundary dispatch",
+        "interpreter_engine_seconds_samples": baseline_engine_samples,
+        "aot_drive_seconds_samples": aot_engine_samples,
+        "fallback_interpreter_seconds_samples": fallback_engine_samples,
+        "aot_route_engine_seconds_samples": route_engine_samples,
+        "interpreter_engine_seconds_median": baseline_engine_median,
+        "aot_route_engine_seconds_median": route_engine_median,
+        "interpreter_engine_seconds_range": [min(baseline_engine_samples), max(baseline_engine_samples)] if baseline_engine_samples else [],
+        "aot_route_engine_seconds_range": [min(route_engine_samples), max(route_engine_samples)] if route_engine_samples else [],
+        "engine_speedup_median": baseline_engine_median / route_engine_median if route_engine_median else 0,
         "performance_aot_instructions": sorted({int(row.get("aot_instructions") or 0) for row in performance}),
         "performance_fallback_count": sorted({int(row.get("fallback_count") or 0) for row in performance}),
+        "performance_fallback_interpreter_instructions": sorted({int(row.get("fallback_interpreter_instructions") or 0) for row in performance}),
+        "performance_svc_interpreter_instructions": sorted({int(row.get("svc_interpreter_instructions") or 0) for row in performance}),
+        "performance_lookup_miss_count": sorted({int(row.get("lookup_miss_count") or 0) for row in performance}),
+        "performance_it_fallback_count": sorted({int(row.get("it_fallback_count") or 0) for row in performance}),
+        "performance_guard_miss_count": sorted({int(row.get("guard_miss_count") or 0) for row in performance}),
+        "performance_step_limit_fallback_count": sorted({int(row.get("step_limit_fallback_count") or 0) for row in performance}),
+        "performance_dynamic_dispatch_count": sorted({int(row.get("aot_blocks") or 0) for row in performance}),
+        "performance_runtime_boundary_seconds": [float(row.get("boundary_seconds") or 0) for row in performance],
+        "performance_svc_interpreter_seconds": [float(row.get("svc_interpreter_seconds") or 0) for row in performance],
+        "stage_wall_seconds_samples": [float(row.get("seconds") or 0) for row in performance],
         "preparation_wall_seconds": manifest.get("preparation_wall_seconds"),
         "generated_c_bytes": manifest.get("generated_c_bytes"),
         "generated_block_count": len(manifest.get("blocks") or []),

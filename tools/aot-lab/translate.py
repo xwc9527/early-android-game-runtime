@@ -368,25 +368,29 @@ def emit(rows, destination):
         pieces.append("")
         entries.append((start, name))
     entries.sort()
-    pieces.append("const AgrAotEntry agr_aot_blocks[] = {")
+    pieces.append("const AgrAotEntry agr_aot_debug_blocks[] = {")
     if not entries:
         pieces.append("    {0, 0}")
     else:
         for pc, name in entries:
             pieces.append(f"    {{{pc}u, {name}}},")
     pieces.append("};")
-    pieces.append(f"const uint32_t agr_aot_block_count = {len(entries)}u;")
+    pieces.append(f"const uint32_t agr_aot_debug_block_count = {len(entries)}u;")
+    pieces.append("const AgrAotEntry agr_aot_fast_blocks[] = {")
+    if not entries:
+        pieces.append("    {0, 0}")
+    else:
+        for pc, name in entries:
+            pieces.append(f"    {{{pc}u, {name}}},")
+    pieces.append("};")
+    pieces.append(f"const uint32_t agr_aot_fast_block_count = {len(entries)}u;")
     pieces.append("")
     destination.write_text("\n".join(pieces), encoding="utf-8", newline="\n")
     return entries
 
 
 def emit_partial(rows, destination, allowed_kinds):
-    """Emit only already-proven generic operations, one guarded instruction per block.
-
-    Unknown operations remain in the existing interpreter fallback. This is a
-    coverage experiment, not a claim that the new workload is fully AOT-ready.
-    """
+    """Emit a diagnostic oracle and an uninstrumented basic-block backend."""
     unique = {}
     ambiguous = set()
     for row in rows:
@@ -394,8 +398,8 @@ def emit_partial(rows, destination, allowed_kinds):
         if (previous["insn"], previous["len"], previous["thumb"]) != (
                 row["insn"], row["len"], row["thumb"]):
             ambiguous.add(row["pc"])
-    pieces = ['#include "agr_aot.h"', ""]
-    entries = []
+    eligible = {}
+    operations = {}
     for pc, row in sorted(unique.items()):
         if pc in ambiguous:
             continue
@@ -409,8 +413,15 @@ def emit_partial(rows, destination, allowed_kinds):
             continue
         if op[0] not in allowed_kinds or op[0] == "mov_reg" and op[1] == 15:
             continue
+        eligible[pc] = row
+        operations[pc] = op
+
+    pieces = ['#include "agr_aot.h"', ""]
+    debug_entries = []
+    for pc, row in sorted(eligible.items()):
+        op = operations[pc]
         raw, length = row["insn"], row["len"]
-        name = f"aot_{pc:08x}"
+        name = f"aot_debug_{pc:08x}"
         lines = [f"static int {name}(AgrAotRegs *s) {{", "    int rc = 0;", "    (void)rc;"]
         lines.append("    if (%s) return AGR_AOT_MISS;" %
                      ("!(*s->cpsr & 0x20u)" if row["thumb"] else "(*s->cpsr & 0x20u)"))
@@ -429,14 +440,82 @@ def emit_partial(rows, destination, allowed_kinds):
             lines.append("    return AGR_AOT_BOUNDARY;")
         lines.append("}")
         pieces.extend(lines + [""])
-        entries.append((pc, name))
-    pieces.append("const AgrAotEntry agr_aot_blocks[] = {")
-    pieces.extend(f"    {{{pc}u, {name}}}," for pc, name in entries)
-    if not entries:
+        debug_entries.append((pc, name))
+
+    starts = set()
+    for index, row in enumerate(rows):
+        pc = row["pc"]
+        if pc not in eligible:
+            if index + 1 < len(rows) and rows[index + 1]["pc"] in eligible:
+                starts.add(rows[index + 1]["pc"])
+            continue
+        op = operations[pc]
+        if index == 0:
+            starts.add(pc)
+        elif rows[index - 1]["pc"] not in eligible:
+            starts.add(pc)
+        else:
+            previous = rows[index - 1]
+            previous_op = operations[previous["pc"]]
+            if is_terminal(previous_op) or previous["pc"] + previous["len"] != pc:
+                starts.add(pc)
+        if is_terminal(op):
+            if index + 1 < len(rows) and rows[index + 1]["pc"] in eligible:
+                starts.add(rows[index + 1]["pc"])
+            if op[0] == "b":
+                starts.add(op[1])
+            elif op[0] == "b_cond":
+                starts.update((op[2], op[3]))
+            elif op[0] == "cbz":
+                starts.update((op[2], op[3]))
+            elif op[0] in {"bl_imm", "blx_imm"}:
+                starts.add(op[1])
+    starts.intersection_update(eligible)
+
+    fast_entries = []
+    fast_block_lengths = {}
+    for start in sorted(starts):
+        body = []
+        pc = start
+        while pc in eligible and len(body) < 64:
+            row = eligible[pc]
+            op = operations[pc]
+            body.append((row, op))
+            if is_terminal(op):
+                break
+            nxt = pc + row["len"]
+            if nxt in starts and nxt != start:
+                break
+            pc = nxt
+        name = f"aot_fast_{start:08x}"
+        lines = [f"static int {name}(AgrAotRegs *s) {{", "    int rc = 0;", "    (void)rc;",
+                 f"    agr_aot_count_instructions({len(body)}u);"]
+        ended = False
+        for row, op in body:
+            lines.append("    " + emit_op(op, row["thumb"]))
+            if is_terminal(op):
+                ended = True
+                break
+        if not ended:
+            last = body[-1][0]
+            lines.extend((f"    s->r[15] = {last['pc'] + last['len']}u;", "    return AGR_AOT_BOUNDARY;"))
+        lines.append("}")
+        pieces.extend(lines + [""])
+        fast_entries.append((start, name))
+        fast_block_lengths[start] = len(body)
+
+    pieces.append("const AgrAotEntry agr_aot_debug_blocks[] = {")
+    pieces.extend(f"    {{{pc}u, {name}}}," for pc, name in debug_entries)
+    if not debug_entries:
         pieces.append("    {0, 0},")
-    pieces.extend(["};", f"const uint32_t agr_aot_block_count = {len(entries)}u;", ""])
+    pieces.extend(["};", f"const uint32_t agr_aot_debug_block_count = {len(debug_entries)}u;", ""])
+    pieces.append("const AgrAotEntry agr_aot_fast_blocks[] = {")
+    pieces.extend(f"    {{{pc}u, {name}}}," for pc, name in fast_entries)
+    if not fast_entries:
+        pieces.append("    {0, 0},")
+    pieces.extend(["};", f"const uint32_t agr_aot_fast_block_count = {len(fast_entries)}u;", ""])
     destination.write_text("\n".join(pieces), encoding="utf-8", newline="\n")
-    return entries
+    return debug_entries, fast_entries, fast_block_lengths
 
 
 def load_trace(path):
@@ -511,9 +590,11 @@ def main():
                 allowed_kinds.add(decode(row["pc"], row["insn"], row["len"], row["thumb"])[0])
             except ValueError:
                 pass
-        entries = emit_partial(rows, Path(args.out), allowed_kinds)
+        entries, fast_entries, fast_block_lengths = emit_partial(rows, Path(args.out), allowed_kinds)
     else:
         entries = emit(rows, Path(args.out))
+        fast_entries = []
+        fast_block_lengths = {}
     manifest = {
         "trace_instructions": len(rows),
         "unique_pcs": len({row["pc"] for row in rows}),
@@ -528,6 +609,8 @@ def main():
         "preparation_wall_seconds": time.perf_counter() - started,
         "generated_c_bytes": Path(args.out).stat().st_size,
         "blocks": [{"pc": pc, "name": name} for pc, name in entries],
+        "fast_blocks": [{"pc": pc, "name": name, "instructions": fast_block_lengths[pc]}
+                        for pc, name in fast_entries],
     }
     if args.manifest:
         Path(args.manifest).write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")

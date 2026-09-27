@@ -26,10 +26,13 @@ typedef struct AgrAotEntry {
     AgrAotFn function;
 } AgrAotEntry;
 
-extern const AgrAotEntry agr_aot_blocks[];
-extern const uint32_t agr_aot_block_count;
+extern const AgrAotEntry agr_aot_debug_blocks[];
+extern const uint32_t agr_aot_debug_block_count;
+extern const AgrAotEntry agr_aot_fast_blocks[];
+extern const uint32_t agr_aot_fast_block_count;
 
 void agr_aot_set_enabled(int enabled);
+void agr_aot_set_diagnostic(int enabled);
 void agr_aot_trace_open(const char *path);
 void agr_aot_trace_close(void);
 void agr_aot_set_trace_limit(uint64_t instruction_limit);
@@ -41,6 +44,21 @@ void agr_aot_log_host(const char *name, uint32_t slot, uint32_t r0, uint32_t r1,
 void agr_aot_checkpoint_open(const char *path);
 void agr_aot_add_boundary_seconds(double seconds);
 double agr_aot_boundary_seconds(void);
+void agr_aot_record_drive(double seconds, int result);
+void agr_aot_record_interpreter(double seconds, int drive_result, uint32_t instructions);
+double agr_aot_drive_seconds(void);
+double agr_aot_off_probe_seconds(void);
+double agr_aot_fallback_interpreter_seconds(void);
+double agr_aot_svc_interpreter_seconds(void);
+double agr_aot_baseline_interpreter_seconds(void);
+uint32_t agr_aot_drive_calls(void);
+uint32_t agr_aot_lookup_misses(void);
+uint32_t agr_aot_it_fallbacks(void);
+uint32_t agr_aot_guard_misses(void);
+uint32_t agr_aot_step_limit_fallbacks(void);
+uint32_t agr_aot_fallback_interpreter_instructions(void);
+uint32_t agr_aot_svc_interpreter_instructions(void);
+uint32_t agr_aot_baseline_interpreter_instructions(void);
 int agr_aot_drive(void *cpu);
 uint32_t agr_aot_executed_blocks(void);
 uint32_t agr_aot_executed_instructions(void);
@@ -48,6 +66,7 @@ uint32_t agr_aot_fallback_count(void);
 uint32_t agr_aot_boundary_count(void);
 uint32_t agr_aot_miss_pc(void);
 void agr_aot_count_instruction(void);
+void agr_aot_count_instructions(uint32_t count);
 
 static inline int agr_aot_fault(uint32_t address) {
     return address < 0x1000u || address > 0xfffffffcu;

@@ -468,6 +468,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         } else if (gKungFooAotProbeMode == 2 || gKungFooAotProbeMode == 4) {
             if (gKungFooAotProbeMode == 2)
                 agr_aot_checkpoint_open([[docs stringByAppendingPathComponent:@"aot-checkpoints.txt"] UTF8String]);
+            agr_aot_set_diagnostic(gKungFooAotProbeMode == 2);
             agr_aot_set_enabled(1);
         }
         aotStageStart=CFAbsoluteTimeGetCurrent();
@@ -498,8 +499,21 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
             @"aot_instructions":@(agr_aot_executed_instructions()),
             @"aot_blocks":@(agr_aot_executed_blocks()),
             @"fallback_count":@(agr_aot_fallback_count()),
+            @"lookup_miss_count":@(agr_aot_lookup_misses()),
+            @"it_fallback_count":@(agr_aot_it_fallbacks()),
+            @"guard_miss_count":@(agr_aot_guard_misses()),
+            @"step_limit_fallback_count":@(agr_aot_step_limit_fallbacks()),
             @"boundary_count":@(agr_aot_boundary_count()),
             @"boundary_seconds":@(agr_aot_boundary_seconds()),
+            @"aot_drive_seconds":@(agr_aot_drive_seconds()),
+            @"aot_off_probe_seconds":@(agr_aot_off_probe_seconds()),
+            @"fallback_interpreter_seconds":@(agr_aot_fallback_interpreter_seconds()),
+            @"svc_interpreter_seconds":@(agr_aot_svc_interpreter_seconds()),
+            @"baseline_interpreter_seconds":@(agr_aot_baseline_interpreter_seconds()),
+            @"drive_calls":@(agr_aot_drive_calls()),
+            @"fallback_interpreter_instructions":@(agr_aot_fallback_interpreter_instructions()),
+            @"svc_interpreter_instructions":@(agr_aot_svc_interpreter_instructions()),
+            @"baseline_interpreter_instructions":@(agr_aot_baseline_interpreter_instructions()),
             @"miss_pc":[NSString stringWithFormat:@"%08x",agr_aot_miss_pc()],
             @"error":stageError&&stageError[0]?[NSString stringWithUTF8String:stageError]:@""};
         NSData *stageBytes=[NSJSONSerialization dataWithJSONObject:stageResult options:0 error:nil];
