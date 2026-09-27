@@ -1,0 +1,10 @@
+THREADSTATE_PORT ok=1 waits=1 broadcasts=1 cond=4294967294 body=1 java=3 dalvik=7
+entry THREAD_NATIVE
+failure body THREAD_RUNNING restore THREAD_NATIVE
+success body THREAD_RUNNING restore THREAD_NATIVE
+nonzero suspendCount entered SUSPENDED
+wait consumed agr_bionic_cond_wait_relative
+broadcast consumed agr_bionic_cond_broadcast
+cond word 0xfffffffe is the closed pulse step
+DxJavaThreadState TERMINATED 3 remained independent of Dalvik THREAD_NATIVE 7
+second execution context THREAD_WAIT did not change the root context

@@ -29,6 +29,7 @@ SOURCES = [
     "Runtime/DexLoom/VM/dx_vm.c",
     "Runtime/DexLoom/VM/dx_interpreter.c",
     "Runtime/DexLoom/VM/dx_jni.c",
+    "Runtime/DexLoom/VM/dx_thread_state.c",
     "Runtime/DexLoom/VM/dx_exec.c",
     "Runtime/DexLoom/VM/dx_indirect_ref.c",
 ]
@@ -58,12 +59,19 @@ def build_agr():
         output = obj / (pathlib.Path(source).stem + ".o")
         run(["cc", *common, "-c", source, "-o", str(output)], cwd=REPO)
         objects.append(output)
+    for source, standard in (
+            ("Runtime/Bionic/agr_bionic_sync.cpp", "c++17"),
+            ("Runtime/Bionic/agr_futex_host.cpp", "c++17")):
+        output = obj / (pathlib.Path(source).stem + ".o")
+        run(["c++", "-std=" + standard, "-O2", "-pthread", "-I", "Runtime/Bionic",
+             "-c", source, "-o", str(output)], cwd=REPO)
+        objects.append(output)
     host_object = obj / "jni-native-binding-host.o"
     run(["cc", *common, "-Wall", "-Wextra", "-Werror", "-c",
          "Tests/DexLoom/jni-native-binding-host.c", "-o", str(host_object)], cwd=REPO)
     binary = OUT / "jni-native-binding-host"
     run(["cc", "-pthread", *[str(path) for path in objects], str(host_object),
-         "-lz", "-lm", "-o", str(binary)])
+         "-lz", "-lm", "-lstdc++", "-o", str(binary)])
     agr_json = OUT / "agr.json"
     with agr_json.open("w", encoding="utf-8") as handle:
         run([str(binary)], cwd=REPO, stdout=handle)

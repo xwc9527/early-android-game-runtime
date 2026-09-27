@@ -37,35 +37,44 @@ jobs:
             "$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" \
             "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" \
             "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" \
+            "$DEX/VM/dx_thread_state.c" \
             "$DEX/VM/dx_exec.c" "$DEX/VM/dx_indirect_ref.c"
           do
             cc "${COMMON[@]}" -c "$source" -o "$OBJ/$(basename "${source%.c}").o"
           done
+          c++ -std=c++17 -O2 -pthread -I Runtime/Bionic -c Runtime/Bionic/agr_bionic_sync.cpp -o "$OBJ/agr_bionic_sync.o"
+          c++ -std=c++17 -O2 -pthread -I Runtime/Bionic -c Runtime/Bionic/agr_futex_host.cpp -o "$OBJ/agr_futex_host.o"
+          EXTRA=("$OBJ/dx_thread_state.o" "$OBJ/agr_bionic_sync.o" "$OBJ/agr_futex_host.o")
           cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/jni-ref-host.c -o "$OBJ/jni-ref-host.o"
-          cc -pthread "$OBJ"/*.o -lz -lm -o /tmp/jni-ref-host
+          cc -pthread "$OBJ"/*.o -lz -lm -lstdc++ -o /tmp/jni-ref-host
           /tmp/jni-ref-host
           cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/method-id-host.c -o "$OBJ/method-id-host.o"
           cc -pthread "$OBJ"/dx_log.o "$OBJ"/dx_memory.o "$OBJ"/dx_arena.o "$OBJ"/dx_dex.o "$OBJ"/dx_opcode.o \
-            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "$OBJ"/dx_exec.o \
-            "$OBJ"/dx_indirect_ref.o "$OBJ"/method-id-host.o -lz -lm -o /tmp/method-id-host
+            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "${EXTRA[@]}" "$OBJ"/dx_exec.o \
+            "$OBJ"/dx_indirect_ref.o "$OBJ"/method-id-host.o -lz -lm -lstdc++ -o /tmp/method-id-host
           /tmp/method-id-host
           cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/dispatch-host.c -o "$OBJ/dispatch-host.o"
           cc -pthread "$OBJ"/dx_log.o "$OBJ"/dx_memory.o "$OBJ"/dx_arena.o "$OBJ"/dx_dex.o "$OBJ"/dx_opcode.o \
-            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "$OBJ"/dx_exec.o \
-            "$OBJ"/dx_indirect_ref.o "$OBJ"/dispatch-host.o -lz -lm -o /tmp/dispatch-host
+            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "${EXTRA[@]}" "$OBJ"/dx_exec.o \
+            "$OBJ"/dx_indirect_ref.o "$OBJ"/dispatch-host.o -lz -lm -lstdc++ -o /tmp/dispatch-host
           /tmp/dispatch-host
           cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/exception-host.c -o "$OBJ/exception-host.o"
           cc -pthread "$OBJ"/dx_log.o "$OBJ"/dx_memory.o "$OBJ"/dx_arena.o "$OBJ"/dx_dex.o "$OBJ"/dx_opcode.o \
-            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "$OBJ"/dx_exec.o \
-            "$OBJ"/dx_indirect_ref.o "$OBJ"/exception-host.o -lz -lm -o /tmp/exception-host
+            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "${EXTRA[@]}" "$OBJ"/dx_exec.o \
+            "$OBJ"/dx_indirect_ref.o "$OBJ"/exception-host.o -lz -lm -lstdc++ -o /tmp/exception-host
           /tmp/exception-host
           cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/lifetime-host.c -o "$OBJ/lifetime-host.o"
           cc -pthread "$OBJ"/dx_log.o "$OBJ"/dx_memory.o "$OBJ"/dx_arena.o "$OBJ"/dx_dex.o "$OBJ"/dx_opcode.o \
-            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "$OBJ"/dx_exec.o \
-            "$OBJ"/dx_indirect_ref.o "$OBJ"/lifetime-host.o -lz -lm -o /tmp/lifetime-host
+            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "${EXTRA[@]}" "$OBJ"/dx_exec.o \
+            "$OBJ"/dx_indirect_ref.o "$OBJ"/lifetime-host.o -lz -lm -lstdc++ -o /tmp/lifetime-host
           /tmp/lifetime-host
           cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/jni-call-host.c -o "$OBJ/jni-call-host.o"
           cc -pthread "$OBJ"/dx_log.o "$OBJ"/dx_memory.o "$OBJ"/dx_arena.o "$OBJ"/dx_dex.o "$OBJ"/dx_opcode.o \
-            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "$OBJ"/dx_exec.o \
-            "$OBJ"/dx_indirect_ref.o "$OBJ"/jni-call-host.o -lz -lm -o /tmp/jni-call-host
+            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "${EXTRA[@]}" "$OBJ"/dx_exec.o \
+            "$OBJ"/dx_indirect_ref.o "$OBJ"/jni-call-host.o -lz -lm -lstdc++ -o /tmp/jni-call-host
           /tmp/jni-call-host
+          cc "${COMMON[@]}" -Wall -Wextra -Werror -c Tests/DexLoom/threadstate-register-natives-host.c -o "$OBJ/threadstate-register-natives-host.o"
+          cc -pthread "$OBJ"/dx_log.o "$OBJ"/dx_memory.o "$OBJ"/dx_arena.o "$OBJ"/dx_dex.o "$OBJ"/dx_opcode.o \
+            "$OBJ"/dx_verifier.o "$OBJ"/dx_vm.o "$OBJ"/dx_interpreter.o "$OBJ"/dx_jni.o "${EXTRA[@]}" "$OBJ"/dx_exec.o \
+            "$OBJ"/dx_indirect_ref.o "$OBJ"/threadstate-register-natives-host.o -lz -lm -lstdc++ -o /tmp/threadstate-register-natives-host
+          /tmp/threadstate-register-natives-host

@@ -1,0 +1,7 @@
+{
+  "stop": "EVIDENCE_GAP",
+  "production_port": false,
+  "runtime_modified": false,
+  "inspected_commit": "baeee030684f908f8c6e7f3a1e80325642b36365",
+  "note": "Prior STOP. Superseded by the production port recorded in summary.json. evidence-gap.json remains the STOP record."
+}
