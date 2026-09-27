@@ -91,9 +91,9 @@ def decode(pc, insn, length, thumb):
             target = (pc + 4 + sign_extend((insn & 0xff) << 1, 9)) & 0xffffffff
             return ("b_cond", (insn >> 8) & 15, target, pc + 2)
         if insn & 0xff87 == 0x4700:
-            return ("bx_reg", (insn >> 3) & 15)
+            return ("bx_reg", (insn >> 3) & 15, pc)
         if insn & 0xff87 == 0x4780:
-            return ("blx_reg", (insn >> 3) & 15, pc + 2)
+            return ("blx_reg", (insn >> 3) & 15, pc + 2, pc)
     if thumb and length == 4:
         hw0, hw1 = (insn >> 16) & 0xffff, insn & 0xffff
         if hw0 == 0xe92d:
@@ -323,12 +323,15 @@ def emit_op(op, thumb):
         test = f"s->r[{rn}]" if nonzero else f"!s->r[{rn}]"
         return f"s->r[15] = {test} ? {target}u : {fall}u; return AGR_AOT_BOUNDARY;"
     if kind == "blx_reg":
-        rm, nxt = op[1:]
+        rm, nxt, pc = op[1:]
+        target = f"{pc + (4 if thumb else 8)}u" if rm == 15 else f"s->r[{rm}]"
         return (
-            f"agr_aot_branch_reg(s, s->r[{rm}], {nxt}u, {1 if thumb else 0}); return AGR_AOT_BOUNDARY;"
+            f"agr_aot_branch_reg(s, {target}, {nxt}u, {1 if thumb else 0}); return AGR_AOT_BOUNDARY;"
         )
     if kind == "bx_reg":
-        return f"agr_aot_branch_reg(s, s->r[{op[1]}], 0u, 0); return AGR_AOT_BOUNDARY;"
+        rm, pc = op[1:]
+        target = f"{pc + (4 if thumb else 8)}u" if rm == 15 else f"s->r[{rm}]"
+        return f"agr_aot_branch_reg(s, {target}, 0u, 0); return AGR_AOT_BOUNDARY;"
     if kind == "bl_imm":
         return f"agr_aot_branch_reg(s, {op[1]}u | 1u, {op[2]}u, 1); return AGR_AOT_BOUNDARY;"
     if kind == "blx_imm":

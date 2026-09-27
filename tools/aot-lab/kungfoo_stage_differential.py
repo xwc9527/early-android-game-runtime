@@ -15,9 +15,11 @@ def main():
     evidence = Path(sys.argv[1])
     baseline = json.loads((evidence / "baseline-stage-result.json").read_text(encoding="utf-8"))
     aot = json.loads((evidence / "aot-stage-result.json").read_text(encoding="utf-8"))
+    performance = json.loads((evidence / "performance-stage-result.json").read_text(encoding="utf-8"))
     manifest = json.loads((evidence / "translation-manifest.json").read_text(encoding="utf-8"))
     baseline_hosts = (evidence / "baseline-hosts.txt").read_text(encoding="utf-8").splitlines()
     aot_hosts = (evidence / "aot-hosts.txt").read_text(encoding="utf-8").splitlines()
+    performance_hosts = (evidence / "performance-hosts.txt").read_text(encoding="utf-8").splitlines()
     trace = integer_rows(evidence / "interpreter-trace.txt")
     checkpoints = integer_rows(evidence / "aot-checkpoints.txt")
 
@@ -46,18 +48,23 @@ def main():
     }
     baseline_seconds = float(baseline.get("seconds") or 0)
     aot_seconds = float(aot.get("seconds") or 0)
+    performance_seconds = float(performance.get("seconds") or 0)
     baseline_boundary = float(baseline.get("boundary_seconds") or 0)
     aot_boundary = float(aot.get("boundary_seconds") or 0)
+    performance_boundary = float(performance.get("boundary_seconds") or 0)
     baseline_guest = max(0.0, baseline_seconds - baseline_boundary)
     aot_guest = max(0.0, aot_seconds - aot_boundary)
+    performance_guest = max(0.0, performance_seconds - performance_boundary)
     result = {
         "schema_version": 1,
         "workload": "kungfoo-armv7-native-loader-stage",
         "semantic_pass": bool(all(equal_fields.values()) and baseline.get("passed") and
-                              aot.get("passed") and baseline_hosts == aot_hosts and
+                              aot.get("passed") and performance.get("passed") and
+                              baseline_hosts == aot_hosts == performance_hosts and
                               not mismatches and checkpoints and int(aot.get("aot_instructions") or 0) > 0),
         "observable_fields_equal": equal_fields,
         "host_sequence_equal": baseline_hosts == aot_hosts,
+        "performance_host_sequence_equal": baseline_hosts == performance_hosts,
         "host_call_count": len(aot_hosts),
         "checkpoint_count": len(checkpoints),
         "checkpoint_mismatches": mismatches,
@@ -67,12 +74,17 @@ def main():
         "fallback_count": int(aot.get("fallback_count") or 0),
         "miss_pc": aot.get("miss_pc"),
         "interpreter_seconds": baseline_seconds,
-        "aot_seconds": aot_seconds,
+        "aot_correctness_seconds": aot_seconds,
+        "aot_performance_seconds": performance_seconds,
         "interpreter_boundary_seconds": baseline_boundary,
-        "aot_boundary_seconds": aot_boundary,
+        "aot_correctness_boundary_seconds": aot_boundary,
+        "aot_performance_boundary_seconds": performance_boundary,
         "interpreter_guest_seconds": baseline_guest,
-        "aot_guest_seconds": aot_guest,
-        "guest_speedup": baseline_guest / aot_guest if aot_guest else 0,
+        "aot_correctness_guest_seconds": aot_guest,
+        "aot_performance_guest_seconds": performance_guest,
+        "guest_speedup": baseline_guest / performance_guest if performance_guest else 0,
+        "performance_aot_instructions": int(performance.get("aot_instructions") or 0),
+        "performance_fallback_count": int(performance.get("fallback_count") or 0),
         "preparation_wall_seconds": manifest.get("preparation_wall_seconds"),
         "generated_c_bytes": manifest.get("generated_c_bytes"),
         "generated_block_count": len(manifest.get("blocks") or []),

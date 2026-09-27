@@ -15,7 +15,7 @@ bash "$ROOT/tools/aot-lab/launch_aot.sh" kungfoo-trace
 probe_status=$?
 set -e
 
-for name in ci-environment.json simulator-device.txt; do
+for name in ci-environment.json simulator-device.txt aot-compile-time.txt; do
   if [[ -f "$ROOT/build/artifacts/$name" ]]; then
     cp "$ROOT/build/artifacts/$name" "$EVIDENCE/$name"
   fi
@@ -70,6 +70,14 @@ if [[ "$probe_status" -eq 0 && -s "$EVIDENCE/interpreter-trace.txt" ]]; then
     [[ -f "$ROOT/build/artifacts/pvs-progress.json" ]] && cp "$ROOT/build/artifacts/pvs-progress.json" "$EVIDENCE/aot-progress.json"
     printf '%s\n' "$aot_status" > "$EVIDENCE/aot.exit"
     [[ "$aot_status" -eq 0 ]] || exit "$aot_status"
+    set +e
+    bash "$ROOT/tools/aot-lab/launch_aot.sh" kungfoo-performance
+    performance_status=$?
+    set -e
+    [[ -f "$ROOT/build/artifacts/aot-stage-result.json" ]] && cp "$ROOT/build/artifacts/aot-stage-result.json" "$EVIDENCE/performance-stage-result.json"
+    [[ -f "$ROOT/build/artifacts/aot-hosts.txt" ]] && cp "$ROOT/build/artifacts/aot-hosts.txt" "$EVIDENCE/performance-hosts.txt"
+    printf '%s\n' "$performance_status" > "$EVIDENCE/performance.exit"
+    [[ "$performance_status" -eq 0 ]] || exit "$performance_status"
     python3 "$ROOT/tools/aot-lab/kungfoo_stage_differential.py" "$EVIDENCE"
     exit $?
   fi
