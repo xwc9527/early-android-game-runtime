@@ -21,7 +21,7 @@ PROFILES = {
     "focused-framework": {"frozen-bubble"},
     "runtime-regression": None,
     "full": None,
-    "gloomy": {"gloomy-dungeons-2"},
+    "gloomy": {"gloomy-dungeons-2", "frozen-bubble"},
 }
 
 
