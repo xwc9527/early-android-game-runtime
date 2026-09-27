@@ -1,0 +1,7 @@
+{
+  "source_authority": false,
+  "functions": ["dx_vm_monitor_enter", "dx_vm_monitor_exit"],
+  "file": "Runtime/DexLoom/VM/dx_exec.c",
+  "observed": "A host pthread mutex and condition variable are created on first use. Enter locks the mutex, waits on the condition while another execution context owns the monitor, stores the owner, increments recursion, then unlocks the mutex. There is no thin lock word, no inflation, and no THREAD_MONITOR publication.",
+  "later_reopen": "A later production port may need a reopen for the module that owns dx_exec.c. This comparison does not authorize that change."
+}

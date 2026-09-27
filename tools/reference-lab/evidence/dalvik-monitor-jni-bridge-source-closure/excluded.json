@@ -1,0 +1,13 @@
+{
+  "not_this_origin": [
+    "dvmObjectWait",
+    "dvmObjectNotify",
+    "dvmObjectNotifyAll",
+    "JNI MonitorEnter",
+    "JNI MonitorExit",
+    "bytecode monitorenter and monitorexit",
+    "Object.wait and Object.notify",
+    "RegisterNatives thread-state crossing",
+    "self-suspend pthread_cond_wait crossing"
+  ]
+}

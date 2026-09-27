@@ -1,6 +1,6 @@
 # AGR Current State
 
-Updated: 2026-09-26
+Updated: 2026-09-27
 
 ## Current reference-migration work
 
@@ -34,7 +34,9 @@ ARMv7 execution architecture. The interpreter remains the correctness and
 fallback backend. Dynarmic is the first candidate and is not permanently
 bound. `Dalvik.JNINativeBinding` stays
 `SOURCE_LOCATED`. The RegisterNatives thread-state prerequisite is
-`PREREQUISITE_CLOSED` for that exact crossing.
+`PREREQUISITE_CLOSED` for that exact crossing. `Dalvik.Monitor` is
+`SOURCE_CLOSED` for the reviewed set that includes `dvmLockObject`. The
+synchronized JNI bridge relationship stays `UNRESOLVED`.
 The current source indexes and manifests are under `tools/reference-lab/indexes`
 and `tools/reference-lab/evidence`; their unresolved edges are explicit.
 

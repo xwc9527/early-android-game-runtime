@@ -1,0 +1,6 @@
+{
+  "owner": "Dalvik.Monitor",
+  "status": "SOURCE_LOCATED",
+  "required_symbols": ["dvmObjectWait", "dvmObjectNotifyAll"],
+  "gap": "dvmLockObject was not in the reviewed symbol set"
+}

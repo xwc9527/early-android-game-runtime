@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 
 from cluster_seed import build_cluster_seed
+from monitor_jni_bridge import validate_jni_monitor_lock_source
 from source_closure import (
     CROSSING_FIELDS,
     SHARED_RUNTIME_SUBSTRATE_OWNERS,
@@ -779,7 +780,7 @@ class SubstratePrerequisiteTest(unittest.TestCase):
             ("Dalvik.MethodInvocation", "vm/interp/Stack.cpp", "dvmCallMethod",
              "UNRESOLVED", "SOURCE_LOCATED"),
             ("Dalvik.Monitor", "vm/Sync.cpp", "dvmLockObject",
-             "UNRESOLVED", "SOURCE_LOCATED")])
+             "UNRESOLVED", "SOURCE_CLOSED")])
         self.assertEqual(owner["source_file_sha256"]["vm/Jni.cpp"],
                          "ebba645673d34d23be01b20891cb18c432ce67a4d7d76fdfbf023cc944b2dbed")
         self.assertIn("method->fastJni is written and has no reader in the pinned Dalvik or libcore trees",
@@ -853,12 +854,31 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         self.assertEqual(thread_edge["relationship"], "PREREQUISITE_CLOSED")
         self.assertEqual(thread_edge["owner_source_status"], "SOURCE_CLOSED")
         monitor = integer_index["external_cluster_sources"]["Dalvik.Monitor"]
-        self.assertEqual(monitor["status"], "SOURCE_LOCATED")
+        self.assertEqual(monitor["status"], "SOURCE_CLOSED")
+        self.assertIs(monitor["closure_reviewed"], True)
+        self.assertIn("dvmLockObject", monitor["required_symbols"])
+        self.assertNotIn("prerequisite_edges", monitor)
         monitor_edge = next(edge for edge in monitor["cross_cluster_source_edges"]
                             if edge["semantic_cluster"] == "Dalvik.ThreadState")
         self.assertEqual(monitor_edge["status"], "SOURCE_CLOSED")
         self.assertEqual(monitor_edge["source_symbol"], "dvmChangeStatus")
         self.assertNotIn("prerequisite_edges", monitor)
+
+    def test_lock_path_source_closure_is_not_the_wait_path(self):
+        integer = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
+        resources = json.loads((ROOT / "tools/reference-lab/indexes/shared-resources-api19-locations.json").read_text())
+        validate_jni_monitor_lock_source(integer, resources)
+        monitor = integer["external_cluster_sources"]["Dalvik.Monitor"]
+        by_path = {}
+        for edge in monitor["cross_cluster_source_edges"]:
+            by_path.setdefault(edge["path"], set()).add(edge["source_symbol"])
+        self.assertEqual(by_path["dvmObjectWait"], {"dvmChangeStatus", "pthread_cond_wait"})
+        self.assertEqual(by_path["dvmLockObject"], {"dvmChangeStatus", "pthread_mutex_lock"})
+        self.assertEqual(by_path["dvmUnlockObject"], {"pthread_mutex_unlock"})
+        copied = json.loads(json.dumps(integer))
+        copied["external_cluster_sources"]["Dalvik.Monitor"]["cross_cluster_source_edges"][1]["path"] = "dvmLockObject"
+        with self.assertRaisesRegex(ValueError, "wait closure was used as the lock closure"):
+            validate_jni_monitor_lock_source(copied, resources)
 
     def test_clock_gettime_source_is_closed_without_a_production_relationship(self):
         index = json.loads((ROOT / "tools/reference-lab/indexes/integer-boxing-api19-locations.json").read_text())
@@ -912,8 +932,8 @@ class SubstratePrerequisiteTest(unittest.TestCase):
         self.assertEqual(thread["prerequisite_edges"][0]["owner_source_status"], "SOURCE_CLOSED")
         self.assertEqual(thread["cross_cluster_source_edges"][0]["status"], "SOURCE_CLOSED")
         monitor = index["external_cluster_sources"]["Dalvik.Monitor"]
-        self.assertEqual(monitor["status"], "SOURCE_LOCATED")
-        self.assertIs(monitor["closure_reviewed"], False)
+        self.assertEqual(monitor["status"], "SOURCE_CLOSED")
+        self.assertIs(monitor["closure_reviewed"], True)
         self.assertNotIn("prerequisite_edges", monitor)
         monitor_edge = next(edge for edge in monitor["cross_cluster_source_edges"]
                             if edge["edge"] == "Bionic pthread condition and mutex semantics")

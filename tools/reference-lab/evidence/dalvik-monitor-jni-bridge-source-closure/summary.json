@@ -1,0 +1,28 @@
+{
+  "result": "SOURCE_CLOSED",
+  "owner": "Dalvik.Monitor",
+  "disposition": "same semantic owner",
+  "new_semantic_owner": false,
+  "origin": "dvmCallJNIMethod ACC_SYNCHRONIZED",
+  "source_symbol": "dvmLockObject",
+  "paired_exit": "dvmUnlockObject",
+  "source_repo": "platform/dalvik",
+  "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+  "source_files": {
+    "vm/Sync.cpp": "8b100ff9e5037fcc8c7bfbbc152a924b31e22e925b03847765d007db42f91b5d",
+    "vm/Sync.h": "553de610f4e54276af751a0a6c550eb4527b1286212aa58413d43272b049f4d7"
+  },
+  "relationship": "UNRESOLVED",
+  "migration_authorized": false,
+  "prerequisite_closed": false,
+  "production_modified": false,
+  "lock_crossings": [
+    "THREAD_MONITOR around contended monitor enter",
+    "fat monitor pthread mutex lock",
+    "fat monitor pthread mutex unlock"
+  ],
+  "wait_crossings_not_used": [
+    "thread wait state and suspension coordination",
+    "Bionic pthread condition and mutex semantics"
+  ]
+}

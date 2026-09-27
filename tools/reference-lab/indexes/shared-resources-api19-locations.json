@@ -390,7 +390,7 @@
           "source_file": "vm/Sync.cpp",
           "source_symbol": "dvmLockObject",
           "source_sha256": "8b100ff9e5037fcc8c7bfbbc152a924b31e22e925b03847765d007db42f91b5d",
-          "status": "SOURCE_LOCATED"
+          "status": "SOURCE_CLOSED"
         }
       ],
       "prerequisite_edges": [
@@ -442,7 +442,7 @@
           "edge": "synchronized JNI bridge monitor",
           "semantic_cluster": "Dalvik.Monitor",
           "relationship": "UNRESOLVED",
-          "owner_source_status": "SOURCE_LOCATED",
+          "owner_source_status": "SOURCE_CLOSED",
           "source_repo": "platform/dalvik",
           "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
           "source_file": "vm/Sync.cpp",

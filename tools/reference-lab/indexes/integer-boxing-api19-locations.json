@@ -229,7 +229,7 @@
           "source_file": "vm/Sync.cpp",
           "source_symbol": "dvmObjectWait",
           "source_sha256": "8b100ff9e5037fcc8c7bfbbc152a924b31e22e925b03847765d007db42f91b5d",
-          "status": "SOURCE_LOCATED"
+          "status": "SOURCE_CLOSED"
         },
         {
           "edge": "method invocation and exception propagation",
@@ -282,10 +282,12 @@
       "source_repo": "platform/dalvik",
       "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
       "source_file_sha256": {
-        "vm/Sync.cpp": "8b100ff9e5037fcc8c7bfbbc152a924b31e22e925b03847765d007db42f91b5d"
+        "vm/Sync.cpp": "8b100ff9e5037fcc8c7bfbbc152a924b31e22e925b03847765d007db42f91b5d",
+        "vm/Sync.h": "553de610f4e54276af751a0a6c550eb4527b1286212aa58413d43272b049f4d7"
       },
-      "required_symbols": ["dvmObjectWait", "dvmObjectNotifyAll"],
-      "cross_cluster_deps": ["thread wait state and suspension coordination", "Bionic pthread condition and mutex semantics"],
+      "required_symbols": ["dvmLockObject", "dvmUnlockObject", "dvmObjectWait", "dvmObjectNotifyAll", "LW_SHAPE_THIN", "LW_SHAPE_FAT", "LW_LOCK_OWNER", "LW_LOCK_COUNT", "LW_MONITOR"],
+      "internal_deps": ["a thin lock stores the owner thread id and recursion count in Object.lock", "the same thread increments the thin recursion count and inflates at the count mask", "an unowned thin lock is taken with android_atomic_acquire_cas", "a thin lock owned by another thread publishes THREAD_MONITOR, spins with sched_yield and nanosleep, restores the previous status, then inflates", "inflateMonitor allocates a Monitor, locks it, and publishes the fat shape", "a fat lock calls lockMonitor", "lockMonitor increments lockCount when the owner is the same thread", "lockMonitor otherwise tries the monitor mutex and, on contention, publishes THREAD_MONITOR around pthread_mutex_lock", "dvmUnlockObject clears or decrements a thin lock owned by the caller and otherwise calls unlockMonitor", "unlock of an unowned monitor throws IllegalMonitorStateException", "dvmObjectWait and dvmObjectNotifyAll are the separate wait/notify path and are not the synchronized JNI bridge enter path"],
+      "cross_cluster_deps": ["thread wait state and suspension coordination", "Bionic pthread condition and mutex semantics", "THREAD_MONITOR around contended monitor enter", "fat monitor pthread mutex lock", "fat monitor pthread mutex unlock"],
       "cross_cluster_source_edges": [
         {
           "edge": "thread wait state and suspension coordination",
@@ -295,7 +297,8 @@
           "source_file": "vm/Thread.cpp",
           "source_symbol": "dvmChangeStatus",
           "source_sha256": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
-          "status": "SOURCE_CLOSED"
+          "status": "SOURCE_CLOSED",
+          "path": "dvmObjectWait"
         },
         {
           "edge": "Bionic pthread condition and mutex semantics",
@@ -305,12 +308,62 @@
           "source_file": "libc/bionic/pthread.c",
           "source_symbol": "pthread_cond_wait",
           "source_sha256": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
-          "status": "SOURCE_CLOSED"
+          "status": "SOURCE_CLOSED",
+          "path": "dvmObjectWait"
+        },
+        {
+          "edge": "THREAD_MONITOR around contended monitor enter",
+          "semantic_cluster": "Dalvik.ThreadState",
+          "source_repo": "platform/dalvik",
+          "revision": "36e356c96640775f0a3f167bd2426ea0f0093b8b",
+          "source_file": "vm/Thread.cpp",
+          "source_symbol": "dvmChangeStatus",
+          "source_sha256": "ed1fb72d49c9f59a5fe9f72b204891a7071ecf36c68371cbfd8a65e235f69dd7",
+          "status": "SOURCE_CLOSED",
+          "path": "dvmLockObject"
+        },
+        {
+          "edge": "fat monitor pthread mutex lock",
+          "semantic_cluster": "Bionic.PthreadCondition",
+          "source_repo": "platform/bionic",
+          "revision": "081db840befec895fb86e709ae95832ade2d065c",
+          "source_file": "libc/bionic/pthread.c",
+          "source_symbol": "pthread_mutex_lock",
+          "source_sha256": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
+          "status": "SOURCE_CLOSED",
+          "path": "dvmLockObject"
+        },
+        {
+          "edge": "fat monitor pthread mutex unlock",
+          "semantic_cluster": "Bionic.PthreadCondition",
+          "source_repo": "platform/bionic",
+          "revision": "081db840befec895fb86e709ae95832ade2d065c",
+          "source_file": "libc/bionic/pthread.c",
+          "source_symbol": "pthread_mutex_unlock",
+          "source_sha256": "8ac45c046e0b410bac44a4d8f5c49de002483371e7d374b62d61eecf0f5d672d",
+          "status": "SOURCE_CLOSED",
+          "path": "dvmUnlockObject"
         }
       ],
-      "blocking_edges": ["monitor ownership and wait/notify source closure", "AGR class-init synchronization contract review"],
-      "status": "SOURCE_LOCATED",
-      "closure_reviewed": false
+      "blocking_edges": [],
+      "status": "SOURCE_CLOSED",
+      "closure_reviewed": true,
+      "closure_evidence": {
+        "reviewed_by": "api19-source-audit",
+        "closure_notes": "Review passes for the existing monitor owner after adding the synchronized JNI bridge enter path. dvmCallJNIMethod locks with dvmLockObject when ACC_SYNCHRONIZED is set and unlocks with dvmUnlockObject after returning from THREAD_NATIVE. That is the same thin and fat Object.lock state used by dvmObjectWait, and it is not a new semantic owner. The lock path does not call dvmObjectWait, pthread_cond_wait, or the RegisterNatives thread-state crossing. Contended enter publishes THREAD_MONITOR through the already reviewed non-RUNNING dvmChangeStatus branch, then restores the previous status. A fat lock uses pthread_mutex_lock through dvmLockMutex. Those are separate source edges from the wait path's THREAD_WAIT and pthread_cond_wait edges. This record is source closure only. It is not MIGRATION_AUTHORIZED and does not close the JNI prerequisite.",
+        "source_file_sha256": {
+          "vm/Sync.cpp": "8b100ff9e5037fcc8c7bfbbc152a924b31e22e925b03847765d007db42f91b5d",
+          "vm/Sync.h": "553de610f4e54276af751a0a6c550eb4527b1286212aa58413d43272b049f4d7"
+        },
+        "reviewed_dependency_edges": [
+          "thread wait state and suspension coordination",
+          "Bionic pthread condition and mutex semantics",
+          "THREAD_MONITOR around contended monitor enter",
+          "fat monitor pthread mutex lock",
+          "fat monitor pthread mutex unlock"
+        ],
+        "unresolved_dependency_edges": []
+      }
     },
     "Dalvik.ThreadState": {
       "source_repo": "platform/dalvik",

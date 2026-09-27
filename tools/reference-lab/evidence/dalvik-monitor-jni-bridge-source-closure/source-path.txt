@@ -1,0 +1,24 @@
+origin dvmCallJNIMethod
+ACC_SYNCHRONIZED
+static lock object is the class
+instance lock object is args[0]
+dvmLockObject
+LW_SHAPE_THIN
+same thread increments LW_LOCK_COUNT and inflateMonitor at the mask
+unowned thin lock uses android_atomic_acquire_cas
+other owner publishes THREAD_MONITOR
+sched_yield
+nanosleep
+restore previous status
+inflateMonitor
+dvmCreateMonitor
+pthread_mutex_init
+lockMonitor
+same owner increments lockCount
+pthread_mutex_trylock
+contended fat lock publishes THREAD_MONITOR around pthread_mutex_lock
+dvmUnlockObject
+thin unlock uses android_atomic_release_store or decrements the count
+fat unlock uses pthread_mutex_unlock
+unowned unlock throws IllegalMonitorStateException
+excluded: dvmObjectWait dvmObjectNotify dvmObjectNotifyAll JNI MonitorEnter JNI MonitorExit bytecode monitorenter Object.wait
