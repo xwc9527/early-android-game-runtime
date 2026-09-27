@@ -124,7 +124,7 @@ class SubstrateSccTests(unittest.TestCase):
         index = {"external_cluster_sources": owners}
         self.assertTrue(component_source_closed(("Dalvik.Monitor", "Dalvik.ThreadState"), owners))
         prerequisite = dict(to_state, relationship="PREREQUISITE_CLOSED", owner_source_status="SOURCE_CLOSED")
-        with self.assertRaisesRegex(ValueError, "no production contract authority"):
+        with self.assertRaisesRegex(ValueError, "crossing closure does not match the prerequisite edge"):
             prerequisite_relations_allow_closure([prerequisite], [to_state], index)
 
     def test_cycle_paths_remain_on_a_closed_scc(self):
