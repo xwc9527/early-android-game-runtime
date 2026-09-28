@@ -53,6 +53,63 @@ static uint32_t baseline_interpreter_instructions;
 static const char *probe_stop_host;
 static int probe_stopped;
 
+#ifdef AGR_AOT_PERF_ATTRIBUTION
+/* Test-only snapshot of a real entry state. Never enabled in normal builds. */
+static int attribution_capture_initialized;
+static int attribution_capture_finished;
+static uint32_t attribution_capture_pc;
+static uint32_t attribution_capture_pages[64];
+static uint32_t attribution_capture_page_count;
+static const char *attribution_capture_path;
+
+static void attribution_capture_configure(void) {
+    if (attribution_capture_initialized) return;
+    attribution_capture_initialized = 1;
+    const char *pc = getenv("AGR_AOT_CAPTURE_PC");
+    const char *pages = getenv("AGR_AOT_CAPTURE_PAGES");
+    attribution_capture_path = getenv("AGR_AOT_CAPTURE_PATH");
+    if (!pc || !pages || !attribution_capture_path) return;
+    char *end = NULL;
+    unsigned long value = strtoul(pc, &end, 0);
+    if (!end || *end || value > UINT32_MAX) return;
+    attribution_capture_pc = (uint32_t)value;
+    while (*pages && attribution_capture_page_count < 64) {
+        value = strtoul(pages, &end, 0);
+        if (end == pages || value > UINT32_MAX - 4095u || (value & 4095u)) {
+            attribution_capture_page_count = 0;
+            return;
+        }
+        attribution_capture_pages[attribution_capture_page_count++] = (uint32_t)value;
+        pages = end;
+        if (*pages == ',') pages++;
+        else if (*pages) { attribution_capture_page_count = 0; return; }
+    }
+}
+
+static void attribution_capture_entry(uint32_t pc, const uint32_t *regs,
+                                      uint32_t cpsr, const uint8_t *mem) {
+    attribution_capture_configure();
+    if (attribution_capture_finished || !attribution_capture_page_count ||
+        pc != attribution_capture_pc || !source_elf) return;
+    attribution_capture_finished = 1;
+    FILE *file = fopen(attribution_capture_path, "wb");
+    if (!file) return;
+    const uint32_t header[5] = {0x41504341u, 1u, pc, cpsr,
+                                attribution_capture_page_count};
+    int okay = fwrite(header, sizeof(header), 1, file) == 1 &&
+               fwrite(regs, sizeof(uint32_t), 16, file) == 16 &&
+               fwrite(&agr_aot_input_elf_bytes, sizeof(uint32_t), 1, file) == 1;
+    for (uint32_t i = 0; okay && i < attribution_capture_page_count; i++) {
+        uint32_t page = attribution_capture_pages[i];
+        okay = fwrite(&page, sizeof(page), 1, file) == 1 &&
+               fwrite(mem + page, 4096, 1, file) == 1;
+    }
+    if (okay) okay = fwrite(source_elf, agr_aot_input_elf_bytes, 1, file) == 1;
+    if (fclose(file) != 0) okay = 0;
+    if (!okay) remove(attribution_capture_path);
+}
+#endif
+
 static void trace_instruction(uint32_t pc, uint32_t insn, uint32_t len, uint32_t thumb,
                               const uint32_t *regs, uint32_t cpsr) {
     if (!trace_file) return;
@@ -244,6 +301,9 @@ int agr_aot_drive(void *cpu) {
 } while (0)
     for (uint32_t step = 0; step < 100000u;) {
         uint32_t pc = regs[15];
+#ifdef AGR_AOT_PERF_ATTRIBUTION
+        attribution_capture_entry(pc, regs, *cpsr, memory);
+#endif
         /* The interpreter owns Thumb IT predication until its ITSTATE clears. */
         if (*cpsr & 0x0600fc00u) {
             fallback_count++;

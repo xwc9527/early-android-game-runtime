@@ -6,6 +6,7 @@ AUTO_LOAD="${AGR_OFFLINE_GLOOMY_AUTO:-0}"
 RELOCATABLE="${AGR_OFFLINE_GLOOMY_RELOCATABLE:-0}"
 POLICY="${AGR_OFFLINE_ENTRY_POLICY:-exports}"
 WARM="${AGR_OFFLINE_GLOOMY_WARM:-0}"
+CAPTURE_ONLY="${AGR_AOT_CAPTURE_ONLY:-0}"
 PREPARED_DIR="${AGR_OFFLINE_PREPARED_DIR:-}"
 [[ "$AUTO_LOAD" == 0 || "$AUTO_LOAD" == 1 ]] || { echo "invalid AUTO_LOAD" >&2; exit 2; }
 [[ "$RELOCATABLE" == 0 || "$RELOCATABLE" == 1 ]] || { echo "invalid RELOCATABLE" >&2; exit 2; }
@@ -15,6 +16,7 @@ SUFFIX=""
 [[ "$AUTO_LOAD" == 1 ]] && SUFFIX="-auto-first"
 [[ "$RELOCATABLE" == 1 ]] && SUFFIX="-relocatable"
 [[ "$WARM" == 1 ]] && SUFFIX="$SUFFIX-warm"
+[[ "$CAPTURE_ONLY" == 1 ]] && SUFFIX="$SUFFIX-attribution-capture"
 [[ -n "$PREPARED_DIR" ]] && SUFFIX="$SUFFIX-prepared"
 [[ "${AGR_GAME_COMPILER_ARM64:-0}" == 1 ]] && SUFFIX="$SUFFIX-game-compiler"
 [[ "${AGR_GAME_COMPILER_REGION:-0}" == 1 ]] && SUFFIX="$SUFFIX-region-compiler"
@@ -106,6 +108,7 @@ cp "$ROOT/build/build-environment.json" "$EVIDENCE/build-environment.json"
 PLACEMENTS=("$AUTO_LOAD")
 [[ "$RELOCATABLE" == 1 ]] && PLACEMENTS=(0 1)
 [[ "$WARM" == 1 ]] && PLACEMENTS=(1)
+[[ "$CAPTURE_ONLY" == 1 ]] && PLACEMENTS=(1)
 for placement in "${PLACEMENTS[@]}"; do
 PAIR="$EVIDENCE"
 if [[ "$RELOCATABLE" == 1 ]]; then
@@ -133,7 +136,14 @@ run_one() {
   done
   [[ "$status" == 0 ]] || return "$status"
 }
-if [[ "$WARM" == 1 ]]; then
+if [[ "$CAPTURE_ONLY" == 1 ]]; then
+  SPEC="$ROOT/tools/aot-lab/evidence/aot-performance-attribution/selected_regions.json"
+  export AGR_AOT_CAPTURE_PC="$("$PYTHON" -c 'import json,sys; print(next(x for x in json.load(open(sys.argv[1]))["segments"] if x["label"]=="gloomy")["guest_pc_first"])' "$SPEC")"
+  export AGR_AOT_CAPTURE_PAGES="$("$PYTHON" -c 'import json,sys; print(",".join(map(str,next(x for x in json.load(open(sys.argv[1]))["segments"] if x["label"]=="gloomy")["snapshot_guest_pages"])))' "$SPEC")"
+  run_one run attribution-capture
+  cp "$ROOT/build/artifacts/aot-attribution-entry.bin" "$PAIR/attribution-entry.bin"
+  continue
+elif [[ "$WARM" == 1 ]]; then
   for sample in 1 2 3 4 5; do
     run_one warm-baseline "baseline-performance-$sample"
     run_one warm-run "aot-performance-$sample"

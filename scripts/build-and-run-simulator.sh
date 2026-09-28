@@ -159,6 +159,7 @@ INDEX=0; DEX_OBJECTS=()
 for SOURCE in "${DEX_SOURCES[@]}"; do OBJECT="$BUILD/obj/dex-$INDEX.o"; clang "${COMMON[@]}" -std=gnu11 -DGL_GLES_PROTOTYPES=1 -I"$ROOT/Vendor/ANGLE-Headers" -I"$DEX_INCLUDE" -I"$BITMAP" -c "$SOURCE" -o "$OBJECT"; DEX_OBJECTS+=("$OBJECT"); INDEX=$((INDEX+1)); done
 REGION_DEFINE=()
 [[ "${AGR_GAME_COMPILER_REGION:-0}" == 1 ]] && REGION_DEFINE+=(-DAGR_AOT_REGION_COMPILER=1)
+[[ "${AGR_AOT_PERF_ATTRIBUTION:-0}" == 1 ]] && REGION_DEFINE+=(-DAGR_AOT_PERF_ATTRIBUTION=1)
 clang "${COMMON[@]}" "${REGION_DEFINE[@]}" -std=c11 -I"$ROOT/Runtime/AotLab" -c "$ROOT/Runtime/AotLab/agr_aot.c" -o "$BUILD/obj/agr_aot.o"
 AGR_AOT_OPT_FLAG="${AGR_AOT_OPT_FLAG:--O2}"
 [[ "$AGR_AOT_OPT_FLAG" == -O2 || "$AGR_AOT_OPT_FLAG" == -Os || "$AGR_AOT_OPT_FLAG" == -Oz ]] || { echo "invalid AGR_AOT_OPT_FLAG" >&2; exit 2; }

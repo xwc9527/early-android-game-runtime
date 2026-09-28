@@ -7,6 +7,7 @@ STAGE="${AGR_OFFLINE_STAGE:-loader}"
 FAST_ONLY="${AGR_OFFLINE_NO_DIAGNOSTIC:-0}"
 POLICY_COMPARE="${AGR_OFFLINE_POLICY_COMPARE:-0}"
 RELOCATABLE="${AGR_OFFLINE_RELOCATABLE:-0}"
+CAPTURE_ONLY="${AGR_AOT_CAPTURE_ONLY:-0}"
 [[ "$STAGE" == loader || "$STAGE" == oncreate ]] || { echo "unknown stage: $STAGE" >&2; exit 2; }
 [[ "$FAST_ONLY" == 0 || "$FAST_ONLY" == 1 ]] || { echo "invalid FAST_ONLY: $FAST_ONLY" >&2; exit 2; }
 [[ "$RELOCATABLE" == 0 || "$RELOCATABLE" == 1 ]] || { echo "invalid RELOCATABLE: $RELOCATABLE" >&2; exit 2; }
@@ -15,6 +16,7 @@ SUFFIX=""
 [[ "$RELOCATABLE" == 1 ]] && SUFFIX="$SUFFIX-relocatable"
 [[ "${AGR_GAME_COMPILER_ARM64:-0}" == 1 ]] && SUFFIX="$SUFFIX-game-compiler"
 [[ "${AGR_GAME_COMPILER_REGION:-0}" == 1 ]] && SUFFIX="$SUFFIX-region-compiler"
+[[ "$CAPTURE_ONLY" == 1 ]] && SUFFIX="$SUFFIX-attribution-capture"
 EVIDENCE="$ROOT/build/offline-aot-$POLICY-$STAGE$SUFFIX"
 mkdir -p "$EVIDENCE"
 export AGR_SIMULATOR_PROFILE=aot-kungfoo
@@ -103,6 +105,15 @@ run_one() {
     return "$status"
   fi
 }
+
+if [[ "$CAPTURE_ONLY" == 1 ]]; then
+  SPEC="$ROOT/tools/aot-lab/evidence/aot-performance-attribution/selected_regions.json"
+  export AGR_AOT_CAPTURE_PC="$("$PYTHON" -c 'import json,sys; print(next(x for x in json.load(open(sys.argv[1]))["segments"] if x["label"]=="kungfoo")["guest_pc_first"])' "$SPEC")"
+  export AGR_AOT_CAPTURE_PAGES="$("$PYTHON" -c 'import json,sys; print(",".join(map(str,next(x for x in json.load(open(sys.argv[1]))["segments"] if x["label"]=="kungfoo")["snapshot_guest_pages"])))' "$SPEC")"
+  run_one kungfoo-oncreate-performance attribution-capture
+  cp "$ROOT/build/artifacts/aot-attribution-entry.bin" "$EVIDENCE/attribution-entry.bin"
+  exit 0
+fi
 
 # The interpreter trace is captured only after the generated artifact is fixed.
 MODE_PREFIX=kungfoo

@@ -19,6 +19,13 @@ xcrun simctl boot "$DEVICE" 2>/dev/null || true
 xcrun simctl bootstatus "$DEVICE" -b
 xcrun simctl install "$DEVICE" "$APP"
 DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
+if [[ -n "${AGR_AOT_CAPTURE_PC:-}" ]]; then
+  : "${AGR_AOT_CAPTURE_PAGES:?capture pages required}"
+  export SIMCTL_CHILD_AGR_AOT_CAPTURE_PC="$AGR_AOT_CAPTURE_PC"
+  export SIMCTL_CHILD_AGR_AOT_CAPTURE_PAGES="$AGR_AOT_CAPTURE_PAGES"
+  export SIMCTL_CHILD_AGR_AOT_CAPTURE_PATH="$DATA/Documents/aot-attribution-entry.bin"
+  rm -f "$DATA/Documents/aot-attribution-entry.bin"
+fi
 rm -f "$DATA/Documents/aot-result.json" "$DATA/Documents/aot-stage-result.json" "$DATA/Documents/aot-prefix-result.json" "$DATA/Documents/aot-trace.txt" "$DATA/Documents/aot-hosts.txt" "$DATA/Documents/aot-checkpoints.txt" "$DATA/Documents/aot-fallbacks.txt" "$DATA/Documents/pvs-progress.json"
 case "$MODE" in
   trace) ARG="--aot-trace" ;;
@@ -49,6 +56,10 @@ done
 for name in aot-result.json aot-stage-result.json aot-prefix-result.json aot-hosts.txt aot-trace.txt aot-checkpoints.txt aot-fallbacks.txt pvs-progress.json; do
   [[ -f "$DATA/Documents/$name" ]] && cp "$DATA/Documents/$name" "$ARTIFACTS/$name"
 done
+if [[ -n "${AGR_AOT_CAPTURE_PC:-}" ]]; then
+  [[ -s "$DATA/Documents/aot-attribution-entry.bin" ]] || { echo "AOT_CAPTURE_MISSING" >&2; exit 1; }
+  cp "$DATA/Documents/aot-attribution-entry.bin" "$ARTIFACTS/aot-attribution-entry.bin"
+fi
 if [[ ! -s "$ARTIFACTS/$RESULT_NAME" ]]; then
   xcrun simctl spawn "$DEVICE" log show --last 15m --style compact \
     --predicate 'process == "AGRSimulator" OR process == "runningboardd"' \
