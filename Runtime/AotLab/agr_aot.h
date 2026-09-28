@@ -23,6 +23,7 @@ typedef struct AgrAotRegs {
     uint32_t region_budget;
     uint32_t region_blocks;
     uint32_t region_instructions;
+    const uint8_t *source_elf;
 } AgrAotRegs;
 
 typedef int (*AgrAotFn)(AgrAotRegs *state);

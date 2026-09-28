@@ -18,6 +18,7 @@ __attribute__((weak)) const uint32_t agr_aot_fast_relocatable = 0;
 __attribute__((weak)) const uint64_t agr_aot_input_elf_fnv64 = 0;
 __attribute__((weak)) const uint32_t agr_aot_input_elf_bytes = 0;
 static uint32_t image_bias;
+static uint8_t *source_elf;
 static int diagnostic;
 static FILE *trace_file;
 static uint64_t trace_limit;
@@ -183,7 +184,16 @@ void agr_aot_bind_elf(const void *bytes, uint32_t size, uint32_t load_bias) {
     const uint8_t *data = (const uint8_t *)bytes;
     uint64_t hash = UINT64_C(14695981039346656037);
     for (uint32_t i = 0; i < size; i++) hash = (hash ^ data[i]) * UINT64_C(1099511628211);
-    if (hash == agr_aot_input_elf_fnv64) image_bias = load_bias;
+    if (hash == agr_aot_input_elf_fnv64) {
+#ifdef AGR_AOT_REGION_COMPILER
+        uint8_t *snapshot = malloc(size);
+        if (!snapshot) { image_bias = 0; return; }
+        memcpy(snapshot, bytes, size);
+        free(source_elf);
+        source_elf = snapshot;
+#endif
+        image_bias = load_bias;
+    }
 }
 
 static const AgrAotEntry *lookup(uint32_t pc) {
@@ -224,7 +234,8 @@ int agr_aot_drive(void *cpu) {
     uint32_t *cpsr = arm_interp_cpsr_ptr(cpu);
     uint8_t *memory = arm_interp_memory_base(cpu);
     if (!regs || !cpsr || !memory) return AGR_AOT_FAULT;
-    AgrAotRegs state = {regs, cpsr, memory, agr_aot_fast_relocatable ? image_bias : 0, 0, 0, 0};
+    AgrAotRegs state = {regs, cpsr, memory, agr_aot_fast_relocatable ? image_bias : 0,
+                        0, 0, 0, source_elf};
     uint32_t local_blocks = 0, local_instructions = 0;
 #define AGR_AOT_RETURN(value) do { \
     executed_blocks += local_blocks; \

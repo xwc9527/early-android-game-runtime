@@ -43,17 +43,6 @@ def split_after_writes(blocks):
     return sorted(unique.items())
 
 
-def guard(row):
-    pc, raw, length, thumb = (row[key] for key in ("pc", "insn", "len", "thumb"))
-    address = f"(s->bias + {pc}u)"
-    if thumb and length == 2:
-        return f"agr_aot_load16(s, {address}) != {raw}u"
-    if thumb:
-        return (f"agr_aot_load16(s, {address}) != {raw >> 16}u || "
-                f"agr_aot_load16(s, (s->bias + {pc + 2}u)) != {raw & 0xffff}u")
-    return f"agr_aot_load32(s, {address}) != {raw}u"
-
-
 def direct_successors(body):
     row, op = body[-1]
     kind = op[0]
@@ -89,10 +78,11 @@ def emit_region(number, blocks, image):
     starts = {pc for pc, _ in blocks}
     name = f"agr_region_{number:05d}"
     lines = [f"static int {name}(AgrAotRegs *outer) {{",
+             "    if (!outer->source_elf) return AGR_AOT_MISS;",
              "    uint32_t regs[16];",
              "    memcpy(regs, outer->r, sizeof(regs));",
              "    uint32_t cpsr = *outer->cpsr;",
-             "    AgrAotRegs local = {regs, &cpsr, outer->mem, outer->bias, 0, 0, 0};",
+             "    AgrAotRegs local = {regs, &cpsr, outer->mem, outer->bias, 0, 0, 0, outer->source_elf};",
              "    AgrAotRegs *s = &local;",
              "    uint32_t blocks_done = 0, instructions = 0;",
              "    int rc = 0, result = AGR_AOT_BOUNDARY;",
@@ -112,18 +102,15 @@ def emit_region(number, blocks, image):
                   "{ result = AGR_AOT_MODE_MISS; goto L_exit; }"]
         end = body[-1][0]["pc"] + body[-1][0]["len"]
         raw = image.code_at(pc, end - pc)
-        group_guard = (len(body) > 1 and raw is not None and
-                       all(op[0] not in WRITE_KINDS for _, op in body))
-        if group_guard:
-            expected = ", ".join(f"0x{byte:02x}" for byte in raw)
-            lines += [f"    static const uint8_t expected_{label}[] = {{{expected}}};",
-                      f"    if (memcmp(s->mem + s->bias + {pc}u, expected_{label}, {len(raw)}u)) "
-                      "{ result = AGR_AOT_MISS; goto L_exit; }"]
-            group_guard_count += 1
-        if not group_guard:
-            for row, _ in body:
-                lines.append(f"    if ({guard(row)}) {{ result = AGR_AOT_MISS; goto L_exit; }}")
-                individual_guard_count += 1
+        if raw is None:
+            raise ValueError(f"block outside executable ELF section: {pc:#x}")
+        section = next(section for section in image.executable
+                       if section.address <= pc and end <= section.address + section.size)
+        offset = section.offset + pc - section.address
+        lines.append(
+            f"    if (memcmp(s->mem + s->bias + {pc}u, s->source_elf + {offset}u, {len(raw)}u)) "
+            "{ result = AGR_AOT_MISS; goto L_exit; }")
+        group_guard_count += 1
         for row, op in body:
             code, early_boundary = translated_op(op, row["thumb"], label)
             lines.append("    " + code)
