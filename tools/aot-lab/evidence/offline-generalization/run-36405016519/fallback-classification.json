@@ -1,0 +1,21 @@
+{
+  "schema": "agr.offline-aot-fallback-classification.v1",
+  "input_elf_sha256": "010baa4964cd7dbcf1ba038428ab4d6afc13ffd0a180b447be07b8f088f9ba9d",
+  "entry_policy": "all-exidx",
+  "runtime_load_bias": 65536,
+  "lookup_miss_events": 2006,
+  "dynamic_counts": {
+    "indirect_mode_target_absent_from_sweep": 96,
+    "indirect_mode_target_wrong_sweep_mode": 96,
+    "static_discovery_gap_sweep_decodes": 1520,
+    "unsupported_isa:ldrex": 147,
+    "unsupported_isa:strex": 147
+  },
+  "unique_pc_mode_counts": {
+    "indirect_mode_target_absent_from_sweep": 2,
+    "indirect_mode_target_wrong_sweep_mode": 2,
+    "static_discovery_gap_sweep_decodes": 290,
+    "unsupported_isa:ldrex": 8,
+    "unsupported_isa:strex": 8
+  }
+}
