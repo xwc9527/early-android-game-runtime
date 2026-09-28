@@ -35,7 +35,12 @@ def split_after_writes(blocks):
                 segment = []
         if segment:
             result.append((segment[0][0]["pc"], segment))
-    return result
+    unique = {}
+    for pc, body in result:
+        previous = unique.setdefault(pc, body)
+        if previous != body:
+            raise ValueError(f"ambiguous split block at {pc:#x}")
+    return sorted(unique.items())
 
 
 def guard(row):
