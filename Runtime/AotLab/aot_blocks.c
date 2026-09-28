@@ -12125,7 +12125,7 @@ static int aot_debug_0004863c(AgrAotRegs *s) {
     (void)rc;
     if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
     if (agr_aot_load16(s, 296508u) != 61904u || agr_aot_load16(s, 296510u) != 769u) return AGR_AOT_MISS;
-    agr_aot_subs(s, 3, s->r[0], 1u);
+    agr_aot_subs(s, 3, 1u, s->r[0]);
     s->r[15] = 296512u;
     return AGR_AOT_BOUNDARY;
 }
@@ -14265,7 +14265,7 @@ static int aot_debug_00091904(AgrAotRegs *s) {
     (void)rc;
     if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
     if (agr_aot_load16(s, 596228u) != 61904u || agr_aot_load16(s, 596230u) != 1u) return AGR_AOT_MISS;
-    agr_aot_subs(s, 0, s->r[0], 1u);
+    agr_aot_subs(s, 0, 1u, s->r[0]);
     s->r[15] = 596232u;
     return AGR_AOT_BOUNDARY;
 }
@@ -18905,7 +18905,7 @@ static int aot_debug_00093df2(AgrAotRegs *s) {
     (void)rc;
     if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
     if (agr_aot_load16(s, 605682u) != 61909u || agr_aot_load16(s, 605684u) != 1281u) return AGR_AOT_MISS;
-    agr_aot_subs(s, 5, s->r[5], 1u);
+    agr_aot_subs(s, 5, 1u, s->r[5]);
     s->r[15] = 605686u;
     return AGR_AOT_BOUNDARY;
 }
@@ -19277,7 +19277,7 @@ static int aot_debug_00094222(AgrAotRegs *s) {
     (void)rc;
     if (!(*s->cpsr & 0x20u)) return AGR_AOT_MISS;
     if (agr_aot_load16(s, 606754u) != 61909u || agr_aot_load16(s, 606756u) != 1281u) return AGR_AOT_MISS;
-    agr_aot_subs(s, 5, s->r[5], 1u);
+    agr_aot_subs(s, 5, 1u, s->r[5]);
     s->r[15] = 606758u;
     return AGR_AOT_BOUNDARY;
 }
@@ -42333,7 +42333,7 @@ static int aot_fast_00048634(AgrAotRegs *s) {
     { int rc = agr_aot_ldr(s, 2, 296504u + 36u); if (rc) return rc; }
     s->r[1] += 296508u;
     s->r[2] += 296510u;
-    agr_aot_subs(s, 3, s->r[0], 1u);
+    agr_aot_subs(s, 3, 1u, s->r[0]);
     agr_aot_mov_reg(s, 0, 4);
     agr_aot_set_itstate(s, 56u); s->r[15] = 296516u; return AGR_AOT_BOUNDARY;
 }
@@ -42679,7 +42679,7 @@ static int aot_fast_00091900(AgrAotRegs *s) {
 static int aot_fast_00091904(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
-    agr_aot_subs(s, 0, s->r[0], 1u);
+    agr_aot_subs(s, 0, 1u, s->r[0]);
     agr_aot_set_itstate(s, 56u); s->r[15] = 596234u; return AGR_AOT_BOUNDARY;
 }
 
@@ -43500,7 +43500,7 @@ static int aot_fast_00093df0(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { uint32_t addr = s->r[4] + 120u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[5]); }
-    agr_aot_subs(s, 5, s->r[5], 1u);
+    agr_aot_subs(s, 5, 1u, s->r[5]);
     s->r[3] = 0u;
     { uint32_t addr = s->r[4] + 116u; if (agr_aot_fault8(addr)) return AGR_AOT_FAULT; agr_aot_store8(s, addr, s->r[3]); }
     agr_aot_set_itstate(s, 56u); s->r[15] = 605696u; return AGR_AOT_BOUNDARY;
@@ -43609,7 +43609,7 @@ static int aot_fast_00094220(AgrAotRegs *s) {
     int rc = 0;
     (void)rc;
     { uint32_t addr = s->r[4] + 124u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[5]); }
-    agr_aot_subs(s, 5, s->r[5], 1u);
+    agr_aot_subs(s, 5, 1u, s->r[5]);
     s->r[3] = 0u;
     { uint32_t addr = s->r[4] + 116u; if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[3]); }
     agr_aot_set_itstate(s, 56u); s->r[15] = 606766u; return AGR_AOT_BOUNDARY;

@@ -188,7 +188,7 @@ def decode(pc, insn, length, thumb):
             return ("add_imm", (hw1 >> 8) & 15, hw0 & 15, immediate, pc)
         if hw0 & 0xfbf0 == 0xf1d0:
             imm12 = ((hw0 >> 10) & 1) << 11 | ((hw1 >> 12) & 7) << 8 | (hw1 & 0xff)
-            return ("subs_imm", (hw1 >> 8) & 15, hw0 & 15, thumb_expand_imm(imm12))
+            return ("rsbs_imm", (hw1 >> 8) & 15, hw0 & 15, thumb_expand_imm(imm12))
         if hw0 & 0xfbf0 in {0xf000, 0xf040} and not (hw1 & 0x8000):
             imm12 = ((hw0 >> 10) & 1) << 11 | ((hw1 >> 12) & 7) << 8 | (hw1 & 0xff)
             return ("and_imm" if (hw0 & 0x0040) == 0 else "orr_imm",
@@ -340,6 +340,8 @@ def emit_op(op, thumb):
         return f"agr_aot_subs(s, {op[1]}, s->r[{op[2]}], s->r[{op[3]}]);"
     if kind == "subs_imm":
         return f"agr_aot_subs(s, {op[1]}, s->r[{op[2]}], {op[3]}u);"
+    if kind == "rsbs_imm":
+        return f"agr_aot_subs(s, {op[1]}, {op[3]}u, s->r[{op[2]}]);"
     if kind == "cmp_reg":
         return f"agr_aot_cmp(s, s->r[{op[1]}], s->r[{op[2]}]);"
     if kind == "cmp_imm":
