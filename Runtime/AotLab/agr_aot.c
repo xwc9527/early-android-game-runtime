@@ -35,6 +35,7 @@ static uint32_t drive_calls;
 static uint32_t lookup_misses;
 static uint32_t it_fallbacks;
 static uint32_t guard_misses;
+static uint32_t mode_misses;
 static uint32_t step_limit_fallbacks;
 static uint32_t fallback_interpreter_instructions;
 static uint32_t svc_interpreter_instructions;
@@ -84,7 +85,7 @@ void agr_aot_log_open(const char *path) {
     boundary_seconds = 0;
     drive_seconds = off_probe_seconds = 0;
     fallback_interpreter_seconds = svc_interpreter_seconds = baseline_interpreter_seconds = 0;
-    drive_calls = lookup_misses = it_fallbacks = guard_misses = step_limit_fallbacks = 0;
+    drive_calls = lookup_misses = it_fallbacks = guard_misses = mode_misses = step_limit_fallbacks = 0;
     fallback_interpreter_instructions = svc_interpreter_instructions = baseline_interpreter_instructions = 0;
 }
 
@@ -222,8 +223,16 @@ int agr_aot_drive(void *cpu) {
         }
         local_blocks++;
         int result = entry->function(&state);
-        if (result != AGR_AOT_MISS) local_instructions += entry->instructions;
+        if (result != AGR_AOT_MISS && result != AGR_AOT_MODE_MISS)
+            local_instructions += entry->instructions;
         if (result == AGR_AOT_FAULT) AGR_AOT_RETURN(AGR_AOT_FAULT);
+        if (result == AGR_AOT_MODE_MISS) {
+            fallback_count++;
+            mode_misses++;
+            last_miss = pc;
+            record_fallback("mode_miss", pc, *cpsr);
+            AGR_AOT_RETURN(AGR_AOT_MISS);
+        }
         if (result == AGR_AOT_MISS) {
             fallback_count++;
             guard_misses++;
@@ -257,6 +266,7 @@ uint32_t agr_aot_drive_calls(void) { return drive_calls; }
 uint32_t agr_aot_lookup_misses(void) { return lookup_misses; }
 uint32_t agr_aot_it_fallbacks(void) { return it_fallbacks; }
 uint32_t agr_aot_guard_misses(void) { return guard_misses; }
+uint32_t agr_aot_mode_misses(void) { return mode_misses; }
 uint32_t agr_aot_step_limit_fallbacks(void) { return step_limit_fallbacks; }
 uint32_t agr_aot_fallback_interpreter_instructions(void) { return fallback_interpreter_instructions; }
 uint32_t agr_aot_svc_interpreter_instructions(void) { return svc_interpreter_instructions; }

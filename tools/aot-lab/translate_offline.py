@@ -15,7 +15,7 @@ from translate import decode, emit_partial
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--elf", required=True)
-    parser.add_argument("--entry-policy", choices=("abi", "exports", "all-exidx"), required=True)
+    parser.add_argument("--entry-policy", choices=("abi", "exports", "all-exidx", "all-exidx-sweep"), required=True)
     parser.add_argument("--load-bias", type=lambda value: int(value, 0), required=True)
     parser.add_argument("--out", required=True)
     parser.add_argument("--manifest", required=True)
@@ -38,7 +38,7 @@ def main():
     debug, fast, lengths, hash_size, max_probe = emit_partial(
         rows, output, allowed,
         extra_starts=(pc + args.load_bias for pc, _ in starts),
-        emit_debug=not args.no_diagnostic)
+        emit_debug=not args.no_diagnostic, mode_guard=True)
     result = {
         "schema": "agr.offline-aot-manifest.v1",
         "elf_sha256": image.sha256,
@@ -49,9 +49,12 @@ def main():
         "entry_policy": args.entry_policy,
         "load_bias": args.load_bias,
         "load_bias_source": "caller-supplied formal linker placement; not inferred from trace",
-        "translation_inputs": ["ELF32 ARM code", "dynamic symbols", "init/fini arrays", "EHABI exidx",
-                               "formal linker load bias"],
+        "translation_inputs": (["ELF32 ARM code", "dynamic symbols", "init/fini arrays"] +
+                               (["EHABI exidx"] if args.entry_policy in
+                                {"all-exidx", "all-exidx-sweep"} else []) +
+                               ["formal linker load bias"]),
         "execution_trace_input": False,
+        "fast_block_mode_guard": True,
         "seed_count": len(seeds),
         "statically_discovered_pc_modes": len(rows),
         "decoded_op_kinds": sorted(allowed),

@@ -23,9 +23,9 @@ def scan(image: Elf32Arm, policy: str):
     seeds = {(item.address, item.thumb) for item in image.init_array_entries()}
     seeds.update((item.address, item.thumb) for item in image.symbols()
                  if item.name in {"JNI_OnLoad", "ANativeActivity_onCreate"})
-    if policy in {"exports", "all-exidx"}:
+    if policy in {"exports", "all-exidx", "all-exidx-sweep"}:
         seeds.update((item.address, item.thumb) for item in image.symbols())
-    if policy == "all-exidx":
+    if policy in {"all-exidx", "all-exidx-sweep"}:
         seeds.update((address, True) for address in image.exidx_starts())
         for section in image.executable:
             if section.name == ".plt":
@@ -88,13 +88,43 @@ def scan(image: Elf32Arm, policy: str):
         if is_return or operation is not None and is_terminal(operation):
             continue
         queue.append((next_address, thumb))
+    if policy == "all-exidx-sweep":
+        # Fill disassembly gaps with a deterministic linear sweep. This uses only
+        # executable ELF sections, not an observed branch sequence. EHABI and
+        # direct-CFG discoveries take precedence when modes overlap.
+        for section in image.executable:
+            thumb = section.name != ".plt"
+            address = section.address
+            stop = section.address + section.size
+            while address + (2 if thumb else 4) <= stop:
+                known = rows.get(address)
+                if known is not None and known["thumb"] == int(thumb):
+                    address += known["len"]
+                    continue
+                data = image.code_at(address, 4) or image.code_at(address, 2)
+                instruction = next(decoder[thumb].disasm(data, address, count=1), None)
+                if instruction is None:
+                    reasons["sweep_invalid_encoding"] += 1
+                    address += 2 if thumb else 4
+                    continue
+                if known is None:
+                    raw = (int.from_bytes(instruction.bytes[:2], "little") << 16 |
+                           int.from_bytes(instruction.bytes[2:4], "little")) if thumb and instruction.size == 4 \
+                          else int.from_bytes(instruction.bytes, "little")
+                    rows[address] = {"pc": address, "insn": raw,
+                                     "len": instruction.size, "thumb": int(thumb),
+                                     "cpsr": 0x20 if thumb else 0}
+                    reasons["sweep_added"] += 1
+                if not thumb:
+                    starts.add((address, False))
+                address += instruction.size
     return rows, starts, seeds, reasons
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--elf", required=True)
-    parser.add_argument("--policy", choices=("abi", "exports", "all-exidx"), required=True)
+    parser.add_argument("--policy", choices=("abi", "exports", "all-exidx", "all-exidx-sweep"), required=True)
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
     started = time.perf_counter()
@@ -114,8 +144,9 @@ def main():
         "elf_sha256": image.sha256,
         "elf_bytes": len(image.data),
         "policy": args.policy,
-        "input_types": ["ELF32 ARM executable sections", "ELF dynamic symbols", "ELF init/fini arrays",
-                        "ELF EHABI exidx"],
+        "input_types": (["ELF32 ARM executable sections", "ELF dynamic symbols",
+                         "ELF init/fini arrays"] +
+                        (["ELF EHABI exidx"] if args.policy in {"all-exidx", "all-exidx-sweep"} else [])),
         "trace_used_for_generation": False,
         "seed_count": len(seeds),
         "discovered_pc_modes": len(rows),

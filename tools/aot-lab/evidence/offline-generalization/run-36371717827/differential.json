@@ -1,0 +1,63 @@
+{
+  "schema": "agr.offline-aot-differential.v1",
+  "input_elf_sha256": "010baa4964cd7dbcf1ba038428ab4d6afc13ffd0a180b447be07b8f088f9ba9d",
+  "generated_c_sha256": "40361d5096a55dc68bd1bc62652969b198919ada361d8ff9e605159cff4e8400",
+  "tested_commit": "635dc4f6d3b3eacbaf4aa3d6168dcbff4f57b9f1",
+  "tested_tree": "cea05fcfed2625d5c1cdc3b4d9a403c8cbc65611",
+  "translation_used_execution_trace": false,
+  "oracle_trace_sha256": "c8240bcf870a26c53bdcf1d9b5309bdebc9fd47e6c47f390687b699be73222d6",
+  "interpreter_trace_instructions": 29578,
+  "interpreter_trace_complete": true,
+  "observable_fields_equal": {
+    "passed": true,
+    "mounted": true,
+    "elf_registered": true,
+    "dex_loaded": true,
+    "jni_onload_status": true,
+    "jni_version": true,
+    "native_so_bytes": true,
+    "error": true
+  },
+  "host_calls_equal": true,
+  "checkpoint_count": 20544,
+  "checkpoint_mismatches": [],
+  "instruction_accounting": {
+    "diagnostic": true,
+    "fast": true
+  },
+  "diagnostic_aot_instructions": 20544,
+  "fast_aot_instructions": 20544,
+  "fast_interpreter_instructions": 9034,
+  "fast_lookup_misses": 7749,
+  "fast_fallback_counts": {
+    "it_state": 629,
+    "lookup_miss": 7749,
+    "svc": 656
+  },
+  "fast_fallback_unique_pc_mode": {
+    "it_state": 85,
+    "lookup_miss": 747,
+    "svc": 11
+  },
+  "lookup_miss_classes": {
+    "static_discovery_gap": 7455,
+    "unsupported_arm_semantic": 294
+  },
+  "fallback_log_accounting": true,
+  "performance_samples": 3,
+  "performance_host_calls_equal": true,
+  "baseline_engine_seconds": [
+    0.0006590000000000057,
+    0.00047200000000000264,
+    0.00046200000000000245
+  ],
+  "aot_route_engine_seconds": [
+    0.001940000000000018,
+    0.0030089999999999813,
+    0.0015420000000000219
+  ],
+  "baseline_engine_median": 0.00047200000000000264,
+  "aot_route_engine_median": 0.001940000000000018,
+  "route_speedup_ratio_of_medians": 0.24329896907216403,
+  "semantic_pass": true
+}

@@ -10,7 +10,8 @@ enum {
     AGR_AOT_FAULT = -1,
     AGR_AOT_OFF = 0,
     AGR_AOT_SVC = 2,
-    AGR_AOT_MISS = 3
+    AGR_AOT_MISS = 3,
+    AGR_AOT_MODE_MISS = 4
 };
 
 typedef struct AgrAotRegs {
@@ -60,6 +61,7 @@ uint32_t agr_aot_drive_calls(void);
 uint32_t agr_aot_lookup_misses(void);
 uint32_t agr_aot_it_fallbacks(void);
 uint32_t agr_aot_guard_misses(void);
+uint32_t agr_aot_mode_misses(void);
 uint32_t agr_aot_step_limit_fallbacks(void);
 uint32_t agr_aot_fallback_interpreter_instructions(void);
 uint32_t agr_aot_svc_interpreter_instructions(void);

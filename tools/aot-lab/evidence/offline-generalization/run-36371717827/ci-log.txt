@@ -1,0 +1,1817 @@
+AGR_SMOKE_PHASE 2026-09-28T02:56:27Z prepare sample profile aot-kungfoo
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+100 11.9M  100 11.9M    0     0  21.8M      0 --:--:-- --:--:-- --:--:-- 21.8M
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/build/angle-xcframeworks-v2.1.28252.zip: OK
+info: downloading component rust-std
+AGR_SMOKE_PHASE 2026-09-28T02:56:39Z compile Runtime and host
+[1m[92m    Updating[0m crates.io index
+[1m[92m     Locking[0m 1 package to latest compatible version
+[1m[92m Downloading[0m crates ...
+[1m[92m  Downloaded[0m libc v0.2.189
+[1m[92m   Compiling[0m libc v0.2.189
+[1m[92m   Compiling[0m touchhle-arm-interpreter v0.1.0 (/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/ArmInterpreter)
+[1m[92m    Finished[0m `release` profile [optimized] target(s) in 5.47s
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/GuestRuntime/agr_guest_runtime.c:656:61: warning: expression which evaluates to zero treated as a null pointer constant of type 'void *' [-Wnon-literal-null-conversion]
+  656 |             g->display = get ? get(EGL_PLATFORM_ANGLE_ANGLE,EGL_DEFAULT_DISPLAY,attributes) : EGL_NO_DISPLAY;
+      |                                                             ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/egl.h:251:43: note: expanded from macro 'EGL_DEFAULT_DISPLAY'
+  251 | #define EGL_DEFAULT_DISPLAY               EGL_CAST(EGLNativeDisplayType,0)
+      |                                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/eglplatform.h:178:31: note: expanded from macro 'EGL_CAST'
+  178 | #define EGL_CAST(type, value) ((type) (value))
+      |                               ^~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/GuestRuntime/agr_guest_runtime.c:1501:84: warning: expression which evaluates to zero treated as a null pointer constant of type 'void *' [-Wnon-literal-null-conversion]
+ 1501 |     g->display = getPlatformDisplay ? getPlatformDisplay(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, da) : EGL_NO_DISPLAY;
+      |                                                                                    ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/egl.h:251:43: note: expanded from macro 'EGL_DEFAULT_DISPLAY'
+  251 | #define EGL_DEFAULT_DISPLAY               EGL_CAST(EGLNativeDisplayType,0)
+      |                                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/eglplatform.h:178:31: note: expanded from macro 'EGL_CAST'
+  178 | #define EGL_CAST(type, value) ((type) (value))
+      |                               ^~~~~~~~~~~~~~~~
+2 warnings generated.
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AndroidFw/agr_androidfw.cpp:5:
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/include/androidfw/AssetManager.h:40:1: warning: empty struct has size 0 in C, size 1 in C++ [-Wextern-c-compat]
+   40 | struct AAssetManager { };
+      | ^
+1 warning generated.
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/Asset.cpp:70:13: warning: 'sprintf' is deprecated: This function is provided for compatibility reasons only.  Due to security concerns inherent in the design of sprintf(3), it is highly recommended that you use snprintf(3) instead. [-Wdeprecated-declarations]
+   70 |             sprintf(buf, ": %dK\n", (int)size);
+      |             ^
+/Applications/Xcode_27.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.0.sdk/usr/include/_stdio.h:278:1: note: 'sprintf' has been explicitly marked deprecated here
+  278 | __deprecated_msg("This function is provided for compatibility reasons only.  Due to security concerns inherent in the design of sprintf(3), it is highly recommended that you use snprintf(3) instead.")
+      | ^
+/Applications/Xcode_27.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.0.sdk/usr/include/sys/cdefs.h:227:48: note: expanded from macro '__deprecated_msg'
+  227 |         #define __deprecated_msg(_msg) __attribute__((__deprecated__(_msg)))
+      |                                                       ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/Asset.cpp:388:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  388 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/Asset.cpp:400:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  400 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/Asset.cpp:709:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  709 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/Asset.cpp:740:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  740 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+5 warnings generated.
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/AssetManager.cpp:27:
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/include/androidfw/AssetManager.h:40:1: warning: empty struct has size 0 in C, size 1 in C++ [-Wextern-c-compat]
+   40 | struct AAssetManager { };
+      | ^
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/AssetManager.cpp:25:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/include/androidfw/Asset.h:30:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/String8.h:23:
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:181:17: warning: first argument in call to 'memmove' is a pointer to non-trivially copyable type 'android::String8' [-Wnontrivial-memcall]
+  181 |         memmove(d,s,n*sizeof(TYPE));
+      |                 ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:410:5: note: in instantiation of function template specialization 'android::move_forward_type<android::String8>' requested here
+  410 |     move_forward_type( reinterpret_cast<TYPE*>(dest), reinterpret_cast<const TYPE*>(from), num );
+      |     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:219:15: note: in instantiation of member function 'android::Vector<android::String8>::do_move_forward' requested here
+  219 | Vector<TYPE>::Vector()
+      |               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/AssetManager.cpp:1456:21: note: in instantiation of member function 'android::Vector<android::String8>::Vector' requested here
+ 1456 |     Vector<String8> dirs;
+      |                     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:181:17: note: explicitly cast the pointer to silence this warning
+  181 |         memmove(d,s,n*sizeof(TYPE));
+      |                 ^
+      |                 (void*)
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:204:17: warning: first argument in call to 'memmove' is a pointer to non-trivially copyable type 'android::String8' [-Wnontrivial-memcall]
+  204 |         memmove(d,s,n*sizeof(TYPE));
+      |                 ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:415:5: note: in instantiation of function template specialization 'android::move_backward_type<android::String8>' requested here
+  415 |     move_backward_type( reinterpret_cast<TYPE*>(dest), reinterpret_cast<const TYPE*>(from), num );
+      |     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:219:15: note: in instantiation of member function 'android::Vector<android::String8>::do_move_backward' requested here
+  219 | Vector<TYPE>::Vector()
+      |               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/AssetManager.cpp:1456:21: note: in instantiation of member function 'android::Vector<android::String8>::Vector' requested here
+ 1456 |     Vector<String8> dirs;
+      |                     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:204:17: note: explicitly cast the pointer to silence this warning
+  204 |         memmove(d,s,n*sizeof(TYPE));
+      |                 ^
+      |                 (void*)
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/AssetManager.cpp:27:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/include/androidfw/AssetManager.h:25:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/include/androidfw/ZipFileRO.h:36:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/threads.h:35:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Thread.h:31:
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/RefBase.h:490:17: warning: first argument in call to 'memmove' is a pointer to non-trivially copyable type 'sp<android::AssetManager::SharedZip>' [-Wnontrivial-memcall]
+  490 |         memmove(d, s, n*sizeof(sp<TYPE>));
+      |                 ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/RefBase.h:523:21: note: in instantiation of function template specialization 'android::ReferenceMover::move_references<android::AssetManager::SharedZip>' requested here
+  523 |     ReferenceMover::move_references(d, s, n);
+      |                     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:410:5: note: in instantiation of function template specialization 'android::move_forward_type<android::AssetManager::SharedZip>' requested here
+  410 |     move_forward_type( reinterpret_cast<TYPE*>(dest), reinterpret_cast<const TYPE*>(from), num );
+      |     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:219:15: note: in instantiation of member function 'android::Vector<android::sp<android::AssetManager::SharedZip> >::do_move_forward' requested here
+  219 | Vector<TYPE>::Vector()
+      |               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/AssetManager.cpp:1916:23: note: in instantiation of member function 'android::Vector<android::sp<android::AssetManager::SharedZip> >::Vector' requested here
+ 1916 | AssetManager::ZipSet::ZipSet(void)
+      |                       ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/RefBase.h:490:17: note: explicitly cast the pointer to silence this warning
+  490 |         memmove(d, s, n*sizeof(sp<TYPE>));
+      |                 ^
+      |                 (void*)
+4 warnings generated.
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:110:28: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+  110 |                      name, (void*)size,
+      |                            ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:112:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  112 |                 return BAD_TYPE;
+      |                 ~~~~~~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:116:20: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  116 |             return BAD_TYPE;
+      |             ~~~~~~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:119:20: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+  119 |              name, (void*)size, (void*)(int)headerSize);
+      |                    ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:119:33: warning: cast to 'void *' from smaller integer type 'int' [-Wint-to-void-pointer-cast]
+  119 |              name, (void*)size, (void*)(int)headerSize);
+      |                                 ^~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:120:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  120 |         return BAD_TYPE;
+      |         ~~~~~~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:123:16: warning: cast to 'void *' from smaller integer type 'int' [-Wint-to-void-pointer-cast]
+  123 |          name, (void*)(int)headerSize);
+      |                ^~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:124:12: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  124 |     return BAD_TYPE;
+      |     ~~~~~~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:238:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  238 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:249:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  249 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:253:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  253 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:263:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  263 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:285:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  285 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:328:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  328 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:362:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  362 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:375:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  375 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:390:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  390 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:400:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  400 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:406:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  406 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:415:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  415 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:435:18: warning: logical not is only applied to the left hand side of this bitwise operator [-Wlogical-not-parentheses]
+  435 |                 (!mHeader->flags&ResStringPool_header::UTF8_FLAG &&
+      |                  ^              ~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:435:18: note: add parentheses after the '!' to evaluate the bitwise operator first
+  435 |                 (!mHeader->flags&ResStringPool_header::UTF8_FLAG &&
+      |                  ^
+      |                   (                                             )
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:435:18: note: add parentheses around left hand side expression to silence this warning
+  435 |                 (!mHeader->flags&ResStringPool_header::UTF8_FLAG &&
+      |                  ^              
+      |                  (              )
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:438:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  438 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:450:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  450 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:457:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  457 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:464:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  464 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:488:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  488 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:1349:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 1349 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:1367:18: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 1367 |         mError = BAD_TYPE;
+      |                ~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:1403:26: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 1403 |                 mError = BAD_TYPE;
+      |                        ~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:1408:26: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 1408 |                 mError = BAD_TYPE;
+      |                        ~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:1425:18: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 1425 |         mError = BAD_TYPE;
+      |                ~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:1486:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 1486 |         return BAD_TYPE;
+      |         ~~~~~~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:2895:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+ 2895 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:2972:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 2972 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:2978:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 2978 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:3014:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 3014 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:3031:18: warning: cast to 'void *' from smaller integer type 'int' [-Wint-to-void-pointer-cast]
+ 3031 |                  (void*)(int)(ctype),
+      |                  ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:3041:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 3041 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:3248:22: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 3248 |                      (void*)resID);
+      |                      ^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:3509:40: warning: format specifies type 'int' but the argument has type 'ssize_t' (aka 'long') [-Wformat]
+ 3509 |         ALOGV("Resulting offset=%d\n", offset);
+      |                                 ~~     ^~~~~~
+      |                                 %ld
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:80:54: note: expanded from macro 'ALOGV'
+   80 | #define ALOGV(...) ((void)ALOG(LOG_VERBOSE, LOG_TAG, __VA_ARGS__))
+      |                                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:3524:18: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 3524 |                  (void*)resID, (int)ip);
+      |                  ^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5121:14: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5120 |         ALOGW("ResTable_package type strings at %p are past chunk size %p.",
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 5121 |              (void*)dtohl(pkg->typeStrings), (void*)pkgSize);
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                           ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5122:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5122 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5126:14: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5125 |         ALOGW("ResTable_package type strings at %p is not on an integer boundary.",
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 5126 |              (void*)dtohl(pkg->typeStrings));
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                           ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5127:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5127 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5131:14: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5130 |         ALOGW("ResTable_package key strings at %p are past chunk size %p.",
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 5131 |              (void*)dtohl(pkg->keyStrings), (void*)pkgSize);
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                           ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5132:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5132 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5136:14: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5135 |         ALOGW("ResTable_package key strings at %p is not on an integer boundary.",
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 5136 |              (void*)dtohl(pkg->keyStrings));
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                           ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5137:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5137 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5192:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+ 5192 |                 return (mError=UNKNOWN_ERROR);
+      |                               ~^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5242:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5242 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5247:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5247 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5260:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5260 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5287:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5287 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5292:22: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5291 |                 ALOGW("ResTable_type entriesStart at %p extends beyond chunk end %p.",
+      |                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 5292 |                      (void*)dtohl(type->entriesStart), (void*)typeSize);
+      |                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                           ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5293:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5293 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5297:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5297 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5310:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5310 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5342:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+ 5342 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5345:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+ 5345 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5452:84: warning: format specifies type 'int' but the argument has type 'size_t' (aka 'unsigned long') [-Wformat]
+ 5452 |             ALOGW("idmap: type %d supposedly has entries, but no entries found\n", i);
+      |                                ~~                                                  ^
+      |                                %lu
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5453:20: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+ 5453 |             return UNKNOWN_ERROR;
+      |             ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5673:93: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5673 |                         printf("      NON-INTEGER ResTable_type entriesStart OFFSET: %p\n", (void*)entriesStart);
+      |                                                                                             ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5678:85: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5678 |                         printf("      NON-INTEGER ResTable_type header.size: %p\n", (void*)typeSize);
+      |                                                                                     ^~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5717:64: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5717 |                             printf("NON-INTEGER OFFSET: %p\n", (void*)thisOffset);
+      |                                                                ^~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5722:36: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5722 |                                    (void*)entriesStart, (void*)thisOffset,
+      |                                    ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5722:57: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5722 |                                    (void*)entriesStart, (void*)thisOffset,
+      |                                                         ^~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5723:36: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5723 |                                    (void*)typeSize);
+      |                                    ^~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5731:34: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5731 |                                  (void*)(entriesStart + thisOffset));
+      |                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5737:77: warning: cast to 'void *' from smaller integer type 'uint16_t' (aka 'unsigned short') [-Wint-to-void-pointer-cast]
+ 5737 |                             printf("NON-INTEGER ResTable_entry SIZE: %p\n", (void*)esize);
+      |                                                                             ^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5742:36: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5742 |                                    (void*)entriesStart, (void*)thisOffset,
+      |                                    ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5742:57: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5742 |                                    (void*)entriesStart, (void*)thisOffset,
+      |                                                         ^~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5743:36: warning: cast to 'void *' from smaller integer type 'uint16_t' (aka 'unsigned short') [-Wint-to-void-pointer-cast]
+ 5743 |                                    (void*)esize, (void*)typeSize);
+      |                                    ^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5743:50: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5743 |                                    (void*)esize, (void*)typeSize);
+      |                                                  ^~~~~~~~~~~~~~~
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:20:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/include/androidfw/ResourceTypes.h:23:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/include/androidfw/Asset.h:30:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/String8.h:23:
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:181:17: warning: destination for this 'memmove' call is a pointer to dynamic class 'Vector<unsigned int>'; vtable pointer will be overwritten [-Wdynamic-class-memaccess]
+  181 |         memmove(d,s,n*sizeof(TYPE));
+      |         ~~~~~~~ ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:410:5: note: in instantiation of function template specialization 'android::move_forward_type<android::Vector<unsigned int> >' requested here
+  410 |     move_forward_type( reinterpret_cast<TYPE*>(dest), reinterpret_cast<const TYPE*>(from), num );
+      |     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:219:15: note: in instantiation of member function 'android::Vector<android::Vector<unsigned int> >::do_move_forward' requested here
+  219 | Vector<TYPE>::Vector()
+      |               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5348:31: note: in instantiation of member function 'android::Vector<android::Vector<unsigned int> >::Vector' requested here
+ 5348 |     Vector<Vector<uint32_t> > map;
+      |                               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:181:17: note: explicitly cast the pointer to silence this warning
+  181 |         memmove(d,s,n*sizeof(TYPE));
+      |                 ^
+      |                 (void*)
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:204:17: warning: destination for this 'memmove' call is a pointer to dynamic class 'Vector<unsigned int>'; vtable pointer will be overwritten [-Wdynamic-class-memaccess]
+  204 |         memmove(d,s,n*sizeof(TYPE));
+      |         ~~~~~~~ ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:415:5: note: in instantiation of function template specialization 'android::move_backward_type<android::Vector<unsigned int> >' requested here
+  415 |     move_backward_type( reinterpret_cast<TYPE*>(dest), reinterpret_cast<const TYPE*>(from), num );
+      |     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:219:15: note: in instantiation of member function 'android::Vector<android::Vector<unsigned int> >::do_move_backward' requested here
+  219 | Vector<TYPE>::Vector()
+      |               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5348:31: note: in instantiation of member function 'android::Vector<android::Vector<unsigned int> >::Vector' requested here
+ 5348 |     Vector<Vector<uint32_t> > map;
+      |                               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:204:17: note: explicitly cast the pointer to silence this warning
+  204 |         memmove(d,s,n*sizeof(TYPE));
+      |                 ^
+      |                 (void*)
+76 warnings generated.
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ZipFileRO.cpp:140:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  140 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ZipFileRO.cpp:170:12: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  170 |     return UNKNOWN_ERROR;
+      |     ~~~~~~ ^~~~~~~~~~~~~
+2 warnings generated.
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/libutils/Threads.cpp:717:19: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  717 |         mStatus = UNKNOWN_ERROR;   // something happened!
+      |                 ~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/libutils/Threads.cpp:722:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  722 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+2 warnings generated.
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0 23 1022k   23  239k    0     0   341k      0  0:00:02 --:--:--  0:00:02  341k100 1022k  100 1022k    0     0  1127k      0 --:--:-- --:--:-- --:--:-- 1127k
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/build/image-codec-src/jpegsrc.v9e.tar.gz: OK
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   619  100   619    0     0   3956      0 --:--:-- --:--:-- --:--:--  3967
+100   505  100   505    0     0   1598      0 --:--:-- --:--:-- --:--:--  1598
+ 21  436k   21 98043    0     0   126k      0  0:00:03 --:--:--  0:00:03  126k100  436k  100  436k    0     0   498k      0 --:--:-- --:--:-- --:--:-- 2794k
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/build/image-codec-src/giflib-5.2.2.tar.gz: OK
+arm64-apple-ios15.0-simulator image codecs:       52 objects
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:29:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+   29 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:57:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+   57 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:85:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+   85 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:113:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  113 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:141:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  141 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:169:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  169 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:197:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  197 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:225:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  225 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:253:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  253 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:281:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  281 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:309:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  309 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:337:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  337 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:365:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  365 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:393:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  393 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:421:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  421 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:449:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  449 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:477:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  477 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:505:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  505 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:533:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  533 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:561:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  561 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:589:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  589 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:617:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  617 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:645:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  645 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:673:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  673 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:701:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  701 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:729:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  729 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:757:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  757 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:1169:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 1169 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:1439:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 1439 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:1709:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 1709 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:1979:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 1979 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:2249:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 2249 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:2519:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 2519 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:2789:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 2789 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:3059:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 3059 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:3329:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 3329 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:3599:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 3599 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:3869:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 3869 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:4139:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 4139 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:4409:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 4409 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:4679:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 4679 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:4949:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 4949 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:5219:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 5219 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:5489:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 5489 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:5759:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 5759 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:6029:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 6029 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:6299:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 6299 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:6569:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 6569 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:6839:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 6839 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:7109:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 7109 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:7379:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 7379 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:7649:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 7649 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:7919:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 7919 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:8189:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 8189 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:8459:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 8459 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:8729:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 8729 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:8999:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 8999 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:9269:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 9269 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:9539:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 9539 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:9935:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 9935 | }
+      | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:10205:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 10205 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:10601:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 10601 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:10871:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 10871 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:11267:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 11267 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:11537:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 11537 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:11807:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 11807 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:12341:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 12341 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:12611:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 12611 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:14383:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 14383 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:14591:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 14591 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:14713:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 14713 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:15385:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 15385 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:15495:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 15495 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:16635:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 16635 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:16737:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 16737 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:16763:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 16763 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:16849:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 16849 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:17223:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 17223 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:17327:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 17327 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:18523:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 18523 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:19063:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 19063 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:19595:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 19595 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:19887:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 19887 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:19987:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 19987 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:20219:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 20219 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:20725:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 20725 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:21149:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 21149 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:21637:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 21637 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:21877:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 21877 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:22513:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 22513 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:22843:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 22843 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:25815:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 25815 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:26015:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 26015 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:26051:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 26051 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:26383:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 26383 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:26419:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 26419 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:26637:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 26637 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:26723:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 26723 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:26809:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 26809 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:27113:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 27113 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:27447:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 27447 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:28305:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 28305 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:28767:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 28767 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:29001:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 29001 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:29285:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 29285 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:29503:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 29503 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:29721:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 29721 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:30019:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 30019 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:30095:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 30095 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:37711:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 37711 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:37835:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 37835 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:37941:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 37941 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:38253:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 38253 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:38319:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 38319 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:38491:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 38491 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:38911:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 38911 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:39073:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 39073 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:39803:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 39803 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:40005:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 40005 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:40097:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 40097 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:40211:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 40211 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:40283:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 40283 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:41091:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 41091 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:41099:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 41099 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:41517:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 41517 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:42129:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 42129 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:42383:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 42383 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:42647:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 42647 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:42911:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 42911 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:44307:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 44307 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:44525:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 44525 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:44743:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 44743 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:46873:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 46873 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:46997:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 46997 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:48003:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 48003 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:48147:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 48147 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:48307:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 48307 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:48335:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 48335 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:48527:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 48527 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:48929:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 48929 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:49331:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 49331 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:49397:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 49397 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:49805:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 49805 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:50135:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 50135 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:50345:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 50345 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:50479:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 50479 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:50831:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 50831 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:51029:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 51029 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:51181:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 51181 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:51391:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 51391 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:51541:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 51541 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:51743:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 51743 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:51779:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 51779 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:52323:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 52323 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:52587:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 52587 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:53099:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 53099 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:53777:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 53777 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:54397:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 54397 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:55127:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 55127 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:55857:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 55857 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:56587:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 56587 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:57305:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 57305 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:58073:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 58073 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:58319:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 58319 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:59123:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 59123 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:59599:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 59599 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:59675:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 59675 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:59693:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 59693 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:59789:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 59789 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:59865:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 59865 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:59883:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 59883 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:59989:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 59989 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:60395:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 60395 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:62227:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 62227 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:62519:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 62519 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:62577:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 62577 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:63483:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 63483 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65397:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65397 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65441:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65441 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65449:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65449 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65457:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65457 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65465:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65465 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65473:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65473 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65481:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65481 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65489:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65489 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65497:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65497 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65505:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65505 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65513:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65513 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65521:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65521 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65529:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65529 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65537:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65537 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65545:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65545 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65553:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65553 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65561:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65561 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65569:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65569 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65577:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65577 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65585:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65585 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65593:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65593 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65601:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65601 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65609:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65609 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65617:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65617 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65625:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65625 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65633:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65633 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65641:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65641 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65649:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65649 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65758:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65758 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65811:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65811 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65864:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65864 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65917:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65917 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:65970:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 65970 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66023:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66023 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66076:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66076 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66129:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66129 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66182:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66182 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66235:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66235 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66288:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66288 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66341:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66341 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66394:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66394 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66447:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66447 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66500:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66500 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66553:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66553 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66606:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66606 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66659:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66659 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66712:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66712 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66765:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66765 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66818:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66818 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66871:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66871 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66924:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66924 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:66977:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 66977 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67030:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67030 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67083:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67083 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67136:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67136 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67189:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67189 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67242:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67242 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67295:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67295 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67348:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67348 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67401:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67401 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67477:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67477 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67530:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67530 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67606:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67606 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67659:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67659 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67735:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67735 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67788:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67788 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67841:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67841 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67936:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67936 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:67989:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 67989 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:68324:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 68324 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:68376:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 68376 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:68416:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 68416 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:68641:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 68641 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:68678:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 68678 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:69042:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 69042 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:69073:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 69073 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:69086:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 69086 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:69105:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 69105 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:69210:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 69210 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:69236:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 69236 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:69559:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 69559 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:69712:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 69712 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:69885:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 69885 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:69961:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 69961 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:70004:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 70004 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:70074:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 70074 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:70227:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 70227 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:70325:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 70325 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:70478:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 70478 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:70554:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 70554 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:70809:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 70809 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:70922:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 70922 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:71358:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 71358 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:71444:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 71444 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:71458:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 71458 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:71578:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 71578 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:71592:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 71592 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:71645:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 71645 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:71664:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 71664 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:71683:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 71683 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:71736:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 71736 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:71811:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 71811 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:72036:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 72036 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:72155:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 72155 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:72227:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 72227 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:72311:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 72311 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:72371:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 72371 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:72431:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 72431 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:72492:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 72492 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:72517:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 72517 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:73608:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 73608 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:73636:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 73636 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:73657:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 73657 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:73749:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 73749 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:73780:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 73780 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:73844:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 73844 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:73938:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 73938 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:73975:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 73975 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:74267:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 74267 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:74336:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 74336 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:74366:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 74366 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:74407:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 74407 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:74435:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 74435 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:74695:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 74695 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:74701:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 74701 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:74800:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 74800 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:74976:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 74976 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:75043:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 75043 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:75118:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 75118 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:75193:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 75193 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:75581:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 75581 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:75641:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 75641 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:75701:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 75701 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:76207:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 76207 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:76235:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 76235 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:76558:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 76558 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:76588:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 76588 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:76630:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 76630 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:76645:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 76645 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:76685:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 76685 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:76826:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 76826 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:76934:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 76934 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:76951:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 76951 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:77084:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 77084 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:77183:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 77183 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:77230:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 77230 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:77259:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 77259 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:77361:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 77361 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:77412:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 77412 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:77455:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 77455 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:77530:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 77530 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:77571:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 77571 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:77652:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 77652 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:77673:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 77673 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:77844:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 77844 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:77940:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 77940 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:78026:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 78026 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:78139:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 78139 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:78234:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 78234 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:78340:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 78340 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:78446:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 78446 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:78552:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 78552 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:78721:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 78721 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:78961:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 78961 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:79048:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 79048 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:79290:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 79290 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:79426:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 79426 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:79444:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 79444 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:79451:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 79451 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:79471:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 79471 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:79489:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 79489 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:79496:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 79496 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:79517:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 79517 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:79641:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 79641 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:80262:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 80262 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:80373:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 80373 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:80398:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 80398 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:80643:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 80643 | }
+       | ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AotLab/aot_blocks.c:81260:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+ 81260 | }
+       | ^
+356 warnings generated.
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/App/main.m:125:46: warning: expression which evaluates to zero treated as a null pointer constant of type 'void *' [-Wnon-literal-null-conversion]
+  125 |                                              EGL_DEFAULT_DISPLAY,
+      |                                              ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/egl.h:251:43: note: expanded from macro 'EGL_DEFAULT_DISPLAY'
+  251 | #define EGL_DEFAULT_DISPLAY               EGL_CAST(EGLNativeDisplayType,0)
+      |                                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/eglplatform.h:178:31: note: expanded from macro 'EGL_CAST'
+  178 | #define EGL_CAST(type, value) ((type) (value))
+      |                               ^~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/App/main.m:300:91: warning: expression which evaluates to zero treated as a null pointer constant of type 'void *' [-Wnon-literal-null-conversion]
+  300 |     EGLDisplay display = getPlatformDisplay ? getPlatformDisplay(EGL_PLATFORM_ANGLE_ANGLE,EGL_DEFAULT_DISPLAY,da) : EGL_NO_DISPLAY;
+      |                                                                                           ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/egl.h:251:43: note: expanded from macro 'EGL_DEFAULT_DISPLAY'
+  251 | #define EGL_DEFAULT_DISPLAY               EGL_CAST(EGLNativeDisplayType,0)
+      |                                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/eglplatform.h:178:31: note: expanded from macro 'EGL_CAST'
+  178 | #define EGL_CAST(type, value) ((type) (value))
+      |                               ^~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/App/main.m:2426:16: warning: @available does not guard availability here; use if (@available) instead [-Wunsupported-availability-guard]
+ 2426 |     if (gpu && @available(iOS 16.0, *)) workingSet = gpu.recommendedMaxWorkingSetSize;
+      |                ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/App/main.m:2426:58: warning: 'recommendedMaxWorkingSetSize' is only available on iOS 16.0 or newer [-Wunguarded-availability-new]
+ 2426 |     if (gpu && @available(iOS 16.0, *)) workingSet = gpu.recommendedMaxWorkingSetSize;
+      |                                                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Applications/Xcode_27.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.0.sdk/System/Library/Frameworks/Metal.framework/Headers/MTLDevice.h:428:31: note: 'recommendedMaxWorkingSetSize' has been marked as being introduced in iOS 16.0 here, but the deployment target is iOS 15.0.0
+  428 | @property (readonly) uint64_t recommendedMaxWorkingSetSize API_AVAILABLE(macos(10.12), macCatalyst(13.0), ios(16.0));
+      |                               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/App/main.m:2426:58: note: enclose 'recommendedMaxWorkingSetSize' in an @available check to silence this warning
+ 2426 |     if (gpu && @available(iOS 16.0, *)) workingSet = gpu.recommendedMaxWorkingSetSize;
+      |                                                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+4 warnings generated.
+AGR_SMOKE_PHASE 2026-09-28T02:57:21Z compiled main.m
+ld: warning: building for iOS-simulator-15.0, but linking with dylib '@rpath/libEGL.framework/libEGL' which was built for newer version 16.0
+ld: warning: building for iOS-simulator-15.0, but linking with dylib '@rpath/libGLESv2.framework/libGLESv2' which was built for newer version 16.0
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/build/AGRSimulator.app/Frameworks/libEGL.framework: replacing existing signature
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/build/AGRSimulator.app/Frameworks/libGLESv2.framework: replacing existing signature
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/build/AGRSimulator.app: replacing existing signature
+AGR_SMOKE_PHASE 2026-09-28T02:57:22Z Runtime app linked and signed
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 28248
+aot-result {"svc_interpreter_seconds": 0, "boundary_seconds": 0.06209000000000017, "trace_incomplete": false, "jni_version": 0, "fallback_interpreter_seconds": 0, "jni_onload_status": 0, "dex_loaded": 1, "mode": "interpreter-trace", "aot_instructions": 0, "aot_blocks": 0, "fallback_log_incomplete": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 0, "trace_seen": 29578, "fallback_interpreter_instructions": 0, "miss_pc": "00000000", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 29578, "boundary_count": 0, "baseline_interpreter_seconds": 0.10188300000000008, "aot_off_probe_seconds": 0.0001649999999999999, "interpreter_instructions": 29578, "lookup_miss_count": 0, "workload": "kungfoo-armv7-native-loader-stage", "aot_drive_seconds": 0, "passed": true, "error": "", "fallback_count": 0, "mounted": 1, "svc_interpreter_instructions": 0, "seconds": 0.11878299713134766, "drive_calls": 656}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 28831
+aot-result {"svc_interpreter_seconds": 0, "boundary_seconds": 0.0028860000000000175, "trace_incomplete": false, "jni_version": 0, "fallback_interpreter_seconds": 0, "jni_onload_status": 0, "dex_loaded": 1, "mode": "interpreter-baseline", "aot_instructions": 0, "aot_blocks": 0, "fallback_log_incomplete": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 0, "trace_seen": 0, "fallback_interpreter_instructions": 0, "miss_pc": "00000000", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 29578, "boundary_count": 0, "baseline_interpreter_seconds": 0.0016529999999999952, "aot_off_probe_seconds": 3.8999999999999986e-05, "interpreter_instructions": 29578, "lookup_miss_count": 0, "workload": "kungfoo-armv7-native-loader-stage", "aot_drive_seconds": 0, "passed": true, "error": "", "fallback_count": 0, "mounted": 1, "svc_interpreter_instructions": 0, "seconds": 0.0209500789642334, "drive_calls": 656}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 29076
+aot-result {"svc_interpreter_seconds": 3.4e-05, "boundary_seconds": 0.021497000000000068, "trace_incomplete": false, "jni_version": 0, "fallback_interpreter_seconds": 0.0007210000000000104, "jni_onload_status": 0, "dex_loaded": 1, "mode": "aot-correctness", "aot_instructions": 20544, "aot_blocks": 20544, "fallback_log_incomplete": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 629, "trace_seen": 0, "fallback_interpreter_instructions": 8378, "miss_pc": "00046a8c", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 0, "boundary_count": 656, "baseline_interpreter_seconds": 0, "aot_off_probe_seconds": 0, "interpreter_instructions": 9034, "lookup_miss_count": 7749, "workload": "kungfoo-armv7-native-loader-stage", "aot_drive_seconds": 0.05332000000000018, "passed": true, "error": "", "fallback_count": 8378, "mounted": 1, "svc_interpreter_instructions": 656, "seconds": 0.060066938400268555, "drive_calls": 9034}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 29792
+aot-result {"svc_interpreter_seconds": 4.9999999999999955e-05, "boundary_seconds": 0.007051000000000019, "trace_incomplete": false, "jni_version": 0, "fallback_interpreter_seconds": 0.000843000000000014, "jni_onload_status": 0, "dex_loaded": 1, "mode": "aot-fast-audit", "aot_instructions": 20544, "aot_blocks": 4892, "fallback_log_incomplete": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 629, "trace_seen": 0, "fallback_interpreter_instructions": 8378, "miss_pc": "00046a8c", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 0, "boundary_count": 656, "baseline_interpreter_seconds": 0, "aot_off_probe_seconds": 0, "interpreter_instructions": 9034, "lookup_miss_count": 7749, "workload": "kungfoo-armv7-native-loader-stage", "aot_drive_seconds": 0.006873000000000325, "passed": true, "error": "", "fallback_count": 8378, "mounted": 1, "svc_interpreter_instructions": 656, "seconds": 0.014801979064941406, "drive_calls": 9034}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 30030
+aot-result {"svc_interpreter_seconds": 0, "boundary_seconds": 0.0013709999999999905, "trace_incomplete": false, "jni_version": 0, "fallback_interpreter_seconds": 0, "jni_onload_status": 0, "dex_loaded": 1, "mode": "interpreter-baseline", "aot_instructions": 0, "aot_blocks": 0, "fallback_log_incomplete": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 0, "trace_seen": 0, "fallback_interpreter_instructions": 0, "miss_pc": "00000000", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 29578, "boundary_count": 0, "baseline_interpreter_seconds": 0.0006590000000000057, "aot_off_probe_seconds": 2.800000000000001e-05, "interpreter_instructions": 29578, "lookup_miss_count": 0, "workload": "kungfoo-armv7-native-loader-stage", "aot_drive_seconds": 0, "passed": true, "error": "", "fallback_count": 0, "mounted": 1, "svc_interpreter_instructions": 0, "seconds": 0.008746981620788574, "drive_calls": 656}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 30517
+aot-result {"svc_interpreter_seconds": 4.899999999999996e-05, "boundary_seconds": 0.0036280000000000158, "trace_incomplete": false, "jni_version": 0, "fallback_interpreter_seconds": 0.000800000000000012, "jni_onload_status": 0, "dex_loaded": 1, "mode": "aot-performance", "aot_instructions": 20544, "aot_blocks": 4892, "fallback_log_incomplete": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 629, "trace_seen": 0, "fallback_interpreter_instructions": 8378, "miss_pc": "00046a8c", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 0, "boundary_count": 656, "baseline_interpreter_seconds": 0, "aot_off_probe_seconds": 0, "interpreter_instructions": 9034, "lookup_miss_count": 7749, "workload": "kungfoo-armv7-native-loader-stage", "aot_drive_seconds": 0.0010910000000000062, "passed": true, "error": "", "fallback_count": 8378, "mounted": 1, "svc_interpreter_instructions": 656, "seconds": 0.00935208797454834, "drive_calls": 9034}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 30950
+aot-result {"svc_interpreter_seconds": 0, "boundary_seconds": 0.0010419999999999958, "trace_incomplete": false, "jni_version": 0, "fallback_interpreter_seconds": 0, "jni_onload_status": 0, "dex_loaded": 1, "mode": "interpreter-baseline", "aot_instructions": 0, "aot_blocks": 0, "fallback_log_incomplete": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 0, "trace_seen": 0, "fallback_interpreter_instructions": 0, "miss_pc": "00000000", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 29578, "boundary_count": 0, "baseline_interpreter_seconds": 0.00047200000000000264, "aot_off_probe_seconds": 1.4000000000000003e-05, "interpreter_instructions": 29578, "lookup_miss_count": 0, "workload": "kungfoo-armv7-native-loader-stage", "aot_drive_seconds": 0, "passed": true, "error": "", "fallback_count": 0, "mounted": 1, "svc_interpreter_instructions": 0, "seconds": 0.006999969482421875, "drive_calls": 656}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 31156
+aot-result {"svc_interpreter_seconds": 6.499999999999991e-05, "boundary_seconds": 0.004026000000000018, "trace_incomplete": false, "jni_version": 0, "fallback_interpreter_seconds": 0.0010870000000000079, "jni_onload_status": 0, "dex_loaded": 1, "mode": "aot-performance", "aot_instructions": 20544, "aot_blocks": 4892, "fallback_log_incomplete": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 629, "trace_seen": 0, "fallback_interpreter_instructions": 8378, "miss_pc": "00046a8c", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 0, "boundary_count": 656, "baseline_interpreter_seconds": 0, "aot_off_probe_seconds": 0, "interpreter_instructions": 9034, "lookup_miss_count": 7749, "workload": "kungfoo-armv7-native-loader-stage", "aot_drive_seconds": 0.0018569999999999737, "passed": true, "error": "", "fallback_count": 8378, "mounted": 1, "svc_interpreter_instructions": 656, "seconds": 0.013267993927001953, "drive_calls": 9034}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 31753
+aot-result {"svc_interpreter_seconds": 0, "boundary_seconds": 0.0009880000000000012, "trace_incomplete": false, "jni_version": 0, "fallback_interpreter_seconds": 0, "jni_onload_status": 0, "dex_loaded": 1, "mode": "interpreter-baseline", "aot_instructions": 0, "aot_blocks": 0, "fallback_log_incomplete": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 0, "trace_seen": 0, "fallback_interpreter_instructions": 0, "miss_pc": "00000000", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 29578, "boundary_count": 0, "baseline_interpreter_seconds": 0.00046200000000000245, "aot_off_probe_seconds": 2.5000000000000008e-05, "interpreter_instructions": 29578, "lookup_miss_count": 0, "workload": "kungfoo-armv7-native-loader-stage", "aot_drive_seconds": 0, "passed": true, "error": "", "fallback_count": 0, "mounted": 1, "svc_interpreter_instructions": 0, "seconds": 0.0046089887619018555, "drive_calls": 656}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 32049
+aot-result {"svc_interpreter_seconds": 2.4000000000000007e-05, "boundary_seconds": 0.0019549999999999906, "trace_incomplete": false, "jni_version": 0, "fallback_interpreter_seconds": 0.000555000000000007, "jni_onload_status": 0, "dex_loaded": 1, "mode": "aot-performance", "aot_instructions": 20544, "aot_blocks": 4892, "fallback_log_incomplete": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 629, "trace_seen": 0, "fallback_interpreter_instructions": 8378, "miss_pc": "00046a8c", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 0, "boundary_count": 656, "baseline_interpreter_seconds": 0, "aot_off_probe_seconds": 0, "interpreter_instructions": 9034, "lookup_miss_count": 7749, "workload": "kungfoo-armv7-native-loader-stage", "aot_drive_seconds": 0.0009630000000000148, "passed": true, "error": "", "fallback_count": 8378, "mounted": 1, "svc_interpreter_instructions": 656, "seconds": 0.00920093059539795, "drive_calls": 9034}
+{
+  "schema": "agr.offline-aot-differential.v1",
+  "input_elf_sha256": "010baa4964cd7dbcf1ba038428ab4d6afc13ffd0a180b447be07b8f088f9ba9d",
+  "generated_c_sha256": "40361d5096a55dc68bd1bc62652969b198919ada361d8ff9e605159cff4e8400",
+  "tested_commit": "635dc4f6d3b3eacbaf4aa3d6168dcbff4f57b9f1",
+  "tested_tree": "cea05fcfed2625d5c1cdc3b4d9a403c8cbc65611",
+  "translation_used_execution_trace": false,
+  "oracle_trace_sha256": "c8240bcf870a26c53bdcf1d9b5309bdebc9fd47e6c47f390687b699be73222d6",
+  "interpreter_trace_instructions": 29578,
+  "interpreter_trace_complete": true,
+  "observable_fields_equal": {
+    "passed": true,
+    "mounted": true,
+    "elf_registered": true,
+    "dex_loaded": true,
+    "jni_onload_status": true,
+    "jni_version": true,
+    "native_so_bytes": true,
+    "error": true
+  },
+  "host_calls_equal": true,
+  "checkpoint_count": 20544,
+  "checkpoint_mismatches": [],
+  "instruction_accounting": {
+    "diagnostic": true,
+    "fast": true
+  },
+  "diagnostic_aot_instructions": 20544,
+  "fast_aot_instructions": 20544,
+  "fast_interpreter_instructions": 9034,
+  "fast_lookup_misses": 7749,
+  "fast_fallback_counts": {
+    "it_state": 629,
+    "lookup_miss": 7749,
+    "svc": 656
+  },
+  "fast_fallback_unique_pc_mode": {
+    "it_state": 85,
+    "lookup_miss": 747,
+    "svc": 11
+  },
+  "lookup_miss_classes": {
+    "static_discovery_gap": 7455,
+    "unsupported_arm_semantic": 294
+  },
+  "fallback_log_accounting": true,
+  "performance_samples": 3,
+  "performance_host_calls_equal": true,
+  "baseline_engine_seconds": [
+    0.0006590000000000057,
+    0.00047200000000000264,
+    0.00046200000000000245
+  ],
+  "aot_route_engine_seconds": [
+    0.001940000000000018,
+    0.0030089999999999813,
+    0.0015420000000000219
+  ],
+  "baseline_engine_median": 0.00047200000000000264,
+  "aot_route_engine_median": 0.001940000000000018,
+  "route_speedup_ratio_of_medians": 0.24329896907216403,
+  "semantic_pass": true
+}

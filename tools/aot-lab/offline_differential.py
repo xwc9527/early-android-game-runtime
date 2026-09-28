@@ -97,7 +97,7 @@ def main():
         lookup_classes[category] += 1
     log_accounting = (not fast.get("fallback_log_incomplete") and
                       len(fallback_events) == sum(int(fast.get(name) or 0) for name in
-                          ("lookup_miss_count", "it_fallback_count", "guard_miss_count",
+                          ("lookup_miss_count", "it_fallback_count", "guard_miss_count", "mode_miss_count",
                            "step_limit_fallback_count", "boundary_count")))
     baselines = [read_json(path) for path in sorted(evidence.glob("baseline-performance-*-stage-result.json"))]
     aots = [read_json(path) for path in sorted(evidence.glob("performance-*-stage-result.json"))]

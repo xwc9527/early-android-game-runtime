@@ -507,6 +507,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
             @"lookup_miss_count":@(agr_aot_lookup_misses()),
             @"it_fallback_count":@(agr_aot_it_fallbacks()),
             @"guard_miss_count":@(agr_aot_guard_misses()),
+            @"mode_miss_count":@(agr_aot_mode_misses()),
             @"step_limit_fallback_count":@(agr_aot_step_limit_fallbacks()),
             @"boundary_count":@(agr_aot_boundary_count()),
             @"boundary_seconds":@(agr_aot_boundary_seconds()),

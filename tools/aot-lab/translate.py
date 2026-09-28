@@ -557,7 +557,8 @@ def emit(rows, destination):
     return entries
 
 
-def emit_partial(rows, destination, allowed_kinds, extra_starts=(), emit_debug=True):
+def emit_partial(rows, destination, allowed_kinds, extra_starts=(), emit_debug=True,
+                 mode_guard=False):
     """Emit a diagnostic oracle and an uninstrumented basic-block backend."""
     unique = {}
     ambiguous = set()
@@ -627,7 +628,8 @@ def emit_partial(rows, destination, allowed_kinds, extra_starts=(), emit_debug=T
         else:
             previous = rows[index - 1]
             previous_op = operations[previous["pc"]]
-            if is_terminal(previous_op) or previous["pc"] + previous["len"] != pc:
+            if (is_terminal(previous_op) or previous["pc"] + previous["len"] != pc or
+                    previous["thumb"] != row["thumb"]):
                 starts.add(pc)
         if is_terminal(op):
             if index + 1 < len(rows) and runtime_eligible(rows[index + 1]):
@@ -655,11 +657,16 @@ def emit_partial(rows, destination, allowed_kinds, extra_starts=(), emit_debug=T
             if is_terminal(op):
                 break
             nxt = pc + row["len"]
+            if nxt in eligible and eligible[nxt]["thumb"] != row["thumb"]:
+                break
             if nxt in starts and nxt != start:
                 break
             pc = nxt
         name = f"aot_fast_{start:08x}"
         lines = [f"static int {name}(AgrAotRegs *s) {{", "    int rc = 0;", "    (void)rc;"]
+        if mode_guard:
+            expected_mode = "0x20u" if body[0][0]["thumb"] else "0u"
+            lines.append(f"    if ((*s->cpsr & 0x20u) != {expected_mode}) return AGR_AOT_MODE_MISS;")
         ended = False
         for row, op in body:
             lines.append("    " + emit_op(op, row["thumb"]))
