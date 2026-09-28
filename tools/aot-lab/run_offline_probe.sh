@@ -6,10 +6,13 @@ POLICY="${AGR_OFFLINE_ENTRY_POLICY:-abi}"
 STAGE="${AGR_OFFLINE_STAGE:-loader}"
 FAST_ONLY="${AGR_OFFLINE_NO_DIAGNOSTIC:-0}"
 POLICY_COMPARE="${AGR_OFFLINE_POLICY_COMPARE:-0}"
+RELOCATABLE="${AGR_OFFLINE_RELOCATABLE:-0}"
 [[ "$STAGE" == loader || "$STAGE" == oncreate ]] || { echo "unknown stage: $STAGE" >&2; exit 2; }
 [[ "$FAST_ONLY" == 0 || "$FAST_ONLY" == 1 ]] || { echo "invalid FAST_ONLY: $FAST_ONLY" >&2; exit 2; }
+[[ "$RELOCATABLE" == 0 || "$RELOCATABLE" == 1 ]] || { echo "invalid RELOCATABLE: $RELOCATABLE" >&2; exit 2; }
 SUFFIX=""
 [[ "$FAST_ONLY" == 1 ]] && SUFFIX="-fast-only"
+[[ "$RELOCATABLE" == 1 ]] && SUFFIX="$SUFFIX-relocatable"
 EVIDENCE="$ROOT/build/offline-aot-$POLICY-$STAGE$SUFFIX"
 mkdir -p "$EVIDENCE"
 export AGR_SIMULATOR_PROFILE=aot-kungfoo
@@ -38,8 +41,13 @@ PY
 TRANSLATION_FLAGS=()
 [[ "$FAST_ONLY" == 1 ]] && TRANSLATION_FLAGS+=(--no-diagnostic)
 [[ "${AGR_OFFLINE_DIRECT_LOOKUP:-0}" == 1 ]] && TRANSLATION_FLAGS+=(--direct-lookup)
+LOAD_BIAS=0x10000
+if [[ "$RELOCATABLE" == 1 ]]; then
+  LOAD_BIAS=runtime
+  TRANSLATION_FLAGS+=(--relocatable)
+fi
 "$PYTHON" "$ROOT/tools/aot-lab/translate_offline.py" \
-  --elf "$EVIDENCE/input-armv7.so" --entry-policy "$POLICY" --load-bias 0x10000 \
+  --elf "$EVIDENCE/input-armv7.so" --entry-policy "$POLICY" --load-bias "$LOAD_BIAS" \
   "${TRANSLATION_FLAGS[@]}" \
   --out "$ROOT/Runtime/AotLab/aot_blocks.c" \
   --manifest "$EVIDENCE/translation-manifest.json" \

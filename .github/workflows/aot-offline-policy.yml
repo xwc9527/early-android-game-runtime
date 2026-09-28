@@ -4,30 +4,30 @@ on:
   workflow_dispatch:
 
 jobs:
-  all-exidx-size-optimized:
+  all-exidx-relocatable:
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Compare size-optimized static AOT artifact on real path
+      - name: Execute relocatable offline AOT on real ARM path
         env:
           AGR_OFFLINE_ENTRY_POLICY: all-exidx
           AGR_OFFLINE_STAGE: oncreate
           AGR_OFFLINE_NO_DIAGNOSTIC: 1
           AGR_OFFLINE_POLICY_COMPARE: 1
           AGR_OFFLINE_DIRECT_LOOKUP: 1
-          AGR_AOT_OPT_FLAG: -Os
+          AGR_OFFLINE_RELOCATABLE: 1
         run: |
           set -o pipefail
-          mkdir -p build/offline-aot-all-exidx-oncreate-fast-only
+          mkdir -p build/offline-aot-all-exidx-oncreate-fast-only-relocatable
           bash tools/aot-lab/run_offline_probe.sh 2>&1 |
-            tee build/offline-aot-all-exidx-oncreate-fast-only/ci-log.txt
+            tee build/offline-aot-all-exidx-oncreate-fast-only-relocatable/ci-log.txt
       - name: Upload original execution evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: offline-aot-all-exidx-size-optimized
-          path: build/offline-aot-all-exidx-oncreate-fast-only
+          name: offline-aot-all-exidx-relocatable
+          path: build/offline-aot-all-exidx-oncreate-fast-only-relocatable
           if-no-files-found: error
