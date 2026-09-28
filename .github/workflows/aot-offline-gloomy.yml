@@ -16,16 +16,17 @@ jobs:
           AGR_OFFLINE_GLOOMY_RELOCATABLE: 1
           AGR_OFFLINE_ENTRY_POLICY: all-exidx
           AGR_GAME_COMPILER_REGION: 1
-          AGR_OFFLINE_GLOOMY_WARM: 1
+          AGR_AOT_PERF_ATTRIBUTION: 1
+          AGR_AOT_CAPTURE_ONLY: 1
         run: |
           set -o pipefail
-          mkdir -p build/offline-aot-gloomy-all-exidx-relocatable-warm-region-compiler
+          mkdir -p build/offline-aot-gloomy-all-exidx-relocatable-attribution-capture-region-compiler
           bash tools/aot-lab/run_offline_gloomy.sh 2>&1 |
-            tee build/offline-aot-gloomy-all-exidx-relocatable-warm-region-compiler/ci-log.txt
+            tee build/offline-aot-gloomy-all-exidx-relocatable-attribution-capture-region-compiler/ci-log.txt
       - name: Upload original execution evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: region-compiler-gloomy-warm
-          path: build/offline-aot-gloomy-all-exidx-relocatable-warm-region-compiler
+          name: attribution-capture-gloomy
+          path: build/offline-aot-gloomy-all-exidx-relocatable-attribution-capture-region-compiler
           if-no-files-found: error
