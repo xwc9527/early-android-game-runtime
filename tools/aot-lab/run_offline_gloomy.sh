@@ -142,6 +142,8 @@ if [[ "$CAPTURE_ONLY" == 1 ]]; then
   export AGR_AOT_CAPTURE_PAGES="$("$PYTHON" -c 'import json,sys; print(",".join(map(str,next(x for x in json.load(open(sys.argv[1]))["segments"] if x["label"]=="gloomy")["snapshot_guest_pages"])))' "$SPEC")"
   run_one run attribution-capture
   cp "$ROOT/build/artifacts/aot-attribution-entry.bin" "$PAIR/attribution-entry.bin"
+  bash "$ROOT/tools/aot-lab/run_attribution_replay.sh" gloomy "$EVIDENCE" \
+    "$PAIR/attribution-entry.bin" "$EVIDENCE/input-armv7.so"
   continue
 elif [[ "$WARM" == 1 ]]; then
   for sample in 1 2 3 4 5; do

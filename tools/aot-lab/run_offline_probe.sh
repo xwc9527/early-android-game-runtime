@@ -112,6 +112,8 @@ if [[ "$CAPTURE_ONLY" == 1 ]]; then
   export AGR_AOT_CAPTURE_PAGES="$("$PYTHON" -c 'import json,sys; print(",".join(map(str,next(x for x in json.load(open(sys.argv[1]))["segments"] if x["label"]=="kungfoo")["snapshot_guest_pages"])))' "$SPEC")"
   run_one kungfoo-oncreate-performance attribution-capture
   cp "$ROOT/build/artifacts/aot-attribution-entry.bin" "$EVIDENCE/attribution-entry.bin"
+  bash "$ROOT/tools/aot-lab/run_attribution_replay.sh" kungfoo "$EVIDENCE" \
+    "$EVIDENCE/attribution-entry.bin" "$EVIDENCE/input-armv7.so"
   exit 0
 fi
 
