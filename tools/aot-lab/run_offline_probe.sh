@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 POLICY="${AGR_OFFLINE_ENTRY_POLICY:-abi}"
 STAGE="${AGR_OFFLINE_STAGE:-loader}"
 FAST_ONLY="${AGR_OFFLINE_NO_DIAGNOSTIC:-0}"
+POLICY_COMPARE="${AGR_OFFLINE_POLICY_COMPARE:-0}"
 [[ "$STAGE" == loader || "$STAGE" == oncreate ]] || { echo "unknown stage: $STAGE" >&2; exit 2; }
 [[ "$FAST_ONLY" == 0 || "$FAST_ONLY" == 1 ]] || { echo "invalid FAST_ONLY: $FAST_ONLY" >&2; exit 2; }
 SUFFIX=""
@@ -59,6 +60,7 @@ cp "$ROOT/build/build-environment.json" "$EVIDENCE/build-environment.json"
 run_one() {
   local mode="$1" prefix="$2" status name
   rm -f "$ROOT/build/artifacts/aot-stage-result.json" "$ROOT/build/artifacts/aot-hosts.txt" \
+    "$ROOT/build/artifacts/aot-prefix-result.json" \
     "$ROOT/build/artifacts/aot-trace.txt" "$ROOT/build/artifacts/aot-checkpoints.txt" \
     "$ROOT/build/artifacts/aot-fallbacks.txt"
   set +e
@@ -66,7 +68,7 @@ run_one() {
   status=$?
   set -e
   printf '%s\n' "$status" > "$EVIDENCE/$prefix.exit"
-  for name in aot-stage-result.json aot-hosts.txt aot-trace.txt aot-checkpoints.txt aot-fallbacks.txt; do
+  for name in aot-stage-result.json aot-prefix-result.json aot-hosts.txt aot-trace.txt aot-checkpoints.txt aot-fallbacks.txt; do
     [[ ! -f "$ROOT/build/artifacts/$name" ]] || cp "$ROOT/build/artifacts/$name" "$EVIDENCE/$prefix-${name#aot-}"
   done
   if [[ "$status" -ne 0 ]]; then
@@ -89,7 +91,11 @@ for sample in $(seq 1 "$SAMPLES"); do
   run_one "$MODE_PREFIX-performance" "performance-$sample"
 done
 if [[ "$FAST_ONLY" == 1 ]]; then
-  "$PYTHON" "$ROOT/tools/aot-lab/offline_fast_only_differential.py" "$EVIDENCE"
+  if [[ "$POLICY_COMPARE" == 1 ]]; then
+    "$PYTHON" "$ROOT/tools/aot-lab/offline_policy_differential.py" "$EVIDENCE"
+  else
+    "$PYTHON" "$ROOT/tools/aot-lab/offline_fast_only_differential.py" "$EVIDENCE"
+  fi
 else
   "$PYTHON" "$ROOT/tools/aot-lab/offline_differential.py" "$EVIDENCE"
 fi

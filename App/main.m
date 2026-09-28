@@ -468,7 +468,8 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
             agr_aot_trace_open([[docs stringByAppendingPathComponent:@"aot-trace.txt"] UTF8String]);
         } else if (gKungFooAotProbeMode == 2 || gKungFooAotProbeMode == 4 || gKungFooAotProbeMode == 5 ||
                    gKungFooAotProbeMode == 7 || gKungFooAotProbeMode == 9 || gKungFooAotProbeMode == 10) {
-            if (gKungFooAotProbeMode == 2 || gKungFooAotProbeMode == 7) {
+            if (gKungFooAotProbeMode == 2 || gKungFooAotProbeMode == 5 ||
+                gKungFooAotProbeMode == 7 || gKungFooAotProbeMode == 9) {
                 agr_aot_checkpoint_open([[docs stringByAppendingPathComponent:@"aot-checkpoints.txt"] UTF8String]);
             }
             if (gKungFooAotProbeMode == 2 || gKungFooAotProbeMode == 5 ||
@@ -483,6 +484,19 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
     if (aotProbe) writePVSProgress(@"before:aot-kungfoo.dlopen",guest);
     int jniOnLoad=dexLoaded==0?agr_guest_load_java_library(guest,agr_apk_native_library(package),&jniVersion):-1;
     if (aotProbe) writePVSProgress(@"after:aot-kungfoo.dlopen",guest);
+    if (aotProbe && gKungFooAotProbeMode >= 6) {
+        NSDictionary *prefix=@{
+            @"workload":@"kungfoo-armv7-native-loader-prefix",
+            @"aot_instructions":@(agr_aot_executed_instructions()),
+            @"interpreter_instructions":@(agr_aot_fallback_interpreter_instructions()+
+                                           agr_aot_svc_interpreter_instructions()+
+                                           agr_aot_baseline_interpreter_instructions()),
+            @"trace_seen":@(agr_aot_trace_seen()),
+            @"jni_onload_status":@(jniOnLoad)};
+        NSData *prefixBytes=[NSJSONSerialization dataWithJSONObject:prefix options:0 error:nil];
+        NSString *docs=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+        [prefixBytes writeToFile:[docs stringByAppendingPathComponent:@"aot-prefix-result.json"] atomically:YES];
+    }
     if (aotProbe && gKungFooAotProbeMode <= 5) {
         aotStageSeconds=CFAbsoluteTimeGetCurrent()-aotStageStart;
         aotStageInterpreterInstructions=guest?agr_guest_instruction_count(guest)-aotStageBefore:0;

@@ -2,10 +2,6 @@ name: ARMv7 Gloomy automatic linker placement AOT probe
 
 on:
   workflow_dispatch:
-  push:
-    branches: [validation/aot-offline-generalization]
-    paths-ignore:
-      - "tools/aot-lab/evidence/**"
 
 jobs:
   auto-first-gloomy:
