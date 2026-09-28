@@ -1,0 +1,901 @@
+AGR_SMOKE_PHASE 2026-09-28T15:37:42Z prepare sample profile aot-kungfoo
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+100 11.9M  100 11.9M    0     0  28.9M      0 --:--:-- --:--:-- --:--:-- 28.9M
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/build/angle-xcframeworks-v2.1.28252.zip: OK
+info: downloading component rust-std
+AGR_SMOKE_PHASE 2026-09-28T15:38:00Z compile Runtime and host
+[1m[92m    Updating[0m crates.io index
+[1m[92m     Locking[0m 1 package to latest compatible version
+[1m[92m Downloading[0m crates ...
+[1m[92m  Downloaded[0m libc v0.2.189
+[1m[92m   Compiling[0m libc v0.2.189
+[1m[92m   Compiling[0m touchhle-arm-interpreter v0.1.0 (/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/ArmInterpreter)
+[1m[92m    Finished[0m `release` profile [optimized] target(s) in 8.09s
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/GuestRuntime/agr_guest_runtime.c:656:61: warning: expression which evaluates to zero treated as a null pointer constant of type 'void *' [-Wnon-literal-null-conversion]
+  656 |             g->display = get ? get(EGL_PLATFORM_ANGLE_ANGLE,EGL_DEFAULT_DISPLAY,attributes) : EGL_NO_DISPLAY;
+      |                                                             ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/egl.h:251:43: note: expanded from macro 'EGL_DEFAULT_DISPLAY'
+  251 | #define EGL_DEFAULT_DISPLAY               EGL_CAST(EGLNativeDisplayType,0)
+      |                                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/eglplatform.h:178:31: note: expanded from macro 'EGL_CAST'
+  178 | #define EGL_CAST(type, value) ((type) (value))
+      |                               ^~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/GuestRuntime/agr_guest_runtime.c:1501:84: warning: expression which evaluates to zero treated as a null pointer constant of type 'void *' [-Wnon-literal-null-conversion]
+ 1501 |     g->display = getPlatformDisplay ? getPlatformDisplay(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, da) : EGL_NO_DISPLAY;
+      |                                                                                    ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/egl.h:251:43: note: expanded from macro 'EGL_DEFAULT_DISPLAY'
+  251 | #define EGL_DEFAULT_DISPLAY               EGL_CAST(EGLNativeDisplayType,0)
+      |                                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/eglplatform.h:178:31: note: expanded from macro 'EGL_CAST'
+  178 | #define EGL_CAST(type, value) ((type) (value))
+      |                               ^~~~~~~~~~~~~~~~
+2 warnings generated.
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Runtime/AndroidFw/agr_androidfw.cpp:5:
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/include/androidfw/AssetManager.h:40:1: warning: empty struct has size 0 in C, size 1 in C++ [-Wextern-c-compat]
+   40 | struct AAssetManager { };
+      | ^
+1 warning generated.
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/Asset.cpp:70:13: warning: 'sprintf' is deprecated: This function is provided for compatibility reasons only.  Due to security concerns inherent in the design of sprintf(3), it is highly recommended that you use snprintf(3) instead. [-Wdeprecated-declarations]
+   70 |             sprintf(buf, ": %dK\n", (int)size);
+      |             ^
+/Applications/Xcode_27.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.0.sdk/usr/include/_stdio.h:278:1: note: 'sprintf' has been explicitly marked deprecated here
+  278 | __deprecated_msg("This function is provided for compatibility reasons only.  Due to security concerns inherent in the design of sprintf(3), it is highly recommended that you use snprintf(3) instead.")
+      | ^
+/Applications/Xcode_27.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.0.sdk/usr/include/sys/cdefs.h:227:48: note: expanded from macro '__deprecated_msg'
+  227 |         #define __deprecated_msg(_msg) __attribute__((__deprecated__(_msg)))
+      |                                                       ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/Asset.cpp:388:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  388 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/Asset.cpp:400:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  400 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/Asset.cpp:709:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  709 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/Asset.cpp:740:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  740 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+5 warnings generated.
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/AssetManager.cpp:27:
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/include/androidfw/AssetManager.h:40:1: warning: empty struct has size 0 in C, size 1 in C++ [-Wextern-c-compat]
+   40 | struct AAssetManager { };
+      | ^
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/AssetManager.cpp:25:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/include/androidfw/Asset.h:30:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/String8.h:23:
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:181:17: warning: first argument in call to 'memmove' is a pointer to non-trivially copyable type 'android::String8' [-Wnontrivial-memcall]
+  181 |         memmove(d,s,n*sizeof(TYPE));
+      |                 ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:410:5: note: in instantiation of function template specialization 'android::move_forward_type<android::String8>' requested here
+  410 |     move_forward_type( reinterpret_cast<TYPE*>(dest), reinterpret_cast<const TYPE*>(from), num );
+      |     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:219:15: note: in instantiation of member function 'android::Vector<android::String8>::do_move_forward' requested here
+  219 | Vector<TYPE>::Vector()
+      |               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/AssetManager.cpp:1456:21: note: in instantiation of member function 'android::Vector<android::String8>::Vector' requested here
+ 1456 |     Vector<String8> dirs;
+      |                     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:181:17: note: explicitly cast the pointer to silence this warning
+  181 |         memmove(d,s,n*sizeof(TYPE));
+      |                 ^
+      |                 (void*)
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:204:17: warning: first argument in call to 'memmove' is a pointer to non-trivially copyable type 'android::String8' [-Wnontrivial-memcall]
+  204 |         memmove(d,s,n*sizeof(TYPE));
+      |                 ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:415:5: note: in instantiation of function template specialization 'android::move_backward_type<android::String8>' requested here
+  415 |     move_backward_type( reinterpret_cast<TYPE*>(dest), reinterpret_cast<const TYPE*>(from), num );
+      |     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:219:15: note: in instantiation of member function 'android::Vector<android::String8>::do_move_backward' requested here
+  219 | Vector<TYPE>::Vector()
+      |               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/AssetManager.cpp:1456:21: note: in instantiation of member function 'android::Vector<android::String8>::Vector' requested here
+ 1456 |     Vector<String8> dirs;
+      |                     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:204:17: note: explicitly cast the pointer to silence this warning
+  204 |         memmove(d,s,n*sizeof(TYPE));
+      |                 ^
+      |                 (void*)
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/AssetManager.cpp:27:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/include/androidfw/AssetManager.h:25:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/include/androidfw/ZipFileRO.h:36:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/threads.h:35:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Thread.h:31:
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/RefBase.h:490:17: warning: first argument in call to 'memmove' is a pointer to non-trivially copyable type 'sp<android::AssetManager::SharedZip>' [-Wnontrivial-memcall]
+  490 |         memmove(d, s, n*sizeof(sp<TYPE>));
+      |                 ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/RefBase.h:523:21: note: in instantiation of function template specialization 'android::ReferenceMover::move_references<android::AssetManager::SharedZip>' requested here
+  523 |     ReferenceMover::move_references(d, s, n);
+      |                     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:410:5: note: in instantiation of function template specialization 'android::move_forward_type<android::AssetManager::SharedZip>' requested here
+  410 |     move_forward_type( reinterpret_cast<TYPE*>(dest), reinterpret_cast<const TYPE*>(from), num );
+      |     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:219:15: note: in instantiation of member function 'android::Vector<android::sp<android::AssetManager::SharedZip> >::do_move_forward' requested here
+  219 | Vector<TYPE>::Vector()
+      |               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/AssetManager.cpp:1916:23: note: in instantiation of member function 'android::Vector<android::sp<android::AssetManager::SharedZip> >::Vector' requested here
+ 1916 | AssetManager::ZipSet::ZipSet(void)
+      |                       ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/RefBase.h:490:17: note: explicitly cast the pointer to silence this warning
+  490 |         memmove(d, s, n*sizeof(sp<TYPE>));
+      |                 ^
+      |                 (void*)
+4 warnings generated.
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:110:28: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+  110 |                      name, (void*)size,
+      |                            ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:112:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  112 |                 return BAD_TYPE;
+      |                 ~~~~~~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:116:20: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  116 |             return BAD_TYPE;
+      |             ~~~~~~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:119:20: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+  119 |              name, (void*)size, (void*)(int)headerSize);
+      |                    ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:119:33: warning: cast to 'void *' from smaller integer type 'int' [-Wint-to-void-pointer-cast]
+  119 |              name, (void*)size, (void*)(int)headerSize);
+      |                                 ^~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:120:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  120 |         return BAD_TYPE;
+      |         ~~~~~~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:123:16: warning: cast to 'void *' from smaller integer type 'int' [-Wint-to-void-pointer-cast]
+  123 |          name, (void*)(int)headerSize);
+      |                ^~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:124:12: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  124 |     return BAD_TYPE;
+      |     ~~~~~~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:238:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  238 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:249:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  249 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:253:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  253 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:263:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  263 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:285:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  285 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:328:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  328 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:362:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  362 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:375:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  375 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:390:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  390 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:400:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  400 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:406:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  406 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:415:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  415 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:435:18: warning: logical not is only applied to the left hand side of this bitwise operator [-Wlogical-not-parentheses]
+  435 |                 (!mHeader->flags&ResStringPool_header::UTF8_FLAG &&
+      |                  ^              ~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:435:18: note: add parentheses after the '!' to evaluate the bitwise operator first
+  435 |                 (!mHeader->flags&ResStringPool_header::UTF8_FLAG &&
+      |                  ^
+      |                   (                                             )
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:435:18: note: add parentheses around left hand side expression to silence this warning
+  435 |                 (!mHeader->flags&ResStringPool_header::UTF8_FLAG &&
+      |                  ^              
+      |                  (              )
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:438:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  438 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:450:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  450 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:457:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  457 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:464:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  464 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:488:28: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+  488 |             return (mError=BAD_TYPE);
+      |                           ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:1349:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 1349 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:1367:18: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 1367 |         mError = BAD_TYPE;
+      |                ~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:1403:26: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 1403 |                 mError = BAD_TYPE;
+      |                        ~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:1408:26: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 1408 |                 mError = BAD_TYPE;
+      |                        ~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:1425:18: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 1425 |         mError = BAD_TYPE;
+      |                ~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:1486:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 1486 |         return BAD_TYPE;
+      |         ~~~~~~ ^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:2895:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+ 2895 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:2972:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 2972 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:2978:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 2978 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:3014:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 3014 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:3031:18: warning: cast to 'void *' from smaller integer type 'int' [-Wint-to-void-pointer-cast]
+ 3031 |                  (void*)(int)(ctype),
+      |                  ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:3041:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 3041 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:3248:22: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 3248 |                      (void*)resID);
+      |                      ^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:3509:40: warning: format specifies type 'int' but the argument has type 'ssize_t' (aka 'long') [-Wformat]
+ 3509 |         ALOGV("Resulting offset=%d\n", offset);
+      |                                 ~~     ^~~~~~
+      |                                 %ld
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:80:54: note: expanded from macro 'ALOGV'
+   80 | #define ALOGV(...) ((void)ALOG(LOG_VERBOSE, LOG_TAG, __VA_ARGS__))
+      |                                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:3524:18: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 3524 |                  (void*)resID, (int)ip);
+      |                  ^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5121:14: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5120 |         ALOGW("ResTable_package type strings at %p are past chunk size %p.",
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 5121 |              (void*)dtohl(pkg->typeStrings), (void*)pkgSize);
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                           ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5122:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5122 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5126:14: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5125 |         ALOGW("ResTable_package type strings at %p is not on an integer boundary.",
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 5126 |              (void*)dtohl(pkg->typeStrings));
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                           ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5127:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5127 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5131:14: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5130 |         ALOGW("ResTable_package key strings at %p are past chunk size %p.",
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 5131 |              (void*)dtohl(pkg->keyStrings), (void*)pkgSize);
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                           ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5132:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5132 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5136:14: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5135 |         ALOGW("ResTable_package key strings at %p is not on an integer boundary.",
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 5136 |              (void*)dtohl(pkg->keyStrings));
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                           ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5137:24: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5137 |         return (mError=BAD_TYPE);
+      |                       ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5192:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+ 5192 |                 return (mError=UNKNOWN_ERROR);
+      |                               ~^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5242:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5242 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5247:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5247 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5260:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5260 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5287:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5287 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5292:22: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5291 |                 ALOGW("ResTable_type entriesStart at %p extends beyond chunk end %p.",
+      |                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 5292 |                      (void*)dtohl(type->entriesStart), (void*)typeSize);
+      |                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                           ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5293:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5293 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5297:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5297 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5310:32: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483649 to -2147483647 [-Wconstant-conversion]
+ 5310 |                 return (mError=BAD_TYPE);
+      |                               ~^~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5342:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+ 5342 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5345:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+ 5345 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5452:84: warning: format specifies type 'int' but the argument has type 'size_t' (aka 'unsigned long') [-Wformat]
+ 5452 |             ALOGW("idmap: type %d supposedly has entries, but no entries found\n", i);
+      |                                ~~                                                  ^
+      |                                %lu
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:129:51: note: expanded from macro 'ALOGW'
+  129 | #define ALOGW(...) ((void)ALOG(LOG_WARN, LOG_TAG, __VA_ARGS__))
+      |                                                   ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:430:38: note: expanded from macro 'ALOG'
+  430 |     LOG_PRI(ANDROID_##priority, tag, __VA_ARGS__)
+      |                                      ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:438:37: note: expanded from macro 'LOG_PRI'
+  438 |     android_printLog(priority, tag, __VA_ARGS__)
+      |                                     ^~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/log/log.h:502:36: note: expanded from macro 'android_printLog'
+  502 |     __android_log_print(prio, tag, fmt)
+      |                                    ^~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5453:20: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+ 5453 |             return UNKNOWN_ERROR;
+      |             ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5673:93: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5673 |                         printf("      NON-INTEGER ResTable_type entriesStart OFFSET: %p\n", (void*)entriesStart);
+      |                                                                                             ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5678:85: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5678 |                         printf("      NON-INTEGER ResTable_type header.size: %p\n", (void*)typeSize);
+      |                                                                                     ^~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5717:64: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5717 |                             printf("NON-INTEGER OFFSET: %p\n", (void*)thisOffset);
+      |                                                                ^~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5722:36: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5722 |                                    (void*)entriesStart, (void*)thisOffset,
+      |                                    ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5722:57: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5722 |                                    (void*)entriesStart, (void*)thisOffset,
+      |                                                         ^~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5723:36: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5723 |                                    (void*)typeSize);
+      |                                    ^~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5731:34: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5731 |                                  (void*)(entriesStart + thisOffset));
+      |                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5737:77: warning: cast to 'void *' from smaller integer type 'uint16_t' (aka 'unsigned short') [-Wint-to-void-pointer-cast]
+ 5737 |                             printf("NON-INTEGER ResTable_entry SIZE: %p\n", (void*)esize);
+      |                                                                             ^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5742:36: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5742 |                                    (void*)entriesStart, (void*)thisOffset,
+      |                                    ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5742:57: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5742 |                                    (void*)entriesStart, (void*)thisOffset,
+      |                                                         ^~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5743:36: warning: cast to 'void *' from smaller integer type 'uint16_t' (aka 'unsigned short') [-Wint-to-void-pointer-cast]
+ 5743 |                                    (void*)esize, (void*)typeSize);
+      |                                    ^~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5743:50: warning: cast to 'void *' from smaller integer type 'uint32_t' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+ 5743 |                                    (void*)esize, (void*)typeSize);
+      |                                                  ^~~~~~~~~~~~~~~
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:20:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/include/androidfw/ResourceTypes.h:23:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/include/androidfw/Asset.h:30:
+In file included from /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/String8.h:23:
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:181:17: warning: destination for this 'memmove' call is a pointer to dynamic class 'Vector<unsigned int>'; vtable pointer will be overwritten [-Wdynamic-class-memaccess]
+  181 |         memmove(d,s,n*sizeof(TYPE));
+      |         ~~~~~~~ ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:410:5: note: in instantiation of function template specialization 'android::move_forward_type<android::Vector<unsigned int> >' requested here
+  410 |     move_forward_type( reinterpret_cast<TYPE*>(dest), reinterpret_cast<const TYPE*>(from), num );
+      |     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:219:15: note: in instantiation of member function 'android::Vector<android::Vector<unsigned int> >::do_move_forward' requested here
+  219 | Vector<TYPE>::Vector()
+      |               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5348:31: note: in instantiation of member function 'android::Vector<android::Vector<unsigned int> >::Vector' requested here
+ 5348 |     Vector<Vector<uint32_t> > map;
+      |                               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:181:17: note: explicitly cast the pointer to silence this warning
+  181 |         memmove(d,s,n*sizeof(TYPE));
+      |                 ^
+      |                 (void*)
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:204:17: warning: destination for this 'memmove' call is a pointer to dynamic class 'Vector<unsigned int>'; vtable pointer will be overwritten [-Wdynamic-class-memaccess]
+  204 |         memmove(d,s,n*sizeof(TYPE));
+      |         ~~~~~~~ ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:415:5: note: in instantiation of function template specialization 'android::move_backward_type<android::Vector<unsigned int> >' requested here
+  415 |     move_backward_type( reinterpret_cast<TYPE*>(dest), reinterpret_cast<const TYPE*>(from), num );
+      |     ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Vector.h:219:15: note: in instantiation of member function 'android::Vector<android::Vector<unsigned int> >::do_move_backward' requested here
+  219 | Vector<TYPE>::Vector()
+      |               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ResourceTypes.cpp:5348:31: note: in instantiation of member function 'android::Vector<android::Vector<unsigned int> >::Vector' requested here
+ 5348 |     Vector<Vector<uint32_t> > map;
+      |                               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/TypeHelpers.h:204:17: note: explicitly cast the pointer to silence this warning
+  204 |         memmove(d,s,n*sizeof(TYPE));
+      |                 ^
+      |                 (void*)
+76 warnings generated.
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ZipFileRO.cpp:140:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  140 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/frameworks-base/libs/androidfw/ZipFileRO.cpp:170:12: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  170 |     return UNKNOWN_ERROR;
+      |     ~~~~~~ ^~~~~~~~~~~~~
+2 warnings generated.
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/libutils/Threads.cpp:717:19: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  717 |         mStatus = UNKNOWN_ERROR;   // something happened!
+      |                 ~ ^~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/libutils/Threads.cpp:722:16: warning: implicit conversion from 'android::(unnamed enum at /Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/AOSP/system-core/include/utils/Errors.h:45:1)' to 'status_t' (aka 'int') changes value from 2147483648 to -2147483648 [-Wconstant-conversion]
+  722 |         return UNKNOWN_ERROR;
+      |         ~~~~~~ ^~~~~~~~~~~~~
+2 warnings generated.
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0 35 1022k   35  367k    0     0   452k      0  0:00:02 --:--:--  0:00:02  452k100 1022k  100 1022k    0     0  1069k      0 --:--:-- --:--:-- --:--:-- 1069k
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/build/image-codec-src/jpegsrc.v9e.tar.gz: OK
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   619  100   619    0     0   3086      0 --:--:-- --:--:-- --:--:--  3095
+100   505  100   505    0     0   1246      0 --:--:-- --:--:-- --:--:--  1246
+  7  436k    7 32507    0     0  43261      0  0:00:10 --:--:--  0:00:10 43261100  436k  100  436k    0     0   464k      0 --:--:-- --:--:-- --:--:-- 2142k
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/build/image-codec-src/giflib-5.2.2.tar.gz: OK
+arm64-apple-ios15.0-simulator image codecs:       52 objects
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/App/main.m:125:46: warning: expression which evaluates to zero treated as a null pointer constant of type 'void *' [-Wnon-literal-null-conversion]
+  125 |                                              EGL_DEFAULT_DISPLAY,
+      |                                              ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/egl.h:251:43: note: expanded from macro 'EGL_DEFAULT_DISPLAY'
+  251 | #define EGL_DEFAULT_DISPLAY               EGL_CAST(EGLNativeDisplayType,0)
+      |                                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/eglplatform.h:178:31: note: expanded from macro 'EGL_CAST'
+  178 | #define EGL_CAST(type, value) ((type) (value))
+      |                               ^~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/App/main.m:300:91: warning: expression which evaluates to zero treated as a null pointer constant of type 'void *' [-Wnon-literal-null-conversion]
+  300 |     EGLDisplay display = getPlatformDisplay ? getPlatformDisplay(EGL_PLATFORM_ANGLE_ANGLE,EGL_DEFAULT_DISPLAY,da) : EGL_NO_DISPLAY;
+      |                                                                                           ^~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/egl.h:251:43: note: expanded from macro 'EGL_DEFAULT_DISPLAY'
+  251 | #define EGL_DEFAULT_DISPLAY               EGL_CAST(EGLNativeDisplayType,0)
+      |                                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/Vendor/ANGLE-Headers/EGL/eglplatform.h:178:31: note: expanded from macro 'EGL_CAST'
+  178 | #define EGL_CAST(type, value) ((type) (value))
+      |                               ^~~~~~~~~~~~~~~~
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/App/main.m:2567:16: warning: @available does not guard availability here; use if (@available) instead [-Wunsupported-availability-guard]
+ 2567 |     if (gpu && @available(iOS 16.0, *)) workingSet = gpu.recommendedMaxWorkingSetSize;
+      |                ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/App/main.m:2567:58: warning: 'recommendedMaxWorkingSetSize' is only available on iOS 16.0 or newer [-Wunguarded-availability-new]
+ 2567 |     if (gpu && @available(iOS 16.0, *)) workingSet = gpu.recommendedMaxWorkingSetSize;
+      |                                                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Applications/Xcode_27.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator27.0.sdk/System/Library/Frameworks/Metal.framework/Headers/MTLDevice.h:428:31: note: 'recommendedMaxWorkingSetSize' has been marked as being introduced in iOS 16.0 here, but the deployment target is iOS 15.0.0
+  428 | @property (readonly) uint64_t recommendedMaxWorkingSetSize API_AVAILABLE(macos(10.12), macCatalyst(13.0), ios(16.0));
+      |                               ^
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/App/main.m:2567:58: note: enclose 'recommendedMaxWorkingSetSize' in an @available check to silence this warning
+ 2567 |     if (gpu && @available(iOS 16.0, *)) workingSet = gpu.recommendedMaxWorkingSetSize;
+      |                                                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+4 warnings generated.
+AGR_SMOKE_PHASE 2026-09-28T15:41:07Z compiled main.m
+ld: warning: building for iOS-simulator-15.0, but linking with dylib '@rpath/libEGL.framework/libEGL' which was built for newer version 16.0
+ld: warning: building for iOS-simulator-15.0, but linking with dylib '@rpath/libGLESv2.framework/libGLESv2' which was built for newer version 16.0
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/build/AGRSimulator.app/Frameworks/libEGL.framework: replacing existing signature
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/build/AGRSimulator.app/Frameworks/libGLESv2.framework: replacing existing signature
+/Users/runner/work/early-android-game-runtime/early-android-game-runtime/build/AGRSimulator.app: replacing existing signature
+AGR_SMOKE_PHASE 2026-09-28T15:41:08Z Runtime app linked and signed
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+[2026-09-28 15:41:39 +0000] Status=2, isTerminal=NO, Elapsed=00:28.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.-0LaunchServicesMigrator (00LaunchServicesMigrator.migrator, user-agnostic)
+		Migration Elapsed:00:09 seconds
+
+[2026-09-28 15:41:40 +0000] Status=2, isTerminal=NO, Elapsed=00:29.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.-0LaunchServicesMigrator (00LaunchServicesMigrator.migrator, user-agnostic)
+		Migration Elapsed:00:10 seconds
+
+[2026-09-28 15:41:41 +0000] Status=2, isTerminal=NO, Elapsed=00:30.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.-0LaunchServicesMigrator (00LaunchServicesMigrator.migrator, user-agnostic)
+		Migration Elapsed:00:11 seconds
+
+[2026-09-28 15:41:42 +0000] Status=2, isTerminal=NO, Elapsed=00:31.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.-0LaunchServicesMigrator (00LaunchServicesMigrator.migrator, user-agnostic)
+		Migration Elapsed:00:12 seconds
+
+[2026-09-28 15:41:48 +0000] Status=2, isTerminal=NO, Elapsed=00:37.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.-0LaunchServicesMigrator (00LaunchServicesMigrator.migrator, user-agnostic)
+		Migration Elapsed:00:13 seconds
+
+[2026-09-28 15:41:48 +0000] Status=2, isTerminal=NO, Elapsed=00:37.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)
+		Migration Elapsed:00:18 seconds
+
+[2026-09-28 15:41:49 +0000] Status=2, isTerminal=NO, Elapsed=00:38.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)
+		Migration Elapsed:00:19 seconds
+
+[2026-09-28 15:41:49 +0000] Status=2, isTerminal=NO, Elapsed=00:38.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)
+		Migration Elapsed:00:19 seconds
+
+[2026-09-28 15:41:50 +0000] Status=2, isTerminal=NO, Elapsed=00:39.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)
+		Migration Elapsed:00:20 seconds
+
+[2026-09-28 15:41:51 +0000] Status=2, isTerminal=NO, Elapsed=00:40.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)
+		Migration Elapsed:00:21 seconds
+
+[2026-09-28 15:41:52 +0000] Status=2, isTerminal=NO, Elapsed=00:41.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)
+		Migration Elapsed:00:22 seconds
+
+[2026-09-28 15:41:53 +0000] Status=2, isTerminal=NO, Elapsed=00:42.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)
+		Migration Elapsed:00:23 seconds
+
+[2026-09-28 15:41:54 +0000] Status=2, isTerminal=NO, Elapsed=00:43.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)
+		Migration Elapsed:00:24 seconds
+
+[2026-09-28 15:41:55 +0000] Status=2, isTerminal=NO, Elapsed=00:44.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)
+		Migration Elapsed:00:25 seconds
+
+[2026-09-28 15:41:57 +0000] Status=2, isTerminal=NO, Elapsed=00:45.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.managedconfiguration.migrator (MCProfile.migrator, user-agnostic)
+		Migration Elapsed:00:26 seconds
+
+[2026-09-28 15:41:57 +0000] Status=2, isTerminal=NO, Elapsed=00:46.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.WebBookmarks.migrator (WebBookmarks.migrator)
+		Migration Elapsed:00:27 seconds
+
+[2026-09-28 15:41:58 +0000] Status=2, isTerminal=NO, Elapsed=00:47.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.MobileSafari.migrator (MobileSafari.migrator)
+		Migration Elapsed:00:28 seconds
+
+[2026-09-28 15:42:00 +0000] Status=2, isTerminal=NO, Elapsed=00:49.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.MobileSafari.migrator (MobileSafari.migrator)
+		Migration Elapsed:00:29 seconds
+
+[2026-09-28 15:42:00 +0000] Status=2, isTerminal=NO, Elapsed=00:49.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.facetime.migrator (FaceTimeMigrator.migrator)
+		Migration Elapsed:00:30 seconds
+
+[2026-09-28 15:42:01 +0000] Status=2, isTerminal=NO, Elapsed=00:50.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.facetime.migrator (FaceTimeMigrator.migrator)
+		Migration Elapsed:00:31 seconds
+
+[2026-09-28 15:42:02 +0000] Status=2, isTerminal=NO, Elapsed=00:51.
+	Waiting on Data Migration
+		Reason:Running plugin com.apple.keyboards.migrator (KeyboardMigrator.migrator)
+		Migration Elapsed:00:32 seconds
+
+[2026-09-28 15:42:05 +0000] Status=4294967295, isTerminal=YES, Elapsed=00:54.
+	Finished
+
+dev.agr.simulator: 61230
+aot-result {"region_chained_blocks": 0, "svc_interpreter_seconds": 0, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0298790000000001, "jni_version": 0, "fallback_interpreter_seconds": 0, "jni_onload_status": 0, "dex_loaded": 1, "mode": "interpreter-trace", "aot_instructions": 0, "activity_created": 1, "aot_blocks": 0, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 0, "trace_seen": 29703, "fallback_interpreter_instructions": 0, "miss_pc": "00000000", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 29703, "boundary_count": 0, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0.05565799999999999, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 0.0008450000000000007, "interpreter_instructions": 29703, "lookup_miss_count": 0, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 0, "mounted": 1, "svc_interpreter_instructions": 0, "seconds": 0.06739199161529541, "drive_calls": 664}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 61618
+aot-result {"region_chained_blocks": 0, "svc_interpreter_seconds": 0, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0009720000000000029, "jni_version": 0, "fallback_interpreter_seconds": 0, "jni_onload_status": 0, "dex_loaded": 1, "mode": "interpreter-baseline", "aot_instructions": 0, "activity_created": 1, "aot_blocks": 0, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 0, "trace_seen": 0, "fallback_interpreter_instructions": 0, "miss_pc": "00000000", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 29703, "boundary_count": 0, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0.00048500000000000263, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 2.3000000000000007e-05, "interpreter_instructions": 29703, "lookup_miss_count": 0, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 0, "mounted": 1, "svc_interpreter_instructions": 0, "seconds": 0.007688999176025391, "drive_calls": 664}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 62405
+aot-result {"region_chained_blocks": 0, "svc_interpreter_seconds": 4.099999999999998e-05, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0210600000000001, "jni_version": 0, "fallback_interpreter_seconds": 0.0002509999999999996, "jni_onload_status": 0, "dex_loaded": 1, "mode": "aot-fast-audit", "aot_instructions": 26404, "activity_created": 1, "aot_blocks": 9600, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 629, "trace_seen": 0, "fallback_interpreter_instructions": 2635, "miss_pc": "00046a8c", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 0, "boundary_count": 664, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 0, "interpreter_instructions": 3299, "lookup_miss_count": 2006, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0.040364000000000684, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 2635, "mounted": 1, "svc_interpreter_instructions": 664, "seconds": 0.0494920015335083, "drive_calls": 3299}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 62519
+aot-result {"region_chained_blocks": 0, "svc_interpreter_seconds": 0, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0011459999999999912, "jni_version": 0, "fallback_interpreter_seconds": 0, "jni_onload_status": 0, "dex_loaded": 1, "mode": "interpreter-baseline", "aot_instructions": 0, "activity_created": 1, "aot_blocks": 0, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 0, "trace_seen": 0, "fallback_interpreter_instructions": 0, "miss_pc": "00000000", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 29703, "boundary_count": 0, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0.0005990000000000036, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 2.800000000000001e-05, "interpreter_instructions": 29703, "lookup_miss_count": 0, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 0, "mounted": 1, "svc_interpreter_instructions": 0, "seconds": 0.00873100757598877, "drive_calls": 664}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 62715
+aot-result {"region_chained_blocks": 6633, "svc_interpreter_seconds": 2.5000000000000008e-05, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0010839999999999932, "jni_version": 0, "fallback_interpreter_seconds": 0.00017199999999999963, "jni_onload_status": 0, "dex_loaded": 1, "mode": "aot-performance", "aot_instructions": 26404, "activity_created": 1, "aot_blocks": 9600, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 629, "trace_seen": 0, "fallback_interpreter_instructions": 2635, "miss_pc": "00046a8c", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 0, "boundary_count": 664, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 0, "interpreter_instructions": 3299, "lookup_miss_count": 2006, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0.0007350000000000058, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 2635, "mounted": 1, "svc_interpreter_instructions": 664, "seconds": 0.009968042373657227, "drive_calls": 3299}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 63356
+aot-result {"region_chained_blocks": 0, "svc_interpreter_seconds": 0, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0010469999999999948, "jni_version": 0, "fallback_interpreter_seconds": 0, "jni_onload_status": 0, "dex_loaded": 1, "mode": "interpreter-baseline", "aot_instructions": 0, "activity_created": 1, "aot_blocks": 0, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 0, "trace_seen": 0, "fallback_interpreter_instructions": 0, "miss_pc": "00000000", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 29703, "boundary_count": 0, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0.0004680000000000028, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 3.4e-05, "interpreter_instructions": 29703, "lookup_miss_count": 0, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 0, "mounted": 1, "svc_interpreter_instructions": 0, "seconds": 0.008108019828796387, "drive_calls": 664}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 63567
+aot-result {"region_chained_blocks": 6633, "svc_interpreter_seconds": 3.000000000000001e-05, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0012209999999999886, "jni_version": 0, "fallback_interpreter_seconds": 0.00017299999999999962, "jni_onload_status": 0, "dex_loaded": 1, "mode": "aot-performance", "aot_instructions": 26404, "activity_created": 1, "aot_blocks": 9600, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 629, "trace_seen": 0, "fallback_interpreter_instructions": 2635, "miss_pc": "00046a8c", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 0, "boundary_count": 664, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 0, "interpreter_instructions": 3299, "lookup_miss_count": 2006, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0.0009560000000000071, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 2635, "mounted": 1, "svc_interpreter_instructions": 664, "seconds": 0.008011937141418457, "drive_calls": 3299}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 63746
+aot-result {"region_chained_blocks": 0, "svc_interpreter_seconds": 0, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0010269999999999977, "jni_version": 0, "fallback_interpreter_seconds": 0, "jni_onload_status": 0, "dex_loaded": 1, "mode": "interpreter-baseline", "aot_instructions": 0, "activity_created": 1, "aot_blocks": 0, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 0, "trace_seen": 0, "fallback_interpreter_instructions": 0, "miss_pc": "00000000", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 29703, "boundary_count": 0, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0.0004870000000000026, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 3.4e-05, "interpreter_instructions": 29703, "lookup_miss_count": 0, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 0, "mounted": 1, "svc_interpreter_instructions": 0, "seconds": 0.00837409496307373, "drive_calls": 664}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 64491
+aot-result {"region_chained_blocks": 6633, "svc_interpreter_seconds": 2.900000000000001e-05, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0012649999999999899, "jni_version": 0, "fallback_interpreter_seconds": 0.0001799999999999996, "jni_onload_status": 0, "dex_loaded": 1, "mode": "aot-performance", "aot_instructions": 26404, "activity_created": 1, "aot_blocks": 9600, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 629, "trace_seen": 0, "fallback_interpreter_instructions": 2635, "miss_pc": "00046a8c", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 0, "boundary_count": 664, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 0, "interpreter_instructions": 3299, "lookup_miss_count": 2006, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0.0011539999999999923, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 2635, "mounted": 1, "svc_interpreter_instructions": 664, "seconds": 0.010271072387695312, "drive_calls": 3299}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 64628
+aot-result {"region_chained_blocks": 0, "svc_interpreter_seconds": 0, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0009360000000000024, "jni_version": 0, "fallback_interpreter_seconds": 0, "jni_onload_status": 0, "dex_loaded": 1, "mode": "interpreter-baseline", "aot_instructions": 0, "activity_created": 1, "aot_blocks": 0, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 0, "trace_seen": 0, "fallback_interpreter_instructions": 0, "miss_pc": "00000000", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 29703, "boundary_count": 0, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0.0004530000000000024, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 2.900000000000001e-05, "interpreter_instructions": 29703, "lookup_miss_count": 0, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 0, "mounted": 1, "svc_interpreter_instructions": 0, "seconds": 0.007143974304199219, "drive_calls": 664}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 65099
+aot-result {"region_chained_blocks": 6633, "svc_interpreter_seconds": 2.5000000000000008e-05, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0011679999999999907, "jni_version": 0, "fallback_interpreter_seconds": 0.00018699999999999959, "jni_onload_status": 0, "dex_loaded": 1, "mode": "aot-performance", "aot_instructions": 26404, "activity_created": 1, "aot_blocks": 9600, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 629, "trace_seen": 0, "fallback_interpreter_instructions": 2635, "miss_pc": "00046a8c", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 0, "boundary_count": 664, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 0, "interpreter_instructions": 3299, "lookup_miss_count": 2006, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0.000984000000000007, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 2635, "mounted": 1, "svc_interpreter_instructions": 664, "seconds": 0.007907986640930176, "drive_calls": 3299}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 65582
+aot-result {"region_chained_blocks": 0, "svc_interpreter_seconds": 0, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0009060000000000022, "jni_version": 0, "fallback_interpreter_seconds": 0, "jni_onload_status": 0, "dex_loaded": 1, "mode": "interpreter-baseline", "aot_instructions": 0, "activity_created": 1, "aot_blocks": 0, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 0, "trace_seen": 0, "fallback_interpreter_instructions": 0, "miss_pc": "00000000", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 29703, "boundary_count": 0, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0.0004300000000000026, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 2.800000000000001e-05, "interpreter_instructions": 29703, "lookup_miss_count": 0, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 0, "mounted": 1, "svc_interpreter_instructions": 0, "seconds": 0.010905027389526367, "drive_calls": 664}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 66049
+aot-result {"region_chained_blocks": 6633, "svc_interpreter_seconds": 3.000000000000001e-05, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0013069999999999898, "jni_version": 0, "fallback_interpreter_seconds": 0.0001829999999999996, "jni_onload_status": 0, "dex_loaded": 1, "mode": "aot-performance", "aot_instructions": 26404, "activity_created": 1, "aot_blocks": 9600, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 629, "trace_seen": 0, "fallback_interpreter_instructions": 2635, "miss_pc": "00046a8c", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 0, "boundary_count": 664, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 0, "interpreter_instructions": 3299, "lookup_miss_count": 2006, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0.0010210000000000028, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 2635, "mounted": 1, "svc_interpreter_instructions": 664, "seconds": 0.007745027542114258, "drive_calls": 3299}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 66682
+aot-result {"region_chained_blocks": 0, "svc_interpreter_seconds": 0, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0009110000000000024, "jni_version": 0, "fallback_interpreter_seconds": 0, "jni_onload_status": 0, "dex_loaded": 1, "mode": "interpreter-baseline", "aot_instructions": 0, "activity_created": 1, "aot_blocks": 0, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 0, "trace_seen": 0, "fallback_interpreter_instructions": 0, "miss_pc": "00000000", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 29703, "boundary_count": 0, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0.00045500000000000266, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 2.700000000000001e-05, "interpreter_instructions": 29703, "lookup_miss_count": 0, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 0, "mounted": 1, "svc_interpreter_instructions": 0, "seconds": 0.013929963111877441, "drive_calls": 664}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 66832
+aot-result {"region_chained_blocks": 6633, "svc_interpreter_seconds": 2.900000000000001e-05, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0012159999999999892, "jni_version": 0, "fallback_interpreter_seconds": 0.00016799999999999964, "jni_onload_status": 0, "dex_loaded": 1, "mode": "aot-performance", "aot_instructions": 26404, "activity_created": 1, "aot_blocks": 9600, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 629, "trace_seen": 0, "fallback_interpreter_instructions": 2635, "miss_pc": "00046a8c", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 0, "boundary_count": 664, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 0, "interpreter_instructions": 3299, "lookup_miss_count": 2006, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0.0009640000000000063, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 2635, "mounted": 1, "svc_interpreter_instructions": 664, "seconds": 0.00795602798461914, "drive_calls": 3299}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 67036
+aot-result {"region_chained_blocks": 0, "svc_interpreter_seconds": 0, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0009540000000000024, "jni_version": 0, "fallback_interpreter_seconds": 0, "jni_onload_status": 0, "dex_loaded": 1, "mode": "interpreter-baseline", "aot_instructions": 0, "activity_created": 1, "aot_blocks": 0, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 0, "trace_seen": 0, "fallback_interpreter_instructions": 0, "miss_pc": "00000000", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 29703, "boundary_count": 0, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0.00044900000000000246, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 2.800000000000001e-05, "interpreter_instructions": 29703, "lookup_miss_count": 0, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 0, "mounted": 1, "svc_interpreter_instructions": 0, "seconds": 0.008185982704162598, "drive_calls": 664}
+Monitoring boot status for iPhone 17 (1B12DE9B-2634-4BCA-AB72-CF1B196DD2D1).
+Device already booted, nothing to do.
+
+dev.agr.simulator: 67616
+aot-result {"region_chained_blocks": 6633, "svc_interpreter_seconds": 3.3e-05, "dex_started": 1, "trace_incomplete": false, "boundary_seconds": 0.0011309999999999914, "jni_version": 0, "fallback_interpreter_seconds": 0.00016699999999999964, "jni_onload_status": 0, "dex_loaded": 1, "mode": "aot-performance", "aot_instructions": 26404, "activity_created": 1, "aot_blocks": 9600, "fallback_log_incomplete": 0, "mode_miss_count": 0, "elf_registered": 1, "native_so_bytes": 882136, "it_fallback_count": 629, "trace_seen": 0, "fallback_interpreter_instructions": 2635, "miss_pc": "00046a8c", "guard_miss_count": 0, "step_limit_fallback_count": 0, "baseline_interpreter_instructions": 0, "boundary_count": 664, "probe_stopped": 1, "constructors": 51, "baseline_interpreter_seconds": 0, "probe_stop_host": "pthread_create", "aot_off_probe_seconds": 0, "interpreter_instructions": 3299, "lookup_miss_count": 2006, "workload": "kungfoo-armv7-native-through-pthread-create", "aot_drive_seconds": 0.0008290000000000071, "constructors_status": 0, "passed": true, "error": "", "fallback_count": 2635, "mounted": 1, "svc_interpreter_instructions": 664, "seconds": 0.008531928062438965, "drive_calls": 3299}
+{
+  "schema": "agr.offline-aot-policy-differential.v1",
+  "entry_policy": "all-exidx",
+  "tested_commit": "49f824f502f91d538439860ed0dcd17fbcaa2244",
+  "tested_tree": "2bbbcdbf41c109b9aa9080aa39833aaab75d855b",
+  "input_elf_sha256": "010baa4964cd7dbcf1ba038428ab4d6afc13ffd0a180b447be07b8f088f9ba9d",
+  "generated_c_sha256": "5906043f1f0112bf9b0dd0963b82ea5f875bd80aabc2f3eb7f1e992a7a511d60",
+  "translation_used_execution_trace": false,
+  "input_identity_valid": true,
+  "source_identity_valid": true,
+  "assembly_identity_valid": true,
+  "interpreter_trace_equal_to_checked_full_run": true,
+  "trace_instructions": 29703,
+  "trace_complete": true,
+  "fast_checkpoint_count": 9600,
+  "fast_checkpoint_mismatch": null,
+  "observable_fields_equal": {
+    "passed": true,
+    "mounted": true,
+    "elf_registered": true,
+    "dex_loaded": true,
+    "jni_onload_status": true,
+    "jni_version": true,
+    "native_so_bytes": true,
+    "dex_started": true,
+    "constructors_status": true,
+    "constructors": true,
+    "probe_stop_host": true,
+    "probe_stopped": true
+  },
+  "host_calls_equal": true,
+  "instruction_accounting": true,
+  "fallback_log_accounting": true,
+  "fallback_reason_counts": {
+    "it_state": 629,
+    "lookup_miss": 2006,
+    "svc": 664
+  },
+  "fallback_unique_pc_mode": {
+    "it_state": 85,
+    "lookup_miss": 310,
+    "svc": 17
+  },
+  "aot_instructions": 26404,
+  "interpreter_instructions": 3299,
+  "new_path_instructions": 125,
+  "new_path_aot_instructions": 117,
+  "new_path_interpreter_instructions": 8,
+  "new_path_aot_coverage": 0.936,
+  "new_path_accounting": true,
+  "performance_samples": 7,
+  "performance_host_calls_equal": true,
+  "baseline_engine_seconds": [
+    0.0005990000000000036,
+    0.0004680000000000028,
+    0.0004870000000000026,
+    0.0004530000000000024,
+    0.0004300000000000026,
+    0.00045500000000000266,
+    0.00044900000000000246
+  ],
+  "aot_route_engine_seconds": [
+    0.0009320000000000054,
+    0.0011590000000000068,
+    0.0013629999999999918,
+    0.0011960000000000067,
+    0.0012340000000000025,
+    0.0011610000000000058,
+    0.001029000000000007
+  ],
+  "baseline_engine_median": 0.00045500000000000266,
+  "aot_route_engine_median": 0.0011610000000000058,
+  "route_speedup_ratio_of_medians": 0.3919035314384155,
+  "semantic_pass": true
+}
