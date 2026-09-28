@@ -6,6 +6,7 @@ AUTO_LOAD="${AGR_OFFLINE_GLOOMY_AUTO:-0}"
 RELOCATABLE="${AGR_OFFLINE_GLOOMY_RELOCATABLE:-0}"
 POLICY="${AGR_OFFLINE_ENTRY_POLICY:-exports}"
 WARM="${AGR_OFFLINE_GLOOMY_WARM:-0}"
+PREPARED_DIR="${AGR_OFFLINE_PREPARED_DIR:-}"
 [[ "$AUTO_LOAD" == 0 || "$AUTO_LOAD" == 1 ]] || { echo "invalid AUTO_LOAD" >&2; exit 2; }
 [[ "$RELOCATABLE" == 0 || "$RELOCATABLE" == 1 ]] || { echo "invalid RELOCATABLE" >&2; exit 2; }
 [[ "$POLICY" == exports || "$POLICY" == all-exidx ]] || { echo "invalid POLICY" >&2; exit 2; }
@@ -14,6 +15,7 @@ SUFFIX=""
 [[ "$AUTO_LOAD" == 1 ]] && SUFFIX="-auto-first"
 [[ "$RELOCATABLE" == 1 ]] && SUFFIX="-relocatable"
 [[ "$WARM" == 1 ]] && SUFFIX="$SUFFIX-warm"
+[[ -n "$PREPARED_DIR" ]] && SUFFIX="$SUFFIX-prepared"
 EVIDENCE="$ROOT/build/offline-aot-gloomy-$POLICY$SUFFIX"
 mkdir -p "$EVIDENCE"
 export AGR_SIMULATOR_PROFILE=gloomy
@@ -49,12 +51,35 @@ if [[ "$RELOCATABLE" == 1 ]]; then
   LOAD_BIAS=runtime
   TRANSLATION_FLAGS+=(--relocatable)
 fi
-"$PYTHON" "$ROOT/tools/aot-lab/translate_offline.py" \
-  --elf "$EVIDENCE/input-armv7.so" --entry-policy "$POLICY" --load-bias "$LOAD_BIAS" \
-  "${TRANSLATION_FLAGS[@]}" \
-  --out "$ROOT/Runtime/AotLab/aot_blocks.c" \
-  --manifest "$EVIDENCE/translation-manifest.json" \
-  > "$EVIDENCE/translation.log" 2>&1
+if [[ -n "$PREPARED_DIR" ]]; then
+  "$PYTHON" - "$ROOT" "$PREPARED_DIR" "$EVIDENCE" "$POLICY" <<'PY'
+import hashlib,json,pathlib,shutil,sys
+root,relative,evidence=pathlib.Path(sys.argv[1]),pathlib.Path(sys.argv[2]),pathlib.Path(sys.argv[3])
+policy=sys.argv[4]
+source=(root/relative).resolve()
+manifest=json.loads((source/'translation-manifest.json').read_text())
+native=(evidence/'input-armv7.so').read_bytes()
+artifact=(source/'aot_blocks.c').read_bytes()
+assert manifest['elf_sha256']==hashlib.sha256(native).hexdigest()
+assert manifest['generated_c_sha256']==hashlib.sha256(artifact).hexdigest()
+assert manifest['entry_policy']==policy and manifest['relocatable']
+assert not manifest['execution_trace_input']
+assert manifest['debug_entry_count']==0
+shutil.copyfile(source/'translation-manifest.json',evidence/'translation-manifest.json')
+shutil.copyfile(source/'aot_blocks.c',root/'Runtime/AotLab/aot_blocks.c')
+(evidence/'prepared-artifact-identity.json').write_text(json.dumps({
+    'source':str(relative),'elf_sha256':manifest['elf_sha256'],
+    'generated_c_sha256':manifest['generated_c_sha256']},indent=2)+'\n')
+(evidence/'translation.log').write_text('reused prebuilt APK preparation artifact\n')
+PY
+else
+  "$PYTHON" "$ROOT/tools/aot-lab/translate_offline.py" \
+    --elf "$EVIDENCE/input-armv7.so" --entry-policy "$POLICY" --load-bias "$LOAD_BIAS" \
+    "${TRANSLATION_FLAGS[@]}" \
+    --out "$ROOT/Runtime/AotLab/aot_blocks.c" \
+    --manifest "$EVIDENCE/translation-manifest.json" \
+    > "$EVIDENCE/translation.log" 2>&1
+fi
 cp "$ROOT/Runtime/AotLab/aot_blocks.c" "$EVIDENCE/aot_blocks.c"
 bash "$ROOT/scripts/build-and-run-simulator.sh" deps
 bash "$ROOT/scripts/build-and-run-simulator.sh" build
