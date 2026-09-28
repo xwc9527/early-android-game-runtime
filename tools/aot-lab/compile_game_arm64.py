@@ -136,7 +136,7 @@ def emit_op(op, pc, thumb, serial):
     raise ValueError(kind)
 
 
-def discover(image):
+def discover(image, allowed=SUPPORTED):
     rows, entry_starts, _, reasons = scan(image, "all-exidx")
     ordered = sorted(rows.values(), key=lambda row: row["pc"])
     eligible = {}
@@ -152,8 +152,9 @@ def discover(image):
         except ValueError:
             excluded["unsupported_encoding"] += 1
             continue
-        if (op[0] not in SUPPORTED or op[0] == "mov_reg" and op[1] == 15 or
-                op[0] == "add_imm" and row["thumb"] and op[2] == 15):
+        if ((allowed is not None and op[0] not in allowed) or
+                op[0] == "mov_reg" and op[1] == 15 or
+                allowed is SUPPORTED and op[0] == "add_imm" and row["thumb"] and op[2] == 15):
             excluded[f"unsupported_op:{op[0]}"] += 1
             continue
         eligible[pc] = row
@@ -181,6 +182,8 @@ def discover(image):
                 starts.add(ordered[index + 1]["pc"])
             if op[0] == "b":
                 starts.add(op[1])
+            elif op[0] == "b_cond":
+                starts.update((op[2], op[3]))
             elif op[0] == "cbz":
                 starts.update((op[2], op[3]))
             elif op[0] in {"bl_imm", "blx_imm"}:

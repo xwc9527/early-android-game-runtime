@@ -11,13 +11,31 @@ import json
 from pathlib import Path
 import time
 
-from compile_game_arm64 import SUPPORTED, discover
+from compile_game_arm64 import discover
 from offline_elf import Elf32Arm
 from translate import emit_op, is_terminal
 
 
 REGION_LIMIT = 64
-WRITE_KINDS = {"stmdb_sp"}
+WRITE_KINDS = {
+    "stmdb_sp", "stm", "str_imm", "str_reg", "str_shifted", "str_indexed",
+    "str_wb", "strb_imm", "strh_imm",
+}
+
+
+def split_after_writes(blocks):
+    """A guest store cannot leave later instructions under a stale code guard."""
+    result = []
+    for _, body in blocks:
+        segment = []
+        for row, op in body:
+            segment.append((row, op))
+            if op[0] in WRITE_KINDS:
+                result.append((segment[0][0]["pc"], segment))
+                segment = []
+        if segment:
+            result.append((segment[0][0]["pc"], segment))
+    return result
 
 
 def guard(row):
@@ -39,6 +57,8 @@ def direct_successors(body):
     if kind == "b":
         return (op[1],)
     if kind == "cbz":
+        return (op[2], op[3])
+    if kind == "b_cond":
         return (op[2], op[3])
     if kind in {"bl_imm", "blx_imm"}:
         return (op[1],)
@@ -95,10 +115,11 @@ def emit_region(number, blocks, image):
                       f"    if (memcmp(s->mem + s->bias + {pc}u, expected_{label}, {len(raw)}u)) "
                       "{ result = AGR_AOT_MISS; goto L_exit; }"]
             group_guard_count += 1
-        for row, op in body:
-            if not group_guard:
+        if not group_guard:
+            for row, _ in body:
                 lines.append(f"    if ({guard(row)}) {{ result = AGR_AOT_MISS; goto L_exit; }}")
                 individual_guard_count += 1
+        for row, op in body:
             code, early_boundary = translated_op(op, row["thumb"], label)
             lines.append("    " + code)
             if not early_boundary:
@@ -156,7 +177,8 @@ def main():
     args = parser.parse_args()
     started = time.perf_counter()
     image = Elf32Arm(args.elf)
-    blocks, excluded, discovery = discover(image)
+    blocks, excluded, discovery = discover(image, allowed=None)
+    blocks = split_after_writes(blocks)
     groups = [blocks[i:i + REGION_LIMIT] for i in range(0, len(blocks), REGION_LIMIT)]
     sources = ['#include "agr_aot.h"', ""]
     entries = []
@@ -187,7 +209,7 @@ def main():
         "block_group_guard_count": group_guards,
         "individual_instruction_guard_count": individual_guards,
         "direct_lookup_slots": direct_slots,
-        "supported_op_kinds": sorted(SUPPORTED),
+        "supported_op_kinds": sorted({op[0] for _, body in blocks for _, op in body}),
         "excluded_reasons": dict(sorted(excluded.items())),
         "static_discovery_reasons": dict(sorted(discovery.items())),
         "generated_c_sha256": hashlib.sha256(source.encode()).hexdigest(),

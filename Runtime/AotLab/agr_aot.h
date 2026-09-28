@@ -73,6 +73,7 @@ double agr_aot_fallback_interpreter_seconds(void);
 double agr_aot_svc_interpreter_seconds(void);
 double agr_aot_baseline_interpreter_seconds(void);
 uint32_t agr_aot_drive_calls(void);
+uint32_t agr_aot_region_chained_blocks(void);
 uint32_t agr_aot_lookup_misses(void);
 uint32_t agr_aot_it_fallbacks(void);
 uint32_t agr_aot_guard_misses(void);

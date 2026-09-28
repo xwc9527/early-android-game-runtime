@@ -40,6 +40,7 @@ static double fallback_interpreter_seconds;
 static double svc_interpreter_seconds;
 static double baseline_interpreter_seconds;
 static uint32_t drive_calls;
+static uint32_t region_chained_blocks;
 static uint32_t lookup_misses;
 static uint32_t it_fallbacks;
 static uint32_t guard_misses;
@@ -96,6 +97,7 @@ void agr_aot_log_open(const char *path) {
     drive_seconds = off_probe_seconds = 0;
     fallback_interpreter_seconds = svc_interpreter_seconds = baseline_interpreter_seconds = 0;
     drive_calls = lookup_misses = it_fallbacks = guard_misses = mode_misses = step_limit_fallbacks = 0;
+    region_chained_blocks = 0;
     fallback_interpreter_instructions = svc_interpreter_instructions = baseline_interpreter_instructions = 0;
     probe_stop_host = NULL;
     probe_stopped = 0;
@@ -272,6 +274,7 @@ int agr_aot_drive(void *cpu) {
         if (state.region_blocks > state.region_budget) AGR_AOT_RETURN(AGR_AOT_FAULT);
         local_blocks += state.region_blocks;
         local_instructions += state.region_instructions;
+        if (state.region_blocks > 1u) region_chained_blocks += state.region_blocks - 1u;
         step += state.region_blocks ? state.region_blocks : 1u;
 #else
         if (result != AGR_AOT_MISS && result != AGR_AOT_MODE_MISS)
@@ -322,6 +325,7 @@ double agr_aot_fallback_interpreter_seconds(void) { return fallback_interpreter_
 double agr_aot_svc_interpreter_seconds(void) { return svc_interpreter_seconds; }
 double agr_aot_baseline_interpreter_seconds(void) { return baseline_interpreter_seconds; }
 uint32_t agr_aot_drive_calls(void) { return drive_calls; }
+uint32_t agr_aot_region_chained_blocks(void) { return region_chained_blocks; }
 uint32_t agr_aot_lookup_misses(void) { return lookup_misses; }
 uint32_t agr_aot_it_fallbacks(void) { return it_fallbacks; }
 uint32_t agr_aot_guard_misses(void) { return guard_misses; }
