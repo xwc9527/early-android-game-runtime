@@ -1,0 +1,1 @@
+{"label":"kungfoo","backend":"account-only-region","repetitions":10000,"guest_instructions_per_repetition":237,"elapsed_ns":3060000,"drive_calls":10000,"chained_blocks":610000,"final_pages_fnv64":"cf2c8e1cde84f0e4","state_equal":true}

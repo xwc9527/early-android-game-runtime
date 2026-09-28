@@ -1,0 +1,481 @@
+{
+  "schema": "agr.aot-same-job-real-segment-replay.v1",
+  "label": "kungfoo",
+  "checks": {
+    "single_workload": true,
+    "same_repetitions": true,
+    "same_guest_instruction_count": true,
+    "memory_results_equal": true,
+    "all_architectural_states_equal": true,
+    "backend_identity": true
+  },
+  "passed": true,
+  "raw_samples": {
+    "interpreter": [
+      {
+        "label": "kungfoo",
+        "backend": "interpreter",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 48160000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "interpreter",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 28362000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "interpreter",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 27851000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "interpreter",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 30910000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "interpreter",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 30079000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "generated-c": [
+      {
+        "label": "kungfoo",
+        "backend": "generated-c",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 5742000,
+        "drive_calls": 610000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "generated-c",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 4471000,
+        "drive_calls": 610000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "generated-c",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 4024000,
+        "drive_calls": 610000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "generated-c",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3999000,
+        "drive_calls": 610000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "generated-c",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 4173000,
+        "drive_calls": 610000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "indexed-region": [
+      {
+        "label": "kungfoo",
+        "backend": "indexed-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3610000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "indexed-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2411000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "indexed-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 4311000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "indexed-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2892000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "indexed-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2830000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "guardless-region": [
+      {
+        "label": "kungfoo",
+        "backend": "guardless-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3442000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guardless-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 1455000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guardless-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 4323000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guardless-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3320000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guardless-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 1382000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "scalar-region": [
+      {
+        "label": "kungfoo",
+        "backend": "scalar-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 803000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "scalar-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 847000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "scalar-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 1066000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "scalar-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 892000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "scalar-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 1098000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "guard-only-region": [
+      {
+        "label": "kungfoo",
+        "backend": "guard-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2967000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2825000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3154000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3034000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3325000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "account-only-region": [
+      {
+        "label": "kungfoo",
+        "backend": "account-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3060000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "account-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2798000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "account-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 4499000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "account-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2864000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "account-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3118000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "guard-account-region": [
+      {
+        "label": "kungfoo",
+        "backend": "guard-account-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3104000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-account-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 5341000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-account-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3267000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-account-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3319000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-account-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3380000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ]
+  },
+  "median_ns_per_repetition": {
+    "interpreter": 3007.9,
+    "generated-c": 417.3,
+    "indexed-region": 289.2,
+    "guardless-region": 332.0,
+    "scalar-region": 89.2,
+    "guard-only-region": 303.4,
+    "account-only-region": 306.0,
+    "guard-account-region": 331.9
+  }
+}
