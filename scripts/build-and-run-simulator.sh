@@ -158,7 +158,10 @@ DEX_SOURCES=("$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c"
 INDEX=0; DEX_OBJECTS=()
 for SOURCE in "${DEX_SOURCES[@]}"; do OBJECT="$BUILD/obj/dex-$INDEX.o"; clang "${COMMON[@]}" -std=gnu11 -DGL_GLES_PROTOTYPES=1 -I"$ROOT/Vendor/ANGLE-Headers" -I"$DEX_INCLUDE" -I"$BITMAP" -c "$SOURCE" -o "$OBJECT"; DEX_OBJECTS+=("$OBJECT"); INDEX=$((INDEX+1)); done
 clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/AotLab" -c "$ROOT/Runtime/AotLab/agr_aot.c" -o "$BUILD/obj/agr_aot.o"
-/usr/bin/time -p -o "$ARTIFACTS/aot-compile-time.txt" clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/AotLab" -c "$ROOT/Runtime/AotLab/aot_blocks.c" -o "$BUILD/obj/aot_blocks.o"
+AGR_AOT_OPT_FLAG="${AGR_AOT_OPT_FLAG:--O2}"
+[[ "$AGR_AOT_OPT_FLAG" == -O2 || "$AGR_AOT_OPT_FLAG" == -Os || "$AGR_AOT_OPT_FLAG" == -Oz ]] || { echo "invalid AGR_AOT_OPT_FLAG" >&2; exit 2; }
+printf '%s\n' "$AGR_AOT_OPT_FLAG" > "$ARTIFACTS/aot-compiler-optimization.txt"
+/usr/bin/time -p -o "$ARTIFACTS/aot-compile-time.txt" clang "${COMMON[@]}" "$AGR_AOT_OPT_FLAG" -std=c11 -I"$ROOT/Runtime/AotLab" -c "$ROOT/Runtime/AotLab/aot_blocks.c" -o "$BUILD/obj/aot_blocks.o"
 cp "$BUILD/obj/aot_blocks.o" "$ARTIFACTS/aot_blocks.o"
 xcrun size -m "$BUILD/obj/aot_blocks.o" > "$ARTIFACTS/aot-object-sections.txt"
 clang "${COMMON[@]}" -Wno-error -fobjc-arc -I"$BUILD/obj" -I"$ROOT/Vendor/ANGLE-Headers" -I"$ROOT/Runtime/NativeCore" -I"$ROOT/Runtime/GuestRuntime" -I"$ROOT/Runtime/AotLab" -I"$DEX" -I"$DEX_INCLUDE" -I"$AFW" -I"$BITMAP" -c "$ROOT/App/main.m" -o "$BUILD/obj/main.o"

@@ -53,7 +53,7 @@ if [[ "$STAGE" == oncreate ]]; then
 fi
 bash "$ROOT/scripts/build-and-run-simulator.sh" deps
 bash "$ROOT/scripts/build-and-run-simulator.sh" build
-for name in ci-environment.json simulator-device.txt aot-compile-time.txt aot_blocks.o aot-object-sections.txt; do
+for name in ci-environment.json simulator-device.txt aot-compiler-optimization.txt aot-compile-time.txt aot_blocks.o aot-object-sections.txt; do
   [[ ! -f "$ROOT/build/artifacts/$name" ]] || cp "$ROOT/build/artifacts/$name" "$EVIDENCE/$name"
 done
 cp "$ROOT/build/build-environment.json" "$EVIDENCE/build-environment.json"

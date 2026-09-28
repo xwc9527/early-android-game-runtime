@@ -4,20 +4,21 @@ on:
   workflow_dispatch:
 
 jobs:
-  all-exidx-direct-lookup:
+  all-exidx-size-optimized:
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Compare dense static PC dispatch on real path
+      - name: Compare size-optimized static AOT artifact on real path
         env:
           AGR_OFFLINE_ENTRY_POLICY: all-exidx
           AGR_OFFLINE_STAGE: oncreate
           AGR_OFFLINE_NO_DIAGNOSTIC: 1
           AGR_OFFLINE_POLICY_COMPARE: 1
           AGR_OFFLINE_DIRECT_LOOKUP: 1
+          AGR_AOT_OPT_FLAG: -Os
         run: |
           set -o pipefail
           mkdir -p build/offline-aot-all-exidx-oncreate-fast-only
@@ -27,6 +28,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: offline-aot-all-exidx-direct-lookup
+          name: offline-aot-all-exidx-size-optimized
           path: build/offline-aot-all-exidx-oncreate-fast-only
           if-no-files-found: error
