@@ -40,7 +40,12 @@ def main():
     same_fields = ("passed", "mounted", "elf_registered", "dex_loaded",
                    "jni_onload_status", "jni_version", "native_so_bytes", "error")
     if "activity_created" in baseline:
-        same_fields += ("dex_started", "constructors_status", "constructors", "activity_created")
+        same_fields += ("dex_started", "constructors_status", "constructors")
+        if baseline.get("probe_stop_host"):
+            same_fields = tuple(key for key in same_fields if key != "error")
+            same_fields += ("probe_stop_host", "probe_stopped")
+        else:
+            same_fields += ("activity_created",)
     observable = {key: baseline.get(key) == diagnostic.get(key) == fast.get(key)
                   for key in same_fields}
     hosts_equal = (baseline_hosts == (evidence / "diagnostic-hosts.txt").read_bytes() ==

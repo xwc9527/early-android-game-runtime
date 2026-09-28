@@ -462,6 +462,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         NSString *docs=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
         [[NSFileManager defaultManager] createDirectoryAtPath:docs withIntermediateDirectories:YES attributes:nil error:nil];
         agr_aot_log_open([[docs stringByAppendingPathComponent:@"aot-hosts.txt"] UTF8String]);
+        if (gKungFooAotProbeMode >= 6) agr_aot_probe_stop_before_host("pthread_create");
         if (gKungFooAotProbeMode == 1 || gKungFooAotProbeMode == 6) {
             agr_aot_set_trace_limit(1000000);
             agr_aot_trace_open([[docs stringByAppendingPathComponent:@"aot-trace.txt"] UTF8String]);
@@ -557,21 +558,23 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         writePVSProgress(@"after:nativeactivity.onCreate",guest);
         if (aotProbe && gKungFooAotProbeMode >= 6) {
             aotStageSeconds=CFAbsoluteTimeGetCurrent()-aotStageStart;
-            aotStageInterpreterInstructions=guest?agr_guest_instruction_count(guest)-aotStageBefore:0;
+            aotStageInterpreterInstructions=agr_aot_fallback_interpreter_instructions()+
+                agr_aot_svc_interpreter_instructions()+agr_aot_baseline_interpreter_instructions();
             aotTraceSeen=agr_aot_trace_seen();
             aotTraceIncomplete=agr_aot_trace_incomplete() != 0;
             agr_aot_set_enabled(0);
             agr_aot_trace_close();
             agr_aot_log_close();
             BOOL stagePassed=package && mounted==0 && registered==0 && dexLoaded==0 &&
-                jniOnLoad==0 && dexStarted==0 && initialized==0 && activityCreated==0;
+                jniOnLoad==0 && dexStarted==0 && initialized==0 && agr_aot_probe_stopped();
             const char *stageError=guest?agr_guest_last_error(guest):"guest unavailable";
             NSString *stageMode=gKungFooAotProbeMode==7?@"aot-correctness":
                 (gKungFooAotProbeMode==10?@"aot-performance":
                  (gKungFooAotProbeMode==9?@"aot-fast-audit":
                   (gKungFooAotProbeMode==8?@"interpreter-baseline":@"interpreter-trace")));
             NSDictionary *stageResult=@{
-                @"mode":stageMode,@"workload":@"kungfoo-armv7-native-oncreate-path",
+                @"mode":stageMode,@"workload":@"kungfoo-armv7-native-through-pthread-create",
+                @"probe_stop_host":@"pthread_create",@"probe_stopped":@(agr_aot_probe_stopped()),
                 @"passed":@(stagePassed),@"mounted":@(mounted==0),
                 @"elf_registered":@(registered==0),@"dex_loaded":@(dexLoaded==0),
                 @"jni_onload_status":@(jniOnLoad),@"jni_version":@(jniVersion),

@@ -1,0 +1,86 @@
+{
+  "schema": "agr.offline-aot-differential.v1",
+  "input_elf_sha256": "010baa4964cd7dbcf1ba038428ab4d6afc13ffd0a180b447be07b8f088f9ba9d",
+  "generated_c_sha256": "d8e1a6c4848f8fd28fb107b83e357e32f23819e7f85c20e190e5664adb7d1029",
+  "tested_commit": "6f63bb66bce6847e5f7afb37eb66bc9aafc6be36",
+  "tested_tree": "69c08d5181da959fead847e434bdabcd8b452138",
+  "translation_used_execution_trace": false,
+  "oracle_trace_sha256": "6d4129f0703a34aebe673d6ad6ff4c04b2f6ec64124bc7dd8626f921881ec22c",
+  "interpreter_trace_instructions": 29863,
+  "interpreter_trace_complete": true,
+  "observable_fields_equal": {
+    "passed": true,
+    "mounted": true,
+    "elf_registered": true,
+    "dex_loaded": true,
+    "jni_onload_status": true,
+    "jni_version": true,
+    "native_so_bytes": true,
+    "error": true,
+    "dex_started": true,
+    "constructors_status": true,
+    "constructors": true,
+    "activity_created": true
+  },
+  "host_calls_equal": false,
+  "checkpoint_count": 28159,
+  "checkpoint_mismatches": [
+    {
+      "index": 28109,
+      "reason": "PC absent from forward trace"
+    }
+  ],
+  "instruction_accounting": {
+    "diagnostic": false,
+    "fast": false
+  },
+  "diagnostic_aot_instructions": 28060,
+  "fast_aot_instructions": 27182,
+  "fast_interpreter_instructions": 2634,
+  "fast_lookup_misses": 1233,
+  "fast_fallback_counts": {
+    "it_state": 629,
+    "lookup_miss": 1233,
+    "mode_miss": 96,
+    "svc": 677
+  },
+  "fast_fallback_unique_pc_mode": {
+    "it_state": 85,
+    "lookup_miss": 222,
+    "mode_miss": 2,
+    "svc": 27
+  },
+  "lookup_miss_classes": {
+    "decoded_but_no_fast_entry": 842,
+    "static_discovery_gap": 96,
+    "unsupported_arm_semantic": 295
+  },
+  "fallback_log_accounting": true,
+  "performance_samples": 3,
+  "heldout_path": {
+    "prior_trace_instructions": 29578,
+    "exact_loader_prefix_equal": true,
+    "same_generated_code_as_loader_probe": true,
+    "new_path_instructions": 285,
+    "new_pc_modes": 266,
+    "new_path_aot_instructions": 217,
+    "new_path_interpreter_instructions": 21,
+    "new_path_instruction_accounting": false,
+    "new_path_aot_coverage": 0.7614035087719299
+  },
+  "performance_host_calls_equal": false,
+  "baseline_engine_seconds": [
+    0.001123000000000003,
+    0.000525000000000003,
+    0.001047000000000003
+  ],
+  "aot_route_engine_seconds": [
+    0.0011960000000000054,
+    0.0011610000000000075,
+    0.001260000000000005
+  ],
+  "baseline_engine_median": 0.001047000000000003,
+  "aot_route_engine_median": 0.0011960000000000054,
+  "route_speedup_ratio_of_medians": 0.8754180602006675,
+  "semantic_pass": false
+}

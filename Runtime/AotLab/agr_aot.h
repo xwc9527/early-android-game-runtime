@@ -45,6 +45,8 @@ int agr_aot_trace_incomplete(void);
 void agr_aot_log_open(const char *path);
 void agr_aot_log_close(void);
 void agr_aot_log_host(const char *name, uint32_t slot, uint32_t r0, uint32_t r1, uint32_t r2, uint32_t r3);
+void agr_aot_probe_stop_before_host(const char *name);
+int agr_aot_probe_stopped(void);
 void agr_aot_checkpoint_open(const char *path);
 void agr_aot_fallback_open(const char *path);
 int agr_aot_fallback_log_incomplete(void);

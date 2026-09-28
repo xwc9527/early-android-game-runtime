@@ -40,6 +40,8 @@ static uint32_t step_limit_fallbacks;
 static uint32_t fallback_interpreter_instructions;
 static uint32_t svc_interpreter_instructions;
 static uint32_t baseline_interpreter_instructions;
+static const char *probe_stop_host;
+static int probe_stopped;
 
 static void trace_instruction(uint32_t pc, uint32_t insn, uint32_t len, uint32_t thumb,
                               const uint32_t *regs, uint32_t cpsr) {
@@ -87,17 +89,23 @@ void agr_aot_log_open(const char *path) {
     fallback_interpreter_seconds = svc_interpreter_seconds = baseline_interpreter_seconds = 0;
     drive_calls = lookup_misses = it_fallbacks = guard_misses = mode_misses = step_limit_fallbacks = 0;
     fallback_interpreter_instructions = svc_interpreter_instructions = baseline_interpreter_instructions = 0;
+    probe_stop_host = NULL;
+    probe_stopped = 0;
 }
+
+void agr_aot_probe_stop_before_host(const char *name) { probe_stop_host = name; }
+int agr_aot_probe_stopped(void) { return probe_stopped; }
 
 void agr_aot_checkpoint_open(const char *path) {
     if (checkpoint_file) fclose(checkpoint_file);
     checkpoint_file = fopen(path, "w");
 }
 
-void agr_aot_add_boundary_seconds(double seconds) { boundary_seconds += seconds; }
+void agr_aot_add_boundary_seconds(double seconds) { if (!probe_stopped) boundary_seconds += seconds; }
 double agr_aot_boundary_seconds(void) { return boundary_seconds; }
 
 void agr_aot_record_drive(double seconds, int result) {
+    if (probe_stopped) return;
     drive_calls++;
     if (result == AGR_AOT_OFF) off_probe_seconds += seconds;
     else drive_seconds += seconds;
@@ -124,6 +132,7 @@ static void record_fallback(const char *reason, uint32_t pc, uint32_t cpsr) {
 }
 
 void agr_aot_record_interpreter(double seconds, int result, uint32_t instructions) {
+    if (probe_stopped) return;
     if (result == AGR_AOT_MISS) {
         fallback_interpreter_seconds += seconds;
         fallback_interpreter_instructions += instructions;
@@ -146,8 +155,14 @@ void agr_aot_log_close(void) {
 }
 
 void agr_aot_log_host(const char *name, uint32_t slot, uint32_t r0, uint32_t r1, uint32_t r2, uint32_t r3) {
-    if (!log_file) return;
-    fprintf(log_file, "%s %u %u %u %u %u\n", name ? name : "host", slot, r0, r1, r2, r3);
+    if (log_file)
+        fprintf(log_file, "%s %u %u %u %u %u\n", name ? name : "host", slot, r0, r1, r2, r3);
+    if (!probe_stopped && probe_stop_host && name && !strcmp(name, probe_stop_host)) {
+        probe_stopped = 1;
+        enabled = 0;
+        agr_aot_trace_close();
+        agr_aot_log_close();
+    }
 }
 
 void agr_aot_set_enabled(int value) { enabled = value; }
