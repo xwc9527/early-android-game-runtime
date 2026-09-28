@@ -1,0 +1,17 @@
+{
+  "schema": "agr.aot-attribution-capture-verification.v1",
+  "label": "gloomy",
+  "capture_sha256": "7571848233d1e0986c07395d2d76ef401a7393f0d75cef27912b765e191292e8",
+  "elf_sha256": "2b8672e79da33de4661f6aa0bcb79df2a302637aca9829d53fff8077a6895638",
+  "capture_bytes": 21764,
+  "elf_bytes": 9376,
+  "guest_page_count": 3,
+  "checks": {
+    "pc_equal": true,
+    "cpsr_equal": true,
+    "registers_equal": true,
+    "pages_equal": true,
+    "elf_hash_equal": true
+  },
+  "passed": true
+}

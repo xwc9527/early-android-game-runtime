@@ -1,0 +1,539 @@
+{
+  "schema": "agr.aot-same-job-real-segment-replay.v1",
+  "label": "gloomy",
+  "checks": {
+    "single_workload": true,
+    "same_repetitions": true,
+    "same_guest_instruction_count": true,
+    "memory_results_equal": true,
+    "all_architectural_states_equal": true,
+    "backend_identity": true
+  },
+  "passed": true,
+  "raw_samples": {
+    "interpreter": [
+      {
+        "label": "gloomy",
+        "backend": "interpreter",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 2903000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "interpreter",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 2917000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "interpreter",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 6476000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "interpreter",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 5080000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "interpreter",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 2962000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      }
+    ],
+    "generated-c": [
+      {
+        "label": "gloomy",
+        "backend": "generated-c",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 824000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "generated-c",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 995000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "generated-c",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 855000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "generated-c",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 895000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "generated-c",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 896000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      }
+    ],
+    "indexed-region": [
+      {
+        "label": "gloomy",
+        "backend": "indexed-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 923000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "indexed-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 997000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "indexed-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 938000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "indexed-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 1179000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "indexed-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 1334000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      }
+    ],
+    "guardless-region": [
+      {
+        "label": "gloomy",
+        "backend": "guardless-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 809000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guardless-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 903000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guardless-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 904000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guardless-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 917000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guardless-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 1111000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      }
+    ],
+    "scalar-region": [
+      {
+        "label": "gloomy",
+        "backend": "scalar-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 715000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "scalar-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 692000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "scalar-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 873000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "scalar-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 715000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "scalar-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 696000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      }
+    ],
+    "guard-only-region": [
+      {
+        "label": "gloomy",
+        "backend": "guard-only-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 902000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guard-only-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 1031000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guard-only-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 938000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guard-only-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 945000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guard-only-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 1134000,
+        "drive_calls": 16384,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      }
+    ],
+    "account-only-region": [
+      {
+        "label": "gloomy",
+        "backend": "account-only-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 883000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "account-only-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 939000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "account-only-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 950000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "account-only-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 785000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "account-only-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 1142000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      }
+    ],
+    "guard-account-region": [
+      {
+        "label": "gloomy",
+        "backend": "guard-account-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 810000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guard-account-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 951000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guard-account-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 995000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guard-account-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 806000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guard-account-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 882000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      }
+    ],
+    "guard-once-region": [
+      {
+        "label": "gloomy",
+        "backend": "guard-once-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 838000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guard-once-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 871000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guard-once-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 858000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guard-once-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 913000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      },
+      {
+        "label": "gloomy",
+        "backend": "guard-once-region",
+        "repetitions": 16384,
+        "guest_instructions_per_repetition": 10,
+        "elapsed_ns": 930000,
+        "drive_calls": 16384,
+        "chained_blocks": 16384,
+        "final_pages_fnv64": "eefaf96cd0945f57",
+        "state_equal": true
+      }
+    ]
+  },
+  "median_ns_per_repetition": {
+    "interpreter": 180.7861328125,
+    "generated-c": 54.62646484375,
+    "indexed-region": 60.85205078125,
+    "guardless-region": 55.17578125,
+    "scalar-region": 43.64013671875,
+    "guard-only-region": 57.67822265625,
+    "account-only-region": 57.31201171875,
+    "guard-account-region": 53.8330078125,
+    "guard-once-region": 53.16162109375
+  }
+}

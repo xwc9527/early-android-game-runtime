@@ -1,0 +1,28 @@
+{
+  "schema": "agr.aot-attribution-isolated-region.v1",
+  "label": "gloomy",
+  "elf_sha256": "2b8672e79da33de4661f6aa0bcb79df2a302637aca9829d53fff8077a6895638",
+  "selected_trace_sha256": "b73bbfc49cf339a5e80083c8a8bd6fa7ddd77f819fcf963f530aa2a5ec33422a",
+  "selected_entry_pc": 69268,
+  "selected_dynamic_instructions": 10,
+  "static_block_count": 2,
+  "static_decoded_instructions": 10,
+  "operation_kinds": [
+    "blx_reg",
+    "ldr_imm",
+    "mov_reg",
+    "movs_imm",
+    "movw",
+    "stmdb_sp"
+  ],
+  "guard_count": 2,
+  "guard_once_per_block_until_guest_store": false,
+  "global_dispatch": false,
+  "region_entry_search": false,
+  "per_block_bookkeeping": false,
+  "region_local_guest_state": true,
+  "host_register_residency_proven": false,
+  "generated_c_bytes": 1869,
+  "generated_c_sha256": "d6844fb0ff1dfc60dcbdfb0bfa47fbd617a292053568afc8e5328c455a44382f",
+  "offline_preparation_seconds": 0.030042957999967257
+}
