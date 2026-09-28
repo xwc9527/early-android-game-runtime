@@ -1,0 +1,10 @@
+{
+  "schema": "agr.offline-aot-input.v1",
+  "apk_sha256": "40a67842345b879fc4b4be90159787f04664d9530f6a3e676c13fa412ad98733",
+  "native_sha256": "2b8672e79da33de4661f6aa0bcb79df2a302637aca9829d53fff8077a6895638",
+  "native_bytes": 9376,
+  "apk_member": "lib/armeabi-v7a/librenderer.so",
+  "load_bias_policy": "runtime formal linker result",
+  "tested_commit": "6789800d2346cf7f736bac74f556f162afbfc299",
+  "tested_tree": "04bbdcdeb60efaa2a2e6cc0b8ae11163793e4ced"
+}
