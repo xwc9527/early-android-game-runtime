@@ -1,0 +1,28 @@
+{
+  "schema": "agr.offline-apk-preparation.v1",
+  "apk_sha256": "40a67842345b879fc4b4be90159787f04664d9530f6a3e676c13fa412ad98733",
+  "apk_bytes": 8177030,
+  "selected_abi": "armeabi-v7a",
+  "available_arm_abis": [
+    "armeabi-v7a",
+    "armeabi"
+  ],
+  "entry_policy": "all-exidx",
+  "translation_uses_execution_trace": false,
+  "native_library_count": 1,
+  "libraries": [
+    {
+      "apk_member": "lib/armeabi-v7a/librenderer.so",
+      "elf_sha256": "2b8672e79da33de4661f6aa0bcb79df2a302637aca9829d53fff8077a6895638",
+      "elf_bytes": 9376,
+      "artifact_c_sha256": "9c1b6948cb5d8570066b6b01510a524e98927f3cf5bfdda627dbc02af003e397",
+      "artifact_c_bytes": 136626,
+      "fast_block_count": 308,
+      "preparation_wall_seconds": 0.0318630120000023,
+      "output_directory": "elf-000-2b8672e79da3"
+    }
+  ],
+  "total_elf_bytes": 9376,
+  "total_generated_c_bytes": 136626,
+  "total_preparation_wall_seconds": 0.12850729699999874
+}

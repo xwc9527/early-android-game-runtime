@@ -1,0 +1,7 @@
+# Original APK to offline AOT preparation
+
+Run `36408196579` tested commit `167e6b1` with one `all-exidx` policy and no execution trace. Its original artifact ZIP and all 19 byte-verified extracted members are in `run-36408196579/`. The archive contains both original locked APKs, their selected native ELFs, generated C artifacts, translation manifests, dependency lock, source identity, and preparation logs. Both APK SHA-256 and selected ARMv7 ELF SHA-256 values match the repository's existing locked identities.
+
+The generic `prepare_apk_offline.py` selected `armeabi-v7a` ahead of `armeabi` and translated every selected 32-bit ARM `.so` in each APK without a game name, symbol name, execution trace, or manually selected entry policy. Each tested APK contained one selected ARMv7 ELF. KungFoo's 13,703,753-byte APK contained an 882,136-byte ELF; the script produced 33,548 fast blocks and 17,041,778 generated C bytes in 4.111 seconds total preparation time. Gloomy's 8,177,030-byte APK contained a 9,376-byte ELF; it produced 308 fast blocks and 136,626 generated C bytes in 0.129 seconds total. These times exclude locked APK download and ARM64 compilation.
+
+This proves automatic preparation for the two tested original APKs. The generated artifact is per ELF; simultaneous registration and dispatch of multiple AOT artifacts in one process have not been executed. No inference about a broad APK library's native code-size distribution follows from these two samples.

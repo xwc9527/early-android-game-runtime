@@ -1,0 +1,28 @@
+{
+  "schema": "agr.offline-apk-preparation.v1",
+  "apk_sha256": "097ade628ad0837e312da4ca48afe0906eb99c3b992d497c7da33e2b2267eb22",
+  "apk_bytes": 13703753,
+  "selected_abi": "armeabi-v7a",
+  "available_arm_abis": [
+    "armeabi-v7a",
+    "armeabi"
+  ],
+  "entry_policy": "all-exidx",
+  "translation_uses_execution_trace": false,
+  "native_library_count": 1,
+  "libraries": [
+    {
+      "apk_member": "lib/armeabi-v7a/libKungFooBarracudaNativeActivity.so",
+      "elf_sha256": "010baa4964cd7dbcf1ba038428ab4d6afc13ffd0a180b447be07b8f088f9ba9d",
+      "elf_bytes": 882136,
+      "artifact_c_sha256": "ade591a956a4e9c4f42f99a31d3a6ed7818687f917c90dc73e525c5d76220cf7",
+      "artifact_c_bytes": 17041778,
+      "fast_block_count": 33548,
+      "preparation_wall_seconds": 3.8220776969999974,
+      "output_directory": "elf-000-010baa4964cd"
+    }
+  ],
+  "total_elf_bytes": 882136,
+  "total_generated_c_bytes": 17041778,
+  "total_preparation_wall_seconds": 4.110749261999999
+}
