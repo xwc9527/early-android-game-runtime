@@ -5,12 +5,15 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 AUTO_LOAD="${AGR_OFFLINE_GLOOMY_AUTO:-0}"
 RELOCATABLE="${AGR_OFFLINE_GLOOMY_RELOCATABLE:-0}"
 POLICY="${AGR_OFFLINE_ENTRY_POLICY:-exports}"
+WARM="${AGR_OFFLINE_GLOOMY_WARM:-0}"
 [[ "$AUTO_LOAD" == 0 || "$AUTO_LOAD" == 1 ]] || { echo "invalid AUTO_LOAD" >&2; exit 2; }
 [[ "$RELOCATABLE" == 0 || "$RELOCATABLE" == 1 ]] || { echo "invalid RELOCATABLE" >&2; exit 2; }
 [[ "$POLICY" == exports || "$POLICY" == all-exidx ]] || { echo "invalid POLICY" >&2; exit 2; }
+[[ "$WARM" == 0 || "$WARM" == 1 ]] || { echo "invalid WARM" >&2; exit 2; }
 SUFFIX=""
 [[ "$AUTO_LOAD" == 1 ]] && SUFFIX="-auto-first"
 [[ "$RELOCATABLE" == 1 ]] && SUFFIX="-relocatable"
+[[ "$WARM" == 1 ]] && SUFFIX="$SUFFIX-warm"
 EVIDENCE="$ROOT/build/offline-aot-gloomy-$POLICY$SUFFIX"
 mkdir -p "$EVIDENCE"
 export AGR_SIMULATOR_PROFILE=gloomy
@@ -61,6 +64,7 @@ done
 cp "$ROOT/build/build-environment.json" "$EVIDENCE/build-environment.json"
 PLACEMENTS=("$AUTO_LOAD")
 [[ "$RELOCATABLE" == 1 ]] && PLACEMENTS=(0 1)
+[[ "$WARM" == 1 ]] && PLACEMENTS=(1)
 for placement in "${PLACEMENTS[@]}"; do
 PAIR="$EVIDENCE"
 if [[ "$RELOCATABLE" == 1 ]]; then
@@ -69,22 +73,32 @@ if [[ "$RELOCATABLE" == 1 ]]; then
   mkdir -p "$PAIR"
   for name in input-identity.json input-armv7.so translation-manifest.json aot_blocks.c; do cp "$EVIDENCE/$name" "$PAIR/$name"; done
 fi
-for mode in trace run; do
+run_one() {
+  local mode="$1" prefix="$2" status name
   rm -f "$ROOT/build/artifacts/aot-result.json" "$ROOT/build/artifacts/aot-hosts.txt" \
     "$ROOT/build/artifacts/aot-trace.txt" "$ROOT/build/artifacts/aot-checkpoints.txt" \
     "$ROOT/build/artifacts/aot-fallbacks.txt"
   set +e
-  LAUNCH_MODE="$mode"
+  local LAUNCH_MODE="$mode"
   [[ "$placement" == 1 ]] && LAUNCH_MODE="auto-$mode"
   bash "$ROOT/tools/aot-lab/launch_aot.sh" "$LAUNCH_MODE"
-  status=$?
+  status="$?"
   set -e
-  prefix=interpreter
-  [[ "$mode" == run ]] && prefix=aot
   printf '%s\n' "$status" > "$PAIR/$prefix.exit"
   for name in aot-result.json aot-hosts.txt aot-trace.txt aot-checkpoints.txt aot-fallbacks.txt; do
     [[ ! -f "$ROOT/build/artifacts/$name" ]] || cp "$ROOT/build/artifacts/$name" "$PAIR/$prefix-${name#aot-}"
   done
-done
-"$PYTHON" "$ROOT/tools/aot-lab/offline_gloomy_differential.py" "$PAIR"
+  [[ "$status" == 0 ]] || return "$status"
+}
+if [[ "$WARM" == 1 ]]; then
+  for sample in 1 2 3 4 5; do
+    run_one warm-baseline "baseline-performance-$sample"
+    run_one warm-run "aot-performance-$sample"
+  done
+  "$PYTHON" "$ROOT/tools/aot-lab/offline_gloomy_warm_differential.py" "$PAIR"
+else
+  run_one trace interpreter
+  run_one run aot
+  "$PYTHON" "$ROOT/tools/aot-lab/offline_gloomy_differential.py" "$PAIR"
+fi
 done

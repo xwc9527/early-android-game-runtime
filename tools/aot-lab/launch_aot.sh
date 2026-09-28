@@ -25,6 +25,8 @@ case "$MODE" in
   run) ARG="--aot-run" ;;
   auto-trace) ARG="--aot-auto-trace" ;;
   auto-run) ARG="--aot-auto-run" ;;
+  auto-warm-baseline) ARG="--aot-auto-warm-baseline" ;;
+  auto-warm-run) ARG="--aot-auto-warm-run" ;;
   kungfoo-trace) ARG="--aot-kungfoo-trace" ;;
   kungfoo-run) ARG="--aot-kungfoo-run" ;;
   kungfoo-performance) ARG="--aot-kungfoo-performance" ;;

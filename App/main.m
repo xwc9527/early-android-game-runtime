@@ -2095,7 +2095,7 @@ static int runKungFooAotProbe(int mode) {
     return passed?0:1;
 }
 
-static int runAotPoc(BOOL useAot, BOOL autoLoad) {
+static int runAotPoc(BOOL useAot, BOOL autoLoad, BOOL warm) {
     NSString *docs = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
     [[NSFileManager defaultManager] createDirectoryAtPath:docs withIntermediateDirectories:YES attributes:nil error:nil];
     NSString *trace = [docs stringByAppendingPathComponent:@"aot-trace.txt"];
@@ -2106,7 +2106,12 @@ static int runAotPoc(BOOL useAot, BOOL autoLoad) {
     int status = 1;
     NSString *error = @"";
     uint64_t hash = 0; NSUInteger nonblack = 0; int lines = -1, triangles = -1, bytes = -1;
-    CFAbsoluteTime elapsed = 0;
+    CFAbsoluteTime elapsed = 0, warmElapsed = 0;
+    double coldEngine = 0, warmEngine = 0;
+    double coldDrive = 0, coldFallback = 0, coldSvc = 0;
+    double warmDrive = 0, warmFallback = 0, warmSvc = 0;
+    uint64_t coldInstructions = 0;
+    uint32_t coldAotInstructions = 0;
     uint64_t interpreterInstructions = 0;
     uint32_t loadedBias = 0;
     if (elf && guest && agr_guest_load_elf_handle(guest, "librenderer.so", elf.bytes,
@@ -2125,20 +2130,41 @@ static int runAotPoc(BOOL useAot, BOOL autoLoad) {
         uint32_t triangleArgs[] = {0x01000000,0x60001000,vertexArray,colorArray,texcoordArray,indexArray,3};
         int32_t ignored = 0;
         uint64_t before = agr_guest_instruction_count(guest);
-        if (!useAot) agr_aot_trace_open(trace.UTF8String);
+        if (!useAot && !warm) agr_aot_trace_open(trace.UTF8String);
         agr_aot_log_open(hosts.UTF8String);
         if (useAot) {
             NSString *checkpoints = [docs stringByAppendingPathComponent:@"aot-checkpoints.txt"];
-            agr_aot_checkpoint_open(checkpoints.UTF8String);
+            if (!warm) agr_aot_checkpoint_open(checkpoints.UTF8String);
             NSString *fallbacks = [docs stringByAppendingPathComponent:@"aot-fallbacks.txt"];
-            agr_aot_fallback_open(fallbacks.UTF8String);
+            if (!warm) agr_aot_fallback_open(fallbacks.UTF8String);
             agr_aot_set_enabled(1);
         }
         CFAbsoluteTime start = CFAbsoluteTimeGetCurrent();
         lines = agr_guest_call_symbol(guest, "Java_zame_game_engine_Renderer_renderLines", lineArgs, 5, &ignored);
         triangles = lines == 0 ? agr_guest_call_symbol(guest, "Java_zame_game_engine_Renderer_renderTriangles", triangleArgs, 7, &ignored) : -1;
+        coldInstructions = agr_guest_instruction_count(guest) - before;
+        coldAotInstructions = agr_aot_executed_instructions();
+        coldEngine = useAot ? (agr_aot_drive_seconds() + agr_aot_fallback_interpreter_seconds() +
+                               agr_aot_svc_interpreter_seconds()) : agr_aot_baseline_interpreter_seconds();
+        coldDrive = agr_aot_drive_seconds();
+        coldFallback = agr_aot_fallback_interpreter_seconds();
+        coldSvc = agr_aot_svc_interpreter_seconds();
+        if (warm && lines == 0 && triangles == 0) {
+            CFAbsoluteTime warmStart = CFAbsoluteTimeGetCurrent();
+            for (uint32_t i = 0; i < 256 && lines == 0 && triangles == 0; i++) {
+                lines = agr_guest_call_symbol(guest, "Java_zame_game_engine_Renderer_renderLines", lineArgs, 5, &ignored);
+                if (lines == 0)
+                    triangles = agr_guest_call_symbol(guest, "Java_zame_game_engine_Renderer_renderTriangles", triangleArgs, 7, &ignored);
+            }
+            warmElapsed = CFAbsoluteTimeGetCurrent() - warmStart;
+        }
         elapsed = CFAbsoluteTimeGetCurrent() - start;
         interpreterInstructions = agr_guest_instruction_count(guest) - before;
+        warmEngine = (useAot ? (agr_aot_drive_seconds() + agr_aot_fallback_interpreter_seconds() +
+                                agr_aot_svc_interpreter_seconds()) : agr_aot_baseline_interpreter_seconds()) - coldEngine;
+        warmDrive = agr_aot_drive_seconds() - coldDrive;
+        warmFallback = agr_aot_fallback_interpreter_seconds() - coldFallback;
+        warmSvc = agr_aot_svc_interpreter_seconds() - coldSvc;
         agr_aot_set_enabled(0);
         agr_aot_trace_close();
         agr_aot_log_close();
@@ -2161,6 +2187,16 @@ static int runAotPoc(BOOL useAot, BOOL autoLoad) {
         @"actual_load_bias":@(loadedBias),
         @"passed": @(status == 0),
         @"seconds": @(elapsed),
+        @"warm_iterations": @(warm ? 256 : 0),
+        @"cold_guest_engine_seconds": @(coldEngine),
+        @"warm_guest_engine_seconds": @(warmEngine),
+        @"warm_aot_drive_seconds": @(warmDrive),
+        @"warm_fallback_interpreter_seconds": @(warmFallback),
+        @"warm_svc_interpreter_seconds": @(warmSvc),
+        @"warm_elapsed_seconds": @(warmElapsed),
+        @"cold_guest_instructions": @(coldInstructions),
+        @"warm_guest_instructions": @(interpreterInstructions - coldInstructions),
+        @"warm_aot_instructions": @(agr_aot_executed_instructions() - coldAotInstructions),
         @"interpreter_instructions": @(interpreterInstructions),
         @"aot_instructions": @(agr_aot_executed_instructions()),
         @"aot_blocks": @(agr_aot_executed_blocks()),
@@ -2219,10 +2255,14 @@ static int runAotPoc(BOOL useAot, BOOL autoLoad) {
         exit(runKungFooAotProbe(mode));
     }
     if ([arguments containsObject:@"--aot-trace"] || [arguments containsObject:@"--aot-run"] ||
-        [arguments containsObject:@"--aot-auto-trace"] || [arguments containsObject:@"--aot-auto-run"]) {
-        BOOL autoLoad=[arguments containsObject:@"--aot-auto-trace"] || [arguments containsObject:@"--aot-auto-run"];
-        BOOL useAot=[arguments containsObject:@"--aot-run"] || [arguments containsObject:@"--aot-auto-run"];
-        exit(runAotPoc(useAot,autoLoad));
+        [arguments containsObject:@"--aot-auto-trace"] || [arguments containsObject:@"--aot-auto-run"] ||
+        [arguments containsObject:@"--aot-auto-warm-baseline"] || [arguments containsObject:@"--aot-auto-warm-run"]) {
+        BOOL autoLoad=[arguments containsObject:@"--aot-auto-trace"] || [arguments containsObject:@"--aot-auto-run"] ||
+                      [arguments containsObject:@"--aot-auto-warm-baseline"] || [arguments containsObject:@"--aot-auto-warm-run"];
+        BOOL useAot=[arguments containsObject:@"--aot-run"] || [arguments containsObject:@"--aot-auto-run"] ||
+                    [arguments containsObject:@"--aot-auto-warm-run"];
+        BOOL warm=[arguments containsObject:@"--aot-auto-warm-baseline"] || [arguments containsObject:@"--aot-auto-warm-run"];
+        exit(runAotPoc(useAot,autoLoad,warm));
     }
     BOOL interactive=[arguments containsObject:@"--interactive"];
     BOOL dexParserCompatibility=[arguments containsObject:@"--dex-parser-compatibility"];

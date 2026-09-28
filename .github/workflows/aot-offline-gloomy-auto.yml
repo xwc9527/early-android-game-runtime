@@ -1,29 +1,30 @@
-name: ARMv7 common-policy relocatable offline AOT probe
+name: ARMv7 relocatable offline AOT warm execution probe
 
 on:
   workflow_dispatch:
 
 jobs:
-  relocatable-gloomy:
+  warm-relocatable-gloomy:
     runs-on: xcode-27
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Execute common ELF policy at two formal linker biases
+      - name: Compare warm interpreter and AOT execution within a loaded guest
         env:
           AGR_OFFLINE_GLOOMY_RELOCATABLE: 1
           AGR_OFFLINE_ENTRY_POLICY: all-exidx
+          AGR_OFFLINE_GLOOMY_WARM: 1
         run: |
           set -o pipefail
-          mkdir -p build/offline-aot-gloomy-all-exidx-relocatable
+          mkdir -p build/offline-aot-gloomy-all-exidx-relocatable-warm
           bash tools/aot-lab/run_offline_gloomy.sh 2>&1 |
-            tee build/offline-aot-gloomy-all-exidx-relocatable/ci-log.txt
+            tee build/offline-aot-gloomy-all-exidx-relocatable-warm/ci-log.txt
       - name: Upload original execution evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: offline-aot-gloomy-all-exidx-relocatable
-          path: build/offline-aot-gloomy-all-exidx-relocatable
+          name: offline-aot-gloomy-all-exidx-relocatable-warm
+          path: build/offline-aot-gloomy-all-exidx-relocatable-warm
           if-no-files-found: error
