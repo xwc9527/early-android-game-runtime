@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "workload": "kungfoo-armv7-native-dlopen-to-gameplay",
+  "probe_exit_status": 0,
+  "apk_sha256": "097ade628ad0837e312da4ca48afe0906eb99c3b992d497c7da33e2b2267eb22",
+  "tested_commit": "1a4cd06e11b851d6de04cc27d82d4139105ea2fa",
+  "tested_tree": "3ef0d47936a0e028f6fb0a670ba4b60d0ff2dd50"
+}

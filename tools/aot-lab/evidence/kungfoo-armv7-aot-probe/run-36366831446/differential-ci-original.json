@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "workload": "kungfoo-armv7-native-loader-stage",
+  "semantic_pass": true,
+  "observable_fields_equal": {
+    "passed": true,
+    "mounted": true,
+    "elf_registered": true,
+    "dex_loaded": true,
+    "jni_onload_status": true,
+    "jni_version": true,
+    "native_so_bytes": true,
+    "error": true
+  },
+  "host_sequence_equal": true,
+  "performance_host_sequence_equal": true,
+  "host_call_count": 603,
+  "checkpoint_count": 27999,
+  "checkpoint_mismatches": [],
+  "interpreter_instructions": 29578,
+  "aot_instructions": 27999,
+  "aot_blocks": 27999,
+  "fallback_count": 923,
+  "miss_pc": "000487f2",
+  "interpreter_seconds": 0.005459904670715332,
+  "aot_correctness_seconds": 0.050485968589782715,
+  "interpreter_boundary_seconds": 0.0010239999999999982,
+  "aot_correctness_boundary_seconds": 0.02423300000000011,
+  "interpreter_stage_residual_seconds": 0.004435904670715334,
+  "aot_correctness_stage_residual_seconds": 0.026252968589782606,
+  "stage_residual_is_execution_metric": false,
+  "performance_sample_count": 7,
+  "timing_definition": "CLOCK_MONOTONIC intervals directly around agr_aot_drive and arm_interp_run; excludes loader/linker host work, SVC execution, and Runtime boundary dispatch",
+  "interpreter_engine_seconds_samples": [
+    0.00039200000000000237,
+    0.00043500000000000255,
+    0.00047500000000000287,
+    0.0004300000000000026,
+    0.0004560000000000026,
+    0.0004900000000000027,
+    0.0004300000000000027
+  ],
+  "aot_drive_seconds_samples": [
+    0.0014269999999999903,
+    0.0002760000000000003,
+    0.0002549999999999998,
+    0.00027600000000000037,
+    0.000264,
+    0.00024399999999999953,
+    0.00022199999999999951
+  ],
+  "fallback_interpreter_seconds_samples": [
+    5.499999999999994e-05,
+    5.9999999999999934e-05,
+    6.699999999999991e-05,
+    7.09999999999999e-05,
+    7.09999999999999e-05,
+    5.6999999999999935e-05,
+    6.99999999999999e-05
+  ],
+  "aot_route_engine_seconds_samples": [
+    0.0014819999999999903,
+    0.00033600000000000025,
+    0.0003219999999999997,
+    0.00034700000000000025,
+    0.0003349999999999999,
+    0.00030099999999999946,
+    0.0002919999999999994
+  ],
+  "interpreter_engine_seconds_median": 0.00043500000000000255,
+  "aot_route_engine_seconds_median": 0.0003349999999999999,
+  "interpreter_engine_seconds_range": [
+    0.00039200000000000237,
+    0.0004900000000000027
+  ],
+  "aot_route_engine_seconds_range": [
+    0.0002919999999999994,
+    0.0014819999999999903
+  ],
+  "engine_speedup_median": 1.2985074626865751,
+  "performance_aot_instructions": [
+    27999
+  ],
+  "performance_fallback_count": [
+    923
+  ],
+  "performance_fallback_interpreter_instructions": [
+    923
+  ],
+  "performance_svc_interpreter_instructions": [
+    656
+  ],
+  "performance_lookup_miss_count": [
+    294
+  ],
+  "performance_it_fallback_count": [
+    629
+  ],
+  "performance_guard_miss_count": [
+    0
+  ],
+  "performance_step_limit_fallback_count": [
+    0
+  ],
+  "performance_dynamic_dispatch_count": [
+    7244
+  ],
+  "performance_runtime_boundary_seconds": [
+    0.0011029999999999914,
+    0.0008860000000000025,
+    0.0007850000000000021,
+    0.0008700000000000025,
+    0.0008460000000000028,
+    0.0008380000000000024,
+    0.0008620000000000024
+  ],
+  "performance_svc_interpreter_seconds": [
+    2.600000000000001e-05,
+    2.4000000000000007e-05,
+    2.600000000000001e-05,
+    2.700000000000001e-05,
+    2.1000000000000006e-05,
+    2.900000000000001e-05,
+    2.800000000000001e-05
+  ],
+  "stage_wall_seconds_samples": [
+    0.005574941635131836,
+    0.004058957099914551,
+    0.004044890403747559,
+    0.004830002784729004,
+    0.00450897216796875,
+    0.004387021064758301,
+    0.004706978797912598
+  ],
+  "preparation_wall_seconds": 1.6302195000000665,
+  "generated_c_bytes": 1838285,
+  "generated_block_count": 4119,
+  "partial_baseline_trace_sha256": "12eaddf3c382326b7abe9fe8630ffdf4df4dccc7dde45ea96175a1fef7bfaa73",
+  "input_trace_sha256": "c8240bcf870a26c53bdcf1d9b5309bdebc9fd47e6c47f390687b699be73222d6"
+}

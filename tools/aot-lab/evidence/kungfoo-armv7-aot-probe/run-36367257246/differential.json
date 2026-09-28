@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "workload": "kungfoo-armv7-native-loader-stage",
+  "semantic_pass": true,
+  "observable_fields_equal": {
+    "passed": true,
+    "mounted": true,
+    "elf_registered": true,
+    "dex_loaded": true,
+    "jni_onload_status": true,
+    "jni_version": true,
+    "native_so_bytes": true,
+    "error": true
+  },
+  "host_sequence_equal": true,
+  "performance_host_sequence_equal": true,
+  "host_call_count": 603,
+  "checkpoint_count": 27999,
+  "checkpoint_mismatches": [],
+  "interpreter_instructions": 29578,
+  "aot_instructions": 27999,
+  "aot_blocks": 27999,
+  "fallback_count": 923,
+  "miss_pc": "000487f2",
+  "interpreter_seconds": 0.008066058158874512,
+  "aot_correctness_seconds": 0.05378603935241699,
+  "interpreter_boundary_seconds": 0.0009680000000000024,
+  "aot_correctness_boundary_seconds": 0.02625300000000011,
+  "interpreter_stage_residual_seconds": 0.007098058158874509,
+  "aot_correctness_stage_residual_seconds": 0.027533039352416883,
+  "stage_residual_is_execution_metric": false,
+  "performance_sample_count": 7,
+  "accounting_valid": true,
+  "replay_dynamic_counts": {
+    "aot_instructions": 27999,
+    "aot_blocks": 7244,
+    "unsupported_encoding": 294,
+    "svc": 656,
+    "it_state": 629,
+    "lookup_miss": 294
+  },
+  "replay_miss_unique_pc_mode": {
+    "unsupported_encoding": 16,
+    "missing_translation": 0
+  },
+  "timing_definition": "CLOCK_MONOTONIC intervals directly around agr_aot_drive and arm_interp_run; both routes include all guest instructions including SVC; excludes loader/linker host work and Runtime boundary dispatch",
+  "interpreter_engine_seconds_samples": [
+    0.0006690000000000028,
+    0.00045900000000000243,
+    0.0004770000000000027,
+    0.0005200000000000027,
+    0.0004160000000000024,
+    0.0004720000000000025,
+    0.0005180000000000027
+  ],
+  "aot_drive_seconds_samples": [
+    0.0016689999999999834,
+    0.0002670000000000001,
+    0.0002229999999999995,
+    0.00026900000000000014,
+    0.00022599999999999953,
+    0.00028800000000000066,
+    0.00047400000000000355
+  ],
+  "fallback_interpreter_seconds_samples": [
+    5.499999999999994e-05,
+    6.399999999999992e-05,
+    4.699999999999996e-05,
+    5.2999999999999947e-05,
+    5.599999999999994e-05,
+    7.699999999999988e-05,
+    7.899999999999996e-05
+  ],
+  "svc_interpreter_seconds_samples": [
+    2.900000000000001e-05,
+    3.699999999999999e-05,
+    3.100000000000001e-05,
+    3.2000000000000005e-05,
+    2.3000000000000007e-05,
+    3.799999999999999e-05,
+    3.2000000000000005e-05
+  ],
+  "aot_route_engine_seconds_samples": [
+    0.0017529999999999833,
+    0.000368,
+    0.00030099999999999946,
+    0.0003540000000000001,
+    0.0003049999999999995,
+    0.0004030000000000005,
+    0.0005850000000000035
+  ],
+  "paired_engine_speedup_samples": [
+    0.38163148887621745,
+    1.2472826086956588,
+    1.5847176079734338,
+    1.4689265536723235,
+    1.3639344262295183,
+    1.1712158808933049,
+    0.8854700854700849
+  ],
+  "interpreter_engine_seconds_median": 0.0004770000000000027,
+  "aot_route_engine_seconds_median": 0.000368,
+  "interpreter_engine_seconds_range": [
+    0.0004160000000000024,
+    0.0006690000000000028
+  ],
+  "aot_route_engine_seconds_range": [
+    0.00030099999999999946,
+    0.0017529999999999833
+  ],
+  "engine_speedup_median": 1.2961956521739204,
+  "performance_aot_instructions": [
+    27999
+  ],
+  "performance_fallback_count": [
+    923
+  ],
+  "performance_fallback_interpreter_instructions": [
+    923
+  ],
+  "performance_svc_interpreter_instructions": [
+    656
+  ],
+  "performance_lookup_miss_count": [
+    294
+  ],
+  "performance_it_fallback_count": [
+    629
+  ],
+  "performance_guard_miss_count": [
+    0
+  ],
+  "performance_step_limit_fallback_count": [
+    0
+  ],
+  "performance_dynamic_dispatch_count": [
+    7244
+  ],
+  "performance_runtime_boundary_seconds": [
+    0.0011579999999999902,
+    0.0008240000000000021,
+    0.0008000000000000024,
+    0.0008260000000000023,
+    0.0007730000000000023,
+    0.0009400000000000021,
+    0.0011419999999999898
+  ],
+  "performance_svc_interpreter_seconds": [
+    2.900000000000001e-05,
+    3.699999999999999e-05,
+    3.100000000000001e-05,
+    3.2000000000000005e-05,
+    2.3000000000000007e-05,
+    3.799999999999999e-05,
+    3.2000000000000005e-05
+  ],
+  "stage_wall_seconds_samples": [
+    0.0063179731369018555,
+    0.00377500057220459,
+    0.004286050796508789,
+    0.0040999650955200195,
+    0.004063010215759277,
+    0.004880070686340332,
+    0.004534006118774414
+  ],
+  "preparation_wall_seconds": 1.3211166670000694,
+  "generated_c_bytes": 1838285,
+  "generated_block_count": 4119,
+  "partial_baseline_trace_sha256": "12eaddf3c382326b7abe9fe8630ffdf4df4dccc7dde45ea96175a1fef7bfaa73",
+  "input_trace_sha256": "c8240bcf870a26c53bdcf1d9b5309bdebc9fd47e6c47f390687b699be73222d6"
+}

@@ -1,0 +1,95 @@
+{
+  "input_trace_sha256": "c8240bcf870a26c53bdcf1d9b5309bdebc9fd47e6c47f390687b699be73222d6",
+  "dynamic_unsupported": 294,
+  "unique_pc_mode": 16,
+  "mnemonic_counts": {
+    "ldrex": 147,
+    "strex": 147
+  },
+  "encoding_counts": [
+    {
+      "instruction": "0xe8402300",
+      "length": 4,
+      "thumb": 1,
+      "mnemonic": "strex",
+      "dynamic_count": 1
+    },
+    {
+      "instruction": "0xe8421300",
+      "length": 4,
+      "thumb": 1,
+      "mnemonic": "strex",
+      "dynamic_count": 22
+    },
+    {
+      "instruction": "0xe8421400",
+      "length": 4,
+      "thumb": 1,
+      "mnemonic": "strex",
+      "dynamic_count": 28
+    },
+    {
+      "instruction": "0xe8430100",
+      "length": 4,
+      "thumb": 1,
+      "mnemonic": "strex",
+      "dynamic_count": 44
+    },
+    {
+      "instruction": "0xe8431200",
+      "length": 4,
+      "thumb": 1,
+      "mnemonic": "strex",
+      "dynamic_count": 36
+    },
+    {
+      "instruction": "0xe8441200",
+      "length": 4,
+      "thumb": 1,
+      "mnemonic": "strex",
+      "dynamic_count": 16
+    },
+    {
+      "instruction": "0xe8502f00",
+      "length": 4,
+      "thumb": 1,
+      "mnemonic": "ldrex",
+      "dynamic_count": 1
+    },
+    {
+      "instruction": "0xe8521f00",
+      "length": 4,
+      "thumb": 1,
+      "mnemonic": "ldrex",
+      "dynamic_count": 22
+    },
+    {
+      "instruction": "0xe8523f00",
+      "length": 4,
+      "thumb": 1,
+      "mnemonic": "ldrex",
+      "dynamic_count": 28
+    },
+    {
+      "instruction": "0xe8531f00",
+      "length": 4,
+      "thumb": 1,
+      "mnemonic": "ldrex",
+      "dynamic_count": 36
+    },
+    {
+      "instruction": "0xe8538f00",
+      "length": 4,
+      "thumb": 1,
+      "mnemonic": "ldrex",
+      "dynamic_count": 44
+    },
+    {
+      "instruction": "0xe8543f00",
+      "length": 4,
+      "thumb": 1,
+      "mnemonic": "ldrex",
+      "dynamic_count": 16
+    }
+  ]
+}
