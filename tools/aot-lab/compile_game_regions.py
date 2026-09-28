@@ -82,13 +82,13 @@ def emit_region(number, blocks, image):
              "    uint32_t regs[16];",
              "    memcpy(regs, outer->r, sizeof(regs));",
              "    uint32_t cpsr = *outer->cpsr;",
-             "    AgrAotRegs local = {regs, &cpsr, outer->mem, outer->bias, 0, 0, 0, outer->source_elf};",
+             "    AgrAotRegs local = {regs, &cpsr, outer->mem, outer->bias, 0, 0, 0, outer->source_elf, 0};",
              "    AgrAotRegs *s = &local;",
              "    uint32_t blocks_done = 0, instructions = 0;",
              "    int rc = 0, result = AGR_AOT_BOUNDARY;",
              "    (void)rc;",
-             "    switch (regs[15] - s->bias) {"]
-    lines.extend(f"    case {pc}u: goto L_{pc:08x};" for pc, _ in blocks)
+             "    switch (outer->region_entry) {"]
+    lines.extend(f"    case {index}u: goto L_{pc:08x};" for index, (pc, _) in enumerate(blocks))
     lines += ["    default: result = AGR_AOT_MISS; goto L_exit;", "    }"]
     group_guard_count = 0
     individual_guard_count = 0
@@ -142,7 +142,8 @@ def emit_table(entries, image):
     pieces = ["const AgrAotEntry agr_aot_debug_blocks[] = {{0, 0, 0}};",
               "const uint32_t agr_aot_debug_block_count = 0u;",
               "const AgrAotEntry agr_aot_fast_blocks[] = {"]
-    pieces += [f"    {{{pc}u, {name}, {length}u}}," for pc, name, length in entries]
+    pieces += [f"    {{{pc}u, {name}, {length}u, {index % REGION_LIMIT}u}},"
+               for index, (pc, name, length) in enumerate(entries)]
     pieces += ["};", f"const uint32_t agr_aot_fast_block_count = {len(entries)}u;",
                "const AgrAotEntry agr_aot_fast_hash[] = {{0, 0, 0}};",
                "const uint32_t agr_aot_fast_hash_mask = 0u;"]
@@ -197,7 +198,9 @@ def main():
         "compiled_region_count": len(groups), "compiled_block_count": len(entries),
         "fast_block_count": len(entries), "debug_entry_count": 0,
         "static_compiled_instructions": sum(len(body) for _, body in blocks),
-        "register_resident": True, "direct_intra_region_edge_candidates": direct_edges,
+        "region_local_guest_state": True,
+        "host_register_residency_proven": False,
+        "direct_intra_region_edge_candidates": direct_edges,
         "block_group_guard_count": group_guards,
         "individual_instruction_guard_count": individual_guards,
         "direct_lookup_slots": direct_slots,

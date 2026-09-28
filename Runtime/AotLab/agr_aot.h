@@ -24,6 +24,7 @@ typedef struct AgrAotRegs {
     uint32_t region_blocks;
     uint32_t region_instructions;
     const uint8_t *source_elf;
+    uint32_t region_entry;
 } AgrAotRegs;
 
 typedef int (*AgrAotFn)(AgrAotRegs *state);
@@ -32,6 +33,7 @@ typedef struct AgrAotEntry {
     uint32_t pc;
     AgrAotFn function;
     uint32_t instructions;
+    uint32_t region_entry;
 } AgrAotEntry;
 
 extern const AgrAotEntry agr_aot_debug_blocks[];

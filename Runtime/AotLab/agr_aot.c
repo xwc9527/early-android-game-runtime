@@ -235,7 +235,7 @@ int agr_aot_drive(void *cpu) {
     uint8_t *memory = arm_interp_memory_base(cpu);
     if (!regs || !cpsr || !memory) return AGR_AOT_FAULT;
     AgrAotRegs state = {regs, cpsr, memory, agr_aot_fast_relocatable ? image_bias : 0,
-                        0, 0, 0, source_elf};
+                        0, 0, 0, source_elf, 0};
     uint32_t local_blocks = 0, local_instructions = 0;
 #define AGR_AOT_RETURN(value) do { \
     executed_blocks += local_blocks; \
@@ -275,6 +275,7 @@ int agr_aot_drive(void *cpu) {
         }
 #ifdef AGR_AOT_REGION_COMPILER
         state.region_budget = checkpoint_file ? 1u : 64u;
+        state.region_entry = entry->region_entry;
         if (state.region_budget > 100000u - step) state.region_budget = 100000u - step;
         state.region_blocks = state.region_instructions = 0;
 #else
