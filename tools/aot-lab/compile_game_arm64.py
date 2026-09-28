@@ -152,7 +152,8 @@ def discover(image):
         except ValueError:
             excluded["unsupported_encoding"] += 1
             continue
-        if op[0] not in SUPPORTED or op[0] == "mov_reg" and op[1] == 15:
+        if (op[0] not in SUPPORTED or op[0] == "mov_reg" and op[1] == 15 or
+                op[0] == "add_imm" and row["thumb"] and op[2] == 15):
             excluded[f"unsupported_op:{op[0]}"] += 1
             continue
         eligible[pc] = row
