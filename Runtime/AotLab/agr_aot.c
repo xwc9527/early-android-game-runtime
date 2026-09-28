@@ -15,6 +15,8 @@ __attribute__((weak)) const uint32_t agr_aot_fast_direct_base = 0;
 __attribute__((weak)) const uint32_t agr_aot_fast_direct_count = 0;
 __attribute__((weak)) const uint32_t agr_aot_fast_direct[] = {0};
 __attribute__((weak)) const uint32_t agr_aot_fast_relocatable = 0;
+__attribute__((weak)) const uint64_t agr_aot_input_elf_fnv64 = 0;
+__attribute__((weak)) const uint32_t agr_aot_input_elf_bytes = 0;
 static uint32_t image_bias;
 static int diagnostic;
 static FILE *trace_file;
@@ -174,8 +176,16 @@ void agr_aot_log_host(const char *name, uint32_t slot, uint32_t r0, uint32_t r1,
 void agr_aot_set_enabled(int value) { enabled = value; }
 void agr_aot_set_diagnostic(int value) { diagnostic = value; }
 void agr_aot_set_image_bias(uint32_t load_bias) { image_bias = load_bias; }
+void agr_aot_bind_elf(const void *bytes, uint32_t size, uint32_t load_bias) {
+    if (!agr_aot_fast_relocatable || !bytes || size != agr_aot_input_elf_bytes) return;
+    const uint8_t *data = (const uint8_t *)bytes;
+    uint64_t hash = UINT64_C(14695981039346656037);
+    for (uint32_t i = 0; i < size; i++) hash = (hash ^ data[i]) * UINT64_C(1099511628211);
+    if (hash == agr_aot_input_elf_fnv64) image_bias = load_bias;
+}
 
 static const AgrAotEntry *lookup(uint32_t pc) {
+    if (agr_aot_fast_relocatable && !image_bias) return NULL;
     if (agr_aot_fast_relocatable) pc -= image_bias;
     if (!diagnostic) {
         if (agr_aot_fast_direct_count) {

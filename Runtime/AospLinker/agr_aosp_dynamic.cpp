@@ -30,6 +30,8 @@
 #include <string>
 #include <vector>
 
+extern "C" void agr_aot_bind_elf(const void*,uint32_t,uint32_t) __attribute__((weak));
+
 #ifndef PT_ARM_EXIDX
 #define PT_ARM_EXIDX 0x70000001
 #endif
@@ -231,6 +233,7 @@ static soinfo* load_library(agr_aosp_dynamic*rt,const char*name){
   Source*src=find_source(rt,name);if(!src){if(is_host_library(name)){soinfo*si=new soinfo;si->name=basename_of(name);si->host=true;si->flags=FLAG_LINKED;rt->solist.push_back(si);return si;}set_error(rt,"library %s not found",name,NULL);return NULL;}
   soinfo*si=new soinfo;si->name=basename_of(name);si->source=src;int32_t ge=0;if(agr_aosp_linker_map(rt->mmap,&src->bytes[0],(uint32_t)src->bytes.size(),src->preferred_bias,&si->image,&ge)){snprintf(rt->linker_error,sizeof(rt->linker_error),"AOSP segment map failed for %s: errno %d",name,ge);delete si;return NULL;}
   si->base=si->image.load_start;si->size=si->image.load_size;si->load_bias=si->image.load_bias;rt->solist.push_back(si);bool became_main=false;if(!rt->somain){rt->somain=si;became_main=true;}
+  if (agr_aot_bind_elf) agr_aot_bind_elf(src->bytes.data(),(uint32_t)src->bytes.size(),si->load_bias);
   if(!parse_headers(rt,si)||!soinfo_link_image(rt,si)){std::vector<soinfo*>deps=si->needed;if(became_main)rt->somain=NULL;agr_aosp_linker_unload(rt->mmap,&si->image,NULL);erase_records(rt,si);rt->solist.pop_back();delete si;for(size_t i=0;i<deps.size();++i)soinfo_unload(rt,deps[i]);return NULL;}return si;
 }
 static soinfo* find_library_internal(agr_aosp_dynamic*rt,const char*name){if(!name)return rt->somain;soinfo*si=find_loaded_library(rt,name);if(si){if(si->flags&FLAG_LINKED)return si;set_error(rt,"recursive link to %s",si->name.c_str(),NULL);return NULL;}return load_library(rt,name);}

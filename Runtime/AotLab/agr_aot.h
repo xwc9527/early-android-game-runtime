@@ -39,10 +39,13 @@ extern const uint32_t agr_aot_fast_direct_base;
 extern const uint32_t agr_aot_fast_direct_count;
 extern const uint32_t agr_aot_fast_direct[];
 extern const uint32_t agr_aot_fast_relocatable;
+extern const uint64_t agr_aot_input_elf_fnv64;
+extern const uint32_t agr_aot_input_elf_bytes;
 
 void agr_aot_set_enabled(int enabled);
 void agr_aot_set_diagnostic(int enabled);
 void agr_aot_set_image_bias(uint32_t load_bias);
+void agr_aot_bind_elf(const void *bytes, uint32_t size, uint32_t load_bias);
 void agr_aot_trace_open(const char *path);
 void agr_aot_trace_close(void);
 void agr_aot_set_trace_limit(uint64_t instruction_limit);

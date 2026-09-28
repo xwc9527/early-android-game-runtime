@@ -2132,7 +2132,6 @@ static int runAotPoc(BOOL useAot, BOOL autoLoad) {
             agr_aot_checkpoint_open(checkpoints.UTF8String);
             NSString *fallbacks = [docs stringByAppendingPathComponent:@"aot-fallbacks.txt"];
             agr_aot_fallback_open(fallbacks.UTF8String);
-            agr_aot_set_image_bias(loadedBias);
             agr_aot_set_enabled(1);
         }
         CFAbsoluteTime start = CFAbsoluteTimeGetCurrent();

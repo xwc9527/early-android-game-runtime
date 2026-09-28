@@ -54,6 +54,14 @@ def main():
         extra_starts=(pc + load_bias for pc, _ in starts),
         emit_debug=not args.no_diagnostic, mode_guard=True,
         direct_lookup=args.direct_lookup, relocatable=args.relocatable)
+    elf_fnv64 = None
+    if args.relocatable:
+        elf_fnv64 = 14695981039346656037
+        for byte in image.data:
+            elf_fnv64 = ((elf_fnv64 ^ byte) * 1099511628211) & 0xffffffffffffffff
+        with output.open("a", encoding="utf-8", newline="\n") as generated:
+            generated.write(f"\nconst uint64_t agr_aot_input_elf_fnv64 = {elf_fnv64}ull;\n")
+            generated.write(f"const uint32_t agr_aot_input_elf_bytes = {len(image.data)}u;\n")
     result = {
         "schema": "agr.offline-aot-manifest.v1",
         "elf_sha256": image.sha256,
@@ -67,6 +75,7 @@ def main():
                              "ELF PT_LOAD and empty AGR first-fit linker VMA" if args.load_bias == "auto-first"
                              else "caller-supplied formal linker placement; not inferred from trace"),
         "relocatable": args.relocatable,
+        "elf_fnv64": elf_fnv64,
         "translation_inputs": (["ELF32 ARM code", "dynamic symbols", "init/fini arrays"] +
                                (["EHABI exidx"] if args.entry_policy in
                                 {"all-exidx", "all-exidx-sweep"} else []) +
