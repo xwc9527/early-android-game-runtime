@@ -1,0 +1,32 @@
+name: ARMv7 Gloomy automatic linker placement AOT probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [validation/aot-offline-generalization]
+    paths-ignore:
+      - "tools/aot-lab/evidence/**"
+
+jobs:
+  auto-first-gloomy:
+    runs-on: xcode-27
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Derive first-object load bias from ELF and AGR linker policy
+        env:
+          AGR_OFFLINE_GLOOMY_AUTO: 1
+        run: |
+          set -o pipefail
+          mkdir -p build/offline-aot-gloomy-exports-auto-first
+          bash tools/aot-lab/run_offline_gloomy.sh 2>&1 |
+            tee build/offline-aot-gloomy-exports-auto-first/ci-log.txt
+      - name: Upload original execution evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-aot-gloomy-exports-auto-first
+          path: build/offline-aot-gloomy-exports-auto-first
+          if-no-files-found: error

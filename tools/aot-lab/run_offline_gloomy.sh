@@ -2,7 +2,11 @@
 # Independent APK/ELF-only preparation on the existing Gloomy renderer workload.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-EVIDENCE="$ROOT/build/offline-aot-gloomy-exports"
+AUTO_LOAD="${AGR_OFFLINE_GLOOMY_AUTO:-0}"
+[[ "$AUTO_LOAD" == 0 || "$AUTO_LOAD" == 1 ]] || { echo "invalid AUTO_LOAD" >&2; exit 2; }
+SUFFIX=""
+[[ "$AUTO_LOAD" == 1 ]] && SUFFIX="-auto-first"
+EVIDENCE="$ROOT/build/offline-aot-gloomy-exports$SUFFIX"
 mkdir -p "$EVIDENCE"
 export AGR_SIMULATOR_PROFILE=gloomy
 python3 -m venv "$ROOT/build/offline-aot-python"
@@ -12,7 +16,7 @@ PYTHON="$ROOT/build/offline-aot-python/bin/python"
 "$PYTHON" -m pip freeze > "$EVIDENCE/python-dependencies.lock"
 bash "$ROOT/scripts/build-and-run-simulator.sh" prepare
 python3 - "$ROOT" "$EVIDENCE" <<'PY'
-import hashlib,json,pathlib,shutil,subprocess,sys
+import hashlib,json,os,pathlib,shutil,subprocess,sys
 root,evidence=map(pathlib.Path,sys.argv[1:])
 prior=json.loads((root/'tools/aot-lab/evidence/gloomy-armv7-arm64-aot-poc/input-identity.json').read_text())
 apk=root/'samples/gloomy-dungeons-2.apk'
@@ -23,13 +27,15 @@ shutil.copyfile(native,evidence/'input-armv7.so')
 (evidence/'input-identity.json').write_text(json.dumps({
     'schema':'agr.offline-aot-input.v1','apk_sha256':prior['apk_sha256'],
     'native_sha256':prior['so_sha256'],'native_bytes':native.stat().st_size,
-    'apk_member':prior['so'],'load_bias':prior['load_base'],
+    'apk_member':prior['so'],'load_bias_policy':'auto-first' if os.environ.get('AGR_OFFLINE_GLOOMY_AUTO')=='1' else prior['load_base'],
     'tested_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),
     'tested_tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],cwd=root,text=True).strip()
 },indent=2)+'\n')
 PY
+LOAD_BIAS=0x02800000
+[[ "$AUTO_LOAD" == 1 ]] && LOAD_BIAS=auto-first
 "$PYTHON" "$ROOT/tools/aot-lab/translate_offline.py" \
-  --elf "$EVIDENCE/input-armv7.so" --entry-policy exports --load-bias 0x02800000 \
+  --elf "$EVIDENCE/input-armv7.so" --entry-policy exports --load-bias "$LOAD_BIAS" \
   --out "$ROOT/Runtime/AotLab/aot_blocks.c" \
   --manifest "$EVIDENCE/translation-manifest.json" \
   > "$EVIDENCE/translation.log" 2>&1
@@ -45,7 +51,9 @@ for mode in trace run; do
     "$ROOT/build/artifacts/aot-trace.txt" "$ROOT/build/artifacts/aot-checkpoints.txt" \
     "$ROOT/build/artifacts/aot-fallbacks.txt"
   set +e
-  bash "$ROOT/tools/aot-lab/launch_aot.sh" "$mode"
+  LAUNCH_MODE="$mode"
+  [[ "$AUTO_LOAD" == 1 ]] && LAUNCH_MODE="auto-$mode"
+  bash "$ROOT/tools/aot-lab/launch_aot.sh" "$LAUNCH_MODE"
   status=$?
   set -e
   prefix=interpreter

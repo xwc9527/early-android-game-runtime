@@ -2,10 +2,6 @@ name: ARMv7 ELF-only AOT fast artifact probe
 
 on:
   workflow_dispatch:
-  push:
-    branches: [validation/aot-offline-generalization]
-    paths-ignore:
-      - "tools/aot-lab/evidence/**"
 
 jobs:
   fast-only-new-path:

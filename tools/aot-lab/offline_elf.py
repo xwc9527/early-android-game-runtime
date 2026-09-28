@@ -38,6 +38,13 @@ class Elf32Arm:
         header = struct.unpack_from("<16sHHIIIIIHHHHHH", self.data)
         if header[2] != 40:
             raise ValueError("expected EM_ARM")
+        program_offset, program_entry_size, program_count = header[5], header[9], header[10]
+        if program_entry_size < 32 or program_count == 0 or \
+                program_offset + program_entry_size * program_count > len(self.data):
+            raise ValueError("missing ELF32 program headers")
+        self.program_headers = tuple(struct.unpack_from("<IIIIIIII", self.data,
+                                     program_offset + index * program_entry_size)
+                                     for index in range(program_count))
         section_offset, section_entry_size, section_count, name_index = (
             header[6], header[11], header[12], header[13])
         if section_entry_size < 40 or section_count == 0 or name_index >= section_count:
@@ -53,6 +60,15 @@ class Elf32Arm:
                          for row in headers]
         self.executable = tuple(section for section in self.sections
                                 if section.flags & 4 and section.kind != 8)
+
+    def first_linker_bias(self, lower_bound: int = 0x10000, page_size: int = 4096) -> int:
+        """AGR's first-fit VMA bias for the first ET_DYN object with no prior maps."""
+        load_vaddrs = [row[2] for row in self.program_headers if row[0] == 1 and row[5]]
+        if not load_vaddrs or page_size <= 0 or page_size & (page_size - 1):
+            raise ValueError("cannot derive first-linker bias")
+        min_vaddr = min(load_vaddrs) & ~(page_size - 1)
+        first_start = (max(lower_bound, min_vaddr) + page_size - 1) & ~(page_size - 1)
+        return first_start - min_vaddr
 
     def _slice(self, offset: int, size: int) -> bytes:
         if offset < 0 or size < 0 or offset + size > len(self.data):

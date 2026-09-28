@@ -23,6 +23,8 @@ rm -f "$DATA/Documents/aot-result.json" "$DATA/Documents/aot-stage-result.json" 
 case "$MODE" in
   trace) ARG="--aot-trace" ;;
   run) ARG="--aot-run" ;;
+  auto-trace) ARG="--aot-auto-trace" ;;
+  auto-run) ARG="--aot-auto-run" ;;
   kungfoo-trace) ARG="--aot-kungfoo-trace" ;;
   kungfoo-run) ARG="--aot-kungfoo-run" ;;
   kungfoo-performance) ARG="--aot-kungfoo-performance" ;;

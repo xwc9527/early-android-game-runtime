@@ -1,0 +1,5 @@
+# First-object automatic linker placement experiment
+
+The Gloomy ELF-only result `36376961451` still supplied a fixed `0x02800000` load bias through its old test harness. For a new game's first native object, AGR's Android linker reserves an ELF PT_LOAD span in a guest VMA whose lower bound is `0x10000`, using first-fit placement when no prior object is mapped. This experiment derives that bias from the original ELF PT_LOAD headers and the existing linker/VMA rule, then asks the unmodified loader to place the object without a preferred bias. It records both the offline predicted bias and actual object handle before evaluating real interpreter/AOT execution.
+
+The iOS simulator run is required to test whether the offline placement rule equals the actual Runtime linker placement and whether the same generic AOT backend remains correct at that address. A successful run establishes automatic placement only for the first object in an empty linker VMA. It does not imply general load-order independence or position-independent AOT for later libraries; those remain separately unresolved.

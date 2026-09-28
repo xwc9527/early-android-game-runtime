@@ -29,6 +29,8 @@ def main():
                        identity["native_sha256"] == manifest["elf_sha256"])
     generated_identity = (hashlib.sha256((evidence / "aot_blocks.c").read_bytes()).hexdigest() ==
                           manifest["generated_c_sha256"])
+    load_bias_equal = (interpreter.get("actual_load_bias") == aot.get("actual_load_bias") ==
+                       manifest["load_bias"])
     observable_fields = ("passed", "lines", "triangles", "bytes", "framebuffer_fnv",
                          "nonblack_pixels", "error")
     observables = {key: interpreter.get(key) == aot.get(key) for key in observable_fields}
@@ -66,6 +68,9 @@ def main():
         "translation_used_execution_trace": manifest["execution_trace_input"],
         "input_identity_valid": source_identity,
         "generated_identity_valid": generated_identity,
+        "actual_load_bias": aot.get("actual_load_bias"),
+        "load_bias_source": manifest["load_bias_source"],
+        "load_bias_equal_to_offline_plan": load_bias_equal,
         "interpreter_trace_sha256": hashlib.sha256((evidence / "interpreter-trace.txt").read_bytes()).hexdigest(),
         "interpreter_trace_instructions": len(trace),
         "checkpoint_count": len(checkpoints),
@@ -81,7 +86,7 @@ def main():
         "boundary_count": aot.get("boundary_count"),
         "aot_coverage": (aot.get("aot_instructions", 0) /
                          interpreter["interpreter_instructions"] if interpreter.get("interpreter_instructions") else 0),
-        "semantic_pass": bool(source_identity and generated_identity and
+        "semantic_pass": bool(source_identity and generated_identity and load_bias_equal and
                               not manifest["execution_trace_input"] and
                               interpreter.get("passed") and aot.get("passed") and
                               all(observables.values()) and host_equal and

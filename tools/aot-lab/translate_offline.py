@@ -16,18 +16,21 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--elf", required=True)
     parser.add_argument("--entry-policy", choices=("abi", "exports", "all-exidx", "all-exidx-sweep"), required=True)
-    parser.add_argument("--load-bias", type=lambda value: int(value, 0), required=True)
+    parser.add_argument("--load-bias", required=True,
+                        help="integer bias or auto-first for the first object in an empty AGR linker VMA")
     parser.add_argument("--out", required=True)
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--no-diagnostic", action="store_true")
     args = parser.parse_args()
     started = time.perf_counter()
     image = Elf32Arm(args.elf)
+    load_bias = (image.first_linker_bias() if args.load_bias == "auto-first"
+                 else int(args.load_bias, 0))
     unrelocated, starts, seeds, reasons = scan(image, args.entry_policy)
     rows = []
     allowed = set()
     for item in unrelocated.values():
-        row = dict(item, pc=item["pc"] + args.load_bias)
+        row = dict(item, pc=item["pc"] + load_bias)
         rows.append(row)
         try:
             allowed.add(decode(row["pc"], row["insn"], row["len"], row["thumb"])[0])
@@ -37,7 +40,7 @@ def main():
     output = Path(args.out)
     debug, fast, lengths, hash_size, max_probe = emit_partial(
         rows, output, allowed,
-        extra_starts=(pc + args.load_bias for pc, _ in starts),
+        extra_starts=(pc + load_bias for pc, _ in starts),
         emit_debug=not args.no_diagnostic, mode_guard=True)
     result = {
         "schema": "agr.offline-aot-manifest.v1",
@@ -47,12 +50,14 @@ def main():
             {"name": section.name, "address": section.address, "size": section.size}
             for section in image.executable],
         "entry_policy": args.entry_policy,
-        "load_bias": args.load_bias,
-        "load_bias_source": "caller-supplied formal linker placement; not inferred from trace",
+        "load_bias": load_bias,
+        "load_bias_source": ("ELF PT_LOAD and empty AGR first-fit linker VMA" if args.load_bias == "auto-first"
+                             else "caller-supplied formal linker placement; not inferred from trace"),
         "translation_inputs": (["ELF32 ARM code", "dynamic symbols", "init/fini arrays"] +
                                (["EHABI exidx"] if args.entry_policy in
                                 {"all-exidx", "all-exidx-sweep"} else []) +
-                               ["formal linker load bias"]),
+                               (["ELF PT_LOAD", "AGR first-fit empty VMA policy"]
+                                if args.load_bias == "auto-first" else ["formal linker load bias"])),
         "execution_trace_input": False,
         "fast_block_mode_guard": True,
         "seed_count": len(seeds),

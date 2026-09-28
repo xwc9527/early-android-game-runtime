@@ -2081,7 +2081,7 @@ static int runKungFooAotProbe(int mode) {
     return passed?0:1;
 }
 
-static int runAotPoc(BOOL useAot) {
+static int runAotPoc(BOOL useAot, BOOL autoLoad) {
     NSString *docs = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
     [[NSFileManager defaultManager] createDirectoryAtPath:docs withIntermediateDirectories:YES attributes:nil error:nil];
     NSString *trace = [docs stringByAppendingPathComponent:@"aot-trace.txt"];
@@ -2094,7 +2094,9 @@ static int runAotPoc(BOOL useAot) {
     uint64_t hash = 0; NSUInteger nonblack = 0; int lines = -1, triangles = -1, bytes = -1;
     CFAbsoluteTime elapsed = 0;
     uint64_t interpreterInstructions = 0;
-    if (elf && guest && agr_guest_load_elf(guest, "librenderer.so", elf.bytes, (uint32_t)elf.length, 0x02800000) == 0
+    uint32_t loadedBias = 0;
+    if (elf && guest && agr_guest_load_elf_handle(guest, "librenderer.so", elf.bytes,
+            (uint32_t)elf.length, autoLoad ? 0u : 0x02800000u, &loadedBias) == 0
         && agr_guest_create_gles1_pbuffer(guest, 32, 32) == 0) {
         agr_guest_setup_gles1_frame(guest);
         const float vertices[] = {-0.85f,-0.75f,0.0f, 0.85f,-0.75f,0.0f, 0.0f,0.85f,0.0f};
@@ -2141,6 +2143,8 @@ static int runAotPoc(BOOL useAot) {
     agr_aot_log_close();
     NSDictionary *result = @{
         @"mode": useAot ? @"aot" : @"interpreter",
+        @"load_bias_policy":autoLoad?@"AGR-first-fit":@"fixed-harness",
+        @"actual_load_bias":@(loadedBias),
         @"passed": @(status == 0),
         @"seconds": @(elapsed),
         @"interpreter_instructions": @(interpreterInstructions),
@@ -2200,8 +2204,11 @@ static int runAotPoc(BOOL useAot) {
         if ([arguments containsObject:@"--aot-kungfoo-oncreate-performance"]) mode=10;
         exit(runKungFooAotProbe(mode));
     }
-    if ([arguments containsObject:@"--aot-trace"] || [arguments containsObject:@"--aot-run"]) {
-        exit(runAotPoc([arguments containsObject:@"--aot-run"]));
+    if ([arguments containsObject:@"--aot-trace"] || [arguments containsObject:@"--aot-run"] ||
+        [arguments containsObject:@"--aot-auto-trace"] || [arguments containsObject:@"--aot-auto-run"]) {
+        BOOL autoLoad=[arguments containsObject:@"--aot-auto-trace"] || [arguments containsObject:@"--aot-auto-run"];
+        BOOL useAot=[arguments containsObject:@"--aot-run"] || [arguments containsObject:@"--aot-auto-run"];
+        exit(runAotPoc(useAot,autoLoad));
     }
     BOOL interactive=[arguments containsObject:@"--interactive"];
     BOOL dexParserCompatibility=[arguments containsObject:@"--dex-parser-compatibility"];
