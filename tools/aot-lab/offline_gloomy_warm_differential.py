@@ -20,6 +20,9 @@ def main():
                     identity["native_sha256"] == manifest["elf_sha256"])
     artifact_equal = (hashlib.sha256((evidence / "aot_blocks.c").read_bytes()).hexdigest() ==
                       manifest["generated_c_sha256"])
+    assembly_equal = (not manifest.get("assembly_sha256") or
+                      hashlib.sha256((evidence / "agr_compiled_blocks.S").read_bytes()).hexdigest() ==
+                      manifest["assembly_sha256"])
     samples = []
     observables = ("passed", "lines", "triangles", "bytes", "framebuffer_fnv",
                    "nonblack_pixels", "error", "actual_load_bias")
@@ -56,7 +59,7 @@ def main():
         })
     baseline_median = statistics.median(x["baseline_warm_engine_seconds"] for x in samples)
     aot_median = statistics.median(x["aot_warm_engine_seconds"] for x in samples)
-    passed = bool(source_equal and artifact_equal and manifest["relocatable"] and
+    passed = bool(source_equal and artifact_equal and assembly_equal and manifest["relocatable"] and
                   not manifest["execution_trace_input"] and
                   all(x["warm_iterations"] == 16384 and x["observables_equal"] and
                       x["host_calls_equal"] and x["instruction_accounting"] and
@@ -68,6 +71,7 @@ def main():
         "tested_commit": identity["tested_commit"],
         "input_identity_valid": source_equal,
         "artifact_identity_valid": artifact_equal,
+        "assembly_identity_valid": assembly_equal,
         "translation_uses_execution_trace": manifest["execution_trace_input"],
         "samples": samples,
         "baseline_warm_engine_median_seconds": baseline_median,

@@ -16,15 +16,16 @@ jobs:
           AGR_OFFLINE_GLOOMY_RELOCATABLE: 1
           AGR_OFFLINE_ENTRY_POLICY: all-exidx
           AGR_GAME_COMPILER_ARM64: 1
+          AGR_OFFLINE_GLOOMY_WARM: 1
         run: |
           set -o pipefail
-          mkdir -p build/offline-aot-gloomy-all-exidx-relocatable-game-compiler
+          mkdir -p build/offline-aot-gloomy-all-exidx-relocatable-warm-game-compiler
           bash tools/aot-lab/run_offline_gloomy.sh 2>&1 |
-            tee build/offline-aot-gloomy-all-exidx-relocatable-game-compiler/ci-log.txt
+            tee build/offline-aot-gloomy-all-exidx-relocatable-warm-game-compiler/ci-log.txt
       - name: Upload original execution evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: game-compiler-gloomy
-          path: build/offline-aot-gloomy-all-exidx-relocatable-game-compiler
+          name: game-compiler-gloomy-warm
+          path: build/offline-aot-gloomy-all-exidx-relocatable-warm-game-compiler
           if-no-files-found: error
