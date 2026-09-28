@@ -16,6 +16,7 @@ SUFFIX=""
 [[ "$RELOCATABLE" == 1 ]] && SUFFIX="-relocatable"
 [[ "$WARM" == 1 ]] && SUFFIX="$SUFFIX-warm"
 [[ -n "$PREPARED_DIR" ]] && SUFFIX="$SUFFIX-prepared"
+[[ "${AGR_GAME_COMPILER_ARM64:-0}" == 1 ]] && SUFFIX="$SUFFIX-game-compiler"
 EVIDENCE="$ROOT/build/offline-aot-gloomy-$POLICY$SUFFIX"
 mkdir -p "$EVIDENCE"
 export AGR_SIMULATOR_PROFILE=gloomy
@@ -51,7 +52,15 @@ if [[ "$RELOCATABLE" == 1 ]]; then
   LOAD_BIAS=runtime
   TRANSLATION_FLAGS+=(--relocatable)
 fi
-if [[ -n "$PREPARED_DIR" ]]; then
+if [[ "${AGR_GAME_COMPILER_ARM64:-0}" == 1 ]]; then
+  "$PYTHON" "$ROOT/tools/aot-lab/compile_game_arm64.py" \
+    --elf "$EVIDENCE/input-armv7.so" \
+    --asm "$ROOT/Runtime/AotLab/agr_compiled_blocks.S" \
+    --table "$ROOT/Runtime/AotLab/aot_blocks.c" \
+    --manifest "$EVIDENCE/translation-manifest.json" \
+    > "$EVIDENCE/translation.log" 2>&1
+  cp "$ROOT/Runtime/AotLab/agr_compiled_blocks.S" "$EVIDENCE/agr_compiled_blocks.S"
+elif [[ -n "$PREPARED_DIR" ]]; then
   "$PYTHON" - "$ROOT" "$PREPARED_DIR" "$EVIDENCE" "$POLICY" <<'PY'
 import hashlib,json,pathlib,shutil,sys
 root,relative,evidence=pathlib.Path(sys.argv[1]),pathlib.Path(sys.argv[2]),pathlib.Path(sys.argv[3])
@@ -83,7 +92,7 @@ fi
 cp "$ROOT/Runtime/AotLab/aot_blocks.c" "$EVIDENCE/aot_blocks.c"
 bash "$ROOT/scripts/build-and-run-simulator.sh" deps
 bash "$ROOT/scripts/build-and-run-simulator.sh" build
-for name in ci-environment.json simulator-device.txt aot-compile-time.txt aot_blocks.o aot-object-sections.txt; do
+for name in ci-environment.json simulator-device.txt aot-compile-time.txt aot_blocks.o aot-object-sections.txt aot-asm-compile-time.txt agr_compiled_blocks.o aot-asm-object-sections.txt; do
   [[ ! -f "$ROOT/build/artifacts/$name" ]] || cp "$ROOT/build/artifacts/$name" "$EVIDENCE/$name"
 done
 cp "$ROOT/build/build-environment.json" "$EVIDENCE/build-environment.json"
@@ -96,7 +105,9 @@ if [[ "$RELOCATABLE" == 1 ]]; then
   PAIR="$EVIDENCE/fixed"
   [[ "$placement" == 1 ]] && PAIR="$EVIDENCE/first-fit"
   mkdir -p "$PAIR"
-  for name in input-identity.json input-armv7.so translation-manifest.json aot_blocks.c; do cp "$EVIDENCE/$name" "$PAIR/$name"; done
+  for name in input-identity.json input-armv7.so translation-manifest.json aot_blocks.c agr_compiled_blocks.S; do
+    [[ ! -f "$EVIDENCE/$name" ]] || cp "$EVIDENCE/$name" "$PAIR/$name"
+  done
 fi
 run_one() {
   local mode="$1" prefix="$2" status name

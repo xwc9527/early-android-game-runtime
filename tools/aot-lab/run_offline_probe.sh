@@ -13,6 +13,7 @@ RELOCATABLE="${AGR_OFFLINE_RELOCATABLE:-0}"
 SUFFIX=""
 [[ "$FAST_ONLY" == 1 ]] && SUFFIX="-fast-only"
 [[ "$RELOCATABLE" == 1 ]] && SUFFIX="$SUFFIX-relocatable"
+[[ "${AGR_GAME_COMPILER_ARM64:-0}" == 1 ]] && SUFFIX="$SUFFIX-game-compiler"
 EVIDENCE="$ROOT/build/offline-aot-$POLICY-$STAGE$SUFFIX"
 mkdir -p "$EVIDENCE"
 export AGR_SIMULATOR_PROFILE=aot-kungfoo
@@ -46,12 +47,22 @@ if [[ "$RELOCATABLE" == 1 ]]; then
   LOAD_BIAS=runtime
   TRANSLATION_FLAGS+=(--relocatable)
 fi
-"$PYTHON" "$ROOT/tools/aot-lab/translate_offline.py" \
-  --elf "$EVIDENCE/input-armv7.so" --entry-policy "$POLICY" --load-bias "$LOAD_BIAS" \
-  "${TRANSLATION_FLAGS[@]}" \
-  --out "$ROOT/Runtime/AotLab/aot_blocks.c" \
-  --manifest "$EVIDENCE/translation-manifest.json" \
-  > "$EVIDENCE/translation.log" 2>&1
+if [[ "${AGR_GAME_COMPILER_ARM64:-0}" == 1 ]]; then
+  "$PYTHON" "$ROOT/tools/aot-lab/compile_game_arm64.py" \
+    --elf "$EVIDENCE/input-armv7.so" \
+    --asm "$ROOT/Runtime/AotLab/agr_compiled_blocks.S" \
+    --table "$ROOT/Runtime/AotLab/aot_blocks.c" \
+    --manifest "$EVIDENCE/translation-manifest.json" \
+    > "$EVIDENCE/translation.log" 2>&1
+  cp "$ROOT/Runtime/AotLab/agr_compiled_blocks.S" "$EVIDENCE/agr_compiled_blocks.S"
+else
+  "$PYTHON" "$ROOT/tools/aot-lab/translate_offline.py" \
+    --elf "$EVIDENCE/input-armv7.so" --entry-policy "$POLICY" --load-bias "$LOAD_BIAS" \
+    "${TRANSLATION_FLAGS[@]}" \
+    --out "$ROOT/Runtime/AotLab/aot_blocks.c" \
+    --manifest "$EVIDENCE/translation-manifest.json" \
+    > "$EVIDENCE/translation.log" 2>&1
+fi
 cp "$ROOT/Runtime/AotLab/aot_blocks.c" "$EVIDENCE/aot_blocks.c"
 if [[ "$STAGE" == oncreate ]]; then
   PRIOR="$ROOT/tools/aot-lab/evidence/offline-generalization/run-36373038682"
@@ -61,7 +72,7 @@ if [[ "$STAGE" == oncreate ]]; then
 fi
 bash "$ROOT/scripts/build-and-run-simulator.sh" deps
 bash "$ROOT/scripts/build-and-run-simulator.sh" build
-for name in ci-environment.json simulator-device.txt aot-compiler-optimization.txt aot-compile-time.txt aot_blocks.o aot-object-sections.txt; do
+for name in ci-environment.json simulator-device.txt aot-compiler-optimization.txt aot-compile-time.txt aot_blocks.o aot-object-sections.txt aot-asm-compile-time.txt agr_compiled_blocks.o aot-asm-object-sections.txt; do
   [[ ! -f "$ROOT/build/artifacts/$name" ]] || cp "$ROOT/build/artifacts/$name" "$EVIDENCE/$name"
 done
 cp "$ROOT/build/build-environment.json" "$EVIDENCE/build-environment.json"

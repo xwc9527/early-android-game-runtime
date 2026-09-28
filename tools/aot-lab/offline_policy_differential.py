@@ -82,6 +82,9 @@ def main():
                       identity["native_sha256"] == manifest["elf_sha256"])
     source_identity = (hashlib.sha256((evidence / "aot_blocks.c").read_bytes()).hexdigest() ==
                        manifest["generated_c_sha256"])
+    assembly_identity = (not manifest.get("assembly_sha256") or
+                         hashlib.sha256((evidence / "agr_compiled_blocks.S").read_bytes()).hexdigest() ==
+                         manifest["assembly_sha256"])
     result = {
         "schema": "agr.offline-aot-policy-differential.v1",
         "entry_policy": manifest["entry_policy"],
@@ -92,6 +95,7 @@ def main():
         "translation_used_execution_trace": manifest["execution_trace_input"],
         "input_identity_valid": input_identity,
         "source_identity_valid": source_identity,
+        "assembly_identity_valid": assembly_identity,
         "interpreter_trace_equal_to_checked_full_run": trace == prior_trace,
         "trace_instructions": len(trace),
         "trace_complete": (not trace_stage.get("trace_incomplete") and
@@ -121,7 +125,7 @@ def main():
         "route_speedup_ratio_of_medians": (statistics.median(baseline_seconds) /
                                            statistics.median(aot_seconds)),
     }
-    result["semantic_pass"] = bool(input_identity and source_identity and
+    result["semantic_pass"] = bool(input_identity and source_identity and assembly_identity and
                                    not manifest["execution_trace_input"] and
                                    manifest["debug_entry_count"] == 0 and
                                    trace == prior_trace and result["trace_complete"] and
