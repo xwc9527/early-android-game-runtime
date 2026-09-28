@@ -15,7 +15,7 @@ bash "$ROOT/tools/aot-lab/launch_aot.sh" kungfoo-trace
 probe_status=$?
 set -e
 
-for name in ci-environment.json simulator-device.txt aot-compile-time.txt; do
+for name in ci-environment.json simulator-device.txt aot-compile-time.txt aot_blocks.o aot-object-sections.txt; do
   if [[ -f "$ROOT/build/artifacts/$name" ]]; then
     cp "$ROOT/build/artifacts/$name" "$EVIDENCE/$name"
   fi
