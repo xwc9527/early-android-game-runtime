@@ -1,0 +1,5 @@
+{
+  "source": "tools/aot-lab/evidence/offline-generalization/run-36408196579/gloomy/elf-000-2b8672e79da3",
+  "elf_sha256": "2b8672e79da33de4661f6aa0bcb79df2a302637aca9829d53fff8077a6895638",
+  "generated_c_sha256": "9c1b6948cb5d8570066b6b01510a524e98927f3cf5bfdda627dbc02af003e397"
+}

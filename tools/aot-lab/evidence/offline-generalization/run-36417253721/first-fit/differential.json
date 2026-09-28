@@ -1,0 +1,39 @@
+{
+  "schema": "agr.offline-gloomy-differential.v1",
+  "tested_commit": "7db5b77f6829baed40ef44783c794c2458c231db",
+  "tested_tree": "85d647add1bdb6e0ef73eb228838aec184e82b39",
+  "input_elf_sha256": "2b8672e79da33de4661f6aa0bcb79df2a302637aca9829d53fff8077a6895638",
+  "input_elf_bytes": 9376,
+  "generated_c_sha256": "9c1b6948cb5d8570066b6b01510a524e98927f3cf5bfdda627dbc02af003e397",
+  "translation_used_execution_trace": false,
+  "input_identity_valid": true,
+  "generated_identity_valid": true,
+  "actual_load_bias": 65536,
+  "load_bias_source": "runtime formal linker result",
+  "load_bias_equal_to_offline_plan": true,
+  "interpreter_trace_sha256": "b73bbfc49cf339a5e80083c8a8bd6fa7ddd77f819fcf963f530aa2a5ec33422a",
+  "interpreter_trace_instructions": 174,
+  "checkpoint_count": 32,
+  "checkpoint_mismatch": null,
+  "observables_equal": {
+    "passed": true,
+    "lines": true,
+    "triangles": true,
+    "bytes": true,
+    "framebuffer_fnv": true,
+    "nonblack_pixels": true,
+    "error": true
+  },
+  "host_calls_equal": true,
+  "instruction_accounting": true,
+  "aot_instructions": 153,
+  "interpreter_fallback_instructions": 21,
+  "fallback_count": 0,
+  "fallback_reason_counts": {
+    "svc": 21
+  },
+  "fallback_log_accounting": true,
+  "boundary_count": 21,
+  "aot_coverage": 0.8793103448275862,
+  "semantic_pass": true
+}
