@@ -1,0 +1,49 @@
+{
+  "schema": "agr.offline-aot-policy-scale.v1",
+  "tested_commit": "485b775c0dc89aaac9b69d6e7c89eb3b5f2d16d0",
+  "tested_tree": "37d68d37455c81e0bbb5e3a184f183093d775f2e",
+  "input_elf_sha256": "010baa4964cd7dbcf1ba038428ab4d6afc13ffd0a180b447be07b8f088f9ba9d",
+  "input_elf_bytes": 882136,
+  "executable_section_bytes": 542032,
+  "execution_trace_input": false,
+  "load_bias": 65536,
+  "debug_entries_emitted": false,
+  "policies": [
+    {
+      "policy": "abi",
+      "discovered_pc_modes": 7167,
+      "fast_block_count": 1712,
+      "generated_c_bytes": 846154,
+      "preparation_wall_seconds": 0.17696749995229766,
+      "generated_c_sha256": "7b769af74cc39c06d5382a33bdac9d9353df0f33d6c53e3ed37674ae23868b31",
+      "debug_entry_count": 0
+    },
+    {
+      "policy": "exports",
+      "discovered_pc_modes": 84421,
+      "fast_block_count": 21896,
+      "generated_c_bytes": 10197445,
+      "preparation_wall_seconds": 1.9358506000135094,
+      "generated_c_sha256": "ddd70e41fe23dc9ce6fec6d9c1a17f579ede9ca01f3fe6d6245d491de1ce1f41",
+      "debug_entry_count": 0
+    },
+    {
+      "policy": "all-exidx",
+      "discovered_pc_modes": 129557,
+      "fast_block_count": 33548,
+      "generated_c_bytes": 16380180,
+      "preparation_wall_seconds": 2.882368199992925,
+      "generated_c_sha256": "5ea118b91eebff6ff1a7a51ff12551e1a2d730d0a6eb26cc808e453869a6151a",
+      "debug_entry_count": 0
+    },
+    {
+      "policy": "all-exidx-sweep",
+      "discovered_pc_modes": 206242,
+      "fast_block_count": 57461,
+      "generated_c_bytes": 25409546,
+      "preparation_wall_seconds": 4.269283799978439,
+      "generated_c_sha256": "038ccf13238387fa22204d45d764c429b5091f58756e16b32e60b01a36bc012e",
+      "debug_entry_count": 0
+    }
+  ]
+}
