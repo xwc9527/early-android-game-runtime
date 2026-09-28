@@ -2114,6 +2114,7 @@ static int runAotPoc(BOOL useAot, BOOL autoLoad, BOOL warm) {
     uint32_t coldAotInstructions = 0;
     uint64_t interpreterInstructions = 0;
     uint32_t loadedBias = 0;
+    uint32_t warmCompleted = 0;
     if (elf && guest && agr_guest_load_elf_handle(guest, "librenderer.so", elf.bytes,
             (uint32_t)elf.length, autoLoad ? 0u : 0x02800000u, &loadedBias) == 0
         && agr_guest_create_gles1_pbuffer(guest, 32, 32) == 0) {
@@ -2151,10 +2152,11 @@ static int runAotPoc(BOOL useAot, BOOL autoLoad, BOOL warm) {
         coldSvc = agr_aot_svc_interpreter_seconds();
         if (warm && lines == 0 && triangles == 0) {
             CFAbsoluteTime warmStart = CFAbsoluteTimeGetCurrent();
-            for (uint32_t i = 0; i < 256 && lines == 0 && triangles == 0; i++) {
+            for (uint32_t i = 0; i < 16384 && lines == 0 && triangles == 0; i++) {
                 lines = agr_guest_call_symbol(guest, "Java_zame_game_engine_Renderer_renderLines", lineArgs, 5, &ignored);
                 if (lines == 0)
                     triangles = agr_guest_call_symbol(guest, "Java_zame_game_engine_Renderer_renderTriangles", triangleArgs, 7, &ignored);
+                if (lines == 0 && triangles == 0) warmCompleted++;
             }
             warmElapsed = CFAbsoluteTimeGetCurrent() - warmStart;
         }
@@ -2187,7 +2189,7 @@ static int runAotPoc(BOOL useAot, BOOL autoLoad, BOOL warm) {
         @"actual_load_bias":@(loadedBias),
         @"passed": @(status == 0),
         @"seconds": @(elapsed),
-        @"warm_iterations": @(warm ? 256 : 0),
+        @"warm_iterations": @(warmCompleted),
         @"cold_guest_engine_seconds": @(coldEngine),
         @"warm_guest_engine_seconds": @(warmEngine),
         @"warm_aot_drive_seconds": @(warmDrive),
