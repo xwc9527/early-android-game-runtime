@@ -1,0 +1,985 @@
+{
+  "schema": "agr.aot-attribution-nzcv-liveness.v1",
+  "label": "kungfoo",
+  "elf_sha256": "010baa4964cd7dbcf1ba038428ab4d6afc13ffd0a180b447be07b8f088f9ba9d",
+  "trace_sha256": "3d852216dd56b6635ce8ef80181061a057b61794f74b4a70438c39aed3ccaf03",
+  "guest_instructions": 237,
+  "flag_producer_events": 114,
+  "entirely_dead_flag_producer_events": 57,
+  "live_flag_producer_events": 57,
+  "condition_consumer_events": 57,
+  "initial_cpsr_bits_live": "",
+  "producers": [
+    {
+      "guest_pc": 701568,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701622,
+      "kind": "movs_imm",
+      "writes": "NZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CZ"
+    },
+    {
+      "guest_pc": 701642,
+      "kind": "lsls_imm",
+      "writes": "CNZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701648,
+      "kind": "cmp_imm",
+      "writes": "CNVZ",
+      "live_writes": "Z"
+    },
+    {
+      "guest_pc": 701634,
+      "kind": "adds_imm",
+      "writes": "CNVZ",
+      "live_writes": ""
+    },
+    {
+      "guest_pc": 701636,
+      "kind": "cmp_reg",
+      "writes": "CNVZ",
+      "live_writes": "CNVZ"
+    }
+  ],
+  "consumers": [
+    {
+      "guest_pc": 701570,
+      "condition": 1,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    },
+    {
+      "guest_pc": 701650,
+      "condition": 0,
+      "reads": "Z"
+    },
+    {
+      "guest_pc": 701638,
+      "condition": 9,
+      "reads": "CZ"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "schema": "agr.aot-attribution-nzcv-liveness.v1",
+  "label": "gloomy",
+  "elf_sha256": "2b8672e79da33de4661f6aa0bcb79df2a302637aca9829d53fff8077a6895638",
+  "trace_sha256": "b73bbfc49cf339a5e80083c8a8bd6fa7ddd77f819fcf963f530aa2a5ec33422a",
+  "guest_instructions": 10,
+  "flag_producer_events": 1,
+  "entirely_dead_flag_producer_events": 0,
+  "live_flag_producer_events": 1,
+  "condition_consumer_events": 0,
+  "initial_cpsr_bits_live": "CV",
+  "producers": [
+    {
+      "guest_pc": 69280,
+      "kind": "movs_imm",
+      "writes": "NZ",
+      "live_writes": "NZ"
+    }
+  ],
+  "consumers": []
+}
