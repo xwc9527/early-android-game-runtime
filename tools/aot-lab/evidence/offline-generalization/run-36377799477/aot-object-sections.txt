@@ -1,0 +1,9 @@
+Segment : 14359792
+	Section (__TEXT, __text): 7993824
+	Section (__TEXT, __literal8): 2112
+	Section (__TEXT, __literal16): 112
+	Section (__TEXT, __const): 36
+	Section (__DATA, __const): 4524792
+	Section (__LD, __compact_unwind): 1838912
+	total 14359788
+total 14359792
