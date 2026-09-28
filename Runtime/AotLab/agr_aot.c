@@ -10,6 +10,10 @@ extern uint8_t *arm_interp_memory_base(void *cpu);
 extern void arm_interp_set_trace(void (*function)(uint32_t, uint32_t, uint32_t, uint32_t, const uint32_t *, uint32_t));
 
 static int enabled;
+/* Older generated artifacts omit the optional dense ELF PC index. */
+__attribute__((weak)) const uint32_t agr_aot_fast_direct_base = 0;
+__attribute__((weak)) const uint32_t agr_aot_fast_direct_count = 0;
+__attribute__((weak)) const uint32_t agr_aot_fast_direct[] = {0};
 static int diagnostic;
 static FILE *trace_file;
 static uint64_t trace_limit;
@@ -170,6 +174,12 @@ void agr_aot_set_diagnostic(int value) { diagnostic = value; }
 
 static const AgrAotEntry *lookup(uint32_t pc) {
     if (!diagnostic) {
+        if (agr_aot_fast_direct_count) {
+            uint32_t delta = pc - agr_aot_fast_direct_base;
+            if ((delta & 1u) || (delta >> 1u) >= agr_aot_fast_direct_count) return NULL;
+            uint32_t slot = agr_aot_fast_direct[delta >> 1u];
+            return slot ? &agr_aot_fast_blocks[slot - 1u] : NULL;
+        }
         uint32_t index = ((pc >> 1u) * 2654435761u) & agr_aot_fast_hash_mask;
         for (uint32_t probe = 0; probe <= agr_aot_fast_hash_mask; probe++) {
             uint32_t found = agr_aot_fast_hash[index].pc;

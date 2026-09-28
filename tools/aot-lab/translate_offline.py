@@ -21,6 +21,8 @@ def main():
     parser.add_argument("--out", required=True)
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--no-diagnostic", action="store_true")
+    parser.add_argument("--direct-lookup", action="store_true",
+                        help="emit a bounded dense PC index in addition to the legacy hash")
     args = parser.parse_args()
     started = time.perf_counter()
     image = Elf32Arm(args.elf)
@@ -41,7 +43,8 @@ def main():
     debug, fast, lengths, hash_size, max_probe = emit_partial(
         rows, output, allowed,
         extra_starts=(pc + load_bias for pc, _ in starts),
-        emit_debug=not args.no_diagnostic, mode_guard=True)
+        emit_debug=not args.no_diagnostic, mode_guard=True,
+        direct_lookup=args.direct_lookup)
     result = {
         "schema": "agr.offline-aot-manifest.v1",
         "elf_sha256": image.sha256,
@@ -69,6 +72,10 @@ def main():
         "fast_blocks": [{"pc": pc, "instructions": lengths[pc]} for pc, _ in fast],
         "fast_hash_size": hash_size,
         "fast_hash_max_probe": max_probe,
+        "fast_direct_lookup_requested": args.direct_lookup,
+        "fast_direct_lookup_entries": (
+            ((fast[-1][0] - fast[0][0]) >> 1) + 1 if args.direct_lookup and fast and
+            ((fast[-1][0] - fast[0][0]) >> 1) + 1 <= 2_000_000 else 0),
         "generated_c_sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
         "generated_c_bytes": output.stat().st_size,
         "preparation_wall_seconds": time.perf_counter() - started,

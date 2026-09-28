@@ -558,7 +558,7 @@ def emit(rows, destination):
 
 
 def emit_partial(rows, destination, allowed_kinds, extra_starts=(), emit_debug=True,
-                 mode_guard=False):
+                 mode_guard=False, direct_lookup=False):
     """Emit a diagnostic oracle and an uninstrumented basic-block backend."""
     unique = {}
     ambiguous = set()
@@ -707,6 +707,20 @@ def emit_partial(rows, destination, allowed_kinds, extra_starts=(), emit_debug=T
     pieces.append("const AgrAotEntry agr_aot_fast_hash[] = {")
     pieces.extend(f"    {{{pc}u, {name}, {fast_block_lengths.get(pc, 0)}u}}," for pc, name in hashed)
     pieces.extend(["};", f"const uint32_t agr_aot_fast_hash_mask = {hash_size - 1}u;", ""])
+    if direct_lookup and fast_entries:
+        base = fast_entries[0][0]
+        span = ((fast_entries[-1][0] - base) >> 1) + 1
+        if span <= 2_000_000:
+            direct = [0] * span
+            for ordinal, (pc, _) in enumerate(fast_entries, 1):
+                assert (pc - base) % 2 == 0
+                direct[(pc - base) >> 1] = ordinal
+            pieces.append(f"const uint32_t agr_aot_fast_direct_base = {base}u;")
+            pieces.append(f"const uint32_t agr_aot_fast_direct_count = {span}u;")
+            pieces.append("const uint32_t agr_aot_fast_direct[] = {")
+            for offset in range(0, span, 16):
+                pieces.append("    " + ", ".join(f"{value}u" for value in direct[offset:offset + 16]) + ",")
+            pieces.extend(["};", ""])
     destination.write_text("\n".join(pieces), encoding="utf-8", newline="\n")
     return debug_entries, fast_entries, fast_block_lengths, hash_size, max_probe
 

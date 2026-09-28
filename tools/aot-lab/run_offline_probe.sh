@@ -37,6 +37,7 @@ shutil.copyfile(native,evidence/'input-armv7.so')
 PY
 TRANSLATION_FLAGS=()
 [[ "$FAST_ONLY" == 1 ]] && TRANSLATION_FLAGS+=(--no-diagnostic)
+[[ "${AGR_OFFLINE_DIRECT_LOOKUP:-0}" == 1 ]] && TRANSLATION_FLAGS+=(--direct-lookup)
 "$PYTHON" "$ROOT/tools/aot-lab/translate_offline.py" \
   --elf "$EVIDENCE/input-armv7.so" --entry-policy "$POLICY" --load-bias 0x10000 \
   "${TRANSLATION_FLAGS[@]}" \

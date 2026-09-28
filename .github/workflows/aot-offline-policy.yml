@@ -2,25 +2,22 @@ name: ARMv7 offline AOT entry policy differential
 
 on:
   workflow_dispatch:
-  push:
-    branches: [validation/aot-offline-generalization]
-    paths-ignore:
-      - "tools/aot-lab/evidence/**"
 
 jobs:
-  all-exidx-fast-only:
+  all-exidx-direct-lookup:
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Compare EHABI-only static entry policy on real path
+      - name: Compare dense static PC dispatch on real path
         env:
           AGR_OFFLINE_ENTRY_POLICY: all-exidx
           AGR_OFFLINE_STAGE: oncreate
           AGR_OFFLINE_NO_DIAGNOSTIC: 1
           AGR_OFFLINE_POLICY_COMPARE: 1
+          AGR_OFFLINE_DIRECT_LOOKUP: 1
         run: |
           set -o pipefail
           mkdir -p build/offline-aot-all-exidx-oncreate-fast-only
@@ -30,6 +27,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: offline-aot-all-exidx-oncreate-fast-only
+          name: offline-aot-all-exidx-direct-lookup
           path: build/offline-aot-all-exidx-oncreate-fast-only
           if-no-files-found: error
