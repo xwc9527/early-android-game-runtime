@@ -1,0 +1,912 @@
+{
+  "ltmp0": {
+    "symbol": "ltmp0",
+    "object_path": "tools/aot-lab/evidence/aot-performance-attribution/run-36465706509/scalar-region/scalar.o",
+    "machine_code_bytes": 332,
+    "host_instruction_count": 83,
+    "category_counts": {
+      "store": 14,
+      "load": 17,
+      "other": 45,
+      "conditional_branch": 3,
+      "unconditional_branch": 4
+    },
+    "stack_memory_accesses": 2,
+    "stack_guest_array_accesses": 0,
+    "stack_cpsr_accesses": 0,
+    "instructions": [
+      {
+        "address": 0,
+        "mnemonic": "stp",
+        "operands": "x20, x19, [sp, #-0x10]!",
+        "category": "store",
+        "stack_access": true,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "sp"
+        ]
+      },
+      {
+        "address": 4,
+        "mnemonic": "ldp",
+        "operands": "x8, x9, [x0]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x0"
+        ]
+      },
+      {
+        "address": 8,
+        "mnemonic": "ldr",
+        "operands": "w14, [x9]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x9"
+        ]
+      },
+      {
+        "address": 12,
+        "mnemonic": "ldp",
+        "operands": "w9, w2, [x8]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x8"
+        ]
+      },
+      {
+        "address": 16,
+        "mnemonic": "ldp",
+        "operands": "w5, w4, [x8, #8]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x8"
+        ]
+      },
+      {
+        "address": 20,
+        "mnemonic": "ldp",
+        "operands": "w3, w10, [x8, #0x10]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x8"
+        ]
+      },
+      {
+        "address": 24,
+        "mnemonic": "ldp",
+        "operands": "w11, w19, [x8, #0x18]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x8"
+        ]
+      },
+      {
+        "address": 28,
+        "mnemonic": "ldp",
+        "operands": "w6, w16, [x8, #0x20]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x8"
+        ]
+      },
+      {
+        "address": 32,
+        "mnemonic": "ldr",
+        "operands": "d0, [x8, #0x28]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x8"
+        ]
+      },
+      {
+        "address": 36,
+        "mnemonic": "ldp",
+        "operands": "w12, w13, [x8, #0x30]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x8"
+        ]
+      },
+      {
+        "address": 40,
+        "mnemonic": "ldr",
+        "operands": "w15, [x8, #0x38]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x8"
+        ]
+      },
+      {
+        "address": 44,
+        "mnemonic": "mov",
+        "operands": "w17, #-0x1020",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 48,
+        "mnemonic": "mov",
+        "operands": "w1, #-0x1004",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 52,
+        "mnemonic": "add",
+        "operands": "w17, w13, w17",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 56,
+        "mnemonic": "cmp",
+        "operands": "w17, w1",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 60,
+        "mnemonic": "b.hi",
+        "operands": "#0xd0",
+        "category": "conditional_branch",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 64,
+        "mnemonic": "ldr",
+        "operands": "x20, [x0, #0x10]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x0"
+        ]
+      },
+      {
+        "address": 68,
+        "mnemonic": "ldr",
+        "operands": "w8, [x0, #0x18]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x0"
+        ]
+      },
+      {
+        "address": 72,
+        "mnemonic": "sub",
+        "operands": "w13, w13, #0x20",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 76,
+        "mnemonic": "add",
+        "operands": "x17, x20, w13, uxtw",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 80,
+        "mnemonic": "stp",
+        "operands": "w4, w3, [x17]",
+        "category": "store",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x17"
+        ]
+      },
+      {
+        "address": 84,
+        "mnemonic": "stp",
+        "operands": "w10, w11, [x17, #8]",
+        "category": "store",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x17"
+        ]
+      },
+      {
+        "address": 88,
+        "mnemonic": "stp",
+        "operands": "w19, w6, [x17, #0x10]",
+        "category": "store",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x17"
+        ]
+      },
+      {
+        "address": 92,
+        "mnemonic": "stp",
+        "operands": "w16, w15, [x17, #0x18]",
+        "category": "store",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x17"
+        ]
+      },
+      {
+        "address": 96,
+        "mnemonic": "add",
+        "operands": "w17, w8, #0xe98",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 100,
+        "mnemonic": "sub",
+        "operands": "w7, w9, #1, lsl #12",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 104,
+        "mnemonic": "cmp",
+        "operands": "w7, w1",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 108,
+        "mnemonic": "b.hi",
+        "operands": "#0xe4",
+        "category": "conditional_branch",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 112,
+        "mnemonic": "ldr",
+        "operands": "w1, [x20, w9, uxtw]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x20"
+        ]
+      },
+      {
+        "address": 116,
+        "mnemonic": "mov",
+        "operands": "w3, #0x40000000",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 120,
+        "mnemonic": "bfxil",
+        "operands": "w3, w14, #0, #0x1e",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 124,
+        "mnemonic": "sub",
+        "operands": "w16, w1, #0xd0c",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 128,
+        "mnemonic": "mov",
+        "operands": "w2, #-0x1004",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 132,
+        "mnemonic": "cmp",
+        "operands": "w16, w2",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 136,
+        "mnemonic": "b.hi",
+        "operands": "#0xf8",
+        "category": "conditional_branch",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 140,
+        "mnemonic": "mov",
+        "operands": "w7, #0",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 144,
+        "mnemonic": "and",
+        "operands": "w14, w14, #0x3fffffff",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 148,
+        "mnemonic": "add",
+        "operands": "x15, x1, x20",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 152,
+        "mnemonic": "ldr",
+        "operands": "w1, [x15, #0x2f4]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x15"
+        ]
+      },
+      {
+        "address": 156,
+        "mnemonic": "orr",
+        "operands": "w8, w8, #1",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 160,
+        "mnemonic": "add",
+        "operands": "w15, w8, #0xeae",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 164,
+        "mnemonic": "mov",
+        "operands": "w8, #0x20",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 168,
+        "mnemonic": "movk",
+        "operands": "w8, #0x4000, lsl #16",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 172,
+        "mnemonic": "orr",
+        "operands": "w8, w14, w8",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 176,
+        "mnemonic": "and",
+        "operands": "w14, w3, #0xffffffdf",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 180,
+        "mnemonic": "tst",
+        "operands": "w1, #1",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 184,
+        "mnemonic": "csel",
+        "operands": "w14, w14, w8, eq",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 188,
+        "mnemonic": "and",
+        "operands": "w17, w1, #0xfffffffe",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 192,
+        "mnemonic": "mov",
+        "operands": "w16, #0x1406",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 196,
+        "mnemonic": "mov",
+        "operands": "w8, #1",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 200,
+        "mnemonic": "mov",
+        "operands": "x2, x5",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 204,
+        "mnemonic": "b",
+        "operands": "#0x10c",
+        "category": "unconditional_branch",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 208,
+        "mnemonic": "ldr",
+        "operands": "w17, [x8, #0x3c]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x8"
+        ]
+      },
+      {
+        "address": 212,
+        "mnemonic": "mov",
+        "operands": "w8, #-1",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 216,
+        "mnemonic": "mov",
+        "operands": "x1, x4",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 220,
+        "mnemonic": "mov",
+        "operands": "x7, x5",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 224,
+        "mnemonic": "b",
+        "operands": "#0x118",
+        "category": "unconditional_branch",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 228,
+        "mnemonic": "mov",
+        "operands": "w8, #-1",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 232,
+        "mnemonic": "mov",
+        "operands": "x1, x4",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 236,
+        "mnemonic": "mov",
+        "operands": "x7, x5",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 240,
+        "mnemonic": "mov",
+        "operands": "x19, x4",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 244,
+        "mnemonic": "b",
+        "operands": "#0x118",
+        "category": "unconditional_branch",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 248,
+        "mnemonic": "mov",
+        "operands": "w7, #0",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 252,
+        "mnemonic": "mov",
+        "operands": "w16, #0x1406",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 256,
+        "mnemonic": "mov",
+        "operands": "w8, #-1",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 260,
+        "mnemonic": "mov",
+        "operands": "x2, x5",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 264,
+        "mnemonic": "mov",
+        "operands": "x14, x3",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 268,
+        "mnemonic": "mov",
+        "operands": "x3, x9",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 272,
+        "mnemonic": "mov",
+        "operands": "x19, x4",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 276,
+        "mnemonic": "mov",
+        "operands": "x6, x5",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 280,
+        "mnemonic": "ldp",
+        "operands": "x4, x0, [x0]",
+        "category": "load",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x0"
+        ]
+      },
+      {
+        "address": 284,
+        "mnemonic": "stp",
+        "operands": "w9, w2, [x4]",
+        "category": "store",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x4"
+        ]
+      },
+      {
+        "address": 288,
+        "mnemonic": "stp",
+        "operands": "w7, w1, [x4, #8]",
+        "category": "store",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x4"
+        ]
+      },
+      {
+        "address": 292,
+        "mnemonic": "stp",
+        "operands": "w3, w10, [x4, #0x10]",
+        "category": "store",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x4"
+        ]
+      },
+      {
+        "address": 296,
+        "mnemonic": "stp",
+        "operands": "w11, w19, [x4, #0x18]",
+        "category": "store",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x4"
+        ]
+      },
+      {
+        "address": 300,
+        "mnemonic": "stp",
+        "operands": "w6, w16, [x4, #0x20]",
+        "category": "store",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x4"
+        ]
+      },
+      {
+        "address": 304,
+        "mnemonic": "str",
+        "operands": "d0, [x4, #0x28]",
+        "category": "store",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x4"
+        ]
+      },
+      {
+        "address": 308,
+        "mnemonic": "stp",
+        "operands": "w12, w13, [x4, #0x30]",
+        "category": "store",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x4"
+        ]
+      },
+      {
+        "address": 312,
+        "mnemonic": "stp",
+        "operands": "w15, w17, [x4, #0x38]",
+        "category": "store",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x4"
+        ]
+      },
+      {
+        "address": 316,
+        "mnemonic": "str",
+        "operands": "w14, [x0]",
+        "category": "store",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "x0"
+        ]
+      },
+      {
+        "address": 320,
+        "mnemonic": "mov",
+        "operands": "x0, x8",
+        "category": "other",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 324,
+        "mnemonic": "ldp",
+        "operands": "x20, x19, [sp], #0x10",
+        "category": "load",
+        "stack_access": true,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": [
+          "sp"
+        ]
+      },
+      {
+        "address": 328,
+        "mnemonic": "ret",
+        "operands": "",
+        "category": "unconditional_branch",
+        "stack_access": false,
+        "stack_guest_array_access": false,
+        "stack_cpsr_access": false,
+        "memory_bases": []
+      }
+    ]
+  }
+}
