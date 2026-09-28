@@ -74,6 +74,8 @@ def classify(instruction, decoder):
     else:
         category = "other"
     stack = False
+    guest_array_stack = False
+    cpsr_stack = False
     memory_bases = []
     for operand in instruction.operands:
         if operand.type == ARM64_OP_MEM:
@@ -81,7 +83,11 @@ def classify(instruction, decoder):
             memory_bases.append(base)
             if base in {"sp", "x29", "w29"}:
                 stack = True
-    return category, stack, memory_bases
+                if base == "sp" and 0x40 <= operand.mem.disp <= 0x7c:
+                    guest_array_stack = True
+                if base == "sp" and operand.mem.disp == 0x3c:
+                    cpsr_stack = True
+    return category, stack, guest_array_stack, cpsr_stack, memory_bases
 
 
 def analyze(path, wanted):
@@ -98,13 +104,20 @@ def analyze(path, wanted):
         rows = []
         counts = Counter()
         stack_count = 0
+        guest_array_count = 0
+        cpsr_stack_count = 0
         for insn in decoder.disasm(code, address):
-            category, stack, bases = classify(insn, decoder)
+            category, stack, guest_array, cpsr_stack, bases = classify(insn, decoder)
             counts[category] += 1
             stack_count += stack
+            guest_array_count += guest_array
+            cpsr_stack_count += cpsr_stack
             rows.append({"address": insn.address, "mnemonic": insn.mnemonic,
                          "operands": insn.op_str, "category": category,
-                         "stack_access": stack, "memory_bases": bases})
+                         "stack_access": stack,
+                         "stack_guest_array_access": guest_array,
+                         "stack_cpsr_access": cpsr_stack,
+                         "memory_bases": bases})
         if len(rows) * 4 != len(code):
             raise ValueError(f"incomplete disassembly of {name}")
         result[query] = {"symbol": name, "object_path": str(path),
@@ -112,6 +125,8 @@ def analyze(path, wanted):
                          "host_instruction_count": len(rows),
                          "category_counts": dict(counts),
                          "stack_memory_accesses": stack_count,
+                         "stack_guest_array_accesses": guest_array_count,
+                         "stack_cpsr_accesses": cpsr_stack_count,
                          "instructions": rows}
     return result
 
@@ -123,7 +138,7 @@ def main():
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
     result = analyze(args.object, args.symbol)
-    Path(args.out).write_text(json.dumps(result, indent=2) + "\n")
+    Path(args.out).write_text(json.dumps(result, indent=2) + "\n", newline="\n")
     for name, record in result.items():
         print(name, record["host_instruction_count"],
               record["category_counts"], "stack", record["stack_memory_accesses"])

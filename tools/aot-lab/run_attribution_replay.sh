@@ -72,15 +72,33 @@ clang "${COMMON[@]}" -std=c11 -DAGR_ATTRIBUTION_COMPILED=1 \
 clang++ "${COMMON[@]}" "$PAYLOAD/replay.o" "$PAYLOAD/payload.o" "$RUST" \
   -o "$PAYLOAD/replay"
 
+SCALAR="$EVIDENCE/scalar-region"
+mkdir -p "$SCALAR"
+/usr/bin/time -p -o "$SCALAR/offline-preparation-time.txt" \
+  "$PYTHON" "$ROOT/tools/aot-lab/compile_attribution_scalar.py" \
+    --elf "$ELF" --selection "$SPEC" --label "$LABEL" \
+    --out "$SCALAR/scalar.c" --manifest "$SCALAR/translation-manifest.json" \
+    > "$SCALAR/translation.log"
+/usr/bin/time -p -o "$SCALAR/native-compile-time.txt" \
+  clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/AotLab" \
+    -c "$SCALAR/scalar.c" -o "$SCALAR/scalar.o"
+xcrun size -m "$SCALAR/scalar.o" > "$SCALAR/object-sections.txt"
+clang "${COMMON[@]}" -std=c11 -DAGR_ATTRIBUTION_COMPILED=1 \
+  -DAGR_ATTRIBUTION_SCALAR=1 -I"$EVIDENCE" -I"$ROOT/Runtime/AotLab" \
+  -c "$SOURCE" -o "$SCALAR/replay.o"
+clang++ "${COMMON[@]}" "$SCALAR/replay.o" "$SCALAR/scalar.o" "$RUST" \
+  -o "$SCALAR/replay"
+
 REPETITIONS=10000
 [[ "$LABEL" == gloomy ]] && REPETITIONS=16384
 for sample in 1 2 3 4 5; do
-  for backend in interpreter-replay "$BASELINE/replay" "$REGION/replay" "$PAYLOAD/replay"; do
+  for backend in interpreter-replay "$BASELINE/replay" "$REGION/replay" "$PAYLOAD/replay" "$SCALAR/replay"; do
     name="$(basename "$backend")"
     case "$backend" in
       interpreter-replay) out="$EVIDENCE/interpreter-$sample.json"; bin="$EVIDENCE/$backend" ;;
       "$BASELINE"/*) out="$BASELINE/sample-$sample.json"; bin="$backend" ;;
       "$PAYLOAD"/*) out="$PAYLOAD/sample-$sample.json"; bin="$backend" ;;
+      "$SCALAR"/*) out="$SCALAR/sample-$sample.json"; bin="$backend" ;;
       *) out="$REGION/sample-$sample.json"; bin="$backend" ;;
     esac
     xcrun simctl spawn "$DEVICE" "$bin" "$CAPTURE" "$REPETITIONS" > "$out"

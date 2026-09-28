@@ -14,6 +14,7 @@ def main():
         "generated-c": [root / "generated-c" / f"sample-{i}.json" for i in range(1, 6)],
         "indexed-region": [root / "indexed-region" / f"sample-{i}.json" for i in range(1, 6)],
         "guardless-region": [root / "guardless-region" / f"sample-{i}.json" for i in range(1, 6)],
+        "scalar-region": [root / "scalar-region" / f"sample-{i}.json" for i in range(1, 6)],
     }
     samples = {name: [json.loads(path.read_text()) for path in paths]
                for name, paths in groups.items()}

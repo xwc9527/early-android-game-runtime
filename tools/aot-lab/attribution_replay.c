@@ -91,6 +91,9 @@ static uint64_t guest_pages_fnv(void *cpu, const Snapshot *s) {
 #ifdef AGR_ATTRIBUTION_PAYLOAD
 extern int agr_attribution_payload(AgrAotRegs *);
 #endif
+#ifdef AGR_ATTRIBUTION_SCALAR
+extern int agr_attribution_scalar(AgrAotRegs *);
+#endif
 static const AgrAotEntry *lookup_entry(uint32_t guest_pc) {
     uint32_t pc = guest_pc - 65536u;
     if (agr_aot_fast_direct_count) {
@@ -116,10 +119,14 @@ static uint32_t run_compiled(void *cpu, const Snapshot *snapshot,
     uint32_t *cpsr = arm_interp_cpsr_ptr(cpu);
     AgrAotRegs state = {regs, cpsr, arm_interp_memory_base(cpu), 65536u,
                         64u, 0u, 0u, snapshot->elf_data, 0u};
-#ifdef AGR_ATTRIBUTION_PAYLOAD
+#if defined(AGR_ATTRIBUTION_PAYLOAD) || defined(AGR_ATTRIBUTION_SCALAR)
+#ifdef AGR_ATTRIBUTION_SCALAR
+    if (agr_attribution_scalar(&state) != AGR_AOT_BOUNDARY ||
+#else
     if (agr_attribution_payload(&state) != AGR_AOT_BOUNDARY ||
+#endif
         regs[15] != AGR_ATTRIBUTION_POST_PC)
-        fail("guardless payload architectural exit mismatch");
+        fail("direct payload architectural exit mismatch");
     (*drive_calls)++;
     return AGR_ATTRIBUTION_INSTRUCTIONS;
 #else
@@ -192,7 +199,9 @@ int main(int argc, char **argv) {
            "\"elapsed_ns\":%llu,\"drive_calls\":%u,\"chained_blocks\":%u,"
            "\"final_pages_fnv64\":\"%016llx\",\"state_equal\":true}\n",
            AGR_ATTRIBUTION_LABEL,
-#ifdef AGR_ATTRIBUTION_PAYLOAD
+#ifdef AGR_ATTRIBUTION_SCALAR
+           "scalar-region",
+#elif defined(AGR_ATTRIBUTION_PAYLOAD)
            "guardless-region",
 #elif defined(AGR_ATTRIBUTION_REGION)
            "indexed-region",
