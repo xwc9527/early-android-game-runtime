@@ -1,0 +1,47 @@
+name: ARMv7 original APK offline AOT preparation
+
+on:
+  workflow_dispatch:
+
+jobs:
+  prepare-two-original-apks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install static ARM scanner
+        run: python3 -m pip install --break-system-packages capstone==5.0.7
+      - name: Prepare both locked original APKs without trace input
+        run: |
+          set -euo pipefail
+          EVIDENCE=build/offline-apk-preparation
+          mkdir -p "$EVIDENCE"
+          python3 -m pip freeze > "$EVIDENCE/python-dependencies.lock"
+          python3 tools/fetch_fdroid_samples.py --profile aot-kungfoo --inputs-only > "$EVIDENCE/fetch-kungfoo.log" 2>&1
+          python3 tools/fetch_fdroid_samples.py --profile gloomy --inputs-only > "$EVIDENCE/fetch-gloomy.log" 2>&1
+          cp samples/kungfoo-barracuda.apk "$EVIDENCE/kungfoo-barracuda.apk"
+          cp samples/gloomy-dungeons-2.apk "$EVIDENCE/gloomy-dungeons-2.apk"
+          python3 tools/aot-lab/prepare_apk_offline.py --apk "$EVIDENCE/kungfoo-barracuda.apk" --out "$EVIDENCE/kungfoo" > "$EVIDENCE/kungfoo-preparation.log"
+          python3 tools/aot-lab/prepare_apk_offline.py --apk "$EVIDENCE/gloomy-dungeons-2.apk" --out "$EVIDENCE/gloomy" > "$EVIDENCE/gloomy-preparation.log"
+          git rev-parse HEAD > "$EVIDENCE/tested-commit.txt"
+          git rev-parse 'HEAD^{tree}' > "$EVIDENCE/tested-tree.txt"
+          python3 - "$EVIDENCE" <<'PY'
+          import json,pathlib,sys
+          d=pathlib.Path(sys.argv[1])
+          k=json.loads((d/'kungfoo/preparation.json').read_text())
+          g=json.loads((d/'gloomy/preparation.json').read_text())
+          assert k['apk_sha256']=='097ade628ad0837e312da4ca48afe0906eb99c3b992d497c7da33e2b2267eb22'
+          assert g['apk_sha256']=='40a67842345b879fc4b4be90159787f04664d9530f6a3e676c13fa412ad98733'
+          assert any(x['elf_sha256']=='010baa4964cd7dbcf1ba038428ab4d6afc13ffd0a180b447be07b8f088f9ba9d' for x in k['libraries'])
+          assert any(x['elf_sha256']=='2b8672e79da33de4661f6aa0bcb79df2a302637aca9829d53fff8077a6895638' for x in g['libraries'])
+          assert k['entry_policy']==g['entry_policy']=='all-exidx'
+          assert not k['translation_uses_execution_trace'] and not g['translation_uses_execution_trace']
+          print('original APK and native ELF identity checks passed')
+          PY
+      - name: Upload original preparation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-aot-original-apk-preparation
+          path: build/offline-apk-preparation
+          if-no-files-found: error
