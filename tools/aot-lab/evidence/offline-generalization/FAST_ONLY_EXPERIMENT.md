@@ -1,0 +1,5 @@
+# Fast-only offline AOT artifact experiment
+
+The full `all-exidx-sweep` run `36375688370` proved correctness for a new synchronous KungFoo path, but its generated C includes 178,925 diagnostic entry functions that are not part of the intended fast route. The 87.3 MB source, 26.5 MB ARM64 `__text`, 281-second compile, and slower guest-engine median cannot fairly describe the fast-only artifact. This run recompiles the same ELF-derived fast functions with diagnostic emission disabled, checks those functions byte-for-byte against the passing full artifact, then runs the same held-out interpreter and AOT path with seven paired performance samples. The interpreter trace remains post-generation evidence only.
+
+The run is necessary to determine whether the apparent code-size and performance expansion comes from the offline coverage strategy itself or from optional correctness instrumentation. It archives the original ELF, generated source/object, compile time, section sizes, raw trace/host/fallback logs, and all paired measurements. It does not change guest semantics, Android ownership, the workload, or D011.

@@ -1,0 +1,34 @@
+name: ARMv7 ELF-only AOT fast artifact probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [validation/aot-offline-generalization]
+    paths-ignore:
+      - "tools/aot-lab/evidence/**"
+
+jobs:
+  fast-only-new-path:
+    runs-on: xcode-27
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build fast-only ELF artifact and measure new path
+        env:
+          AGR_OFFLINE_ENTRY_POLICY: all-exidx-sweep
+          AGR_OFFLINE_STAGE: oncreate
+          AGR_OFFLINE_NO_DIAGNOSTIC: 1
+        run: |
+          set -o pipefail
+          mkdir -p build/offline-aot-all-exidx-sweep-oncreate-fast-only
+          bash tools/aot-lab/run_offline_probe.sh 2>&1 |
+            tee build/offline-aot-all-exidx-sweep-oncreate-fast-only/ci-log.txt
+      - name: Upload original execution evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-aot-all-exidx-sweep-oncreate-fast-only
+          path: build/offline-aot-all-exidx-sweep-oncreate-fast-only
+          if-no-files-found: error

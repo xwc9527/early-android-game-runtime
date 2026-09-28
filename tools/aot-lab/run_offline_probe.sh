@@ -4,8 +4,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 POLICY="${AGR_OFFLINE_ENTRY_POLICY:-abi}"
 STAGE="${AGR_OFFLINE_STAGE:-loader}"
+FAST_ONLY="${AGR_OFFLINE_NO_DIAGNOSTIC:-0}"
 [[ "$STAGE" == loader || "$STAGE" == oncreate ]] || { echo "unknown stage: $STAGE" >&2; exit 2; }
-EVIDENCE="$ROOT/build/offline-aot-$POLICY-$STAGE"
+[[ "$FAST_ONLY" == 0 || "$FAST_ONLY" == 1 ]] || { echo "invalid FAST_ONLY: $FAST_ONLY" >&2; exit 2; }
+SUFFIX=""
+[[ "$FAST_ONLY" == 1 ]] && SUFFIX="-fast-only"
+EVIDENCE="$ROOT/build/offline-aot-$POLICY-$STAGE$SUFFIX"
 mkdir -p "$EVIDENCE"
 export AGR_SIMULATOR_PROFILE=aot-kungfoo
 python3 -m venv "$ROOT/build/offline-aot-python"
@@ -30,8 +34,11 @@ shutil.copyfile(native,evidence/'input-armv7.so')
     'tested_commit':__import__('subprocess').check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),
     'tested_tree':__import__('subprocess').check_output(['git','rev-parse','HEAD^{tree}'],cwd=root,text=True).strip()},indent=2)+'\n')
 PY
+TRANSLATION_FLAGS=()
+[[ "$FAST_ONLY" == 1 ]] && TRANSLATION_FLAGS+=(--no-diagnostic)
 "$PYTHON" "$ROOT/tools/aot-lab/translate_offline.py" \
   --elf "$EVIDENCE/input-armv7.so" --entry-policy "$POLICY" --load-bias 0x10000 \
+  "${TRANSLATION_FLAGS[@]}" \
   --out "$ROOT/Runtime/AotLab/aot_blocks.c" \
   --manifest "$EVIDENCE/translation-manifest.json" \
   > "$EVIDENCE/translation.log" 2>&1
@@ -73,10 +80,16 @@ MODE_PREFIX=kungfoo
 [[ "$STAGE" == oncreate ]] && MODE_PREFIX=kungfoo-oncreate
 run_one "$MODE_PREFIX-trace" interpreter
 run_one "$MODE_PREFIX-baseline" baseline
-run_one "$MODE_PREFIX-run" diagnostic
+[[ "$FAST_ONLY" == 1 ]] || run_one "$MODE_PREFIX-run" diagnostic
 run_one "$MODE_PREFIX-fast-audit" fast-audit
-for sample in 1 2 3; do
+SAMPLES=3
+[[ "$FAST_ONLY" == 1 ]] && SAMPLES=7
+for sample in $(seq 1 "$SAMPLES"); do
   run_one "$MODE_PREFIX-baseline" "baseline-performance-$sample"
   run_one "$MODE_PREFIX-performance" "performance-$sample"
 done
-"$PYTHON" "$ROOT/tools/aot-lab/offline_differential.py" "$EVIDENCE"
+if [[ "$FAST_ONLY" == 1 ]]; then
+  "$PYTHON" "$ROOT/tools/aot-lab/offline_fast_only_differential.py" "$EVIDENCE"
+else
+  "$PYTHON" "$ROOT/tools/aot-lab/offline_differential.py" "$EVIDENCE"
+fi
