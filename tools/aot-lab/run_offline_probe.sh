@@ -14,6 +14,7 @@ SUFFIX=""
 [[ "$FAST_ONLY" == 1 ]] && SUFFIX="-fast-only"
 [[ "$RELOCATABLE" == 1 ]] && SUFFIX="$SUFFIX-relocatable"
 [[ "${AGR_GAME_COMPILER_ARM64:-0}" == 1 ]] && SUFFIX="$SUFFIX-game-compiler"
+[[ "${AGR_GAME_COMPILER_REGION:-0}" == 1 ]] && SUFFIX="$SUFFIX-region-compiler"
 EVIDENCE="$ROOT/build/offline-aot-$POLICY-$STAGE$SUFFIX"
 mkdir -p "$EVIDENCE"
 export AGR_SIMULATOR_PROFILE=aot-kungfoo
@@ -47,7 +48,13 @@ if [[ "$RELOCATABLE" == 1 ]]; then
   LOAD_BIAS=runtime
   TRANSLATION_FLAGS+=(--relocatable)
 fi
-if [[ "${AGR_GAME_COMPILER_ARM64:-0}" == 1 ]]; then
+if [[ "${AGR_GAME_COMPILER_REGION:-0}" == 1 ]]; then
+  "$PYTHON" "$ROOT/tools/aot-lab/compile_game_regions.py" \
+    --elf "$EVIDENCE/input-armv7.so" \
+    --out "$ROOT/Runtime/AotLab/aot_blocks.c" \
+    --manifest "$EVIDENCE/translation-manifest.json" \
+    > "$EVIDENCE/translation.log" 2>&1
+elif [[ "${AGR_GAME_COMPILER_ARM64:-0}" == 1 ]]; then
   "$PYTHON" "$ROOT/tools/aot-lab/compile_game_arm64.py" \
     --elf "$EVIDENCE/input-armv7.so" \
     --asm "$ROOT/Runtime/AotLab/agr_compiled_blocks.S" \

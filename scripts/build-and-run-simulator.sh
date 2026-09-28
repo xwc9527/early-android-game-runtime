@@ -157,7 +157,9 @@ DEX="$ROOT/Runtime/DexLoom"; DEX_INCLUDE="$DEX/Include"
 DEX_SOURCES=("$DEX/Base/dx_log.c" "$DEX/Base/dx_memory.c" "$DEX/Base/dx_arena.c" "$DEX/DEX/dx_dex.c" "$DEX/DEX/dx_opcode.c" "$DEX/DEX/dx_verifier.c" "$DEX/VM/dx_vm.c" "$DEX/VM/dx_interpreter.c" "$DEX/VM/dx_jni.c" "$DEX/VM/dx_thread_state.c" "$DEX/VM/dx_exec.c" "$DEX/VM/dx_indirect_ref.c" "$DEX/VM/dx_verifier.c" "$DEX/APK/dx_apk.c" "$DEX/APK/dx_manifest.c" "$DEX/APK/dx_resources.c" "$DEX/AndroidMini/framework_viewroot.c" "$DEX/poc_host.c" "$DEX/game_dex_runner.c")
 INDEX=0; DEX_OBJECTS=()
 for SOURCE in "${DEX_SOURCES[@]}"; do OBJECT="$BUILD/obj/dex-$INDEX.o"; clang "${COMMON[@]}" -std=gnu11 -DGL_GLES_PROTOTYPES=1 -I"$ROOT/Vendor/ANGLE-Headers" -I"$DEX_INCLUDE" -I"$BITMAP" -c "$SOURCE" -o "$OBJECT"; DEX_OBJECTS+=("$OBJECT"); INDEX=$((INDEX+1)); done
-clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/AotLab" -c "$ROOT/Runtime/AotLab/agr_aot.c" -o "$BUILD/obj/agr_aot.o"
+REGION_DEFINE=()
+[[ "${AGR_GAME_COMPILER_REGION:-0}" == 1 ]] && REGION_DEFINE+=(-DAGR_AOT_REGION_COMPILER=1)
+clang "${COMMON[@]}" "${REGION_DEFINE[@]}" -std=c11 -I"$ROOT/Runtime/AotLab" -c "$ROOT/Runtime/AotLab/agr_aot.c" -o "$BUILD/obj/agr_aot.o"
 AGR_AOT_OPT_FLAG="${AGR_AOT_OPT_FLAG:--O2}"
 [[ "$AGR_AOT_OPT_FLAG" == -O2 || "$AGR_AOT_OPT_FLAG" == -Os || "$AGR_AOT_OPT_FLAG" == -Oz ]] || { echo "invalid AGR_AOT_OPT_FLAG" >&2; exit 2; }
 printf '%s\n' "$AGR_AOT_OPT_FLAG" > "$ARTIFACTS/aot-compiler-optimization.txt"

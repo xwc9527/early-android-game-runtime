@@ -19,6 +19,10 @@ typedef struct AgrAotRegs {
     uint32_t *cpsr;
     uint8_t *mem;
     uint32_t bias;
+    /* Compiler-private accounting; not part of guest architectural state. */
+    uint32_t region_budget;
+    uint32_t region_blocks;
+    uint32_t region_instructions;
 } AgrAotRegs;
 
 typedef int (*AgrAotFn)(AgrAotRegs *state);

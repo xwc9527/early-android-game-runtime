@@ -1,4 +1,4 @@
-name: AGR Game Compiler KungFoo probe
+name: AGR Region Compiler KungFoo probe
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Compile ELF to AArch64 assembly and compare execution
+      - name: Compile ELF to register-resident regions and compare execution
         env:
           AGR_OFFLINE_ENTRY_POLICY: all-exidx
           AGR_OFFLINE_STAGE: oncreate
@@ -19,16 +19,16 @@ jobs:
           AGR_OFFLINE_POLICY_COMPARE: 1
           AGR_OFFLINE_DIRECT_LOOKUP: 1
           AGR_OFFLINE_RELOCATABLE: 1
-          AGR_GAME_COMPILER_ARM64: 1
+          AGR_GAME_COMPILER_REGION: 1
         run: |
           set -o pipefail
-          mkdir -p build/offline-aot-all-exidx-oncreate-fast-only-relocatable-game-compiler
+          mkdir -p build/offline-aot-all-exidx-oncreate-fast-only-relocatable-region-compiler
           bash tools/aot-lab/run_offline_probe.sh 2>&1 |
-            tee build/offline-aot-all-exidx-oncreate-fast-only-relocatable-game-compiler/ci-log.txt
+            tee build/offline-aot-all-exidx-oncreate-fast-only-relocatable-region-compiler/ci-log.txt
       - name: Upload original execution evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: game-compiler-kungfoo
-          path: build/offline-aot-all-exidx-oncreate-fast-only-relocatable-game-compiler
+          name: region-compiler-kungfoo
+          path: build/offline-aot-all-exidx-oncreate-fast-only-relocatable-region-compiler
           if-no-files-found: error

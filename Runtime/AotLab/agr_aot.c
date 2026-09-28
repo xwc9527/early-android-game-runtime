@@ -222,14 +222,14 @@ int agr_aot_drive(void *cpu) {
     uint32_t *cpsr = arm_interp_cpsr_ptr(cpu);
     uint8_t *memory = arm_interp_memory_base(cpu);
     if (!regs || !cpsr || !memory) return AGR_AOT_FAULT;
-    AgrAotRegs state = {regs, cpsr, memory, agr_aot_fast_relocatable ? image_bias : 0};
+    AgrAotRegs state = {regs, cpsr, memory, agr_aot_fast_relocatable ? image_bias : 0, 0, 0, 0};
     uint32_t local_blocks = 0, local_instructions = 0;
 #define AGR_AOT_RETURN(value) do { \
     executed_blocks += local_blocks; \
     executed_instructions += local_instructions; \
     return (value); \
 } while (0)
-    for (uint32_t step = 0; step < 100000u; step++) {
+    for (uint32_t step = 0; step < 100000u;) {
         uint32_t pc = regs[15];
         /* The interpreter owns Thumb IT predication until its ITSTATE clears. */
         if (*cpsr & 0x0600fc00u) {
@@ -260,14 +260,31 @@ int agr_aot_drive(void *cpu) {
             for (uint32_t i = 0; i < 16; i++) fprintf(checkpoint_file, " %u", regs[i]);
             fputc('\n', checkpoint_file);
         }
+#ifdef AGR_AOT_REGION_COMPILER
+        state.region_budget = checkpoint_file ? 1u : 64u;
+        if (state.region_budget > 100000u - step) state.region_budget = 100000u - step;
+        state.region_blocks = state.region_instructions = 0;
+#else
         local_blocks++;
+#endif
         int result = entry->function(&state);
+#ifdef AGR_AOT_REGION_COMPILER
+        if (state.region_blocks > state.region_budget) AGR_AOT_RETURN(AGR_AOT_FAULT);
+        local_blocks += state.region_blocks;
+        local_instructions += state.region_instructions;
+        step += state.region_blocks ? state.region_blocks : 1u;
+#else
         if (result != AGR_AOT_MISS && result != AGR_AOT_MODE_MISS)
             local_instructions += entry->instructions;
+        step++;
+#endif
         if (result == AGR_AOT_FAULT) AGR_AOT_RETURN(AGR_AOT_FAULT);
         if (result == AGR_AOT_MODE_MISS) {
             fallback_count++;
             mode_misses++;
+#ifdef AGR_AOT_REGION_COMPILER
+            pc = regs[15];
+#endif
             last_miss = pc;
             record_fallback("mode_miss", pc, *cpsr);
             AGR_AOT_RETURN(AGR_AOT_MISS);
@@ -275,6 +292,9 @@ int agr_aot_drive(void *cpu) {
         if (result == AGR_AOT_MISS) {
             fallback_count++;
             guard_misses++;
+#ifdef AGR_AOT_REGION_COMPILER
+            pc = regs[15];
+#endif
             last_miss = pc;
             record_fallback("guard_miss", pc, *cpsr);
             AGR_AOT_RETURN(AGR_AOT_MISS);
