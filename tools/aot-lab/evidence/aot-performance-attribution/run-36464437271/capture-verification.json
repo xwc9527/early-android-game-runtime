@@ -1,0 +1,17 @@
+{
+  "schema": "agr.aot-attribution-capture-verification.v1",
+  "label": "kungfoo",
+  "capture_sha256": "feba84e5db6c0b2dfc16ada4ee3663df2ea8cbe4b04f034f11a8329a3725195f",
+  "elf_sha256": "010baa4964cd7dbcf1ba038428ab4d6afc13ffd0a180b447be07b8f088f9ba9d",
+  "capture_bytes": 898624,
+  "elf_bytes": 882136,
+  "guest_page_count": 4,
+  "checks": {
+    "pc_equal": true,
+    "cpsr_equal": true,
+    "registers_equal": true,
+    "pages_equal": true,
+    "elf_hash_equal": true
+  },
+  "passed": true
+}

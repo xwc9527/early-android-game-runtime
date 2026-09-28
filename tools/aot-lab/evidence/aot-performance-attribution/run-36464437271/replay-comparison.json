@@ -1,0 +1,249 @@
+{
+  "schema": "agr.aot-same-job-real-segment-replay.v1",
+  "label": "kungfoo",
+  "checks": {
+    "single_workload": true,
+    "same_repetitions": true,
+    "same_guest_instruction_count": true,
+    "memory_results_equal": true,
+    "all_architectural_states_equal": true,
+    "backend_identity": true
+  },
+  "passed": true,
+  "raw_samples": {
+    "interpreter": [
+      {
+        "label": "kungfoo",
+        "backend": "interpreter",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 42924000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "interpreter",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 32762000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "interpreter",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 36237000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "interpreter",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 29089000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "interpreter",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 34068000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "generated-c": [
+      {
+        "label": "kungfoo",
+        "backend": "generated-c",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 5901000,
+        "drive_calls": 610000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "generated-c",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 8161000,
+        "drive_calls": 610000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "generated-c",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 4770000,
+        "drive_calls": 610000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "generated-c",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 9758000,
+        "drive_calls": 610000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "generated-c",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 5896000,
+        "drive_calls": 610000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "indexed-region": [
+      {
+        "label": "kungfoo",
+        "backend": "indexed-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 5453000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "indexed-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3507000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "indexed-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3332000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "indexed-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3185000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "indexed-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3483000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "guardless-region": [
+      {
+        "label": "kungfoo",
+        "backend": "guardless-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 1436000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guardless-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 1510000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guardless-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2016000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guardless-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2568000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guardless-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 1840000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ]
+  },
+  "median_ns_per_repetition": {
+    "interpreter": 3406.8,
+    "generated-c": 590.1,
+    "indexed-region": 348.3,
+    "guardless-region": 184.0
+  }
+}
