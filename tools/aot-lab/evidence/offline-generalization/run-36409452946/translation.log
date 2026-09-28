@@ -1,0 +1,88 @@
+{
+  "schema": "agr.offline-aot-manifest.v1",
+  "elf_sha256": "2b8672e79da33de4661f6aa0bcb79df2a302637aca9829d53fff8077a6895638",
+  "elf_bytes": 9376,
+  "executable_sections": [
+    {
+      "name": ".plt",
+      "address": 3292,
+      "size": 164
+    },
+    {
+      "name": ".text",
+      "address": 3456,
+      "size": 3950
+    }
+  ],
+  "entry_policy": "all-exidx",
+  "load_bias": 0,
+  "load_bias_source": "runtime formal linker result",
+  "relocatable": true,
+  "elf_fnv64": 13986468843527641119,
+  "translation_inputs": [
+    "ELF32 ARM code",
+    "dynamic symbols",
+    "init/fini arrays",
+    "EHABI exidx"
+  ],
+  "runtime_inputs": [
+    "formal linker load bias"
+  ],
+  "execution_trace_input": false,
+  "fast_block_mode_guard": true,
+  "seed_count": 44,
+  "statically_discovered_pc_modes": 1067,
+  "decoded_op_kinds": [
+    "add_high",
+    "add_imm",
+    "add_reg",
+    "adds_imm",
+    "adjust_sp",
+    "and_imm",
+    "b",
+    "b_cond",
+    "bl_imm",
+    "blx_imm",
+    "blx_reg",
+    "bx_reg",
+    "cbz",
+    "cmp_imm",
+    "cmp_reg",
+    "it",
+    "ldmia_sp",
+    "ldr_imm",
+    "ldr_indexed",
+    "ldr_reg",
+    "ldr_wb",
+    "ldrb_imm",
+    "lsls_imm",
+    "lsls_reg",
+    "mov_imm",
+    "mov_reg",
+    "movs_imm",
+    "movw",
+    "orr_imm",
+    "stm",
+    "stmdb_sp",
+    "str_imm",
+    "str_indexed",
+    "str_wb",
+    "strb_imm",
+    "subs_imm",
+    "subs_reg",
+    "uxtb"
+  ],
+  "unsupported_discovery_reasons": {
+    "indirect_target": 48,
+    "outside_executable": 1
+  },
+  "debug_entry_count": 947,
+  "fast_block_count": 308,
+  "fast_hash_size": 1024,
+  "fast_hash_max_probe": 4,
+  "fast_direct_lookup_requested": false,
+  "fast_direct_lookup_entries": 0,
+  "generated_c_sha256": "3db331b5cf8e91a7bb3e518569461e507a6264c063ae8c09d6c5452f37273c0e",
+  "generated_c_bytes": 476083,
+  "preparation_wall_seconds": 0.024613292000026377
+}
