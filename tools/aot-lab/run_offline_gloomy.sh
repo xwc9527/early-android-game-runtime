@@ -4,12 +4,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 AUTO_LOAD="${AGR_OFFLINE_GLOOMY_AUTO:-0}"
 RELOCATABLE="${AGR_OFFLINE_GLOOMY_RELOCATABLE:-0}"
+POLICY="${AGR_OFFLINE_ENTRY_POLICY:-exports}"
 [[ "$AUTO_LOAD" == 0 || "$AUTO_LOAD" == 1 ]] || { echo "invalid AUTO_LOAD" >&2; exit 2; }
 [[ "$RELOCATABLE" == 0 || "$RELOCATABLE" == 1 ]] || { echo "invalid RELOCATABLE" >&2; exit 2; }
+[[ "$POLICY" == exports || "$POLICY" == all-exidx ]] || { echo "invalid POLICY" >&2; exit 2; }
 SUFFIX=""
 [[ "$AUTO_LOAD" == 1 ]] && SUFFIX="-auto-first"
 [[ "$RELOCATABLE" == 1 ]] && SUFFIX="-relocatable"
-EVIDENCE="$ROOT/build/offline-aot-gloomy-exports$SUFFIX"
+EVIDENCE="$ROOT/build/offline-aot-gloomy-$POLICY$SUFFIX"
 mkdir -p "$EVIDENCE"
 export AGR_SIMULATOR_PROFILE=gloomy
 python3 -m venv "$ROOT/build/offline-aot-python"
@@ -45,7 +47,7 @@ if [[ "$RELOCATABLE" == 1 ]]; then
   TRANSLATION_FLAGS+=(--relocatable)
 fi
 "$PYTHON" "$ROOT/tools/aot-lab/translate_offline.py" \
-  --elf "$EVIDENCE/input-armv7.so" --entry-policy exports --load-bias "$LOAD_BIAS" \
+  --elf "$EVIDENCE/input-armv7.so" --entry-policy "$POLICY" --load-bias "$LOAD_BIAS" \
   "${TRANSLATION_FLAGS[@]}" \
   --out "$ROOT/Runtime/AotLab/aot_blocks.c" \
   --manifest "$EVIDENCE/translation-manifest.json" \
