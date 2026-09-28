@@ -465,9 +465,13 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         if (gKungFooAotProbeMode == 1) {
             agr_aot_set_trace_limit(1000000);
             agr_aot_trace_open([[docs stringByAppendingPathComponent:@"aot-trace.txt"] UTF8String]);
-        } else if (gKungFooAotProbeMode == 2 || gKungFooAotProbeMode == 4) {
-            if (gKungFooAotProbeMode == 2)
+        } else if (gKungFooAotProbeMode == 2 || gKungFooAotProbeMode == 4 || gKungFooAotProbeMode == 5) {
+            if (gKungFooAotProbeMode == 2) {
                 agr_aot_checkpoint_open([[docs stringByAppendingPathComponent:@"aot-checkpoints.txt"] UTF8String]);
+            }
+            if (gKungFooAotProbeMode == 2 || gKungFooAotProbeMode == 5) {
+                agr_aot_fallback_open([[docs stringByAppendingPathComponent:@"aot-fallbacks.txt"] UTF8String]);
+            }
             agr_aot_set_diagnostic(gKungFooAotProbeMode == 2);
             agr_aot_set_enabled(1);
         }
@@ -487,7 +491,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         BOOL stagePassed=package && mounted==0 && registered==0 && dexLoaded==0 && jniOnLoad==0;
         const char *stageError=guest?agr_guest_last_error(guest):"guest unavailable";
         NSDictionary *stageResult=@{
-            @"mode":gKungFooAotProbeMode==2?@"aot-correctness":(gKungFooAotProbeMode==4?@"aot-performance":(gKungFooAotProbeMode==3?@"interpreter-baseline":@"interpreter-trace")),
+            @"mode":gKungFooAotProbeMode==2?@"aot-correctness":(gKungFooAotProbeMode==4?@"aot-performance":(gKungFooAotProbeMode==5?@"aot-fast-audit":(gKungFooAotProbeMode==3?@"interpreter-baseline":@"interpreter-trace"))),
             @"workload":@"kungfoo-armv7-native-loader-stage",
             @"passed":@(stagePassed),@"mounted":@(mounted==0),
             @"elf_registered":@(registered==0),@"dex_loaded":@(dexLoaded==0),
@@ -496,6 +500,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
             @"seconds":@(aotStageSeconds),
             @"interpreter_instructions":@(aotStageInterpreterInstructions),
             @"trace_seen":@(aotTraceSeen),@"trace_incomplete":@(aotTraceIncomplete),
+            @"fallback_log_incomplete":@(agr_aot_fallback_log_incomplete()),
             @"aot_instructions":@(agr_aot_executed_instructions()),
             @"aot_blocks":@(agr_aot_executed_blocks()),
             @"fallback_count":@(agr_aot_fallback_count()),
@@ -2010,7 +2015,7 @@ static int runKungFooAotProbe(int mode) {
     BOOL passed=failures.count==0 && [native[@"native_activity_created"] boolValue]
         && [native[@"native_draws"] unsignedIntValue]>0
         && [native[@"native_swaps"] unsignedIntValue]>0;
-    NSDictionary *result=@{@"mode":mode==2?@"aot-correctness":(mode==4?@"aot-performance":(mode==3?@"interpreter-baseline":@"interpreter-trace")),
+    NSDictionary *result=@{@"mode":mode==2?@"aot-correctness":(mode==4?@"aot-performance":(mode==5?@"aot-fast-audit":(mode==3?@"interpreter-baseline":@"interpreter-trace"))),
         @"workload":@"kungfoo-armv7-native-dlopen-to-gameplay",
         @"passed":@(passed),@"failures":failures,@"native":native?:@{}};
     NSData *bytes=[NSJSONSerialization dataWithJSONObject:result options:0 error:nil];
@@ -2112,10 +2117,12 @@ static int runAotPoc(BOOL useAot) {
     if ([arguments containsObject:@"--aot-kungfoo-trace"] ||
         [arguments containsObject:@"--aot-kungfoo-run"] ||
         [arguments containsObject:@"--aot-kungfoo-performance"] ||
+        [arguments containsObject:@"--aot-kungfoo-fast-audit"] ||
         [arguments containsObject:@"--aot-kungfoo-baseline"]) {
         int mode=[arguments containsObject:@"--aot-kungfoo-run"]?2:
             ([arguments containsObject:@"--aot-kungfoo-baseline"]?3:
-             ([arguments containsObject:@"--aot-kungfoo-performance"]?4:1));
+             ([arguments containsObject:@"--aot-kungfoo-performance"]?4:
+              ([arguments containsObject:@"--aot-kungfoo-fast-audit"]?5:1)));
         exit(runKungFooAotProbe(mode));
     }
     if ([arguments containsObject:@"--aot-trace"] || [arguments containsObject:@"--aot-run"]) {

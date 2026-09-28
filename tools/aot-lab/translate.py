@@ -557,7 +557,7 @@ def emit(rows, destination):
     return entries
 
 
-def emit_partial(rows, destination, allowed_kinds):
+def emit_partial(rows, destination, allowed_kinds, extra_starts=(), emit_debug=True):
     """Emit a diagnostic oracle and an uninstrumented basic-block backend."""
     unique = {}
     ambiguous = set()
@@ -586,7 +586,7 @@ def emit_partial(rows, destination, allowed_kinds):
 
     pieces = ['#include "agr_aot.h"', ""]
     debug_entries = []
-    for pc, row in sorted(eligible.items()):
+    for pc, row in sorted(eligible.items()) if emit_debug else ():
         op = operations[pc]
         raw, length = row["insn"], row["len"]
         name = f"aot_debug_{pc:08x}"
@@ -640,6 +640,7 @@ def emit_partial(rows, destination, allowed_kinds):
                 starts.update((op[2], op[3]))
             elif op[0] in {"bl_imm", "blx_imm"}:
                 starts.add(op[1])
+    starts.update(extra_starts)
     starts.intersection_update(eligible)
 
     fast_entries = []

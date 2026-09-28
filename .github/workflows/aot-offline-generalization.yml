@@ -1,0 +1,32 @@
+name: ARMv7 offline AOT generalization probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [validation/aot-offline-generalization]
+    paths-ignore:
+      - "tools/aot-lab/evidence/**"
+
+jobs:
+  elf-only-kungfoo:
+    runs-on: xcode-27
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Prepare from ELF, then execute withheld path
+        env:
+          AGR_OFFLINE_ENTRY_POLICY: abi
+        run: |
+          set -o pipefail
+          mkdir -p build/offline-aot-abi
+          bash tools/aot-lab/run_offline_probe.sh 2>&1 |
+            tee build/offline-aot-abi/ci-log.txt
+      - name: Upload original execution evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-aot-abi
+          path: build/offline-aot-abi
+          if-no-files-found: error

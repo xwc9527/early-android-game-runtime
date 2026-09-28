@@ -45,6 +45,8 @@ void agr_aot_log_open(const char *path);
 void agr_aot_log_close(void);
 void agr_aot_log_host(const char *name, uint32_t slot, uint32_t r0, uint32_t r1, uint32_t r2, uint32_t r3);
 void agr_aot_checkpoint_open(const char *path);
+void agr_aot_fallback_open(const char *path);
+int agr_aot_fallback_log_incomplete(void);
 void agr_aot_add_boundary_seconds(double seconds);
 double agr_aot_boundary_seconds(void);
 void agr_aot_record_drive(double seconds, int result);

@@ -17,6 +17,9 @@ static atomic_uint_fast64_t trace_seen;
 static atomic_int trace_incomplete;
 static FILE *log_file;
 static FILE *checkpoint_file;
+static FILE *fallback_file;
+static uint32_t fallback_log_count;
+static int fallback_log_incomplete;
 static uint32_t executed_blocks;
 static uint32_t executed_instructions;
 static uint32_t fallback_count;
@@ -99,6 +102,26 @@ void agr_aot_record_drive(double seconds, int result) {
     else drive_seconds += seconds;
 }
 
+void agr_aot_fallback_open(const char *path) {
+    if (fallback_file) fclose(fallback_file);
+    fallback_file = fopen(path, "w");
+    fallback_log_count = 0;
+    fallback_log_incomplete = fallback_file == NULL;
+}
+
+int agr_aot_fallback_log_incomplete(void) { return fallback_log_incomplete; }
+
+static void record_fallback(const char *reason, uint32_t pc, uint32_t cpsr) {
+    if (!fallback_file) return;
+    if (fallback_log_count == 100000u) {
+        fallback_log_incomplete = 1;
+        return;
+    }
+    if (fprintf(fallback_file, "%s %08x %08x\n", reason, pc, cpsr) < 0)
+        fallback_log_incomplete = 1;
+    fallback_log_count++;
+}
+
 void agr_aot_record_interpreter(double seconds, int result, uint32_t instructions) {
     if (result == AGR_AOT_MISS) {
         fallback_interpreter_seconds += seconds;
@@ -117,6 +140,8 @@ void agr_aot_log_close(void) {
     log_file = NULL;
     if (checkpoint_file) fclose(checkpoint_file);
     checkpoint_file = NULL;
+    if (fallback_file && fclose(fallback_file) != 0) fallback_log_incomplete = 1;
+    fallback_file = NULL;
 }
 
 void agr_aot_log_host(const char *name, uint32_t slot, uint32_t r0, uint32_t r1, uint32_t r2, uint32_t r3) {
@@ -171,12 +196,14 @@ int agr_aot_drive(void *cpu) {
             fallback_count++;
             it_fallbacks++;
             last_miss = pc;
+            record_fallback("it_state", pc, *cpsr);
             AGR_AOT_RETURN(AGR_AOT_MISS);
         }
         if ((*cpsr & 0x20u) == 0 && !agr_aot_fault(pc)) {
             uint32_t word = agr_aot_load32(&state, pc);
             if ((word & 0xff000000u) == 0xef000000u) {
                 boundary_count++;
+                record_fallback("svc", pc, *cpsr);
                 AGR_AOT_RETURN(AGR_AOT_SVC);
             }
         }
@@ -185,6 +212,7 @@ int agr_aot_drive(void *cpu) {
             fallback_count++;
             lookup_misses++;
             last_miss = pc;
+            record_fallback("lookup_miss", pc, *cpsr);
             AGR_AOT_RETURN(AGR_AOT_MISS);
         }
         if (checkpoint_file) {
@@ -200,12 +228,14 @@ int agr_aot_drive(void *cpu) {
             fallback_count++;
             guard_misses++;
             last_miss = pc;
+            record_fallback("guard_miss", pc, *cpsr);
             AGR_AOT_RETURN(AGR_AOT_MISS);
         }
     }
     fallback_count++;
     step_limit_fallbacks++;
     last_miss = regs[15];
+    record_fallback("step_limit", regs[15], *cpsr);
     AGR_AOT_RETURN(AGR_AOT_MISS);
 #undef AGR_AOT_RETURN
 }

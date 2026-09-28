@@ -19,13 +19,14 @@ xcrun simctl boot "$DEVICE" 2>/dev/null || true
 xcrun simctl bootstatus "$DEVICE" -b
 xcrun simctl install "$DEVICE" "$APP"
 DATA="$(xcrun simctl get_app_container "$DEVICE" dev.agr.simulator data)"
-rm -f "$DATA/Documents/aot-result.json" "$DATA/Documents/aot-stage-result.json" "$DATA/Documents/aot-trace.txt" "$DATA/Documents/aot-hosts.txt" "$DATA/Documents/aot-checkpoints.txt" "$DATA/Documents/pvs-progress.json"
+rm -f "$DATA/Documents/aot-result.json" "$DATA/Documents/aot-stage-result.json" "$DATA/Documents/aot-trace.txt" "$DATA/Documents/aot-hosts.txt" "$DATA/Documents/aot-checkpoints.txt" "$DATA/Documents/aot-fallbacks.txt" "$DATA/Documents/pvs-progress.json"
 case "$MODE" in
   trace) ARG="--aot-trace" ;;
   run) ARG="--aot-run" ;;
   kungfoo-trace) ARG="--aot-kungfoo-trace" ;;
   kungfoo-run) ARG="--aot-kungfoo-run" ;;
   kungfoo-performance) ARG="--aot-kungfoo-performance" ;;
+  kungfoo-fast-audit) ARG="--aot-kungfoo-fast-audit" ;;
   kungfoo-baseline) ARG="--aot-kungfoo-baseline" ;;
   *) echo "unknown AOT launch mode: $MODE" >&2; exit 2 ;;
 esac
@@ -36,7 +37,7 @@ for _ in $(seq 1 180); do
   [[ -s "$DATA/Documents/$RESULT_NAME" ]] && break
   sleep 1
 done
-for name in aot-result.json aot-stage-result.json aot-hosts.txt aot-trace.txt aot-checkpoints.txt pvs-progress.json; do
+for name in aot-result.json aot-stage-result.json aot-hosts.txt aot-trace.txt aot-checkpoints.txt aot-fallbacks.txt pvs-progress.json; do
   [[ -f "$DATA/Documents/$name" ]] && cp "$DATA/Documents/$name" "$ARTIFACTS/$name"
 done
 if [[ ! -s "$ARTIFACTS/$RESULT_NAME" ]]; then
