@@ -72,8 +72,8 @@ def main():
                                 {"all-exidx", "all-exidx-sweep"} else []) +
                                (["ELF PT_LOAD", "AGR first-fit empty VMA policy"]
                                if args.load_bias == "auto-first" else
-                               ["runtime formal linker load bias"] if args.relocatable else
-                               ["formal linker load bias"])),
+                               [] if args.relocatable else ["formal linker load bias"])),
+        "runtime_inputs": (["formal linker load bias"] if args.relocatable else []),
         "execution_trace_input": False,
         "fast_block_mode_guard": True,
         "seed_count": len(seeds),

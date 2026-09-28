@@ -1,0 +1,82 @@
+{
+  "schema": "agr.offline-aot-manifest.v1",
+  "elf_sha256": "2b8672e79da33de4661f6aa0bcb79df2a302637aca9829d53fff8077a6895638",
+  "elf_bytes": 9376,
+  "executable_sections": [
+    {
+      "name": ".plt",
+      "address": 3292,
+      "size": 164
+    },
+    {
+      "name": ".text",
+      "address": 3456,
+      "size": 3950
+    }
+  ],
+  "entry_policy": "exports",
+  "load_bias": 0,
+  "load_bias_source": "runtime formal linker result",
+  "relocatable": true,
+  "translation_inputs": [
+    "ELF32 ARM code",
+    "dynamic symbols",
+    "init/fini arrays",
+    "runtime formal linker load bias"
+  ],
+  "execution_trace_input": false,
+  "fast_block_mode_guard": true,
+  "seed_count": 29,
+  "statically_discovered_pc_modes": 1045,
+  "decoded_op_kinds": [
+    "add_high",
+    "add_imm",
+    "add_reg",
+    "adds_imm",
+    "adjust_sp",
+    "and_imm",
+    "b",
+    "b_cond",
+    "bl_imm",
+    "blx_imm",
+    "blx_reg",
+    "bx_reg",
+    "cbz",
+    "cmp_imm",
+    "cmp_reg",
+    "it",
+    "ldmia_sp",
+    "ldr_imm",
+    "ldr_indexed",
+    "ldr_wb",
+    "ldrb_imm",
+    "lsls_imm",
+    "lsls_reg",
+    "mov_imm",
+    "mov_reg",
+    "movs_imm",
+    "movw",
+    "orr_imm",
+    "stm",
+    "stmdb_sp",
+    "str_imm",
+    "str_indexed",
+    "strb_imm",
+    "subs_imm",
+    "subs_reg",
+    "uxtb"
+  ],
+  "unsupported_discovery_reasons": {
+    "indirect_target": 45,
+    "outside_executable": 1
+  },
+  "debug_entry_count": 925,
+  "fast_block_count": 301,
+  "fast_hash_size": 1024,
+  "fast_hash_max_probe": 4,
+  "fast_direct_lookup_requested": false,
+  "fast_direct_lookup_entries": 0,
+  "generated_c_sha256": "feb0c74658295fecf7f3552c8c06b0835fb0fad45c133e5ab0c3c0425ee17fd5",
+  "generated_c_bytes": 465145,
+  "preparation_wall_seconds": 0.02676658299992596
+}
