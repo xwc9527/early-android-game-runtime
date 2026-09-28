@@ -1,0 +1,539 @@
+{
+  "schema": "agr.aot-same-job-real-segment-replay.v1",
+  "label": "kungfoo",
+  "checks": {
+    "single_workload": true,
+    "same_repetitions": true,
+    "same_guest_instruction_count": true,
+    "memory_results_equal": true,
+    "all_architectural_states_equal": true,
+    "backend_identity": true
+  },
+  "passed": true,
+  "raw_samples": {
+    "interpreter": [
+      {
+        "label": "kungfoo",
+        "backend": "interpreter",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 38490000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "interpreter",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 30851000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "interpreter",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 29374000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "interpreter",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 28381000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "interpreter",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 32968000,
+        "drive_calls": 0,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "generated-c": [
+      {
+        "label": "kungfoo",
+        "backend": "generated-c",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 5295000,
+        "drive_calls": 610000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "generated-c",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3761000,
+        "drive_calls": 610000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "generated-c",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 4075000,
+        "drive_calls": 610000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "generated-c",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 4239000,
+        "drive_calls": 610000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "generated-c",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 4134000,
+        "drive_calls": 610000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "indexed-region": [
+      {
+        "label": "kungfoo",
+        "backend": "indexed-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 4115000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "indexed-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2145000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "indexed-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2401000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "indexed-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2708000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "indexed-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2255000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "guardless-region": [
+      {
+        "label": "kungfoo",
+        "backend": "guardless-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 1385000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guardless-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2194000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guardless-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 1517000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guardless-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 1460000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guardless-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 1450000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "scalar-region": [
+      {
+        "label": "kungfoo",
+        "backend": "scalar-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 1063000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "scalar-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 1012000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "scalar-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 829000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "scalar-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 1350000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "scalar-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 855000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "guard-only-region": [
+      {
+        "label": "kungfoo",
+        "backend": "guard-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2986000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3020000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3075000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3467000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2990000,
+        "drive_calls": 10000,
+        "chained_blocks": 0,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "account-only-region": [
+      {
+        "label": "kungfoo",
+        "backend": "account-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2898000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "account-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 14716000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "account-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2859000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "account-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3558000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "account-only-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 2845000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "guard-account-region": [
+      {
+        "label": "kungfoo",
+        "backend": "guard-account-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3743000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-account-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3170000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-account-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3135000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-account-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3330000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-account-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 4227000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ],
+    "guard-once-region": [
+      {
+        "label": "kungfoo",
+        "backend": "guard-once-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3565000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-once-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3454000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-once-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3398000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-once-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3377000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      },
+      {
+        "label": "kungfoo",
+        "backend": "guard-once-region",
+        "repetitions": 10000,
+        "guest_instructions_per_repetition": 237,
+        "elapsed_ns": 3396000,
+        "drive_calls": 10000,
+        "chained_blocks": 610000,
+        "final_pages_fnv64": "cf2c8e1cde84f0e4",
+        "state_equal": true
+      }
+    ]
+  },
+  "median_ns_per_repetition": {
+    "interpreter": 3085.1,
+    "generated-c": 413.4,
+    "indexed-region": 240.1,
+    "guardless-region": 146.0,
+    "scalar-region": 101.2,
+    "guard-only-region": 302.0,
+    "account-only-region": 289.8,
+    "guard-account-region": 333.0,
+    "guard-once-region": 339.8
+  }
+}

@@ -1,0 +1,5 @@
+Segment : 2216
+	Section (__TEXT, __text): 2120
+	Section (__LD, __compact_unwind): 96
+	total 2216
+total 2216
