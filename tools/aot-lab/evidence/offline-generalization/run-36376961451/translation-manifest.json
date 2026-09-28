@@ -1,0 +1,1285 @@
+{
+  "schema": "agr.offline-aot-manifest.v1",
+  "elf_sha256": "2b8672e79da33de4661f6aa0bcb79df2a302637aca9829d53fff8077a6895638",
+  "elf_bytes": 9376,
+  "executable_sections": [
+    {
+      "name": ".plt",
+      "address": 3292,
+      "size": 164
+    },
+    {
+      "name": ".text",
+      "address": 3456,
+      "size": 3950
+    }
+  ],
+  "entry_policy": "exports",
+  "load_bias": 41943040,
+  "load_bias_source": "caller-supplied formal linker placement; not inferred from trace",
+  "translation_inputs": [
+    "ELF32 ARM code",
+    "dynamic symbols",
+    "init/fini arrays",
+    "formal linker load bias"
+  ],
+  "execution_trace_input": false,
+  "fast_block_mode_guard": true,
+  "seed_count": 29,
+  "statically_discovered_pc_modes": 1045,
+  "decoded_op_kinds": [
+    "add_high",
+    "add_imm",
+    "add_reg",
+    "adds_imm",
+    "adjust_sp",
+    "and_imm",
+    "b",
+    "b_cond",
+    "bl_imm",
+    "blx_imm",
+    "blx_reg",
+    "bx_reg",
+    "cbz",
+    "cmp_imm",
+    "cmp_reg",
+    "it",
+    "ldmia_sp",
+    "ldr_imm",
+    "ldr_indexed",
+    "ldr_wb",
+    "ldrb_imm",
+    "lsls_imm",
+    "lsls_reg",
+    "mov_imm",
+    "mov_reg",
+    "movs_imm",
+    "movw",
+    "orr_imm",
+    "stm",
+    "stmdb_sp",
+    "str_imm",
+    "str_indexed",
+    "strb_imm",
+    "subs_imm",
+    "subs_reg",
+    "uxtb"
+  ],
+  "unsupported_discovery_reasons": {
+    "indirect_target": 45,
+    "outside_executable": 1
+  },
+  "debug_entry_count": 925,
+  "fast_block_count": 301,
+  "fast_blocks": [
+    {
+      "pc": 41946364,
+      "instructions": 3
+    },
+    {
+      "pc": 41946376,
+      "instructions": 3
+    },
+    {
+      "pc": 41946388,
+      "instructions": 3
+    },
+    {
+      "pc": 41946400,
+      "instructions": 3
+    },
+    {
+      "pc": 41946412,
+      "instructions": 3
+    },
+    {
+      "pc": 41946424,
+      "instructions": 3
+    },
+    {
+      "pc": 41946436,
+      "instructions": 3
+    },
+    {
+      "pc": 41946448,
+      "instructions": 3
+    },
+    {
+      "pc": 41946496,
+      "instructions": 2
+    },
+    {
+      "pc": 41946564,
+      "instructions": 10
+    },
+    {
+      "pc": 41946588,
+      "instructions": 7
+    },
+    {
+      "pc": 41946604,
+      "instructions": 2
+    },
+    {
+      "pc": 41946608,
+      "instructions": 6
+    },
+    {
+      "pc": 41946622,
+      "instructions": 2
+    },
+    {
+      "pc": 41946626,
+      "instructions": 1
+    },
+    {
+      "pc": 41946628,
+      "instructions": 6
+    },
+    {
+      "pc": 41946642,
+      "instructions": 6
+    },
+    {
+      "pc": 41946658,
+      "instructions": 5
+    },
+    {
+      "pc": 41946672,
+      "instructions": 1
+    },
+    {
+      "pc": 41946674,
+      "instructions": 5
+    },
+    {
+      "pc": 41946688,
+      "instructions": 5
+    },
+    {
+      "pc": 41946702,
+      "instructions": 7
+    },
+    {
+      "pc": 41946718,
+      "instructions": 1
+    },
+    {
+      "pc": 41946720,
+      "instructions": 7
+    },
+    {
+      "pc": 41946736,
+      "instructions": 7
+    },
+    {
+      "pc": 41946752,
+      "instructions": 7
+    },
+    {
+      "pc": 41946768,
+      "instructions": 1
+    },
+    {
+      "pc": 41946772,
+      "instructions": 10
+    },
+    {
+      "pc": 41946798,
+      "instructions": 7
+    },
+    {
+      "pc": 41946814,
+      "instructions": 6
+    },
+    {
+      "pc": 41946828,
+      "instructions": 5
+    },
+    {
+      "pc": 41946840,
+      "instructions": 4
+    },
+    {
+      "pc": 41946850,
+      "instructions": 7
+    },
+    {
+      "pc": 41946866,
+      "instructions": 7
+    },
+    {
+      "pc": 41946882,
+      "instructions": 1
+    },
+    {
+      "pc": 41946888,
+      "instructions": 3
+    },
+    {
+      "pc": 41946906,
+      "instructions": 4
+    },
+    {
+      "pc": 41946916,
+      "instructions": 3
+    },
+    {
+      "pc": 41946924,
+      "instructions": 1
+    },
+    {
+      "pc": 41946934,
+      "instructions": 5
+    },
+    {
+      "pc": 41946948,
+      "instructions": 4
+    },
+    {
+      "pc": 41946956,
+      "instructions": 3
+    },
+    {
+      "pc": 41946966,
+      "instructions": 2
+    },
+    {
+      "pc": 41946970,
+      "instructions": 2
+    },
+    {
+      "pc": 41946974,
+      "instructions": 2
+    },
+    {
+      "pc": 41946980,
+      "instructions": 3
+    },
+    {
+      "pc": 41946986,
+      "instructions": 2
+    },
+    {
+      "pc": 41946990,
+      "instructions": 2
+    },
+    {
+      "pc": 41946994,
+      "instructions": 2
+    },
+    {
+      "pc": 41946998,
+      "instructions": 2
+    },
+    {
+      "pc": 41947002,
+      "instructions": 3
+    },
+    {
+      "pc": 41947010,
+      "instructions": 2
+    },
+    {
+      "pc": 41947014,
+      "instructions": 2
+    },
+    {
+      "pc": 41947018,
+      "instructions": 1
+    },
+    {
+      "pc": 41947020,
+      "instructions": 4
+    },
+    {
+      "pc": 41947028,
+      "instructions": 4
+    },
+    {
+      "pc": 41947036,
+      "instructions": 4
+    },
+    {
+      "pc": 41947044,
+      "instructions": 2
+    },
+    {
+      "pc": 41947048,
+      "instructions": 6
+    },
+    {
+      "pc": 41947060,
+      "instructions": 7
+    },
+    {
+      "pc": 41947074,
+      "instructions": 3
+    },
+    {
+      "pc": 41947082,
+      "instructions": 2
+    },
+    {
+      "pc": 41947086,
+      "instructions": 1
+    },
+    {
+      "pc": 41947088,
+      "instructions": 8
+    },
+    {
+      "pc": 41947106,
+      "instructions": 1
+    },
+    {
+      "pc": 41947108,
+      "instructions": 3
+    },
+    {
+      "pc": 41947116,
+      "instructions": 2
+    },
+    {
+      "pc": 41947120,
+      "instructions": 3
+    },
+    {
+      "pc": 41947126,
+      "instructions": 1
+    },
+    {
+      "pc": 41947130,
+      "instructions": 4
+    },
+    {
+      "pc": 41947138,
+      "instructions": 4
+    },
+    {
+      "pc": 41947146,
+      "instructions": 3
+    },
+    {
+      "pc": 41947154,
+      "instructions": 3
+    },
+    {
+      "pc": 41947160,
+      "instructions": 1
+    },
+    {
+      "pc": 41947164,
+      "instructions": 2
+    },
+    {
+      "pc": 41947168,
+      "instructions": 5
+    },
+    {
+      "pc": 41947182,
+      "instructions": 1
+    },
+    {
+      "pc": 41947186,
+      "instructions": 3
+    },
+    {
+      "pc": 41947198,
+      "instructions": 1
+    },
+    {
+      "pc": 41947202,
+      "instructions": 2
+    },
+    {
+      "pc": 41947206,
+      "instructions": 2
+    },
+    {
+      "pc": 41947224,
+      "instructions": 5
+    },
+    {
+      "pc": 41947238,
+      "instructions": 2
+    },
+    {
+      "pc": 41947244,
+      "instructions": 1
+    },
+    {
+      "pc": 41947248,
+      "instructions": 1
+    },
+    {
+      "pc": 41947250,
+      "instructions": 1
+    },
+    {
+      "pc": 41947254,
+      "instructions": 3
+    },
+    {
+      "pc": 41947260,
+      "instructions": 2
+    },
+    {
+      "pc": 41947268,
+      "instructions": 3
+    },
+    {
+      "pc": 41947274,
+      "instructions": 2
+    },
+    {
+      "pc": 41947282,
+      "instructions": 3
+    },
+    {
+      "pc": 41947288,
+      "instructions": 3
+    },
+    {
+      "pc": 41947300,
+      "instructions": 1
+    },
+    {
+      "pc": 41947318,
+      "instructions": 1
+    },
+    {
+      "pc": 41947320,
+      "instructions": 3
+    },
+    {
+      "pc": 41947326,
+      "instructions": 3
+    },
+    {
+      "pc": 41947334,
+      "instructions": 2
+    },
+    {
+      "pc": 41947338,
+      "instructions": 1
+    },
+    {
+      "pc": 41947342,
+      "instructions": 7
+    },
+    {
+      "pc": 41947356,
+      "instructions": 2
+    },
+    {
+      "pc": 41947360,
+      "instructions": 2
+    },
+    {
+      "pc": 41947364,
+      "instructions": 3
+    },
+    {
+      "pc": 41947372,
+      "instructions": 2
+    },
+    {
+      "pc": 41947378,
+      "instructions": 6
+    },
+    {
+      "pc": 41947402,
+      "instructions": 2
+    },
+    {
+      "pc": 41947420,
+      "instructions": 8
+    },
+    {
+      "pc": 41947440,
+      "instructions": 2
+    },
+    {
+      "pc": 41947572,
+      "instructions": 2
+    },
+    {
+      "pc": 41947576,
+      "instructions": 7
+    },
+    {
+      "pc": 41947594,
+      "instructions": 2
+    },
+    {
+      "pc": 41947612,
+      "instructions": 3
+    },
+    {
+      "pc": 41947622,
+      "instructions": 3
+    },
+    {
+      "pc": 41947632,
+      "instructions": 1
+    },
+    {
+      "pc": 41947634,
+      "instructions": 4
+    },
+    {
+      "pc": 41947642,
+      "instructions": 3
+    },
+    {
+      "pc": 41947648,
+      "instructions": 2
+    },
+    {
+      "pc": 41947654,
+      "instructions": 2
+    },
+    {
+      "pc": 41947658,
+      "instructions": 3
+    },
+    {
+      "pc": 41947666,
+      "instructions": 3
+    },
+    {
+      "pc": 41947674,
+      "instructions": 9
+    },
+    {
+      "pc": 41947694,
+      "instructions": 7
+    },
+    {
+      "pc": 41947708,
+      "instructions": 2
+    },
+    {
+      "pc": 41947714,
+      "instructions": 1
+    },
+    {
+      "pc": 41947716,
+      "instructions": 5
+    },
+    {
+      "pc": 41947726,
+      "instructions": 2
+    },
+    {
+      "pc": 41947730,
+      "instructions": 2
+    },
+    {
+      "pc": 41947734,
+      "instructions": 3
+    },
+    {
+      "pc": 41947742,
+      "instructions": 3
+    },
+    {
+      "pc": 41947750,
+      "instructions": 2
+    },
+    {
+      "pc": 41947756,
+      "instructions": 1
+    },
+    {
+      "pc": 41947760,
+      "instructions": 2
+    },
+    {
+      "pc": 41947764,
+      "instructions": 1
+    },
+    {
+      "pc": 41947768,
+      "instructions": 4
+    },
+    {
+      "pc": 41947776,
+      "instructions": 1
+    },
+    {
+      "pc": 41947778,
+      "instructions": 4
+    },
+    {
+      "pc": 41947786,
+      "instructions": 2
+    },
+    {
+      "pc": 41947790,
+      "instructions": 1
+    },
+    {
+      "pc": 41947792,
+      "instructions": 3
+    },
+    {
+      "pc": 41947802,
+      "instructions": 5
+    },
+    {
+      "pc": 41947832,
+      "instructions": 2
+    },
+    {
+      "pc": 41947860,
+      "instructions": 3
+    },
+    {
+      "pc": 41947870,
+      "instructions": 5
+    },
+    {
+      "pc": 41947900,
+      "instructions": 2
+    },
+    {
+      "pc": 41947904,
+      "instructions": 9
+    },
+    {
+      "pc": 41947926,
+      "instructions": 2
+    },
+    {
+      "pc": 41947930,
+      "instructions": 6
+    },
+    {
+      "pc": 41947950,
+      "instructions": 2
+    },
+    {
+      "pc": 41947968,
+      "instructions": 4
+    },
+    {
+      "pc": 41947980,
+      "instructions": 3
+    },
+    {
+      "pc": 41947988,
+      "instructions": 1
+    },
+    {
+      "pc": 41947990,
+      "instructions": 2
+    },
+    {
+      "pc": 41947994,
+      "instructions": 4
+    },
+    {
+      "pc": 41948004,
+      "instructions": 3
+    },
+    {
+      "pc": 41948010,
+      "instructions": 2
+    },
+    {
+      "pc": 41948014,
+      "instructions": 5
+    },
+    {
+      "pc": 41948024,
+      "instructions": 3
+    },
+    {
+      "pc": 41948030,
+      "instructions": 2
+    },
+    {
+      "pc": 41948034,
+      "instructions": 1
+    },
+    {
+      "pc": 41948036,
+      "instructions": 2
+    },
+    {
+      "pc": 41948042,
+      "instructions": 3
+    },
+    {
+      "pc": 41948052,
+      "instructions": 13
+    },
+    {
+      "pc": 41948082,
+      "instructions": 6
+    },
+    {
+      "pc": 41948098,
+      "instructions": 2
+    },
+    {
+      "pc": 41948104,
+      "instructions": 6
+    },
+    {
+      "pc": 41948124,
+      "instructions": 3
+    },
+    {
+      "pc": 41948700,
+      "instructions": 2
+    },
+    {
+      "pc": 41948704,
+      "instructions": 2
+    },
+    {
+      "pc": 41948708,
+      "instructions": 2
+    },
+    {
+      "pc": 41948712,
+      "instructions": 7
+    },
+    {
+      "pc": 41948732,
+      "instructions": 5
+    },
+    {
+      "pc": 41948742,
+      "instructions": 1
+    },
+    {
+      "pc": 41948746,
+      "instructions": 1
+    },
+    {
+      "pc": 41948748,
+      "instructions": 1
+    },
+    {
+      "pc": 41948754,
+      "instructions": 1
+    },
+    {
+      "pc": 41948756,
+      "instructions": 1
+    },
+    {
+      "pc": 41948762,
+      "instructions": 2
+    },
+    {
+      "pc": 41948766,
+      "instructions": 3
+    },
+    {
+      "pc": 41948776,
+      "instructions": 1
+    },
+    {
+      "pc": 41948780,
+      "instructions": 2
+    },
+    {
+      "pc": 41948976,
+      "instructions": 2
+    },
+    {
+      "pc": 41949046,
+      "instructions": 2
+    },
+    {
+      "pc": 41949252,
+      "instructions": 2
+    },
+    {
+      "pc": 41949260,
+      "instructions": 1
+    },
+    {
+      "pc": 41949268,
+      "instructions": 3
+    },
+    {
+      "pc": 41949280,
+      "instructions": 2
+    },
+    {
+      "pc": 41949288,
+      "instructions": 1
+    },
+    {
+      "pc": 41949296,
+      "instructions": 1
+    },
+    {
+      "pc": 41949304,
+      "instructions": 1
+    },
+    {
+      "pc": 41949312,
+      "instructions": 1
+    },
+    {
+      "pc": 41949320,
+      "instructions": 1
+    },
+    {
+      "pc": 41949328,
+      "instructions": 1
+    },
+    {
+      "pc": 41949396,
+      "instructions": 1
+    },
+    {
+      "pc": 41949464,
+      "instructions": 1
+    },
+    {
+      "pc": 41949484,
+      "instructions": 1
+    },
+    {
+      "pc": 41949504,
+      "instructions": 1
+    },
+    {
+      "pc": 41949508,
+      "instructions": 8
+    },
+    {
+      "pc": 41949534,
+      "instructions": 3
+    },
+    {
+      "pc": 41949544,
+      "instructions": 8
+    },
+    {
+      "pc": 41949570,
+      "instructions": 3
+    },
+    {
+      "pc": 41949580,
+      "instructions": 8
+    },
+    {
+      "pc": 41949606,
+      "instructions": 3
+    },
+    {
+      "pc": 41949616,
+      "instructions": 8
+    },
+    {
+      "pc": 41949642,
+      "instructions": 3
+    },
+    {
+      "pc": 41949652,
+      "instructions": 8
+    },
+    {
+      "pc": 41949678,
+      "instructions": 3
+    },
+    {
+      "pc": 41949688,
+      "instructions": 2
+    },
+    {
+      "pc": 41949692,
+      "instructions": 2
+    },
+    {
+      "pc": 41949696,
+      "instructions": 9
+    },
+    {
+      "pc": 41949714,
+      "instructions": 1
+    },
+    {
+      "pc": 41949716,
+      "instructions": 4
+    },
+    {
+      "pc": 41949726,
+      "instructions": 1
+    },
+    {
+      "pc": 41949728,
+      "instructions": 2
+    },
+    {
+      "pc": 41949732,
+      "instructions": 7
+    },
+    {
+      "pc": 41949748,
+      "instructions": 3
+    },
+    {
+      "pc": 41949756,
+      "instructions": 1
+    },
+    {
+      "pc": 41949758,
+      "instructions": 6
+    },
+    {
+      "pc": 41949776,
+      "instructions": 2
+    },
+    {
+      "pc": 41949782,
+      "instructions": 3
+    },
+    {
+      "pc": 41949788,
+      "instructions": 2
+    },
+    {
+      "pc": 41949794,
+      "instructions": 7
+    },
+    {
+      "pc": 41949810,
+      "instructions": 6
+    },
+    {
+      "pc": 41949824,
+      "instructions": 1
+    },
+    {
+      "pc": 41949834,
+      "instructions": 1
+    },
+    {
+      "pc": 41949840,
+      "instructions": 4
+    },
+    {
+      "pc": 41949854,
+      "instructions": 1
+    },
+    {
+      "pc": 41949858,
+      "instructions": 2
+    },
+    {
+      "pc": 41949868,
+      "instructions": 1
+    },
+    {
+      "pc": 41949880,
+      "instructions": 3
+    },
+    {
+      "pc": 41949888,
+      "instructions": 3
+    },
+    {
+      "pc": 41949898,
+      "instructions": 2
+    },
+    {
+      "pc": 41949904,
+      "instructions": 2
+    },
+    {
+      "pc": 41949908,
+      "instructions": 4
+    },
+    {
+      "pc": 41949918,
+      "instructions": 1
+    },
+    {
+      "pc": 41949922,
+      "instructions": 2
+    },
+    {
+      "pc": 41949930,
+      "instructions": 1
+    },
+    {
+      "pc": 41949936,
+      "instructions": 2
+    },
+    {
+      "pc": 41949940,
+      "instructions": 3
+    },
+    {
+      "pc": 41949948,
+      "instructions": 6
+    },
+    {
+      "pc": 41949966,
+      "instructions": 3
+    },
+    {
+      "pc": 41949974,
+      "instructions": 3
+    },
+    {
+      "pc": 41949982,
+      "instructions": 1
+    },
+    {
+      "pc": 41949984,
+      "instructions": 2
+    },
+    {
+      "pc": 41949990,
+      "instructions": 1
+    },
+    {
+      "pc": 41949998,
+      "instructions": 4
+    },
+    {
+      "pc": 41950016,
+      "instructions": 2
+    },
+    {
+      "pc": 41950020,
+      "instructions": 2
+    },
+    {
+      "pc": 41950024,
+      "instructions": 2
+    },
+    {
+      "pc": 41950030,
+      "instructions": 3
+    },
+    {
+      "pc": 41950040,
+      "instructions": 1
+    },
+    {
+      "pc": 41950042,
+      "instructions": 1
+    },
+    {
+      "pc": 41950044,
+      "instructions": 2
+    },
+    {
+      "pc": 41950048,
+      "instructions": 2
+    },
+    {
+      "pc": 41950052,
+      "instructions": 7
+    },
+    {
+      "pc": 41950070,
+      "instructions": 2
+    },
+    {
+      "pc": 41950080,
+      "instructions": 3
+    },
+    {
+      "pc": 41950090,
+      "instructions": 5
+    },
+    {
+      "pc": 41950102,
+      "instructions": 1
+    },
+    {
+      "pc": 41950104,
+      "instructions": 1
+    },
+    {
+      "pc": 41950110,
+      "instructions": 5
+    },
+    {
+      "pc": 41950122,
+      "instructions": 2
+    },
+    {
+      "pc": 41950126,
+      "instructions": 2
+    },
+    {
+      "pc": 41950132,
+      "instructions": 6
+    },
+    {
+      "pc": 41950148,
+      "instructions": 3
+    },
+    {
+      "pc": 41950156,
+      "instructions": 6
+    },
+    {
+      "pc": 41950172,
+      "instructions": 2
+    },
+    {
+      "pc": 41950176,
+      "instructions": 2
+    },
+    {
+      "pc": 41950180,
+      "instructions": 2
+    },
+    {
+      "pc": 41950186,
+      "instructions": 5
+    },
+    {
+      "pc": 41950204,
+      "instructions": 1
+    },
+    {
+      "pc": 41950206,
+      "instructions": 2
+    },
+    {
+      "pc": 41950210,
+      "instructions": 2
+    },
+    {
+      "pc": 41950216,
+      "instructions": 3
+    },
+    {
+      "pc": 41950228,
+      "instructions": 1
+    },
+    {
+      "pc": 41950232,
+      "instructions": 3
+    },
+    {
+      "pc": 41950238,
+      "instructions": 3
+    },
+    {
+      "pc": 41950246,
+      "instructions": 6
+    },
+    {
+      "pc": 41950262,
+      "instructions": 2
+    },
+    {
+      "pc": 41950266,
+      "instructions": 2
+    },
+    {
+      "pc": 41950272,
+      "instructions": 5
+    },
+    {
+      "pc": 41950286,
+      "instructions": 2
+    },
+    {
+      "pc": 41950292,
+      "instructions": 2
+    },
+    {
+      "pc": 41950298,
+      "instructions": 3
+    },
+    {
+      "pc": 41950308,
+      "instructions": 2
+    },
+    {
+      "pc": 41950316,
+      "instructions": 1
+    },
+    {
+      "pc": 41950318,
+      "instructions": 3
+    },
+    {
+      "pc": 41950328,
+      "instructions": 5
+    },
+    {
+      "pc": 41950342,
+      "instructions": 1
+    },
+    {
+      "pc": 41950344,
+      "instructions": 1
+    },
+    {
+      "pc": 41950348,
+      "instructions": 2
+    },
+    {
+      "pc": 41950354,
+      "instructions": 1
+    },
+    {
+      "pc": 41950356,
+      "instructions": 1
+    },
+    {
+      "pc": 41950358,
+      "instructions": 2
+    },
+    {
+      "pc": 41950364,
+      "instructions": 14
+    },
+    {
+      "pc": 41950400,
+      "instructions": 2
+    },
+    {
+      "pc": 41950406,
+      "instructions": 2
+    },
+    {
+      "pc": 41950412,
+      "instructions": 2
+    },
+    {
+      "pc": 41950416,
+      "instructions": 2
+    },
+    {
+      "pc": 41950422,
+      "instructions": 2
+    },
+    {
+      "pc": 41950430,
+      "instructions": 2
+    },
+    {
+      "pc": 41950434,
+      "instructions": 2
+    },
+    {
+      "pc": 41950440,
+      "instructions": 2
+    }
+  ],
+  "fast_hash_size": 1024,
+  "fast_hash_max_probe": 4,
+  "generated_c_sha256": "0e254ca7c72f51d491fa1c618f7a4568fc8c9c74929167822b00713c44a0bd1d",
+  "generated_c_bytes": 450611,
+  "preparation_wall_seconds": 0.027190959000108705
+}
