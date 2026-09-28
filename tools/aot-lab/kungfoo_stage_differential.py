@@ -5,6 +5,9 @@ import json
 from pathlib import Path
 import statistics
 import sys
+from collections import Counter
+
+from translate import decode, is_svc
 
 
 def integer_rows(path):
@@ -29,6 +32,41 @@ def main():
                          sorted(evidence.glob("performance-*-hosts.txt"))]
     trace = integer_rows(evidence / "interpreter-trace.txt")
     checkpoints = integer_rows(evidence / "aot-checkpoints.txt")
+    fast_lengths = {entry["pc"]: entry["instructions"] for entry in manifest.get("fast_blocks", [])}
+    trace_rows = [{"pc": row[0], "insn": row[1], "len": row[2], "thumb": row[3], "cpsr": row[4]}
+                  for row in trace]
+    replay_counts = Counter()
+    replay_miss_pcs = {"unsupported_encoding": set(), "missing_translation": set()}
+    cursor_replay = 0
+    while cursor_replay < len(trace_rows):
+        row = trace_rows[cursor_replay]
+        if is_svc(row):
+            replay_counts["svc"] += 1
+            cursor_replay += 1
+            continue
+        if row["cpsr"] & 0x0600fc00:
+            replay_counts["it_state"] += 1
+            cursor_replay += 1
+            continue
+        length = fast_lengths.get(row["pc"], 0)
+        if length:
+            replay_counts["aot_instructions"] += length
+            replay_counts["aot_blocks"] += 1
+            cursor_replay += length
+            continue
+        try:
+            decode(row["pc"], row["insn"], row["len"], row["thumb"])
+        except ValueError:
+            reason = "unsupported_encoding"
+        else:
+            reason = "missing_translation"
+        replay_counts[reason] += 1
+        replay_miss_pcs[reason].add((row["pc"], row["thumb"]))
+        cursor_replay += 1
+    replay_counts["lookup_miss"] = (replay_counts["unsupported_encoding"] +
+                                     replay_counts["missing_translation"])
+    replay_complete = (sum(replay_counts[key] for key in
+                           ("aot_instructions", "it_state", "lookup_miss", "svc")) == len(trace_rows))
 
     cursor = 0
     mismatches = []
@@ -64,13 +102,30 @@ def main():
     aot_engine_samples = [float(row.get("aot_drive_seconds") or 0) for row in performance]
     fallback_engine_samples = [float(row.get("fallback_interpreter_seconds") or 0)
                                for row in performance]
-    route_engine_samples = [aot_time + fallback_time for aot_time, fallback_time in
-                            zip(aot_engine_samples, fallback_engine_samples)]
+    svc_engine_samples = [float(row.get("svc_interpreter_seconds") or 0)
+                          for row in performance]
+    route_engine_samples = [aot_time + fallback_time + svc_time for aot_time, fallback_time, svc_time in
+                            zip(aot_engine_samples, fallback_engine_samples, svc_engine_samples)]
+    paired_speedups = [baseline_time / route_time if route_time else 0
+                       for baseline_time, route_time in zip(baseline_engine_samples, route_engine_samples)]
     baseline_engine_median = statistics.median(baseline_engine_samples) if baseline_engine_samples else 0
     route_engine_median = statistics.median(route_engine_samples) if route_engine_samples else 0
+    accounting_valid = (replay_complete and
+                        int(aot.get("aot_instructions") or 0) +
+                        int(aot.get("fallback_interpreter_instructions") or 0) +
+                        int(aot.get("svc_interpreter_instructions") or 0) == len(trace_rows) and
+                        all(int(row.get("aot_instructions") or 0) == replay_counts["aot_instructions"] and
+                            int(row.get("aot_blocks") or 0) == replay_counts["aot_blocks"] and
+                            int(row.get("fallback_interpreter_instructions") or 0) ==
+                            replay_counts["lookup_miss"] + replay_counts["it_state"] and
+                            int(row.get("lookup_miss_count") or 0) == replay_counts["lookup_miss"] and
+                            int(row.get("it_fallback_count") or 0) == replay_counts["it_state"] and
+                            int(row.get("svc_interpreter_instructions") or 0) == replay_counts["svc"]
+                            for row in performance))
     samples_valid = (len(baseline_performance) == len(performance) == 7 and
                      all(row.get("passed") for row in baseline_performance + performance) and
-                     all(hosts == baseline_hosts for hosts in baseline_performance_hosts + performance_hosts))
+                     all(hosts == baseline_hosts for hosts in baseline_performance_hosts + performance_hosts) and
+                     accounting_valid)
     result = {
         "schema_version": 1,
         "workload": "kungfoo-armv7-native-loader-stage",
@@ -96,11 +151,16 @@ def main():
         "aot_correctness_stage_residual_seconds": aot_stage_residual,
         "stage_residual_is_execution_metric": False,
         "performance_sample_count": len(performance),
-        "timing_definition": "CLOCK_MONOTONIC intervals directly around agr_aot_drive and arm_interp_run; excludes loader/linker host work, SVC execution, and Runtime boundary dispatch",
+        "accounting_valid": accounting_valid,
+        "replay_dynamic_counts": dict(replay_counts),
+        "replay_miss_unique_pc_mode": {reason: len(pcs) for reason, pcs in replay_miss_pcs.items()},
+        "timing_definition": "CLOCK_MONOTONIC intervals directly around agr_aot_drive and arm_interp_run; both routes include all guest instructions including SVC; excludes loader/linker host work and Runtime boundary dispatch",
         "interpreter_engine_seconds_samples": baseline_engine_samples,
         "aot_drive_seconds_samples": aot_engine_samples,
         "fallback_interpreter_seconds_samples": fallback_engine_samples,
+        "svc_interpreter_seconds_samples": svc_engine_samples,
         "aot_route_engine_seconds_samples": route_engine_samples,
+        "paired_engine_speedup_samples": paired_speedups,
         "interpreter_engine_seconds_median": baseline_engine_median,
         "aot_route_engine_seconds_median": route_engine_median,
         "interpreter_engine_seconds_range": [min(baseline_engine_samples), max(baseline_engine_samples)] if baseline_engine_samples else [],
