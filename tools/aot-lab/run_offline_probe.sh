@@ -6,6 +6,11 @@ POLICY="${AGR_OFFLINE_ENTRY_POLICY:-abi}"
 EVIDENCE="$ROOT/build/offline-aot-$POLICY"
 mkdir -p "$EVIDENCE"
 export AGR_SIMULATOR_PROFILE=aot-kungfoo
+python3 -m venv "$ROOT/build/offline-aot-python"
+PYTHON="$ROOT/build/offline-aot-python/bin/python"
+"$PYTHON" -m pip install --disable-pip-version-check capstone==5.0.7 \
+  > "$EVIDENCE/python-dependencies.log" 2>&1
+"$PYTHON" -m pip freeze > "$EVIDENCE/python-dependencies.lock"
 
 bash "$ROOT/scripts/build-and-run-simulator.sh" prepare
 python3 - "$ROOT" "$EVIDENCE" <<'PY'
@@ -23,7 +28,7 @@ shutil.copyfile(native,evidence/'input-armv7.so')
     'tested_commit':__import__('subprocess').check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),
     'tested_tree':__import__('subprocess').check_output(['git','rev-parse','HEAD^{tree}'],cwd=root,text=True).strip()},indent=2)+'\n')
 PY
-python3 "$ROOT/tools/aot-lab/translate_offline.py" \
+"$PYTHON" "$ROOT/tools/aot-lab/translate_offline.py" \
   --elf "$EVIDENCE/input-armv7.so" --entry-policy "$POLICY" --load-bias 0x10000 \
   --out "$ROOT/Runtime/AotLab/aot_blocks.c" \
   --manifest "$EVIDENCE/translation-manifest.json" \
@@ -60,4 +65,4 @@ for sample in 1 2 3; do
   run_one kungfoo-baseline "baseline-performance-$sample"
   run_one kungfoo-performance "performance-$sample"
 done
-python3 "$ROOT/tools/aot-lab/offline_differential.py" "$EVIDENCE"
+"$PYTHON" "$ROOT/tools/aot-lab/offline_differential.py" "$EVIDENCE"
