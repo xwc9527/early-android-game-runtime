@@ -2,10 +2,6 @@ name: ARMv7 offline AOT generalization probe
 
 on:
   workflow_dispatch:
-  push:
-    branches: [validation/aot-offline-generalization]
-    paths-ignore:
-      - "tools/aot-lab/evidence/**"
 
 jobs:
   elf-only-kungfoo-oncreate:

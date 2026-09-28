@@ -2114,6 +2114,8 @@ static int runAotPoc(BOOL useAot) {
         if (useAot) {
             NSString *checkpoints = [docs stringByAppendingPathComponent:@"aot-checkpoints.txt"];
             agr_aot_checkpoint_open(checkpoints.UTF8String);
+            NSString *fallbacks = [docs stringByAppendingPathComponent:@"aot-fallbacks.txt"];
+            agr_aot_fallback_open(fallbacks.UTF8String);
             agr_aot_set_enabled(1);
         }
         CFAbsoluteTime start = CFAbsoluteTimeGetCurrent();
@@ -2145,6 +2147,10 @@ static int runAotPoc(BOOL useAot) {
         @"aot_instructions": @(agr_aot_executed_instructions()),
         @"aot_blocks": @(agr_aot_executed_blocks()),
         @"fallback_count": @(agr_aot_fallback_count()),
+        @"fallback_log_incomplete": @(agr_aot_fallback_log_incomplete()),
+        @"lookup_miss_count": @(agr_aot_lookup_misses()),
+        @"it_fallback_count": @(agr_aot_it_fallbacks()),
+        @"mode_miss_count": @(agr_aot_mode_misses()),
         @"boundary_count": @(agr_aot_boundary_count()),
         @"boundary_seconds": @(agr_aot_boundary_seconds()),
         @"miss_pc": [NSString stringWithFormat:@"%08x", agr_aot_miss_pc()],

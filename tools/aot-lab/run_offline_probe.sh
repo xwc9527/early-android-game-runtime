@@ -62,6 +62,10 @@ run_one() {
   for name in aot-stage-result.json aot-hosts.txt aot-trace.txt aot-checkpoints.txt aot-fallbacks.txt; do
     [[ ! -f "$ROOT/build/artifacts/$name" ]] || cp "$ROOT/build/artifacts/$name" "$EVIDENCE/$prefix-${name#aot-}"
   done
+  if [[ "$status" -ne 0 ]]; then
+    echo "probe mode $mode failed with status $status; preserving current raw evidence" >&2
+    return "$status"
+  fi
 }
 
 # The interpreter trace is captured only after the generated artifact is fixed.

@@ -1,0 +1,30 @@
+name: ARMv7 Gloomy ELF-only AOT probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [validation/aot-offline-generalization]
+    paths-ignore:
+      - "tools/aot-lab/evidence/**"
+
+jobs:
+  elf-only-gloomy:
+    runs-on: xcode-27
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Prepare from original ELF, then execute renderer path
+        run: |
+          set -o pipefail
+          mkdir -p build/offline-aot-gloomy-exports
+          bash tools/aot-lab/run_offline_gloomy.sh 2>&1 |
+            tee build/offline-aot-gloomy-exports/ci-log.txt
+      - name: Upload original execution evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-aot-gloomy-exports
+          path: build/offline-aot-gloomy-exports
+          if-no-files-found: error
