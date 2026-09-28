@@ -55,14 +55,32 @@ clang "${COMMON[@]}" -std=c11 -DAGR_ATTRIBUTION_COMPILED=1 \
 clang++ "${COMMON[@]}" "$REGION/replay.o" "$EVIDENCE/aot_blocks.o" "$RUST" \
   -o "$REGION/replay"
 
+PAYLOAD="$EVIDENCE/guardless-region"
+mkdir -p "$PAYLOAD"
+/usr/bin/time -p -o "$PAYLOAD/offline-preparation-time.txt" \
+  "$PYTHON" "$ROOT/tools/aot-lab/compile_attribution_payload.py" \
+    --elf "$ELF" --selection "$SPEC" --label "$LABEL" \
+    --out "$PAYLOAD/payload.c" --manifest "$PAYLOAD/translation-manifest.json" \
+    > "$PAYLOAD/translation.log"
+/usr/bin/time -p -o "$PAYLOAD/native-compile-time.txt" \
+  clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/AotLab" \
+    -c "$PAYLOAD/payload.c" -o "$PAYLOAD/payload.o"
+xcrun size -m "$PAYLOAD/payload.o" > "$PAYLOAD/object-sections.txt"
+clang "${COMMON[@]}" -std=c11 -DAGR_ATTRIBUTION_COMPILED=1 \
+  -DAGR_ATTRIBUTION_PAYLOAD=1 -I"$EVIDENCE" -I"$ROOT/Runtime/AotLab" \
+  -c "$SOURCE" -o "$PAYLOAD/replay.o"
+clang++ "${COMMON[@]}" "$PAYLOAD/replay.o" "$PAYLOAD/payload.o" "$RUST" \
+  -o "$PAYLOAD/replay"
+
 REPETITIONS=10000
 [[ "$LABEL" == gloomy ]] && REPETITIONS=16384
 for sample in 1 2 3 4 5; do
-  for backend in interpreter-replay "$BASELINE/replay" "$REGION/replay"; do
+  for backend in interpreter-replay "$BASELINE/replay" "$REGION/replay" "$PAYLOAD/replay"; do
     name="$(basename "$backend")"
     case "$backend" in
       interpreter-replay) out="$EVIDENCE/interpreter-$sample.json"; bin="$EVIDENCE/$backend" ;;
       "$BASELINE"/*) out="$BASELINE/sample-$sample.json"; bin="$backend" ;;
+      "$PAYLOAD"/*) out="$PAYLOAD/sample-$sample.json"; bin="$backend" ;;
       *) out="$REGION/sample-$sample.json"; bin="$backend" ;;
     esac
     xcrun simctl spawn "$DEVICE" "$bin" "$CAPTURE" "$REPETITIONS" > "$out"

@@ -1,0 +1,224 @@
+{
+  "aot_fast_0009b480": {
+    "symbol": "_aot_fast_0009b480",
+    "object_path": "tools/aot-lab/evidence/offline-generalization/run-36405016519/aot_blocks.o",
+    "machine_code_bytes": 96,
+    "host_instruction_count": 24,
+    "category_counts": {
+      "load": 5,
+      "conditional_branch": 1,
+      "other": 14,
+      "unconditional_branch": 2,
+      "store": 2
+    },
+    "stack_memory_accesses": 0,
+    "instructions": [
+      {
+        "address": 4123704,
+        "mnemonic": "ldr",
+        "operands": "x8, [x0, #8]",
+        "category": "load",
+        "stack_access": false,
+        "memory_bases": [
+          "x0"
+        ]
+      },
+      {
+        "address": 4123708,
+        "mnemonic": "ldr",
+        "operands": "w9, [x8]",
+        "category": "load",
+        "stack_access": false,
+        "memory_bases": [
+          "x8"
+        ]
+      },
+      {
+        "address": 4123712,
+        "mnemonic": "tbnz",
+        "operands": "w9, #5, #0x3eec4c",
+        "category": "conditional_branch",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123716,
+        "mnemonic": "mov",
+        "operands": "w0, #4",
+        "category": "other",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123720,
+        "mnemonic": "ret",
+        "operands": "",
+        "category": "unconditional_branch",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123724,
+        "mnemonic": "ldr",
+        "operands": "x10, [x0]",
+        "category": "load",
+        "stack_access": false,
+        "memory_bases": [
+          "x0"
+        ]
+      },
+      {
+        "address": 4123728,
+        "mnemonic": "ldr",
+        "operands": "w11, [x10, #8]",
+        "category": "load",
+        "stack_access": false,
+        "memory_bases": [
+          "x10"
+        ]
+      },
+      {
+        "address": 4123732,
+        "mnemonic": "and",
+        "operands": "w12, w11, #0x80000000",
+        "category": "other",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123736,
+        "mnemonic": "mov",
+        "operands": "w13, #0x40000000",
+        "category": "other",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123740,
+        "mnemonic": "cmp",
+        "operands": "w11, #0",
+        "category": "other",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123744,
+        "mnemonic": "csel",
+        "operands": "w11, w13, wzr, eq",
+        "category": "other",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123748,
+        "mnemonic": "bfxil",
+        "operands": "w12, w9, #0, #0x1c",
+        "category": "other",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123752,
+        "mnemonic": "orr",
+        "operands": "w9, w12, w11",
+        "category": "other",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123756,
+        "mnemonic": "orr",
+        "operands": "w9, w9, #0x20000000",
+        "category": "other",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123760,
+        "mnemonic": "str",
+        "operands": "w9, [x8]",
+        "category": "store",
+        "stack_access": false,
+        "memory_bases": [
+          "x8"
+        ]
+      },
+      {
+        "address": 4123764,
+        "mnemonic": "ldr",
+        "operands": "w8, [x0, #0x18]",
+        "category": "load",
+        "stack_access": false,
+        "memory_bases": [
+          "x0"
+        ]
+      },
+      {
+        "address": 4123768,
+        "mnemonic": "mov",
+        "operands": "w9, #0xb476",
+        "category": "other",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123772,
+        "mnemonic": "movk",
+        "operands": "w9, #9, lsl #16",
+        "category": "other",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123776,
+        "mnemonic": "add",
+        "operands": "w11, w9, #0xe",
+        "category": "other",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123780,
+        "mnemonic": "csel",
+        "operands": "w9, w11, w9, eq",
+        "category": "other",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123784,
+        "mnemonic": "add",
+        "operands": "w8, w8, w9",
+        "category": "other",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123788,
+        "mnemonic": "str",
+        "operands": "w8, [x10, #0x3c]",
+        "category": "store",
+        "stack_access": false,
+        "memory_bases": [
+          "x10"
+        ]
+      },
+      {
+        "address": 4123792,
+        "mnemonic": "mov",
+        "operands": "w0, #1",
+        "category": "other",
+        "stack_access": false,
+        "memory_bases": []
+      },
+      {
+        "address": 4123796,
+        "mnemonic": "ret",
+        "operands": "",
+        "category": "unconditional_branch",
+        "stack_access": false,
+        "memory_bases": []
+      }
+    ]
+  }
+}

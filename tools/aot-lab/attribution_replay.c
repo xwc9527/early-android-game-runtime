@@ -88,6 +88,9 @@ static uint64_t guest_pages_fnv(void *cpu, const Snapshot *s) {
 }
 
 #ifdef AGR_ATTRIBUTION_COMPILED
+#ifdef AGR_ATTRIBUTION_PAYLOAD
+extern int agr_attribution_payload(AgrAotRegs *);
+#endif
 static const AgrAotEntry *lookup_entry(uint32_t guest_pc) {
     uint32_t pc = guest_pc - 65536u;
     if (agr_aot_fast_direct_count) {
@@ -113,6 +116,13 @@ static uint32_t run_compiled(void *cpu, const Snapshot *snapshot,
     uint32_t *cpsr = arm_interp_cpsr_ptr(cpu);
     AgrAotRegs state = {regs, cpsr, arm_interp_memory_base(cpu), 65536u,
                         64u, 0u, 0u, snapshot->elf_data, 0u};
+#ifdef AGR_ATTRIBUTION_PAYLOAD
+    if (agr_attribution_payload(&state) != AGR_AOT_BOUNDARY ||
+        regs[15] != AGR_ATTRIBUTION_POST_PC)
+        fail("guardless payload architectural exit mismatch");
+    (*drive_calls)++;
+    return AGR_ATTRIBUTION_INSTRUCTIONS;
+#else
     uint32_t instructions = 0;
     for (uint32_t iteration = 0; iteration < 10000u &&
          regs[15] != AGR_ATTRIBUTION_POST_PC; iteration++) {
@@ -135,6 +145,7 @@ static uint32_t run_compiled(void *cpu, const Snapshot *snapshot,
     }
     if (regs[15] != AGR_ATTRIBUTION_POST_PC) fail("compiled segment exceeded drive limit");
     return instructions;
+#endif
 }
 #endif
 
@@ -181,7 +192,9 @@ int main(int argc, char **argv) {
            "\"elapsed_ns\":%llu,\"drive_calls\":%u,\"chained_blocks\":%u,"
            "\"final_pages_fnv64\":\"%016llx\",\"state_equal\":true}\n",
            AGR_ATTRIBUTION_LABEL,
-#ifdef AGR_ATTRIBUTION_REGION
+#ifdef AGR_ATTRIBUTION_PAYLOAD
+           "guardless-region",
+#elif defined(AGR_ATTRIBUTION_REGION)
            "indexed-region",
 #elif defined(AGR_ATTRIBUTION_COMPILED)
            "generated-c",

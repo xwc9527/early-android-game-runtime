@@ -59,47 +59,58 @@ def direct_successors(body):
     return ()
 
 
-def translated_op(op, thumb, label):
+def translated_op(op, thumb, label, account=True):
     source = emit_op(op, thumb, relocatable=True)
     early_boundary = "return AGR_AOT_BOUNDARY;" in source
+    increment = "instructions++; " if account else ""
     source = source.replace("return AGR_AOT_BOUNDARY;",
-                            f"{{ instructions++; goto L_after_{label}; }}")
+                            f"{{ {increment}goto L_after_{label}; }}")
     source = source.replace("return AGR_AOT_FAULT;",
                             "{ result = AGR_AOT_FAULT; goto L_exit; }")
     source = source.replace("return rc;",
-                            f"{{ if (rc == AGR_AOT_BOUNDARY) {{ instructions++; goto L_after_{label}; }} "
+                            f"{{ if (rc == AGR_AOT_BOUNDARY) {{ {increment}goto L_after_{label}; }} "
                             "result = rc; goto L_exit; }")
     if "return " in source:
         raise ValueError(f"unhandled operation exit: {source}")
     return source, early_boundary
 
 
-def emit_region(number, blocks, image):
+def emit_region(number, blocks, image, guard=True, account=True, direct_entry=None):
     starts = {pc for pc, _ in blocks}
     name = f"agr_region_{number:05d}"
-    lines = [f"static int {name}(AgrAotRegs *outer) {{",
-             "    if (!outer->source_elf) return AGR_AOT_MISS;",
+    lines = [f"static int {name}(AgrAotRegs *outer) {{"]
+    if guard:
+        lines.append("    if (!outer->source_elf) return AGR_AOT_MISS;")
+    lines += [
              "    uint32_t regs[16];",
              "    memcpy(regs, outer->r, sizeof(regs));",
              "    uint32_t cpsr = *outer->cpsr;",
              "    AgrAotRegs local = {regs, &cpsr, outer->mem, outer->bias, 0, 0, 0, outer->source_elf, 0};",
              "    AgrAotRegs *s = &local;",
-             "    uint32_t blocks_done = 0, instructions = 0;",
              "    int rc = 0, result = AGR_AOT_BOUNDARY;",
-             "    (void)rc;",
-             "    switch (outer->region_entry) {"]
-    lines.extend(f"    case {index}u: goto L_{pc:08x};" for index, (pc, _) in enumerate(blocks))
-    lines += ["    default: result = AGR_AOT_MISS; goto L_exit;", "    }"]
+             "    (void)rc;"]
+    if account:
+        lines.append("    uint32_t blocks_done = 0, instructions = 0;")
+    if direct_entry is None:
+        lines.append("    switch (outer->region_entry) {")
+        lines.extend(f"    case {index}u: goto L_{pc:08x};" for index, (pc, _) in enumerate(blocks))
+        lines += ["    default: result = AGR_AOT_MISS; goto L_exit;", "    }"]
+    else:
+        if direct_entry not in starts:
+            raise ValueError(f"direct entry not a block start: {direct_entry:#x}")
+        lines.append(f"    goto L_{direct_entry:08x};")
     group_guard_count = 0
     individual_guard_count = 0
     for pc, body in blocks:
         label = f"{pc:08x}"
         row0 = body[0][0]
-        lines += [f"L_{label}:",
-                  "    if (blocks_done >= outer->region_budget) goto L_exit;",
-                  "    if (cpsr & 0x0600fc00u) goto L_exit;",
-                  f"    if ((cpsr & 0x20u) != {'0x20u' if row0['thumb'] else '0u'}) "
-                  "{ result = AGR_AOT_MODE_MISS; goto L_exit; }"]
+        lines += [f"L_{label}:"]
+        if account:
+            lines.append("    if (blocks_done >= outer->region_budget) goto L_exit;")
+        if guard:
+            lines += ["    if (cpsr & 0x0600fc00u) goto L_exit;",
+                      f"    if ((cpsr & 0x20u) != {'0x20u' if row0['thumb'] else '0u'}) "
+                      "{ result = AGR_AOT_MODE_MISS; goto L_exit; }"]
         end = body[-1][0]["pc"] + body[-1][0]["len"]
         raw = image.code_at(pc, end - pc)
         if raw is None:
@@ -107,20 +118,23 @@ def emit_region(number, blocks, image):
         section = next(section for section in image.executable
                        if section.address <= pc and end <= section.address + section.size)
         offset = section.offset + pc - section.address
-        lines.append(
-            f"    if (memcmp(s->mem + s->bias + {pc}u, s->source_elf + {offset}u, {len(raw)}u)) "
-            "{ result = AGR_AOT_MISS; goto L_exit; }")
-        group_guard_count += 1
+        if guard:
+            lines.append(
+                f"    if (memcmp(s->mem + s->bias + {pc}u, s->source_elf + {offset}u, {len(raw)}u)) "
+                "{ result = AGR_AOT_MISS; goto L_exit; }")
+            group_guard_count += 1
         for row, op in body:
-            code, early_boundary = translated_op(op, row["thumb"], label)
+            code, early_boundary = translated_op(op, row["thumb"], label, account=account)
             lines.append("    " + code)
-            if not early_boundary:
+            if not early_boundary and account:
                 lines.append("    instructions++;")
             if is_terminal(op):
                 break
         if not is_terminal(body[-1][1]):
             lines.append(f"    regs[15] = s->bias + {end}u;")
-        lines += [f"L_after_{label}:", "    blocks_done++;"]
+        lines += [f"L_after_{label}:"]
+        if account:
+            lines.append("    blocks_done++;")
         successors = [target for target in direct_successors(body) if target in starts]
         if len(successors) == 1:
             target = successors[0]
@@ -132,9 +146,11 @@ def emit_region(number, blocks, image):
     lines += ["L_exit:",
               "    memcpy(outer->r, regs, sizeof(regs));",
               "    *outer->cpsr = cpsr;",
-              "    outer->region_blocks = blocks_done;",
-              "    outer->region_instructions = instructions;",
-              "    return result;", "}", ""]
+              ]
+    if account:
+        lines += ["    outer->region_blocks = blocks_done;",
+                  "    outer->region_instructions = instructions;"]
+    lines += ["    return result;", "}", ""]
     return name, "\n".join(lines), group_guard_count, individual_guard_count
 
 
