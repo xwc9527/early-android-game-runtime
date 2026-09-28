@@ -26,6 +26,7 @@ def main():
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--guard", action="store_true")
     parser.add_argument("--account", action="store_true")
+    parser.add_argument("--guard-once", action="store_true")
     args = parser.parse_args()
     started = time.perf_counter()
     image = Elf32Arm(args.elf)
@@ -43,7 +44,8 @@ def main():
         raise ValueError("selected real execution has an uncompiled guest PC")
     entry = spec["guest_pc_first"] - spec["load_bias"]
     name, body, guards, _ = emit_region(0, selected, image, guard=args.guard,
-                                        account=args.account, direct_entry=entry)
+                                        account=args.account, direct_entry=entry,
+                                        guard_once=args.guard_once)
     if guards != (len(selected) if args.guard else 0):
         raise AssertionError("selected region guard count mismatch")
     source = "#include \"agr_aot.h\"\n\n" + body + (
@@ -60,6 +62,7 @@ def main():
         "static_decoded_instructions": sum(len(body) for _, body in selected),
         "operation_kinds": sorted({op[0] for _, body in selected for _, op in body}),
         "guard_count": guards,
+        "guard_once_per_block_until_guest_store": args.guard_once,
         "global_dispatch": False,
         "region_entry_search": False,
         "per_block_bookkeeping": args.account,

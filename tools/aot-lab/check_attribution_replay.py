@@ -18,6 +18,7 @@ def main():
         "guard-only-region": [root / "guard-only-region" / f"sample-{i}.json" for i in range(1, 6)],
         "account-only-region": [root / "account-only-region" / f"sample-{i}.json" for i in range(1, 6)],
         "guard-account-region": [root / "guard-account-region" / f"sample-{i}.json" for i in range(1, 6)],
+        "guard-once-region": [root / "guard-once-region" / f"sample-{i}.json" for i in range(1, 6)],
     }
     samples = {name: [json.loads(path.read_text()) for path in paths]
                for name, paths in groups.items()}

@@ -89,18 +89,22 @@ clang "${COMMON[@]}" -std=c11 -DAGR_ATTRIBUTION_COMPILED=1 \
 clang++ "${COMMON[@]}" "$SCALAR/replay.o" "$SCALAR/scalar.o" "$RUST" \
   -o "$SCALAR/replay"
 
-for mode in guard-only account-only guard-account; do
+for mode in guard-only account-only guard-account guard-once; do
   PROBE="$EVIDENCE/$mode-region"
   mkdir -p "$PROBE"
   GENERATOR_FLAGS=()
   DEFINES=(-DAGR_ATTRIBUTION_COMPILED=1 -DAGR_ATTRIBUTION_PAYLOAD=1)
-  if [[ "$mode" == guard-only || "$mode" == guard-account ]]; then
+  if [[ "$mode" == guard-only || "$mode" == guard-account || "$mode" == guard-once ]]; then
     GENERATOR_FLAGS+=(--guard)
     DEFINES+=(-DAGR_ATTRIBUTION_GUARD=1)
   fi
-  if [[ "$mode" == account-only || "$mode" == guard-account ]]; then
+  if [[ "$mode" == account-only || "$mode" == guard-account || "$mode" == guard-once ]]; then
     GENERATOR_FLAGS+=(--account)
     DEFINES+=(-DAGR_ATTRIBUTION_ACCOUNT=1)
+  fi
+  if [[ "$mode" == guard-once ]]; then
+    GENERATOR_FLAGS+=(--guard-once)
+    DEFINES+=(-DAGR_ATTRIBUTION_GUARD_ONCE=1)
   fi
   /usr/bin/time -p -o "$PROBE/offline-preparation-time.txt" \
     "$PYTHON" "$ROOT/tools/aot-lab/compile_attribution_payload.py" \
@@ -125,7 +129,8 @@ for sample in 1 2 3 4 5; do
     "$PAYLOAD/replay" "$SCALAR/replay" \
     "$EVIDENCE/guard-only-region/replay" \
     "$EVIDENCE/account-only-region/replay" \
-    "$EVIDENCE/guard-account-region/replay"; do
+    "$EVIDENCE/guard-account-region/replay" \
+    "$EVIDENCE/guard-once-region/replay"; do
     name="$(basename "$backend")"
     case "$backend" in
       interpreter-replay) out="$EVIDENCE/interpreter-$sample.json"; bin="$EVIDENCE/$backend" ;;
@@ -135,6 +140,7 @@ for sample in 1 2 3 4 5; do
       "$EVIDENCE/guard-only-region"/*) out="$EVIDENCE/guard-only-region/sample-$sample.json"; bin="$backend" ;;
       "$EVIDENCE/account-only-region"/*) out="$EVIDENCE/account-only-region/sample-$sample.json"; bin="$backend" ;;
       "$EVIDENCE/guard-account-region"/*) out="$EVIDENCE/guard-account-region/sample-$sample.json"; bin="$backend" ;;
+      "$EVIDENCE/guard-once-region"/*) out="$EVIDENCE/guard-once-region/sample-$sample.json"; bin="$backend" ;;
       *) out="$REGION/sample-$sample.json"; bin="$backend" ;;
     esac
     xcrun simctl spawn "$DEVICE" "$bin" "$CAPTURE" "$REPETITIONS" > "$out"

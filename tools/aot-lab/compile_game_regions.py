@@ -75,7 +75,10 @@ def translated_op(op, thumb, label, account=True):
     return source, early_boundary
 
 
-def emit_region(number, blocks, image, guard=True, account=True, direct_entry=None):
+def emit_region(number, blocks, image, guard=True, account=True, direct_entry=None,
+                guard_once=False):
+    if guard_once and (not guard or len(blocks) > 64):
+        raise ValueError("guard-once requires guarded region with at most 64 blocks")
     starts = {pc for pc, _ in blocks}
     name = f"agr_region_{number:05d}"
     lines = [f"static int {name}(AgrAotRegs *outer) {{"]
@@ -91,6 +94,8 @@ def emit_region(number, blocks, image, guard=True, account=True, direct_entry=No
              "    (void)rc;"]
     if account:
         lines.append("    uint32_t blocks_done = 0, instructions = 0;")
+    if guard_once:
+        lines.append("    uint64_t validated_blocks = 0;")
     if direct_entry is None:
         lines.append("    switch (outer->region_entry) {")
         lines.extend(f"    case {index}u: goto L_{pc:08x};" for index, (pc, _) in enumerate(blocks))
@@ -101,7 +106,7 @@ def emit_region(number, blocks, image, guard=True, account=True, direct_entry=No
         lines.append(f"    goto L_{direct_entry:08x};")
     group_guard_count = 0
     individual_guard_count = 0
-    for pc, body in blocks:
+    for block_index, (pc, body) in enumerate(blocks):
         label = f"{pc:08x}"
         row0 = body[0][0]
         lines += [f"L_{label}:"]
@@ -119,9 +124,16 @@ def emit_region(number, blocks, image, guard=True, account=True, direct_entry=No
                        if section.address <= pc and end <= section.address + section.size)
         offset = section.offset + pc - section.address
         if guard:
-            lines.append(
-                f"    if (memcmp(s->mem + s->bias + {pc}u, s->source_elf + {offset}u, {len(raw)}u)) "
-                "{ result = AGR_AOT_MISS; goto L_exit; }")
+            comparison = (f"memcmp(s->mem + s->bias + {pc}u, "
+                          f"s->source_elf + {offset}u, {len(raw)}u)")
+            if guard_once:
+                bit = f"(UINT64_C(1) << {block_index})"
+                lines.append(f"    if (!(validated_blocks & {bit})) {{")
+                lines.append(f"        if ({comparison}) {{ result = AGR_AOT_MISS; goto L_exit; }}")
+                lines.append(f"        validated_blocks |= {bit};")
+                lines.append("    }")
+            else:
+                lines.append(f"    if ({comparison}) {{ result = AGR_AOT_MISS; goto L_exit; }}")
             group_guard_count += 1
         for row, op in body:
             code, early_boundary = translated_op(op, row["thumb"], label, account=account)
@@ -133,6 +145,8 @@ def emit_region(number, blocks, image, guard=True, account=True, direct_entry=No
         if not is_terminal(body[-1][1]):
             lines.append(f"    regs[15] = s->bias + {end}u;")
         lines += [f"L_after_{label}:"]
+        if guard_once and body[-1][1][0] in WRITE_KINDS:
+            lines.append("    validated_blocks = 0;")
         if account:
             lines.append("    blocks_done++;")
         successors = [target for target in direct_successors(body) if target in starts]

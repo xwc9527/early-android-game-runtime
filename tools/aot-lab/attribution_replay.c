@@ -210,6 +210,8 @@ int main(int argc, char **argv) {
            AGR_ATTRIBUTION_LABEL,
 #ifdef AGR_ATTRIBUTION_SCALAR
            "scalar-region",
+#elif defined(AGR_ATTRIBUTION_GUARD_ONCE)
+           "guard-once-region",
 #elif defined(AGR_ATTRIBUTION_GUARD) && defined(AGR_ATTRIBUTION_ACCOUNT)
            "guard-account-region",
 #elif defined(AGR_ATTRIBUTION_GUARD)
