@@ -89,16 +89,52 @@ clang "${COMMON[@]}" -std=c11 -DAGR_ATTRIBUTION_COMPILED=1 \
 clang++ "${COMMON[@]}" "$SCALAR/replay.o" "$SCALAR/scalar.o" "$RUST" \
   -o "$SCALAR/replay"
 
+for mode in guard-only account-only guard-account; do
+  PROBE="$EVIDENCE/$mode-region"
+  mkdir -p "$PROBE"
+  GENERATOR_FLAGS=()
+  DEFINES=(-DAGR_ATTRIBUTION_COMPILED=1 -DAGR_ATTRIBUTION_PAYLOAD=1)
+  if [[ "$mode" == guard-only || "$mode" == guard-account ]]; then
+    GENERATOR_FLAGS+=(--guard)
+    DEFINES+=(-DAGR_ATTRIBUTION_GUARD=1)
+  fi
+  if [[ "$mode" == account-only || "$mode" == guard-account ]]; then
+    GENERATOR_FLAGS+=(--account)
+    DEFINES+=(-DAGR_ATTRIBUTION_ACCOUNT=1)
+  fi
+  /usr/bin/time -p -o "$PROBE/offline-preparation-time.txt" \
+    "$PYTHON" "$ROOT/tools/aot-lab/compile_attribution_payload.py" \
+      --elf "$ELF" --selection "$SPEC" --label "$LABEL" \
+      --out "$PROBE/payload.c" --manifest "$PROBE/translation-manifest.json" \
+      "${GENERATOR_FLAGS[@]}" > "$PROBE/translation.log"
+  /usr/bin/time -p -o "$PROBE/native-compile-time.txt" \
+    clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/AotLab" \
+      -c "$PROBE/payload.c" -o "$PROBE/payload.o"
+  xcrun size -m "$PROBE/payload.o" > "$PROBE/object-sections.txt"
+  clang "${COMMON[@]}" -std=c11 "${DEFINES[@]}" \
+    -I"$EVIDENCE" -I"$ROOT/Runtime/AotLab" \
+    -c "$SOURCE" -o "$PROBE/replay.o"
+  clang++ "${COMMON[@]}" "$PROBE/replay.o" "$PROBE/payload.o" "$RUST" \
+    -o "$PROBE/replay"
+done
+
 REPETITIONS=10000
 [[ "$LABEL" == gloomy ]] && REPETITIONS=16384
 for sample in 1 2 3 4 5; do
-  for backend in interpreter-replay "$BASELINE/replay" "$REGION/replay" "$PAYLOAD/replay" "$SCALAR/replay"; do
+  for backend in interpreter-replay "$BASELINE/replay" "$REGION/replay" \
+    "$PAYLOAD/replay" "$SCALAR/replay" \
+    "$EVIDENCE/guard-only-region/replay" \
+    "$EVIDENCE/account-only-region/replay" \
+    "$EVIDENCE/guard-account-region/replay"; do
     name="$(basename "$backend")"
     case "$backend" in
       interpreter-replay) out="$EVIDENCE/interpreter-$sample.json"; bin="$EVIDENCE/$backend" ;;
       "$BASELINE"/*) out="$BASELINE/sample-$sample.json"; bin="$backend" ;;
       "$PAYLOAD"/*) out="$PAYLOAD/sample-$sample.json"; bin="$backend" ;;
       "$SCALAR"/*) out="$SCALAR/sample-$sample.json"; bin="$backend" ;;
+      "$EVIDENCE/guard-only-region"/*) out="$EVIDENCE/guard-only-region/sample-$sample.json"; bin="$backend" ;;
+      "$EVIDENCE/account-only-region"/*) out="$EVIDENCE/account-only-region/sample-$sample.json"; bin="$backend" ;;
+      "$EVIDENCE/guard-account-region"/*) out="$EVIDENCE/guard-account-region/sample-$sample.json"; bin="$backend" ;;
       *) out="$REGION/sample-$sample.json"; bin="$backend" ;;
     esac
     xcrun simctl spawn "$DEVICE" "$bin" "$CAPTURE" "$REPETITIONS" > "$out"

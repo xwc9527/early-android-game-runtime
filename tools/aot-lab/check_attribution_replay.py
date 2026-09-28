@@ -15,6 +15,9 @@ def main():
         "indexed-region": [root / "indexed-region" / f"sample-{i}.json" for i in range(1, 6)],
         "guardless-region": [root / "guardless-region" / f"sample-{i}.json" for i in range(1, 6)],
         "scalar-region": [root / "scalar-region" / f"sample-{i}.json" for i in range(1, 6)],
+        "guard-only-region": [root / "guard-only-region" / f"sample-{i}.json" for i in range(1, 6)],
+        "account-only-region": [root / "account-only-region" / f"sample-{i}.json" for i in range(1, 6)],
+        "guard-account-region": [root / "guard-account-region" / f"sample-{i}.json" for i in range(1, 6)],
     }
     samples = {name: [json.loads(path.read_text()) for path in paths]
                for name, paths in groups.items()}

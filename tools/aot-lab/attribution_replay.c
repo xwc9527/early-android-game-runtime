@@ -120,6 +120,9 @@ static uint32_t run_compiled(void *cpu, const Snapshot *snapshot,
     AgrAotRegs state = {regs, cpsr, arm_interp_memory_base(cpu), 65536u,
                         64u, 0u, 0u, snapshot->elf_data, 0u};
 #if defined(AGR_ATTRIBUTION_PAYLOAD) || defined(AGR_ATTRIBUTION_SCALAR)
+#ifdef AGR_ATTRIBUTION_ACCOUNT
+    state.region_budget = 1024u;
+#endif
 #ifdef AGR_ATTRIBUTION_SCALAR
     if (agr_attribution_scalar(&state) != AGR_AOT_BOUNDARY ||
 #else
@@ -127,6 +130,12 @@ static uint32_t run_compiled(void *cpu, const Snapshot *snapshot,
 #endif
         regs[15] != AGR_ATTRIBUTION_POST_PC)
         fail("direct payload architectural exit mismatch");
+#ifdef AGR_ATTRIBUTION_ACCOUNT
+    if (state.region_instructions != AGR_ATTRIBUTION_INSTRUCTIONS ||
+        !state.region_blocks)
+        fail("isolated region accounting mismatch");
+    *chained += state.region_blocks - 1u;
+#endif
     (*drive_calls)++;
     return AGR_ATTRIBUTION_INSTRUCTIONS;
 #else
@@ -201,6 +210,12 @@ int main(int argc, char **argv) {
            AGR_ATTRIBUTION_LABEL,
 #ifdef AGR_ATTRIBUTION_SCALAR
            "scalar-region",
+#elif defined(AGR_ATTRIBUTION_GUARD) && defined(AGR_ATTRIBUTION_ACCOUNT)
+           "guard-account-region",
+#elif defined(AGR_ATTRIBUTION_GUARD)
+           "guard-only-region",
+#elif defined(AGR_ATTRIBUTION_ACCOUNT)
+           "account-only-region",
 #elif defined(AGR_ATTRIBUTION_PAYLOAD)
            "guardless-region",
 #elif defined(AGR_ATTRIBUTION_REGION)

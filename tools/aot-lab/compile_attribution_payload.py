@@ -24,6 +24,8 @@ def main():
     parser.add_argument("--label", choices=("gloomy", "kungfoo"), required=True)
     parser.add_argument("--out", required=True)
     parser.add_argument("--manifest", required=True)
+    parser.add_argument("--guard", action="store_true")
+    parser.add_argument("--account", action="store_true")
     args = parser.parse_args()
     started = time.perf_counter()
     image = Elf32Arm(args.elf)
@@ -40,15 +42,15 @@ def main():
     if not observed <= coverage:
         raise ValueError("selected real execution has an uncompiled guest PC")
     entry = spec["guest_pc_first"] - spec["load_bias"]
-    name, body, guards, _ = emit_region(0, selected, image, guard=False,
-                                        account=False, direct_entry=entry)
-    if guards:
-        raise AssertionError("pure region emitted guards")
+    name, body, guards, _ = emit_region(0, selected, image, guard=args.guard,
+                                        account=args.account, direct_entry=entry)
+    if guards != (len(selected) if args.guard else 0):
+        raise AssertionError("selected region guard count mismatch")
     source = "#include \"agr_aot.h\"\n\n" + body + (
         f"int agr_attribution_payload(AgrAotRegs *state) {{ return {name}(state); }}\n")
     Path(args.out).write_text(source, newline="\n")
     manifest = {
-        "schema": "agr.aot-attribution-guardless-region.v1",
+        "schema": "agr.aot-attribution-isolated-region.v1",
         "label": args.label,
         "elf_sha256": image.sha256,
         "selected_trace_sha256": spec["trace_sha256"],
@@ -57,10 +59,10 @@ def main():
         "static_block_count": len(selected),
         "static_decoded_instructions": sum(len(body) for _, body in selected),
         "operation_kinds": sorted({op[0] for _, body in selected for _, op in body}),
-        "guard_count": 0,
+        "guard_count": guards,
         "global_dispatch": False,
         "region_entry_search": False,
-        "per_block_bookkeeping": False,
+        "per_block_bookkeeping": args.account,
         "region_local_guest_state": True,
         "host_register_residency_proven": False,
         "generated_c_bytes": len(source.encode()),
