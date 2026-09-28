@@ -1,0 +1,6 @@
+Segment : 32168
+	Section (__TEXT, __text): 0
+	Section (__TEXT, __const): 52
+	Section (__DATA, __const): 32112
+	total 32164
+total 32168

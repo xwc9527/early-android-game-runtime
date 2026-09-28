@@ -1,0 +1,4 @@
+Segment : 8170100
+	Section (__TEXT, __text): 8170100
+	total 8170100
+total 8170100
