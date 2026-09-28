@@ -462,17 +462,19 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         NSString *docs=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
         [[NSFileManager defaultManager] createDirectoryAtPath:docs withIntermediateDirectories:YES attributes:nil error:nil];
         agr_aot_log_open([[docs stringByAppendingPathComponent:@"aot-hosts.txt"] UTF8String]);
-        if (gKungFooAotProbeMode == 1) {
+        if (gKungFooAotProbeMode == 1 || gKungFooAotProbeMode == 6) {
             agr_aot_set_trace_limit(1000000);
             agr_aot_trace_open([[docs stringByAppendingPathComponent:@"aot-trace.txt"] UTF8String]);
-        } else if (gKungFooAotProbeMode == 2 || gKungFooAotProbeMode == 4 || gKungFooAotProbeMode == 5) {
-            if (gKungFooAotProbeMode == 2) {
+        } else if (gKungFooAotProbeMode == 2 || gKungFooAotProbeMode == 4 || gKungFooAotProbeMode == 5 ||
+                   gKungFooAotProbeMode == 7 || gKungFooAotProbeMode == 9 || gKungFooAotProbeMode == 10) {
+            if (gKungFooAotProbeMode == 2 || gKungFooAotProbeMode == 7) {
                 agr_aot_checkpoint_open([[docs stringByAppendingPathComponent:@"aot-checkpoints.txt"] UTF8String]);
             }
-            if (gKungFooAotProbeMode == 2 || gKungFooAotProbeMode == 5) {
+            if (gKungFooAotProbeMode == 2 || gKungFooAotProbeMode == 5 ||
+                gKungFooAotProbeMode == 7 || gKungFooAotProbeMode == 9) {
                 agr_aot_fallback_open([[docs stringByAppendingPathComponent:@"aot-fallbacks.txt"] UTF8String]);
             }
-            agr_aot_set_diagnostic(gKungFooAotProbeMode == 2);
+            agr_aot_set_diagnostic(gKungFooAotProbeMode == 2 || gKungFooAotProbeMode == 7);
             agr_aot_set_enabled(1);
         }
         aotStageStart=CFAbsoluteTimeGetCurrent();
@@ -480,7 +482,7 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
     if (aotProbe) writePVSProgress(@"before:aot-kungfoo.dlopen",guest);
     int jniOnLoad=dexLoaded==0?agr_guest_load_java_library(guest,agr_apk_native_library(package),&jniVersion):-1;
     if (aotProbe) writePVSProgress(@"after:aot-kungfoo.dlopen",guest);
-    if (aotProbe) {
+    if (aotProbe && gKungFooAotProbeMode <= 5) {
         aotStageSeconds=CFAbsoluteTimeGetCurrent()-aotStageStart;
         aotStageInterpreterInstructions=guest?agr_guest_instruction_count(guest)-aotStageBefore:0;
         aotTraceSeen=agr_aot_trace_seen();
@@ -553,6 +555,58 @@ static NSDictionary *runNativeActivityApk(NSString *apkPath, NSDictionary *trace
         activityCreated = agr_guest_call_symbol(guest,"ANativeActivity_onCreate",args,3,&ignored);
         agr_guest_record_runtime_event(guest,"nativeactivity.onCreate",activity,0,activityCreated,-1,0,0,-1);
         writePVSProgress(@"after:nativeactivity.onCreate",guest);
+        if (aotProbe && gKungFooAotProbeMode >= 6) {
+            aotStageSeconds=CFAbsoluteTimeGetCurrent()-aotStageStart;
+            aotStageInterpreterInstructions=guest?agr_guest_instruction_count(guest)-aotStageBefore:0;
+            aotTraceSeen=agr_aot_trace_seen();
+            aotTraceIncomplete=agr_aot_trace_incomplete() != 0;
+            agr_aot_set_enabled(0);
+            agr_aot_trace_close();
+            agr_aot_log_close();
+            BOOL stagePassed=package && mounted==0 && registered==0 && dexLoaded==0 &&
+                jniOnLoad==0 && dexStarted==0 && initialized==0 && activityCreated==0;
+            const char *stageError=guest?agr_guest_last_error(guest):"guest unavailable";
+            NSString *stageMode=gKungFooAotProbeMode==7?@"aot-correctness":
+                (gKungFooAotProbeMode==10?@"aot-performance":
+                 (gKungFooAotProbeMode==9?@"aot-fast-audit":
+                  (gKungFooAotProbeMode==8?@"interpreter-baseline":@"interpreter-trace")));
+            NSDictionary *stageResult=@{
+                @"mode":stageMode,@"workload":@"kungfoo-armv7-native-oncreate-path",
+                @"passed":@(stagePassed),@"mounted":@(mounted==0),
+                @"elf_registered":@(registered==0),@"dex_loaded":@(dexLoaded==0),
+                @"jni_onload_status":@(jniOnLoad),@"jni_version":@(jniVersion),
+                @"dex_started":@(dexStarted==0),@"constructors_status":@(initialized),
+                @"constructors":@(constructors),@"activity_created":@(activityCreated==0),
+                @"native_so_bytes":@(mainLibraryBytes),
+                @"seconds":@(aotStageSeconds),
+                @"interpreter_instructions":@(aotStageInterpreterInstructions),
+                @"trace_seen":@(aotTraceSeen),@"trace_incomplete":@(aotTraceIncomplete),
+                @"fallback_log_incomplete":@(agr_aot_fallback_log_incomplete()),
+                @"aot_instructions":@(agr_aot_executed_instructions()),
+                @"aot_blocks":@(agr_aot_executed_blocks()),
+                @"fallback_count":@(agr_aot_fallback_count()),
+                @"lookup_miss_count":@(agr_aot_lookup_misses()),
+                @"it_fallback_count":@(agr_aot_it_fallbacks()),
+                @"guard_miss_count":@(agr_aot_guard_misses()),
+                @"mode_miss_count":@(agr_aot_mode_misses()),
+                @"step_limit_fallback_count":@(agr_aot_step_limit_fallbacks()),
+                @"boundary_count":@(agr_aot_boundary_count()),
+                @"boundary_seconds":@(agr_aot_boundary_seconds()),
+                @"aot_drive_seconds":@(agr_aot_drive_seconds()),
+                @"aot_off_probe_seconds":@(agr_aot_off_probe_seconds()),
+                @"fallback_interpreter_seconds":@(agr_aot_fallback_interpreter_seconds()),
+                @"svc_interpreter_seconds":@(agr_aot_svc_interpreter_seconds()),
+                @"baseline_interpreter_seconds":@(agr_aot_baseline_interpreter_seconds()),
+                @"drive_calls":@(agr_aot_drive_calls()),
+                @"fallback_interpreter_instructions":@(agr_aot_fallback_interpreter_instructions()),
+                @"svc_interpreter_instructions":@(agr_aot_svc_interpreter_instructions()),
+                @"baseline_interpreter_instructions":@(agr_aot_baseline_interpreter_instructions()),
+                @"miss_pc":[NSString stringWithFormat:@"%08x",agr_aot_miss_pc()],
+                @"error":stageError&&stageError[0]?[NSString stringWithUTF8String:stageError]:@""};
+            NSData *stageBytes=[NSJSONSerialization dataWithJSONObject:stageResult options:0 error:nil];
+            NSString *docs=[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+            [stageBytes writeToFile:[docs stringByAppendingPathComponent:@"aot-stage-result.json"] atomically:YES];
+        }
         agr_guest_read(guest,callbacks,callbackWords,sizeof(callbackWords));
         for (uint32_t i = 0; i < 16; i++) if (callbackWords[i]) callbacksFound++;
         if (activityCreated == 0 && callbackWords[0]) {
@@ -2119,11 +2173,22 @@ static int runAotPoc(BOOL useAot) {
         [arguments containsObject:@"--aot-kungfoo-run"] ||
         [arguments containsObject:@"--aot-kungfoo-performance"] ||
         [arguments containsObject:@"--aot-kungfoo-fast-audit"] ||
-        [arguments containsObject:@"--aot-kungfoo-baseline"]) {
-        int mode=[arguments containsObject:@"--aot-kungfoo-run"]?2:
-            ([arguments containsObject:@"--aot-kungfoo-baseline"]?3:
-             ([arguments containsObject:@"--aot-kungfoo-performance"]?4:
-              ([arguments containsObject:@"--aot-kungfoo-fast-audit"]?5:1)));
+        [arguments containsObject:@"--aot-kungfoo-baseline"] ||
+        [arguments containsObject:@"--aot-kungfoo-oncreate-trace"] ||
+        [arguments containsObject:@"--aot-kungfoo-oncreate-run"] ||
+        [arguments containsObject:@"--aot-kungfoo-oncreate-baseline"] ||
+        [arguments containsObject:@"--aot-kungfoo-oncreate-fast-audit"] ||
+        [arguments containsObject:@"--aot-kungfoo-oncreate-performance"]) {
+        int mode=1;
+        if ([arguments containsObject:@"--aot-kungfoo-run"]) mode=2;
+        if ([arguments containsObject:@"--aot-kungfoo-baseline"]) mode=3;
+        if ([arguments containsObject:@"--aot-kungfoo-performance"]) mode=4;
+        if ([arguments containsObject:@"--aot-kungfoo-fast-audit"]) mode=5;
+        if ([arguments containsObject:@"--aot-kungfoo-oncreate-trace"]) mode=6;
+        if ([arguments containsObject:@"--aot-kungfoo-oncreate-run"]) mode=7;
+        if ([arguments containsObject:@"--aot-kungfoo-oncreate-baseline"]) mode=8;
+        if ([arguments containsObject:@"--aot-kungfoo-oncreate-fast-audit"]) mode=9;
+        if ([arguments containsObject:@"--aot-kungfoo-oncreate-performance"]) mode=10;
         exit(runKungFooAotProbe(mode));
     }
     if ([arguments containsObject:@"--aot-trace"] || [arguments containsObject:@"--aot-run"]) {

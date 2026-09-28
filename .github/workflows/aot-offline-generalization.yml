@@ -8,25 +8,26 @@ on:
       - "tools/aot-lab/evidence/**"
 
 jobs:
-  elf-only-kungfoo-sweep:
+  elf-only-kungfoo-oncreate:
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Prepare from ELF, then execute withheld path
+      - name: Prepare from ELF, then execute new NativeActivity path
         env:
           AGR_OFFLINE_ENTRY_POLICY: all-exidx-sweep
+          AGR_OFFLINE_STAGE: oncreate
         run: |
           set -o pipefail
-          mkdir -p build/offline-aot-all-exidx-sweep
+          mkdir -p build/offline-aot-all-exidx-sweep-oncreate
           bash tools/aot-lab/run_offline_probe.sh 2>&1 |
-            tee build/offline-aot-all-exidx-sweep/ci-log.txt
+            tee build/offline-aot-all-exidx-sweep-oncreate/ci-log.txt
       - name: Upload original execution evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: offline-aot-all-exidx-sweep
-          path: build/offline-aot-all-exidx-sweep
+          name: offline-aot-all-exidx-sweep-oncreate
+          path: build/offline-aot-all-exidx-sweep-oncreate
           if-no-files-found: error

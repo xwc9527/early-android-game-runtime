@@ -39,6 +39,8 @@ def main():
     baseline_hosts = (evidence / "baseline-hosts.txt").read_bytes()
     same_fields = ("passed", "mounted", "elf_registered", "dex_loaded",
                    "jni_onload_status", "jni_version", "native_so_bytes", "error")
+    if "activity_created" in baseline:
+        same_fields += ("dex_started", "constructors_status", "constructors", "activity_created")
     observable = {key: baseline.get(key) == diagnostic.get(key) == fast.get(key)
                   for key in same_fields}
     hosts_equal = (baseline_hosts == (evidence / "diagnostic-hosts.txt").read_bytes() ==
@@ -109,6 +111,30 @@ def main():
         (evidence / f"baseline-performance-{index}-hosts.txt").read_bytes() == baseline_hosts ==
         (evidence / f"performance-{index}-hosts.txt").read_bytes()
         for index in range(1, len(baselines) + 1))
+    prior_path = evidence / "prior-loader-interpreter-trace.txt"
+    heldout = None
+    if prior_path.exists():
+        prior = read_rows(prior_path)
+        prior_stage = read_json(evidence / "prior-loader-fast-audit-stage-result.json")
+        prior_manifest = read_json(evidence / "prior-loader-translation-manifest.json")
+        prefix_equal = len(trace) > len(prior) and trace[:len(prior)] == prior
+        same_generated_code = (prior_manifest["generated_c_sha256"] == manifest["generated_c_sha256"])
+        suffix = trace[len(prior):] if prefix_equal else []
+        prior_pc_modes = {(row[0], row[3]) for row in prior}
+        heldout = {
+            "prior_trace_instructions": len(prior),
+            "exact_loader_prefix_equal": prefix_equal,
+            "same_generated_code_as_loader_probe": same_generated_code,
+            "new_path_instructions": len(suffix),
+            "new_pc_modes": len({(row[0], row[3]) for row in suffix} - prior_pc_modes),
+        }
+        if prefix_equal and same_generated_code:
+            suffix_aot = int(fast["aot_instructions"]) - int(prior_stage["aot_instructions"])
+            suffix_interp = int(fast["interpreter_instructions"]) - int(prior_stage["interpreter_instructions"])
+            heldout.update({"new_path_aot_instructions": suffix_aot,
+                            "new_path_interpreter_instructions": suffix_interp,
+                            "new_path_instruction_accounting": suffix_aot + suffix_interp == len(suffix),
+                            "new_path_aot_coverage": suffix_aot / len(suffix) if suffix else 0})
     result = {
         "schema": "agr.offline-aot-differential.v1",
         "input_elf_sha256": image.sha256,
@@ -134,6 +160,7 @@ def main():
         "lookup_miss_classes": dict(sorted(lookup_classes.items())),
         "fallback_log_accounting": log_accounting,
         "performance_samples": len(aot_times),
+        "heldout_path": heldout,
         "performance_host_calls_equal": performance_hosts_equal,
         "baseline_engine_seconds": baseline_times,
         "aot_route_engine_seconds": aot_times,
@@ -146,7 +173,11 @@ def main():
                               all(path_accounting.values()) and not checkpoint_mismatches and
                               checkpoints and log_accounting and len(baselines) == len(aots) == 3 and
                               all(row.get("passed") for row in baselines + aots) and
-                              performance_hosts_equal),
+                              performance_hosts_equal and
+                              (heldout is None or
+                               (heldout["exact_loader_prefix_equal"] and
+                                heldout["same_generated_code_as_loader_probe"] and
+                                heldout.get("new_path_instruction_accounting")))),
     }
     (evidence / "differential.json").write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps(result, indent=2))

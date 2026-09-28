@@ -28,6 +28,11 @@ case "$MODE" in
   kungfoo-performance) ARG="--aot-kungfoo-performance" ;;
   kungfoo-fast-audit) ARG="--aot-kungfoo-fast-audit" ;;
   kungfoo-baseline) ARG="--aot-kungfoo-baseline" ;;
+  kungfoo-oncreate-trace) ARG="--aot-kungfoo-oncreate-trace" ;;
+  kungfoo-oncreate-run) ARG="--aot-kungfoo-oncreate-run" ;;
+  kungfoo-oncreate-baseline) ARG="--aot-kungfoo-oncreate-baseline" ;;
+  kungfoo-oncreate-fast-audit) ARG="--aot-kungfoo-oncreate-fast-audit" ;;
+  kungfoo-oncreate-performance) ARG="--aot-kungfoo-oncreate-performance" ;;
   *) echo "unknown AOT launch mode: $MODE" >&2; exit 2 ;;
 esac
 RESULT_NAME=aot-result.json

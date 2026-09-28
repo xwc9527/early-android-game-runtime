@@ -3,7 +3,9 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 POLICY="${AGR_OFFLINE_ENTRY_POLICY:-abi}"
-EVIDENCE="$ROOT/build/offline-aot-$POLICY"
+STAGE="${AGR_OFFLINE_STAGE:-loader}"
+[[ "$STAGE" == loader || "$STAGE" == oncreate ]] || { echo "unknown stage: $STAGE" >&2; exit 2; }
+EVIDENCE="$ROOT/build/offline-aot-$POLICY-$STAGE"
 mkdir -p "$EVIDENCE"
 export AGR_SIMULATOR_PROFILE=aot-kungfoo
 python3 -m venv "$ROOT/build/offline-aot-python"
@@ -34,6 +36,12 @@ PY
   --manifest "$EVIDENCE/translation-manifest.json" \
   > "$EVIDENCE/translation.log" 2>&1
 cp "$ROOT/Runtime/AotLab/aot_blocks.c" "$EVIDENCE/aot_blocks.c"
+if [[ "$STAGE" == oncreate ]]; then
+  PRIOR="$ROOT/tools/aot-lab/evidence/offline-generalization/run-36373038682"
+  cp "$PRIOR/interpreter-trace.txt" "$EVIDENCE/prior-loader-interpreter-trace.txt"
+  cp "$PRIOR/fast-audit-stage-result.json" "$EVIDENCE/prior-loader-fast-audit-stage-result.json"
+  cp "$PRIOR/translation-manifest.json" "$EVIDENCE/prior-loader-translation-manifest.json"
+fi
 bash "$ROOT/scripts/build-and-run-simulator.sh" deps
 bash "$ROOT/scripts/build-and-run-simulator.sh" build
 for name in ci-environment.json simulator-device.txt aot-compile-time.txt aot_blocks.o aot-object-sections.txt; do
@@ -57,12 +65,14 @@ run_one() {
 }
 
 # The interpreter trace is captured only after the generated artifact is fixed.
-run_one kungfoo-trace interpreter
-run_one kungfoo-baseline baseline
-run_one kungfoo-run diagnostic
-run_one kungfoo-fast-audit fast-audit
+MODE_PREFIX=kungfoo
+[[ "$STAGE" == oncreate ]] && MODE_PREFIX=kungfoo-oncreate
+run_one "$MODE_PREFIX-trace" interpreter
+run_one "$MODE_PREFIX-baseline" baseline
+run_one "$MODE_PREFIX-run" diagnostic
+run_one "$MODE_PREFIX-fast-audit" fast-audit
 for sample in 1 2 3; do
-  run_one kungfoo-baseline "baseline-performance-$sample"
-  run_one kungfoo-performance "performance-$sample"
+  run_one "$MODE_PREFIX-baseline" "baseline-performance-$sample"
+  run_one "$MODE_PREFIX-performance" "performance-$sample"
 done
 "$PYTHON" "$ROOT/tools/aot-lab/offline_differential.py" "$EVIDENCE"
