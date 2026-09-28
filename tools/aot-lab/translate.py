@@ -328,7 +328,10 @@ def blocks_from_trace(rows):
     return built
 
 
-def emit_op(op, thumb):
+def emit_op(op, thumb, relocatable=False):
+    def pc_value(value):
+        return f"(s->bias + {value}u)" if relocatable else f"{value}u"
+
     kind = op[0]
     if kind == "lsls_imm":
         return f"agr_aot_lsls(s, {op[1]}, s->r[{op[2]}], {op[3]}u);"
@@ -348,7 +351,7 @@ def emit_op(op, thumb):
         return f"agr_aot_cmp(s, s->r[{op[1]}], {op[2]}u);"
     if kind == "add_high":
         rd, rm, pc = op[1:]
-        source = f"{pc + 4}u" if rm == 15 else f"s->r[{rm}]"
+        source = pc_value(pc + 4) if rm == 15 else f"s->r[{rm}]"
         if rd == 15:
             return f"agr_aot_branch_reg(s, s->r[15] + {source}, 0u, 0); return AGR_AOT_BOUNDARY;"
         return f"s->r[{rd}] += {source};"
@@ -366,7 +369,7 @@ def emit_op(op, thumb):
         rd, rn, imm = op[1], op[2], op[3]
         pc = op[5]
         if rn == 15:
-            base = f"{(pc + 4) & ~3}u" if thumb else f"{pc + 8}u"
+            base = pc_value((pc + 4) & ~3) if thumb else pc_value(pc + 8)
         else:
             base = f"s->r[{rn}]"
         return f"{{ int rc = agr_aot_ldr(s, {rd}, {base} + {imm}u); if (rc) return rc; }}"
@@ -374,11 +377,11 @@ def emit_op(op, thumb):
         return f"{{ int rc = agr_aot_ldr(s, {op[1]}, s->r[{op[2]}] + s->r[{op[3]}]); if (rc) return rc; }}"
     if kind == "ldr_shifted":
         rt, rn, rm, shift, pc = op[1:]
-        base = f"{(pc + 4) & ~3}u" if rn == 15 else f"s->r[{rn}]"
+        base = pc_value((pc + 4) & ~3) if rn == 15 else f"s->r[{rn}]"
         return f"{{ int rc = agr_aot_ldr(s, {rt}, {base} + (s->r[{rm}] << {shift}u)); if (rc) return rc; }}"
     if kind == "ldr_indexed":
         rt, rn, imm, up, pre, writeback, pc = op[1:]
-        base = f"{(pc + 4) & ~3}u" if rn == 15 else f"s->r[{rn}]"
+        base = pc_value((pc + 4) & ~3) if rn == 15 else f"s->r[{rn}]"
         sign = "+" if up else "-"
         address = f"({base} {sign} {imm}u)" if pre else base
         lines = [f"{{ uint32_t addr = {address};"]
@@ -398,14 +401,14 @@ def emit_op(op, thumb):
                 f"if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, s->r[{op[1]}]); }}")
     if kind == "str_shifted":
         rt, rn, rm, shift, pc = op[1:]
-        base = f"{(pc + 4) & ~3}u" if rn == 15 else f"s->r[{rn}]"
-        value = f"{pc + 4}u" if rt == 15 else f"s->r[{rt}]"
+        base = pc_value((pc + 4) & ~3) if rn == 15 else f"s->r[{rn}]"
+        value = pc_value(pc + 4) if rt == 15 else f"s->r[{rt}]"
         return (f"{{ uint32_t addr = {base} + (s->r[{rm}] << {shift}u); "
                 f"if (agr_aot_fault(addr)) return AGR_AOT_FAULT; agr_aot_store32(s, addr, {value}); }}")
     if kind == "str_indexed":
         rt, rn, imm, up, pre, writeback, pc = op[1:]
-        base = f"{(pc + 4) & ~3}u" if rn == 15 else f"s->r[{rn}]"
-        value = f"{pc + 4}u" if rt == 15 else f"s->r[{rt}]"
+        base = pc_value((pc + 4) & ~3) if rn == 15 else f"s->r[{rn}]"
+        value = pc_value(pc + 4) if rt == 15 else f"s->r[{rt}]"
         sign = "+" if up else "-"
         address = f"({base} {sign} {imm}u)" if pre else base
         lines = [f"{{ uint32_t addr = {address};"]
@@ -430,15 +433,15 @@ def emit_op(op, thumb):
         return line
     if kind == "add_reg":
         rd, rn, rm, pc = op[1:]
-        base = f"{pc + 8}u" if rn == 15 else f"s->r[{rn}]"
-        source = f"{pc + 8}u" if rm == 15 else f"s->r[{rm}]"
+        base = pc_value(pc + 8) if rn == 15 else f"s->r[{rn}]"
+        source = pc_value(pc + 8) if rm == 15 else f"s->r[{rm}]"
         suffix = " return AGR_AOT_BOUNDARY;" if rd == 15 else ""
         return f"agr_aot_add_imm(s, {rd}, {base}, {source});{suffix}"
     if kind == "str_wb":
         rd, rn, imm, up, writeback, pc = op[1:]
         sign = "+" if up else "-"
-        base = f"({pc + 8}u)" if rn == 15 else f"s->r[{rn}]"
-        value = f"({pc + 8}u)" if rd == 15 else f"s->r[{rd}]"
+        base = pc_value(pc + 8) if rn == 15 else f"s->r[{rn}]"
+        value = pc_value(pc + 8) if rd == 15 else f"s->r[{rd}]"
         lines = [f"{{ uint32_t addr = {base} {sign} {imm}u;"]
         if writeback and rn != 15:
             lines.append(f"s->r[{rn}] = addr;")
@@ -446,7 +449,7 @@ def emit_op(op, thumb):
         return " ".join(lines)
     if kind == "add_imm":
         rd, rn, imm, pc = op[1:]
-        base = f"{pc + 8}u" if rn == 15 else f"s->r[{rn}]"
+        base = pc_value(pc + 8) if rn == 15 else f"s->r[{rn}]"
         suffix = " return AGR_AOT_BOUNDARY;" if rd == 15 else ""
         return f"agr_aot_add_imm(s, {rd}, {base}, {imm}u);{suffix}"
     if kind == "adjust_sp":
@@ -457,7 +460,7 @@ def emit_op(op, thumb):
     if kind == "lsls_reg":
         return f"agr_aot_lsls_reg(s, {op[1]}, s->r[{op[2]}], s->r[{op[3]}]);"
     if kind == "it":
-        return f"agr_aot_set_itstate(s, {op[1]}u); s->r[15] = {op[2] + 2}u; return AGR_AOT_BOUNDARY;"
+        return f"agr_aot_set_itstate(s, {op[1]}u); s->r[15] = {pc_value(op[2] + 2)}; return AGR_AOT_BOUNDARY;"
     if kind == "and_imm":
         return f"s->r[{op[1]}] = s->r[{op[2]}] & {op[3]}u;"
     if kind == "orr_imm":
@@ -465,35 +468,35 @@ def emit_op(op, thumb):
     if kind == "ldr_wb":
         rd, rn, imm, up, writeback, pc = op[1:]
         sign = "+" if up else "-"
-        base = f"({pc + 8}u)" if rn == 15 else f"s->r[{rn}]"
+        base = pc_value(pc + 8) if rn == 15 else f"s->r[{rn}]"
         lines = [f"{{ uint32_t addr = {base} {sign} {imm}u;"]
         if writeback and rn != 15:
             lines.append(f"s->r[{rn}] = addr;")
         lines.append(f"if ((rc = agr_aot_ldr(s, {rd}, addr))) return rc; }}")
         return " ".join(lines)
     if kind == "b":
-        return f"s->r[15] = {op[1]}u; return AGR_AOT_BOUNDARY;"
+        return f"s->r[15] = {pc_value(op[1])}; return AGR_AOT_BOUNDARY;"
     if kind == "b_cond":
-        return f"s->r[15] = agr_aot_condition(s, {op[1]}u) ? {op[2]}u : {op[3]}u; return AGR_AOT_BOUNDARY;"
+        return f"s->r[15] = agr_aot_condition(s, {op[1]}u) ? {pc_value(op[2])} : {pc_value(op[3])}; return AGR_AOT_BOUNDARY;"
     if kind == "cbz":
         rn, target, fall, nonzero = op[1:]
         test = f"s->r[{rn}]" if nonzero else f"!s->r[{rn}]"
-        return f"s->r[15] = {test} ? {target}u : {fall}u; return AGR_AOT_BOUNDARY;"
+        return f"s->r[15] = {test} ? {pc_value(target)} : {pc_value(fall)}; return AGR_AOT_BOUNDARY;"
     if kind == "blx_reg":
         rm, nxt, pc = op[1:]
-        target = f"{pc + (4 if thumb else 8)}u" if rm == 15 else f"s->r[{rm}]"
+        target = pc_value(pc + (4 if thumb else 8)) if rm == 15 else f"s->r[{rm}]"
         return (
-            f"agr_aot_branch_reg(s, {target}, {nxt}u, {1 if thumb else 0}); return AGR_AOT_BOUNDARY;"
+            f"agr_aot_branch_reg(s, {target}, {pc_value(nxt)}, {1 if thumb else 0}); return AGR_AOT_BOUNDARY;"
         )
     if kind == "bx_reg":
         rm, pc = op[1:]
-        target = f"{pc + (4 if thumb else 8)}u" if rm == 15 else f"s->r[{rm}]"
+        target = pc_value(pc + (4 if thumb else 8)) if rm == 15 else f"s->r[{rm}]"
         return f"agr_aot_branch_reg(s, {target}, 0u, 0); return AGR_AOT_BOUNDARY;"
     if kind == "bl_imm":
-        return f"agr_aot_branch_reg(s, {op[1]}u | 1u, {op[2]}u, 1); return AGR_AOT_BOUNDARY;"
+        return f"agr_aot_branch_reg(s, {pc_value(op[1])} | 1u, {pc_value(op[2])}, 1); return AGR_AOT_BOUNDARY;"
     if kind == "blx_imm":
         target, nxt = op[1:]
-        return f"agr_aot_branch_reg(s, {target}u, {nxt}u, {1 if thumb else 0}); return AGR_AOT_BOUNDARY;"
+        return f"agr_aot_branch_reg(s, {pc_value(target)}, {pc_value(nxt)}, {1 if thumb else 0}); return AGR_AOT_BOUNDARY;"
     if kind == "dmb":
         return "atomic_thread_fence(memory_order_seq_cst);"
     raise ValueError(kind)
@@ -558,8 +561,11 @@ def emit(rows, destination):
 
 
 def emit_partial(rows, destination, allowed_kinds, extra_starts=(), emit_debug=True,
-                 mode_guard=False, direct_lookup=False):
+                 mode_guard=False, direct_lookup=False, relocatable=False):
     """Emit a diagnostic oracle and an uninstrumented basic-block backend."""
+    def pc_value(value):
+        return f"(s->bias + {value}u)" if relocatable else f"{value}u"
+
     unique = {}
     ambiguous = set()
     for row in rows:
@@ -595,16 +601,16 @@ def emit_partial(rows, destination, allowed_kinds, extra_starts=(), emit_debug=T
         lines.append("    if (%s) return AGR_AOT_MISS;" %
                      ("!(*s->cpsr & 0x20u)" if row["thumb"] else "(*s->cpsr & 0x20u)"))
         if row["thumb"] and length == 2:
-            guards = [f"agr_aot_load16(s, {pc}u) != {raw}u"]
+            guards = [f"agr_aot_load16(s, {pc_value(pc)}) != {raw}u"]
         elif row["thumb"]:
-            guards = [f"agr_aot_load16(s, {pc}u) != {raw >> 16}u",
-                      f"agr_aot_load16(s, {pc + 2}u) != {raw & 0xffff}u"]
+            guards = [f"agr_aot_load16(s, {pc_value(pc)}) != {raw >> 16}u",
+                      f"agr_aot_load16(s, {pc_value(pc + 2)}) != {raw & 0xffff}u"]
         else:
-            guards = [f"agr_aot_load32(s, {pc}u) != {raw}u"]
+            guards = [f"agr_aot_load32(s, {pc_value(pc)}) != {raw}u"]
         lines.append(f"    if ({' || '.join(guards)}) return AGR_AOT_MISS;")
-        lines.append("    " + emit_op(op, row["thumb"]))
+        lines.append("    " + emit_op(op, row["thumb"], relocatable))
         if not is_terminal(op):
-            lines.append(f"    s->r[15] = {pc + length}u;")
+            lines.append(f"    s->r[15] = {pc_value(pc + length)};")
             lines.append("    return AGR_AOT_BOUNDARY;")
         lines.append("}")
         pieces.extend(lines + [""])
@@ -669,13 +675,13 @@ def emit_partial(rows, destination, allowed_kinds, extra_starts=(), emit_debug=T
             lines.append(f"    if ((*s->cpsr & 0x20u) != {expected_mode}) return AGR_AOT_MODE_MISS;")
         ended = False
         for row, op in body:
-            lines.append("    " + emit_op(op, row["thumb"]))
+            lines.append("    " + emit_op(op, row["thumb"], relocatable))
             if is_terminal(op):
                 ended = True
                 break
         if not ended:
             last = body[-1][0]
-            lines.extend((f"    s->r[15] = {last['pc'] + last['len']}u;", "    return AGR_AOT_BOUNDARY;"))
+            lines.extend((f"    s->r[15] = {pc_value(last['pc'] + last['len'])};", "    return AGR_AOT_BOUNDARY;"))
         lines.append("}")
         pieces.extend(lines + [""])
         fast_entries.append((start, name))
@@ -707,6 +713,8 @@ def emit_partial(rows, destination, allowed_kinds, extra_starts=(), emit_debug=T
     pieces.append("const AgrAotEntry agr_aot_fast_hash[] = {")
     pieces.extend(f"    {{{pc}u, {name}, {fast_block_lengths.get(pc, 0)}u}}," for pc, name in hashed)
     pieces.extend(["};", f"const uint32_t agr_aot_fast_hash_mask = {hash_size - 1}u;", ""])
+    if relocatable:
+        pieces.append("const uint32_t agr_aot_fast_relocatable = 1u;")
     if direct_lookup and fast_entries:
         base = fast_entries[0][0]
         span = ((fast_entries[-1][0] - base) >> 1) + 1

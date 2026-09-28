@@ -17,17 +17,26 @@ def main():
     parser.add_argument("--elf", required=True)
     parser.add_argument("--entry-policy", choices=("abi", "exports", "all-exidx", "all-exidx-sweep"), required=True)
     parser.add_argument("--load-bias", required=True,
-                        help="integer bias or auto-first for the first object in an empty AGR linker VMA")
+                        help="integer bias, auto-first, or runtime with --relocatable")
     parser.add_argument("--out", required=True)
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--no-diagnostic", action="store_true")
     parser.add_argument("--direct-lookup", action="store_true",
                         help="emit a bounded dense PC index in addition to the legacy hash")
+    parser.add_argument("--relocatable", action="store_true",
+                        help="defer ELF load bias to the runtime linker result")
     args = parser.parse_args()
     started = time.perf_counter()
     image = Elf32Arm(args.elf)
-    load_bias = (image.first_linker_bias() if args.load_bias == "auto-first"
-                 else int(args.load_bias, 0))
+    if args.relocatable:
+        if args.load_bias != "runtime":
+            parser.error("--relocatable requires --load-bias runtime")
+        load_bias = 0
+    else:
+        if args.load_bias == "runtime":
+            parser.error("--load-bias runtime requires --relocatable")
+        load_bias = (image.first_linker_bias() if args.load_bias == "auto-first"
+                     else int(args.load_bias, 0))
     unrelocated, starts, seeds, reasons = scan(image, args.entry_policy)
     rows = []
     allowed = set()
@@ -44,7 +53,7 @@ def main():
         rows, output, allowed,
         extra_starts=(pc + load_bias for pc, _ in starts),
         emit_debug=not args.no_diagnostic, mode_guard=True,
-        direct_lookup=args.direct_lookup)
+        direct_lookup=args.direct_lookup, relocatable=args.relocatable)
     result = {
         "schema": "agr.offline-aot-manifest.v1",
         "elf_sha256": image.sha256,
@@ -54,13 +63,17 @@ def main():
             for section in image.executable],
         "entry_policy": args.entry_policy,
         "load_bias": load_bias,
-        "load_bias_source": ("ELF PT_LOAD and empty AGR first-fit linker VMA" if args.load_bias == "auto-first"
+        "load_bias_source": ("runtime formal linker result" if args.relocatable else
+                             "ELF PT_LOAD and empty AGR first-fit linker VMA" if args.load_bias == "auto-first"
                              else "caller-supplied formal linker placement; not inferred from trace"),
+        "relocatable": args.relocatable,
         "translation_inputs": (["ELF32 ARM code", "dynamic symbols", "init/fini arrays"] +
                                (["EHABI exidx"] if args.entry_policy in
                                 {"all-exidx", "all-exidx-sweep"} else []) +
                                (["ELF PT_LOAD", "AGR first-fit empty VMA policy"]
-                                if args.load_bias == "auto-first" else ["formal linker load bias"])),
+                               if args.load_bias == "auto-first" else
+                               ["runtime formal linker load bias"] if args.relocatable else
+                               ["formal linker load bias"])),
         "execution_trace_input": False,
         "fast_block_mode_guard": True,
         "seed_count": len(seeds),

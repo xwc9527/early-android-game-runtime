@@ -1,28 +1,28 @@
-name: ARMv7 Gloomy automatic linker placement AOT probe
+name: ARMv7 Gloomy relocatable offline AOT probe
 
 on:
   workflow_dispatch:
 
 jobs:
-  auto-first-gloomy:
+  relocatable-gloomy:
     runs-on: xcode-27
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Derive first-object load bias from ELF and AGR linker policy
+      - name: Execute one offline artifact at two formal linker biases
         env:
-          AGR_OFFLINE_GLOOMY_AUTO: 1
+          AGR_OFFLINE_GLOOMY_RELOCATABLE: 1
         run: |
           set -o pipefail
-          mkdir -p build/offline-aot-gloomy-exports-auto-first
+          mkdir -p build/offline-aot-gloomy-exports-relocatable
           bash tools/aot-lab/run_offline_gloomy.sh 2>&1 |
-            tee build/offline-aot-gloomy-exports-auto-first/ci-log.txt
+            tee build/offline-aot-gloomy-exports-relocatable/ci-log.txt
       - name: Upload original execution evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: offline-aot-gloomy-exports-auto-first
-          path: build/offline-aot-gloomy-exports-auto-first
+          name: offline-aot-gloomy-exports-relocatable
+          path: build/offline-aot-gloomy-exports-relocatable
           if-no-files-found: error

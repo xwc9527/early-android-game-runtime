@@ -3,9 +3,12 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 AUTO_LOAD="${AGR_OFFLINE_GLOOMY_AUTO:-0}"
+RELOCATABLE="${AGR_OFFLINE_GLOOMY_RELOCATABLE:-0}"
 [[ "$AUTO_LOAD" == 0 || "$AUTO_LOAD" == 1 ]] || { echo "invalid AUTO_LOAD" >&2; exit 2; }
+[[ "$RELOCATABLE" == 0 || "$RELOCATABLE" == 1 ]] || { echo "invalid RELOCATABLE" >&2; exit 2; }
 SUFFIX=""
 [[ "$AUTO_LOAD" == 1 ]] && SUFFIX="-auto-first"
+[[ "$RELOCATABLE" == 1 ]] && SUFFIX="-relocatable"
 EVIDENCE="$ROOT/build/offline-aot-gloomy-exports$SUFFIX"
 mkdir -p "$EVIDENCE"
 export AGR_SIMULATOR_PROFILE=gloomy
@@ -27,15 +30,23 @@ shutil.copyfile(native,evidence/'input-armv7.so')
 (evidence/'input-identity.json').write_text(json.dumps({
     'schema':'agr.offline-aot-input.v1','apk_sha256':prior['apk_sha256'],
     'native_sha256':prior['so_sha256'],'native_bytes':native.stat().st_size,
-    'apk_member':prior['so'],'load_bias_policy':'auto-first' if os.environ.get('AGR_OFFLINE_GLOOMY_AUTO')=='1' else prior['load_base'],
+    'apk_member':prior['so'],'load_bias_policy':(
+        'runtime formal linker result' if os.environ.get('AGR_OFFLINE_GLOOMY_RELOCATABLE')=='1' else
+        'auto-first' if os.environ.get('AGR_OFFLINE_GLOOMY_AUTO')=='1' else prior['load_base']),
     'tested_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),
     'tested_tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],cwd=root,text=True).strip()
 },indent=2)+'\n')
 PY
 LOAD_BIAS=0x02800000
 [[ "$AUTO_LOAD" == 1 ]] && LOAD_BIAS=auto-first
+TRANSLATION_FLAGS=()
+if [[ "$RELOCATABLE" == 1 ]]; then
+  LOAD_BIAS=runtime
+  TRANSLATION_FLAGS+=(--relocatable)
+fi
 "$PYTHON" "$ROOT/tools/aot-lab/translate_offline.py" \
   --elf "$EVIDENCE/input-armv7.so" --entry-policy exports --load-bias "$LOAD_BIAS" \
+  "${TRANSLATION_FLAGS[@]}" \
   --out "$ROOT/Runtime/AotLab/aot_blocks.c" \
   --manifest "$EVIDENCE/translation-manifest.json" \
   > "$EVIDENCE/translation.log" 2>&1
@@ -46,21 +57,32 @@ for name in ci-environment.json simulator-device.txt aot-compile-time.txt aot_bl
   [[ ! -f "$ROOT/build/artifacts/$name" ]] || cp "$ROOT/build/artifacts/$name" "$EVIDENCE/$name"
 done
 cp "$ROOT/build/build-environment.json" "$EVIDENCE/build-environment.json"
+PLACEMENTS=("$AUTO_LOAD")
+[[ "$RELOCATABLE" == 1 ]] && PLACEMENTS=(0 1)
+for placement in "${PLACEMENTS[@]}"; do
+PAIR="$EVIDENCE"
+if [[ "$RELOCATABLE" == 1 ]]; then
+  PAIR="$EVIDENCE/fixed"
+  [[ "$placement" == 1 ]] && PAIR="$EVIDENCE/first-fit"
+  mkdir -p "$PAIR"
+  for name in input-identity.json input-armv7.so translation-manifest.json aot_blocks.c; do cp "$EVIDENCE/$name" "$PAIR/$name"; done
+fi
 for mode in trace run; do
   rm -f "$ROOT/build/artifacts/aot-result.json" "$ROOT/build/artifacts/aot-hosts.txt" \
     "$ROOT/build/artifacts/aot-trace.txt" "$ROOT/build/artifacts/aot-checkpoints.txt" \
     "$ROOT/build/artifacts/aot-fallbacks.txt"
   set +e
   LAUNCH_MODE="$mode"
-  [[ "$AUTO_LOAD" == 1 ]] && LAUNCH_MODE="auto-$mode"
+  [[ "$placement" == 1 ]] && LAUNCH_MODE="auto-$mode"
   bash "$ROOT/tools/aot-lab/launch_aot.sh" "$LAUNCH_MODE"
   status=$?
   set -e
   prefix=interpreter
   [[ "$mode" == run ]] && prefix=aot
-  printf '%s\n' "$status" > "$EVIDENCE/$prefix.exit"
+  printf '%s\n' "$status" > "$PAIR/$prefix.exit"
   for name in aot-result.json aot-hosts.txt aot-trace.txt aot-checkpoints.txt aot-fallbacks.txt; do
-    [[ ! -f "$ROOT/build/artifacts/$name" ]] || cp "$ROOT/build/artifacts/$name" "$EVIDENCE/$prefix-${name#aot-}"
+    [[ ! -f "$ROOT/build/artifacts/$name" ]] || cp "$ROOT/build/artifacts/$name" "$PAIR/$prefix-${name#aot-}"
   done
 done
-"$PYTHON" "$ROOT/tools/aot-lab/offline_gloomy_differential.py" "$EVIDENCE"
+"$PYTHON" "$ROOT/tools/aot-lab/offline_gloomy_differential.py" "$PAIR"
+done

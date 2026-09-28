@@ -29,8 +29,10 @@ def main():
                        identity["native_sha256"] == manifest["elf_sha256"])
     generated_identity = (hashlib.sha256((evidence / "aot_blocks.c").read_bytes()).hexdigest() ==
                           manifest["generated_c_sha256"])
-    load_bias_equal = (interpreter.get("actual_load_bias") == aot.get("actual_load_bias") ==
-                       manifest["load_bias"])
+    load_bias_equal = (interpreter.get("actual_load_bias") == aot.get("actual_load_bias") and
+                       (manifest.get("relocatable") and aot.get("actual_load_bias", 0) != 0 or
+                        not manifest.get("relocatable") and
+                        aot.get("actual_load_bias") == manifest["load_bias"]))
     observable_fields = ("passed", "lines", "triangles", "bytes", "framebuffer_fnv",
                          "nonblack_pixels", "error")
     observables = {key: interpreter.get(key) == aot.get(key) for key in observable_fields}

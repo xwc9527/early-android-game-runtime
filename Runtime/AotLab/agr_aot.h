@@ -18,6 +18,7 @@ typedef struct AgrAotRegs {
     uint32_t *r;
     uint32_t *cpsr;
     uint8_t *mem;
+    uint32_t bias;
 } AgrAotRegs;
 
 typedef int (*AgrAotFn)(AgrAotRegs *state);
@@ -37,9 +38,11 @@ extern const uint32_t agr_aot_fast_hash_mask;
 extern const uint32_t agr_aot_fast_direct_base;
 extern const uint32_t agr_aot_fast_direct_count;
 extern const uint32_t agr_aot_fast_direct[];
+extern const uint32_t agr_aot_fast_relocatable;
 
 void agr_aot_set_enabled(int enabled);
 void agr_aot_set_diagnostic(int enabled);
+void agr_aot_set_image_bias(uint32_t load_bias);
 void agr_aot_trace_open(const char *path);
 void agr_aot_trace_close(void);
 void agr_aot_set_trace_limit(uint64_t instruction_limit);

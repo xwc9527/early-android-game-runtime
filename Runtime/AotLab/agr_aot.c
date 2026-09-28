@@ -14,6 +14,8 @@ static int enabled;
 __attribute__((weak)) const uint32_t agr_aot_fast_direct_base = 0;
 __attribute__((weak)) const uint32_t agr_aot_fast_direct_count = 0;
 __attribute__((weak)) const uint32_t agr_aot_fast_direct[] = {0};
+__attribute__((weak)) const uint32_t agr_aot_fast_relocatable = 0;
+static uint32_t image_bias;
 static int diagnostic;
 static FILE *trace_file;
 static uint64_t trace_limit;
@@ -171,8 +173,10 @@ void agr_aot_log_host(const char *name, uint32_t slot, uint32_t r0, uint32_t r1,
 
 void agr_aot_set_enabled(int value) { enabled = value; }
 void agr_aot_set_diagnostic(int value) { diagnostic = value; }
+void agr_aot_set_image_bias(uint32_t load_bias) { image_bias = load_bias; }
 
 static const AgrAotEntry *lookup(uint32_t pc) {
+    if (agr_aot_fast_relocatable) pc -= image_bias;
     if (!diagnostic) {
         if (agr_aot_fast_direct_count) {
             uint32_t delta = pc - agr_aot_fast_direct_base;
@@ -208,7 +212,7 @@ int agr_aot_drive(void *cpu) {
     uint32_t *cpsr = arm_interp_cpsr_ptr(cpu);
     uint8_t *memory = arm_interp_memory_base(cpu);
     if (!regs || !cpsr || !memory) return AGR_AOT_FAULT;
-    AgrAotRegs state = {regs, cpsr, memory};
+    AgrAotRegs state = {regs, cpsr, memory, agr_aot_fast_relocatable ? image_bias : 0};
     uint32_t local_blocks = 0, local_instructions = 0;
 #define AGR_AOT_RETURN(value) do { \
     executed_blocks += local_blocks; \
