@@ -1,0 +1,75 @@
+{
+  "schema": "agr.game-compiler-region-prototype.v1",
+  "input_elf_sha256": "2b8672e79da33de4661f6aa0bcb79df2a302637aca9829d53fff8077a6895638",
+  "elf_sha256": "2b8672e79da33de4661f6aa0bcb79df2a302637aca9829d53fff8077a6895638",
+  "input_elf_bytes": 9376,
+  "executable_bytes": 4114,
+  "entry_policy": "all-exidx",
+  "execution_trace_input": false,
+  "execution_trace_used_for_selection": true,
+  "relocatable": true,
+  "load_bias": 0,
+  "load_bias_source": "runtime formal linker result",
+  "runtime_load_bias": true,
+  "compiled_region_count": 1,
+  "compiled_block_count": 64,
+  "fast_block_count": 64,
+  "debug_entry_count": 0,
+  "static_compiled_instructions": 225,
+  "region_local_guest_state": true,
+  "host_register_residency_proven": false,
+  "profile_guided_selection": {
+    "sha256": "12eaddf3c382326b7abe9fe8630ffdf4df4dccc7dde45ea96175a1fef7bfaa73",
+    "profile_load_bias": 41943040,
+    "selection_rule": "top N ELF-derived regions by dynamic guest instruction count",
+    "selected_region_ids": [
+      0
+    ],
+    "selected_dynamic_instruction_counts": {
+      "0": 153
+    },
+    "trace_selects_semantics": false
+  },
+  "direct_intra_region_edge_candidates": 33,
+  "block_group_guard_count": 64,
+  "individual_instruction_guard_count": 0,
+  "direct_lookup_slots": 357,
+  "supported_op_kinds": [
+    "add_high",
+    "add_imm",
+    "add_reg",
+    "adds_imm",
+    "adjust_sp",
+    "b",
+    "b_cond",
+    "bl_imm",
+    "blx_imm",
+    "blx_reg",
+    "bx_reg",
+    "cbz",
+    "cmp_imm",
+    "cmp_reg",
+    "it",
+    "ldmia_sp",
+    "ldr_imm",
+    "ldr_wb",
+    "lsls_imm",
+    "mov_reg",
+    "movs_imm",
+    "movw",
+    "stmdb_sp",
+    "str_imm",
+    "str_wb",
+    "subs_imm"
+  ],
+  "excluded_reasons": {
+    "unsupported_encoding": 120
+  },
+  "static_discovery_reasons": {
+    "indirect_target": 48,
+    "outside_executable": 1
+  },
+  "generated_c_sha256": "dababe906c0878cf3ccb4b0de82ff95939e77b6362893fb9e94e31fe5822b883",
+  "generated_c_bytes": 53644,
+  "offline_preparation_seconds": 0.02045791599994118
+}
