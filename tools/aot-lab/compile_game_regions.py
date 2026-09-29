@@ -197,16 +197,45 @@ def main():
     parser.add_argument("--elf", required=True)
     parser.add_argument("--out", required=True)
     parser.add_argument("--manifest", required=True)
+    parser.add_argument("--profile-trace", default=None,
+                        help="optional runtime trace used only to rank ELF-derived regions")
+    parser.add_argument("--top-regions", type=int, default=0)
     args = parser.parse_args()
     started = time.perf_counter()
     image = Elf32Arm(args.elf)
     blocks, excluded, discovery = discover(image, allowed=None)
     blocks = split_after_writes(blocks)
     groups = [blocks[i:i + REGION_LIMIT] for i in range(0, len(blocks), REGION_LIMIT)]
+    profile = None
+    selected_groups = set(range(len(groups)))
+    if args.profile_trace:
+        if args.top_regions < 1:
+            raise ValueError("profile selection requires positive --top-regions")
+        by_pc = {row["pc"]: group_id
+                 for group_id, group in enumerate(groups)
+                 for _, body in group for row, _ in body}
+        counts = {}
+        trace_bytes = Path(args.profile_trace).read_bytes()
+        for line in trace_bytes.splitlines():
+            guest_pc = int(line.split()[0])
+            group_id = by_pc.get(guest_pc - 65536)
+            if group_id is not None:
+                counts[group_id] = counts.get(group_id, 0) + 1
+        if not counts:
+            raise ValueError("profile has no ELF-derived compiled region")
+        selected_groups = set(sorted(counts, key=lambda n: (-counts[n], n))[:args.top_regions])
+        profile = {"sha256": hashlib.sha256(trace_bytes).hexdigest(),
+                   "selection_rule": "top N ELF-derived regions by dynamic guest instruction count",
+                   "selected_region_ids": sorted(selected_groups),
+                   "selected_dynamic_instruction_counts":
+                       {str(n): counts[n] for n in sorted(selected_groups)},
+                   "trace_selects_semantics": False}
     sources = ['#include "agr_aot.h"', ""]
     entries = []
     group_guards = individual_guards = direct_edges = 0
     for number, group in enumerate(groups):
+        if number not in selected_groups:
+            continue
         name, source, guarded, individual = emit_region(number, group, image)
         sources.append(source)
         group_guards += guarded
@@ -223,18 +252,22 @@ def main():
         "input_elf_bytes": len(image.data),
         "executable_bytes": sum(section.size for section in image.executable),
         "entry_policy": "all-exidx", "execution_trace_input": False,
+        "execution_trace_used_for_selection": profile is not None,
         "relocatable": True, "load_bias": 0,
         "load_bias_source": "runtime formal linker result", "runtime_load_bias": True,
-        "compiled_region_count": len(groups), "compiled_block_count": len(entries),
+        "compiled_region_count": len(selected_groups), "compiled_block_count": len(entries),
         "fast_block_count": len(entries), "debug_entry_count": 0,
-        "static_compiled_instructions": sum(len(body) for _, body in blocks),
+        "static_compiled_instructions": sum(len(body) for n in selected_groups
+                                             for _, body in groups[n]),
         "region_local_guest_state": True,
         "host_register_residency_proven": False,
+        "profile_guided_selection": profile,
         "direct_intra_region_edge_candidates": direct_edges,
         "block_group_guard_count": group_guards,
         "individual_instruction_guard_count": individual_guards,
         "direct_lookup_slots": direct_slots,
-        "supported_op_kinds": sorted({op[0] for _, body in blocks for _, op in body}),
+        "supported_op_kinds": sorted({op[0] for n in selected_groups
+                                      for _, body in groups[n] for _, op in body}),
         "excluded_reasons": dict(sorted(excluded.items())),
         "static_discovery_reasons": dict(sorted(discovery.items())),
         "generated_c_sha256": hashlib.sha256(source.encode()).hexdigest(),

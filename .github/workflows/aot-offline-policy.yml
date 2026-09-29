@@ -20,17 +20,16 @@ jobs:
           AGR_OFFLINE_DIRECT_LOOKUP: 1
           AGR_OFFLINE_RELOCATABLE: 1
           AGR_GAME_COMPILER_REGION: 1
-          AGR_AOT_PERF_ATTRIBUTION: 1
-          AGR_AOT_CAPTURE_ONLY: 1
+          AGR_GAME_COMPILER_TOP_REGION: 1
         run: |
           set -o pipefail
-          mkdir -p build/offline-aot-all-exidx-oncreate-fast-only-relocatable-region-compiler-attribution-capture
+          mkdir -p build/offline-aot-all-exidx-oncreate-fast-only-relocatable-region-compiler-top-region
           bash tools/aot-lab/run_offline_probe.sh 2>&1 |
-            tee build/offline-aot-all-exidx-oncreate-fast-only-relocatable-region-compiler-attribution-capture/ci-log.txt
+            tee build/offline-aot-all-exidx-oncreate-fast-only-relocatable-region-compiler-top-region/ci-log.txt
       - name: Upload original execution evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: attribution-capture-kungfoo
-          path: build/offline-aot-all-exidx-oncreate-fast-only-relocatable-region-compiler-attribution-capture
+          name: selective-top-region-kungfoo
+          path: build/offline-aot-all-exidx-oncreate-fast-only-relocatable-region-compiler-top-region
           if-no-files-found: error

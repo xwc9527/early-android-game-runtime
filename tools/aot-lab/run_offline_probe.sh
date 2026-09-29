@@ -16,6 +16,7 @@ SUFFIX=""
 [[ "$RELOCATABLE" == 1 ]] && SUFFIX="$SUFFIX-relocatable"
 [[ "${AGR_GAME_COMPILER_ARM64:-0}" == 1 ]] && SUFFIX="$SUFFIX-game-compiler"
 [[ "${AGR_GAME_COMPILER_REGION:-0}" == 1 ]] && SUFFIX="$SUFFIX-region-compiler"
+[[ "${AGR_GAME_COMPILER_TOP_REGION:-0}" == 1 ]] && SUFFIX="$SUFFIX-top-region"
 [[ "$CAPTURE_ONLY" == 1 ]] && SUFFIX="$SUFFIX-attribution-capture"
 EVIDENCE="$ROOT/build/offline-aot-$POLICY-$STAGE$SUFFIX"
 mkdir -p "$EVIDENCE"
@@ -51,8 +52,13 @@ if [[ "$RELOCATABLE" == 1 ]]; then
   TRANSLATION_FLAGS+=(--relocatable)
 fi
 if [[ "${AGR_GAME_COMPILER_REGION:-0}" == 1 ]]; then
+  REGION_PROFILE_FLAGS=()
+  if [[ "${AGR_GAME_COMPILER_TOP_REGION:-0}" == 1 ]]; then
+    REGION_PROFILE_FLAGS+=(--profile-trace "$ROOT/tools/aot-lab/evidence/game-compiler/run-36450798560/interpreter-trace.txt" --top-regions 1)
+  fi
   "$PYTHON" "$ROOT/tools/aot-lab/compile_game_regions.py" \
     --elf "$EVIDENCE/input-armv7.so" \
+    "${REGION_PROFILE_FLAGS[@]}" \
     --out "$ROOT/Runtime/AotLab/aot_blocks.c" \
     --manifest "$EVIDENCE/translation-manifest.json" \
     > "$EVIDENCE/translation.log" 2>&1
