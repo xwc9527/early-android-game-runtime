@@ -1,0 +1,9 @@
+{
+  "schema": "agr.offline-aot-input.v1",
+  "native_sha256": "010baa4964cd7dbcf1ba038428ab4d6afc13ffd0a180b447be07b8f088f9ba9d",
+  "native_bytes": 882136,
+  "apk_sha256": "097ade628ad0837e312da4ca48afe0906eb99c3b992d497c7da33e2b2267eb22",
+  "apk_member": "lib/armeabi-v7a/libKungFooBarracudaNativeActivity.so",
+  "tested_commit": "4d60a21f5c941e257187e74c18313a7bf10a308c",
+  "tested_tree": "72ea4b62d5fcd47993136a0510caa56383349b06"
+}
