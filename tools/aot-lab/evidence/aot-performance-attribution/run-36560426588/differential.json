@@ -1,0 +1,73 @@
+{
+  "schema": "agr.offline-aot-policy-differential.v1",
+  "entry_policy": "all-exidx",
+  "tested_commit": "cb0a6f8e4e60ba3fa854bb38f3145b841b2e275f",
+  "tested_tree": "184082050fec2b206442ab7bf7d03dabace497fa",
+  "input_elf_sha256": "010baa4964cd7dbcf1ba038428ab4d6afc13ffd0a180b447be07b8f088f9ba9d",
+  "generated_c_sha256": "bc1115f97531106c69fc4e1220c902659f60b00f9af6bbb46bd923613877d7c0",
+  "translation_used_execution_trace": false,
+  "input_identity_valid": true,
+  "source_identity_valid": true,
+  "assembly_identity_valid": true,
+  "interpreter_trace_equal_to_checked_full_run": true,
+  "trace_instructions": 29703,
+  "trace_complete": true,
+  "fast_checkpoint_count": 1820,
+  "fast_checkpoint_mismatch": null,
+  "observable_fields_equal": {
+    "passed": true,
+    "mounted": true,
+    "elf_registered": true,
+    "dex_loaded": true,
+    "jni_onload_status": true,
+    "jni_version": true,
+    "native_so_bytes": true,
+    "dex_started": true,
+    "constructors_status": true,
+    "constructors": true,
+    "probe_stop_host": true,
+    "probe_stopped": true
+  },
+  "host_calls_equal": true,
+  "instruction_accounting": true,
+  "fallback_log_accounting": true,
+  "fallback_reason_counts": {
+    "lookup_miss": 742,
+    "svc": 6
+  },
+  "fallback_unique_pc_mode": {
+    "lookup_miss": 187,
+    "svc": 1
+  },
+  "aot_instructions": 6860,
+  "interpreter_instructions": 22843,
+  "new_path_instructions": 125,
+  "new_path_aot_instructions": 0,
+  "new_path_interpreter_instructions": 125,
+  "new_path_aot_coverage": 0.0,
+  "new_path_accounting": true,
+  "performance_samples": 7,
+  "performance_host_calls_equal": true,
+  "baseline_engine_seconds": [
+    0.00045500000000000277,
+    0.0004460000000000025,
+    0.00046800000000000276,
+    0.00042700000000000246,
+    0.0004380000000000025,
+    0.00048700000000000273,
+    0.00048600000000000276
+  ],
+  "aot_route_engine_seconds": [
+    0.000796000000000004,
+    0.000531000000000002,
+    0.0004940000000000025,
+    0.00042900000000000246,
+    0.0004540000000000026,
+    0.00043400000000000226,
+    0.0004620000000000024
+  ],
+  "baseline_engine_median": 0.00045500000000000277,
+  "aot_route_engine_median": 0.0004620000000000024,
+  "route_speedup_ratio_of_medians": 0.9848484848484858,
+  "semantic_pass": true
+}
