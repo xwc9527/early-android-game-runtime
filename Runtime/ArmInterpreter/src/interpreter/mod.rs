@@ -584,6 +584,28 @@ impl InterpreterCpu {
         }
     }
 
+    /// Experimental selective AOT handoff. Execute fallback instructions in
+    /// one interpreter quantum and stop only at a compiled block entry.
+    pub fn run_until_aot(&mut self, mem: &mut Mem, budget: &mut u64,
+                         entries: &[u32], base: u32, bias: u32) -> (CpuState, bool) {
+        loop {
+            let state = self.step_one(mem);
+            *budget = budget.saturating_sub(1);
+            match state {
+                CpuState::Normal => {
+                    let delta = self.regs[PC].wrapping_sub(bias).wrapping_sub(base);
+                    let slot = (delta >> 1) as usize;
+                    if delta & 1 == 0 && slot < entries.len() && entries[slot] != 0 &&
+                        self.cpsr & 0x0600_fc00 == 0 {
+                        return (CpuState::Normal, true);
+                    }
+                    if *budget == 0 { return (CpuState::Normal, false); }
+                }
+                halt => return (halt, false),
+            }
+        }
+    }
+
     /// [P1 debug] dump the recent-instruction ring buffer (oldest → newest).
     pub fn dump_trace(&self) {
         echo!("[TRACE] last {} executed insns (old → new):", self.trace.len());

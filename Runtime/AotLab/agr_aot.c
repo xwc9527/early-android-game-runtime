@@ -397,6 +397,7 @@ double agr_aot_fallback_interpreter_seconds(void) { return fallback_interpreter_
 double agr_aot_svc_interpreter_seconds(void) { return svc_interpreter_seconds; }
 double agr_aot_baseline_interpreter_seconds(void) { return baseline_interpreter_seconds; }
 uint32_t agr_aot_drive_calls(void) { return drive_calls; }
+uint32_t agr_aot_current_image_bias(void) { return image_bias; }
 uint32_t agr_aot_region_chained_blocks(void) { return region_chained_blocks; }
 uint32_t agr_aot_lookup_misses(void) { return lookup_misses; }
 uint32_t agr_aot_it_fallbacks(void) { return it_fallbacks; }

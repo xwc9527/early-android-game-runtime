@@ -122,7 +122,9 @@ clang++ "${COMMON[@]}" -std=gnu++98 -fno-exceptions -fno-rtti -I"$ROOT/Runtime/B
 clang++ "${COMMON[@]}" -std=gnu++98 -fno-exceptions -fno-rtti -I"$ROOT/Runtime/AospLinker" -I"$ROOT/Runtime/Bionic" -I"$ROOT/Runtime/Process" -I"$ROOT/Runtime/NativeCore" -c "$ROOT/Runtime/AospLinker/agr_aosp_linker.cpp" -o "$BUILD/obj/agr_aosp_linker.o"
 clang++ "${COMMON[@]}" -std=gnu++98 -fno-exceptions -fno-rtti -I"$ROOT/Runtime/AospLinker" -I"$ROOT/Runtime/Bionic" -I"$ROOT/Runtime/Process" -I"$ROOT/Runtime/NativeCore" -c "$ROOT/Runtime/AospLinker/agr_aosp_dynamic.cpp" -o "$BUILD/obj/agr_aosp_dynamic.o"
 clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/NativeCore" -c "$ROOT/Tests/Conformance/agr_contracts.c" -o "$BUILD/obj/agr_contracts.o"
-clang "${COMMON[@]}" -std=c11 -DGL_GLES_PROTOTYPES=1 -I"$ROOT/Vendor/ANGLE-Headers" -I"$ROOT/Runtime/NativeCore" -I"$ROOT/Runtime/GuestRuntime" -I"$ROOT/Runtime/Ehabi" -c "$ROOT/Runtime/GuestRuntime/agr_guest_runtime.c" -o "$BUILD/obj/agr_guest_runtime.o"
+SELECTIVE_BATCH_DEFINE=()
+[[ "${AGR_AOT_SELECTIVE_BATCH:-0}" == 1 ]] && SELECTIVE_BATCH_DEFINE+=(-DAGR_AOT_SELECTIVE_BATCH=1)
+clang "${COMMON[@]}" "${SELECTIVE_BATCH_DEFINE[@]}" -std=c11 -DGL_GLES_PROTOTYPES=1 -I"$ROOT/Vendor/ANGLE-Headers" -I"$ROOT/Runtime/NativeCore" -I"$ROOT/Runtime/GuestRuntime" -I"$ROOT/Runtime/Ehabi" -c "$ROOT/Runtime/GuestRuntime/agr_guest_runtime.c" -o "$BUILD/obj/agr_guest_runtime.o"
 clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/GuestRuntime" -c "$ROOT/Runtime/GuestRuntime/agr_thread_context.c" -o "$BUILD/obj/agr_thread_context.o"
 clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/Ehabi" -I"$ROOT/Runtime/GuestRuntime" -I"$ROOT/Runtime/NativeCore" -c "$ROOT/Runtime/Ehabi/agr_ehabi.c" -o "$BUILD/obj/agr_ehabi.o"
 clang "${COMMON[@]}" -std=c11 -I"$ROOT/Runtime/GuestRuntime" -c "$ROOT/Runtime/GuestRuntime/agr_service_dispatch.c" -o "$BUILD/obj/agr_service_dispatch.o"

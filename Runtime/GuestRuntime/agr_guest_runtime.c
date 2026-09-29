@@ -41,6 +41,10 @@ extern int32_t arm_interp_watch_trace(void *, uint32_t, uint32_t *, uint32_t *);
 extern int32_t arm_interp_set_cpsr(void *, uint32_t);
 extern uint32_t arm_interp_get_cpsr(void *);
 extern int32_t arm_interp_run(void *, uint64_t *, uint32_t *);
+#ifdef AGR_AOT_SELECTIVE_BATCH
+extern int32_t arm_interp_run_until_aot(void *, uint64_t *, uint32_t *,
+    const uint32_t *, uint32_t, uint32_t, uint32_t);
+#endif
 
 #define JNI_ENV_PTR 0x01000000u
 #define JNI_TABLE   0x01000100u
@@ -1017,10 +1021,21 @@ static int run_until_return(agr_guest *g) {
             (engine_end.tv_nsec - engine_start.tv_nsec) / 1e9, driven);
         if (driven == AGR_AOT_FAULT) { set_error(g, "AOT guest memory fault"); return -1; }
         uint64_t budget = driven == AGR_AOT_MISS ? 1 : g->run_budget;
+#ifdef AGR_AOT_SELECTIVE_BATCH
+        int batch_fallback = driven == AGR_AOT_MISS && agr_aot_fast_direct_count &&
+            agr_aot_current_image_bias();
+        if (batch_fallback) budget = g->run_budget;
+#endif
         uint64_t starting_budget = budget; uint32_t svc = 0;
         arm_interp_set_thread_tag(guest_cpu(g), agr_current_thread(g->runtime));
         clock_gettime(CLOCK_MONOTONIC, &engine_start);
+#ifdef AGR_AOT_SELECTIVE_BATCH
+        int32_t state = batch_fallback ? arm_interp_run_until_aot(guest_cpu(g), &budget, &svc,
+            agr_aot_fast_direct, agr_aot_fast_direct_count, agr_aot_fast_direct_base,
+            agr_aot_current_image_bias()) : arm_interp_run(guest_cpu(g), &budget, &svc);
+#else
         int32_t state = arm_interp_run(guest_cpu(g), &budget, &svc);
+#endif
         clock_gettime(CLOCK_MONOTONIC, &engine_end);
         uint32_t interpreted = (uint32_t)(starting_budget - budget);
         agr_aot_record_interpreter((engine_end.tv_sec - engine_start.tv_sec) +
@@ -1029,7 +1044,7 @@ static int run_until_return(agr_guest *g) {
         guest_context(g)->current_guest_pc=observed_pc;
         atomic_store_explicit(&g->last_guest_pc,observed_pc,memory_order_release);
         atomic_fetch_add_explicit(&g->instruction_count,interpreted,memory_order_relaxed);
-        if (state == 0 && driven == AGR_AOT_MISS) continue;
+        if ((state == 0 && driven == AGR_AOT_MISS) || state == 2) continue;
         if (state != 1) {
             uint32_t pc = arm_interp_get_reg(guest_cpu(g), 15), cpsr = arm_interp_get_cpsr(guest_cpu(g));
             uint8_t code[12] = {0}; arm_interp_read(guest_cpu(g), pc-8, code, sizeof(code));

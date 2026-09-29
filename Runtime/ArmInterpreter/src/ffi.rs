@@ -253,6 +253,37 @@ pub unsafe extern "C" fn arm_interp_run(ptr: *mut c_void, budget: *mut u64,
     0
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn arm_interp_run_until_aot(
+    ptr: *mut c_void, budget: *mut u64, svc_out: *mut u32,
+    direct: *const u32, direct_count: u32, direct_base: u32, image_bias: u32,
+) -> i32 {
+    if ptr.is_null() || budget.is_null() || svc_out.is_null() || direct.is_null() ||
+        direct_count == 0 || image_bias == 0 { return -1; }
+    let h = &mut *ptr.cast::<Handle>();
+    let entries = std::slice::from_raw_parts(direct, direct_count as usize);
+    while *budget != 0 {
+        let scheduled = (*budget).min(1024);
+        let mut quantum = scheduled;
+        let (state, at_compiled_entry) = {
+            let Ok(mut mem) = h.mem.lock() else { return -1; };
+            h.cpu.run_until_aot(&mut mem, &mut quantum, entries, direct_base, image_bias)
+        };
+        let spent = scheduled - quantum;
+        if spent == 0 && matches!(state, CpuState::Normal) { return -1; }
+        *budget -= spent;
+        if at_compiled_entry { return 2; }
+        match state {
+            CpuState::Normal => {},
+            CpuState::Svc(n) => { *svc_out = n; return 1; },
+            CpuState::Error(CpuError::MemoryError) => return -2,
+            CpuState::Error(CpuError::UndefinedInstruction) => return -3,
+            CpuState::Error(CpuError::Breakpoint) => return -4,
+        }
+    }
+    0
+}
+
 #[cfg(test)]
 mod permission_tests {
     use super::*;
