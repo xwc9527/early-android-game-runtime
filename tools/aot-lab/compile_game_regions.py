@@ -199,6 +199,7 @@ def main():
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--profile-trace", default=None,
                         help="optional runtime trace used only to rank ELF-derived regions")
+    parser.add_argument("--profile-load-bias", type=lambda value: int(value, 0), default=None)
     parser.add_argument("--top-regions", type=int, default=0)
     args = parser.parse_args()
     started = time.perf_counter()
@@ -211,6 +212,8 @@ def main():
     if args.profile_trace:
         if args.top_regions < 1:
             raise ValueError("profile selection requires positive --top-regions")
+        if args.profile_load_bias is None:
+            raise ValueError("profile selection requires --profile-load-bias")
         by_pc = {row["pc"]: group_id
                  for group_id, group in enumerate(groups)
                  for _, body in group for row, _ in body}
@@ -218,13 +221,14 @@ def main():
         trace_bytes = Path(args.profile_trace).read_bytes()
         for line in trace_bytes.splitlines():
             guest_pc = int(line.split()[0])
-            group_id = by_pc.get(guest_pc - 65536)
+            group_id = by_pc.get(guest_pc - args.profile_load_bias)
             if group_id is not None:
                 counts[group_id] = counts.get(group_id, 0) + 1
         if not counts:
             raise ValueError("profile has no ELF-derived compiled region")
         selected_groups = set(sorted(counts, key=lambda n: (-counts[n], n))[:args.top_regions])
         profile = {"sha256": hashlib.sha256(trace_bytes).hexdigest(),
+                   "profile_load_bias": args.profile_load_bias,
                    "selection_rule": "top N ELF-derived regions by dynamic guest instruction count",
                    "selected_region_ids": sorted(selected_groups),
                    "selected_dynamic_instruction_counts":

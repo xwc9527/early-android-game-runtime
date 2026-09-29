@@ -63,7 +63,8 @@ def main():
                   not manifest["execution_trace_input"] and
                   all(x["warm_iterations"] == 16384 and x["observables_equal"] and
                       x["host_calls_equal"] and x["instruction_accounting"] and
-                      x["aot_fallback_count"] == 0 and x["load_bias"] == 0x10000 and
+                      (x["aot_fallback_count"] == 0 or manifest.get("profile_guided_selection")) and
+                      x["aot_warm_fallback_seconds"] == 0 and x["load_bias"] == 0x10000 and
                       x["baseline_warm_engine_seconds"] > 0 and
                       x["aot_warm_engine_seconds"] > 0 for x in samples))
     result = {

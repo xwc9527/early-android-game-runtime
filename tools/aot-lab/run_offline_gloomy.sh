@@ -20,6 +20,8 @@ SUFFIX=""
 [[ -n "$PREPARED_DIR" ]] && SUFFIX="$SUFFIX-prepared"
 [[ "${AGR_GAME_COMPILER_ARM64:-0}" == 1 ]] && SUFFIX="$SUFFIX-game-compiler"
 [[ "${AGR_GAME_COMPILER_REGION:-0}" == 1 ]] && SUFFIX="$SUFFIX-region-compiler"
+[[ "${AGR_GAME_COMPILER_TOP_REGION:-0}" == 1 ]] && SUFFIX="$SUFFIX-top-region"
+[[ "${AGR_AOT_SELECTIVE_BATCH:-0}" == 1 ]] && SUFFIX="$SUFFIX-batched"
 EVIDENCE="$ROOT/build/offline-aot-gloomy-$POLICY$SUFFIX"
 mkdir -p "$EVIDENCE"
 export AGR_SIMULATOR_PROFILE=gloomy
@@ -56,8 +58,13 @@ if [[ "$RELOCATABLE" == 1 ]]; then
   TRANSLATION_FLAGS+=(--relocatable)
 fi
 if [[ "${AGR_GAME_COMPILER_REGION:-0}" == 1 ]]; then
+  REGION_PROFILE_FLAGS=()
+  if [[ "${AGR_GAME_COMPILER_TOP_REGION:-0}" == 1 ]]; then
+    REGION_PROFILE_FLAGS+=(--profile-trace "$ROOT/tools/aot-lab/evidence/gloomy-armv7-arm64-aot-poc/interpreter-trace.txt" --profile-load-bias 0x2800000 --top-regions 2)
+  fi
   "$PYTHON" "$ROOT/tools/aot-lab/compile_game_regions.py" \
     --elf "$EVIDENCE/input-armv7.so" \
+    "${REGION_PROFILE_FLAGS[@]}" \
     --out "$ROOT/Runtime/AotLab/aot_blocks.c" \
     --manifest "$EVIDENCE/translation-manifest.json" \
     > "$EVIDENCE/translation.log" 2>&1

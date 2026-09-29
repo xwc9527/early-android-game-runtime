@@ -55,7 +55,7 @@ fi
 if [[ "${AGR_GAME_COMPILER_REGION:-0}" == 1 ]]; then
   REGION_PROFILE_FLAGS=()
   if [[ "${AGR_GAME_COMPILER_TOP_REGION:-0}" == 1 ]]; then
-    REGION_PROFILE_FLAGS+=(--profile-trace "$ROOT/tools/aot-lab/evidence/game-compiler/run-36450798560/interpreter-trace.txt" --top-regions 2)
+    REGION_PROFILE_FLAGS+=(--profile-trace "$ROOT/tools/aot-lab/evidence/game-compiler/run-36450798560/interpreter-trace.txt" --profile-load-bias 0x10000 --top-regions 2)
   fi
   "$PYTHON" "$ROOT/tools/aot-lab/compile_game_regions.py" \
     --elf "$EVIDENCE/input-armv7.so" \
