@@ -1,4 +1,23 @@
 {
   "schema_version": 1,
-  "experiments": []
+  "experiments": [
+    {
+      "id": "aot-selective-interpreter-batch-2026-09-29",
+      "purpose": "Test whether per-instruction lookup miss handoff consumes the measured selective AOT payload advantage.",
+      "explanations": [
+        "Per-instruction miss-to-driver transitions dominate the selective full-route loss.",
+        "The compiled payload or necessary fallback execution dominates even after transitions are batched."
+      ],
+      "outcome_a": "Full differential passes and lookup misses fall from 21550 to approximately one per interpreter run; the route approaches or exceeds interpreter speed.",
+      "outcome_b": "Any differential mismatch or continued large loss rejects the batched handoff as a viable correction.",
+      "files": [
+        "Runtime/ArmInterpreter/src/interpreter/mod.rs",
+        "Runtime/ArmInterpreter/src/ffi.rs",
+        "Runtime/GuestRuntime/agr_guest_runtime.c",
+        "scripts/build-and-run-simulator.sh"
+      ],
+      "enabled": false,
+      "status": "RESOLVED"
+    }
+  ]
 }
